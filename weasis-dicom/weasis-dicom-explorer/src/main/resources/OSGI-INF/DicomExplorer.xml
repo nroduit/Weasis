@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.explorer.DicomExplorer">
+   <implementation class="org.weasis.dicom.explorer.DicomExplorer"/>
+   <property name="name" type="String" value="Dicom Explorer"/>
+   <property name="description" type="String" value="Explore Dicom data by patient, study and series"/>
+   <service>
+      <provide interface="org.weasis.core.api.explorer.DataExplorerView"/>
+   </service>
+</scr:component>

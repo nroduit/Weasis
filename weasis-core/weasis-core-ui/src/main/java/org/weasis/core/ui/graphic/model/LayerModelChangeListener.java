@@ -1,0 +1,27 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
+package org.weasis.core.ui.graphic.model;
+
+/**
+ * The listener interface for receiving layerModelChange events.
+ * 
+ * @see LayerModelChangeEvent
+ */
+public interface LayerModelChangeListener {
+
+    void handleLayerModelChanged(LayerModel layerModel);
+
+    void handleLayerAdded(LayerModel layerModel, AbstractLayer layer);
+
+    void handleLayerRemoved(LayerModel layerModel, AbstractLayer layer);
+
+    void handleLayerChanged(LayerModel layerModel, AbstractLayer layer);
+}

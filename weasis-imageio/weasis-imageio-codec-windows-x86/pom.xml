@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-imageio-parent</artifactId>
+		<groupId>org.weasis.imageio</groupId>
+		<version>1.2-SNAPSHOT</version>
+		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<packaging>bundle</packaging>
+	<artifactId>weasis-imageio-codec-windows-x86</artifactId>
+	<name>ImageIO native Windows x86 codec</name>
+	<version>1.2-b04</version>
+	<properties>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Bundle-NativeCode>lib/clib_jiio.dll;lib/clib_jiio_sse2.dll;lib/clib_jiio_util.dll;
+							processor=x86; osname=win32</Bundle-NativeCode>
+						<Fragment-Host>weasis-imageio-codec;bundle-version="0.7.0"</Fragment-Host>
+						<Embed-StripVersion>true</Embed-StripVersion>
+
+						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
+						<Specification-Version>1.2-b04</Specification-Version>
+						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>clib_jiio</artifactId>
+			<version>1.2-b04</version>
+			<type>dll</type>
+			<classifier>windows-x86</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>clib_jiio_sse2</artifactId>
+			<version>1.2-b04</version>
+			<type>dll</type>
+			<classifier>windows-x86</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>clib_jiio_util</artifactId>
+			<version>1.2-b04</version>
+			<type>dll</type>
+			<classifier>windows-x86</classifier>
+		</dependency>
+	</dependencies>
+</project>

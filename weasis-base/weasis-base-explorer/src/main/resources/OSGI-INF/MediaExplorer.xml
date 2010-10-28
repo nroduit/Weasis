@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.base.explorer.DefaultExplorer">
+   <implementation class="org.weasis.base.explorer.DefaultExplorer"/>
+   <property name="name" type="String" value="Media Explorer"/>
+   <property name="description" type="String" value="Explore supported media files in tree view"/>
+   <service>
+      <provide interface="org.weasis.core.api.explorer.DataExplorerView"/>
+   </service>
+ 
+</scr:component>

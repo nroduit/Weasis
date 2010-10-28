@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<presets>
+  <preset name="Brain" modality="CT" window="110" level="35" />
+  <preset name="Abdomen" modality="CT" window="320" level="50" />
+  <preset name="Mediastinum" modality="CT" window="400" level="80" />
+  <preset name="Bone" modality="CT" window="2000" level="350" />
+  <preset name="Lung" modality="CT" window="1500" level="-500" />
+  <preset name="MIP" modality="CT" window="380" level="120" />
+</presets>

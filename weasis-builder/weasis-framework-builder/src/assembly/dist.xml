@@ -1,0 +1,30 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+	<id>hug-dist</id>
+	<formats>
+		<format>war</format>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<fileSets>
+		<fileSet>
+			<!-- Copy bundles + repository.xml -->
+			<directory>target/tmp</directory>
+			<outputDirectory>/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<!-- Direct resources copy -->
+			<directory>src/main/resources</directory>
+			<outputDirectory>/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<!-- copy OSGI framework config -->
+			<directory>etc/config</directory>
+			<outputDirectory>/conf</outputDirectory>
+			<filtered>true</filtered>
+		</fileSet>
+	</fileSets>
+
+
+</assembly>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layoutModel name="3 Views">
+	<element type="org.weasis.core.ui.editor.image.DefaultView2d" x="0" y="0" width="2" height="1"
+		weightx="1.0" weighty="0.5" position="10" expand="1" />
+	<element type="org.weasis.core.ui.editor.image.DefaultView2d" x="0" y="1" width="1" height="1" weightx="0.5"
+		weighty="0.5" position="10" expand="1" />
+	<element type="org.weasis.core.ui.editor.image.DefaultView2d" x="1" y="1" width="1" height="1" weightx="0.5"
+		weighty="0.5" position="10" expand="1" />
+</layoutModel>

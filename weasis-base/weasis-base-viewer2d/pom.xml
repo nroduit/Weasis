@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-base-parent</artifactId>
+		<groupId>org.weasis.base</groupId>
+		<version>1.2-SNAPSHOT</version>
+		<relativePath>../weasis-base-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-base-viewer2d</artifactId>
+	<packaging>bundle</packaging>
+	<name>Image Viewer [${project.artifactId}]</name>
+	<version>0.5.3-SNAPSHOT</version>
+	<properties>
+		<bundle.namespace>org.weasis.base.viewer2d</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Service-Component>OSGI-INF/viewerFactory.xml</Service-Component>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+	</dependencies>
+</project>

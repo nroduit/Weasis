@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.weasis</groupId>
+	<artifactId>weasis-framework</artifactId>
+	<version>1.0.6-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>${project.artifactId}</name>
+	<licenses>
+		<license>
+			<name>Eclipse Public License v1.0</name>
+			<url>http://www.eclipse.org/legal/epl-v10.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk</connection>
+		<developerConnection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk</developerConnection>
+		<url>https://weasis.repositoryhosting.com/trac/weasis_weasis/browser/trunk</url>
+	</scm>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.1</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<modules>
+		<module>weasis-parent</module>
+		<module>weasis-core</module>
+		<module>weasis-imageio</module>
+		<module>weasis-imageioext</module>
+		<module>weasis-base</module>
+		<module>weasis-dicom</module>
+		<module>weasis-launcher</module>
+	</modules>
+</project>

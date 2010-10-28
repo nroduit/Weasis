@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-dicom-parent</artifactId>
+		<groupId>org.weasis.dicom</groupId>
+		<version>1.2-SNAPSHOT</version>
+		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-dicom-codec</artifactId>
+	<packaging>bundle</packaging>
+	<name>DICOM Codec [${project.artifactId}]</name>
+	<version>0.5.3-SNAPSHOT</version>
+	<properties>
+		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Service-Component>OSGI-INF/DicomCodec.xml</Service-Component>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.dcm4che2.*</Export-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.thirdparty.dcm4che</groupId>
+			<artifactId>dcm4che-core</artifactId>
+			<version>2.0.24</version>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.dcm4che</groupId>
+			<artifactId>dcm4che-image</artifactId>
+			<version>2.0.24</version>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.imageio</groupId>
+			<artifactId>weasis-imageio-codec</artifactId>
+			<version>0.7.1-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="org.weasis.dicom.codec.DicomCodec">
+   <implementation class="org.weasis.dicom.codec.DicomCodec"/>
+   <property name="codecName" type="String" value="DICOM (dcm4chee toolkit)"/>
+   <service>
+      <provide interface="org.weasis.core.api.media.data.Codec"/>
+   </service>
+</scr:component>

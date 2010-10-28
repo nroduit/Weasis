@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-imageio-parent</artifactId>
+		<groupId>org.weasis.imageio</groupId>
+		<version>1.2-SNAPSHOT</version>
+		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-imageio-codec</artifactId>
+	<packaging>bundle</packaging>
+	<name>ImageIO Codec [${project.artifactId}]</name>
+	<version>0.7.1-SNAPSHOT</version>
+	<properties>
+		<bundle.namespace>org.weasis.imageio.codec</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Service-Component>OSGI-INF/ImageioCodec.xml</Service-Component>
+						<!--
+							Using <_exportcontents> requires to configure <Export-Package>, there is no default export
+							(All packages, except any containing 'impl' or 'internal'
+						-->
+						<_exportcontents>com.sun.media.imageio.*,com.sun.media.jai.*,com.sun.media.imageioimpl.common</_exportcontents>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
+
+						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
+						<Specification-Version>1.2-b04</Specification-Version>
+						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
+						<Implementation-Title>weasis.thirdparty.com.sun.media.imageio</Implementation-Title>
+						<Implementation-Version>1.2-b04</Implementation-Version>
+						<Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
+						<Extension-Name>weasis.thirdparty.com.sun.media.imageio</Extension-Name>
+						<Sealed>true</Sealed>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>clibwrapper_jiio</artifactId>
+			<version>1.2-b04</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>jai_imageio</artifactId>
+			<version>1.2-b04</version>
+		</dependency>
+	</dependencies>
+</project>
