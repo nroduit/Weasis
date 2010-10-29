@@ -142,6 +142,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             if (o1 == o2) {
                 return 0;
             }
+            if (o1 instanceof StudyPane && o2 instanceof StudyPane) {
+                o1 = ((StudyPane) o1).dicomStudy;
+                o2 = ((StudyPane) o2).dicomStudy;
+            }
             if (o1 instanceof MediaSeriesGroup && o2 instanceof MediaSeriesGroup) {
                 MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
                 MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
@@ -156,10 +160,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         Date time2 = (Date) st2.getTagValue(TagElement.StudyTime);
                         if (time1 != null && time2 != null) {
                             // inverse time
-                            res = time2.compareTo(time1);
-                            if (res != 0) {
-                                return res;
-                            }
+                            return time2.compareTo(time1);
                         }
                     } else {
                         return res;
@@ -208,8 +209,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         @Override
         public void addElement(Object anObject) {
             int index = binarySearch(anObject, studyComparator);
+            // TODO handle same dates.
             if (index < 0) {
                 super.insertElementAt(anObject, -(index + 1));
+            } else {
+                super.insertElementAt(anObject, index);
             }
         }
     };
@@ -439,10 +443,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             studyPane = new StudyPane(study);
             List<StudyPane> studies = patient2study.get(model.getParent(study, DicomModel.patient));
             if (studies != null) {
-                int index = modelStudy.binarySearch(study, studyComparator);
+                int index = Collections.binarySearch(studies, studyPane, studyComparator);
                 if (index < 0) {
-                    // add + 1 because of "All Studies" item
-                    index = -(index + 2);
+                    index = -(index + 1);
                 } else {
                     index = studies.size();
                 }
