@@ -218,11 +218,8 @@ public class WeasisLauncher {
             configProps.setProperty(Constants.FRAMEWORK_STORAGE, cacheDir);
         }
 
-        // Splash screen that shows bundles loading
-        WebStartLoader loader = new WebStartLoader();
-
         // Load local properties and clean if necessary the previous version
-        loadProperties(configProps, loader);
+        WebStartLoader loader = loadProperties(configProps);
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
@@ -615,7 +612,7 @@ public class WeasisLauncher {
         }
     }
 
-    public static void loadProperties(Properties config, final WebStartLoader loader) {
+    public static WebStartLoader loadProperties(Properties config) {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
 
@@ -656,7 +653,9 @@ public class WeasisLauncher {
         }
         look = setLookAndFeel(look);
 
-        // Display splashscreen
+        // Splash screen that shows bundles loading
+        final WebStartLoader loader = new WebStartLoader();
+        // Display splash screen
         loader.open();
 
         Properties common_prop;
@@ -725,6 +724,7 @@ public class WeasisLauncher {
                 }
             });
         }
+        return loader;
     }
 
     private static Properties readProperties(File propsFile) {

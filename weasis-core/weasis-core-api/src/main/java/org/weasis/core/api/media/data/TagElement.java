@@ -36,6 +36,9 @@ public class TagElement implements Transferable, Serializable {
     public static final SimpleDateFormat formatTime = new SimpleDateFormat("HH:mm:ss"); //$NON-NLS-1$
     public static final SimpleDateFormat formatDateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //$NON-NLS-1$
 
+    public static final SimpleDateFormat dicomformatDate = new SimpleDateFormat("yyyyMMdd"); //$NON-NLS-1$
+    public static final SimpleDateFormat dicomformatTime = new SimpleDateFormat("HHmmss"); //$NON-NLS-1$
+
     public enum DICOM_LEVEL {
         Patient, Study, Series, Instance
     };
@@ -431,10 +434,20 @@ public class TagElement implements Transferable, Serializable {
         return null;
     }
 
-    public static Date getTime(String dateTime) {
+    public static Date getDicomDate(String date) {
+        if (date != null) {
+            try {
+                return dicomformatDate.parse(date);
+            } catch (Exception e) {
+            }
+        }
+        return null;
+    }
+
+    public static Date getDicomTime(String dateTime) {
         if (dateTime != null) {
             try {
-                return formatDateTime.parse(dateTime);
+                return dicomformatTime.parse(dateTime);
             } catch (Exception e) {
             }
         }

@@ -47,7 +47,6 @@ import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -92,6 +91,7 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -101,7 +101,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomExplorer extends PluginTool implements DataExplorerView {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(DicomExplorer.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
 
     public final static String NAME = Messages.getString("DicomExplorer.title"); //$NON-NLS-1$
     public final static String PREFERENCE_NODE = "dicom.explorer"; //$NON-NLS-1$
@@ -124,57 +124,92 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     private final DicomModel model;
 
-    private final DefaultComboBoxModel modelPatient = new DefaultComboBoxModel() {
+    private final Comparator patientComparator = new Comparator() {
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            return o1.toString().compareToIgnoreCase(o2.toString());
+        }
+    };
+    private final Comparator studyComparator = new Comparator() {
+        @Override
+        public boolean equals(Object obj) {
+            return true;
+        }
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            if (o1 == o2) {
+                return 0;
+            }
+            if (o1 instanceof MediaSeriesGroup && o2 instanceof MediaSeriesGroup) {
+                MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
+                MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
+                Date date1 = (Date) st1.getTagValue(TagElement.StudyDate);
+                Date date2 = (Date) st2.getTagValue(TagElement.StudyDate);
+                // LOGGER.debug("date1: {} date2: {}", date1, date2);
+                if (date1 != null && date2 != null) {
+                    // inverse time
+                    int res = date2.compareTo(date1);
+                    if (res == 0) {
+                        Date time1 = (Date) st1.getTagValue(TagElement.StudyTime);
+                        Date time2 = (Date) st2.getTagValue(TagElement.StudyTime);
+                        if (time1 != null && time2 != null) {
+                            // inverse time
+                            res = time2.compareTo(time1);
+                            if (res != 0) {
+                                return res;
+                            }
+                        }
+                    } else {
+                        return res;
+                    }
+                }
+
+                String uid1 = (String) st1.getTagValue(TagElement.StudyInstanceUID);
+                String uid2 = (String) st2.getTagValue(TagElement.StudyInstanceUID);
+                if (date1 == null && date2 == null && uid1 != null && uid2 != null) {
+                    return uid1.compareTo(uid2);
+                } else {
+                    if (date1 == null) {
+                        return 1;
+                    }
+                    if (date2 == null) {
+                        return -1;
+                    }
+                }
+            } else {
+                if (o1 instanceof MediaSeriesGroup) {
+                    return 1;
+                }
+                if (o2 instanceof MediaSeriesGroup) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    };
+    private final ArrayListComboBoxModel modelPatient = new ArrayListComboBoxModel() {
 
         private static final long serialVersionUID = 1826724555734323483L;
 
         @Override
         public void addElement(Object anObject) {
-            int index = 0;
-            for (int i = 0; i < this.getSize(); i++) {
-                Object o = this.getElementAt(i);
-                if (anObject.toString().compareToIgnoreCase(o.toString()) < 0) {
-                    break;
-                }
-                index = i + 1;
+            int index = binarySearch(anObject, patientComparator);
+            if (index < 0) {
+                super.insertElementAt(anObject, -(index + 1));
             }
-            super.insertElementAt(anObject, index);
-
         }
     };
-    private final DefaultComboBoxModel modelStudy = new DefaultComboBoxModel() {
+    private final ArrayListComboBoxModel modelStudy = new ArrayListComboBoxModel() {
 
         private static final long serialVersionUID = 2272386715266884376L;
 
         @Override
         public void addElement(Object anObject) {
-            Date date = null;
-            if (anObject instanceof MediaSeriesGroup
-                && (date = (Date) ((MediaSeriesGroup) anObject).getTagValue(TagElement.StudyDate)) != null) {
-                // Exclude "All Studies"
-                int index = 1;
-                for (int i = 1; i < this.getSize(); i++) {
-                    Object o = this.getElementAt(i);
-                    Date date2 = null;
-                    if (o instanceof MediaSeriesGroup
-                        && (date2 = (Date) ((MediaSeriesGroup) o).getTagValue(TagElement.StudyDate)) != null) {
-                        int res = date.compareTo(date2);
-                        if (res > 0) {
-                            break;
-                        } else if (res == 0) {
-                            res =
-                                ((String) ((MediaSeriesGroup) anObject).getTagValue(TagElement.StudyInstanceUID))
-                                    .compareTo((String) ((MediaSeriesGroup) o).getTagValue(TagElement.StudyInstanceUID));
-                            if (res < 0) {
-                                break;
-                            }
-                        }
-                    }
-                    index = i + 1;
-                }
-                super.insertElementAt(anObject, index);
-            } else {
-                super.addElement(anObject);
+            int index = binarySearch(anObject, studyComparator);
+            if (index < 0) {
+                super.insertElementAt(anObject, -(index + 1));
             }
         }
     };
@@ -404,25 +439,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             studyPane = new StudyPane(study);
             List<StudyPane> studies = patient2study.get(model.getParent(study, DicomModel.patient));
             if (studies != null) {
-                // Sort study by date and uid
-                Date val1 = (Date) study.getTagValue(TagElement.StudyDate);
-                String uid1 = (String) study.getTagValue(TagElement.StudyInstanceUID);
-                int index = 0;
-                for (int i = 0; i < studies.size(); i++) {
-                    StudyPane sp = studies.get(i);
-                    Date val2 = (Date) sp.dicomStudy.getTagValue(TagElement.StudyDate);
-                    int rep = 0;
-                    if (val1 != null && val2 != null) {
-                        // inverse time
-                        rep = val2.compareTo(val1);
-                    }
-                    if (rep == 0) {
-                        rep = uid1.compareTo((String) sp.dicomStudy.getTagValue(TagElement.StudyInstanceUID));
-                    }
-                    if (rep < 0) {
-                        break;
-                    }
-                    index = i + 1;
+                int index = modelStudy.binarySearch(study, studyComparator);
+                if (index < 0) {
+                    // add + 1 because of "All Studies" item
+                    index = -(index + 2);
+                } else {
+                    index = studies.size();
                 }
                 if (position != null) {
                     position[0] = index;
@@ -485,7 +507,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             // if (updateSplitNumber) {
                             // updateSplitSeriesNumber(seriesList, i, seriesUID, splitIndex + 1);
                             // }
-                            log.debug("Sort Series {} by Series Number, index: {} ", val1, i); //$NON-NLS-1$
+                            LOGGER.debug("Sort Series {} by Series Number, index: {} ", val1, i); //$NON-NLS-1$
                             break;
                         }
                         // Split Series or series without series number
@@ -499,8 +521,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     // if (updateSplitNumber) {
                                     // updateSplitSeriesNumber(seriesList, i, seriesUID, splitIndex + 1);
                                     // }
-                                    log.debug("Sort Series {} by slice Location: {}, index: {} ", new Object[] { val1, //$NON-NLS-1$
-                                        tag1, i });
+                                    LOGGER.debug(
+                                        "Sort Series {} by slice Location: {}, index: {} ", new Object[] { val1, //$NON-NLS-1$
+                                            tag1, i });
                                     break;
                                 }
                                 // Case tag2 is a localizer and tag1 the series
@@ -516,8 +539,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                         // if (updateSplitNumber) {
                                         // updateSplitSeriesNumber(seriesList, i, seriesUID, splitIndex + 1);
                                         // }
-                                        log.debug("Sort Series {} by orientation: {}, index: {} ", new Object[] { val1, //$NON-NLS-1$
-                                            p1, i });
+                                        LOGGER.debug(
+                                            "Sort Series {} by orientation: {}, index: {} ", new Object[] { val1, //$NON-NLS-1$
+                                                p1, i });
                                         break;
                                     }
                                 }
@@ -1320,7 +1344,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             addSpecialModalityToStudy(series);
             return;
         }
-        log.info("Add series: {}", series); //$NON-NLS-1$
+        LOGGER.info("Add series: {}", series); //$NON-NLS-1$
         MediaSeriesGroup study = model.getParent(series, DicomModel.study);
         MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
         PatientPane patientPane = createPatientPane(patient);

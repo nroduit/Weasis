@@ -59,19 +59,19 @@ import org.xml.sax.InputSource;
 
 public class DownloadManager {
 
-    private static final Logger log = LoggerFactory.getLogger(DownloadManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
     public DownloadManager() {
     }
 
-    public static ArrayList<LoadSeries> buildDicomSeriesFromXml(URI uri, DicomModel model) {
+    public static ArrayList<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
         ArrayList<LoadSeries> seriesList = new ArrayList<LoadSeries>();
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
             URL url = uri.toURL();
-            log.info("Downloading WADO references: {}", url); //$NON-NLS-1$
+            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
 
             String path = uri.getPath();
             if (path.endsWith(".gz")) { //$NON-NLS-1$
@@ -186,11 +186,11 @@ public class DownloadManager {
             patient.setTag(TagElement.PatientName, name);
 
             patient.setTag(TagElement.PatientSex, getTagAttribute(xmler, TagElement.PatientSex.getTagName(), "O")); //$NON-NLS-1$
-            patient.setTag(TagElement.PatientBirthDate, TagElement.getDate(patientBirthDate));
-            patient.setTag(TagElement.PatientBirthTime, TagElement.getTime(getTagAttribute(xmler,
+            patient.setTag(TagElement.PatientBirthDate, TagElement.getDicomDate(patientBirthDate));
+            patient.setTag(TagElement.PatientBirthTime, TagElement.getDicomTime(getTagAttribute(xmler,
                 TagElement.PatientBirthTime.getTagName(), null)));
             model.addHierarchyNode(TreeModel.rootNode, patient);
-            log.info("Adding new patient: " + patient); //$NON-NLS-1$
+            LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
         }
 
         int eventType;
@@ -222,9 +222,9 @@ public class DownloadManager {
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
             study = new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID, TagElement.StudyDate);
-            study.setTag(TagElement.StudyDate, TagElement.getDate(getTagAttribute(xmler, TagElement.StudyDate
+            study.setTag(TagElement.StudyDate, TagElement.getDicomDate(getTagAttribute(xmler, TagElement.StudyDate
                 .getTagName(), null)));
-            study.setTag(TagElement.StudyTime, TagElement.getTime(getTagAttribute(xmler, TagElement.StudyTime
+            study.setTag(TagElement.StudyTime, TagElement.getDicomTime(getTagAttribute(xmler, TagElement.StudyTime
                 .getTagName(), null)));
             study.setTag(TagElement.StudyDescription, getTagAttribute(xmler, TagElement.StudyDescription.getTagName(),
                 "")); //$NON-NLS-1$
@@ -233,6 +233,7 @@ public class DownloadManager {
             study.setTag(TagElement.StudyID, getTagAttribute(xmler, TagElement.StudyID.getTagName(), null));
             study.setTag(TagElement.ReferringPhysicianName, getTagAttribute(xmler, TagElement.ReferringPhysicianName
                 .getTagName(), null));
+            LOGGER.debug("Set date to study: {}", study.getTagValue(TagElement.StudyDate));
             model.addHierarchyNode(patient, study);
         }
 
@@ -287,7 +288,7 @@ public class DownloadManager {
                 // Should not happen
                 dicomSeries.setTag(TagElement.WadoParameters, wadoParameters);
             } else if (!wado.getWadoURL().equals(wadoParameters.getWadoURL())) {
-                log.error("Wado parameters must be unique for a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
+                LOGGER.error("Wado parameters must be unique for a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
                 // Cannot have multiple wado parameter for a Series
                 return dicomSeries;
             }
@@ -313,7 +314,7 @@ public class DownloadManager {
                         String sopInstanceUID = getTagAttribute(xmler, TagElement.SOPInstanceUID.getTagName(), null);
                         if (sopInstanceUID != null) {
                             if (containsInstance && dicomInstances.contains(sopInstanceUID)) {
-                                log.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
+                                LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
                                 String tsuid = getTagAttribute(xmler, TagElement.TransferSyntaxUID.getTagName(), null);
                                 DicomInstance dcmInstance = new DicomInstance(sopInstanceUID, tsuid);
@@ -383,11 +384,11 @@ public class DownloadManager {
         return defaultValue;
     }
 
-    public static ArrayList<LoadSeries> buildDicomStructure(URI uri, DicomModel model) {
+    public static ArrayList<LoadSeries> buildDicomStructure(URI uri, final DicomModel model) {
         ArrayList<LoadSeries> tasks = new ArrayList<LoadSeries>();
         try {
             URL url = uri.toURL();
-            log.info("Downloading WADO references: {}", url); //$NON-NLS-1$
+            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
             Document doc = null;
@@ -450,11 +451,11 @@ public class DownloadManager {
 
                         patient.setTag(TagElement.PatientSex, getTagAttribute(patientElement, TagElement.PatientSex
                             .getTagName(), "O")); //$NON-NLS-1$
-                        patient.setTag(TagElement.PatientBirthDate, TagElement.getDate(patientBirthDate));
-                        patient.setTag(TagElement.PatientBirthTime, TagElement.getTime(getTagAttribute(patientElement,
-                            TagElement.PatientBirthTime.getTagName(), null)));
+                        patient.setTag(TagElement.PatientBirthDate, TagElement.getDicomDate(patientBirthDate));
+                        patient.setTag(TagElement.PatientBirthTime, TagElement.getDicomTime(getTagAttribute(
+                            patientElement, TagElement.PatientBirthTime.getTagName(), null)));
                         model.addHierarchyNode(TreeModel.rootNode, patient);
-                        log.info("Adding new patient: " + patient); //$NON-NLS-1$
+                        LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
                     } else {
                         if (listOfPatient.getLength() == 1) {
                             final MediaSeriesGroup uniquePatient = patient;
@@ -486,10 +487,10 @@ public class DownloadManager {
                                 study =
                                     new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID,
                                         TagElement.StudyDate);
-                                study.setTag(TagElement.StudyDate, TagElement.getDate(getTagAttribute(studyElement,
-                                    TagElement.StudyDate.getTagName(), null)));
-                                study.setTag(TagElement.StudyTime, TagElement.getTime(getTagAttribute(studyElement,
-                                    TagElement.StudyTime.getTagName(), null)));
+                                study.setTag(TagElement.StudyDate, TagElement.getDicomDate(getTagAttribute(
+                                    studyElement, TagElement.StudyDate.getTagName(), null)));
+                                study.setTag(TagElement.StudyTime, TagElement.getDicomTime(getTagAttribute(
+                                    studyElement, TagElement.StudyTime.getTagName(), null)));
                                 study.setTag(TagElement.StudyDescription, getTagAttribute(studyElement,
                                     TagElement.StudyDescription.getTagName(), "")); //$NON-NLS-1$
                                 study.setTag(TagElement.AccessionNumber, getTagAttribute(studyElement,
@@ -532,7 +533,7 @@ public class DownloadManager {
                                         model.addHierarchyNode(study, dicomSeries);
                                         buildLoadSeries = true;
                                     } else {
-                                        log.warn("{} already exists, abort downloading.", dicomSeries); //$NON-NLS-1$
+                                        LOGGER.warn("{} already exists, abort downloading.", dicomSeries); //$NON-NLS-1$
                                     }
 
                                     NodeList sopInstanceUIDList =

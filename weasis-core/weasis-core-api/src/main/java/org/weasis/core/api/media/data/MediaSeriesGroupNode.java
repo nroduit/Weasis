@@ -61,6 +61,9 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public boolean equals(Object obj) {
         Object value1 = tags.get(tagID);
+        if (value1 == obj) {
+            return true;
+        }
         if (value1 == null) {
             return false;
         }
