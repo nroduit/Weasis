@@ -633,9 +633,14 @@ public class WeasisLauncher {
         File common_file = new File(basdir, APP_PROPERTY_FILE);
         Properties s_prop = readProperties(common_file);
 
-        String lang = s_prop.getProperty("locale.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-        String country = s_prop.getProperty("locale.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
-        String variant = s_prop.getProperty("locale.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        // Get locale from system properties otherwise set en_US (only for the first launch of Weasis on a user session)
+        String lang = System.getProperty("weasis.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+        String country = System.getProperty("weasis.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
+        String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        // Set the locale of the previous launch if exists
+        lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$ 
+        country = s_prop.getProperty("locale.country", country); //$NON-NLS-1$ 
+        variant = s_prop.getProperty("locale.variant", variant); //$NON-NLS-1$ 
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
@@ -695,7 +700,7 @@ public class WeasisLauncher {
         // Save if not exist or could not be read
         if (cleanCache && versionNew != null) {
             if (!versionNew.equals(versionOld)) {
-                System.out.printf("Clean previous Weasis version: %s \n", versionOld);
+                System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
                 config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             }
         }
@@ -746,7 +751,7 @@ public class WeasisLauncher {
                 }
             }
         } else {
-            File appFoler = new File(System.getProperty(P_WEASIS_PATH, ""));
+            File appFoler = new File(System.getProperty(P_WEASIS_PATH, "")); //$NON-NLS-1$
             appFoler.mkdirs();
         }
         return properties;

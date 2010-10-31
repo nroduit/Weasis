@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns="http://www.weasis.org/xsd" 
+	targetNamespace="http://www.weasis.org/xsd" 
+	elementFormDefault="qualified">
+
+	<!--                                DICOM VALUE REPRESENTATIONS                                -->
+
+	<!--
+		IS (Integer String)
+		Restriction: leading and/or trailing spaces are not allowed! 
+	-->
+  <xsd:simpleType name="dicomVrIS">
+    <xsd:restriction base="xsd:int"/>
+  </xsd:simpleType>
+
+	<!--
+		UI (Unique Identifier/UID)
+		Restriction: NULL padding character is not allowed!
+	-->
+  <xsd:simpleType name="dicomVrUI">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="64"/>
+      <xsd:pattern value="[0-9.]*"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!--
+		CS (Code String)
+	-->
+  <xsd:simpleType name="dicomVrCS">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="16"/>
+      <xsd:pattern value="[A-Z0-9 _]*"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+	<!--
+		LO (Long String)
+		Note : backslash character and control characters except for ESC character must be excluded!
+	-->
+  <xsd:simpleType name="dicomVrLO">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="64"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!--
+		PN (Person Name)
+		Note : backslash character and control characters except for ESC character must be excluded!
+	-->
+  <xsd:simpleType name="dicomVrPN">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="64"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!--
+		SH (Short String)
+		Note : backslash character and control characters except for ESC character must be excluded!
+	-->
+  <xsd:simpleType name="dicomVrSH">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="16"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!--
+		TM (Time)
+		Format : hhmmss.frac
+		Note : One or more of the components mm, ss, or frac may be unspecified as long as every component to the right of an unspecified component is also unspecified.
+		Restrictions : - format hh:mm:ss.frac (prior to V3.0) is not supported!
+		               - trailing spaces are not allowed!
+	-->
+  <xsd:simpleType name="dicomVrTM">
+    <xsd:restriction base="xsd:string">
+      <xsd:maxLength value="13"/>
+      <xsd:pattern value="(([0-1][0-9])|(2[0-3]))(([0-5][0-9])(([0-5][0-9])(.([0-9]{1,6}))?)?)?"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <!--
+		DA (Date)
+		Format : yyyymmdd
+		Restrictions : - format yyyy.mm.dd (prior to V3.0) is not supported!
+	-->
+  <xsd:simpleType name="dicomVrDA">
+  	<xsd:union memberTypes="xsd:gYear xsd:gMonth xsd:gDay"/>
+  </xsd:simpleType>
+  
+	<!--                        DICOM DATA ELEMENTS HAVING ENUMARETED VALUES                       -->
+  
+	<!-- Patient Sex -->
+  <xsd:simpleType name="dicomPatientSex">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="M"/>
+      <xsd:enumeration value="F"/>
+      <xsd:enumeration value="O"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!--                              WEASIS SPECIFIC DATA ELEMENTS                               -->
+  
+  <xsd:simpleType name="dicomTagsList">
+  	<xsd:restriction base="xsd:string">
+  		<xsd:pattern value="((0x[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]){1}(,0x[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F])*)?"/>
+  	</xsd:restriction>
+  </xsd:simpleType>
+
+	<!--                           DESCRIPTION OF WADO_QUERY XML DOCUMENT                          -->
+	
+	<xsd:element name="wado_query" type="WADOQuery"/>
+	<xsd:complexType name="WADOQuery">
+		<xsd:sequence>
+			<xsd:element name="Patient" type="Patient" minOccurs="1" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="wadoURL" type="xsd:anyURI"/>
+		<xsd:attribute name="webLogin" type="xsd:string"/>
+		<xsd:attribute name="requireOnlySOPInstanceUID" type="xsd:boolean"/>
+		<xsd:attribute name="additionnalParameters" type="xsd:string"/>
+		<xsd:attribute name="overrideDicomTagsList" type="dicomTagsList"/>
+	</xsd:complexType>
+	<xsd:complexType name="Patient">
+		<xsd:sequence>
+			<xsd:element name="Study" type="Study" minOccurs="1" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="PatientID" type="dicomVrLO" use="required"/>
+		<xsd:attribute name="PatientName" type="dicomVrPN" use="required"/>
+		<xsd:attribute name="PatientBirthDate" type="dicomVrDA" use="required"/>
+		<xsd:attribute name="PatientBirthTime" type="dicomVrTM"/>
+		<xsd:attribute name="PatientSex" type="dicomPatientSex"/>
+	</xsd:complexType>
+	<xsd:complexType name="Study">
+		<xsd:sequence>
+			<xsd:element name="Series" type="Series" minOccurs="1" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="StudyInstanceUID" type="dicomVrUI" use="required"/>
+		<xsd:attribute name="StudyDescription" type="dicomVrLO"/>
+		<xsd:attribute name="StudyDate" type="dicomVrDA"/>
+		<xsd:attribute name="StudyTime" type="dicomVrTM"/>
+		<xsd:attribute name="AccessionNumber" type="dicomVrSH"/>
+		<xsd:attribute name="StudyID" type="dicomVrSH"/>
+		<xsd:attribute name="ReferringPhysicianName" type="dicomVrPN"/>
+	</xsd:complexType>
+	<xsd:complexType name="Series">
+		<xsd:sequence>
+			<xsd:element name="Instance" type="Instance" minOccurs="1" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="SeriesInstanceUID" type="dicomVrUI" use="required"/>
+		<xsd:attribute name="SeriesDescription" type="dicomVrLO"/>
+		<xsd:attribute name="SeriesNumber" type="dicomVrIS"/>
+		<xsd:attribute name="Modality" type="dicomVrCS"/>
+		<xsd:attribute name="WadoTransferSyntaxUID" type="xsd:string"/>
+		<xsd:attribute name="TransferSyntaxUID" type="dicomVrUI"/>
+		<xsd:attribute name="WadoCompressionRate" type="xsd:integer"/>
+	</xsd:complexType>
+	<xsd:complexType name="Instance">
+		<xsd:attribute name="SOPInstanceUID" type="dicomVrUI" use="required"/>
+		<xsd:attribute name="TransferSyntaxUID" type="dicomVrUI"/>
+		<xsd:attribute name="InstanceNumber" type="dicomVrIS"/>
+	</xsd:complexType>
+</xsd:schema>
