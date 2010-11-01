@@ -13,6 +13,8 @@ package org.weasis.dicom.explorer.wado;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -23,12 +25,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.Source;
+import javax.xml.transform.stax.StAXSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +64,7 @@ import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class DownloadManager {
 
@@ -80,7 +89,7 @@ public class DownloadManager {
                 stream = url.openStream();
             } else {
                 // In case wado file has no extension
-                File outFile = File.createTempFile("wadoqueries_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 if (FileUtil.writeFile(url, outFile)) {
                     String mime = MimeInspector.getMimeType(outFile);
                     if (mime != null && mime.equals("application/x-gzip")) { //$NON-NLS-1$
@@ -90,27 +99,30 @@ public class DownloadManager {
                     }
                 }
             }
-            xmler = xmlif.createXMLStreamReader(stream);
+            File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+            FileUtil.writFile(stream, new FileOutputStream(tempFile));
+            xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
 
             // TODO cannot reset stream after validating xml, try to write a temporary file
-            // Source xmlFile = new StAXSource(xmler);
-            // SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            // try {
-            // Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));
-            // Validator validator = schema.newValidator();
-            // validator.validate(xmlFile);
-            // LOGGER.info("wado_query is valid");
-            // } catch (SAXException e) {
-            // LOGGER.error("wado_query is NOT valid");
-            // LOGGER.error("Reason: {}", e.getLocalizedMessage());
-            // }
+            Source xmlFile = new StAXSource(xmler);
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            try {
+                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));
+                Validator validator = schema.newValidator();
+                validator.validate(xmlFile);
+                LOGGER.info("wado_query is valid");
+            } catch (SAXException e) {
+                LOGGER.error("wado_query is NOT valid");
+                LOGGER.error("Reason: {}", e.getLocalizedMessage());
+            }
 
+            xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
             int eventType;
             if (xmler.hasNext()) {
                 eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        String key = xmler.getName().toString();
+                        String key = xmler.getName().getLocalPart();
                         // First Tag must <wado_query>
                         if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
                             String wadoURL = getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
@@ -129,7 +141,8 @@ public class DownloadManager {
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         // <Patient> Tag
-                                        if (TagElement.DICOM_LEVEL.Patient.name().equals(xmler.getName().toString())) {
+                                        if (TagElement.DICOM_LEVEL.Patient.name()
+                                            .equals(xmler.getName().getLocalPart())) {
                                             patient = readPatient(model, seriesList, xmler, wadoParameters);
                                             pat++;
                                         }
@@ -172,7 +185,6 @@ public class DownloadManager {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
         }
-
         return seriesList;
     }
 
@@ -213,12 +225,12 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Study> Tag
-                    if (TagElement.DICOM_LEVEL.Study.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Study.name().equals(xmler.getName().getLocalPart())) {
                         readStudy(model, seriesList, xmler, patient, wadoParameters);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagElement.DICOM_LEVEL.Patient.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Patient.name().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
@@ -257,12 +269,12 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Series> Tag
-                    if (TagElement.DICOM_LEVEL.Series.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Series.name().equals(xmler.getName().getLocalPart())) {
                         readSeries(model, seriesList, xmler, patient, study, wadoParameters);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagElement.DICOM_LEVEL.Study.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Study.name().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;
@@ -323,7 +335,7 @@ public class DownloadManager {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     // <Instance> Tag
-                    if (TagElement.DICOM_LEVEL.Instance.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Instance.name().equals(xmler.getName().getLocalPart())) {
                         String sopInstanceUID = getTagAttribute(xmler, TagElement.SOPInstanceUID.getTagName(), null);
                         if (sopInstanceUID != null) {
                             if (containsInstance && dicomInstances.contains(sopInstanceUID)) {
@@ -340,7 +352,7 @@ public class DownloadManager {
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if (TagElement.DICOM_LEVEL.Series.name().equals(xmler.getName().toString())) {
+                    if (TagElement.DICOM_LEVEL.Series.name().equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;

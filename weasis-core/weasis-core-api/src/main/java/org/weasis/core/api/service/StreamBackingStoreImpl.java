@@ -27,7 +27,6 @@ import org.apache.felix.prefs.PreferencesDescription;
 import org.apache.felix.prefs.PreferencesImpl;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.FileUtil;
 
@@ -166,7 +165,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
                 // It is a child of the node
                 case XMLStreamConstants.START_ELEMENT:
                     PreferencesImpl impl = prefs.getOrCreateNode(startKey);
-                    this.read(impl, xmler, xmler.getName().toString());
+                    this.read(impl, xmler, xmler.getName().getLocalPart());
                     break;
                 case XMLStreamConstants.END_ELEMENT:
                     // In case the tag does not contain values or inner tag
@@ -174,7 +173,7 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
                         impl = prefs.getOrCreateNode(startKey);
                     }
                     // Return to the parent tag
-                    if (startKey.equals(xmler.getName().toString())) {
+                    if (startKey.equals(xmler.getName().getLocalPart())) {
                         return;
                     }
                     break;

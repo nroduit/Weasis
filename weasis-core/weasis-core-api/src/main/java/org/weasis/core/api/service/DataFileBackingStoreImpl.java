@@ -30,7 +30,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.util.FileUtil;
 
@@ -141,14 +140,14 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
                     eventType = xmler.next();
                     switch (eventType) {
                         case XMLStreamConstants.START_ELEMENT:
-                            String key = xmler.getName().toString();
+                            String key = xmler.getName().getLocalPart();
                             if ("preferences".equals(key)) { //$NON-NLS-1$
                                 while (xmler.hasNext()) {
                                     eventType = xmler.next();
                                     switch (eventType) {
                                         // It is a child of the preferences node
                                         case XMLStreamConstants.START_ELEMENT:
-                                            this.read(root, xmler, xmler.getName().toString());
+                                            this.read(root, xmler, xmler.getName().getLocalPart());
                                             break;
                                         default:
                                             break;
