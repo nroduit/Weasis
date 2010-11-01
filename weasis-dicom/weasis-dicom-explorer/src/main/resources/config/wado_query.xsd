@@ -115,7 +115,7 @@
 		<xsd:sequence>
 			<xsd:element name="Patient" type="Patient" minOccurs="1" maxOccurs="unbounded"/>
 		</xsd:sequence>
-		<xsd:attribute name="wadoURL" type="xsd:anyURI"/>
+		<xsd:attribute name="wadoURL" type="xsd:anyURI" use="required"/>
 		<xsd:attribute name="webLogin" type="xsd:string"/>
 		<xsd:attribute name="requireOnlySOPInstanceUID" type="xsd:boolean"/>
 		<xsd:attribute name="additionnalParameters" type="xsd:string"/>
@@ -127,7 +127,7 @@
 		</xsd:sequence>
 		<xsd:attribute name="PatientID" type="dicomVrLO" use="required"/>
 		<xsd:attribute name="PatientName" type="dicomVrPN" use="required"/>
-		<xsd:attribute name="PatientBirthDate" type="dicomVrDA" use="required"/>
+		<xsd:attribute name="PatientBirthDate" type="dicomVrDA"/>
 		<xsd:attribute name="PatientBirthTime" type="dicomVrTM"/>
 		<xsd:attribute name="PatientSex" type="dicomPatientSex"/>
 	</xsd:complexType>

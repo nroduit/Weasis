@@ -90,8 +90,21 @@ public class DownloadManager {
                     }
                 }
             }
-
             xmler = xmlif.createXMLStreamReader(stream);
+
+            // TODO cannot reset stream after validating xml, try to write a temporary file
+            // Source xmlFile = new StAXSource(xmler);
+            // SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            // try {
+            // Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));
+            // Validator validator = schema.newValidator();
+            // validator.validate(xmlFile);
+            // LOGGER.info("wado_query is valid");
+            // } catch (SAXException e) {
+            // LOGGER.error("wado_query is NOT valid");
+            // LOGGER.error("Reason: {}", e.getLocalizedMessage());
+            // }
+
             int eventType;
             if (xmler.hasNext()) {
                 eventType = xmler.next();
