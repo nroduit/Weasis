@@ -13,9 +13,9 @@
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<scm>
-		<connection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-imageio</connection>
-		<developerConnection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-imageio</developerConnection>
-		<url>https://weasis.repositoryhosting.com/trac/weasis_weasis/browser/trunk/weasis-imageio</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-imageio</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-imageio</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-imageio</url>
 	</scm>
 	<modules>
 		<module>weasis-imageio-parent</module>

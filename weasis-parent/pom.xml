@@ -17,9 +17,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-parent</connection>
-		<developerConnection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-parent</developerConnection>
-		<url>https://weasis.repositoryhosting.com/trac/weasis_weasis/browser/trunk/weasis-parent</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-parent</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-parent</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-parent</url>
 	</scm>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>

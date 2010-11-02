@@ -14,9 +14,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk</connection>
-		<developerConnection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk</developerConnection>
-		<url>https://weasis.repositoryhosting.com/trac/weasis_weasis/browser/trunk</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk</url>
 	</scm>
 	<build>
 		<plugins>

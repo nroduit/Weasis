@@ -30,9 +30,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-launcher</connection>
-		<developerConnection>scm:svn:https://weasis.repositoryhosting.com/svn/weasis_weasis/trunk/weasis-launcher</developerConnection>
-		<url>https://weasis.repositoryhosting.com/trac/weasis_weasis/browser/trunk/weasis-launcher</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</url>
 	</scm>
 	<profiles>
 		<profile>
