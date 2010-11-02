@@ -21,6 +21,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -828,35 +829,19 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         public void pause() {
             status = Status.Paused;
-            // stateChanged();
         }
 
         public void resume() {
             status = Status.Downloading;
-            // stateChanged();
-            // this.run();
-            // download();
         }
 
         public void cancel() {
             status = Status.Cancelled;
-            // stateChanged();
         }
 
         private void error() {
             status = Status.Error;
-            // stateChanged();
         }
-
-        // private void download() {
-        // thread = new Thread(this);
-        // thread.start();
-        // }
-
-        // private void stateChanged() {
-        // setChanged();
-        // notifyObservers();
-        // }
 
         // Download file.
         public Boolean call() throws Exception {
@@ -865,237 +850,200 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 progressBar.setValue(progressBar.getValue() + 1);
             }
 
-            DicomInputStream dis = null;
             // RandomAccessFile file = null;
             InputStream stream = null;
             // BufferedOutputStream out = null;
-            DicomOutputStream dos = null;
 
-            try {
-                // If there is a proxy, it should be in the System class properties if Weasis is launch through Java Web
-                // Start
-                HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-                httpCon.setDoOutput(true);
-                httpCon.setDoInput(true);
-                httpCon.setRequestMethod("GET"); //$NON-NLS-1$
-                if (wadoParameters.getWebLogin() != null) {
-                    httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
-                }
-                // Specify what portion of file to download.
-                httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                // Connect to server.
-                httpCon.connect();
+            // If there is a proxy, it should be in the System class properties if Weasis is launch through Java Web
+            // Start
+            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+            httpCon.setDoOutput(true);
+            httpCon.setDoInput(true);
+            httpCon.setRequestMethod("GET"); //$NON-NLS-1$
+            if (wadoParameters.getWebLogin() != null) {
+                httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            // Specify what portion of file to download.
+            httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            // Connect to server.
+            httpCon.connect();
 
-                // Make sure response code is in the 200 range.
-                if (httpCon.getResponseCode() / 100 != 2) {
-                    error();
-                    log.error("Http Response error {} for {}", httpCon.getResponseCode(), url); //$NON-NLS-1$
+            // Make sure response code is in the 200 range.
+            if (httpCon.getResponseCode() / 100 != 2) {
+                error();
+                log.error("Http Response error {} for {}", httpCon.getResponseCode(), url); //$NON-NLS-1$
+                return false;
+            }
+
+            if (tempFile == null) {
+                tempFile = File.createTempFile("image_", ".dcm", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+
+            stream = httpCon.getInputStream();
+            // TODO find workaround
+            // Does not work with WADO. (only without output filter on the
+            // wado server)
+            int contentLength = httpCon.getContentLength();
+            contentLength = -1;
+            if (contentLength == -1) {
+                // long skipped = stream.skip(stream.available());
+                // contentLength = 0;
+                // while (skipped > 0) {
+                // contentLength += skipped;
+                // skipped = stream.skip(stream.available());
+                // }
+                // stream.close();
+                // stream = httpCon.getInputStream();
+            }
+
+            // Set the size for this download if it hasn't been already set.
+            if (size == -1) {
+                size = contentLength;
+                // stateChanged();
+            }
+            final DicomMediaIO dicomReader = new DicomMediaIO(tempFile);
+
+            if (dicomSeries != null) {
+                final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagElement.WadoParameters);
+                if (wado == null) {
                     return false;
                 }
-
-                if (tempFile == null) {
-                    tempFile = File.createTempFile("image_", ".dcm", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                int[] overrideList = wado.getOverrideDicomTagIDList();
+                if (overrideList == null) {
+                    FileUtil.writFile(stream, new FileOutputStream(tempFile));
+                } else {
+                    writFile(stream, new FileOutputStream(tempFile), overrideList);
                 }
 
-                stream = httpCon.getInputStream();
-                // TODO find workaround
-                // Does not work with WADO. (only without output filter on the
-                // wado server)
-                int contentLength = httpCon.getContentLength();
-                contentLength = -1;
-                if (contentLength == -1) {
-                    // long skipped = stream.skip(stream.available());
-                    // contentLength = 0;
-                    // while (skipped > 0) {
-                    // contentLength += skipped;
-                    // skipped = stream.skip(stream.available());
-                    // }
-                    // stream.close();
-                    // stream = httpCon.getInputStream();
-                }
-
-                // Set the size for this download if it hasn't been already set.
-                if (size == -1) {
-                    size = contentLength;
-                    // stateChanged();
-                }
-                final DicomMediaIO dicomReader = new DicomMediaIO(tempFile);
-                // if (size < 0) {
-                if (dicomSeries != null) {
-                    final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagElement.WadoParameters);
-                    if (wado == null) {
-                        return false;
-                    }
-                    dis = new DicomInputStream(new BufferedInputStream(stream));
-                    // dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-                    DicomObject dcm = dis.readDicomObject();
-                    dos = new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
-                    int[] overrideList = wado.getOverrideDicomTagIDList();
-                    if (overrideList != null) {
+                if (dicomReader.readMediaTags()) {
+                    if (dicomSeries.size() == 0) {
+                        // Override the group (patient, study and series) by the dicom fields except the UID of
+                        // the group
+                        dicomReader.writeMetaData(dicomSeries);
                         MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                        dicomReader.writeMetaData(study);
                         MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                        VRMap vrMap = VRMap.getVRMap();
-                        for (int tag : overrideList) {
-                            TagElement tagElement = patient.getTagElement(tag);
-                            Object value = null;
-                            if (tagElement == null) {
-                                tagElement = study.getTagElement(tag);
-                                value = study.getTagValue(tagElement);
-                            } else {
-                                value = patient.getTagValue(tagElement);
-                            }
-                            if (value != null) {
-                                TagType type = tagElement.getType();
-                                if (TagType.String.equals(type)) {
-                                    dcm.putString(tag, vrMap.vrOf(tag), value.toString());
-                                } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
-                                    dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
-                                } else if (TagType.Integer.equals(type)) {
-                                    dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
-                                } else if (TagType.Float.equals(type)) {
-                                    dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
+                        dicomReader.writeMetaData(patient);
+                        GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                            public void run() {
+                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                                if (thumb != null) {
+                                    thumb.repaint();
                                 }
+                                dicomModel.firePropertyChange(new ObservableEvent(
+                                    ObservableEvent.BasicAction.UpdateParent, dicomModel, null, dicomSeries));
                             }
-                        }
-                    }
-                    dos.writeDicomFile(dcm);
-
-                    // FileCacheImageInputStream iis = new
-                    // FileCacheImageInputStream(stream, tempFile);
-                    if (dicomReader.readMediaTags()) {
-                        if (dicomSeries.size() == 0) {
-                            // Override the group (patient, study and series) by the dicom fields except the UID of
-                            // the group
-                            dicomReader.writeMetaData(dicomSeries);
-                            MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                            dicomReader.writeMetaData(study);
-                            MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                            dicomReader.writeMetaData(patient);
-                            GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                                public void run() {
-                                    Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
-                                    if (thumb != null) {
-                                        thumb.repaint();
-                                    }
-                                    dicomModel.firePropertyChange(new ObservableEvent(
-                                        ObservableEvent.BasicAction.UpdateParent, dicomModel, null, dicomSeries));
-                                }
-                            });
-                        }
-                        // file = iis.getCache();
-                        // file = new RandomAccessFile(tempFile, "rw");
-                        // byte[] buffer = new byte[4096];
-                        // int numRead;
-                        // long numWritten = 0;
-                        // while ((numRead = stream.read(buffer)) != -1) {
-                        // file.write(buffer, 0, numRead);
-                        // numWritten += numRead;
-                        // }
-
-                        // out = new BufferedOutputStream(new
-                        // FileOutputStream(tempFile));
-                        // byte[] buffer = new byte[MAX_BUFFER_SIZE];
-                        // int numRead;
-                        // long numWritten = 0;
-                        // while ((numRead = stream.read(buffer)) != -1) {
-                        // out.write(buffer, 0, numRead);
-                        // numWritten += numRead;
-                        // }
-                        // stateChanged();
+                        });
                     }
                 }
-                // }
-                // else {
-                // // Open file and seek to the end of it.
-                // file = new RandomAccessFile(tempFile, "rw");
-                // file.seek(downloaded);
-                //
-                // while (status == Status.Downloading) {
-                // /*
-                // * Size buffer according to how much of the file is left to
-                // download.
-                // */
-                // byte buffer[];
-                // if (size - downloaded > MAX_BUFFER_SIZE) {
-                // buffer = new byte[MAX_BUFFER_SIZE];
-                // }
-                // else {
-                // buffer = new byte[size - downloaded];
-                // }
-                //
-                // // Read from server into buffer.
-                // int read = stream.read(buffer);
-                // if (read == -1) {
-                // break;
-                // }
-                //
-                // // Write buffer to file.
-                // file.write(buffer, 0, read);
-                // downloaded += read;
-                // // stateChanged();
-                // }
-                // }
+            }
 
-                // Change status to complete if this point was reached because
-                // downloading has finished.
-                if (status == Status.Downloading) {
-                    status = Status.Complete;
-                    ;
-                    if (tempFile != null) {
-                        if (dicomSeries != null && dicomReader.readMediaTags()) {
-                            // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
-                            // before reaching done() of SwingWorker
-                            GuiExecutor.instance().invokeAndWait(new Runnable() {
+            // Change status to complete if this point was reached because
+            // downloading has finished.
+            if (status == Status.Downloading) {
+                status = Status.Complete;
+                ;
+                if (tempFile != null) {
+                    if (dicomSeries != null && dicomReader.readMediaTags()) {
+                        // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
+                        // before reaching done() of SwingWorker
+                        GuiExecutor.instance().invokeAndWait(new Runnable() {
 
-                                public void run() {
-                                    boolean firstImage = dicomSeries.size() == 0;
-                                    if (dicomSeries instanceof DicomSeries) {
-                                        dicomModel.applySplittingRules(dicomSeries, dicomReader);
-                                    } else {
-                                        dicomSeries.addMedia(dicomReader);
-                                    }
-                                    dicomReader.reset();
-                                    Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
-                                    if (thumb != null) {
-                                        thumb.repaint();
-                                    }
+                            public void run() {
+                                boolean firstImage = dicomSeries.size() == 0;
+                                if (dicomSeries instanceof DicomSeries) {
+                                    dicomModel.applySplittingRules(dicomSeries, dicomReader);
+                                } else {
+                                    dicomSeries.addMedia(dicomReader);
+                                }
+                                dicomReader.reset();
+                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                                if (thumb != null) {
+                                    thumb.repaint();
+                                }
 
-                                    if (firstImage) {
-                                        boolean openNewTab = true;
-                                        MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                                        if (entry1 != null) {
-                                            synchronized (UIManager.VIEWER_PLUGINS) {
-                                                for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                                                    if (entry1.equals(p.getGroupID())) {
-                                                        openNewTab = false;
-                                                        break;
-                                                    }
+                                if (firstImage) {
+                                    boolean openNewTab = true;
+                                    MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                                    if (entry1 != null) {
+                                        synchronized (UIManager.VIEWER_PLUGINS) {
+                                            for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                                                if (entry1.equals(p.getGroupID())) {
+                                                    openNewTab = false;
+                                                    break;
                                                 }
                                             }
                                         }
-                                        if (openNewTab) {
-                                            SeriesViewerFactory plugin =
-                                                UIManager.getViewerFactory(dicomSeries.getMimeType());
-                                            if (plugin != null) {
-                                                LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries },
-                                                    dicomModel);
-                                            }
+                                    }
+                                    if (openNewTab) {
+                                        SeriesViewerFactory plugin =
+                                            UIManager.getViewerFactory(dicomSeries.getMimeType());
+                                        if (plugin != null) {
+                                            LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries },
+                                                dicomModel);
                                         }
                                     }
                                 }
-                            });
+                            }
+                        });
 
+                    }
+                    // stateChanged();
+                }
+            }
+
+            return true;
+        }
+
+        public boolean writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
+            if (inputStream == null && out == null) {
+                return false;
+            }
+            DicomInputStream dis = null;
+            DicomOutputStream dos = null;
+            try {
+                dis = new DicomInputStream(new BufferedInputStream(inputStream));
+                DicomObject dcm = dis.readDicomObject();
+                dos = new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
+
+                if (overrideList != null) {
+                    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                    VRMap vrMap = VRMap.getVRMap();
+                    for (int tag : overrideList) {
+                        TagElement tagElement = patient.getTagElement(tag);
+                        Object value = null;
+                        if (tagElement == null) {
+                            tagElement = study.getTagElement(tag);
+                            value = study.getTagValue(tagElement);
+                        } else {
+                            value = patient.getTagValue(tagElement);
                         }
-                        // stateChanged();
+                        if (value != null) {
+                            TagType type = tagElement.getType();
+                            if (TagType.String.equals(type)) {
+                                dcm.putString(tag, vrMap.vrOf(tag), value.toString());
+                            } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
+                                dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
+                            } else if (TagType.Integer.equals(type)) {
+                                dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
+                            } else if (TagType.Float.equals(type)) {
+                                dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
+                            }
+                        }
                     }
                 }
+                dos.writeDicomFile(dcm);
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
             } finally {
                 FileUtil.safeClose(dos);
                 // FileUtil.safeClose(stream);
                 FileUtil.safeClose(dis);
             }
-            return true;
         }
     }
 

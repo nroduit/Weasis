@@ -103,17 +103,17 @@ public class DownloadManager {
             FileUtil.writFile(stream, new FileOutputStream(tempFile));
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
 
-            // TODO cannot reset stream after validating xml, try to write a temporary file
             Source xmlFile = new StAXSource(xmler);
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
-                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));
+                Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));//$NON-NLS-1$ 
                 Validator validator = schema.newValidator();
                 validator.validate(xmlFile);
-                LOGGER.info("wado_query is valid");
+                LOGGER.info("[Validate with XSD schema] wado_query is valid");
             } catch (SAXException e) {
-                LOGGER.error("wado_query is NOT valid");
+                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid");
                 LOGGER.error("Reason: {}", e.getLocalizedMessage());
+                // Try to read the xml even it is not valid.
             }
 
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
