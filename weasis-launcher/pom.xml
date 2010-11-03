@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
-			<version>3.0.3</version>
+			<version>3.0.5</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

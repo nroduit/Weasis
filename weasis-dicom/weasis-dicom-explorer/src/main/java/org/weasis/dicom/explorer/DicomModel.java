@@ -264,7 +264,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             // remove in the data model
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
-            LOGGER.info("Remove Series: {}", dicomSeries);
+            LOGGER.info("Remove Series: {}", dicomSeries); //$NON-NLS-1$
             dicomSeries.dispose();
         }
     }
@@ -284,7 +284,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 studyGroup));
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
             removeHierarchyNode(patientGroup, studyGroup);
-            LOGGER.info("Remove Study: {}", studyGroup);
+            LOGGER.info("Remove Study: {}", studyGroup); //$NON-NLS-1$
         }
     }
 
@@ -306,7 +306,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
                 patientGroup));
             removeHierarchyNode(rootNode, patientGroup);
-            LOGGER.info("Remove Patient: {}", patientGroup);
+            LOGGER.info("Remove Patient: {}", patientGroup); //$NON-NLS-1$
         }
     }
 
@@ -338,7 +338,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagElement.ExplorerModel, this);
         addHierarchyNode(study, s);
         s.addMedia(dicomReader);
-        LOGGER.info("Series splitting: {}", s);
+        LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
     }
 
     public void applySplittingRules(Series original, MediaReader mediaLoader) {

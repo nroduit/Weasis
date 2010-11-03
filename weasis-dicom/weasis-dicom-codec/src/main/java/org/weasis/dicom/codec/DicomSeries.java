@@ -220,7 +220,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                             try {
                                 i.getTile(ti, tj);
                             } catch (OutOfMemoryError e) {
-                                System.out.println("Out of memory when loading image: " + img);
+                                System.out.println("Out of memory when loading image: " + img); //$NON-NLS-1$
                                 freeMemory();
                                 return;
                             }

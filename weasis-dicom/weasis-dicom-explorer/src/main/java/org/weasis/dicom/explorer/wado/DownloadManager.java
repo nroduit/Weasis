@@ -109,10 +109,10 @@ public class DownloadManager {
                 Schema schema = schemaFactory.newSchema(DownloadManager.class.getResource("/config/wado_query.xsd"));//$NON-NLS-1$ 
                 Validator validator = schema.newValidator();
                 validator.validate(xmlFile);
-                LOGGER.info("[Validate with XSD schema] wado_query is valid");
+                LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
             } catch (SAXException e) {
-                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid");
-                LOGGER.error("Reason: {}", e.getLocalizedMessage());
+                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid"); //$NON-NLS-1$
+                LOGGER.error("Reason: {}", e.getLocalizedMessage()); //$NON-NLS-1$
                 // Try to read the xml even it is not valid.
             }
 
@@ -258,7 +258,6 @@ public class DownloadManager {
             study.setTag(TagElement.StudyID, getTagAttribute(xmler, TagElement.StudyID.getTagName(), null));
             study.setTag(TagElement.ReferringPhysicianName, getTagAttribute(xmler, TagElement.ReferringPhysicianName
                 .getTagName(), null));
-            LOGGER.debug("Set date to study: {}", study.getTagValue(TagElement.StudyDate));
             model.addHierarchyNode(patient, study);
         }
 

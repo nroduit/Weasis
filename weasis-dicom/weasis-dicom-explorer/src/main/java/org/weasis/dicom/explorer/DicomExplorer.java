@@ -1661,7 +1661,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         if (sameOrigin) {
                             final Series[] seriesList = selList.toArray(new Series[selList.size()]);
                             popupMenu.add(new JSeparator());
-                            item2 = new JMenuItem("Merge Selected Series");
+                            item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
                                 public void actionPerformed(ActionEvent e) {

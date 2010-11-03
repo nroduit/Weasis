@@ -106,7 +106,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    private final AbstractAction exportToClipboardAction = new AbstractAction("Selected View to Clipboard") {
+    private final AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
         @Override
         public void actionPerformed(ActionEvent e) {
