@@ -6,17 +6,17 @@
 	<artifactId>weasis-imageioext</artifactId>
 	<name>ImageIO-ext Library [${project.artifactId}]</name>
 	<packaging>pom</packaging>
-	<version>1.2-SNAPSHOT</version>
+	<version>1.2</version>
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.3-SNAPSHOT</version>
+		<version>1.3</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-imageioext</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-imageioext</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-imageioext</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.6/weasis-imageioext</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.6/weasis-imageioext</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.6/weasis-imageioext</url>
 	</scm>
 	<dependencies />
 
