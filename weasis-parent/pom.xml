@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<!--
 		Shared parent. Define the settings common to all projects using Weasis
@@ -30,13 +31,14 @@
 			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
+	<!-- Maven server for deploying releases	-->
 	<distributionManagement>
 		<repository>
 			<id>releases</id>
 			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
 		</repository>
 	</distributionManagement>
-	
+
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
