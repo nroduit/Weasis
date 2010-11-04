@@ -31,7 +31,7 @@
 			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
-	<!-- Maven server for deploying releases	-->
+	<!-- Maven server for deploying releases -->
 	<distributionManagement>
 		<repository>
 			<id>releases</id>
