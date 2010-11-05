@@ -26,7 +26,6 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagElement;
 
@@ -341,8 +340,14 @@ public class ImageToolkit {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
-            return source;
+        if (datatype == DataBuffer.TYPE_BYTE) {
+            if (window > 255.0f || level > 255.0f) {
+                window = 255.0f;
+                level = 127.5f;
+            }
+            if (window == 255.0f && level == 127.5f) {
+                return source;
+            }
         }
 
         /**
