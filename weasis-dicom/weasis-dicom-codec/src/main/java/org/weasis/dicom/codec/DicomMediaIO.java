@@ -330,8 +330,47 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.BitsStored, dicomObject.getInt(Tag.BitsStored,
                 (Integer) getTagValue(TagElement.BitsAllocated)));
             setTag(TagElement.PixelRepresentation, dicomObject.getInt(Tag.PixelRepresentation, 0));
+            validateDicomImageValues();
             computeSlicePositionVector();
         }
+    }
+
+    private void validateDicomImageValues() {
+        Float window = (Float) getTagValue(TagElement.WindowWidth);
+        float minValue = (Float) getTagValue(TagElement.SmallestImagePixelValue);
+        float maxValue = (Float) getTagValue(TagElement.LargestImagePixelValue);
+        // Test if DICOM min and max pixel values are consistent
+        if (minValue != 0 || maxValue != 0) {
+            Float level = (Float) getTagValue(TagElement.WindowCenter);
+            float min = pixel2rescale(minValue);
+            float max = pixel2rescale(maxValue);
+            if (!level.isNaN() && !window.isNaN()) {
+                // Empirical test
+                float low = level - window / 4.0f;
+                float high = level + window / 4.0f;
+                if (low < min || high > max) {
+                    // Min and Max seems to be not consistent
+                    // Set to 0, it will search in min and max in pixel data
+                    setTag(TagElement.SmallestImagePixelValue, 0.0f);
+                    setTag(TagElement.SmallestImagePixelValue, 0.0f);
+                }
+            }
+        }
+        if (!window.isNaN()) {
+            int bitsStored = (Integer) getTagValue(TagElement.BitsStored);
+            if (window > (1 << bitsStored)) {
+                // Reset w/l values that are not consistent to the bits stored
+                setTag(TagElement.WindowCenter, Float.NaN);
+                setTag(TagElement.WindowWidth, Float.NaN);
+            }
+        }
+    }
+
+    public float pixel2rescale(float pixelValue) {
+        // Hounsfield units: hu
+        // hu = pixelValue * rescale slope + intercept value
+        return (pixelValue * (Float) getTagValue(TagElement.RescaleSlope) + (Float) getTagValue(TagElement.RescaleIntercept));
+
     }
 
     private void computeSlicePositionVector() {

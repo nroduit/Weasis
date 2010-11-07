@@ -79,22 +79,6 @@ public class DicomImageElement extends ImageElement {
         if (minValue == 0.0f && maxValue == 0.0f) {
             minValue = (Float) getTagValue(TagElement.SmallestImagePixelValue);
             maxValue = (Float) getTagValue(TagElement.LargestImagePixelValue);
-            // Test if DICOM min and max pixel values are consistent
-            if (minValue != 0 || maxValue != 0) {
-                float min = pixel2rescale(minValue);
-                float max = pixel2rescale(maxValue);
-                Float level = (Float) getTagValue(TagElement.WindowCenter);
-                Float window = (Float) getTagValue(TagElement.WindowWidth);
-                if (!level.isNaN() && !window.isNaN()) {
-                    float low = level - window / 4.0f;
-                    float high = level + window / 4.0f;
-                    if (low < min || high > max) {
-                        // Set to 0, it will search in min and max in pixel data
-                        minValue = 0.0f;
-                        maxValue = 0.0f;
-                    }
-                }
-            }
             /*
              * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
              * be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both
