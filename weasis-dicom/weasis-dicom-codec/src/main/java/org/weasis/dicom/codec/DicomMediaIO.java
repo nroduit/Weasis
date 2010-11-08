@@ -211,8 +211,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // SubseriesInstanceUID is the unique identifying tag for this series group
             group.setTag(TagElement.SeriesInstanceUID, getTagValue(TagElement.SeriesInstanceUID));
             group.setTag(TagElement.Modality, getTagValue(TagElement.Modality));
-            group.setTag(TagElement.SeriesDate, header.getDate(Tag.SeriesDate, getDateFromDicomElement(header,
-                Tag.StudyDate, null)));
+            group.setTag(TagElement.SeriesDate,
+                header.getDate(Tag.SeriesDate, getDateFromDicomElement(header, Tag.StudyDate, null)));
             group.setTag(TagElement.SeriesDescription, header.getString(Tag.SeriesDescription));
             group.setTag(TagElement.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
             group.setTag(TagElement.InstitutionName, header.getString(Tag.InstitutionName));
@@ -221,22 +221,22 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             group.setTag(TagElement.Manufacturer, header.getString(Tag.Manufacturer));
             group.setTag(TagElement.ManufacturerModelName, header.getString(Tag.ManufacturerModelName));
             // TODO sequence: define data structure
-            group.setTag(TagElement.ReferencedPerformedProcedureStepSequence, header
-                .get(Tag.ReferencedPerformedProcedureStepSequence));
+            group.setTag(TagElement.ReferencedPerformedProcedureStepSequence,
+                header.get(Tag.ReferencedPerformedProcedureStepSequence));
             group.setTag(TagElement.SeriesNumber, getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
             group.setTag(TagElement.PreferredPlaybackSequencing, header.getInt(Tag.PreferredPlaybackSequencing, 0));
-            group.setTag(TagElement.CineRate, header.getInt(Tag.CineRate, header.getInt(
-                Tag.RecommendedDisplayFrameRate, 20)));
+            group.setTag(TagElement.CineRate,
+                header.getInt(Tag.CineRate, header.getInt(Tag.RecommendedDisplayFrameRate, 20)));
             group.setTag(TagElement.KVP, header.getFloat(Tag.KVP, Float.NaN));
             group.setTag(TagElement.Laterality, header.getString(Tag.Laterality));
             group.setTag(TagElement.BodyPartExamined, header.getString(Tag.BodyPartExamined));
             group.setTag(TagElement.ReferencedImageSequence, header.get(Tag.ReferencedImageSequence));
             group.setTag(TagElement.FrameOfReferenceUID, header.getString(Tag.FrameOfReferenceUID));
             group.setTag(TagElement.NumberOfSeriesRelatedInstances, header.getInt(Tag.NumberOfSeriesRelatedInstances));
-            group.setTag(TagElement.PerformedProcedureStepStartDate, getDateFromDicomElement(header,
-                Tag.PerformedProcedureStepStartDate, null));
-            group.setTag(TagElement.PerformedProcedureStepStartTime, getDateFromDicomElement(header,
-                Tag.PerformedProcedureStepStartTime, null));
+            group.setTag(TagElement.PerformedProcedureStepStartDate,
+                getDateFromDicomElement(header, Tag.PerformedProcedureStepStartDate, null));
+            group.setTag(TagElement.PerformedProcedureStepStartTime,
+                getDateFromDicomElement(header, Tag.PerformedProcedureStepStartTime, null));
             // TODO sequence: define data structure
             group.setTag(TagElement.RequestAttributesSequence, header.get(Tag.RequestAttributesSequence));
 
@@ -249,8 +249,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private void writeInstanceTags() {
         if (dicomObject != null) {
             // Tags for identifying group (Patient, Study, Series)
-            setTag(TagElement.PatientID, dicomObject.getString(Tag.PatientID, Messages
-                .getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagElement.PatientID,
+                dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
             String name = dicomObject.getString(Tag.PatientName, Messages.getString("DicomMediaIO.unknown")); //$NON-NLS-1$
             if (name.trim().equals("")) { //$NON-NLS-1$
                 name = Messages.getString("DicomMediaIO.unknown"); //$NON-NLS-1$
@@ -260,12 +260,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.PatientBirthDate, getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null));
             // Identifier for the patient. Tend to be unique.
             // TODO set preferences for what is PatientUID
-            setTag(TagElement.PatientPseudoUID, getTagValue(TagElement.PatientID).toString()
-                + TagElement.formatDate((Date) getTagValue(TagElement.PatientBirthDate)));
-            setTag(TagElement.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, Messages
-                .getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            setTag(TagElement.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, Messages
-                .getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(
+                TagElement.PatientPseudoUID,
+                getTagValue(TagElement.PatientID).toString()
+                    + TagElement.formatDate((Date) getTagValue(TagElement.PatientBirthDate)));
+            setTag(TagElement.StudyInstanceUID,
+                dicomObject.getString(Tag.StudyInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagElement.SeriesInstanceUID,
+                dicomObject.getString(Tag.SeriesInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
             setTag(TagElement.Modality, dicomObject.getString(Tag.Modality, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
             // Instance tags
             setTag(TagElement.ImageType, dicomObject.getString(Tag.ImageType));
@@ -273,8 +275,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.ContrastBolusAgent, dicomObject.getString(Tag.ContrastBolusAgent));
             setTag(TagElement.TransferSyntaxUID, dicomObject.getString(Tag.TransferSyntaxUID));
             setTag(TagElement.InstanceNumber, dicomObject.getInt(Tag.InstanceNumber, 0));
-            setTag(TagElement.SOPInstanceUID, dicomObject.getString(Tag.SOPInstanceUID, getTagValue(
-                TagElement.InstanceNumber).toString()));
+            setTag(TagElement.SOPInstanceUID,
+                dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagElement.InstanceNumber).toString()));
             setTag(TagElement.SOPClassUID, dicomObject.getString(Tag.SOPClassUID));
             setTag(TagElement.ScanningSequence, dicomObject.getString(Tag.ScanningSequence));
             setTag(TagElement.SequenceVariant, dicomObject.getString(Tag.SequenceVariant));
@@ -300,8 +302,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             setTag(TagElement.ImagerPixelSpacing, dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
             setTag(TagElement.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[]) null));
-            setTag(TagElement.PixelSpacingCalibrationDescription, dicomObject
-                .getString(Tag.PixelSpacingCalibrationDescription));
+            setTag(TagElement.PixelSpacingCalibrationDescription,
+                dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
 
             setTag(TagElement.WindowWidth, dicomObject.getFloat(Tag.WindowWidth, Float.NaN));
             setTag(TagElement.WindowCenter, dicomObject.getFloat(Tag.WindowCenter, Float.NaN));
@@ -311,10 +313,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.RescaleType, dicomObject.getString(Tag.RescaleType));
             setTag(TagElement.Units, dicomObject.getString(Tag.Units));
 
-            setTag(TagElement.SmallestImagePixelValue, ((Integer) dicomObject.getInt(Tag.SmallestImagePixelValue, 0))
-                .floatValue());
-            setTag(TagElement.LargestImagePixelValue, ((Integer) dicomObject.getInt(Tag.LargestImagePixelValue, 0))
-                .floatValue());
+            setTag(TagElement.SmallestImagePixelValue,
+                ((Integer) dicomObject.getInt(Tag.SmallestImagePixelValue, 0)).floatValue());
+            setTag(TagElement.LargestImagePixelValue,
+                ((Integer) dicomObject.getInt(Tag.LargestImagePixelValue, 0)).floatValue());
             setTag(TagElement.PixelPaddingValue, dicomObject.getInt(Tag.PixelPaddingValue, 0));
             setTag(TagElement.NumberOfFrames, dicomObject.getInt(Tag.NumberOfFrames, 1));
             setTag(TagElement.PixelPaddingRangeLimit, dicomObject.getInt(Tag.PixelPaddingRangeLimit, 0));
@@ -327,8 +329,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.Rows, dicomObject.getInt(Tag.Rows, 0));
             setTag(TagElement.Columns, dicomObject.getInt(Tag.Columns, 0));
             setTag(TagElement.BitsAllocated, dicomObject.getInt(Tag.BitsAllocated, 8));
-            setTag(TagElement.BitsStored, dicomObject.getInt(Tag.BitsStored,
-                (Integer) getTagValue(TagElement.BitsAllocated)));
+            setTag(TagElement.BitsStored,
+                dicomObject.getInt(Tag.BitsStored, (Integer) getTagValue(TagElement.BitsAllocated)));
             setTag(TagElement.PixelRepresentation, dicomObject.getInt(Tag.PixelRepresentation, 0));
             validateDicomImageValues();
             computeSlicePositionVector();
@@ -352,7 +354,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     // Min and Max seems to be not consistent
                     // Set to 0, it will search in min and max in pixel data
                     setTag(TagElement.SmallestImagePixelValue, 0.0f);
-                    setTag(TagElement.SmallestImagePixelValue, 0.0f);
+                    setTag(TagElement.LargestImagePixelValue, 0.0f);
                 }
             }
         }
