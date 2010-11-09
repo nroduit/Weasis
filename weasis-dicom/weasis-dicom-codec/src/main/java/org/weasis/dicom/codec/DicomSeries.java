@@ -16,6 +16,8 @@ import java.util.List;
 
 import javax.media.jai.PlanarImage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaReader;
@@ -24,6 +26,7 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagElement;
 
 public class DicomSeries extends Series<DicomImageElement> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeries.class);
 
     private volatile boolean preloading = true;
     protected PreloadingTask preloadingTask;
@@ -209,6 +212,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         private void loadArrays(DicomImageElement img, DataExplorerModel model) {
             // Do not load an image if another process already loading it
             if (preloading && !img.isLoading()) {
+                long start = System.currentTimeMillis();
                 PlanarImage i = img.getImage();
                 if (i != null) {
                     int tymin = i.getMinTileY();
@@ -227,6 +231,8 @@ public class DicomSeries extends Series<DicomImageElement> {
                         }
                     }
                 }
+                long stop = System.currentTimeMillis();
+                LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img.getMediaURI()); //$NON-NLS-1$
                 if (model != null) {
                     model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
                         new SeriesEvent(SeriesEvent.Action.loadImageInMemory, DicomSeries.this, img)));
