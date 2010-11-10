@@ -22,7 +22,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Service-Component>OSGI-INF/DicomCodec.xml</Service-Component>
+						<Service-Component>OSGI-INF/DicomCodec.xml,OSGI-INF/Preferences.xml</Service-Component>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.dcm4che2.*</Export-Package>
 					</instructions>
