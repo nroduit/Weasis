@@ -26,6 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
+import org.dcm4che2.imageio.ImageReaderFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public class DicomPrefView extends AbstractItemDialogPage {
@@ -45,13 +46,13 @@ public class DicomPrefView extends AbstractItemDialogPage {
         panel.setLayout(gbl_panel);
         panel.setBorder(new TitledBorder(null, "Image Reader", TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
 
-        final JLabel lblTranscodingTo = new JLabel("JPEG2000 decoder:"); //$NON-NLS-1$
-        GridBagConstraints gbc_lblTranscodingTo = new GridBagConstraints();
-        gbc_lblTranscodingTo.insets = new Insets(0, 0, 5, 5);
-        gbc_lblTranscodingTo.anchor = GridBagConstraints.WEST;
-        gbc_lblTranscodingTo.gridx = 0;
-        gbc_lblTranscodingTo.gridy = 0;
-        panel.add(lblTranscodingTo, gbc_lblTranscodingTo);
+        final JLabel j2kLabel = new JLabel("JPEG2000:"); //$NON-NLS-1$
+        GridBagConstraints gbc_j2kLabel = new GridBagConstraints();
+        gbc_j2kLabel.insets = new Insets(0, 0, 5, 5);
+        gbc_j2kLabel.anchor = GridBagConstraints.WEST;
+        gbc_j2kLabel.gridx = 0;
+        gbc_j2kLabel.gridy = 0;
+        panel.add(j2kLabel, gbc_j2kLabel);
 
         comboBox = new JComboBox(getJpeg2000ReaderClassName().toArray());
         GridBagConstraints gbc_comboBox = new GridBagConstraints();
@@ -70,13 +71,23 @@ public class DicomPrefView extends AbstractItemDialogPage {
         gbc_lblstrut.gridy = 0;
         panel.add(Box.createHorizontalStrut(2), gbc_lblstrut);
 
+        String j2kReader = DicomPrefManager.getInstance().getJ2kReader();
+        if (j2kReader != null) {
+            for (int i = 0; i < comboBox.getItemCount(); i++) {
+                Decoder dec = (Decoder) comboBox.getItemAt(i);
+                if (j2kReader.equals(dec.getReader())) {
+                    comboBox.setSelectedItem(dec);
+                    break;
+                }
+            }
+        }
     }
 
     @Override
     public void closeAdditionalWindow() {
-        String reader = (String) comboBox.getSelectedItem();
+        Decoder reader = (Decoder) comboBox.getSelectedItem();
         if (reader != null) {
-            // DicomManager.getInstance().setWadoTSUID(tsuid);
+            DicomPrefManager.getInstance().setJ2kReader(reader.getReader());
         }
     }
 
@@ -86,12 +97,45 @@ public class DicomPrefView extends AbstractItemDialogPage {
 
     }
 
-    public List<String> getJpeg2000ReaderClassName() {
-        ArrayList<String> list = new ArrayList<String>();
-        for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {
-            ImageReader r = (ImageReader) it.next();
-            list.add(r.getClass().getName());
+    public List<Decoder> getJpeg2000ReaderClassName() {
+        ImageReaderFactory factory = ImageReaderFactory.getInstance();
+        String decoders[] = factory.getProperty("jpeg2000").split(",");
+        String decoderNames[] = factory.getProperty("jpeg2000.title").split(",");
+        ArrayList<Decoder> list = new ArrayList<Decoder>();
+        if (decoders.length == decoderNames.length) {
+            for (int i = 0; i < decoders.length; i++) {
+                for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {
+                    ImageReader r = (ImageReader) it.next();
+                    if (decoders[i].equals(r.getClass().getName())) {
+                        list.add(new Decoder(decoderNames[i], decoders[i]));
+                    }
+                }
+            }
         }
         return list;
+    }
+
+    static class Decoder {
+        private final String name;
+        private final String reader;
+
+        public Decoder(String name, String reader) {
+            super();
+            this.name = name;
+            this.reader = reader;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getReader() {
+            return reader;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 }

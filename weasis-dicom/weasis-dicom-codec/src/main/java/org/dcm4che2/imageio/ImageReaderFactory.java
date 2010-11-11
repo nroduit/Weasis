@@ -50,6 +50,7 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -125,7 +126,20 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
         return "true".equalsIgnoreCase(typeSpecifier);
     }
 
+    public String getProperty(String prop) {
+        return config.getProperty(prop, "");
+    }
+
     public ImageReader getJpeg2000Reader(String decoders) {
+        String j2kReader = DicomPrefManager.getInstance().getJ2kReader();
+        if (j2kReader != null) {
+            for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {
+                ImageReader r = (ImageReader) it.next();
+                if (j2kReader.equals(r.getClass().getName())) {
+                    return r;
+                }
+            }
+        }
         if (decoders != null) {
             HashMap<String, ImageReader> installedDecoders = new HashMap<String, ImageReader>(5);
             for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {

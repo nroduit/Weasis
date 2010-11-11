@@ -16,6 +16,7 @@ import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 public class Activator implements BundleActivator {
     public final static BundlePreferences PREFERENCES = new BundlePreferences();
@@ -39,6 +40,7 @@ public class Activator implements BundleActivator {
 
     // @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        DicomPrefManager.getInstance().savePreferences();
         // TODO unregister rle reader
         PREFERENCES.close();
         this.bundleContext = null;
