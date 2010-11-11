@@ -6,7 +6,7 @@
 	<artifactId>weasis-framework-builder</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distribution [${project.artifactId}]</name>
-	<version>1.0.6-SNAPSHOT</version>
+	<version>1.0.7-SNAPSHOT</version>
 	<properties>
 		<!--
 			dollar property to avoid replacing some variables when filtering
@@ -25,13 +25,13 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.0.6</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.3-SNAPSHOT</weasis.launcher.version>
-		<weasis.core.version>0.5.3-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.7.1-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.3-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.3-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.3-SNAPSHOT</weasis.dicom.version>
-		<weasis.imageioext.j2k.codec.version>0.5.3-SNAPSHOT</weasis.imageioext.j2k.codec.version>
+		<weasis.launcher.version>0.5.4-SNAPSHOT</weasis.launcher.version>
+		<weasis.core.version>0.5.4-SNAPSHOT</weasis.core.version>
+		<weasis.imageio.version>0.7.2-SNAPSHOT</weasis.imageio.version>
+		<weasis.jmc.version>0.5.4-SNAPSHOT</weasis.jmc.version>
+		<weasis.base.version>0.5.4-SNAPSHOT</weasis.base.version>
+		<weasis.dicom.version>0.5.4-SNAPSHOT</weasis.dicom.version>
+		<weasis.imageioext.j2k.codec.version>0.5.4-SNAPSHOT</weasis.imageioext.j2k.codec.version>
 
 		<mydoggy.version>1.5.0-b03</mydoggy.version>
 		<jai.version>1.1.4-b03</jai.version>
