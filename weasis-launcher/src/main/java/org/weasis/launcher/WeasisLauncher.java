@@ -78,6 +78,7 @@ public class WeasisLauncher {
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public final static String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
     public final static String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
+    static Properties modulesi18n = null;
 
     /**
      * <p>
@@ -539,6 +540,20 @@ public class WeasisLauncher {
         }
 
         // Read the properties file.
+        Properties props = readProperties(propURL);
+
+        if (props != null) {
+            // Perform variable substitution for system properties.
+            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
+                String name = (String) e.nextElement();
+                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
+            }
+        }
+        return props;
+    }
+
+    public static Properties readProperties(URL propURL) {
+        // Read the properties file.
         Properties props = new Properties();
         InputStream is = null;
         try {
@@ -550,13 +565,6 @@ public class WeasisLauncher {
             FileUtil.safeClose(is);
             return null;
         }
-
-        // Perform variable substitution for system properties.
-        for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
-        }
-
         return props;
     }
 
@@ -638,7 +646,20 @@ public class WeasisLauncher {
         String country = System.getProperty("weasis.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
         String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         // Set the locale of the previous launch if exists
-        lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$ 
+        lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
+        if (!lang.equals("en")) {
+            String translation_modules = System.getProperty("weasis.i18n", null);
+            if (translation_modules != null) {
+
+                try {
+                    translation_modules +=
+                        translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties";
+                    modulesi18n = readProperties(new URL(translation_modules));
+                } catch (MalformedURLException ex) {
+                    System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
+                }
+            }
+        }
         country = s_prop.getProperty("locale.country", country); //$NON-NLS-1$ 
         variant = s_prop.getProperty("locale.variant", variant); //$NON-NLS-1$ 
         Locale.setDefault(new Locale(lang, country, variant));

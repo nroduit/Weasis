@@ -26,6 +26,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.Version;
 import org.osgi.service.startlevel.StartLevel;
 
 public class AutoProcessor {
@@ -263,6 +264,28 @@ public class AutoProcessor {
                     bundleIter++;
                     webStartLoader.setValue(bundleIter);
                     sl.setBundleStartLevel(b, startLevel);
+
+                    String value = null;
+                    String prop = null;
+                    if (WeasisLauncher.modulesi18n != null) {
+                        Version v = b.getVersion();
+                        StringBuffer p = new StringBuffer(b.getSymbolicName());
+                        p.append("-i18n-");
+                        p.append(v.getMajor());
+                        p.append(".");
+                        p.append(v.getMinor());
+                        p.append(".");
+                        p.append(v.getMicro());
+                        p.append(".jar");
+                        prop = p.toString();
+                        value = WeasisLauncher.modulesi18n.getProperty(prop);
+                        if (value != null) {
+                            String translation_modules = System.getProperty("weasis.i18n", "");
+                            translation_modules += translation_modules.endsWith("/") ? prop : "/" + prop;
+                            Bundle b2 = context.installBundle(translation_modules, null);
+                            sl.setBundleStartLevel(b2, startLevel);
+                        }
+                    }
                 } catch (Exception ex) {
                     String arch = System.getProperty("native.library.spec"); //$NON-NLS-1$
                     if (bundleName.contains(arch)) {
