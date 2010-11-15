@@ -265,8 +265,6 @@ public class AutoProcessor {
                     webStartLoader.setValue(bundleIter);
                     sl.setBundleStartLevel(b, startLevel);
 
-                    String value = null;
-                    String prop = null;
                     if (WeasisLauncher.modulesi18n != null) {
                         Version v = b.getVersion();
                         StringBuffer p = new StringBuffer(b.getSymbolicName());
@@ -277,13 +275,16 @@ public class AutoProcessor {
                         p.append(".");
                         p.append(v.getMicro());
                         p.append(".jar");
-                        prop = p.toString();
-                        value = WeasisLauncher.modulesi18n.getProperty(prop);
+                        String prop = p.toString();
+                        String value = WeasisLauncher.modulesi18n.getProperty(prop);
                         if (value != null) {
                             String translation_modules = System.getProperty("weasis.i18n", "");
                             translation_modules += translation_modules.endsWith("/") ? prop : "/" + prop;
                             Bundle b2 = context.installBundle(translation_modules, null);
                             sl.setBundleStartLevel(b2, startLevel);
+                            if (!value.equals(b2.getVersion().getQualifier())) {
+                                b2.update();
+                            }
                         }
                     }
                 } catch (Exception ex) {
