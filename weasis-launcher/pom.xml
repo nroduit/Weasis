@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
@@ -21,8 +22,7 @@
 		</license>
 		<license>
 			<!--
-				WeasisLauncher and AutoProcessor classes is derived from the Apache
-				Felix launcher
+				WeasisLauncher and AutoProcessor classes is derived from the Apache Felix launcher
 			-->
 			<name>Apache 2</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
@@ -34,6 +34,19 @@
 		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</developerConnection>
 		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</url>
 	</scm>
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/messages*.properties</include>
+				</includes>
+			</resource>
+		</resources>
+	</build>
 	<profiles>
 		<profile>
 			<id>jarsign</id>
@@ -56,8 +69,7 @@
 		</profile>
 	</profiles>
 	<!--
-		Dependencies below are provided for debugging Weasis from IDE (by launching
-		WeasisLauncher)
+		Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher)
 	-->
 	<dependencies>
 		<dependency>
