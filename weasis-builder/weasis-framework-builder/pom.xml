@@ -6,7 +6,7 @@
 	<artifactId>weasis-framework-builder</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distribution [${project.artifactId}]</name>
-	<version>1.0.7-SNAPSHOT</version>
+	<version>1.0.7</version>
 	<properties>
 		<!--
 			dollar property to avoid replacing some variables when filtering
