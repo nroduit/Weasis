@@ -58,6 +58,12 @@ public class BundleTools {
             } finally {
                 FileUtil.safeClose(fis);
             }
+        } else {
+            try {
+                propsFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
