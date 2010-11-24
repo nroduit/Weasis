@@ -41,6 +41,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
@@ -527,91 +529,127 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         return menuBar;
     }
 
+    private static void buildImportSubMenu(final JMenu importMenu) {
+        synchronized (UIManager.EXPLORER_PLUGINS) {
+            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
+            for (final DataExplorerView dataExplorerView : explorers) {
+                Action action = dataExplorerView.getOpenImportDialogAction();
+                if (action != null) {
+                    JMenuItem item = new JMenuItem(action);
+                    importMenu.add(item);
+                }
+            }
+        }
+    }
+
+    private static void buildExportSubMenu(final JMenu exportMenu) {
+        // TODO export workspace in as preference
+
+        //                final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
+        //
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        // // Handle workspace ui persistence
+        // PersistenceDelegate pstDelegate = UIManager.toolWindowManager.getPersistenceDelegate();
+        // try {
+        //                                pstDelegate.save(new FileOutputStream(new File("/home/nicolas/Documents/test.xml"))); //$NON-NLS-1$
+        // } catch (FileNotFoundException e1) {
+        // e1.printStackTrace();
+        // }
+        // }
+        // };
+        // exportMenu.add(saveAction);
+
+        synchronized (UIManager.EXPLORER_PLUGINS) {
+            if (selectedPlugin != null) {
+                Action[] actions = selectedPlugin.getExportActions();
+                if (actions != null) {
+                    for (Action action : actions) {
+                        JMenuItem item = new JMenuItem(action);
+                        exportMenu.add(item);
+                    }
+                }
+            }
+
+            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
+            for (final DataExplorerView dataExplorerView : explorers) {
+                Action action = dataExplorerView.getOpenExportDialogAction();
+                if (action != null) {
+                    JMenuItem item = new JMenuItem(action);
+                    exportMenu.add(item);
+                }
+            }
+        }
+    }
+
     private static void buildMenuFile() {
         menuFile.removeAll();
         final JMenu importMenu = new JMenu(Messages.getString("WeasisWin.import")); //$NON-NLS-1$
         JPopupMenu menuImport = importMenu.getPopupMenu();
-        menuImport.addPopupMenuListener(new PopupMenuListener() {
-
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                synchronized (UIManager.EXPLORER_PLUGINS) {
-                    List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-                    for (final DataExplorerView dataExplorerView : explorers) {
-                        Action action = dataExplorerView.getOpenImportDialogAction();
-                        if (action != null) {
-                            JMenuItem item = new JMenuItem(action);
-                            importMenu.add(item);
-                        }
+        // #WEA-6 - workaround, PopupMenuListener don't work on Mac
+        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+            importMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (importMenu.isSelected()) {
+                        buildImportSubMenu(importMenu);
+                    } else {
+                        importMenu.removeAll();
                     }
                 }
-            }
+            });
+        } else {
+            menuImport.addPopupMenuListener(new PopupMenuListener() {
 
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                importMenu.removeAll();
-            }
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildImportSubMenu(importMenu);
+                }
 
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-            }
-        });
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    importMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
         menuFile.add(importMenu);
 
         final JMenu exportMenu = new JMenu(Messages.getString("WeasisWin.export")); //$NON-NLS-1$
         JPopupMenu menuExport = exportMenu.getPopupMenu();
-        menuExport.addPopupMenuListener(new PopupMenuListener() {
-
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                // TODO export workspace in as preference
-
-                //                final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
-                //
-                // @Override
-                // public void actionPerformed(ActionEvent e) {
-                // // Handle workspace ui persistence
-                // PersistenceDelegate pstDelegate = UIManager.toolWindowManager.getPersistenceDelegate();
-                // try {
-                //                                pstDelegate.save(new FileOutputStream(new File("/home/nicolas/Documents/test.xml"))); //$NON-NLS-1$
-                // } catch (FileNotFoundException e1) {
-                // e1.printStackTrace();
-                // }
-                // }
-                // };
-                // exportMenu.add(saveAction);
-
-                synchronized (UIManager.EXPLORER_PLUGINS) {
-                    if (selectedPlugin != null) {
-                        Action[] actions = selectedPlugin.getExportActions();
-                        if (actions != null) {
-                            for (Action action : actions) {
-                                JMenuItem item = new JMenuItem(action);
-                                exportMenu.add(item);
-                            }
-                        }
-                    }
-
-                    List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-                    for (final DataExplorerView dataExplorerView : explorers) {
-                        Action action = dataExplorerView.getOpenExportDialogAction();
-                        if (action != null) {
-                            JMenuItem item = new JMenuItem(action);
-                            exportMenu.add(item);
-                        }
+        // #WEA-6 - workaround, PopupMenuListener don't work on Mac
+        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+            exportMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (exportMenu.isSelected()) {
+                        buildExportSubMenu(exportMenu);
+                    } else {
+                        exportMenu.removeAll();
                     }
                 }
-            }
+            });
+        } else {
+            menuExport.addPopupMenuListener(new PopupMenuListener() {
 
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                exportMenu.removeAll();
-            }
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildExportSubMenu(exportMenu);
+                }
 
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-            }
-        });
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    exportMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
         menuFile.add(new JMenuItem(OpenPreferencesAction.getInstance()));
