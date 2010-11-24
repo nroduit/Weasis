@@ -76,10 +76,11 @@ public class TagElement implements Transferable, Serializable {
         new TagElement(Messages.getString("TagElement.img_or"), TagType.String); //$NON-NLS-1$
     public static final TagElement ImageBitsPerPixel =
         new TagElement(Messages.getString("TagElement.img_bpp"), TagType.Integer); //$NON-NLS-1$
-    public static final TagElement WadoCompressionRate =
-        new TagElement(Messages.getString("TagElement.wado_comp_rate"), TagType.Integer); //$NON-NLS-1$
-    public final static TagElement WadoTransferSyntaxUID =
-        new TagElement(Messages.getString("TagElement.wado_tsuid"), TagType.String); //$NON-NLS-1$
+
+    // Do not internationalize WadoTransferSyntaxUID and WadoCompressionRate because they are defined in wado_query.xsd
+    public static final TagElement WadoCompressionRate = new TagElement("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
+    public final static TagElement WadoTransferSyntaxUID = new TagElement("Wado Transfer Syntax UID", TagType.String); //$NON-NLS-1$
+
     public final static TagElement WadoParameters = new TagElement("Wado Parameter", TagType.Object); //$NON-NLS-1$
     public final static TagElement WadoInstanceReferenceList =
         new TagElement("List of DICOM instance References", TagType.List); //$NON-NLS-1$
