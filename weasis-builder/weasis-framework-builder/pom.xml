@@ -25,13 +25,13 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.0.6</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.4-SNAPSHOT</weasis.launcher.version>
-		<weasis.core.version>0.5.4-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.7.2-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.4-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.4-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.4-SNAPSHOT</weasis.dicom.version>
-		<weasis.imageioext.j2k.codec.version>0.5.4-SNAPSHOT</weasis.imageioext.j2k.codec.version>
+		<weasis.launcher.version>0.5.4</weasis.launcher.version>
+		<weasis.core.version>0.5.4</weasis.core.version>
+		<weasis.imageio.version>0.7.2</weasis.imageio.version>
+		<weasis.jmc.version>0.5.4</weasis.jmc.version>
+		<weasis.base.version>0.5.4</weasis.base.version>
+		<weasis.dicom.version>0.5.4</weasis.dicom.version>
+		<weasis.imageioext.j2k.codec.version>0.5.4</weasis.imageioext.j2k.codec.version>
 
 		<mydoggy.version>1.5.0-b03</mydoggy.version>
 		<jai.version>1.1.4-b03</jai.version>
