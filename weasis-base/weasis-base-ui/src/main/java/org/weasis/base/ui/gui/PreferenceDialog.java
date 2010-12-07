@@ -29,7 +29,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LookSetting()));
+        pagesRoot.add(new DefaultMutableTreeNode(new GeneralSetting()));
         final Object[] servicesPref = Activator.getPreferencesPages();
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             pagesRoot.add(new DefaultMutableTreeNode(servicesPref[i]));

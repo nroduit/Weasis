@@ -73,6 +73,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -94,7 +95,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private final ToolBarContainer toolbarContainer;
 
-    private final boolean busy = false;
+    private volatile boolean busy = false;
 
     private WeasisWin() {
         this.setJMenuBar(createMenuBar());
@@ -125,8 +126,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             // TODO add a message, Please wait or kill
             return false;
         }
-        int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
-        if (option == JOptionPane.YES_OPTION) {
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
+            int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
+            if (option == JOptionPane.YES_OPTION) {
+                System.exit(0);
+                return true;
+            }
+        } else {
             System.exit(0);
             return true;
         }

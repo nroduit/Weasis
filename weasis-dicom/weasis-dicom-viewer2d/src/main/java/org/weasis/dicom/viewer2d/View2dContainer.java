@@ -57,13 +57,14 @@ import org.weasis.dicom.viewer2d.dockable.ImageTool;
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
 
     // TODO read and store models
-    public static final GridBagLayoutModel VIEWS_2x1m2 =
-        new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), new ImageIcon( //$NON-NLS-1$
-            View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
+        new GridBagLayoutModel(
+            View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$
+                View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
 
     public static final GridBagLayoutModel[] MODELS =
-        { VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x1m2, VIEWS_2x2, VIEWS_3x2, VIEWS_3x3,
-            VIEWS_4x3, VIEWS_4x4 };
+        { VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x1_r1xc2_dump, VIEWS_2x2, VIEWS_3x2,
+            VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy

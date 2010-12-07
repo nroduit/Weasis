@@ -55,7 +55,8 @@ public class GridBagLayoutModel implements GUIEntry {
         }
     }
 
-    public GridBagLayoutModel(InputStream stream, Icon icon) {
+    public GridBagLayoutModel(InputStream stream, String title, Icon icon) {
+        this.title = title;
         this.icon = icon;
         this.constraints = new LinkedHashMap<LayoutConstraints, JComponent>();
         try {
@@ -137,7 +138,7 @@ public class GridBagLayoutModel implements GUIEntry {
                 position = Integer.parseInt(attributes.getValue("position")); //$NON-NLS-1$
                 expand = Integer.parseInt(attributes.getValue("expand")); //$NON-NLS-1$
 
-            } else if ("layoutModel".equals(qName)) { //$NON-NLS-1$
+            } else if (title == null && "layoutModel".equals(qName)) { //$NON-NLS-1$
                 title = attributes.getValue("name"); //$NON-NLS-1$
             }
         }

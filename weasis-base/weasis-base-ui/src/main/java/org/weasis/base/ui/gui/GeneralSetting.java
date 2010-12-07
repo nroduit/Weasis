@@ -16,8 +16,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.Box;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -26,7 +28,7 @@ import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.service.BundleTools;
 
-public class LookSetting extends AbstractItemDialogPage {
+public class GeneralSetting extends AbstractItemDialogPage {
 
     public static final String pageName = Messages.getString("LookSetting.gen"); //$NON-NLS-1$
     private LookInfo oldUILook;
@@ -35,11 +37,13 @@ public class LookSetting extends AbstractItemDialogPage {
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelMLook = new JLabel();
     private final JComboBox jComboBox1 = new JComboBox();
-    private final JLabel jLabelinfo = new JLabel();
     private final JLabel labelLocale = new JLabel(Messages.getString("LookSetting.locale")); //$NON-NLS-1$
     private final JComboBox comboBox = new JLocaleCombo();
+    private final JTextPane txtpnNote = new JTextPane();
+    private final JCheckBox chckbxConfirmClosing =
+        new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
-    public LookSetting() {
+    public GeneralSetting() {
         setTitle(pageName);
         setList(jComboBox1, UIManager.getInstalledLookAndFeels());
         try {
@@ -52,10 +56,10 @@ public class LookSetting extends AbstractItemDialogPage {
 
     private void jbInit() throws Exception {
         component1 = Box.createHorizontalStrut(8);
+        gridBagLayout1.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0 };
         gridBagLayout1.columnWeights = new double[] { 0.0, 0.0, 0.0 };
         this.setLayout(gridBagLayout1);
-        jLabelMLook.setText(Messages.getString("LookSetting.lf")); //$NON-NLS-1$
-        jLabelinfo.setText(Messages.getString("LookSetting.note")); //$NON-NLS-1$
+        jLabelMLook.setText(Messages.getString("LookSetting.lf"));
 
         GridBagConstraints gbc_label = new GridBagConstraints();
         gbc_label.insets = new Insets(15, 10, 5, 0);
@@ -70,17 +74,35 @@ public class LookSetting extends AbstractItemDialogPage {
         gbc_comboBox.gridx = 1;
         gbc_comboBox.gridy = 0;
         add(comboBox, gbc_comboBox);
-        this.add(component1, new GridBagConstraints(2, 3, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
+
+        GridBagConstraints gbc_chckbxConfirmationMessageWhen = new GridBagConstraints();
+        gbc_chckbxConfirmationMessageWhen.gridwidth = 2;
+        gbc_chckbxConfirmationMessageWhen.anchor = GridBagConstraints.WEST;
+        gbc_chckbxConfirmationMessageWhen.insets = new Insets(7, 10, 5, 5);
+        gbc_chckbxConfirmationMessageWhen.gridx = 0;
+        gbc_chckbxConfirmationMessageWhen.gridy = 2;
+        add(chckbxConfirmClosing, gbc_chckbxConfirmationMessageWhen);
+
+        GridBagConstraints gbc_txtpnNote = new GridBagConstraints();
+        gbc_txtpnNote.gridwidth = 2;
+        gbc_txtpnNote.insets = new Insets(5, 10, 5, 5);
+        gbc_txtpnNote.fill = GridBagConstraints.BOTH;
+        gbc_txtpnNote.gridx = 0;
+        gbc_txtpnNote.gridy = 3;
+        txtpnNote.setEditable(false);
+        txtpnNote.setText(Messages.getString("GeneralSetting.txtpnNote")); //$NON-NLS-1$
+        add(txtpnNote, gbc_txtpnNote);
+        this.add(component1, new GridBagConstraints(2, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
         this.add(jLabelMLook, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-            GridBagConstraints.NONE, new Insets(7, 10, 5, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(7, 10, 5, 0), 0, 0));
         this.add(jComboBox1, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
-        this.add(jLabelinfo, new GridBagConstraints(0, 2, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(5, 10, 5, 5), 0, 0));
     }
 
     protected void initialize(boolean afirst) {
+        chckbxConfirmClosing.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
+            "weasis.confirm.closing", true));//$NON-NLS-1$
         String className = null;
         LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
         if (currentLAF != null) {
@@ -108,6 +130,7 @@ public class LookSetting extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
+        BundleTools.SYSTEM_PREFERENCES.putBooleanProperty("weasis.confirm.closing", chckbxConfirmClosing.isSelected()); //$NON-NLS-1$
         LookInfo look = (LookInfo) jComboBox1.getSelectedItem();
         if (look != null) {
             BundleTools.SYSTEM_PREFERENCES.put("weasis.look", look.getClassName()); //$NON-NLS-1$

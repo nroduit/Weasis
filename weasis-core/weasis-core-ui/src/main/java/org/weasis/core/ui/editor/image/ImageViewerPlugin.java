@@ -54,10 +54,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             String.format(Messages.getString("ImageViewerPlugin.2"), "1x2"), 1, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
                     .getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2_f2 =
-        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), //$NON-NLS-1$
+        new GridBagLayoutModel(
+            ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), Messages.getString("ImageViewerPlugin.layout_c2x1"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2x2_f2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2_f1x2 =
-        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), //$NON-NLS-1$
+        new GridBagLayoutModel(
+            ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), Messages.getString("ImageViewerPlugin.layout_c1x2"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2_f1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2 =
         new GridBagLayoutModel(
@@ -79,11 +81,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         new GridBagLayoutModel(
             String.format(Messages.getString("ImageViewerPlugin.2"), "4x4"), 4, 4, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
                     .getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
-    static {
-        String title = String.format(Messages.getString(Messages.getString("ImageViewerPlugin.2")), "3"); //$NON-NLS-1$ //$NON-NLS-2$
-        VIEWS_2x2_f2.setTitle(title);
-        VIEWS_2_f1x2.setTitle(title);
-    }
+
     /**
      * The current focused <code>ImagePane</code>. The default is 0.
      */
