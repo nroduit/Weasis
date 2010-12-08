@@ -33,7 +33,7 @@ public class TagElement implements Transferable, Serializable {
     private final static AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
     // TODO date format in general settings
     public static final SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy"); //$NON-NLS-1$
-    public static final SimpleDateFormat formatTime = new SimpleDateFormat("HH:mm:ss"); //$NON-NLS-1$
+    public static final SimpleDateFormat formatTime = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
     public static final SimpleDateFormat formatDateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //$NON-NLS-1$
 
     public static final SimpleDateFormat dicomformatDate = new SimpleDateFormat("yyyyMMdd"); //$NON-NLS-1$

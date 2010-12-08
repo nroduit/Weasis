@@ -787,8 +787,7 @@ public class WeasisLauncher {
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
         UIManager.put("Slider.paintValue", Boolean.FALSE); //$NON-NLS-1$
-
-        UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
+        UIManager.LookAndFeelInfo lafs[] = LookAndFeels.commonInstalledLookAndFeels();
         laf_exist: if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
                 if (lafs[i].getClassName().equals(look)) { //$NON-NLS-1$
