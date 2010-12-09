@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
@@ -21,7 +22,8 @@
 		</license>
 		<license>
 			<!--
-				WeasisLauncher and AutoProcessor classes is derived from the Apache Felix launcher
+				WeasisLauncher and AutoProcessor classes is derived from the Apache
+				Felix launcher
 			-->
 			<name>Apache 2</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
@@ -55,7 +57,8 @@
 		</profile>
 	</profiles>
 	<!--
-		Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher)
+		Dependencies below are provided for debugging Weasis from IDE (by
+		launching WeasisLauncher)
 	-->
 	<dependencies>
 		<dependency>
@@ -135,6 +138,12 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>tilecachetool</artifactId>
 			<version>1.0.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>substance</artifactId>
+			<version>6.1.0</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

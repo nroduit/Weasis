@@ -14,18 +14,27 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
+import javax.swing.SingleSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
 
 public class GeneralSetting extends AbstractItemDialogPage {
@@ -43,6 +52,45 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JCheckBox chckbxConfirmClosing =
         new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
+    private transient final ChangeListener propListener = new ChangeListener() {
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
+            try {
+                UIManager.setLookAndFeel(item.getClassName());
+                Window p = WinUtil.getParentDialogOrFrame(GeneralSetting.this);
+                SwingUtilities.updateComponentTreeUI(p);
+                p.pack();
+
+                // UIManager.getLookAndFeelDefaults().put("ClassLoader", SubstanceLoader.class.getClassLoader());
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+        }
+    };
+
+    private transient final ItemListener lafItemListener = new ItemListener() {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
+                try {
+                    UIManager.setLookAndFeel(item.getClassName());
+                    Window p = WinUtil.getParentDialogOrFrame(GeneralSetting.this);
+                    SwingUtilities.updateComponentTreeUI(p);
+                    p.pack();
+
+                    // UIManager.getLookAndFeelDefaults().put("ClassLoader", SubstanceLoader.class.getClassLoader());
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+
+        }
+    };
+
     public GeneralSetting() {
         setTitle(pageName);
         setList(jComboBox1, UIManager.getInstalledLookAndFeels());
@@ -52,6 +100,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Object comp = jComboBox1.getUI().getAccessibleChild(jComboBox1, 0);
+        if (comp instanceof JPopupMenu) {
+            SingleSelectionModel model = ((JPopupMenu) comp).getSelectionModel();
+            model.addChangeListener(propListener);
+        }
+        jComboBox1.addItemListener(lafItemListener);
     }
 
     private void jbInit() throws Exception {
