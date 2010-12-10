@@ -27,8 +27,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.LookAndFeel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import org.apache.felix.framework.Felix;
@@ -79,6 +81,7 @@ public class WeasisLauncher {
     public final static String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
     public final static String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     static Properties modulesi18n = null;
+    private static String look = null;
 
     /**
      * <p>
@@ -270,6 +273,15 @@ public class WeasisLauncher {
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
             m_tracker.open();
+
+            // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    setLookAndFeel(look);
+                }
+            });
+
             // Start the framework.
             m_felix.start();
 
@@ -665,7 +677,7 @@ public class WeasisLauncher {
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
-        String look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
+        look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
         if (look == null) {
             look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
         }
@@ -677,7 +689,7 @@ public class WeasisLauncher {
                 look = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
             }
         }
-        look = setLookAndFeel(look);
+        // look = setLookAndFeel(look);
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();

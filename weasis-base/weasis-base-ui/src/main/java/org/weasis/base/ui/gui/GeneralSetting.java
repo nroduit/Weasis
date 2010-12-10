@@ -11,30 +11,27 @@
 package org.weasis.base.ui.gui;
 
 import java.awt.Component;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Window;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
 import javax.swing.JTextPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.LookAndFeel;
-import javax.swing.SingleSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.basic.BasicComboPopup;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
 
 public class GeneralSetting extends AbstractItemDialogPage {
@@ -51,49 +48,63 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JTextPane txtpnNote = new JTextPane();
     private final JCheckBox chckbxConfirmClosing =
         new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
+    // private final Walkthrough uiSample = new Walkthrough(WinUtil.getParentDialogOrFrame(GeneralSetting.this));
+    private int uiIndex = -1;
 
-    private transient final ChangeListener propListener = new ChangeListener() {
-
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
-            try {
-                UIManager.setLookAndFeel(item.getClassName());
-                Window p = WinUtil.getParentDialogOrFrame(GeneralSetting.this);
-                SwingUtilities.updateComponentTreeUI(p);
-                p.pack();
-
-                // UIManager.getLookAndFeelDefaults().put("ClassLoader", SubstanceLoader.class.getClassLoader());
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
-        }
-    };
-
-    private transient final ItemListener lafItemListener = new ItemListener() {
+    private transient final ListSelectionListener listSelectionListener = new ListSelectionListener() {
 
         @Override
-        public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
-                try {
-                    UIManager.setLookAndFeel(item.getClassName());
-                    Window p = WinUtil.getParentDialogOrFrame(GeneralSetting.this);
-                    SwingUtilities.updateComponentTreeUI(p);
-                    p.pack();
+        public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+                ListSelectionModel model = (ListSelectionModel) e.getSource();
+                int first = model.getMinSelectionIndex();
+                if (first != uiIndex && first >= 0) {
+                    uiIndex = first;
+                    LookInfo item = (LookInfo) jComboBox1.getItemAt(uiIndex);
+                    try {
+                        UIManager.setLookAndFeel(item.getClassName());
+                        Frame p = WeasisWin.getFrames()[0];
+                        SwingUtilities.updateComponentTreeUI(p);
+                        p.pack();
 
-                    // UIManager.getLookAndFeelDefaults().put("ClassLoader", SubstanceLoader.class.getClassLoader());
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
                 }
             }
-
         }
+
     };
+
+    // private transient final ItemListener lafItemListener = new ItemListener() {
+    //
+    // @Override
+    // public void itemStateChanged(ItemEvent e) {
+    // if (e.getStateChange() == ItemEvent.SELECTED) {
+    // LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
+    // try {
+    //
+    // UIManager.setLookAndFeel(item.getClassName());
+    // // UIManager.getLookAndFeelDefaults().put("ClassLoader",
+    // // UIManager.getLookAndFeel().getClass().getClassLoader());
+    // // Window p = WinUtil.getParentDialogOrFrame(GeneralSetting.this);
+    // Window p = WeasisWin.getInstance();
+    // SwingUtilities.updateComponentTreeUI(p);
+    // p.pack();
+    //
+    // // UIManager.getLookAndFeelDefaults().put("ClassLoader", SubstanceLoader.class.getClassLoader());
+    // } catch (Exception e1) {
+    // e1.printStackTrace();
+    // }
+    // }
+    //
+    // }
+    // };
 
     public GeneralSetting() {
         setTitle(pageName);
         setList(jComboBox1, UIManager.getInstalledLookAndFeels());
+
         try {
             jbInit();
             initialize(true);
@@ -101,11 +112,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
             e.printStackTrace();
         }
         Object comp = jComboBox1.getUI().getAccessibleChild(jComboBox1, 0);
-        if (comp instanceof JPopupMenu) {
-            SingleSelectionModel model = ((JPopupMenu) comp).getSelectionModel();
-            model.addChangeListener(propListener);
+        if (comp instanceof BasicComboPopup) {
+            BasicComboPopup popup = (BasicComboPopup) comp;
+            popup.getList().getSelectionModel().addListSelectionListener(listSelectionListener);
         }
-        jComboBox1.addItemListener(lafItemListener);
+        // jComboBox1.addItemListener(lafItemListener);
     }
 
     private void jbInit() throws Exception {
@@ -138,9 +149,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
         add(chckbxConfirmClosing, gbc_chckbxConfirmationMessageWhen);
 
         GridBagConstraints gbc_txtpnNote = new GridBagConstraints();
+        gbc_txtpnNote.anchor = GridBagConstraints.NORTHWEST;
         gbc_txtpnNote.gridwidth = 2;
         gbc_txtpnNote.insets = new Insets(5, 10, 5, 5);
-        gbc_txtpnNote.fill = GridBagConstraints.BOTH;
+        gbc_txtpnNote.fill = GridBagConstraints.HORIZONTAL;
         gbc_txtpnNote.gridx = 0;
         gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);

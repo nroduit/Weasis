@@ -69,7 +69,11 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
     public WeasisAboutBox() {
         super(WeasisWin.getInstance(), Messages.getString("WeasisAboutBox.title"), true); //$NON-NLS-1$
         try {
-            sysTable = new JTable(new SimpleTableModel(new String[] { Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, createSysInfo())); //$NON-NLS-1$ //$NON-NLS-2$
+            sysTable =
+                new JTable(
+                    new SimpleTableModel(
+                        new String[] {
+                            Messages.getString("WeasisAboutBox.prop"), Messages.getString("WeasisAboutBox.val") }, createSysInfo())); //$NON-NLS-1$ //$NON-NLS-2$
             sysTable.getColumnModel().setColumnMargin(5);
             JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
             jbInit();
@@ -113,8 +117,8 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
 
         // jTextPane1.setPage(buffer.toString());
         // jTextPane1.setFont(FontTools.getFont10());
-        jTextPane1.setOpaque(false);
-        jLabel1.setBorder(BorderFactory.createLineBorder(Color.black));
+        // jTextPane1.setOpaque(false);
+        jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
         jLabel1.setIcon(new ImageIcon(getClass().getResource("/about.png"))); //$NON-NLS-1$
         jPanel3.setLayout(borderLayout3);
 

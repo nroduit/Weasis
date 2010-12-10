@@ -17,6 +17,8 @@ import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
+import javax.swing.JFrame;
+
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
@@ -30,7 +32,7 @@ public class WeasisApp {
     private static final WeasisApp instance = new WeasisApp();
 
     private WeasisApp() {
-
+        JFrame.setDefaultLookAndFeelDecorated(true);
     }
 
     public final static WeasisApp getInstance() {
