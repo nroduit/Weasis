@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.ui.util;
 
-import java.awt.Color;
 import java.awt.Graphics;
 
 import javax.swing.AbstractButton;
@@ -19,11 +18,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 
-import org.weasis.core.ui.Messages;
-
 public class VLButtonUI extends BasicToggleButtonUI {
-
-    private Color highlight = UIManager.getColor("controlHighlight"); //$NON-NLS-1$
 
     public VLButtonUI() {
     }
@@ -40,7 +35,7 @@ public class VLButtonUI extends BasicToggleButtonUI {
                 g.translate(1, 1);
             } else {
                 if (!selected) {
-                    g.setColor(highlight);
+                    g.setColor(UIManager.getColor("controlHighlight"));
                     g.fillRect(1, 1, btn.getWidth() - 2, btn.getHeight() - 2);
                 }
             }

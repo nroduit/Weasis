@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.Action;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -100,7 +99,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private WeasisWin() {
         this.setJMenuBar(createMenuBar());
         toolbarContainer = new ToolBarContainer();
-        toolbarContainer.setLayout(new BoxLayout(toolbarContainer, BoxLayout.PAGE_AXIS));
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
         this.setTitle("Weasis v" + AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
         this.setIconImage(new ImageIcon(getClass().getResource("/logo-button.png")).getImage()); //$NON-NLS-1$
@@ -437,30 +435,44 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         if (tool == null) {
             if (oldTool != null) {
-                for (PluginTool pluginTool : oldTool) {
-                    pluginTool.closeDockable();
+                for (PluginTool p : oldTool) {
+                    p.closeDockable();
                 }
             }
         } else {
             if (tool != oldTool) {
                 if (oldTool != null) {
-                    for (PluginTool pluginTool : oldTool) {
-                        pluginTool.closeDockable();
+                    for (PluginTool p : oldTool) {
+                        p.closeDockable();
                     }
                 }
-                for (PluginTool pluginTool : tool) {
-                    pluginTool.registerToolAsDockable();
+                for (PluginTool p : tool) {
+                    p.registerToolAsDockable();
                 }
             }
         }
 
-        WtoolBar toolBar = selectedPlugin.getToolBar();
-        WtoolBar oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
+        WtoolBar[] toolBar = selectedPlugin.getToolBar();
+        WtoolBar[] oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
 
-        if (toolBar != oldToolBar) {
-            toolbarContainer.registerToolBar(toolBar);
+        if (toolBar == null) {
+            if (oldToolBar != null) {
+                toolbarContainer.unregisterAll();
+            }
+            toolbarContainer.registerToolBar(ToolBarContainer.EMPTY);
             toolbarContainer.revalidate();
             toolbarContainer.repaint();
+        } else {
+            if (toolBar != oldToolBar) {
+                if (oldToolBar != null) {
+                    toolbarContainer.unregisterAll();
+                }
+                for (WtoolBar t : toolBar) {
+                    toolbarContainer.registerToolBar(t);
+                }
+                toolbarContainer.revalidate();
+                toolbarContainer.repaint();
+            }
         }
 
     }

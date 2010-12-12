@@ -47,7 +47,7 @@ public abstract class MeasureToolBar extends WtoolBar implements ActionListener 
 
     public MeasureToolBar() {
         super("measure2dBar", TYPE.tool); //$NON-NLS-1$
-        addSeparator();
+        // addSeparator();
         jTgleButtonArrow.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/24x24/selection.png"))); //$NON-NLS-1$
         jTgleButtonArrow.setToolTipText(Messages.getString("MeasureToolBar.sel")); //$NON-NLS-1$
         jTgleButtonArrow.addActionListener(this);

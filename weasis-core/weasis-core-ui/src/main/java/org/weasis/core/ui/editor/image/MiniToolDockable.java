@@ -11,7 +11,6 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -32,8 +31,7 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.util.ToolBarButtonBorder;
-import org.weasis.core.ui.util.VLButtonUI;
+import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MiniToolDockable extends PluginTool implements ActionListener {
 
@@ -58,15 +56,15 @@ public abstract class MiniToolDockable extends PluginTool implements ActionListe
         add(Box.createRigidArea(dim));
         final DropDownButton button = new DropDownButton("Mini", currentAction.getActionW().getSmallDropButtonIcon()) { //$NON-NLS-1$
 
-            @Override
-            protected JPopupMenu getPopupMenu() {
-                return getPopupMenuScroll(this);
-            }
-        };
+                @Override
+                protected JPopupMenu getPopupMenu() {
+                    return getPopupMenuScroll(this);
+                }
+            };
         button.setToolTipText(Messages.getString("MiniToolDockable.change")); //$NON-NLS-1$
-        button.setMargin(new Insets(2, 2, 2, 2));
-        button.setUI(new VLButtonUI());
-        button.setBorder(new ToolBarButtonBorder());
+        WtoolBar.installButtonUI(button);
+        WtoolBar.configureButton(button);
+
         button.setAlignmentY(CENTER_ALIGNMENT);
         button.setAlignmentX(CENTER_ALIGNMENT);
         add(button);

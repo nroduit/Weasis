@@ -17,8 +17,6 @@ import java.awt.Graphics2D;
 
 import javax.swing.Icon;
 
-import org.weasis.core.api.Messages;
-
 public class DropDownLabel implements Icon {
 
     private String label;

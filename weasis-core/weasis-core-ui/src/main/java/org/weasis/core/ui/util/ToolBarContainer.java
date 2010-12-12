@@ -10,21 +10,24 @@
  ******************************************************************************/
 package org.weasis.core.ui.util;
 
+import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JToolBar;
 
 import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 public class ToolBarContainer extends JPanel {
-
+    public final static WtoolBar EMPTY = ToolBarFactory.buildEmptyToolBar("empty");
     private Map<String, WtoolBar> toolBarsByName = new HashMap<String, WtoolBar>();
 
     public ToolBarContainer() {
+        setOpaque(false);
+        setLayout(new WrapLayout(FlowLayout.LEADING, 2, 2));
     }
 
     /**
@@ -38,7 +41,6 @@ public class ToolBarContainer extends JPanel {
         String name = TYPE.tool.equals(type) ? toolbar.toString() : type.name();
         WtoolBar oldBar = toolBarsByName.get(name);
         toolBarsByName.put(name, toolbar);
-        toolbar.setAlignmentX(LEFT_ALIGNMENT);
         if (oldBar == null) {
             add(toolbar);
         } else {
@@ -52,7 +54,7 @@ public class ToolBarContainer extends JPanel {
         }
     }
 
-    private int getComponentIndex(JToolBar bar) {
+    private int getComponentIndex(JComponent bar) {
         synchronized (this) {
             int size = this.getComponentCount();
             for (int i = 0; i < size; i++) {
@@ -77,10 +79,15 @@ public class ToolBarContainer extends JPanel {
         remove(toolbar);
     }
 
+    public void unregisterAll() {
+        toolBarsByName.clear();
+        removeAll();
+    }
+
     /**
      * Returns the registered toolbar associated with the given name, or null if not found
      */
-    public JToolBar getToolBarByName(String name) {
+    public WtoolBar getToolBarByName(String name) {
         return toolBarsByName.get(name);
     }
 

@@ -613,34 +613,36 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
                     ButtonGroup groupButtons = new ButtonGroup();
                     ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
-                    if (view != null && view.getToolBar() instanceof ViewerToolBar) {
-                        final ViewerToolBar toolBar =
-                            (ViewerToolBar) eventManager.getSelectedView2dContainer().getToolBar();
-                        ActionListener leftButtonAction = new ActionListener() {
+                    if (view != null) {
+                        final ViewerToolBar toolBar = view.getViewerToolBar();
+                        if (toolBar != null) {
+                            ActionListener leftButtonAction = new ActionListener() {
 
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                if (e.getSource() instanceof JRadioButtonMenuItem) {
-                                    JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                    toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, item
-                                        .getActionCommand());
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    if (e.getSource() instanceof JRadioButtonMenuItem) {
+                                        JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
+                                        toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, item
+                                            .getActionCommand());
+                                    }
                                 }
-                            }
-                        };
-                        for (int i = 0; i < ViewerToolBar.actionsButtons.length; i++) {
-                            JRadioButtonMenuItem radio =
-                                new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(),
-                                    actionsButtons[i].getCommand().equals(action));
+                            };
 
-                            radio.setActionCommand(actionsButtons[i].getCommand());
-                            radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
-                                actionsButtons[i].getModifier()));
-                            // Trigger the selected mouse action
-                            radio.addActionListener(toolBar);
-                            // Update the state of the button in the toolbar
-                            radio.addActionListener(leftButtonAction);
-                            popupMenu.add(radio);
-                            groupButtons.add(radio);
+                            for (int i = 0; i < ViewerToolBar.actionsButtons.length; i++) {
+                                JRadioButtonMenuItem radio =
+                                    new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(),
+                                        actionsButtons[i].getCommand().equals(action));
+
+                                radio.setActionCommand(actionsButtons[i].getCommand());
+                                radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
+                                    actionsButtons[i].getModifier()));
+                                // Trigger the selected mouse action
+                                radio.addActionListener(toolBar);
+                                // Update the state of the button in the toolbar
+                                radio.addActionListener(leftButtonAction);
+                                popupMenu.add(radio);
+                                groupButtons.add(radio);
+                            }
                         }
                     }
                     popupMenu.add(new JSeparator());

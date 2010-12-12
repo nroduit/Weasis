@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.LookAndFeel;
@@ -276,6 +277,7 @@ public class WeasisLauncher {
 
             // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
             JFrame.setDefaultLookAndFeelDecorated(true);
+            JDialog.setDefaultLookAndFeelDecorated(true);
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
                     setLookAndFeel(look);

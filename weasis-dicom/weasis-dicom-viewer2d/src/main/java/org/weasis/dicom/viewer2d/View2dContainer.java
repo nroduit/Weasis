@@ -71,7 +71,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // initialization with a method.
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
-    private static ViewerToolBar<DicomImageElement> toolBar;
+    private static WtoolBar[] toolBars;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -380,11 +380,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public synchronized WtoolBar getToolBar() {
-        if (toolBar == null) {
-            toolBar = new ViewerToolBar<DicomImageElement>(eventManager);
+    public synchronized WtoolBar[] getToolBar() {
+        if (toolBars == null) {
+            toolBars = new WtoolBar[2];
+            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(eventManager);
+            toolBars[0] = bar;
+            toolBars[1] = bar.getMeasureToolBar();
         }
-        return toolBar;
+        return toolBars;
     }
 
     @Override

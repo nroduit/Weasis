@@ -106,14 +106,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    private final AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
+    private final AbstractAction exportToClipboardAction =
+        new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            EXPORT_TO_CLIPBOARD.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit().getSystemClipboard(),
-                TransferHandler.COPY);
-        }
-    };
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                EXPORT_TO_CLIPBOARD.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                    .getSystemClipboard(), TransferHandler.COPY);
+            }
+        };
     protected Point highlightedPosition = null;
     private int pointerType = 0;
     private final Color pointerColor1 = Color.black;
@@ -713,12 +714,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE && e.isControlDown()) {
             ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-            if (view != null && view.getToolBar() instanceof ViewerToolBar) {
-                ViewerToolBar<E> toolBar = (ViewerToolBar<E>) view.getToolBar();
-                String command =
-                    ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                        toolBar.getMouseLeft().getActionCommand()).getCommand();
-                changeLeftMouseAction(command);
+            if (view != null) {
+                ViewerToolBar<E> toolBar = view.getViewerToolBar();
+                if (toolBar != null) {
+                    String command =
+                        ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
+                            toolBar.getMouseLeft().getActionCommand()).getCommand();
+                    changeLeftMouseAction(command);
+                }
             }
         } else {
             ActionW action = ActionW.getActionFromkeyEvent(e.getKeyCode());
@@ -731,15 +734,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     private void changeLeftMouseAction(String command) {
         ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-        if (view != null && view.getToolBar() instanceof ViewerToolBar) {
-            ViewerToolBar<E> toolBar = (ViewerToolBar<E>) view.getToolBar();
-            MouseActions mouseActions = eventManager.getMouseActions();
-            if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                mouseActions.setAction(MouseActions.LEFT, command);
-                if (view != null) {
-                    view.setMouseActions(mouseActions);
+        if (view != null) {
+            ViewerToolBar<E> toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                MouseActions mouseActions = eventManager.getMouseActions();
+                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                    mouseActions.setAction(MouseActions.LEFT, command);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, command);
                 }
-                toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, command);
             }
         }
     }

@@ -321,8 +321,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public synchronized void setDrawActions() {
-        WtoolBar toolBar = getToolBar();
-        if (toolBar instanceof ViewerToolBar) {
+        WtoolBar toolBar = getViewerToolBar();
+        if (toolBar != null) {
             ((ViewerToolBar) toolBar).getMeasureToolBar().setDrawActions();
         }
     }

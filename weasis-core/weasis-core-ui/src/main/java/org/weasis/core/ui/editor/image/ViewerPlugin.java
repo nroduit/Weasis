@@ -23,6 +23,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.util.WtoolBar;
 
 /**
  * "Home" interface for particular tool. It is used by application core to start up tool when user selects appropriate
@@ -124,6 +125,18 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
 
     public Component getComponent() {
         return this;
+    }
+
+    public ViewerToolBar getViewerToolBar() {
+        WtoolBar[] bars = getToolBar();
+        if (bars != null) {
+            for (WtoolBar t : bars) {
+                if (t instanceof ViewerToolBar) {
+                    return (ViewerToolBar) t;
+                }
+            }
+        }
+        return null;
     }
 
     public abstract Action[] getExportActions();

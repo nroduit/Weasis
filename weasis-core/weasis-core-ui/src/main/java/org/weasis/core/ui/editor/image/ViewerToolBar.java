@@ -120,7 +120,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(mouseWheel);
         }
 
-        addSeparator();
+        addSeparator(WtoolBar.SEPARATOR_2x32);
 
         final DropDownButton layout = new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
             .getResource("/icon/32x32/layout.png")))) { //$NON-NLS-1$
@@ -147,7 +147,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
         add(button);
 
-        addSeparator();
+        addSeparator(WtoolBar.SEPARATOR_2x32);
         final JButton jButtonActualZoom =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
@@ -302,10 +302,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 .getActionCommand()))
             || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK) && measCmd.equals(mouseRight
                 .getActionCommand()))) {
-            add(measureToolBar);
+            measureToolBar.setVisible(true);
             measureToolBar.initialize();
         } else {
-            remove(measureToolBar);
+            measureToolBar.setVisible(false);
         }
         revalidate();
         repaint();

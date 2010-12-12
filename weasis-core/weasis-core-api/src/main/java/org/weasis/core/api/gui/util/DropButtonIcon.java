@@ -10,12 +10,13 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import javax.swing.ButtonModel;
 import javax.swing.Icon;
+import javax.swing.UIManager;
 
 public class DropButtonIcon implements Icon {
 
@@ -28,7 +29,14 @@ public class DropButtonIcon implements Icon {
     public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
         leftIcon.paintIcon(c, g2d, x, y);
-        g2d.setPaint(Color.black);
+        if (c instanceof DropDownButton) {
+            ButtonModel model = ((DropDownButton) c).getModel();
+            if (model.isRollover() && !model.isPressed()) {
+                g2d.setPaint(UIManager.getColor("controlShadow"));
+            } else {
+                g2d.setPaint(UIManager.getColor("controlHighlight"));
+            }
+        }
         int shiftx = x + leftIcon.getIconWidth() + 1;
         int shifty = y + leftIcon.getIconHeight() - 5;
         int[] xPoints = { shiftx, shiftx + 8, shiftx + 4 };

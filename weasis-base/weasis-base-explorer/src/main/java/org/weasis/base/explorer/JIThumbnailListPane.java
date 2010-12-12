@@ -19,7 +19,6 @@ import javax.swing.event.ListSelectionEvent;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.util.ToolBarFactory;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
@@ -31,7 +30,6 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
 
     public static final String NAME = "Media List";
     public static final Icon ICON = new ImageIcon(JIThumbnailListPane.class.getResource("/icon/16x16/folder.png"));
-    private final static WtoolBar toolBar = ToolBarFactory.buildEmptyToolBar("thumbList");
 
     private final JIThumbnailList list;
     private final ExecutorService pool;
@@ -150,8 +148,8 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
     }
 
     @Override
-    public WtoolBar getToolBar() {
-        return toolBar;
+    public WtoolBar[] getToolBar() {
+        return null;
     }
 
     @Override

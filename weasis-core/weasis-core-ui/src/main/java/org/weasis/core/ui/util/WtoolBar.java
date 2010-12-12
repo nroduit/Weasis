@@ -15,6 +15,8 @@
 package org.weasis.core.ui.util;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -22,23 +24,23 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JToolBar;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
-import org.weasis.core.ui.Messages;
-
-public class WtoolBar extends JToolBar {
+public class WtoolBar extends JPanel {
 
     public enum TYPE {
         main, explorer, tool
     };
 
+    public final static Dimension SEPARATOR_2x32 = new Dimension(2, 32);
+    public final static Dimension SEPARATOR_7x32 = new Dimension(25, 52);
     private final TYPE type;
-    private String barName;
+    private final String barName;
 
     private boolean rolloverBorderPainted = true;
-    private boolean rolloverContentAreaFilled = false;
+    private boolean rolloverContentAreaFilled = true;
     private boolean useCustomUI = true;
 
     private transient MouseListener buttonMouseHandler = new MouseAdapter() {
@@ -60,6 +62,7 @@ public class WtoolBar extends JToolBar {
         public void mouseExited(MouseEvent e) {
             AbstractButton btn = (AbstractButton) e.getSource();
             btn.setBorderPainted(false);
+            btn.setContentAreaFilled(false);
         }
     };
 
@@ -69,11 +72,16 @@ public class WtoolBar extends JToolBar {
      * The name is used when reading/writing XML configuration. It must not be null if you use this feature.
      */
     public WtoolBar(String barName, TYPE type) {
+        FlowLayout flowLayout = (FlowLayout) getLayout();
+        flowLayout.setVgap(0);
+        flowLayout.setHgap(0);
+        flowLayout.setAlignment(FlowLayout.LEADING);
         this.barName = barName;
         this.type = type;
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        setFloatable(false);
-
+        this.setAlignmentX(LEFT_ALIGNMENT);
+        this.setAlignmentY(TOP_ALIGNMENT);
+        setOpaque(false);
+        addSeparator(SEPARATOR_7x32);
     }
 
     public TYPE getType() {
@@ -81,6 +89,12 @@ public class WtoolBar extends JToolBar {
     }
 
     public void initialize() {
+    }
+
+    public void addSeparator(Dimension dim) {
+        JSeparator s = new JSeparator(JSeparator.VERTICAL);
+        s.setPreferredSize(dim);
+        add(s);
     }
 
     /** Overriden to track AbstractButton added */
@@ -95,16 +109,17 @@ public class WtoolBar extends JToolBar {
 
     /** Adds a new button to this toolbar */
     public Component add(AbstractButton button) {
-        if (useCustomUI) {
+        boolean substanceLaf = javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance");
+        if (useCustomUI && !substanceLaf) {
             installButtonUI(button);
         }
-
         super.add(button);
-
-        configureButton(button);
-
-        installMouseHandler(button);
-
+        if (substanceLaf) {
+            button.putClientProperty("substancelaf.componentFlat", Boolean.TRUE);
+        } else {
+            configureButton(button);
+            installMouseHandler(button);
+        }
         return button;
     }
 
@@ -124,7 +139,7 @@ public class WtoolBar extends JToolBar {
      * <li>set a ToolBarButtonBorder.
      * </ul>
      */
-    public void installButtonUI(AbstractButton button) {
+    public static void installButtonUI(AbstractButton button) {
         button.setMargin(new Insets(2, 2, 2, 2));
         button.setUI(new VLButtonUI());
         button.setBorder(new ToolBarButtonBorder());
@@ -150,7 +165,7 @@ public class WtoolBar extends JToolBar {
      * <li>setBorderPainted(false)
      *</ul>
      */
-    public void configureButton(AbstractButton button) {
+    public static void configureButton(AbstractButton button) {
         button.setRolloverEnabled(true);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
@@ -209,6 +224,10 @@ public class WtoolBar extends JToolBar {
     @Override
     public String toString() {
         return "WtoolBar " + getName(); //$NON-NLS-1$
+    }
+
+    public String getBarName() {
+        return barName;
     }
 
 }
