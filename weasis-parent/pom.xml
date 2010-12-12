@@ -165,7 +165,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>mydoggy</artifactId>
-			<version>1.5.0-b03</version>
+			<version>1.5.0-b05</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
