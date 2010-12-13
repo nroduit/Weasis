@@ -275,11 +275,11 @@ public class WeasisLauncher {
                     null);
             m_tracker.open();
 
-            // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            JDialog.setDefaultLookAndFeelDecorated(true);
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
+                    // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
+                    JFrame.setDefaultLookAndFeelDecorated(true);
+                    JDialog.setDefaultLookAndFeelDecorated(true);
                     setLookAndFeel(look);
                 }
             });
@@ -689,6 +689,9 @@ public class WeasisLauncher {
             if (index > 0) {
                 String sys = sys_spec.substring(0, index);
                 look = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
+            }
+            if (look == null) {
+                look = UIManager.getSystemLookAndFeelClassName();
             }
         }
         // look = setLookAndFeel(look);

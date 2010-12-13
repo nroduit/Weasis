@@ -34,8 +34,8 @@ public class WtoolBar extends JPanel {
         main, explorer, tool
     };
 
-    public final static Dimension SEPARATOR_2x32 = new Dimension(2, 32);
-    public final static Dimension SEPARATOR_7x32 = new Dimension(25, 52);
+    public final static Dimension SEPARATOR_2x24 = new Dimension(2, 24);
+
     private final TYPE type;
     private final String barName;
 
@@ -81,7 +81,7 @@ public class WtoolBar extends JPanel {
         this.setAlignmentX(LEFT_ALIGNMENT);
         this.setAlignmentY(TOP_ALIGNMENT);
         setOpaque(false);
-        addSeparator(SEPARATOR_7x32);
+        addSeparator(SEPARATOR_2x24);
     }
 
     public TYPE getType() {
@@ -156,14 +156,14 @@ public class WtoolBar extends JPanel {
 
     /**
      * This method is invoked upon adding a button to the toolbar. It can be overriden to provide another look or feel.
-     *<p>
+     * <p>
      * Default settings are :
-     *<ul>
+     * <ul>
      * <li>setRolloverEnabled(true)
      * <li>setContentAreaFilled(false);
      * <li>setOpaque(false)
      * <li>setBorderPainted(false)
-     *</ul>
+     * </ul>
      */
     public static void configureButton(AbstractButton button) {
         button.setRolloverEnabled(true);
@@ -207,9 +207,9 @@ public class WtoolBar extends JPanel {
 
     /**
      * Updates the useCustomUI property.
-     *<p>
+     * <p>
      * Default value is true.
-     *<p>
+     * <p>
      * When set to true the installButtonUI() method will be called when a button is added to this toolbar.
      */
     public void setUseCustomUI(boolean useCustomUI) {

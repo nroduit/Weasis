@@ -10,15 +10,15 @@
  ******************************************************************************/
 package org.weasis.core.ui.docking;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.swing.SwingUtilities;
 
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.noos.xing.mydoggy.ToolWindowManagerDescriptor;
@@ -27,58 +27,14 @@ import org.noos.xing.mydoggy.ToolWindowTypeDescriptor;
 import org.noos.xing.mydoggy.plaf.MyDoggyToolWindowBar;
 import org.noos.xing.mydoggy.plaf.MyDoggyToolWindowManager;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
 public class UIManager {
 
-    static class WinManager implements Runnable {
-
-        MyDoggyToolWindowManager winManager;
-
-        @Override
-        public void run() {
-            winManager =
-                new MyDoggyToolWindowManager(Locale.getDefault(), MyDoggyToolWindowManager.class.getClassLoader());
-            winManager.getResourceManager().setUserBundle(Locale.getDefault(), "/toolWindow", //$NON-NLS-1$
-                UIManager.class.getClassLoader());
-            // set the size of the splitPane separator
-            for (ToolWindowAnchor anchor : ToolWindowAnchor.values()) {
-                MyDoggyToolWindowBar bar = winManager.getBar(anchor);
-                bar.setDividerSize(7);
-            }
-
-            ToolWindowManagerDescriptor desc = winManager.getToolWindowManagerDescriptor();
-            desc.setNumberingEnabled(false);
-
-            for (ToolWindowType toolWinType : ToolWindowType.values()) {
-                if (toolWinType.equals(ToolWindowType.EXTERN)) {
-                    continue;
-                }
-                ToolWindowTypeDescriptor type = winManager.getTypeDescriptorTemplate(toolWinType);
-                type.setIdVisibleOnTitleBar(false);
-                type.setAnimating(false);
-            }
-        }
-    }
-
-    private final static WinManager manager = new WinManager();
-    static {
-        try {
-            if (SwingUtilities.isEventDispatchThread()) {
-                manager.run();
-            } else {
-                SwingUtilities.invokeAndWait(manager);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-    }
-    public final static MyDoggyToolWindowManager toolWindowManager = manager.winManager;
+    public final static MyDoggyToolWindowManager toolWindowManager = builWinManager();
 
     public final static AtomicInteger dockableUIGenerator = new AtomicInteger(1);
 
@@ -99,6 +55,50 @@ public class UIManager {
             }
         }
         return null;
+    }
+
+    private static MyDoggyToolWindowManager builWinManager() {
+        MyDoggyToolWindowManager result = null;
+
+        FutureTask<MyDoggyToolWindowManager> future =
+            new FutureTask<MyDoggyToolWindowManager>(new Callable<MyDoggyToolWindowManager>() {
+
+                @Override
+                public MyDoggyToolWindowManager call() throws Exception {
+                    MyDoggyToolWindowManager winManager =
+                        new MyDoggyToolWindowManager(Locale.getDefault(), MyDoggyToolWindowManager.class
+                            .getClassLoader());
+                    winManager.getResourceManager().setUserBundle(Locale.getDefault(), "/toolWindow", //$NON-NLS-1$
+                        UIManager.class.getClassLoader());
+                    // set the size of the splitPane separator
+                    for (ToolWindowAnchor anchor : ToolWindowAnchor.values()) {
+                        MyDoggyToolWindowBar bar = winManager.getBar(anchor);
+                        bar.setDividerSize(7);
+                    }
+
+                    ToolWindowManagerDescriptor desc = winManager.getToolWindowManagerDescriptor();
+                    desc.setNumberingEnabled(false);
+
+                    for (ToolWindowType toolWinType : ToolWindowType.values()) {
+                        if (toolWinType.equals(ToolWindowType.EXTERN)) {
+                            continue;
+                        }
+                        ToolWindowTypeDescriptor type = winManager.getTypeDescriptorTemplate(toolWinType);
+                        type.setIdVisibleOnTitleBar(false);
+                        type.setAnimating(false);
+                    }
+                    return winManager;
+                }
+            });
+        GuiExecutor.instance().invokeAndWait(future);
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public static SeriesViewerFactory getViewerFactory(SeriesViewer seriesViewer) {

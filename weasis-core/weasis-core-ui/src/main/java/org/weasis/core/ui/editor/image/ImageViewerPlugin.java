@@ -25,6 +25,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.plaf.PanelUI;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -114,6 +115,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         view2ds = new ArrayList<DefaultView2d<E>>();
         components = new ArrayList<JComponent>();
         grid = new JPanel();
+        // For having a black background with any Look and Feel
+        grid.setUI(new PanelUI() {
+        });
         grid.setBackground(Color.BLACK);
         grid.setFocusCycleRoot(true);
         grid.setLayout(new GridBagLayout());
