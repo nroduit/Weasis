@@ -54,6 +54,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -64,6 +65,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
@@ -71,7 +73,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicComboPopup;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.noos.xing.mydoggy.DockedTypeDescriptor;
@@ -257,8 +262,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private final JPanel panel_3 = new JPanel();
     private final JButton btnExport = new JButton(Messages.getString("DicomExplorer.export")); //$NON-NLS-1$
     private final JButton btnImport = new JButton(Messages.getString("DicomExplorer.import")); //$NON-NLS-1$
-    private final AbstractAction importAction =
-        new AbstractAction(Messages.getString("DicomExplorer.to") + DicomExplorer.NAME) { //$NON-NLS-1$
+    private final AbstractAction importAction = new AbstractAction(
+        Messages.getString("DicomExplorer.to") + DicomExplorer.NAME) { //$NON-NLS-1$
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -266,8 +271,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 JMVUtils.showCenterScreen(dialog);
             }
         };
-    private final AbstractAction exportAction =
-        new AbstractAction(Messages.getString("DicomExplorer.from") + DicomExplorer.NAME) { //$NON-NLS-1$
+    private final AbstractAction exportAction = new AbstractAction(
+        Messages.getString("DicomExplorer.from") + DicomExplorer.NAME) { //$NON-NLS-1$
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -632,9 +637,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     class PatientContainerPane extends JPanel {
 
-        private final GridBagConstraints constraint =
-            new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1,
+            0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
         private final Component filler = Box.createRigidArea(new Dimension(5, 5));
 
         public PatientContainerPane() {
@@ -739,9 +743,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     class PatientPane extends JPanel {
 
         private final MediaSeriesGroup patient;
-        private final GridBagConstraints constraint =
-            new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        private final GridBagConstraints constraint = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1,
+            0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
 
         public PatientPane(MediaSeriesGroup patient) {
             if (patient == null) {
@@ -1020,10 +1023,32 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             panel.add(patientCombobox, gridBagConstraints_1);
             patientCombobox.setMaximumRowCount(15);
             patientCombobox.setFont(FontTools.getFont11());
-            patientCombobox.setRenderer(new ComboBoxCellRenderer());
-
             JMVUtils.setPreferredWidth(patientCombobox, 145, 145);
+            patientCombobox.updateUI();
             patientCombobox.addItemListener(patientChangeListener);
+            Object comp = patientCombobox.getUI().getAccessibleChild(patientCombobox, 0);
+            if (comp instanceof BasicComboPopup) {
+                final BasicComboPopup popup = (BasicComboPopup) comp;
+                popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+                    @Override
+                    public void valueChanged(ListSelectionEvent e) {
+                        if (!e.getValueIsAdjusting()) {
+                            ListSelectionModel model = (ListSelectionModel) e.getSource();
+                            int first = model.getMinSelectionIndex();
+                            if (first >= 0) {
+                                Object item = patientCombobox.getItemAt(first);
+                                if (patientCombobox.getRenderer() instanceof JComponent) {
+                                    ((JComponent) patientCombobox.getRenderer()).setToolTipText(item.toString());
+                                }
+
+                            }
+                        }
+
+                    }
+                });
+            }
+            // patientCombobox.setRenderer(new ComboBoxCellRenderer());
 
             final GridBagConstraints gridBagConstraints_3 = new GridBagConstraints();
             gridBagConstraints_3.anchor = GridBagConstraints.WEST;
