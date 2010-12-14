@@ -752,12 +752,11 @@ public class WeasisLauncher {
                         { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     int response =
-                        JOptionPane
-                            .showOptionDialog(
-                                loader.getWindow(),
-                                Messages.getString("WeasisLauncher.msg"), //$NON-NLS-1$
-                                Messages.getString("WeasisLauncher.first"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
-                                null, options, null);
+                        JOptionPane.showOptionDialog(
+                            loader.getWindow(),
+                            Messages.getString("WeasisLauncher.msg"), //$NON-NLS-1$
+                            Messages.getString("WeasisLauncher.first"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
+                            null, options, null);
                     if (response == 1) {
                         // delete the properties file to ask again
                         file.delete();
@@ -766,6 +765,8 @@ public class WeasisLauncher {
                     }
                 }
             });
+        } else {
+            // TODO window for news
         }
         return loader;
     }
