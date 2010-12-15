@@ -27,6 +27,7 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
     private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
     private final static Color back = new Color(242, 242, 242);
 
+    // TODO renderer not supported by Substance laf
     public ThumbnailRenderer() {
         // Cannot pass a boxLayout directly to super because it has a this reference
         super(null, true);

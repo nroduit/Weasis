@@ -54,9 +54,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -64,19 +62,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.UIResource;
-import javax.swing.plaf.basic.BasicComboPopup;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.noos.xing.mydoggy.DockedTypeDescriptor;
@@ -1024,31 +1015,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             patientCombobox.setMaximumRowCount(15);
             patientCombobox.setFont(FontTools.getFont11());
             JMVUtils.setPreferredWidth(patientCombobox, 145, 145);
+            // Update UI before adding the Tooltip feature in the combobox list
             patientCombobox.updateUI();
             patientCombobox.addItemListener(patientChangeListener);
-            Object comp = patientCombobox.getUI().getAccessibleChild(patientCombobox, 0);
-            if (comp instanceof BasicComboPopup) {
-                final BasicComboPopup popup = (BasicComboPopup) comp;
-                popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (!e.getValueIsAdjusting()) {
-                            ListSelectionModel model = (ListSelectionModel) e.getSource();
-                            int first = model.getMinSelectionIndex();
-                            if (first >= 0) {
-                                Object item = patientCombobox.getItemAt(first);
-                                if (patientCombobox.getRenderer() instanceof JComponent) {
-                                    ((JComponent) patientCombobox.getRenderer()).setToolTipText(item.toString());
-                                }
-
-                            }
-                        }
-
-                    }
-                });
-            }
-            // patientCombobox.setRenderer(new ComboBoxCellRenderer());
+            JMVUtils.addTooltipToComboList(patientCombobox);
 
             final GridBagConstraints gridBagConstraints_3 = new GridBagConstraints();
             gridBagConstraints_3.anchor = GridBagConstraints.WEST;
@@ -1059,12 +1029,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             panel.add(studyCombobox, gridBagConstraints_3);
             studyCombobox.setMaximumRowCount(15);
             studyCombobox.setFont(FontTools.getFont11());
-            studyCombobox.setRenderer(new ComboBoxCellRenderer());
+            // Update UI before adding the Tooltip feature in the combobox list
+            studyCombobox.updateUI();
             JMVUtils.setPreferredWidth(studyCombobox, 145, 145);
             // do not use addElement
             modelStudy.insertElementAt(ALL_STUDIES, 0);
             modelStudy.setSelectedItem(ALL_STUDIES);
             studyCombobox.addItemListener(studyItemListener);
+            JMVUtils.addTooltipToComboList(studyCombobox);
+
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
@@ -1162,56 +1135,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             }
         }
         return false;
-    }
-
-    static class ComboBoxCellRenderer extends JLabel implements ListCellRenderer, UIResource {
-
-        private final Border cBorder = new EmptyBorder(1, 3, 1, 3);
-
-        public ComboBoxCellRenderer() {
-            setOpaque(true);
-            setHorizontalAlignment(LEFT);
-            setVerticalAlignment(CENTER);
-            setBorder(cBorder);
-            // set default combobox ui render
-            setName("ComboBox.renderer"); //$NON-NLS-1$
-            setText(" "); //$NON-NLS-1$
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-            boolean cellHasFocus) {
-            // set default list ui render
-            setName("ComboBox.listRenderer"); //$NON-NLS-1$
-
-            if (isSelected) {
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
-            } else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
-            }
-            setFont(list.getFont());
-            if (value != null) {
-                String str = value.toString();
-                setText(str);
-                setToolTipText(str);
-            } else {
-                setText(""); //$NON-NLS-1$
-            }
-            // The renderer component should inherit the enabled and
-            // orientation state of its parent combobox. This is
-            // especially needed for GTK comboboxes, where the
-            // ListCellRenderer's state determines the visual state
-            // of the combobox.
-            // if (comboBox != null) {
-            // setEnabled(comboBox.isEnabled());
-            // setComponentOrientation(comboBox.getComponentOrientation());
-            // }
-            return this;
-
-        }
-
     }
 
     public void selectPatient(MediaSeriesGroup patient) {

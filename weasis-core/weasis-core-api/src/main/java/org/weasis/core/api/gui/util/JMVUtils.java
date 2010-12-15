@@ -27,18 +27,23 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
+import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JMenuItem;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
-import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.text.DefaultFormatterFactory;
@@ -50,8 +55,6 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
-
-import org.weasis.core.api.Messages;
 
 /**
  * The Class JMVUtils.
@@ -137,8 +140,8 @@ public class JMVUtils {
             Rectangle bound =
                 GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
                     .getBounds();
-            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2, bound.y
-                + (bound.height - window.getHeight()) / 2);
+            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
+                bound.y + (bound.height - window.getHeight()) / 2);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -163,7 +166,7 @@ public class JMVUtils {
 
     public static void formatTableHeaders(JTable table, int alignement, int columnSize) {
         TableHaederRenderer renderer = new TableHaederRenderer();
-        ;
+
         renderer.setHorizontalAlignment(alignement);
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn col = table.getColumnModel().getColumn(i);
@@ -198,15 +201,15 @@ public class JMVUtils {
         textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         textField.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    textField.commitEdit(); // so use it.
-                    textField.postActionEvent(); // stop editing //for DefaultCellEditor
-                } catch (java.text.ParseException exc) {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        textField.commitEdit(); // so use it.
+                        textField.postActionEvent(); // stop editing //for DefaultCellEditor
+                    } catch (java.text.ParseException exc) {
+                    }
+                    textField.setValue(textField.getValue());
                 }
-                textField.setValue(textField.getValue());
-            }
-        });
+            });
     }
 
     public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
@@ -215,14 +218,14 @@ public class JMVUtils {
         ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    ftf.commitEdit(); // so use it.
-                } catch (java.text.ParseException exc) {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        ftf.commitEdit(); // so use it.
+                    } catch (java.text.ParseException exc) {
+                    }
+                    ftf.setValue(ftf.getValue());
                 }
-                ftf.setValue(ftf.getValue());
-            }
-        });
+            });
     }
 
     public static void formatCheckAction(JSpinner spin) {
@@ -230,14 +233,14 @@ public class JMVUtils {
         ftf.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
         ftf.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
 
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    ftf.commitEdit(); // so use it.
-                } catch (java.text.ParseException exc) {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        ftf.commitEdit(); // so use it.
+                    } catch (java.text.ParseException exc) {
+                    }
+                    ftf.setValue(ftf.getValue());
                 }
-                ftf.setValue(ftf.getValue());
-            }
-        });
+            });
     }
 
     public static Number getFormattedValue(JFormattedTextField textField) {
@@ -397,4 +400,24 @@ public class JMVUtils {
         return (aText != null) && (!aText.trim().equals("")); //$NON-NLS-1$
     }
 
+    public static void addTooltipToComboList(final JComboBox combo) {
+        Object comp = combo.getUI().getAccessibleChild(combo, 0);
+        if (comp instanceof BasicComboPopup) {
+            final BasicComboPopup popup = (BasicComboPopup) comp;
+            popup.getList().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+                @Override
+                public void valueChanged(ListSelectionEvent e) {
+                    if (!e.getValueIsAdjusting()) {
+                        ListSelectionModel model = (ListSelectionModel) e.getSource();
+                        int first = model.getMinSelectionIndex();
+                        if (first >= 0) {
+                            Object item = combo.getItemAt(first);
+                            ((JComponent) combo.getRenderer()).setToolTipText(item.toString());
+                        }
+                    }
+                }
+            });
+        }
+    }
 }

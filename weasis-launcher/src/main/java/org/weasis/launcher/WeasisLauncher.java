@@ -10,7 +10,10 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Window;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,9 +33,13 @@ import java.util.Properties;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.apache.felix.framework.Felix;
 import org.apache.felix.framework.util.FelixConstants;
@@ -275,12 +282,14 @@ public class WeasisLauncher {
                     null);
             m_tracker.open();
 
+            final Window splash = loader.getWindow();
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
                     // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
                     JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                     setLookAndFeel(look);
+
                 }
             });
 
@@ -765,8 +774,24 @@ public class WeasisLauncher {
                     }
                 }
             });
-        } else {
-            // TODO window for news
+        } else if (versionNew != null && !versionNew.equals(versionOld)) {
+            final String str = Messages.getString("WeasisLauncher.news");
+            if (!"".equals(str.trim())) {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                        JTextPane jTextPane1 = new JTextPane();
+                        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
+                        jTextPane1.setEditable(false);
+                        jTextPane1.setBackground(Color.WHITE);
+                        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+                        ss.addRule("p {font-size:12}");
+                        jTextPane1.setText(str);
+                        jTextPane1.setPreferredSize(new Dimension(550, 300));
+                        JScrollPane sp = new JScrollPane(jTextPane1);
+                        JOptionPane.showMessageDialog(loader.getWindow(), sp, "News", JOptionPane.PLAIN_MESSAGE);
+                    }
+                });
+            }
         }
         return loader;
     }
@@ -839,6 +864,9 @@ public class WeasisLauncher {
                     Class lnfClass = Class.forName(look, true, ClassLoader.getSystemClassLoader());
                     LookAndFeel laf = (LookAndFeel) lnfClass.newInstance();
                     UIManager.setLookAndFeel(laf);
+                }
+                for (Window window : Window.getWindows()) {
+                    SwingUtilities.updateComponentTreeUI(window);
                 }
             } catch (Exception e) {
                 System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
