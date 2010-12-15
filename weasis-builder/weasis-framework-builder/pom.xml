@@ -6,12 +6,9 @@
 	<artifactId>weasis-framework-builder</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distribution [${project.artifactId}]</name>
-	<version>1.0.7-SNAPSHOT</version>
+	<version>1.0.8-SNAPSHOT</version>
 	<properties>
-		<!--
-			dollar property to avoid replacing some variables when filtering
-			resources files (ex. ${user.home} in config.properties)
-		-->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
@@ -25,15 +22,16 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.0.6</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.4-SNAPSHOT</weasis.launcher.version>
-		<weasis.core.version>0.5.4-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.7.2-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.4-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.4-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.4-SNAPSHOT</weasis.dicom.version>
-		<weasis.imageioext.j2k.codec.version>0.5.4-SNAPSHOT</weasis.imageioext.j2k.codec.version>
+		<weasis.launcher.version>0.5.5-SNAPSHOT</weasis.launcher.version>
+		<weasis.core.version>0.5.5-SNAPSHOT</weasis.core.version>
+		<weasis.imageio.version>0.7.3-SNAPSHOT</weasis.imageio.version>
+		<weasis.jmc.version>0.5.5-SNAPSHOT</weasis.jmc.version>
+		<weasis.base.version>0.5.5-SNAPSHOT</weasis.base.version>
+		<weasis.dicom.version>0.5.5-SNAPSHOT</weasis.dicom.version>
+		<weasis.imageioext.j2k.codec.version>0.5.5-SNAPSHOT</weasis.imageioext.j2k.codec.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
+		<substance.version>6.1.0</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version>
@@ -179,6 +177,12 @@
 									<version>${com.sun.media.j3d.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty</groupId>
+									<artifactId>substance</artifactId>
+									<version>${substance.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis Core bundles -->
@@ -264,16 +268,12 @@
 									<version>${weasis.imageioext.kakadu.native.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								<!--								<artifactItem>-->
-								<!--									<groupId>org.weasis.imageioext</groupId>-->
-								<!--
-									<artifactId>weasis-imageioext-j2k-codec-windows-x86-64</artifactId>
-								-->
-								<!--
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-								-->
-								<!--									<outputDirectory>${tmp.bundle.dir}</outputDirectory>>-->
-								<!--								</artifactItem>-->
+								<!-- <artifactItem> -->
+								<!-- <groupId>org.weasis.imageioext</groupId> -->
+								<!-- <artifactId>weasis-imageioext-j2k-codec-windows-x86-64</artifactId> -->
+								<!-- <version>${weasis.imageioext.kakadu.native.version}</version> -->
+								<!-- <outputDirectory>${tmp.bundle.dir}</outputDirectory>> -->
+								<!-- </artifactItem> -->
 
 								<!-- ===================================== -->
 								<!-- Weasis Base bundles -->
@@ -326,12 +326,9 @@
 						<configuration>
 							<tasks>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex"
-									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
-									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
-									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${basedir}/lib/bindex.jar" />
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</tasks>
@@ -367,12 +364,8 @@
 	<profiles>
 		<profile>
 			<activation>
-				<!--
-					Use your own certificate either: mvn package
-					-Djarsigner.alias="alias" -Djarsigner.storepass="storepass"
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in
-					setting.xml (<jarsigner.alias>alias</jarsigner.alias>)
-				-->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
+					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
