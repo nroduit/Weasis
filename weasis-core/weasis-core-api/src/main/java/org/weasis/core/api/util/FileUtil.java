@@ -12,12 +12,18 @@ package org.weasis.core.api.util;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 import javax.imageio.stream.ImageInputStream;
 import javax.xml.stream.XMLStreamException;
@@ -147,10 +153,10 @@ public class FileUtil {
             e.printStackTrace();
             return false;
         }
-        return writFile(input, outputStream);
+        return writeFile(input, outputStream);
     }
 
-    public static boolean writFile(InputStream inputStream, OutputStream out) {
+    public static boolean writeFile(InputStream inputStream, OutputStream out) {
         if (inputStream == null && out == null) {
             return false;
         }
@@ -170,4 +176,45 @@ public class FileUtil {
         }
     }
 
+    public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {
+        if (inputStream == null && out == null) {
+            return false;
+        }
+        try {
+            FileChannel fci = inputStream.getChannel();
+            FileChannel fco = out.getChannel();
+            fco.transferFrom(fci, 0, fci.size());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            FileUtil.safeClose(inputStream);
+            FileUtil.safeClose(out);
+        }
+    }
+
+    public static boolean nioWriteFile(InputStream in, OutputStream out, final int bufferSize) {
+        if (in == null && out == null) {
+            return false;
+        }
+        try {
+            ReadableByteChannel readChannel = Channels.newChannel(in);
+            WritableByteChannel writeChannel = Channels.newChannel(out);
+            ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+            while (readChannel.read(buffer) != -1) {
+                buffer.flip();
+                writeChannel.write(buffer);
+                buffer.clear();
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            FileUtil.safeClose(in);
+            FileUtil.safeClose(out);
+        }
+    }
 }

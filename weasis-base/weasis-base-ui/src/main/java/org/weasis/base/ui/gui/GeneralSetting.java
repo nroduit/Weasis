@@ -104,34 +104,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
                         try {
                             // JFrame dialog = WeasisWin.getInstance();
                             Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
-                            final boolean wasDecoratedByOS = !dialog.isUndecorated();
                             UIManager.setLookAndFeel(finalLafClassName);
-                            // for (Window window : Window.getWindows()) {
-                            // SwingUtilities.updateComponentTreeUI(window);
-                            // }
                             SwingUtilities.updateComponentTreeUI(dialog);
-
-                            // boolean canBeDecoratedByLAF = UIManager.getLookAndFeel().getSupportsWindowDecorations();
-                            // if (canBeDecoratedByLAF == wasDecoratedByOS) {
-                            // boolean wasVisible = dialog.isVisible();
-                            //
-                            // dialog.setVisible(false);
-                            // dialog.dispose();
-                            // if (!canBeDecoratedByLAF) {
-                            // // see the java docs under the method
-                            // // JFrame.setDefaultLookAndFeelDecorated(boolean
-                            // // value) for description of these 2 lines:
-                            // dialog.setUndecorated(false);
-                            // // dialog.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-                            //
-                            // } else {
-                            // dialog.setUndecorated(true);
-                            // // dialog.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
-                            // }
-                            // dialog.setVisible(wasVisible);
-                            //
-                            // }
-
                         } catch (Exception exception) {
                             System.out.println("Can't change look and feel");
                         }
@@ -209,24 +183,27 @@ public class GeneralSetting extends AbstractItemDialogPage {
         if (look != null) {
             BundleTools.SYSTEM_PREFERENCES.put("weasis.look", look.getClassName()); //$NON-NLS-1$
         }
-        // Restor old laf to avoid display issues.
+        // Restore old laf to avoid display issues.
         final String finalLafClassName = oldUILook.getClassName();
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);
+        LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
+        if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    try {
+                        WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);
 
-                    UIManager.setLookAndFeel(finalLafClassName);
-                    for (Window window : Window.getWindows()) {
-                        SwingUtilities.updateComponentTreeUI(window);
+                        UIManager.setLookAndFeel(finalLafClassName);
+                        for (Window window : Window.getWindows()) {
+                            SwingUtilities.updateComponentTreeUI(window);
+                        }
+
+                    } catch (Exception exception) {
+                        System.out.println("Can't change look and feel");
                     }
-
-                } catch (Exception exception) {
-                    System.out.println("Can't change look and feel");
                 }
-            }
-        };
-        GuiExecutor.instance().execute(runnable);
+            };
+            GuiExecutor.instance().execute(runnable);
+        }
     }
 
     @Override

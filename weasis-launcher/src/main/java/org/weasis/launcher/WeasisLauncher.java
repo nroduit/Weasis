@@ -35,7 +35,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
-import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.text.html.HTMLEditorKit;
@@ -182,7 +181,7 @@ public class WeasisLauncher {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setSystemSpecification();
 
-        List<StringBuffer> commandList = splitCommand(argv);
+        final List<StringBuffer> commandList = splitCommand(argv);
         // Look for bundle directory and/or cache directory.
         // We support at most one argument, which is the bundle
         // cache directory.
@@ -282,35 +281,31 @@ public class WeasisLauncher {
                     null);
             m_tracker.open();
 
-            final Window splash = loader.getWindow();
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                    // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
-                    JFrame.setDefaultLookAndFeelDecorated(true);
-                    JDialog.setDefaultLookAndFeelDecorated(true);
-                    setLookAndFeel(look);
-
-                }
-            });
-
             // Start the framework.
             m_felix.start();
 
             // End of splash screen
             loader.close();
             loader = null;
+            SwingUtilities.invokeLater(new Runnable() {
 
-            Object commandSession = getCommandSession(m_tracker.getService());
-            if (commandSession != null) {
-                // execute the commands from main argv
-                for (StringBuffer command : commandList) {
-                    commandSession_execute(commandSession, command);
+                @Override
+                public void run() {
+                    Object commandSession = getCommandSession(m_tracker.getService());
+                    if (commandSession != null) {
+                        // execute the commands from main argv
+                        for (StringBuffer command : commandList) {
+                            commandSession_execute(commandSession, command);
+                        }
+                        commandSession_close(commandSession);
+                    }
+
+                    m_tracker.close();
                 }
-                commandSession_close(commandSession);
-            }
-            m_tracker.close();
+            });
 
             boolean uiStarted = false;
+
             for (Bundle b : m_felix.getBundleContext().getBundles()) {
                 if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
                     uiStarted = true;
@@ -688,6 +683,8 @@ public class WeasisLauncher {
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
+        LookAndFeels.installSubstanceLookAndFeels();
+
         look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
         if (look == null) {
             look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
@@ -703,7 +700,14 @@ public class WeasisLauncher {
                 look = UIManager.getSystemLookAndFeelClassName();
             }
         }
-        // look = setLookAndFeel(look);
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
+                JFrame.setDefaultLookAndFeelDecorated(true);
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                look = setLookAndFeel(look);
+            }
+        });
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();
@@ -830,7 +834,7 @@ public class WeasisLauncher {
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
         UIManager.put("Slider.paintValue", Boolean.FALSE); //$NON-NLS-1$
-        UIManager.LookAndFeelInfo lafs[] = LookAndFeels.commonInstalledLookAndFeels();
+        UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
         laf_exist: if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
                 if (lafs[i].getClassName().equals(look)) { //$NON-NLS-1$
@@ -857,17 +861,8 @@ public class WeasisLauncher {
 
         if (look != null) {
             try {
-                if ("javax.swing.plaf.metal.MetalLookAndFeel".equals(look)) { //$NON-NLS-1$
-                    // Avoid reflection for the common case of metal.
-                    UIManager.setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
-                } else {
-                    Class lnfClass = Class.forName(look, true, ClassLoader.getSystemClassLoader());
-                    LookAndFeel laf = (LookAndFeel) lnfClass.newInstance();
-                    UIManager.setLookAndFeel(laf);
-                }
-                for (Window window : Window.getWindows()) {
-                    SwingUtilities.updateComponentTreeUI(window);
-                }
+                    UIManager.setLookAndFeel(look);
+   
             } catch (Exception e) {
                 System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
                 e.printStackTrace();

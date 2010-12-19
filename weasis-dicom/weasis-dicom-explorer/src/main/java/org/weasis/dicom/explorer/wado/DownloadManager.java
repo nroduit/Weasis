@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -40,11 +38,6 @@ import javax.xml.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -63,7 +56,6 @@ import org.weasis.dicom.codec.DicomVideo;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class DownloadManager {
@@ -100,7 +92,7 @@ public class DownloadManager {
                 }
             }
             File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-            FileUtil.writFile(stream, new FileOutputStream(tempFile));
+            FileUtil.writeFile(stream, new FileOutputStream(tempFile));
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
 
             Source xmlFile = new StAXSource(xmler);
@@ -113,9 +105,11 @@ public class DownloadManager {
             } catch (SAXException e) {
                 LOGGER.error("[Validate with XSD schema] wado_query is NOT valid"); //$NON-NLS-1$
                 LOGGER.error("Reason: {}", e.getLocalizedMessage()); //$NON-NLS-1$
-                // Try to read the xml even it is not valid.
+            } catch (Exception e) {
+                LOGGER.error("Error when validate XSD schema. Try to update JRE"); //$NON-NLS-1$
+                e.printStackTrace();
             }
-
+            // Try to read the xml even it is not valid.
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
             int eventType;
             if (xmler.hasNext()) {
@@ -168,7 +162,13 @@ public class DownloadManager {
                                     }
                                 });
                             }
-
+                            for (LoadSeries loadSeries : seriesList) {
+                                String modality = (String) loadSeries.getDicomSeries().getTagValue(TagElement.Modality);
+                                boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+                                if (!ps) {
+                                    loadSeries.startDownloadImageReference(wadoParameters);
+                                }
+                            }
                         }
                         break;
                     default:
@@ -212,8 +212,8 @@ public class DownloadManager {
 
             patient.setTag(TagElement.PatientSex, getTagAttribute(xmler, TagElement.PatientSex.getTagName(), "O")); //$NON-NLS-1$
             patient.setTag(TagElement.PatientBirthDate, TagElement.getDicomDate(patientBirthDate));
-            patient.setTag(TagElement.PatientBirthTime, TagElement.getDicomTime(getTagAttribute(xmler,
-                TagElement.PatientBirthTime.getTagName(), null)));
+            patient.setTag(TagElement.PatientBirthTime,
+                TagElement.getDicomTime(getTagAttribute(xmler, TagElement.PatientBirthTime.getTagName(), null)));
             model.addHierarchyNode(TreeModel.rootNode, patient);
             LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
         }
@@ -247,17 +247,17 @@ public class DownloadManager {
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
             study = new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID, TagElement.StudyDate);
-            study.setTag(TagElement.StudyDate, TagElement.getDicomDate(getTagAttribute(xmler, TagElement.StudyDate
-                .getTagName(), null)));
-            study.setTag(TagElement.StudyTime, TagElement.getDicomTime(getTagAttribute(xmler, TagElement.StudyTime
-                .getTagName(), null)));
-            study.setTag(TagElement.StudyDescription, getTagAttribute(xmler, TagElement.StudyDescription.getTagName(),
-                "")); //$NON-NLS-1$
-            study.setTag(TagElement.AccessionNumber, getTagAttribute(xmler, TagElement.AccessionNumber.getTagName(),
-                null));
+            study.setTag(TagElement.StudyDate,
+                TagElement.getDicomDate(getTagAttribute(xmler, TagElement.StudyDate.getTagName(), null)));
+            study.setTag(TagElement.StudyTime,
+                TagElement.getDicomTime(getTagAttribute(xmler, TagElement.StudyTime.getTagName(), null)));
+            study.setTag(TagElement.StudyDescription,
+                getTagAttribute(xmler, TagElement.StudyDescription.getTagName(), "")); //$NON-NLS-1$
+            study.setTag(TagElement.AccessionNumber,
+                getTagAttribute(xmler, TagElement.AccessionNumber.getTagName(), null));
             study.setTag(TagElement.StudyID, getTagAttribute(xmler, TagElement.StudyID.getTagName(), null));
-            study.setTag(TagElement.ReferringPhysicianName, getTagAttribute(xmler, TagElement.ReferringPhysicianName
-                .getTagName(), null));
+            study.setTag(TagElement.ReferringPhysicianName,
+                getTagAttribute(xmler, TagElement.ReferringPhysicianName.getTagName(), null));
             model.addHierarchyNode(patient, study);
         }
 
@@ -294,15 +294,15 @@ public class DownloadManager {
             dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagElement.ExplorerModel, model);
             dicomSeries.setTag(TagElement.SeriesInstanceUID, seriesUID);
-            dicomSeries.setTag(TagElement.SeriesNumber, getIntegerTagAttribute(xmler, TagElement.SeriesNumber
-                .getTagName(), null));
+            dicomSeries.setTag(TagElement.SeriesNumber,
+                getIntegerTagAttribute(xmler, TagElement.SeriesNumber.getTagName(), null));
             dicomSeries.setTag(TagElement.Modality, getTagAttribute(xmler, TagElement.Modality.getTagName(), null));
-            dicomSeries.setTag(TagElement.SeriesDescription, getTagAttribute(xmler, TagElement.SeriesDescription
-                .getTagName(), "")); //$NON-NLS-1$
-            dicomSeries.setTag(TagElement.WadoTransferSyntaxUID, getTagAttribute(xmler,
-                TagElement.WadoTransferSyntaxUID.getTagName(), null));
-            dicomSeries.setTag(TagElement.WadoCompressionRate, getIntegerTagAttribute(xmler,
-                TagElement.WadoCompressionRate.getTagName(), 0));
+            dicomSeries.setTag(TagElement.SeriesDescription,
+                getTagAttribute(xmler, TagElement.SeriesDescription.getTagName(), "")); //$NON-NLS-1$
+            dicomSeries.setTag(TagElement.WadoTransferSyntaxUID,
+                getTagAttribute(xmler, TagElement.WadoTransferSyntaxUID.getTagName(), null));
+            dicomSeries.setTag(TagElement.WadoCompressionRate,
+                getIntegerTagAttribute(xmler, TagElement.WadoCompressionRate.getTagName(), 0));
             dicomSeries.setTag(TagElement.WadoParameters, wadoParameters);
             dicomSeries.setTag(TagElement.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
             model.addHierarchyNode(study, dicomSeries);
@@ -342,8 +342,8 @@ public class DownloadManager {
                             } else {
                                 String tsuid = getTagAttribute(xmler, TagElement.TransferSyntaxUID.getTagName(), null);
                                 DicomInstance dcmInstance = new DicomInstance(sopInstanceUID, tsuid);
-                                dcmInstance.setInstanceNumber(getIntegerTagAttribute(xmler, TagElement.InstanceNumber
-                                    .getTagName(), -1));
+                                dcmInstance.setInstanceNumber(getIntegerTagAttribute(xmler,
+                                    TagElement.InstanceNumber.getTagName(), -1));
                                 dicomInstances.add(dcmInstance);
                             }
                         }
@@ -372,14 +372,13 @@ public class DownloadManager {
             String modality = (String) dicomSeries.getTagValue(TagElement.Modality);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, model);
+
             Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagElement.SeriesNumber));
             DownloadPriority priority =
-                new DownloadPriority((String) patient.getTagValue(TagElement.PatientName), (String) study
-                    .getTagValue(TagElement.StudyInstanceUID), (Date) study.getTagValue(TagElement.StudyDate), sn);
+                new DownloadPriority((String) patient.getTagValue(TagElement.PatientName),
+                    (String) study.getTagValue(TagElement.StudyInstanceUID),
+                    (Date) study.getTagValue(TagElement.StudyDate), sn);
             loadSeries.setPriority(priority);
-            if (!ps) {
-                loadSeries.startDownloadImageReference(wadoParameters);
-            }
             seriesList.add(loadSeries);
         }
         return dicomSeries;
@@ -403,272 +402,6 @@ public class DownloadManager {
                     return Integer.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-            }
-        }
-        return defaultValue;
-    }
-
-    public static ArrayList<LoadSeries> buildDicomStructure(URI uri, final DicomModel model) {
-        ArrayList<LoadSeries> tasks = new ArrayList<LoadSeries>();
-        try {
-            URL url = uri.toURL();
-            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document doc = null;
-            InputSource inputSource;
-            if (uri.getPath().endsWith(".gz")) { //$NON-NLS-1$
-                inputSource = GzipManager.gzipUncompressToInputSource(url);
-            } else {
-                inputSource = new InputSource(uri.toURL().openStream());
-            }
-            try {
-                doc = docBuilder.parse(inputSource);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-
-            // normalize text representation
-            doc.getDocumentElement().normalize();
-            Element root = doc.getDocumentElement();
-
-            if (root == null || !WadoParameters.TAG_DOCUMENT_ROOT.equals(root.getNodeName())) {
-                return null;
-            }
-            String wadoURL = getTagAttribute(root, WadoParameters.TAG_WADO_URL, null);
-            boolean onlySopUID = Boolean.valueOf(getTagAttribute(root, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
-            String additionnalParameters = getTagAttribute(root, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
-            String overrideList = getTagAttribute(root, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-            String webLogin = getTagAttribute(root, WadoParameters.TAG_WADO_WEB_LOGIN, null); //$NON-NLS-1$
-            final WadoParameters wadoParameters =
-                new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
-            NodeList listOfPatient = doc.getElementsByTagName(TagElement.DICOM_LEVEL.Patient.name());
-
-            for (int m = 0; m < listOfPatient.getLength(); m++) {
-                Node patientNode = listOfPatient.item(m);
-                if (patientNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Element patientElement = (Element) patientNode;
-                    // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
-                    // the tags located in DICOM object (because original DICOM can contain different values after
-                    // merging patient or study
-                    String patientID = getTagAttribute(patientElement, TagElement.PatientID.getTagName(), ""); //$NON-NLS-1$
-                    String patientBirthDate =
-                        getTagAttribute(patientElement, TagElement.PatientBirthDate.getTagName(), ""); //$NON-NLS-1$
-                    String name =
-                        getTagAttribute(patientElement, TagElement.PatientName.getTagName(), Messages
-                            .getString("DownloadManager.unknown")); //$NON-NLS-1$
-
-                    // TODO set preferences of building patientPseudoUID
-                    String patientPseudoUID = patientID + patientBirthDate;
-                    MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
-                    if (patient == null) {
-                        patient =
-                            new MediaSeriesGroupNode(TagElement.PatientPseudoUID, patientPseudoUID,
-                                TagElement.PatientName);
-                        patient.setTag(TagElement.PatientID, patientID);
-                        if (name.trim().equals("")) { //$NON-NLS-1$
-                            name = Messages.getString("DownloadManager.unknown"); //$NON-NLS-1$
-                        }
-                        name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
-                        patient.setTag(TagElement.PatientName, name);
-
-                        patient.setTag(TagElement.PatientSex, getTagAttribute(patientElement, TagElement.PatientSex
-                            .getTagName(), "O")); //$NON-NLS-1$
-                        patient.setTag(TagElement.PatientBirthDate, TagElement.getDicomDate(patientBirthDate));
-                        patient.setTag(TagElement.PatientBirthTime, TagElement.getDicomTime(getTagAttribute(
-                            patientElement, TagElement.PatientBirthTime.getTagName(), null)));
-                        model.addHierarchyNode(TreeModel.rootNode, patient);
-                        LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
-                    } else {
-                        if (listOfPatient.getLength() == 1) {
-                            final MediaSeriesGroup uniquePatient = patient;
-                            GuiExecutor.instance().execute(new Runnable() {
-
-                                public void run() {
-                                    synchronized (UIManager.VIEWER_PLUGINS) {
-                                        for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                                            if (uniquePatient.equals(p.getGroupID())) {
-                                                p.setSelectedAndGetFocus();
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }
-
-                    NodeList listOfStudy = patientElement.getElementsByTagName(TagElement.DICOM_LEVEL.Study.name());
-                    for (int i = 0; i < listOfStudy.getLength(); i++) {
-                        Node studyNode = listOfStudy.item(i);
-                        if (studyNode.getNodeType() == Node.ELEMENT_NODE) {
-                            Element studyElement = (Element) studyNode;
-                            String studyUID =
-                                getTagAttribute(studyElement, TagElement.StudyInstanceUID.getTagName(), ""); //$NON-NLS-1$
-                            MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
-                            if (study == null) {
-                                study =
-                                    new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID,
-                                        TagElement.StudyDate);
-                                study.setTag(TagElement.StudyDate, TagElement.getDicomDate(getTagAttribute(
-                                    studyElement, TagElement.StudyDate.getTagName(), null)));
-                                study.setTag(TagElement.StudyTime, TagElement.getDicomTime(getTagAttribute(
-                                    studyElement, TagElement.StudyTime.getTagName(), null)));
-                                study.setTag(TagElement.StudyDescription, getTagAttribute(studyElement,
-                                    TagElement.StudyDescription.getTagName(), "")); //$NON-NLS-1$
-                                study.setTag(TagElement.AccessionNumber, getTagAttribute(studyElement,
-                                    TagElement.AccessionNumber.getTagName(), null));
-                                study.setTag(TagElement.StudyID, getTagAttribute(studyElement, TagElement.StudyID
-                                    .getTagName(), null));
-                                study.setTag(TagElement.ReferringPhysicianName, getTagAttribute(studyElement,
-                                    TagElement.ReferringPhysicianName.getTagName(), null));
-                                model.addHierarchyNode(patient, study);
-                            }
-
-                            NodeList seriesList =
-                                studyElement.getElementsByTagName(TagElement.DICOM_LEVEL.Series.name());
-                            for (int j = 0; j < seriesList.getLength(); j++) {
-                                Node seriesNode = seriesList.item(j);
-                                if (seriesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                    Element seriesElement = (Element) seriesNode;
-                                    String seriesUID =
-                                        getTagAttribute(seriesElement, TagElement.SeriesInstanceUID.getTagName(), ""); //$NON-NLS-1$
-
-                                    boolean buildLoadSeries = false;
-                                    Series dicomSeries = (Series) model.getHierarchyNode(study, seriesUID);
-                                    if (dicomSeries == null) {
-                                        dicomSeries = new DicomSeries(seriesUID);
-                                        dicomSeries.setTag(TagElement.ExplorerModel, model);
-                                        dicomSeries.setTag(TagElement.SeriesInstanceUID, seriesUID);
-                                        dicomSeries.setTag(TagElement.SeriesNumber, getIntegerTagAttribute(
-                                            seriesElement, TagElement.SeriesNumber.getTagName(), null));
-                                        dicomSeries.setTag(TagElement.Modality, getTagAttribute(seriesElement,
-                                            TagElement.Modality.getTagName(), null));
-                                        dicomSeries.setTag(TagElement.SeriesDescription, getTagAttribute(seriesElement,
-                                            TagElement.SeriesDescription.getTagName(), "")); //$NON-NLS-1$
-                                        dicomSeries.setTag(TagElement.WadoTransferSyntaxUID, getTagAttribute(
-                                            seriesElement, TagElement.WadoTransferSyntaxUID.getTagName(), null));
-                                        dicomSeries.setTag(TagElement.WadoCompressionRate, getIntegerTagAttribute(
-                                            seriesElement, TagElement.WadoCompressionRate.getTagName(), 0));
-                                        dicomSeries.setTag(TagElement.WadoParameters, wadoParameters);
-                                        dicomSeries.setTag(TagElement.WadoInstanceReferenceList,
-                                            new ArrayList<DicomInstance>());
-                                        model.addHierarchyNode(study, dicomSeries);
-                                        buildLoadSeries = true;
-                                    } else {
-                                        LOGGER.warn("{} already exists, abort downloading.", dicomSeries); //$NON-NLS-1$
-                                    }
-
-                                    NodeList sopInstanceUIDList =
-                                        seriesElement.getElementsByTagName(TagElement.DICOM_LEVEL.Instance.name());
-                                    for (int k = 0; k < sopInstanceUIDList.getLength(); k++) {
-                                        Node sop = sopInstanceUIDList.item(k);
-                                        if (sop.getNodeType() == Node.ELEMENT_NODE) {
-                                            Element sopInst = (Element) sop;
-                                            String sopInstanceUID =
-                                                getTagAttribute(sopInst, TagElement.SOPInstanceUID.getTagName(), null);
-                                            if (sopInstanceUID != null) {
-                                                String tsuid =
-                                                    getTagAttribute(sopInst, TagElement.TransferSyntaxUID.getTagName(),
-                                                        null);
-                                                if ("1.2.840.10008.1.2.4.100".equals(tsuid) //$NON-NLS-1$
-                                                    && sopInstanceUIDList.getLength() == 1) {
-                                                    dicomSeries = new DicomVideo(seriesUID);
-                                                    dicomSeries.setTag(TagElement.SeriesNumber, getIntegerTagAttribute(
-                                                        seriesElement, TagElement.SeriesNumber.getTagName(), 0));
-                                                    dicomSeries.setTag(TagElement.Modality, getTagAttribute(
-                                                        seriesElement, TagElement.Modality.getTagName(), null));
-                                                    dicomSeries.setTag(TagElement.SeriesDescription, getTagAttribute(
-                                                        seriesElement, TagElement.SeriesDescription.getTagName(), "")); //$NON-NLS-1$
-                                                    dicomSeries.setTag(TagElement.WadoTransferSyntaxUID,
-                                                        getTagAttribute(seriesElement, TagElement.WadoTransferSyntaxUID
-                                                            .getTagName(), null));
-                                                    dicomSeries.setTag(TagElement.WadoCompressionRate,
-                                                        getIntegerTagAttribute(seriesElement,
-                                                            TagElement.WadoCompressionRate.getTagName(), 0));
-                                                    dicomSeries.setTag(TagElement.WadoParameters, wadoParameters);
-                                                    dicomSeries.setTag(TagElement.WadoInstanceReferenceList,
-                                                        new ArrayList<DicomInstance>());
-                                                    model.addHierarchyNode(study, dicomSeries);
-                                                    buildLoadSeries = true;
-                                                }
-                                                List<DicomInstance> dicomInstances =
-                                                    (List<DicomInstance>) dicomSeries
-                                                        .getTagValue(TagElement.WadoInstanceReferenceList);
-                                                DicomInstance dcmInstance = new DicomInstance(sopInstanceUID, tsuid);
-                                                dcmInstance.setInstanceNumber(getIntegerTagAttribute(sopInst,
-                                                    TagElement.InstanceNumber.getTagName(), -1));
-                                                dicomInstances.add(dcmInstance);
-                                            }
-                                        }
-                                    }
-                                    if (buildLoadSeries) {
-                                        String modality = (String) dicomSeries.getTagValue(TagElement.Modality);
-                                        boolean ps =
-                                            modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-                                        final LoadSeries loadSeries = new LoadSeries(dicomSeries, model);
-                                        Integer sn =
-                                            (Integer) (ps ? Integer.MAX_VALUE : dicomSeries
-                                                .getTagValue(TagElement.SeriesNumber));
-                                        DownloadPriority priority =
-                                            new DownloadPriority((String) patient.getTagValue(TagElement.PatientName),
-                                                (String) study.getTagValue(TagElement.StudyInstanceUID), (Date) study
-                                                    .getTagValue(TagElement.StudyDate), sn);
-                                        loadSeries.setPriority(priority);
-                                        if (!ps) {
-                                            loadSeries.startDownloadImageReference(wadoParameters);
-                                        }
-                                        tasks.add(loadSeries);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
-        return tasks;
-    }
-
-    private static String getTagValue(NodeList nodeList, String defaultValue) {
-        if (nodeList != null && nodeList.getLength() > 0) {
-            Element lastNameElement = (Element) nodeList.item(0);
-            NodeList textLNList = lastNameElement.getChildNodes();
-            if (textLNList.getLength() > 0) {
-                String val = (textLNList.item(0)).getNodeValue();
-                return val == null ? defaultValue : val;
-            }
-        }
-        return defaultValue;
-    }
-
-    private static String getTagAttribute(Element element, String attribute, String defaultValue) {
-        if (element != null && attribute != null) {
-            try {
-                Attr attr = element.getAttributeNode(attribute);
-                if (attr != null) {
-                    return attr.getValue();
-                }
-            } catch (Exception e) {
-            }
-        }
-        return defaultValue;
-    }
-
-    private static Integer getIntegerTagAttribute(Element element, String attribute, Integer defaultValue) {
-        if (element != null && attribute != null) {
-            try {
-                Attr attr = element.getAttributeNode(attribute);
-                if (attr != null) {
-                    return Integer.valueOf(attr.getValue().trim());
-                }
-            } catch (Exception e) {
             }
         }
         return defaultValue;

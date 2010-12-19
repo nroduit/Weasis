@@ -36,10 +36,10 @@ public class WebStartLoader {
     public static final String FRM_TITLE = Messages.getString("WebStartLoader.title"); //$NON-NLS-1$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
-    private Window window;
+    private volatile Window window;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
-    private javax.swing.JProgressBar downloadProgress;
+    private volatile javax.swing.JProgressBar downloadProgress;
 
     public WebStartLoader() {
         init();
@@ -99,8 +99,8 @@ public class WebStartLoader {
         panelProgress.add(downloadProgress, BorderLayout.CENTER);
         panelProgress.add(cancelButton, BorderLayout.EAST);
         panel.add(panelProgress, BorderLayout.SOUTH);
-        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory
-            .createEmptyBorder(3, 3, 3, 3)));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
+            BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
         window.add(panel, BorderLayout.CENTER);
         window.pack();
@@ -113,34 +113,38 @@ public class WebStartLoader {
     /*
      * Set maximum value for progress bar
      */
-    public void setMax(int max) {
+    public void setMax(final int max) {
         if (isClosed()) {
             return;
         }
-        downloadProgress.setMaximum(max);
+        EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                downloadProgress.setMaximum(max);
+            }
+        });
     }
 
     /*
      * Set actual value of progress bar
      */
-    public void setValue(int val) {
+    public void setValue(final int val) {
         if (isClosed()) {
             return;
         }
-        downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
-        downloadProgress.setValue(val);
-        downloadProgress.repaint();
+        EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
+                downloadProgress.setValue(val);
+                downloadProgress.repaint();
+            }
+        });
 
     }
 
     private void closing() {
-        EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                close();
-                System.exit(0);
-            }
-        });
+        System.exit(0);
     }
 
     public boolean isClosed() {
@@ -148,12 +152,12 @@ public class WebStartLoader {
     }
 
     public void open() {
+        if (isClosed()) {
+            return;
+        }
         EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                if (isClosed()) {
-                    return;
-                }
                 displayOnScreen();
             }
         });
@@ -163,12 +167,17 @@ public class WebStartLoader {
         if (isClosed()) {
             return;
         }
-        window.setVisible(false);
-        window.dispose();
-        window = null;
-        cancelButton = null;
-        downloadProgress = null;
-        loadingLabel = null;
+        EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                window.setVisible(false);
+                window.dispose();
+                window = null;
+                cancelButton = null;
+                downloadProgress = null;
+                loadingLabel = null;
+            }
+        });
     }
 
     private void displayOnScreen() {
@@ -176,8 +185,8 @@ public class WebStartLoader {
             Rectangle bound =
                 GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
                     .getBounds();
-            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2, bound.y
-                + (bound.height - window.getHeight()) / 2);
+            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
+                bound.y + (bound.height - window.getHeight()) / 2);
         } catch (Exception e) {
             e.printStackTrace();
         }

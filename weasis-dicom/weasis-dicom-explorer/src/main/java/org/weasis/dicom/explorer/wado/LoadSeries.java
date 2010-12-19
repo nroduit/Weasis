@@ -59,8 +59,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.TagElement;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.media.data.TagElement.TagType;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -84,7 +84,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public final static String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
     public final static int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
-    private static final ExecutorService executor = Executors.newFixedThreadPool(3);
+
+    // private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
     public enum Status {
         Downloading, Paused, Complete, Cancelled, Error
@@ -92,7 +93,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     private final DicomModel dicomModel;
     private final Series dicomSeries;
-    private final JProgressBar progressBar;
+    private volatile JProgressBar progressBar;
     private DownloadPriority priority = null;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel) {
@@ -103,8 +104,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.dicomSeries = dicomSeries;
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagElement.WadoInstanceReferenceList);
-        this.progressBar = new CircularProgressBar(0, sopList.size());
-        this.progressBar.setSize(30, 30);
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                progressBar = new CircularProgressBar(0, sopList.size());
+                progressBar.setSize(30, 30);
+            }
+        });
         this.dicomSeries.setSeriesLoader(this);
     }
 
@@ -172,6 +179,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         return false;
     }
 
+    private void setProgressBarValue(final int value) {
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                progressBar.setValue(progressBar.getValue() + 1);
+            }
+        });
+    }
+
     private Boolean startDownload() {
 
         MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
@@ -187,7 +204,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         ExecutorService imageDownloader = Executors.newFixedThreadPool(CODOWNLOAD_NUMBER);
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
-        progressBar.setValue(0);
+        setProgressBarValue(0);
         for (int k = 0; k < sopList.size(); k++) {
             DicomInstance instance = sopList.get(dindex[k]);
             if (isCancelled()) {
@@ -195,7 +212,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
             // Test if SOPInstanceUID already exists
             if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
-                progressBar.setValue(k + 1);
+                setProgressBarValue(k + 1);
                 continue;
             }
             URL url = null;
@@ -280,11 +297,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         try {
             imageDownloader.invokeAll(tasks);
         } catch (InterruptedException e) {
-            // e.printStackTrace();
         }
 
         imageDownloader.shutdown();
-
         return true;
     }
 
@@ -341,36 +356,32 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         final File file =
                             getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
 
-                        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                if (file != null) {
-                                    Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
-                                    if (thumbnail == null) {
-                                        thumbnail = new Thumbnail(dicomSeries, file, Thumbnail.DEFAULT_SIZE);
-                                    }
-                                    // In case series is downloaded or canceled
-                                    if (LoadSeries.this.isDone()) {
-                                        thumbnail.setProgressBar(null);
-                                        thumbnail.repaint();
-                                    } else {
-                                        thumbnail.setProgressBar(progressBar);
-                                    }
-                                    addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
-                                    thumbnail.registerListeners();
-                                    dicomSeries.setTag(TagElement.Thumbnail, thumbnail);
-                                }
-                                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add,
-                                    dicomModel, null, dicomSeries));
+                        if (file != null) {
+                            Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                            if (thumbnail == null) {
+                                thumbnail = new Thumbnail(dicomSeries, file, Thumbnail.DEFAULT_SIZE);
                             }
-                        });
+                            // In case series is downloaded or canceled
+                            if (LoadSeries.this.isDone()) {
+                                thumbnail.setProgressBar(null);
+                                thumbnail.repaint();
+                            } else {
+                                thumbnail.setProgressBar(progressBar);
+                            }
+                            addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
+                            thumbnail.registerListeners();
+                            dicomSeries.setTag(TagElement.Thumbnail, thumbnail);
+                        }
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
+                            null, dicomSeries));
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             };
-            executor.submit(thumbnailLoader);
+            GuiExecutor.instance().execute(thumbnailLoader);
+            // executor.submit(thumbnailLoader);
         }
     }
 
@@ -563,8 +574,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                         public void actionPerformed(ActionEvent e) {
                             MediaSeriesGroup patientGroup =
-                                dicomModel
-                                    .getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
+                                dicomModel.getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
                             dicomModel.removePatient(patientGroup);
                         }
                     });
@@ -853,9 +863,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         // Download file.
         public Boolean call() throws Exception {
             // Increment progress bar (prevent exception) and repaint when downloaded
-            synchronized (progressBar) {
-                progressBar.setValue(progressBar.getValue() + 1);
-            }
+            setProgressBarValue(progressBar.getValue() + 1);
 
             // RandomAccessFile file = null;
             InputStream stream = null;
@@ -917,7 +925,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
                 int[] overrideList = wado.getOverrideDicomTagIDList();
                 if (overrideList == null) {
-                    FileUtil.writFile(stream, new FileOutputStream(tempFile));
+                    FileUtil.writeFile(stream, new FileOutputStream(tempFile));
                 } else {
                     writFile(stream, new FileOutputStream(tempFile), overrideList);
                 }
@@ -950,7 +958,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             // downloading has finished.
             if (status == Status.Downloading) {
                 status = Status.Complete;
-                ;
                 if (tempFile != null) {
                     if (dicomSeries != null && dicomReader.readMediaTags()) {
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
