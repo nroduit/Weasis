@@ -374,6 +374,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         }
                         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
                             null, dicomSeries));
+                        try {
+                            Thread.sleep(50);
+                        } catch (Exception e) {
+                        }
 
                     } catch (Exception e) {
                         e.printStackTrace();

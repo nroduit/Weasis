@@ -12,7 +12,6 @@
 			in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
-		<tmp.extensions>${project.build.directory}/tmp/extensions</tmp.extensions>
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
 		<felix.framework.version>3.0.5</felix.framework.version>
@@ -33,7 +32,7 @@
 		<weasis.imageioext.j2k.codec.version>0.5.5-SNAPSHOT</weasis.imageioext.j2k.codec.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>6.1.0-b01</substance.version>
+		<substance.version>6.1.0-b02</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version>
@@ -183,7 +182,7 @@
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>substance</artifactId>
 									<version>${substance.version}</version>
-									<outputDirectory>${tmp.extensions}</outputDirectory>
+									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>substance.jar</destFileName>
 								</artifactItem>
 
@@ -393,7 +392,6 @@
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
 									<includes>
 										<include>*.jar</include>
-										<include>extensions/*.jar</include>
 									</includes>
 								</configuration>
 							</execution>
