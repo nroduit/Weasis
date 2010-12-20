@@ -13,7 +13,6 @@ package org.weasis.launcher;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Window;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -683,7 +682,6 @@ public class WeasisLauncher {
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
-        LookAndFeels.installSubstanceLookAndFeels();
 
         look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
         if (look == null) {
@@ -700,6 +698,14 @@ public class WeasisLauncher {
                 look = UIManager.getSystemLookAndFeelClassName();
             }
         }
+
+        String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
+
+        // Force changing Look and Feel when upgrade version
+        if (LookAndFeels.installSubstanceLookAndFeels() && versionNew != null && versionNew.startsWith("1.0.8")) {
+            look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel";
+        }
+
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
@@ -723,7 +729,7 @@ public class WeasisLauncher {
         }
 
         String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
-        String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
+
         if (versionNew != null) {
             // Add also to java properties for the about
             System.setProperty(P_WEASIS_VERSION, versionNew);
@@ -861,8 +867,8 @@ public class WeasisLauncher {
 
         if (look != null) {
             try {
-                    UIManager.setLookAndFeel(look);
-   
+                UIManager.setLookAndFeel(look);
+
             } catch (Exception e) {
                 System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
                 e.printStackTrace();

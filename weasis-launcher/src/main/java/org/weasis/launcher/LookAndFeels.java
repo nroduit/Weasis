@@ -42,11 +42,11 @@ public final class LookAndFeels {
         "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel",
         "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel" };
 
-    public static void installSubstanceLookAndFeels() {
+    public static boolean installSubstanceLookAndFeels() {
         try {
             Class.forName(classes[0]);
         } catch (Exception e) {
-            return;
+            return false;
         }
         List<LookAndFeelInfo> tmp = new ArrayList<LookAndFeelInfo>();
 
@@ -58,6 +58,7 @@ public final class LookAndFeels {
             tmp.add(new ReadableLookAndFeelInfo(names[i], classes[i]));
         }
         UIManager.setInstalledLookAndFeels(tmp.toArray(new LookAndFeelInfo[tmp.size()]));
+        return true;
     }
 
     private static class ReadableLookAndFeelInfo extends LookAndFeelInfo {

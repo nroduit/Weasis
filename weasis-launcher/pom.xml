@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis.launcher</groupId>
 	<artifactId>weasis-launcher</artifactId>
-	<!-- The weasis launcher is not OSGI bundle, it is a simple jar	-->
+	<!-- The weasis launcher is not OSGI bundle, it is a simple jar -->
 	<packaging>jar</packaging>
 	<name>Weasis Launcher (Felix) [${project.artifactId}]</name>
 	<version>0.5.5-SNAPSHOT</version>
@@ -21,10 +21,8 @@
 			<distribution>repo</distribution>
 		</license>
 		<license>
-			<!--
-				WeasisLauncher and AutoProcessor classes is derived from the Apache
-				Felix launcher
-			-->
+			<!-- WeasisLauncher and AutoProcessor classes is derived from the Apache 
+				Felix launcher -->
 			<name>Apache 2</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
@@ -56,10 +54,8 @@
 			</build>
 		</profile>
 	</profiles>
-	<!--
-		Dependencies below are provided for debugging Weasis from IDE (by
-		launching WeasisLauncher)
-	-->
+	<!-- Dependencies below are provided for debugging Weasis from IDE (by launching 
+		WeasisLauncher) -->
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
@@ -141,5 +137,11 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>substance</artifactId>
+			<version>6.1.0-b01</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 </project>

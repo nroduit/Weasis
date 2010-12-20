@@ -17,6 +17,7 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -42,7 +43,6 @@ public class WebStartLoader {
     private volatile javax.swing.JProgressBar downloadProgress;
 
     public WebStartLoader() {
-        init();
     }
 
     public void writeLabel(String text) {
@@ -52,7 +52,7 @@ public class WebStartLoader {
     /*
      * Init splashScreen
      */
-    private void init() {
+    public void initGUI() {
         loadingLabel = new javax.swing.JLabel();
         loadingLabel.setFont(new Font("Dialog", Font.PLAIN, 10)); //$NON-NLS-1$
         downloadProgress = new javax.swing.JProgressBar();
@@ -152,15 +152,21 @@ public class WebStartLoader {
     }
 
     public void open() {
-        if (isClosed()) {
-            return;
-        }
-        EventQueue.invokeLater(new Runnable() {
+        try {
+            EventQueue.invokeAndWait(new Runnable() {
 
-            public void run() {
-                displayOnScreen();
-            }
-        });
+                public void run() {
+                    if (window == null) {
+                        initGUI();
+                    }
+                    displayOnScreen();
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {
