@@ -699,10 +699,19 @@ public class WeasisLauncher {
             }
         }
 
+        Properties common_prop;
+        if (basdir.getPath().equals(dir)) {
+            common_prop = s_prop;
+        } else {
+            common_file = new File(dir, APP_PROPERTY_FILE);
+            common_prop = readProperties(common_file);
+        }
+
+        String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
         String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // Force changing Look and Feel when upgrade version
-        if (LookAndFeels.installSubstanceLookAndFeels() && versionNew != null && versionNew.startsWith("1.0.8")) {
+        if (LookAndFeels.installSubstanceLookAndFeels() && versionNew != null && !versionNew.equals(versionOld)) {
             look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel";
         }
 
@@ -719,16 +728,6 @@ public class WeasisLauncher {
         final WebStartLoader loader = new WebStartLoader();
         // Display splash screen
         loader.open();
-
-        Properties common_prop;
-        if (basdir.getPath().equals(dir)) {
-            common_prop = s_prop;
-        } else {
-            common_file = new File(dir, APP_PROPERTY_FILE);
-            common_prop = readProperties(common_file);
-        }
-
-        String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
 
         if (versionNew != null) {
             // Add also to java properties for the about
