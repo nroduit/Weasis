@@ -60,6 +60,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
@@ -68,6 +69,7 @@ import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -78,12 +80,12 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.DragPoint;
+import org.weasis.core.ui.graphic.DragPoint.STATE;
 import org.weasis.core.ui.graphic.DragSequence;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.SelectGraphic;
-import org.weasis.core.ui.graphic.DragPoint.STATE;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
@@ -106,8 +108,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    private final AbstractAction exportToClipboardAction =
-        new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
+    private final AbstractAction exportToClipboardAction = new AbstractAction(
+        Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -171,6 +173,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.INVERSELUT, false);
         actionsInView.put(ActionW.LUT, ByteLut.defaultLUT);
         actionsInView.put(ActionW.INVERSESTACK, false);
+        actionsInView.put(ActionW.FILTER, KernelData.NONE);
         actionsInView.put(ActionW.DRAW, true);
     }
 
@@ -556,8 +559,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 rotationAngle = 360 - rotationAngle;
             }
             Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0, imageCanvas
-                .getHeight() / 2.0);
+            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
+                imageCanvas.getHeight() / 2.0);
         }
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
@@ -648,6 +651,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (evt.getPropertyName().equals(ActionW.INVERSELUT.getCommand())) {
             actionsInView.put(ActionW.INVERSELUT, evt.getNewValue());
             imageLayer.updateImageOperation(PseudoColorOperation.name);
+        } else if (evt.getPropertyName().equals(ActionW.FILTER.getCommand())) {
+            actionsInView.put(ActionW.FILTER, evt.getNewValue());
+            imageLayer.updateImageOperation(FilterOperation.name);
         }
     }
 
@@ -805,8 +811,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             String str = getPixelInfo(pModel, imageLayer);
             oldBound.width =
-                Math.max(oldBound.width, DefaultView2d.this.getGraphics().getFontMetrics().stringWidth(
-                    Messages.getString("DefaultView2d.pix") + str) + 4); //$NON-NLS-1$
+                Math.max(
+                    oldBound.width,
+                    DefaultView2d.this.getGraphics().getFontMetrics()
+                        .stringWidth(Messages.getString("DefaultView2d.pix") + str) + 4); //$NON-NLS-1$
             infoLayer.setPixelInfo(str);
             repaint(oldBound);
         }

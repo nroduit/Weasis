@@ -24,7 +24,8 @@ public class SynchView implements GUIEntry {
         None, Stack, Tile
     }
 
-    public final static SynchView NONE = new SynchView(Messages.getString("SynchView.none"), Mode.None, null, new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
+    public final static SynchView NONE = new SynchView(
+        Messages.getString("SynchView.none"), Mode.None, null, new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
     public final static SynchView DEFAULT_TILE;
     public final static SynchView DEFAULT_STACK;
     static {
@@ -39,11 +40,11 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.PRESET, true);
         actions.put(ActionW.LUT, true);
         actions.put(ActionW.INVERSELUT, true);
+        actions.put(ActionW.FILTER, true);
         actions.put(ActionW.VIEWINGPROTOCOL, true);
         actions.put(ActionW.IMAGE_OVERLAY, true);
-        DEFAULT_TILE =
-            new SynchView(Messages.getString("SynchView.def_t"), Mode.Tile, //$NON-NLS-1$
-                new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
+        DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), Mode.Tile, //$NON-NLS-1$
+            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
         actions = new HashMap<ActionW, Boolean>();
         actions.put(ActionW.SCROLL_SERIES, true);
@@ -53,9 +54,8 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.FLIP, true);
         actions.put(ActionW.VIEWINGPROTOCOL, true);
         actions.put(ActionW.IMAGE_OVERLAY, true);
-        DEFAULT_STACK =
-            new SynchView(Messages.getString("SynchView.def_s"), Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$
-                .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
+        DEFAULT_STACK = new SynchView(Messages.getString("SynchView.def_s"), Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$
+            .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
     }
 
     private final HashMap<ActionW, Boolean> actions;

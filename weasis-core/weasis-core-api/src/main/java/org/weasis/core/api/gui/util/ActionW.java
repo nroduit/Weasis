@@ -27,12 +27,14 @@ public enum ActionW {
 
     VIEW_MODE(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
-    ZOOM(Messages.getString("ActionW.zoom"), "zoom", KeyEvent.VK_Z, 0, getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    ZOOM(
+         Messages.getString("ActionW.zoom"), "zoom", KeyEvent.VK_Z, 0, getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     SCROLL_SERIES(
                   Messages.getString("ActionW.scroll"), "sequence", KeyEvent.VK_S, 0, getCustomCursor("sequence.png", Messages.getString("ActionW.scroll"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
-    ROTATION(Messages.getString("ActionW.rotate"), "rotation", KeyEvent.VK_R, 0, getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    ROTATION(
+             Messages.getString("ActionW.rotate"), "rotation", KeyEvent.VK_R, 0, getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     CINESPEED(Messages.getString("ActionW.speed"), "cinespeed", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -52,7 +54,8 @@ public enum ActionW {
 
     LEVEL(Messages.getString("ActionW.level"), "level", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
-    WINLEVEL(Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    WINLEVEL(
+             Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     FLIP(Messages.getString("ActionW.flip"), "flip", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -64,7 +67,8 @@ public enum ActionW {
 
     RESET(Messages.getString("ActionW.Reset"), "reset", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
-    PAN(Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    PAN(
+        Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     DRAW(Messages.getString("ActionW.draw"), "draw", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -88,7 +92,9 @@ public enum ActionW {
 
     SYNCH_LINK("", "synchLink", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
 
-    SYNCH_CROSSLINE("", "synchCrossline", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    SYNCH_CROSSLINE("", "synchCrossline", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
+
+    FILTER("", "filter", 0, 0, null); //$NON-NLS-1$ 
 
     // keep TempLayer in last position
 

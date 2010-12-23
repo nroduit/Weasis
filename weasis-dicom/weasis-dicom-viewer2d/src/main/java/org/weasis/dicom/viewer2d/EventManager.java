@@ -26,14 +26,15 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -80,6 +81,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     private final ComboItemListener presetAction;
     private final ComboItemListener lutAction;
+    private final ComboItemListener filterAction;
     private final ComboItemListener sortStackAction;
     private final ComboItemListener viewingProtocolAction;
     private final ComboItemListener layoutAction;
@@ -122,6 +124,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         iniAction(presetAction = getPresetAction());
         iniAction(lutAction = getLutAction());
+        iniAction(filterAction = getFilterAction());
         iniAction(sortStackAction = getSortStackAction());
         iniAction(viewingProtocolAction = getViewingProtocolAction());
         iniAction(layoutAction = getLayoutAction(View2dContainer.MODELS));
@@ -153,6 +156,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         levelAction.getModel().addChangeListener(presetAction);
     }
 
+    private ComboItemListener getFilterAction() {
+        return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof KernelData) {
+                    firePropertyChange(action.getCommand(), null, object);
+                }
+            }
+        };
+    }
+
     @Override
     protected SliderCineListener getMoveTroughSliceAction(int speed, TIME time, double mouseSensivity) {
         return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
@@ -182,8 +197,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             if (PresetWindowLevel.DEFAULT.equals(presetAction.getSelectedItem())) {
                                 windowAction.getModel().removeChangeListener(presetAction);
                                 levelAction.getModel().removeChangeListener(presetAction);
-                                windowAction.setMinMaxValueWithoutTriggerAction(0, (max - min), (int) media
-                                    .getDefaultWindow());
+                                windowAction.setMinMaxValueWithoutTriggerAction(0, (max - min),
+                                    (int) media.getDefaultWindow());
                                 levelAction.setMinMaxValueWithoutTriggerAction(min, max, (int) media.getDefaultLevel());
                                 windowAction.getModel().addChangeListener(presetAction);
                                 levelAction.getModel().addChangeListener(presetAction);
@@ -498,6 +513,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
         lutAction.setSelectedItem(ByteLut.defaultLUT);
+        filterAction.setSelectedItem(KernelData.NONE);
         firePropertyChange(ActionW.ZOOM.getCommand(), null, 0.0);
     }
 
@@ -566,6 +582,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
         lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT));
         inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT));
+        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER));
         imageOverlayAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d
             .getActionValue(ActionW.IMAGE_OVERLAY));
         sortStackAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.SORTSTACK));
@@ -645,8 +662,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                             // the actions are synchronized
                                             addPropertyChangeListeners(pane, synchView);
                                         } else {
-                                            propertySupport.addPropertyChangeListener(ActionW.SCROLL_SERIES
-                                                .getCommand(), pane);
+                                            propertySupport.addPropertyChangeListener(
+                                                ActionW.SCROLL_SERIES.getCommand(), pane);
                                         }
                                     } else {
                                         pane.setActionsInView(ActionW.SYNCH_LINK, false);
@@ -693,16 +710,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
             Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$
-            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().getCommand(), windowAction
-                .getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().getCommand(), levelAction
-                .getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().getCommand(),
+                windowAction.getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().getCommand(),
+                levelAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, moveTroughSliceAction.getActionW().getCommand(),
                 moveTroughSliceAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().getCommand(), rotateAction
-                .getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().getCommand(), zoomAction
-                .getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().getCommand(),
+                rotateAction.getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().getCommand(),
+                zoomAction.getMouseSensivity());
         }
     }
 }

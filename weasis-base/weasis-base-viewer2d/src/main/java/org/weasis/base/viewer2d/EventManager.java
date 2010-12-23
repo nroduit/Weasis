@@ -23,10 +23,11 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagElement;
@@ -62,6 +63,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final ToggleButtonListener inverseStackAction;
 
     private final ComboItemListener lutAction;
+    private final ComboItemListener filterAction;
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
 
@@ -100,6 +102,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(inverseStackAction = getInverseStackAction());
 
         iniAction(lutAction = getLutAction());
+        iniAction(filterAction = getFilterAction());
         iniAction(layoutAction = getLayoutAction(View2dContainer.MODELS));
         iniAction(synchAction = getSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
 
@@ -125,6 +128,18 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     private void initializeParameters() {
         enableActions(false);
+    }
+
+    private ComboItemListener getFilterAction() {
+        return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof KernelData) {
+                    firePropertyChange(action.getCommand(), null, object);
+                }
+            }
+        };
     }
 
     private ComboItemListener getLutAction() {
@@ -194,6 +209,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
         lutAction.setSelectedItem(ByteLut.defaultLUT);
+        filterAction.setSelectedItem(KernelData.NONE);
         firePropertyChange(ActionW.ZOOM.getCommand(), null, 0.0);
     }
 
@@ -262,6 +278,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
         lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT));
         inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT));
+        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER));
         inverseStackAction.setSelected((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
@@ -273,16 +290,16 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
             Preferences prefNode = prefs.node("mouse.sensivity");
-            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().getCommand(), windowAction
-                .getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().getCommand(), levelAction
-                .getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().getCommand(),
+                windowAction.getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().getCommand(),
+                levelAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, moveTroughSliceAction.getActionW().getCommand(),
                 moveTroughSliceAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().getCommand(), rotateAction
-                .getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().getCommand(), zoomAction
-                .getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().getCommand(),
+                rotateAction.getMouseSensivity());
+            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().getCommand(),
+                zoomAction.getMouseSensivity());
         }
     }
 }

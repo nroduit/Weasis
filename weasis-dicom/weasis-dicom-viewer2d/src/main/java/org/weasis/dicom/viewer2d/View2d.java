@@ -47,6 +47,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
@@ -102,6 +103,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         manager.addImageOperationAction(new FlipOperation());
         manager.addImageOperationAction(new RotationOperation());
         manager.addImageOperationAction(new ZoomOperation());
+        manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
 
         infoLayer = new InfoLayer(this);
@@ -622,8 +624,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 public void actionPerformed(ActionEvent e) {
                                     if (e.getSource() instanceof JRadioButtonMenuItem) {
                                         JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                        toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, item
-                                            .getActionCommand());
+                                        toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT,
+                                            item.getActionCommand());
                                     }
                                 }
                             };

@@ -48,8 +48,8 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
-    public static final GridBagLayoutModel[] MODELS =
-        { VIEWS_1x1, VIEWS_2x1, VIEWS_1x2, VIEWS_2x2, VIEWS_3x2, VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
+    public static final GridBagLayoutModel[] MODELS = { VIEWS_1x1, VIEWS_2x1, VIEWS_1x2, VIEWS_2x2, VIEWS_3x2,
+        VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
@@ -81,6 +81,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     menu.add(new JSeparator());
                     menu.add(((ToggleButtonListener) invlutAction).createMenu("Inverse LUT"));
                 }
+                menuRoot.add(menu);
+            }
+            ActionState filterAction = eventManager.getAction(ActionW.FILTER);
+            if (filterAction instanceof ComboItemListener) {
+                JMenu menu = ((ComboItemListener) filterAction).createMenu("Filter");
                 menuRoot.add(menu);
             }
             ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
