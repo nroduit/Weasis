@@ -50,8 +50,8 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
             if (img != null) {
                 PlanarImage imgP = img.getImage();
                 if (imgP != null) {
-                    float window = img.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW));
-                    float level = img.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL));
+                    float window = img.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()));
+                    float level = img.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
                     RenderedImage result = ImageToolkit.getDefaultRenderedImage(img, imgP, window, level);
                     if (result instanceof PlanarImage) {
                         image = ((PlanarImage) result).getAsBufferedImage();

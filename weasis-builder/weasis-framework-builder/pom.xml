@@ -5,7 +5,7 @@
 	<groupId>org.weasis.builder</groupId>
 	<artifactId>weasis-framework-builder</artifactId>
 	<packaging>pom</packaging>
-	<name>Weasis Distribution [${project.artifactId}]</name>
+	<name>Weasis WEB Distribution</name>
 	<version>1.0.8-SNAPSHOT</version>
 	<properties>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
@@ -21,7 +21,7 @@
 		<felix.configadmin.version>1.2.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.scr.version>1.6.0</felix.scr.version>
-		<sling.commons.log.version>2.0.6</sling.commons.log.version>
+		<sling.commons.log.version>2.1.0</sling.commons.log.version>
 
 		<weasis.launcher.version>0.5.5-SNAPSHOT</weasis.launcher.version>
 		<weasis.core.version>0.5.5-SNAPSHOT</weasis.core.version>

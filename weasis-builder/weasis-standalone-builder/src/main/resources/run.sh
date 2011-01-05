@@ -1,0 +1,2 @@
+export JAVA_HOME=./jre1.6.0_17
+${JAVA_HOME}/bin/java -Xms64m -Xmx768m -Dfelix.properties=file:conf/config.properties -classpath "jre1.6.0_17/lib/javaws.jar:bin/felix.jar:bin/weasis.jar" org.weasis.launcher.WeasisLauncher

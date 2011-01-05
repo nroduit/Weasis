@@ -24,6 +24,7 @@ import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 
 import org.weasis.core.api.gui.util.ActionState;
@@ -32,6 +33,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
@@ -108,8 +110,9 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         if (((active & MouseActions.SCROLL_MASK) == MouseActions.SCROLL_MASK)) {
             mouseWheel =
-                new DropDownButton(MouseActions.WHEEL, new DropButtonIcon(new ImageIcon(MouseActions.class
-                    .getResource("/icon/32x32/mouse-wheel-" + actions.getAction(MouseActions.WHEEL) + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$
+                new DropDownButton(MouseActions.WHEEL, new DropButtonIcon(new ImageIcon(
+                    MouseActions.class
+                        .getResource("/icon/32x32/mouse-wheel-" + actions.getAction(MouseActions.WHEEL) + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$
 
                     @Override
                     protected JPopupMenu getPopupMenu() {
@@ -120,7 +123,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(mouseWheel);
         }
 
-        // addSeparator(WtoolBar.SEPARATOR_2x24);
+        addSeparator(WtoolBar.SEPARATOR_2x24);
 
         final DropDownButton layout = new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
             .getResource("/icon/32x32/layout.png")))) { //$NON-NLS-1$
@@ -136,8 +139,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         add(Box.createRigidArea(new Dimension(5, 0)));
 
         final DropDownButton button =
-            new DropDownButton(ActionW.SYNCH.getCommand(), new DropButtonIcon(new ImageIcon(MouseActions.class
-                .getResource("/icon/32x32/synch.png")))) { //$NON-NLS-1$
+            new DropDownButton(ActionW.SYNCH.cmd(), new DropButtonIcon(new ImageIcon(
+                MouseActions.class.getResource("/icon/32x32/synch.png")))) { //$NON-NLS-1$
 
                 @Override
                 protected JPopupMenu getPopupMenu() {
@@ -147,7 +150,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
         add(button);
 
-        // addSeparator(WtoolBar.SEPARATOR_2x24);
+        addSeparator(WtoolBar.SEPARATOR_2x24);
+
         final JButton jButtonActualZoom =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
@@ -170,18 +174,28 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             public void actionPerformed(ActionEvent e) {
                 // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
                 // value is adjusted by the BoundedRangeModel
-                eventManager.firePropertyChange(ActionW.ZOOM.getCommand(), null, 0.0);
+                eventManager.firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
             }
         });
         add(jButtonBestFit);
+
+        final JToggleButton jButtonLens =
+            new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom.png"))); //$NON-NLS-1$
+        jButtonLens.setToolTipText("Show the magnifying lens"); //$NON-NLS-1$
+        ActionState lens = eventManager.getAction(ActionW.LENS);
+        if (lens instanceof ToggleButtonListener) {
+            ((ToggleButtonListener) lens).registerComponent(jButtonLens);
+        }
+        add(jButtonLens);
+
         displayMeasureToobar();
     }
 
     private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {
         String action = actions.getAction(actionLabel);
         final DropDownButton button =
-            new DropDownButton(actionLabel, new DropButtonIcon(new ImageIcon(MouseActions.class
-                .getResource("/icon/32x32/mouse-" + actionLabel + "-" + action + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            new DropDownButton(actionLabel, new DropButtonIcon(new ImageIcon(
+                MouseActions.class.getResource("/icon/32x32/mouse-" + actionLabel + "-" + action + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                 @Override
                 protected JPopupMenu getPopupMenu() {
@@ -243,12 +257,12 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         for (int i = 0; i < actionsButtons.length; i++) {
             JRadioButtonMenuItem radio =
                 new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(), actionsButtons[i]
-                    .getCommand().equals(action));
-            radio.setActionCommand(actionsButtons[i].getCommand());
+                    .cmd().equals(action));
+            radio.setActionCommand(actionsButtons[i].cmd());
             radio.addActionListener(this);
             if (MouseActions.LEFT.equals(type)) {
-                radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(), actionsButtons[i]
-                    .getModifier()));
+                radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
+                    actionsButtons[i].getModifier()));
             }
             popupMouseButtons.add(radio);
             groupButtons.add(radio);
@@ -265,8 +279,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         for (int i = 0; i < actionsScroll.length; i++) {
             JRadioButtonMenuItem radio =
                 new JRadioButtonMenuItem(actionsScroll[i].getTitle(), actionsScroll[i].getIcon(), actionsScroll[i]
-                    .getCommand().equals(action));
-            radio.setActionCommand(actionsScroll[i].getCommand());
+                    .cmd().equals(action));
+            radio.setActionCommand(actionsScroll[i].cmd());
             radio.addActionListener(this);
             popupMouseScroll.add(radio);
             groupButtons.add(radio);
@@ -295,7 +309,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private void displayMeasureToobar() {
-        final String measCmd = ActionW.MEASURE.getCommand();
+        final String measCmd = ActionW.MEASURE.cmd();
         int active = eventManager.getMouseActions().getActiveButtons();
         if (measCmd.equals(mouseLeft.getActionCommand())
             || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK) && measCmd.equals(mouseMiddle
@@ -329,7 +343,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         if (actions != null && actions.length > 0) {
             int index = 0;
             for (int i = 0; i < actions.length; i++) {
-                if (actions[i].getCommand().equals(command)) {
+                if (actions[i].cmd().equals(command)) {
                     index = i == actions.length - 1 ? 0 : i + 1;
                 }
             }

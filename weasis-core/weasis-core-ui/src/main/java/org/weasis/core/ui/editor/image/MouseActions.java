@@ -32,10 +32,10 @@ public class MouseActions {
     public final static String RIGHT = "right"; //$NON-NLS-1$
     public final static String WHEEL = "wheel"; //$NON-NLS-1$
 
-    private String left = ActionW.WINLEVEL.getCommand();
-    private String middle = ActionW.PAN.getCommand();
-    private String right = ActionW.CONTEXTMENU.getCommand();
-    private String wheel = ActionW.SCROLL_SERIES.getCommand();
+    private String left = ActionW.WINLEVEL.cmd();
+    private String middle = ActionW.PAN.cmd();
+    private String right = ActionW.CONTEXTMENU.cmd();
+    private String wheel = ActionW.SCROLL_SERIES.cmd();
     private int activeButtons =
         InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK;
 
@@ -128,14 +128,14 @@ public class MouseActions {
     public static void loadPreferences(Preferences prefs, boolean defaultValue) {
         if (prefs != null) {
             Preferences p = prefs.node(MouseActions.PREFERENCE_NODE);
-            p.put(P_MOUSE_LEFT, defaultValue ? ActionW.WINLEVEL.getCommand() : p.get(P_MOUSE_LEFT, ActionW.WINLEVEL
-                .getCommand()));
-            p.put(P_MOUSE_MIDDLE, defaultValue ? ActionW.PAN.getCommand() : p.get(P_MOUSE_MIDDLE, ActionW.PAN
-                .getCommand()));
-            p.put(P_MOUSE_RIGHT, defaultValue ? ActionW.CONTEXTMENU.getCommand() : p.get(P_MOUSE_RIGHT,
-                ActionW.CONTEXTMENU.getCommand()));
-            p.put(P_MOUSE_WHEEL, defaultValue ? ActionW.ZOOM.getCommand() : p.get(P_MOUSE_WHEEL, ActionW.ZOOM
-                .getCommand()));
+            p.put(P_MOUSE_LEFT, defaultValue ? ActionW.WINLEVEL.cmd() : p.get(P_MOUSE_LEFT, ActionW.WINLEVEL
+                .cmd()));
+            p.put(P_MOUSE_MIDDLE, defaultValue ? ActionW.PAN.cmd() : p.get(P_MOUSE_MIDDLE, ActionW.PAN
+                .cmd()));
+            p.put(P_MOUSE_RIGHT, defaultValue ? ActionW.CONTEXTMENU.cmd() : p.get(P_MOUSE_RIGHT,
+                ActionW.CONTEXTMENU.cmd()));
+            p.put(P_MOUSE_WHEEL, defaultValue ? ActionW.ZOOM.cmd() : p.get(P_MOUSE_WHEEL, ActionW.ZOOM
+                .cmd()));
         }
     }
 

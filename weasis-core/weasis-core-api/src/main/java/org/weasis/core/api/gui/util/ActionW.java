@@ -22,79 +22,62 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.Messages;
 
-public enum ActionW {
-    SYNCH(Messages.getString("ActionW.synch"), "synch", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
+public class ActionW {
+    public static final ActionW SYNCH = new ActionW(Messages.getString("ActionW.synch"), "synch", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW VIEW_MODE =
+        new ActionW(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW ZOOM =
+        new ActionW(
+            Messages.getString("ActionW.zoom"), "zoom", KeyEvent.VK_Z, 0, getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final ActionW SCROLL_SERIES =
+        new ActionW(
+            Messages.getString("ActionW.scroll"), "sequence", KeyEvent.VK_S, 0, getCustomCursor("sequence.png", Messages.getString("ActionW.scroll"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final ActionW ROTATION =
+        new ActionW(
+            Messages.getString("ActionW.rotate"), "rotation", KeyEvent.VK_R, 0, getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
-    VIEW_MODE(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    ZOOM(
-         Messages.getString("ActionW.zoom"), "zoom", KeyEvent.VK_Z, 0, getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
-    SCROLL_SERIES(
-                  Messages.getString("ActionW.scroll"), "sequence", KeyEvent.VK_S, 0, getCustomCursor("sequence.png", Messages.getString("ActionW.scroll"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
-    ROTATION(
-             Messages.getString("ActionW.rotate"), "rotation", KeyEvent.VK_R, 0, getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
-    CINESPEED(Messages.getString("ActionW.speed"), "cinespeed", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    CINESTART(Messages.getString("ActionW.start"), "cinestart", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    CINESTOP(Messages.getString("ActionW.stop"), "cinestop", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SKIPBACKWARD(Messages.getString("ActionW.prev"), "skipBackward", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SKIPFORWARD(Messages.getString("ActionW.next"), "skipForward", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SEEKBACKWARD(Messages.getString("ActionW.fwd"), "seekBackward", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SEEKFORWARD(Messages.getString("ActionW.rew"), "seekForward", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    WINDOW(Messages.getString("ActionW.win"), "window", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    LEVEL(Messages.getString("ActionW.level"), "level", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    WINLEVEL(
-             Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
-    FLIP(Messages.getString("ActionW.flip"), "flip", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    PRESET(Messages.getString("ActionW.preset"), "preset", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    LUT(Messages.getString("ActionW.lut"), "lut", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    INVERSELUT("", "inverseLut", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    RESET(Messages.getString("ActionW.Reset"), "reset", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    PAN(
-        Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
-    DRAW(Messages.getString("ActionW.draw"), "draw", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    MEASURE(Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SORTSTACK("", "sortStack", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    CONTEXTMENU(Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    VIEWINGPROTOCOL("", "viewingProtocol", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    LAYOUT(Messages.getString("ActionW.layout"), "layout", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    MODE(Messages.getString("ActionW.switch_mode"), "mode", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    IMAGE_OVERLAY(Messages.getString("ActionW.overlay"), "overlay", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    INVERSESTACK("", "inverseStack", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    STACK_OFFSET("", "stackOffset", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SYNCH_LINK("", "synchLink", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    SYNCH_CROSSLINE("", "synchCrossline", 0, 0, null), //$NON-NLS-1$ //$NON-NLS-2$
-
-    FILTER("", "filter", 0, 0, null); //$NON-NLS-1$ 
+    public static final ActionW CINESPEED = new ActionW(Messages.getString("ActionW.speed"), "cinespeed", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW CINESTART = new ActionW(Messages.getString("ActionW.start"), "cinestart", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW CINESTOP = new ActionW(Messages.getString("ActionW.stop"), "cinestop", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SKIPBACKWARD = new ActionW(
+        Messages.getString("ActionW.prev"), "skipBackward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SKIPFORWARD =
+        new ActionW(Messages.getString("ActionW.next"), "skipForward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SEEKBACKWARD = new ActionW(
+        Messages.getString("ActionW.fwd"), "seekBackward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SEEKFORWARD = new ActionW(Messages.getString("ActionW.rew"), "seekForward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW WINDOW = new ActionW(Messages.getString("ActionW.win"), "window", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LEVEL = new ActionW(Messages.getString("ActionW.level"), "level", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW WINLEVEL =
+        new ActionW(
+            Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final ActionW FLIP = new ActionW(Messages.getString("ActionW.flip"), "flip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW PRESET = new ActionW(Messages.getString("ActionW.preset"), "preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW INVERSELUT = new ActionW("", "inverseLut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW PAN =
+        new ActionW(
+            Messages.getString("ActionW.pan"), "pan", KeyEvent.VK_T, 0, getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final ActionW DRAW = new ActionW(Messages.getString("ActionW.draw"), "draw", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW MEASURE = new ActionW(
+        Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW CONTEXTMENU = new ActionW(
+        Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW VIEWINGPROTOCOL = new ActionW("", "viewingProtocol", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LAYOUT = new ActionW(Messages.getString("ActionW.layout"), "layout", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW MODE = new ActionW(Messages.getString("ActionW.switch_mode"), "mode", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW IMAGE_OVERLAY = new ActionW(
+        Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW INVERSESTACK = new ActionW("", "inverseStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW STACK_OFFSET = new ActionW("", "stackOffset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SYNCH_LINK = new ActionW("", "synchLink", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SYNCH_CROSSLINE = new ActionW("", "synchCrossline", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LENS = new ActionW("", "showLens", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW FILTER = new ActionW("", "filter", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
+    public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
+    public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$ 
 
     // keep TempLayer in last position
 
@@ -106,7 +89,7 @@ public enum ActionW {
     private final int modifier;
     private final Cursor cursor;
 
-    ActionW(String title, String command, int keyEvent, int modifier, Cursor cursor) {
+    public ActionW(String title, String command, int keyEvent, int modifier, Cursor cursor) {
         this.title = title;
         this.command = command;
         this.keyCode = keyEvent;
@@ -122,7 +105,7 @@ public enum ActionW {
         return title;
     }
 
-    public String getCommand() {
+    public String cmd() {
         return command;
     }
 
@@ -163,24 +146,6 @@ public enum ActionW {
             return null;
         }
         return new DropButtonIcon(smallIcon);
-    }
-
-    public static ActionW getActionFromCommand(String command) {
-        for (ActionW action : ActionW.values()) {
-            if (action.command.equals(command)) {
-                return action;
-            }
-        }
-        return null;
-    }
-
-    public static ActionW getActionFromkeyEvent(int keyEvent) {
-        for (ActionW action : ActionW.values()) {
-            if (action.keyCode == keyEvent) {
-                return action;
-            }
-        }
-        return null;
     }
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {

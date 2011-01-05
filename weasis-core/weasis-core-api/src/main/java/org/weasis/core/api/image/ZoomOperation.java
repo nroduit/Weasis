@@ -13,7 +13,7 @@ package org.weasis.core.api.image;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 
-import javax.media.jai.InterpolationBilinear;
+import javax.media.jai.Interpolation;
 import javax.media.jai.JAI;
 
 import org.slf4j.Logger;
@@ -25,15 +25,16 @@ import org.weasis.core.api.image.util.ImageToolkit;
 
 public class ZoomOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZoomOperation.class);
-
     public final static String name = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
+    public static final String[] INTERPOLATIONS = { "Nearest neighbor", "Bilinear", "Bicubic", "Bicubic 2" };
+    public final static String INTERPOLATION_CMD = "zoomInterpolation"; //$NON-NLS-1$
 
     public String getOperationName() {
         return name;
     }
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Double zoomFactor = (Double) imageOperation.getActionValue(ActionW.ZOOM);
+        Double zoomFactor = (Double) imageOperation.getActionValue(ActionW.ZOOM.cmd());
         if (zoomFactor == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
@@ -47,10 +48,18 @@ public class ZoomOperation extends AbstractOperation {
             pb.add(val);
             pb.add(0.0f);
             pb.add(0.0f);
-            pb.add(new InterpolationBilinear());
+            pb.add(getInterpolation(imageOperation));
 
             result = JAI.create("scale", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
         }
         return result;
+    }
+
+    public static Interpolation getInterpolation(ImageOperation imageOperation) {
+        Integer interpolation = (Integer) imageOperation.getActionValue(INTERPOLATION_CMD);
+        if (interpolation == null || interpolation < 0 || interpolation > 3) {
+            interpolation = 1;
+        }
+        return Interpolation.getInstance(interpolation);
     }
 }

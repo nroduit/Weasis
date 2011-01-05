@@ -43,6 +43,7 @@ import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -52,7 +53,6 @@ import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.DragLayer;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.Tools;
@@ -62,13 +62,14 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     public View2d(ImageViewerEventManager<ImageElement> eventManager) {
         super(eventManager);
-        OperationsManager manager = imageLayer.getOperations();
+        OperationsManager manager = imageLayer.getOperationsManager();
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new FlipOperation());
         manager.addImageOperationAction(new RotationOperation());
-        manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
+        // Zoom must be the last operation to send to the lens the image state before zooming
+        manager.addImageOperationAction(new ZoomOperation());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
@@ -88,7 +89,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             @Override
             public void componentResized(ComponentEvent e) {
                 // TODO add preference keep image in best fit when resize
-                Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM);
+                Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 // Resize in best fit window only if the previous value is also a best fit value.
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
@@ -110,8 +111,8 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (series == null) {
             return;
         }
-        if (evt.getPropertyName().equals(ActionW.INVERSESTACK.getCommand())) {
-            actionsInView.put(ActionW.INVERSESTACK, evt.getNewValue());
+        if (evt.getPropertyName().equals(ActionW.INVERSESTACK.cmd())) {
+            actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
             sortStack();
         }
     }
@@ -131,7 +132,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
             frameIndex = defaultIndex + tileOffset;
             setImage(series.getMedia(frameIndex), true);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM);
+            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
         }
@@ -147,21 +148,22 @@ public class View2d extends DefaultView2d<ImageElement> {
     protected void setWindowLevel(ImageElement img) {
         float min = img.getMinValue();
         float max = img.getMaxValue();
-        actionsInView.put(ActionW.WINDOW, max - min);
-        actionsInView.put(ActionW.LEVEL, (max - min) / 2.0f + min);
+        actionsInView.put(ActionW.WINDOW.cmd(), max - min);
+        actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
     }
 
     protected void sortStack() {
-        Comparator<ImageElement> sortComparator = (Comparator<ImageElement>) actionsInView.get(ActionW.SORTSTACK);
+        Comparator<ImageElement> sortComparator =
+            (Comparator<ImageElement>) actionsInView.get(ActionW.SORTSTACK.cmd());
         if (sortComparator != null) {
-            series.sort((Boolean) actionsInView.get(ActionW.INVERSESTACK) ? Collections.reverseOrder(sortComparator)
-                : sortComparator);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM);
+            series.sort((Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd()) ? Collections
+                .reverseOrder(sortComparator) : sortComparator);
+            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode
             boolean rescaleView = (val == null || val <= 0.0);
             setImage(series.getMedia(frameIndex), rescaleView);
             if (rescaleView) {
-                val = (Double) actionsInView.get(ActionW.ZOOM);
+                val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);
                 center();
             }
@@ -209,7 +211,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             this.addKeyListener((PannerListener) adapter);
         }
 
-        if (actionName.equals(ActionW.WINLEVEL.getCommand())) {
+        if (actionName.equals(ActionW.WINLEVEL.cmd())) {
             // For window/level action set window action on x axis
             MouseActionAdapter win = getAction(ActionW.WINDOW);
             if (win != null) {
@@ -220,9 +222,9 @@ public class View2d extends DefaultView2d<ImageElement> {
             }
             // set level action with inverse progression (move the cursor down will decrease the values)
             adapter.setInverse(true);
-        } else if (actionName.equals(ActionW.WINDOW.getCommand())) {
+        } else if (actionName.equals(ActionW.WINDOW.cmd())) {
             adapter.setMoveOnX(false);
-        } else if (actionName.equals(ActionW.LEVEL.getCommand())) {
+        } else if (actionName.equals(ActionW.LEVEL.cmd())) {
             adapter.setInverse(true);
         }
         this.addMouseListener(adapter);
@@ -230,25 +232,25 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     private MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.getCommand())) {
+        if (action.equals(ActionW.MEASURE.cmd())) {
             return mouseClickHandler;
-        } else if (action.equals(ActionW.PAN.getCommand())) {
+        } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);
-        } else if (action.equals(ActionW.CONTEXTMENU.getCommand())) {
+        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
-        } else if (action.equals(ActionW.WINDOW.getCommand())) {
+        } else if (action.equals(ActionW.WINDOW.cmd())) {
             return getAction(ActionW.WINDOW);
-        } else if (action.equals(ActionW.LEVEL.getCommand())) {
+        } else if (action.equals(ActionW.LEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         }
         // Tricky action, see in addMouseAdapter()
-        else if (action.equals(ActionW.WINLEVEL.getCommand())) {
+        else if (action.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.SCROLL_SERIES.getCommand())) {
+        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
             return getAction(ActionW.SCROLL_SERIES);
-        } else if (action.equals(ActionW.ZOOM.getCommand())) {
+        } else if (action.equals(ActionW.ZOOM.cmd())) {
             return getAction(ActionW.ZOOM);
-        } else if (action.equals(ActionW.ROTATION.getCommand())) {
+        } else if (action.equals(ActionW.ROTATION.cmd())) {
             return getAction(ActionW.ROTATION);
         }
         return null;
@@ -274,7 +276,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     @Override
-    public void handleLayerChanged(RenderedImageLayer layer) {
+    public void handleLayerChanged(ImageLayer layer) {
         repaint();
     }
 
@@ -323,9 +325,9 @@ public class View2d extends DefaultView2d<ImageElement> {
                             for (int i = 0; i < ViewerToolBar.actionsButtons.length; i++) {
                                 JRadioButtonMenuItem radio =
                                     new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(),
-                                        actionsButtons[i].getCommand().equals(action));
+                                        actionsButtons[i].cmd().equals(action));
 
-                                radio.setActionCommand(actionsButtons[i].getCommand());
+                                radio.setActionCommand(actionsButtons[i].cmd());
                                 radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
                                     actionsButtons[i].getModifier()));
                                 // Trigger the selected mouse action

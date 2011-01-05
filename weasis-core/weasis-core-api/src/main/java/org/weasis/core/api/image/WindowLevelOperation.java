@@ -27,15 +27,15 @@ public class WindowLevelOperation extends AbstractOperation {
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         ImageElement image = imageOperation.getImage();
-        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW);
-        Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL);
+        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+        Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
         if (image == null || window == null || level == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else {
             result =
-                ImageToolkit.getDefaultRenderedImage(image, source, image.getPixelWindow(window), image
-                    .getPixelLevel(level));
+                ImageToolkit.getDefaultRenderedImage(image, source, image.getPixelWindow(window),
+                    image.getPixelLevel(level));
         }
         return result;
     }

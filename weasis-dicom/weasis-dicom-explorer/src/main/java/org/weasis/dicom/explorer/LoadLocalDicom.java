@@ -33,7 +33,6 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideo;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class LoadLocalDicom extends SwingWorker<Boolean, String> {
@@ -149,7 +148,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
         try {
             if (dicomSeries == null) {
-                dicomSeries = dicomReader.isVideo() ? new DicomVideo(seriesUID) : new DicomSeries(seriesUID);
+                dicomSeries = dicomReader.buildSeries(seriesUID);
                 dicomSeries.setTag(TagElement.ExplorerModel, dicomModel);
                 dicomReader.writeMetaData(dicomSeries);
                 dicomModel.addHierarchyNode(study, dicomSeries);
@@ -214,7 +213,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
             Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
             try {
                 if (dicomSeries == null) {
-                    dicomSeries = dicomReader.isVideo() ? new DicomVideo(seriesUID) : new DicomSeries(seriesUID);
+                    dicomSeries = dicomReader.buildSeries(seriesUID);
                     dicomSeries.setTag(TagElement.ExplorerModel, dicomModel);
                     dicomReader.writeMetaData(dicomSeries);
                     dicomModel.addHierarchyNode(study, dicomSeries);
@@ -222,8 +221,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     dicomSeries.addMedia(dicomReader);
                 } else {
                     // Test if SOPInstanceUID already exists
-                    if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader
-                        .getTagValue(TagElement.SOPInstanceUID))) {
+                    if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
+                        dicomReader.getTagValue(TagElement.SOPInstanceUID))) {
                         continue seriesList;
                     }
                     dicomModel.applySplittingRules(dicomSeries, dicomReader);

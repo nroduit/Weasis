@@ -16,6 +16,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
@@ -27,15 +28,15 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.util.ZoomSetting;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 
@@ -51,8 +52,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
     protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
     protected final MouseActions mouseActions = new MouseActions(null);
+    protected final ZoomSetting zoomSetting = new ZoomSetting();
     protected ImageViewerPlugin<E> selectedView2dContainer;
-    // Manages all PropertyChangeListeners
+    // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
     protected final HashMap<ActionW, ActionState> actions = new HashMap<ActionW, ActionState>();
     protected boolean enabledAction = true;
@@ -92,7 +94,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // }
 
                 // Model contains display value, value-1 is the index value of a sequence
-                firePropertyChange(action.getCommand(), null, location);
+                firePropertyChange(action.cmd(), null, location);
                 if (media != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, media, EVENT.SELECT));
                 }
@@ -114,8 +116,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 private volatile int wait;
                 private volatile int currentCineRate;
                 private volatile long start;
-                private final int timeDiv =
-                    TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000 : 3600000;
+                private final int timeDiv = TIME.second.equals(time) ? 1000 : TIME.minute.equals(time) ? 60000
+                    : 3600000;
 
                 @Override
                 public void run() {
@@ -224,34 +226,34 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected SliderChangeListener getWindowAction() {
+    protected SliderChangeListener newWindowAction() {
 
         return new SliderChangeListener(ActionW.WINDOW, WINDOW_SMALLEST, WINDOW_LARGEST, WINDOW_DEFAULT, true, 1.25) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.getCommand(), null, model.getValue());
+                firePropertyChange(action.cmd(), null, model.getValue());
             }
         };
     }
 
-    protected SliderChangeListener getLevelAction() {
+    protected SliderChangeListener newLevelAction() {
         return new SliderChangeListener(ActionW.LEVEL, LEVEL_SMALLEST, LEVEL_LARGEST, LEVEL_DEFAULT, true, 1.25) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.getCommand(), null, model.getValue());
+                firePropertyChange(action.cmd(), null, model.getValue());
 
             }
         };
     }
 
-    protected SliderChangeListener getRotateAction() {
+    protected SliderChangeListener newRotateAction() {
         return new SliderChangeListener(ActionW.ROTATION, 0, 360, 0, true, 0.25) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.getCommand(), null, model.getValue());
+                firePropertyChange(action.cmd(), null, model.getValue());
             }
 
             @Override
@@ -261,12 +263,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected SliderChangeListener getZoomAction() {
+    protected SliderChangeListener newZoomAction() {
         return new SliderChangeListener(ActionW.ZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX, 0, true, 0.1) {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.getCommand(), null, sliderValueToViewScale(model.getValue()));
+                firePropertyChange(action.cmd(), null, sliderValueToViewScale(model.getValue()));
             }
 
             @Override
@@ -277,34 +279,62 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected PannerListener getPanAction() {
+    protected PannerListener newPanAction() {
         return new PannerListener(ActionW.PAN, null) {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(action.getCommand(), null, point);
+                firePropertyChange(action.cmd(), null, point);
             }
         };
     }
 
-    protected ToggleButtonListener getFlipAction() {
+    protected ToggleButtonListener newFlipAction() {
         return new ToggleButtonListener(ActionW.FLIP, false) {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.getCommand(), null, selected);
+                firePropertyChange(action.cmd(), null, selected);
             }
 
         };
     }
 
-    protected ToggleButtonListener getInverseLutAction() {
+    protected ToggleButtonListener newInverseLutAction() {
         return new ToggleButtonListener(ActionW.INVERSELUT, false) {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.getCommand(), null, selected);
+                firePropertyChange(action.cmd(), null, selected);
             }
+        };
+    }
+
+    protected ToggleButtonListener newLensAction() {
+        return new ToggleButtonListener(ActionW.LENS, false) {
+
+            @Override
+            public void actionPerformed(boolean selected) {
+                firePropertyChange(action.cmd(), null, selected);
+            }
+
+        };
+    }
+
+    protected SliderChangeListener newLensZoomAction() {
+        return new SliderChangeListener(ActionW.LENSZOOM, ZOOM_SLIDER_MIN, ZOOM_SLIDER_MAX,
+            viewScaleToSliderValue(2.0), true, 0.1) {
+
+            @Override
+            public void stateChanged(BoundedRangeModel model) {
+                firePropertyChange(action.cmd(), null, sliderValueToViewScale(model.getValue()));
+            }
+
+            @Override
+            public String getValueToDisplay() {
+                return DecFormater.twoDecimal(sliderValueToViewScale(getValue()) * 100) + " %"; //$NON-NLS-1$
+            }
+
         };
     }
 
@@ -322,7 +352,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     // };
     // }
 
-    protected ComboItemListener getLayoutAction(GridBagLayoutModel[] layouts) {
+    protected ComboItemListener newLayoutAction(GridBagLayoutModel[] layouts) {
         if (layouts == null) {
             layouts = new GridBagLayoutModel[0];
         }
@@ -348,7 +378,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected ComboItemListener getSynchAction(SynchView[] synchViewList) {
+    protected ComboItemListener newSynchAction(SynchView[] synchViewList) {
         if (synchViewList == null) {
             synchViewList = new SynchView[0];
         }
@@ -364,12 +394,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
-    protected ToggleButtonListener getInverseStackAction() {
+    protected ToggleButtonListener newInverseStackAction() {
         return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.getCommand(), null, selected);
+                firePropertyChange(action.cmd(), null, selected);
             }
         };
     }
@@ -444,14 +474,14 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         for (ActionState a : actions.values()) {
             Boolean bool = synchActions.get(a.getActionW());
             if (bool != null && bool) {
-                propertySupport.addPropertyChangeListener(a.getActionW().getCommand(), viewPane);
+                propertySupport.addPropertyChangeListener(a.getActionW().cmd(), viewPane);
             }
         }
     }
 
     public void addPropertyChangeListeners(DefaultView2d<E> viewPane) {
         for (ActionState a : actions.values()) {
-            propertySupport.addPropertyChangeListener(a.getActionW().getCommand(), viewPane);
+            propertySupport.addPropertyChangeListener(a.getActionW().cmd(), viewPane);
         }
     }
 
@@ -462,12 +492,38 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         return null;
     }
 
+    public ActionW getActionFromCommand(String command) {
+        if (command != null) {
+            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
+                ActionW action = iterator.next();
+                if (action.cmd().equals(command)) {
+                    return action;
+                }
+            }
+        }
+        return null;
+    }
+
+    public ActionW getActionFromkeyEvent(int keyEvent) {
+        for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
+            ActionW action = iterator.next();
+            if (action.getKeyCode() == keyEvent) {
+                return action;
+            }
+        }
+        return null;
+    }
+
     public Collection<ActionState> getAllActionValues() {
         return actions.values();
     }
 
     public MouseActions getMouseActions() {
         return mouseActions;
+    }
+
+    public ZoomSetting getZoomSetting() {
+        return zoomSetting;
     }
 
     public int viewScaleToSliderValue(double viewScale) {
@@ -504,13 +560,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         clearAllPropertyChangeListeners();
         if (viewerPlugin != null) {
             DefaultView2d<E> viewPane = viewerPlugin.getSelectedImagePane();
-            // if (viewPane == null || viewPane.getSeries() == null) {
             if (viewPane == null) {
                 return;
             }
             if (viewPane.getSeries() != null) {
                 addPropertyChangeListeners(viewPane);
-                Boolean synchLink = (Boolean) viewPane.getActionValue(ActionW.SYNCH_LINK);
+                Boolean synchLink = (Boolean) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());
                 final ArrayList<DefaultView2d<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
@@ -523,18 +578,18 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                         if (isCompatible(viewPane.getSeries(), panes.get(i).getSeries())) {
                             if (synchLink == null || synchLink) {
                                 hasLink = true;
-                                panes.get(i).setActionsInView(ActionW.SYNCH_LINK, true);
+                                panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
                                 addPropertyChangeListeners(panes.get(i), synchView);
                             }
                         }
                     }
                     if (synchLink == null && hasLink) {
-                        viewPane.setActionsInView(ActionW.SYNCH_LINK, hasLink);
+                        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), hasLink);
                     }
                 } else if (Mode.Tile.equals(synchView.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
                         if (synchLink == null || synchLink) {
-                            panes.get(i).setActionsInView(ActionW.SYNCH_LINK, true);
+                            panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
                             addPropertyChangeListeners(panes.get(i), synchView);
                         }
                     }

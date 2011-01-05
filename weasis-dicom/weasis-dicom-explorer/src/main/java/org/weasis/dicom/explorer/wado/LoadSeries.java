@@ -385,7 +385,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     }
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
                         null, dicomSeries));
-                    // Let time to EDT to repaint
+                    // Let EDT time for repainting
                     try {
                         Thread.sleep(100);
                     } catch (Exception e) {
@@ -907,8 +907,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
             stream = httpCon.getInputStream();
             // TODO find workaround
-            // Does not work with WADO. (only without output filter on the
-            // wado server)
+            // Does not work with WADO. (only without output filter on the wado server). In dcm4chee
+            // http://www.dcm4che.org/jira/browse/DCMEE-421
             int contentLength = httpCon.getContentLength();
             contentLength = -1;
             if (contentLength == -1) {

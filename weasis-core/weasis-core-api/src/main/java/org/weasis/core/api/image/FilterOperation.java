@@ -31,7 +31,7 @@ public class FilterOperation extends AbstractOperation {
     }
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        KernelData kernel = (KernelData) imageOperation.getActionValue(ActionW.FILTER);
+        KernelData kernel = (KernelData) imageOperation.getActionValue(ActionW.FILTER.cmd());
         if (kernel == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$

@@ -43,6 +43,7 @@ import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.media.jai.PlanarImage;
@@ -60,6 +61,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -97,7 +99,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     private static final ImageTransferHandler EXPORT_TO_CLIPBOARD = new ImageTransferHandler();
 
     protected final FocusHandler focusHandler = new FocusHandler();
-    protected final MouseClickHandler mouseClickHandler = new MouseClickHandler();
+    protected final MouseHandler mouseClickHandler = new MouseHandler();
 
     protected static final Shape[] pointer;
     static {
@@ -127,6 +129,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected int frameIndex;
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
+    protected ZoomWin<E> lens;
 
     protected MediaSeries<E> series = null;
     protected static final Color focusColor = Color.orange;
@@ -151,7 +154,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         tileOffset = 0;
         initActionWState();
 
-        imageLayer = new RenderedImageLayer<E>(new OperationsManager(this));
+        imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), true);
         // infoLayer = new InfoLayer(this);
 
         setBorder(normalBorder);
@@ -165,16 +168,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         imageLayer.addLayerChangeListener(this);
     }
 
+    public void copyActionWState(HashMap<String, Object> actionsInView) {
+        actionsInView.putAll(this.actionsInView);
+    }
+
     protected void initActionWState() {
-        actionsInView.put(ActionW.ZOOM, 0.0);
-        actionsInView.put(ActionW.ROTATION, 0);
-        actionsInView.put(ActionW.FLIP, false);
-        actionsInView.put(ActionW.INVERSELUT, false);
-        actionsInView.put(ActionW.INVERSELUT, false);
-        actionsInView.put(ActionW.LUT, ByteLut.defaultLUT);
-        actionsInView.put(ActionW.INVERSESTACK, false);
-        actionsInView.put(ActionW.FILTER, KernelData.NONE);
-        actionsInView.put(ActionW.DRAW, true);
+        actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
+        actionsInView.put(ActionW.LENS.cmd(), false);
+        actionsInView.put(ActionW.ROTATION.cmd(), 0);
+        actionsInView.put(ActionW.FLIP.cmd(), false);
+        actionsInView.put(ActionW.INVERSELUT.cmd(), false);
+        actionsInView.put(ActionW.LUT.cmd(), ByteLut.defaultLUT);
+        actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
+        actionsInView.put(ActionW.FILTER.cmd(), KernelData.NONE);
+        actionsInView.put(ActionW.DRAW.cmd(), true);
+        actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -246,6 +254,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    protected void closeLens() {
+        if (lens != null) {
+            ActionState lens = eventManager.getAction(ActionW.LENS);
+            if (lens instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) lens).setSelected(false);
+            }
+        }
+    }
+
     public void setSeries(MediaSeries<E> series) {
         setSeries(series, -1);
     }
@@ -259,11 +276,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (series == null) {
             imageLayer.setImage(null);
             getLayerModel().deleteAllGraphics();
+            closeLens();
         } else {
             defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
             frameIndex = defaultIndex + tileOffset;
             setImage(series.getMedia(frameIndex), true);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM);
+            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
         }
@@ -354,7 +372,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 center();
             }
             if (bestFit) {
-                actionsInView.put(ActionW.ZOOM, -getBestFitViewScale());
+                actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
             }
             imageLayer.setImage(img);
         }
@@ -416,8 +434,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return imageLayer.getSourceImage();
     }
 
+    public RenderedImage getSourceImage() {
+        E image = getImage();
+        if (image == null) {
+            return null;
+        }
+        return image.getImage();
+    }
+
     public AffineTransform getAffineTransform() {
         return affineTransform;
+    }
+
+    public AffineTransform getInverseTransform() {
+        return inverseTransform;
     }
 
     public final void center() {
@@ -466,7 +496,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return frameIndex;
     }
 
-    public void setActionsInView(ActionW action, Object value) {
+    public void setActionsInView(String action, Object value) {
         if (action != null) {
             actionsInView.put(action, value);
             repaint();
@@ -513,7 +543,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW)) {
+        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
             getLayerModel().draw(g2d, transform, inverseTransform);
         }
     }
@@ -523,7 +553,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (viewScale == 0.0) {
             viewScale = -getBestFitViewScale();
         }
-        actionsInView.put(ActionW.ZOOM, viewScale);
+        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
         super.zoom(Math.abs(viewScale));
         imageLayer.updateImageOperation(ZoomOperation.name);
         updateAffineTransform();
@@ -532,7 +562,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected void updateAffineTransform() {
         double viewScale = getViewModel().getViewScale();
 
-        Boolean flip = (Boolean) actionsInView.get(ActionW.FLIP);
+        Boolean flip = (Boolean) actionsInView.get(ActionW.FLIP.cmd());
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
@@ -553,7 +583,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             affineTransform.setToScale(viewScale, viewScale);
         }
 
-        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION);
+        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
         if (rotationAngle != null && rotationAngle > 0) {
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
@@ -570,8 +600,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setDrawingsVisibility(boolean visible) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW) != visible) {
-            actionsInView.put(ActionW.DRAW, visible);
+        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd()) != visible) {
+            actionsInView.put(ActionW.DRAW.cmd(), visible);
             repaint();
         }
     }
@@ -579,15 +609,23 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected void setWindowLevel(E img) {
         float min = img.getMinValue();
         float max = img.getMaxValue();
-        actionsInView.put(ActionW.WINDOW, max - min);
-        actionsInView.put(ActionW.LEVEL, (max - min) / 2.0f + min);
+        actionsInView.put(ActionW.WINDOW.cmd(), max - min);
+        actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+    }
+
+    public Object getLensActionValue(String action) {
+        if (lens == null) {
+            return null;
+        }
+        return lens.getActionValue(action);
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
         if (series == null) {
             return;
         }
-        if (evt.getPropertyName().equals(ActionW.SCROLL_SERIES.getCommand())) {
+        final String command = evt.getPropertyName();
+        if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
             Object value = evt.getNewValue();
             AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
             if (layer != null) {
@@ -595,12 +633,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             if (value instanceof Double) {
                 double location = (Double) value;
-                Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE);
+                Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                 if (cutlines != null && cutlines) {
                     computeCrosslines(location);
                 } else {
                     // TODO add a way in GUI to resynchronize series
-                    Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET);
+                    Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
                     if (offset != null) {
                         location += offset;
                     }
@@ -610,29 +648,55 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 // TODO recieve Integer and crossline or synch are true
                 frameIndex = (Integer) evt.getNewValue() + tileOffset;
             }
-            Double val = (Double) actionsInView.get(ActionW.ZOOM);
+            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode
             boolean rescaleView = (val == null || val <= 0.0);
             setImage(series.getMedia(frameIndex), rescaleView);
             if (rescaleView) {
-                val = (Double) actionsInView.get(ActionW.ZOOM);
+                val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);
                 center();
             }
-        } else if (evt.getPropertyName().equals(ActionW.WINDOW.getCommand())) {
-            actionsInView.put(ActionW.WINDOW, ((Integer) evt.getNewValue()).floatValue());
+        } else if (command.equals(ActionW.WINDOW.cmd())) {
+            actionsInView.put(ActionW.WINDOW.cmd(), ((Integer) evt.getNewValue()).floatValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (evt.getPropertyName().equals(ActionW.LEVEL.getCommand())) {
-            actionsInView.put(ActionW.LEVEL, ((Integer) evt.getNewValue()).floatValue());
+        } else if (command.equals(ActionW.LEVEL.cmd())) {
+            actionsInView.put(ActionW.LEVEL.cmd(), ((Integer) evt.getNewValue()).floatValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (evt.getPropertyName().equals(ActionW.ROTATION.getCommand())) {
-            actionsInView.put(ActionW.ROTATION, evt.getNewValue());
+        } else if (command.equals(ActionW.ROTATION.cmd())) {
+            actionsInView.put(ActionW.ROTATION.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(RotationOperation.name);
             updateAffineTransform();
-        } else if (evt.getPropertyName().equals(ActionW.ZOOM.getCommand())) {
+        } else if (command.equals(ActionW.ZOOM.cmd())) {
             double zoomFactor = (Double) evt.getNewValue();
             zoom(zoomFactor);
-        } else if (evt.getPropertyName().equals(ActionW.PAN.getCommand())) {
+
+        } else if (command.equals(ActionW.LENSZOOM.cmd())) {
+            if (lens != null) {
+                lens.setActionInView(ActionW.ZOOM.cmd(), evt.getNewValue());
+            }
+
+        } else if (command.equals(ActionW.LENS.cmd())) {
+            Boolean showLens = (Boolean) evt.getNewValue();
+            actionsInView.put(ActionW.LENS.cmd(), showLens);
+            if (showLens) {
+                if (lens == null) {
+                    lens = new ZoomWin(this);
+                }
+                // resize if to big
+                int maxWidth = getWidth() / 3;
+                int maxHeight = getHeight() / 3;
+                lens.setSize(lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(), lens.getHeight() > maxHeight
+                    ? maxHeight : lens.getHeight());
+                this.add(lens);
+                lens.showLens(true);
+
+            } else {
+                lens.showLens(false);
+                this.remove(lens);
+            }
+
+        } else if (command.equals(ActionW.PAN.cmd())) {
             DragPoint point = (DragPoint) evt.getNewValue();
             // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
             // if (view != null) {
@@ -641,19 +705,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // }
             // }
             moveOrigin(point);
-        } else if (evt.getPropertyName().equals(ActionW.FLIP.getCommand())) {
-            actionsInView.put(ActionW.FLIP, evt.getNewValue());
+        } else if (command.equals(ActionW.FLIP.cmd())) {
+            actionsInView.put(ActionW.FLIP.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FlipOperation.name);
             updateAffineTransform();
-        } else if (evt.getPropertyName().equals(ActionW.LUT.getCommand())) {
-            actionsInView.put(ActionW.LUT, evt.getNewValue());
+        } else if (command.equals(ActionW.LUT.cmd())) {
+            actionsInView.put(ActionW.LUT.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(PseudoColorOperation.name);
-        } else if (evt.getPropertyName().equals(ActionW.INVERSELUT.getCommand())) {
-            actionsInView.put(ActionW.INVERSELUT, evt.getNewValue());
+        } else if (command.equals(ActionW.INVERSELUT.cmd())) {
+            actionsInView.put(ActionW.INVERSELUT.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(PseudoColorOperation.name);
-        } else if (evt.getPropertyName().equals(ActionW.FILTER.getCommand())) {
-            actionsInView.put(ActionW.FILTER, evt.getNewValue());
+        } else if (command.equals(ActionW.FILTER.cmd())) {
+            actionsInView.put(ActionW.FILTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
+        }
+        if (lens != null) {
+            // Transmit to the lens the command in case the source image has been freeze (for updating rotation and flip
+            // => will keep consistent display)
+            lens.setCommandFromParentView(command, evt.getNewValue());
+            lens.updateZoom();
         }
     }
 
@@ -692,6 +762,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         for (int i = 0; i < wheelListeners.length; i++) {
             this.removeMouseWheelListener(wheelListeners[i]);
         }
+        if (lens != null) {
+            lens.disableMouseAndKeyListener();
+        }
     }
 
     public synchronized void iniDefaultMouseListener() {
@@ -725,14 +798,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (toolBar != null) {
                     String command =
                         ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                            toolBar.getMouseLeft().getActionCommand()).getCommand();
+                            toolBar.getMouseLeft().getActionCommand()).cmd();
                     changeLeftMouseAction(command);
                 }
             }
         } else {
-            ActionW action = ActionW.getActionFromkeyEvent(e.getKeyCode());
+            ActionW action = eventManager.getActionFromkeyEvent(e.getKeyCode());
             if (action != null) {
-                changeLeftMouseAction(action.getCommand());
+                changeLeftMouseAction(action.cmd());
             }
         }
 
@@ -827,7 +900,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public void focusLost(FocusEvent e) {
     }
 
-    protected class MouseClickHandler extends MouseActionAdapter {
+    protected class MouseHandler extends MouseActionAdapter {
 
         @Override
         public void mousePressed(MouseEvent mouseevent) {
@@ -1047,17 +1120,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             ActionW action = null;
             // left mouse button, always active
             if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-                action = ActionW.getActionFromCommand(mouseActions.getLeft());
+                action = eventManager.getActionFromCommand(mouseActions.getLeft());
             }
             // middle mouse button
             else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0
                 && ((mouseActions.getActiveButtons() & InputEvent.BUTTON2_DOWN_MASK) != 0)) {
-                action = ActionW.getActionFromCommand(mouseActions.getMiddle());
+                action = eventManager.getActionFromCommand(mouseActions.getMiddle());
             }
             // right mouse button
             else if ((modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0
                 && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
-                action = ActionW.getActionFromCommand(mouseActions.getRight());
+                action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
             DefaultView2d.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
         }

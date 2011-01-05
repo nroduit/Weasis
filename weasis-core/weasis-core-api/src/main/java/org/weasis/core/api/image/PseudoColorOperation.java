@@ -37,8 +37,8 @@ public class PseudoColorOperation extends AbstractOperation {
     }
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Boolean invert = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT);
-        ByteLut lutTable = (ByteLut) imageOperation.getActionValue(ActionW.LUT);
+        Boolean invert = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
+        ByteLut lutTable = (ByteLut) imageOperation.getActionValue(ActionW.LUT.cmd());
         if (invert == null) {
             invert = false;
         }

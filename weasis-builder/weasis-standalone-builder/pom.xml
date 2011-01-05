@@ -3,30 +3,49 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis.builder</groupId>
-	<artifactId>weasis-framework-builder</artifactId>
+	<artifactId>weasis-standalone-builder</artifactId>
 	<packaging>pom</packaging>
-	<name>Weasis Distribution [${project.artifactId}]</name>
-	<version>1.0.3</version>
-
+	<name>Weasis Standalone Distribution</name>
+	<version>1.0.8-SNAPSHOT</version>
 	<properties>
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
+			in config.properties) -->
+		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
+		<tmp.bin.dir>${project.build.directory}/tmp/bin</tmp.bin.dir>
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<sling.commons.log.version>2.0.6</sling.commons.log.version>
-		<felix.gogo.version>0.6.0</felix.gogo.version>
-		<felix.scr.version>1.4.0</felix.scr.version>
+		<felix.framework.version>3.0.7</felix.framework.version>
+		<felix.gogo.version>0.6.1</felix.gogo.version>
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.bundlerepository.version>1.6.4</felix.bundlerepository.version>
-		<felix.configadmin.version>1.2.4</felix.configadmin.version>
+		<felix.configadmin.version>1.2.8</felix.configadmin.version>
+		<felix.prefs.version>1.0.4</felix.prefs.version>
+		<felix.scr.version>1.6.0</felix.scr.version>
+		<sling.commons.log.version>2.1.0</sling.commons.log.version>
 
-		<weasis.core.version>0.5.2-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.5.2-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.2-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.2-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.2-SNAPSHOT</weasis.dicom.version>
+		<weasis.launcher.version>0.5.5-SNAPSHOT</weasis.launcher.version>
+		<weasis.core.version>0.5.5-SNAPSHOT</weasis.core.version>
+		<weasis.imageio.version>0.7.3-SNAPSHOT</weasis.imageio.version>
+		<weasis.jmc.version>0.5.5-SNAPSHOT</weasis.jmc.version>
+		<weasis.base.version>0.5.5-SNAPSHOT</weasis.base.version>
+		<weasis.dicom.version>0.5.5-SNAPSHOT</weasis.dicom.version>
+		<weasis.imageioext.j2k.codec.version>0.5.5-SNAPSHOT</weasis.imageioext.j2k.codec.version>
+
+		<mydoggy.version>1.5.0-b05</mydoggy.version>
+		<substance.version>6.1.0-b02</substance.version>
+		<jai.version>1.1.4-b03</jai.version>
+		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
+		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version>
+		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
+		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>
-
+	<repositories>
+		<repository>
+			<id>weasis</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+		</repository>
+	</repositories>
 	<build>
 		<plugins>
 			<plugin>
@@ -50,17 +69,23 @@
 								<artifactItem>
 									<groupId>org.apache.felix</groupId>
 									<artifactId>org.apache.felix.framework</artifactId>
-									<version>3.0.1</version>
-									<outputDirectory>${tmp.dir}</outputDirectory>
+									<version>${felix.framework.version}</version>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
 									<destFileName>felix.jar</destFileName>
 								</artifactItem>
-
 								<artifactItem>
 									<groupId>org.weasis.launcher</groupId>
 									<artifactId>weasis-launcher</artifactId>
-									<version>0.5.2-SNAPSHOT</version>
-									<outputDirectory>${tmp.dir}</outputDirectory>
+									<version>${weasis.launcher.version}</version>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
 									<destFileName>weasis-launcher.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty</groupId>
+									<artifactId>substance</artifactId>
+									<version>${substance.version}</version>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
+									<destFileName>substance.jar</destFileName>
 								</artifactItem>
 
 								<!-- ===================================== -->
@@ -122,6 +147,46 @@
 								</artifactItem>
 
 								<!-- ===================================== -->
+								<!-- Other required bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.thirdparty</groupId>
+									<artifactId>mydoggy</artifactId>
+									<version>${mydoggy.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<artifactId>jai-lib</artifactId>
+									<version>${jai.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<artifactId>jai-lib-linux-x86</artifactId>
+									<version>${jai.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<artifactId>jai-lib-linux-x86-64</artifactId>
+									<version>${jai.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<artifactId>jai-lib-windows-x86</artifactId>
+									<version>${jai.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<artifactId>vecmath</artifactId>
+									<version>${com.sun.media.j3d.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
+								<!-- ===================================== -->
 								<!-- Weasis Core bundles -->
 								<!-- ===================================== -->
 								<artifactItem>
@@ -132,16 +197,12 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.core</groupId>
-									<artifactId>weasis-core-api-windows-x86</artifactId>
-									<version>${weasis.core.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-ui</artifactId>
 									<version>${weasis.core.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+
+
 								<!-- ===================================== -->
 								<!-- Weasis Imageio bundles -->
 								<!-- ===================================== -->
@@ -153,10 +214,68 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.imageio</groupId>
-									<artifactId>weasis-imageio-codec-windows-x86</artifactId>
-									<version>${weasis.imageio.version}</version>
+									<artifactId>weasis-imageio-codec-linux-x86</artifactId>
+									<version>${weasis.imageio.native.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageio</groupId>
+									<artifactId>weasis-imageio-codec-linux-x86-64</artifactId>
+									<version>${weasis.imageio.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageio</groupId>
+									<artifactId>weasis-imageio-codec-windows-x86</artifactId>
+									<version>${weasis.imageio.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
+								<!-- ===================================== -->
+								<!-- Weasis Imageio-ext bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec</artifactId>
+									<version>${weasis.imageioext.j2k.codec.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec-linux-x86</artifactId>
+									<version>${weasis.imageioext.kakadu.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec-linux-x86-64</artifactId>
+									<version>${weasis.imageioext.kakadu.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec-macosx-x86</artifactId>
+									<version>${weasis.imageioext.kakadu.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec-macosx-x86-64</artifactId>
+									<version>${weasis.imageioext.kakadu.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.imageioext</groupId>
+									<artifactId>weasis-imageioext-j2k-codec-windows-x86</artifactId>
+									<version>${weasis.imageioext.kakadu.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<!-- <artifactItem> -->
+								<!-- <groupId>org.weasis.imageioext</groupId> -->
+								<!-- <artifactId>weasis-imageioext-j2k-codec-windows-x86-64</artifactId> -->
+								<!-- <version>${weasis.imageioext.kakadu.native.version}</version> -->
+								<!-- <outputDirectory>${tmp.bundle.dir}</outputDirectory>> -->
+								<!-- </artifactItem> -->
 
 								<!-- ===================================== -->
 								<!-- Weasis Base bundles -->
@@ -164,12 +283,6 @@
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-ui</artifactId>
-									<version>${weasis.base.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.base</groupId>
-									<artifactId>weasis-base-viewer2d</artifactId>
 									<version>${weasis.base.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
@@ -250,45 +363,41 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+				<artifactId>launch4j-plugin</artifactId>
+				<version>1.5.0.0</version>
+				<executions>
+					<execution>
+						<id>l4j-clui</id>
+						<phase>package</phase>
+						<goals>
+							<goal>launch4j</goal>
+						</goals>
+						<configuration>
+							<headerType>console</headerType>
+							<dontWrapJar>true</dontWrapJar>
+							<outfile>${project.build.directory}/dist/weasis/weasis.exe</outfile>
+							<jar>bin/weasis-launcher.jar</jar>
+							<errTitle>weasis</errTitle>
+							<icon>etc/weasis.ico</icon>
+							
+							<classPath>
+								<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
+								<addDependencies>false</addDependencies>
+								<preCp>bin\felix.jar;bin\substance.jar</preCp>
+							</classPath>
+							<jre>
+								<minVersion>1.6.0</minVersion>
+								<maxHeapSize>512</maxHeapSize>
+							</jre>
+
+
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
-	<profiles>
-		<profile>
-			<activation>
-				<!--
-					Use your own certificate either: mvn package -Djarsigner.alias="alias"
-					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" or : add properties
-					in setting.xml (<jarsigner.alias>alias</jarsigner.alias>)
-				-->
-				<property>
-					<name>jarsigner.alias</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-jarsigner-plugin</artifactId>
-						<version>1.2</version>
-						<executions>
-							<execution>
-								<inherited>false</inherited>
-								<id>sign</id>
-								<phase>process-resources</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-								<configuration>
-									<archiveDirectory>${tmp.dir}</archiveDirectory>
-									<includes>
-										<include>*.jar</include>
-									</includes>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+
 </project>

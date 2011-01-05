@@ -24,4 +24,10 @@ public abstract class AbstractOperation implements ImageOperationAction {
         result = null;
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Object obj = super.clone();
+        result = null;
+        return obj;
+    }
 }

@@ -198,6 +198,8 @@ public class WeasisLauncher {
                         cacheDir = params[3];
                     }
                 }
+                commandList.remove(c);
+                break;
             }
         }
 

@@ -8,18 +8,22 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.api.gui;
+package org.weasis.dicom.codec;
 
-import java.awt.image.RenderedImage;
+import java.net.URI;
 
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
 
-public interface ImageOperation {
+public class DicomEncapsulatedDocument extends MediaElement<URI> {
 
-    public abstract Object getActionValue(String action);
+    public DicomEncapsulatedDocument(MediaReader mediaIO, Object key) {
+        super(mediaIO, key);
+    }
 
-    public abstract ImageElement getImage();
+    @Override
+    public void dispose() {
 
-    // Return the source image for the first operation in the list
-    public RenderedImage getSourceImage();
+    }
+
 }

@@ -12,21 +12,37 @@ package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
+import java.util.List;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
 
 public class OperationsManager {
 
     private final ImageOperation imageOperation;
-    private final ArrayList<ImageOperationAction> operations;
+    private final List<ImageOperationAction> operations;
 
     public OperationsManager(ImageOperation imageOperation) {
         if (imageOperation == null) {
             throw new IllegalArgumentException("ImageOperation cannot be null"); //$NON-NLS-1$
         }
         this.imageOperation = imageOperation;
-        operations = new ArrayList<ImageOperationAction>();
+        this.operations = new ArrayList<ImageOperationAction>();
+    }
+
+    public List<ImageOperationAction> getOperations() {
+        return operations;
+    }
+
+    public RenderedImage getSourceImage(String name) {
+        for (int i = 0; i < operations.size(); i++) {
+            if (operations.get(i).getOperationName().equals(name)) {
+                if (i == 0) {
+                    return imageOperation.getSourceImage();
+                }
+                return operations.get(i - 1).getRenderedImageNode();
+            }
+        }
+        return null;
     }
 
     public void addImageOperationAction(ImageOperationAction action) {
@@ -46,10 +62,7 @@ public class OperationsManager {
     }
 
     public RenderedImage updateAllOperations() {
-        if (imageOperation.getImage() == null) {
-            return null;
-        }
-        RenderedImage source = imageOperation.getImage().getImage();
+        RenderedImage source = imageOperation.getSourceImage();
         RenderedImage result = null;
         if (source != null && operations.size() > 0) {
             result = operations.get(0).getRenderedImage(source, imageOperation);

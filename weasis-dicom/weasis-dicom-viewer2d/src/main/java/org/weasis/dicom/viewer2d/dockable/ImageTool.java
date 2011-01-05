@@ -132,7 +132,7 @@ public class ImageTool extends PluginTool {
             JMVUtils.formatCheckAction(speedSpinner);
             panel_3.add(speedSpinner);
             final JButton startButton = new JButton();
-            startButton.setActionCommand(ActionW.CINESTART.getCommand());
+            startButton.setActionCommand(ActionW.CINESTART.cmd());
             startButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
             startButton.setToolTipText(Messages.getString("ImageTool.cine_start")); //$NON-NLS-1$
             startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png"))); //$NON-NLS-1$
@@ -140,7 +140,7 @@ public class ImageTool extends PluginTool {
             panel_3.add(startButton);
 
             final JButton stopButton = new JButton();
-            stopButton.setActionCommand(ActionW.CINESTOP.getCommand());
+            stopButton.setActionCommand(ActionW.CINESTOP.cmd());
             stopButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
             stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop")); //$NON-NLS-1$
             stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png"))); //$NON-NLS-1$

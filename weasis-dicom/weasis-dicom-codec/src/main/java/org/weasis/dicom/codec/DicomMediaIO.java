@@ -66,6 +66,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
      */
     private static final Logger logger = LoggerFactory.getLogger(DicomMediaIO.class);
 
+    public enum DICOM_TYPE {
+        Image, Video, EncapsulatedDocument
+    };
+
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String VIDEO_MIMETYPE = "video/dicom"; //$NON-NLS-1$
     public static final String SERIES_MIMETYPE = "series/dicom"; //$NON-NLS-1$
@@ -80,10 +84,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private DicomObject dicomObject = null;
     private int numberOfFrame;
     private int stored;
-    private boolean video = false;
     private final HashMap<TagElement, Object> tags;
     private MediaElement image = null;
     private ImageInputStream imageStream = null;
+    private DICOM_TYPE dicomType = DICOM_TYPE.Image;
 
     public DicomMediaIO(URI uri) {
         super(readerSpi);
@@ -121,7 +125,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     return false;
                 }
                 if ("1.2.840.10008.1.2.4.100".equals(dicomObject.getString(Tag.TransferSyntaxUID))) { //$NON-NLS-1$
-                    video = true;
+                    dicomType = DICOM_TYPE.Video;
                 }
                 stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
                 if (stored > 0) {
@@ -132,6 +136,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     String modality = dicomObject.getString(Tag.Modality);
                     boolean ps =
                         modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    // String encap = dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument);
                     if (!ps) {
                         close();
                         return false;
@@ -153,12 +158,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    public Object getTagValue(TagElement tag) {
-        return tags.get(tag);
+    public void setTagIfValueNotNull(TagElement tag, Object value) {
+        if (tag != null && value != null) {
+            tags.put(tag, value);
+        }
     }
 
-    public boolean isVideo() {
-        return video;
+    public Object getTagValue(TagElement tag) {
+        return tags.get(tag);
     }
 
     private void writeTag(MediaSeriesGroup group, TagElement tag) {
@@ -332,6 +339,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTag(TagElement.BitsStored,
                 dicomObject.getInt(Tag.BitsStored, (Integer) getTagValue(TagElement.BitsAllocated)));
             setTag(TagElement.PixelRepresentation, dicomObject.getInt(Tag.PixelRepresentation, 0));
+
+            setTagIfValueNotNull(TagElement.MIMETypeOfEncapsulatedDocument,
+                dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
             validateDicomImageValues();
             computeSlicePositionVector();
         }
@@ -578,7 +588,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private MediaElement getSingleImage() {
         if (image == null) {
             if (readMediaTags()) {
-                if (isVideo()) {
+                if (DICOM_TYPE.Video.equals(dicomType)) {
                     image = new DicomVideoElement(this, null);
                 } else {
                     image = new DicomImageElement(this, 0);
@@ -608,8 +618,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public MediaSeries getMediaSeries() {
         Series series = null;
         if (readMediaTags()) {
-            String serieUID = (String) getTagValue(TagElement.SeriesInstanceUID);
-            series = isVideo() ? new DicomVideo(serieUID) : new DicomSeries(serieUID);
+            String seriesUID = (String) getTagValue(TagElement.SeriesInstanceUID);
+            series = buildSeries(seriesUID);
             writeMetaData(series);
             // no need to apply splitting rules
             // also no model
@@ -625,7 +635,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     @Override
     public String getMediaFragmentMimeType(Object key) {
-        return isVideo() ? VIDEO_MIMETYPE : IMAGE_MIMETYPE;
+        return DICOM_TYPE.Video.equals(dicomType) ? VIDEO_MIMETYPE : IMAGE_MIMETYPE;
     }
 
     @Override
@@ -676,4 +686,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return desc;
     }
 
+    public Series buildSeries(String seriesUID) {
+        if (dicomType.equals(DICOM_TYPE.Image)) {
+            return new DicomSeries(seriesUID);
+        } else if (dicomType.equals(DICOM_TYPE.Video)) {
+            return new DicomVideo(seriesUID);
+        }
+
+        // else if (dicomType.equals(DICOM_TYPE.EncapsulatedDocument)) {
+        // }
+        return new DicomSeries(seriesUID);
+    }
 }

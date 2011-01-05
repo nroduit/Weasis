@@ -33,7 +33,7 @@ public class FlipOperation extends AbstractOperation {
     }
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Boolean flip = (Boolean) imageOperation.getActionValue(ActionW.FLIP);
+        Boolean flip = (Boolean) imageOperation.getActionValue(ActionW.FLIP.cmd());
         if (flip == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$

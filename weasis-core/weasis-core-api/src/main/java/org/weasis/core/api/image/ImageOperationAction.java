@@ -14,7 +14,7 @@ import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.gui.ImageOperation;
 
-public interface ImageOperationAction {
+public interface ImageOperationAction extends Cloneable {
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation);
 
@@ -23,4 +23,6 @@ public interface ImageOperationAction {
     public String getOperationName();
 
     public void clearNode();
+
+    public Object clone() throws CloneNotSupportedException;
 }

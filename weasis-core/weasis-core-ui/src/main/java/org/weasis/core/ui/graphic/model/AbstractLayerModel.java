@@ -180,7 +180,7 @@ public class AbstractLayerModel implements LayerModel {
         obj = ((AbstractDragGraphic) (obj)).clone(mouseevent.getX(), mouseevent.getY());
         if (obj != null) {
             AbstractLayer layer = getLayer(tool);
-            if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW)) {
+            if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
                 JOptionPane
                     .showMessageDialog(
                         canvas,

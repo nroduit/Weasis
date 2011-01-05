@@ -24,8 +24,6 @@ import javax.swing.JComponent;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.ui.Messages;
 
 /**
  * The Class GraphicsPane.
@@ -39,7 +37,7 @@ public class GraphicsPane extends JComponent {
     private ViewModel viewModel;
     private final ViewModelHandler viewModelHandler;
     protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
-    protected final HashMap<ActionW, Object> actionsInView = new HashMap<ActionW, Object>();
+    protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
 
     public GraphicsPane() {
         this(null, null);
@@ -130,7 +128,7 @@ public class GraphicsPane extends JComponent {
         }
     }
 
-    public Object getActionValue(ActionW action) {
+    public Object getActionValue(String action) {
         if (action == null) {
             return null;
         }
@@ -167,8 +165,8 @@ public class GraphicsPane extends JComponent {
     public void zoom(Rectangle2D zoomRect) {
         final double viewportWidth = getWidth() - 1;
         final double viewportHeight = getHeight() - 1;
-        zoom(zoomRect.getCenterX(), zoomRect.getCenterY(), Math.min(viewportWidth / zoomRect.getWidth(), viewportHeight
-            / zoomRect.getHeight()));
+        zoom(zoomRect.getCenterX(), zoomRect.getCenterY(),
+            Math.min(viewportWidth / zoomRect.getWidth(), viewportHeight / zoomRect.getHeight()));
     }
 
     public double getBestFitViewScale() {
@@ -202,7 +200,6 @@ public class GraphicsPane extends JComponent {
         return modelLength * viewModel.getViewScale();
     }
 
-    // /////////////////////////////////////////////////////////////////////////////////////
     // JComponent Overrides
     /**
      * If you override this in a subclass you should not make permanent changes to the passed in <code>Graphics</code>.

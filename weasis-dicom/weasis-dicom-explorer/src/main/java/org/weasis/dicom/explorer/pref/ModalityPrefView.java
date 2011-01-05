@@ -262,7 +262,8 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
                         } else if (result.trim().equals("")) { //$NON-NLS-1$
                             element.setFormat(null);
                         } else {
-                            JOptionPane.showMessageDialog(ModalityPrefView.this,
+                            JOptionPane.showMessageDialog(
+                                ModalityPrefView.this,
                                 Messages.getString("ModalityPrefView.not_valid"), Messages.getString("ModalityPrefView.disp_format"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
                         }
                     }
@@ -299,6 +300,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
                 disElements[0] = TagElement.PatientName;
                 disElements[1] = TagElement.PatientBirthDate;
                 disElements[2] = TagElement.PatientID;
+                // TODO set format once at the beginning
                 disElements[2].setFormat(Messages.getString("ModalityPrefView.id")); //$NON-NLS-1$
                 disElements[3] = TagElement.PatientSex;
                 disElements[3].setFormat(Messages.getString("ModalityPrefView.sex")); //$NON-NLS-1$

@@ -20,7 +20,6 @@ import java.awt.geom.Point2D;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.DragPoint;
 
 public abstract class PannerListener extends MouseActionAdapter implements ActionState, KeyListener {
@@ -102,8 +101,8 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
             if (panner != null) {
                 if (pickPoint != null) {
                     double scale = panner.getViewModel().getViewScale();
-                    setPoint(new DragPoint(DragPoint.STATE.Dragged, -((e.getX() - pickPoint.getX()) / scale), -((e
-                        .getY() - pickPoint.getY()) / scale)));
+                    setPoint(new DragPoint(DragPoint.STATE.Dragged, -((e.getX() - pickPoint.getX()) / scale),
+                        -((e.getY() - pickPoint.getY()) / scale)));
                     panner.setPointerType(1);
                 }
             }

@@ -42,18 +42,15 @@ import org.weasis.core.ui.util.WtoolBar;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
 
     private static final String view2dClass = DefaultView2d.class.getName();
-    public static final GridBagLayoutModel VIEWS_1x1 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_2x1 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "2x1"), 2, 1, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout2x1.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_1x2 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "1x2"), 1, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_2x1 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "2x1"), 2, 1, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout2x1.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x2 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "1x2"), 1, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2_f2 =
         new GridBagLayoutModel(
             ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), Messages.getString("ImageViewerPlugin.layout_c2x1"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -62,26 +59,21 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         new GridBagLayoutModel(
             ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), Messages.getString("ImageViewerPlugin.layout_c1x2"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2_f1x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_2x2 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "2x2"), 2, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout2x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_3x2 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "3x2"), 3, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout3x2.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_3x3 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "3x3"), 3, 3, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout3x3.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_4x3 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "4x3"), 4, 3, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout4x3.png"))); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_4x4 =
-        new GridBagLayoutModel(
-            String.format(Messages.getString("ImageViewerPlugin.2"), "4x4"), 4, 4, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
-                    .getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_2x2 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "2x2"), 2, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout2x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_3x2 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "3x2"), 3, 2, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout3x2.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_3x3 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "3x3"), 3, 3, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout3x3.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_4x3 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "4x3"), 4, 3, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout4x3.png"))); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_4x4 = new GridBagLayoutModel(String.format(
+        Messages.getString("ImageViewerPlugin.2"), "4x4"), 4, 4, view2dClass, new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
+        .getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
 
     /**
      * The current focused <code>ImagePane</code>. The default is 0.

@@ -61,6 +61,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final ToggleButtonListener flipAction;
     private final ToggleButtonListener inverseLutAction;
     private final ToggleButtonListener inverseStackAction;
+    private final ToggleButtonListener showLensAction;
 
     private final ComboItemListener lutAction;
     private final ComboItemListener filterAction;
@@ -92,32 +93,33 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     private EventManager() {
         iniAction(moveTroughSliceAction = getMoveTroughSliceAction(10, TIME.minute, 0.1));
-        iniAction(windowAction = getWindowAction());
-        iniAction(levelAction = getLevelAction());
-        iniAction(rotateAction = getRotateAction());
-        iniAction(zoomAction = getZoomAction());
+        iniAction(windowAction = newWindowAction());
+        iniAction(levelAction = newLevelAction());
+        iniAction(rotateAction = newRotateAction());
+        iniAction(zoomAction = newZoomAction());
 
-        iniAction(flipAction = getFlipAction());
-        iniAction(inverseLutAction = getInverseLutAction());
-        iniAction(inverseStackAction = getInverseStackAction());
+        iniAction(flipAction = newFlipAction());
+        iniAction(inverseLutAction = newInverseLutAction());
+        iniAction(inverseStackAction = newInverseStackAction());
+        iniAction(showLensAction = newLensAction());
 
         iniAction(lutAction = getLutAction());
         iniAction(filterAction = getFilterAction());
-        iniAction(layoutAction = getLayoutAction(View2dContainer.MODELS));
-        iniAction(synchAction = getSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
+        iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
+        iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
 
-        iniAction(panAction = getPanAction());
+        iniAction(panAction = newPanAction());
 
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
         mouseActions.applyPreferences(pref);
         if (pref != null) {
             Preferences prefNode = pref.node("mouse.sensivity");
-            windowAction.setMouseSensivity(prefNode.getDouble(windowAction.getActionW().getCommand(), 1.25));
-            levelAction.setMouseSensivity(prefNode.getDouble(levelAction.getActionW().getCommand(), 1.25));
-            moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().getCommand(),
+            windowAction.setMouseSensivity(prefNode.getDouble(windowAction.getActionW().cmd(), 1.25));
+            levelAction.setMouseSensivity(prefNode.getDouble(levelAction.getActionW().cmd(), 1.25));
+            moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(),
                 0.1));
-            rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().getCommand(), 0.25));
-            zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().getCommand(), 0.1));
+            rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
+            zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
         }
         initializeParameters();
     }
@@ -136,7 +138,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof KernelData) {
-                    firePropertyChange(action.getCommand(), null, object);
+                    firePropertyChange(action.cmd(), null, object);
                 }
             }
         };
@@ -150,19 +152,19 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             public void itemStateChanged(Object object) {
                 if (object instanceof ByteLut) {
                     // customPreset = false;
-                    firePropertyChange(action.getCommand(), null, object);
+                    firePropertyChange(action.cmd(), null, object);
                 }
             }
         };
     }
 
     @Override
-    protected ToggleButtonListener getInverseStackAction() {
+    protected ToggleButtonListener newInverseStackAction() {
         return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.getCommand(), null, selected);
+                firePropertyChange(action.cmd(), null, selected);
             }
         };
     }
@@ -190,10 +192,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void actionPerformed(ActionEvent evt) {
         String command = evt.getActionCommand();
 
-        if (command.equals(ActionW.CINESTART.getCommand())) {
+        if (command.equals(ActionW.CINESTART.cmd())) {
             // turn cining on.
             moveTroughSliceAction.start();
-        } else if (command.equals(ActionW.CINESTOP.getCommand())) {
+        } else if (command.equals(ActionW.CINESTOP.cmd())) {
             // turn cine off.
             moveTroughSliceAction.stop();
         }
@@ -202,15 +204,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void resetAllActions() {
         if (selectedView2dContainer != null) {
             DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-            windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW)).intValue());
-            levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL)).intValue());
+            windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
+            levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
         }
         flipAction.setSelected(false);
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
         lutAction.setSelectedItem(ByteLut.defaultLUT);
         filterAction.setSelectedItem(KernelData.NONE);
-        firePropertyChange(ActionW.ZOOM.getCommand(), null, 0.0);
+        firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
     }
 
     public void reset(ResetTools action) {
@@ -219,15 +221,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
             // value is adjusted by the BoundedRangeModel
-            firePropertyChange(ActionW.ZOOM.getCommand(), null, 0.0);
+            firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
 
         } else if (ResetTools.Rotation.equals(action)) {
             rotateAction.setValue(0);
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
                 DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-                windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW)).intValue());
-                levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL)).intValue());
+                windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
+                levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
             }
         } else if (ResetTools.Pan.equals(action)) {
             if (selectedView2dContainer != null) {
@@ -264,22 +266,24 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
         MediaSeries<ImageElement> series = defaultView2d.getSeries();
         windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
-            ((Float) defaultView2d.getActionValue(ActionW.WINDOW)).intValue());
+            ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-            ((Float) defaultView2d.getActionValue(ActionW.LEVEL)).intValue());
-        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION));
-        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP));
+            ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+        rotateAction
+            .setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
+        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
-            .getActionValue(ActionW.ZOOM))));
+            .getActionValue(ActionW.ZOOM.cmd()))));
         moveTroughSliceAction.setMinMaxValue(1, series.size(), defaultView2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagElement.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
-        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT));
-        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER));
-        inverseStackAction.setSelected((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK));
+        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
+        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
+            .cmd()));
+        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
+        inverseStackAction.setSelected((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK.cmd()));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
         return true;
@@ -290,15 +294,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
             Preferences prefNode = prefs.node("mouse.sensivity");
-            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().getCommand(),
+            BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().cmd(),
                 windowAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().getCommand(),
+            BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().cmd(),
                 levelAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, moveTroughSliceAction.getActionW().getCommand(),
+            BundlePreferences.putDoublePreferences(prefNode, moveTroughSliceAction.getActionW().cmd(),
                 moveTroughSliceAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().getCommand(),
+            BundlePreferences.putDoublePreferences(prefNode, rotateAction.getActionW().cmd(),
                 rotateAction.getMouseSensivity());
-            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().getCommand(),
+            BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
         }
     }

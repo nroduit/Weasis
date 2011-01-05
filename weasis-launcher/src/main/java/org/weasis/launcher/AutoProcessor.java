@@ -44,6 +44,10 @@ public class AutoProcessor {
      **/
     public static final String AUTO_DEPLOY_ACTION_PROPERY = "felix.auto.deploy.action"; //$NON-NLS-1$
     /**
+     * The property name used to specify auto-deploy start level.
+     **/
+    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERY = "felix.auto.deploy.startlevel";
+    /**
      * The name used for the auto-deploy install action.
      **/
     public static final String AUTO_DEPLOY_INSTALL_VALUE = "install"; //$NON-NLS-1$
@@ -86,7 +90,7 @@ public class AutoProcessor {
 
     /**
      * <p>
-     * Processes bundles in the auto-deploy directory, installing and then starting each one.
+     * Processes bundles in the auto-deploy directory, performing the specified deploy actions.
      * </p>
      */
     private static void processAutoDeploy(Map configMap, BundleContext context, WebStartLoader webStartLoader) {
@@ -105,6 +109,22 @@ public class AutoProcessor {
 
         // Perform auto-deploy actions.
         if (actionList.size() > 0) {
+            // Retrieve the Start Level service, since it will be needed
+            // to set the start level of the installed bundles.
+            StartLevel sl =
+                (StartLevel) context.getService(context
+                    .getServiceReference(org.osgi.service.startlevel.StartLevel.class.getName()));
+
+            // Get start level for auto-deploy bundles.
+            int startLevel = sl.getInitialBundleStartLevel();
+            if (configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERY) != null) {
+                try {
+                    startLevel = Integer.parseInt(configMap.get(AUTO_DEPLOY_STARTLEVEL_PROPERY).toString());
+                } catch (NumberFormatException ex) {
+                    // Ignore and keep default level.
+                }
+            }
+
             // Get list of already installed bundles as a map.
             Map installedBundleMap = new HashMap();
             Bundle[] bundles = context.getBundles();
@@ -151,11 +171,16 @@ public class AutoProcessor {
                     }
 
                     // If we have found and/or successfully installed a bundle,
-                    // then add it to the list of bundles to potentially start.
+                    // then add it to the list of bundles to potentially start
+                    // and also set its start level accordingly.
                     if (b != null) {
                         webStartLoader.setValue(i + 1);
-                        startBundleList.add(b);
+                        if (!isFragment(b)) {
+                            startBundleList.add(b);
+                            sl.setBundleStartLevel(b, startLevel);
+                        }
                     }
+
                 } catch (BundleException ex) {
                     System.err.println("Auto-deploy install: " + ex //$NON-NLS-1$
                         + ((ex.getCause() != null) ? " - " + ex.getCause() : "")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -184,9 +209,8 @@ public class AutoProcessor {
             if (actionList.contains(AUTO_DEPLOY_START_VALUE)) {
                 for (int i = 0; i < startBundleList.size(); i++) {
                     try {
-                        if (!isFragment((Bundle) startBundleList.get(i))) {
-                            ((Bundle) startBundleList.get(i)).start();
-                        }
+                        ((Bundle) startBundleList.get(i)).start();
+
                     } catch (BundleException ex) {
                         System.err.println("Auto-deploy start: " + ex //$NON-NLS-1$
                             + ((ex.getCause() != null) ? " - " + ex.getCause() : "")); //$NON-NLS-1$ //$NON-NLS-2$

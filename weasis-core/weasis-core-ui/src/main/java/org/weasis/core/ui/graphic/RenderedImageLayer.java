@@ -23,14 +23,12 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 
-import javax.media.jai.PlanarImage;
 import javax.media.jai.iterator.RandomIter;
 import javax.media.jai.iterator.RandomIterFactory;
 
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.model.Layer;
 
 /**
@@ -45,25 +43,25 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     private AffineTransform _transform;
     private RandomIter readIterator;
     private ArrayList<ImageLayerChangeListener<E>> listenerList;
-    private final boolean layerChangeFireingSuspended = false;
+    private boolean buildIterator = false;
     private RenderedImage displayImage;
     private boolean visible = true;
 
     // private final Image2DViewer view2DPane;
 
-    public RenderedImageLayer(OperationsManager manager) {
-        this(manager, null, null);
+    public RenderedImageLayer(OperationsManager manager, boolean buildIterator) {
+        this(manager, null, buildIterator, null);
     }
 
-    public RenderedImageLayer(OperationsManager manager, E image) {
-        this(manager, image, null);
+    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator) {
+        this(manager, image, buildIterator, null);
     }
 
-    public RenderedImageLayer(OperationsManager manager, E image, int x, int y) {
-        this(manager, image, AffineTransform.getTranslateInstance(x, y));
+    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator, int x, int y) {
+        this(manager, image, buildIterator, AffineTransform.getTranslateInstance(x, y));
     }
 
-    public RenderedImageLayer(OperationsManager manager, E image, AffineTransform transform) {
+    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator, AffineTransform transform) {
         if (manager == null) {
             throw new IllegalArgumentException("OperationsManager argument cannot be null"); //$NON-NLS-1$
         }
@@ -122,8 +120,8 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         Rectangle clipBounds = g2d.getClipBounds();
         if (clipBounds == null) {
             clipBounds =
-                new Rectangle(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth(), displayImage
-                    .getHeight());
+                new Rectangle(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth(),
+                    displayImage.getHeight());
         }
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
@@ -314,16 +312,14 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
             operations.clearCacheNodes();
         }
         readIterator =
-            (sourceImage == null || sourceImage.getImage() == null) ? null : RandomIterFactory.create(sourceImage
-                .getImage(), null);
+            (buildIterator && sourceImage != null && sourceImage.getImage() != null) ? RandomIterFactory.create(
+                sourceImage.getImage(), null) : null;
         fireLayerChanged();
     }
 
     public void fireLayerChanged() {
-        if (!layerChangeFireingSuspended) {
-            for (int i = 0; i < listenerList.size(); i++) {
-                listenerList.get(i).handleLayerChanged(this);
-            }
+        for (int i = 0; i < listenerList.size(); i++) {
+            listenerList.get(i).handleLayerChanged(this);
         }
     }
 
@@ -337,12 +333,16 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     }
 
     public void updateImageOperation(String operation) {
-        // cache(operations.updateOperation(operation));
         displayImage = operations.updateOperation(operation);
         fireImageChanged();
     }
 
-    public OperationsManager getOperations() {
+    public void updateAllImageOperations() {
+        displayImage = operations.updateAllOperations();
+        fireImageChanged();
+    }
+
+    public OperationsManager getOperationsManager() {
         return operations;
     }
 
@@ -363,27 +363,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     public void setLevel(int i) {
         // TODO Auto-generated method stub
 
-    }
-
-    /**
-     * Determine which tiles are needed to display given rectangle.
-     * 
-     * @param pi
-     *            PlanarImage
-     * @param vr
-     *            rectangle in pixels
-     * @return rectangle in tiles
-     */
-    private static Rectangle computeRect(final PlanarImage pi, final Rectangle vr, final int dx, final int dy) {
-        final int x = vr.x + pi.getTileGridXOffset() - dx;
-        final int firstTileX = pi.XToTileX(x);
-        final int y = vr.y + pi.getTileGridYOffset() - dy;
-        final int firstTileY = pi.YToTileY(y);
-
-        final int lastTileX = Math.min(pi.XToTileX(x + vr.width) + 1, pi.getNumXTiles());
-        final int lastTileY = Math.min(pi.YToTileY(y + vr.height) + 1, pi.getNumYTiles());
-
-        return new Rectangle(firstTileX, firstTileY, lastTileX - firstTileX, lastTileY - firstTileY);
     }
 
 }

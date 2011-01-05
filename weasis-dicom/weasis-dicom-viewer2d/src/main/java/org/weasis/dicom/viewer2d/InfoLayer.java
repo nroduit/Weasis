@@ -159,8 +159,8 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(WINDOW_LEVEL)) {
             paintFontOutline(
                 g2,
-                Messages.getString("InfoLayer.win") + view2DPane.getActionValue(ActionW.WINDOW) + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$
-                    + view2DPane.getActionValue(ActionW.LEVEL), BORDER, drawY);
+                Messages.getString("InfoLayer.win") + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$
+                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -173,7 +173,7 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(ROTATION)) {
             paintFontOutline(
                 g2,
-                Messages.getString("InfoLayer.angle") + view2DPane.getActionValue(ActionW.ROTATION) + Messages.getString("InfoLayer.angle_symb"), BORDER, drawY); //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("InfoLayer.angle") + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + Messages.getString("InfoLayer.angle_symb"), BORDER, drawY); //$NON-NLS-1$ //$NON-NLS-2$
             drawY -= fontHeight;
         }
 
@@ -249,10 +249,10 @@ public class InfoLayer implements AnnotationsLayer {
                             v[4], v[5]);
                 char colLeft = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
                 char rowTop = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
-                if ((Boolean) view2DPane.getActionValue(ActionW.FLIP)) {
+                if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
                     colLeft = getImageOrientationOposite(colLeft);
                 }
-                int angle = (Integer) view2DPane.getActionValue(ActionW.ROTATION);
+                int angle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
                 if (angle > 45) {
                     char rowBottom = getImageOrientationOposite(rowTop);
                     char colRight = getImageOrientationOposite(colLeft);
@@ -398,14 +398,15 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT);
+        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
         if (lut != null && bound.height > 350) {
 
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
             byte[][] table =
-                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT) ? lut.getInvertedLutTable() : lut.getLutTable();
+                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd()) ? lut.getInvertedLutTable() : lut
+                    .getLutTable();
             float length = table[0].length;
             float x = bound.width - 30f;
             float y = bound.height / 2f - length / 2f;
@@ -428,8 +429,8 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW) / separation;
-            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL) - stepWindow * 2f;
+            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()) / separation;
+            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()) - stepWindow * 2f;
             String str = "" + (int) firstlevel; //$NON-NLS-1$
             paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
             for (int i = 1; i < separation; i++) {

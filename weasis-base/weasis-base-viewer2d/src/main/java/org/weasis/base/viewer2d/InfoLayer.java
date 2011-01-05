@@ -109,8 +109,8 @@ public class InfoLayer implements AnnotationsLayer {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            paintFontOutline(g2, "Win.: " + view2DPane.getActionValue(ActionW.WINDOW) + " Level: "
-                + view2DPane.getActionValue(ActionW.LEVEL), BORDER, drawY);
+            paintFontOutline(g2, "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
+                + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -119,7 +119,8 @@ public class InfoLayer implements AnnotationsLayer {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION) + " °", BORDER, drawY);
+            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", BORDER,
+                drawY);
             drawY -= fontHeight;
         }
 
@@ -132,7 +133,7 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(ANNOTATIONS)) {
             MediaSeries<ImageElement> series = view2DPane.getSeries();
 
-            Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
+            Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             String str = synchLink != null && synchLink ? "linked" : "unlinked";
             paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
 
@@ -207,14 +208,15 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT);
+        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
         if (lut != null && bound.height > 350) {
 
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
             byte[][] table =
-                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT) ? lut.getInvertedLutTable() : lut.getLutTable();
+                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd()) ? lut.getInvertedLutTable() : lut
+                    .getLutTable();
             float length = table[0].length;
             float x = bound.width - 30f;
             float y = bound.height / 2f - length / 2f;
@@ -237,8 +239,8 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW) / separation;
-            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL) - stepWindow * 2f;
+            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()) / separation;
+            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()) - stepWindow * 2f;
             String str = "" + (int) firstlevel;
             paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
             for (int i = 1; i < separation; i++) {

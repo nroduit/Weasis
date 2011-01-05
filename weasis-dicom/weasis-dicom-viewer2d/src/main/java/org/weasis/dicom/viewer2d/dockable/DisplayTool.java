@@ -34,8 +34,8 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -219,7 +219,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 }
                 tree.upadateNode(dicomInfo);
             }
-            Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW);
+            Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
             drawings.setSelected(draw == null ? true : draw);
             Enumeration en = drawings.children();
             while (en.hasMoreElements()) {

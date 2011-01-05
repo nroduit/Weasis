@@ -10,12 +10,14 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.Hashtable;
 
 import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -25,14 +27,16 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.ZoomOperation;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
-    private Hashtable labels = new Hashtable();
+    private final Hashtable labels = new Hashtable();
     private JSlider sliderWindow;
     private JSlider sliderLevel;
     private JSlider sliderZoom;
     private JSlider sliderRotation;
     private JSlider sliderScroll;
+    private final JComboBox comboBoxInterpolation;
 
     public ViewerPrefView() {
         setTitle(View2dFactory.NAME); //$NON-NLS-1$
@@ -52,7 +56,20 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbl_panel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
         panel.setLayout(gbl_panel);
 
+        JPanel panel_1 = new JPanel();
+        FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
+        flowLayout.setAlignment(FlowLayout.LEADING);
+        panel_1.setBorder(new TitledBorder(null, "Zoom", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        add(panel_1);
+
+        JLabel lblInterpolation = new JLabel("Interpolation:");
+        panel_1.add(lblInterpolation);
         EventManager eventManager = EventManager.getInstance();
+
+        comboBoxInterpolation = new JComboBox(ZoomOperation.INTERPOLATIONS);
+        comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
+        panel_1.add(comboBoxInterpolation);
+
         ActionState winAction = eventManager.getAction(ActionW.WINDOW);
         if (winAction instanceof MouseActionAdapter) {
             JLabel lblWindow = new JLabel(Messages.getString("ViewerPrefView.win")); //$NON-NLS-1$
@@ -184,7 +201,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         if (levelAction instanceof MouseActionAdapter) {
             ((MouseActionAdapter) levelAction).setMouseSensivity(sliderToRealValue(sliderLevel.getValue()));
         }
-
         ActionState zoomlAction = eventManager.getAction(ActionW.ZOOM);
         if (zoomlAction instanceof MouseActionAdapter) {
             ((MouseActionAdapter) zoomlAction).setMouseSensivity(sliderToRealValue(sliderZoom.getValue()));
@@ -197,6 +213,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         if (seqAction instanceof MouseActionAdapter) {
             ((MouseActionAdapter) seqAction).setMouseSensivity(sliderToRealValue(sliderScroll.getValue()));
         }
+        eventManager.getZoomSetting().setInterpolation(comboBoxInterpolation.getSelectedIndex());
     }
 
     @Override

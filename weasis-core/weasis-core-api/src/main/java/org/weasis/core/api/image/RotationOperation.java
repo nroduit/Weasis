@@ -32,7 +32,7 @@ public class RotationOperation extends AbstractOperation {
     public final static double epsilon = 1e-5;
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Integer rotationAngle = (Integer) imageOperation.getActionValue(ActionW.ROTATION);
+        Integer rotationAngle = (Integer) imageOperation.getActionValue(ActionW.ROTATION.cmd());
         if (rotationAngle == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$

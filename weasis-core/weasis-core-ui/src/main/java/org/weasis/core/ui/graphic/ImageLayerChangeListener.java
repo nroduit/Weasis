@@ -10,9 +10,10 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageLayerChangeListener<E extends ImageElement> {
 
-    void handleLayerChanged(RenderedImageLayer<E> layer);
+    void handleLayerChanged(ImageLayer<E> layer);
 }
