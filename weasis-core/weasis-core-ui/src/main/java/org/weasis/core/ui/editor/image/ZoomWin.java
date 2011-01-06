@@ -48,6 +48,10 @@ import org.weasis.core.ui.graphic.model.MainLayerModel;
  */
 public class ZoomWin<E extends ImageElement> extends GraphicsPane implements ImageOperation, ImageLayerChangeListener {
 
+    public enum SYNCH_TYPE {
+        None, ParentImage, ParentParameters
+    };
+
     private final DefaultView2d<E> view2d;
     private RectangularShape shape;
     private int borderOffset = 2;
@@ -58,9 +62,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     public final static String SYNCH_CMD = "synchronize";
     public final static String FREEZE_CMD = "freeze";
     private PopUpMenuOnZoom popup = null;
-    private RenderedImageLayer<E> imageLayer;
+    private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
     private OperationsManager freezeOperations;
+    private SYNCH_TYPE type = SYNCH_TYPE.None;
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
 
     private final AffineTransform affineTransform = new AffineTransform();
@@ -313,11 +318,13 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         return img;
     }
 
-    public void setFreezeImage(RenderedImage image) {
+    public void setFreezeImage(RenderedImage image, SYNCH_TYPE type) {
+        this.type = type;
         actionsInView.put(ZoomWin.FREEZE_CMD, image);
         if (image == null) {
             freezeActionsInView.clear();
             freezeOperations = null;
+            type = SYNCH_TYPE.None;
         }
         imageLayer.updateAllImageOperations();
     }
@@ -362,7 +369,48 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 e.printStackTrace();
             }
         }
+        return freezeOperations.updateAllOperations();
+    }
 
+    RenderedImage freezeParentParameters() {
+        OperationsManager pManager = view2d.getImageLayer().getOperationsManager();
+        freezeActionsInView.clear();
+        view2d.copyActionWState(freezeActionsInView);
+
+        freezeOperations = new OperationsManager(new ImageOperation() {
+
+            @Override
+            public RenderedImage getSourceImage() {
+                ImageElement image = view2d.getImage();
+                if (image == null) {
+                    return null;
+                }
+                return image.getImage();
+            }
+
+            @Override
+            public ImageElement getImage() {
+                return view2d.getImage();
+            }
+
+            @Override
+            public Object getActionValue(String action) {
+                if (action == null) {
+                    return null;
+                }
+                return freezeActionsInView.get(action);
+            }
+        });
+        for (ImageOperationAction op : pManager.getOperations()) {
+            try {
+                if (!ZoomOperation.name.equals(op.getOperationName())) {
+                    ImageOperationAction operation = (ImageOperationAction) op.clone();
+                    freezeOperations.addImageOperationAction(operation);
+                }
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
+        }
         return freezeOperations.updateAllOperations();
     }
 
@@ -374,6 +422,13 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         @Override
         public void mousePressed(MouseEvent e) {
+            ImageViewerPlugin<E> pane = view2d.getEventManager().getSelectedView2dContainer();
+            if (pane == null) {
+                return;
+            }
+            if (pane.isContainingView(view2d)) {
+                pane.setSelectedImagePane(view2d);
+            }
             if (e.isPopupTrigger()) {
                 popup.enableMenuItem();
                 popup.show(e.getComponent(), e.getX(), e.getY());
@@ -481,11 +536,14 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             if (freezeOperations == null) {
                 // when image of parent has changed process some update
                 refreshZoomWin();
+            } else if (SYNCH_TYPE.ParentParameters.equals(type)) {
+                refreshZoomWin();
+                setFreezeImage(freezeOperations.updateAllOperations(), type);
             }
         } else if (freezeOperations != null
             && (ActionW.ROTATION.cmd().equals(command) || ActionW.FLIP.cmd().equals(command))) {
             freezeActionsInView.put(command, value);
-            setFreezeImage(freezeOperations.updateAllOperations());
+            setFreezeImage(freezeOperations.updateAllOperations(), type);
         }
     }
 

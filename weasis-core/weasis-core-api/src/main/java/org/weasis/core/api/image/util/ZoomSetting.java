@@ -19,7 +19,7 @@ public class ZoomSetting {
     private int interpolation = 1;
     private boolean lensRound = false;
     private int lensLineWidth = 2;
-    private Color lensLineColor = new Color(144, 238, 144);
+    private Color lensLineColor = new Color(195, 109, 254);
 
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {

@@ -13,6 +13,7 @@ import javax.swing.JRadioButtonMenuItem;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.ui.editor.image.ZoomWin.SYNCH_TYPE;
 
 /**
  * The Class PopUpMenuOnZoom.
@@ -23,23 +24,22 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
     /** The display image zone */
     private final ZoomWin zoomWin;
-    private JMenuItem jMenuItemZoom = new JMenuItem();
-    private ButtonGroup buttonMagnify = new ButtonGroup();
-    private int[] magnify = { 1, 2, 3, 4, 6 };
+    private final JMenuItem jMenuItemZoom = new JMenuItem();
+    private final ButtonGroup buttonMagnify = new ButtonGroup();
+    private final int[] magnify = { 1, 2, 3, 4, 6 };
     private JRadioButtonMenuItem[] jRadioButtonMenuItemMagnify;
-    private ActionListener magnifyListener = new java.awt.event.ActionListener() {
+    private final ActionListener magnifyListener = new java.awt.event.ActionListener() {
 
         public void actionPerformed(ActionEvent e) {
             magnifyActionPerformed(e);
         }
     };
-    private JMenu jMenuMagnify = new JMenu();
-    private JMenu jMenuImage = new JMenu();
-    private JRadioButtonMenuItem jMenuItemMagnifyOther = new JRadioButtonMenuItem();
-    private JCheckBoxMenuItem jCheckBoxMenuItemDraw = new JCheckBoxMenuItem();
-    private JCheckBoxMenuItem jCheckBoxMenutemSychronize = new JCheckBoxMenuItem();
-    private JMenuItem freeze = new JMenuItem("Freeze parent image");
-    private JMenuItem resetFreeze = new JMenuItem("Reset freeze");
+    private final JMenu jMenuMagnify = new JMenu();
+    private final JMenu jMenuImage = new JMenu();
+    private final JRadioButtonMenuItem jMenuItemMagnifyOther = new JRadioButtonMenuItem();
+    private final JCheckBoxMenuItem jCheckBoxMenuItemDraw = new JCheckBoxMenuItem();
+    private final JCheckBoxMenuItem jCheckBoxMenutemSychronize = new JCheckBoxMenuItem();
+    private final JMenuItem resetFreeze = new JMenuItem("Reset freeze");
 
     public PopUpMenuOnZoom(ZoomWin zoomWin) {
         if (zoomWin == null) {
@@ -70,19 +70,30 @@ public class PopUpMenuOnZoom extends JPopupMenu {
             }
         });
         jMenuImage.setText("Image");
+        final JMenuItem freezParams = new JMenuItem("Freeze parameters");
+        freezParams.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                zoomWin.setFreezeImage(zoomWin.freezeParentParameters(), SYNCH_TYPE.ParentParameters);
+            }
+        });
+        jMenuImage.add(freezParams);
+        final JMenuItem freeze = new JMenuItem("Freeze image");
         freeze.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(zoomWin.freezeParentImage());
+                zoomWin.setFreezeImage(zoomWin.freezeParentImage(), SYNCH_TYPE.ParentImage);
             }
         });
         jMenuImage.add(freeze);
+        jMenuImage.addSeparator();
         resetFreeze.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(null);
+                zoomWin.setFreezeImage(null, SYNCH_TYPE.None);
             }
         });
         jMenuImage.add(resetFreeze);

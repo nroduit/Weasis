@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
@@ -95,7 +96,7 @@ import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
-    private Dimension oldSize;
+    private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
 
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
@@ -118,13 +119,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         TempLayer layerTmp = new TempLayer(getLayerModel());
         getLayerModel().addLayer(layerTmp);
 
+        oldSize = new Dimension(0, 0);
     }
 
     @Override
     public void registerDefaultListeners() {
         super.registerDefaultListeners();
         setTransferHandler(new SequenceHandler());
-        oldSize = new Dimension(0, 0);
         addComponentListener(new ComponentAdapter() {
 
             @Override
@@ -141,10 +142,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     int w = getWidth();
                     int h = getHeight();
                     if (w != 0 && h != 0) {
-                        Point p = lens.getLocation();
-                        p.x = p.x + (w - oldSize.width) / 2;
-                        p.y = p.y + (h - oldSize.height) / 2;
-                        lens.setLocation(p);
+                        Rectangle bound = lens.getBounds();
+                        if (oldSize.width != 0 && oldSize.height != 0) {
+                            int centerx = bound.width / 2;
+                            int centery = bound.height / 2;
+                            bound.x = (bound.x + centerx) * w / oldSize.width - centerx;
+                            bound.y = (bound.y + centery) * h / oldSize.height - centery;
+                            lens.setLocation(bound.x, bound.y);
+                        }
                         oldSize.width = w;
                         oldSize.height = h;
                     }

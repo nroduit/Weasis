@@ -28,6 +28,10 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.dicom.codec.DicomImageElement;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
     private final Hashtable labels = new Hashtable();
@@ -213,7 +217,18 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         if (seqAction instanceof MouseActionAdapter) {
             ((MouseActionAdapter) seqAction).setMouseSensivity(sliderToRealValue(sliderScroll.getValue()));
         }
-        eventManager.getZoomSetting().setInterpolation(comboBoxInterpolation.getSelectedIndex());
+        int interpolation = comboBoxInterpolation.getSelectedIndex();
+        eventManager.getZoomSetting().setInterpolation(interpolation);
+        synchronized (UIManager.VIEWER_PLUGINS) {
+            for (final ViewerPlugin<DicomImageElement> p : UIManager.VIEWER_PLUGINS) {
+                if (p instanceof View2dContainer) {
+                    View2dContainer viewer = (View2dContainer) p;
+                    for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
+                        v.changeZoomInterpolation(interpolation);
+                    }
+                }
+            }
+        }
     }
 
     @Override

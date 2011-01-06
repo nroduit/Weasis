@@ -61,7 +61,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -256,10 +255,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void closeLens() {
         if (lens != null) {
-            ActionState lens = eventManager.getAction(ActionW.LENS);
-            if (lens instanceof ToggleButtonListener) {
-                ((ToggleButtonListener) lens).setSelected(false);
-            }
+            lens.showLens(false);
+            this.remove(lens);
+            actionsInView.put(ActionW.LENS.cmd(), false);
         }
     }
 
@@ -620,6 +618,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return lens.getActionValue(action);
     }
 
+    public void changeZoomInterpolation(int interpolation) {
+        Integer val = (Integer) actionsInView.get(ZoomOperation.INTERPOLATION_CMD);
+        boolean update = val == null || val != interpolation;
+        if (update) {
+            actionsInView.put(ZoomOperation.INTERPOLATION_CMD, interpolation);
+            if (lens != null) {
+                lens.setActionInView(ZoomOperation.INTERPOLATION_CMD, interpolation);
+                lens.updateZoom();
+            }
+            imageLayer.updateImageOperation(ZoomOperation.name);
+        }
+    }
+
     public void propertyChange(PropertyChangeEvent evt) {
         if (series == null) {
             return;
@@ -692,8 +703,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 lens.showLens(true);
 
             } else {
-                lens.showLens(false);
-                this.remove(lens);
+                closeLens();
             }
 
         } else if (command.equals(ActionW.PAN.cmd())) {
