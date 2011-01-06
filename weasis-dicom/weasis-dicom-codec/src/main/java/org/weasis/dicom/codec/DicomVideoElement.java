@@ -18,6 +18,8 @@ import org.weasis.core.api.media.data.TagElement;
 
 public class DicomVideoElement extends AudioVideoElement {
 
+    public static final String MPEG_MIMETYPE = "video/mpeg"; //$NON-NLS-1$
+
     private double pixelSizeX = 1.0;
     private double pixelSizeY = 1.0;
     private File videoFile = null;

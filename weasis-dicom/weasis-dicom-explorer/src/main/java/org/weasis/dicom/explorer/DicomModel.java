@@ -45,6 +45,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomVideo;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
@@ -315,7 +316,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return (modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    private void splitSeries(DicomMediaIO dicomReader, DicomSeries original) {
+    private void splitSeries(DicomMediaIO dicomReader, Series original) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
         String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
         int k = 1;
@@ -328,7 +329,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             k++;
         }
         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
-        DicomSeries s = new DicomSeries(uid);
+        Series s = dicomReader.buildSeries(uid);
         dicomReader.writeMetaData(s);
         Object val = original.getTagValue(TagElement.SplitSeriesNumber);
         if (val == null) {
@@ -345,7 +346,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (mediaLoader instanceof DicomMediaIO) {
             DicomMediaIO dicomReader = (DicomMediaIO) mediaLoader;
             int frames = dicomReader.getMediaElementNumber();
-            // TODO split Video or convert to DicomVideoSeries
             if (original instanceof DicomSeries) {
                 DicomSeries initialSeries = (DicomSeries) original;
                 if (frames < 1) {
@@ -388,6 +388,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         k++;
                     }
                     splitSeries(dicomReader, initialSeries);
+                }
+            } else if (original instanceof DicomVideo) {
+                if (frames < 1) {
+                    original.addMedia(dicomReader);
+                } else {
+                    splitSeries(dicomReader, original);
                 }
             }
         }
@@ -442,8 +448,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
-                    loadingExecutor
-                        .execute(new LoadRemoteDicom(args.toArray(new String[args.size()]), DicomModel.this));
+                    loadingExecutor.execute(new LoadRemoteDicom(args.toArray(new String[args.size()]), DicomModel.this));
                 }
             }
         });
