@@ -190,7 +190,6 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private void buildDicomStructure(ArrayList<DicomMediaIO> seriesList, boolean open) {
         ArrayList<Series> dicomseriesList = new ArrayList<Series>();
         seriesList: for (DicomMediaIO dicomReader : seriesList) {
-
             String patientPseudoUID = (String) dicomReader.getTagValue(TagElement.PatientPseudoUID);
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
             if (patient == null) {

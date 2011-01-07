@@ -18,14 +18,13 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.internal.mime.InvalidMagicMimeEntryException;
 import org.weasis.core.api.internal.mime.MagicMimeEntry;
 import org.weasis.core.api.util.FileUtil;
@@ -34,12 +33,12 @@ public class MimeInspector {
 
     public static final Icon textIcon =
         new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-x-generic.svg")); //$NON-NLS-1$
-    public static final Icon imageIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); //$NON-NLS-1$
-    public static final Icon audioIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
-    public static final Icon videoIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
+    public static final Icon imageIcon = new ImageIcon(
+        MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); //$NON-NLS-1$
+    public static final Icon audioIcon = new ImageIcon(
+        MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
+    public static final Icon videoIcon = new ImageIcon(
+        MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
     public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); //$NON-NLS-1$
     public static final Icon dicomVideo = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom-video.png")); //$NON-NLS-1$
     public static final String UNKNOWN_MIME_TYPE = "application/x-unknown-mime-type"; //$NON-NLS-1$
@@ -206,17 +205,19 @@ public class MimeInspector {
     }
 
     public static String[] getExtensions(String mime) {
-        Set<Entry<Object, Object>> entries = mimeTypes.entrySet();
         ArrayList<String> list = new ArrayList<String>();
-        for (Entry<Object, Object> entry : entries) {
-            String val = (String) entry.getValue();
-            if (val != null) {
-                String[] mimeTypes = mime.split(","); //$NON-NLS-1$
-                for (String mimeType : mimeTypes) {
-                    if (mimeType.equals(mime)) {
-                        String key = (String) entry.getKey();
-                        if (!list.contains(key)) {
-                            list.add(key);
+        if (mime != null) {
+            String[] mimes = mime.split(","); //$NON-NLS-1$
+            Set<Entry<Object, Object>> entries = mimeTypes.entrySet();
+            for (Entry<Object, Object> entry : entries) {
+                String key = (String) entry.getKey();
+                String val = (String) entry.getValue();
+                if (val != null) {
+                    for (String m : mimes) {
+                        if (val.equals(m)) {
+                            if (!list.contains(key)) {
+                                list.add(key);
+                            }
                         }
                     }
                 }

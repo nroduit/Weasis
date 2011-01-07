@@ -39,15 +39,6 @@ public class DicomVideoElement extends AudioVideoElement {
         }
     }
 
-    @Override
-    public void dispose() {
-        // Unload image from memory
-        if (mediaIO != null) {
-            mediaIO.reset();
-        }
-        super.dispose();
-    }
-
     public double getPixelSizeX() {
         return pixelSizeX;
     }

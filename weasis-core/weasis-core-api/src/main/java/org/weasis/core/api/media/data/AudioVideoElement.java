@@ -20,7 +20,9 @@ public class AudioVideoElement extends MediaElement<URI> {
 
     @Override
     public void dispose() {
-
+        if (mediaIO != null) {
+            mediaIO.close();
+        }
     }
 
 }

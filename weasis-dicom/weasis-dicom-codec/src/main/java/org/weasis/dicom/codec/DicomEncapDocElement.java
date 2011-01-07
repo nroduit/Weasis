@@ -10,20 +10,32 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.io.File;
 import java.net.URI;
 
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 
-public class DicomEncapsulatedDocument extends MediaElement<URI> {
+public class DicomEncapDocElement extends MediaElement<URI> {
+    private File document = null;
 
-    public DicomEncapsulatedDocument(MediaReader mediaIO, Object key) {
+    public DicomEncapDocElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
     }
 
     @Override
     public void dispose() {
+        if (mediaIO != null) {
+            mediaIO.close();
+        }
+    }
 
+    public File getDocument() {
+        return document;
+    }
+
+    public void setDocument(File document) {
+        this.document = document;
     }
 
 }

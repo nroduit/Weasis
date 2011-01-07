@@ -66,18 +66,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
      */
     private static final Logger logger = LoggerFactory.getLogger(DicomMediaIO.class);
 
-    public enum DICOM_TYPE {
-        Image, Video, EncapsulatedDocument
-    };
-
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
-    public static final String VIDEO_MIMETYPE = "video/dicom"; //$NON-NLS-1$
+    public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
+    public static final String SERIES_VIDEO_MIMETYPE = "video/dicom"; //$NON-NLS-1$
     public static final String SERIES_MIMETYPE = "series/dicom"; //$NON-NLS-1$
     public static final String SERIES_PR_MIMETYPE = "pr/dicom"; //$NON-NLS-1$
     public static final String SERIES_KO_MIMETYPE = "ko/dicom"; //$NON-NLS-1$
     public static final String SERIES_SR_MIMETYPE = "sr/dicom"; //$NON-NLS-1$
-    public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
-    public static final String IMAGE_XDSI = "xds-i/dicom"; //$NON-NLS-1$
+    public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
+    public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final Codec CODEC = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
     private final static DicomImageReaderSpi readerSpi = new DicomImageReaderSpi();
     private final URI uri;
@@ -87,13 +84,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private final HashMap<TagElement, Object> tags;
     private MediaElement image = null;
     private ImageInputStream imageStream = null;
-    private DICOM_TYPE dicomType = DICOM_TYPE.Image;
+    private volatile String mimeType;
 
     public DicomMediaIO(URI uri) {
         super(readerSpi);
         this.uri = uri;
         numberOfFrame = 0;
         this.tags = new HashMap<TagElement, Object>();
+        mimeType = MIMETYPE;
     }
 
     public DicomMediaIO(File source) {
@@ -124,20 +122,18 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     close();
                     return false;
                 }
-                if ("1.2.840.10008.1.2.4.100".equals(dicomObject.getString(Tag.TransferSyntaxUID))) { //$NON-NLS-1$
-                    dicomType = DICOM_TYPE.Video;
-                }
+
                 stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
                 if (stored > 0) {
                     numberOfFrame = getNumImages(false);
-                }
-
-                else {
-                    String modality = dicomObject.getString(Tag.Modality);
-                    boolean ps =
-                        modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    // String encap = dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument);
-                    if (!ps) {
+                    if ("1.2.840.10008.1.2.4.100".equals(dicomObject.getString(Tag.TransferSyntaxUID))) { //$NON-NLS-1$
+                        mimeType = SERIES_VIDEO_MIMETYPE;
+                    } else {
+                        mimeType = IMAGE_MIMETYPE;
+                    }
+                } else {
+                    boolean special = setDicomSpecialType(dicomObject);
+                    if (!special) {
                         close();
                         return false;
                     }
@@ -150,6 +146,29 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             writeInstanceTags();
         }
         return true;
+    }
+
+    private boolean setDicomSpecialType(DicomObject dicom) {
+        String modality = dicom.getString(Tag.Modality);
+        if (modality != null) {
+            if ("PR".equals(modality)) {//$NON-NLS-1$
+                mimeType = SERIES_PR_MIMETYPE;
+                return true;
+            } else if ("KO".equals(modality)) {//$NON-NLS-1$
+                mimeType = SERIES_KO_MIMETYPE;
+                return true;
+            } else if ("SR".equals(modality)) {//$NON-NLS-1$
+                mimeType = SERIES_SR_MIMETYPE;
+                return true;
+            } else {
+                String encap = dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument);
+                if (encap != null) {
+                    mimeType = SERIES_ENCAP_DOC_MIMETYPE;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void setTag(TagElement tag, Object value) {
@@ -588,8 +607,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private MediaElement getSingleImage() {
         if (image == null) {
             if (readMediaTags()) {
-                if (DICOM_TYPE.Video.equals(dicomType)) {
+                if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
                     image = new DicomVideoElement(this, null);
+                } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
+                    image = new DicomEncapDocElement(this, null);
                 } else {
                     image = new DicomImageElement(this, 0);
                 }
@@ -635,7 +656,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     @Override
     public String getMediaFragmentMimeType(Object key) {
-        return DICOM_TYPE.Video.equals(dicomType) ? VIDEO_MIMETYPE : IMAGE_MIMETYPE;
+        return mimeType;
     }
 
     @Override
@@ -687,14 +708,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public Series buildSeries(String seriesUID) {
-        if (dicomType.equals(DICOM_TYPE.Image)) {
+        if (IMAGE_MIMETYPE.equals(mimeType)) {
             return new DicomSeries(seriesUID);
-        } else if (dicomType.equals(DICOM_TYPE.Video)) {
-            return new DicomVideo(seriesUID);
+        } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
+            return new DicomVideoSeries(seriesUID);
+        } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
+            return new DicomEncapDocSeries(seriesUID);
         }
-
-        // else if (dicomType.equals(DICOM_TYPE.EncapsulatedDocument)) {
-        // }
         return new DicomSeries(seriesUID);
     }
 }

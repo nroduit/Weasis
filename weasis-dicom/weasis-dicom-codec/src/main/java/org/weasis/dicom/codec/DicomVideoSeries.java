@@ -24,17 +24,17 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagElement;
 
-public class DicomVideo extends Series<DicomVideoElement> {
+public class DicomVideoSeries extends Series<DicomVideoElement> implements FileExtractor {
 
     private int width = 256;
     private int height = 256;
     private int frames = 0;
 
-    public DicomVideo(String subseriesInstanceUID) {
+    public DicomVideoSeries(String subseriesInstanceUID) {
         super(TagElement.SubseriesInstanceUID, subseriesInstanceUID, TagElement.SubseriesInstanceUID);
     }
 
-    public DicomVideo(DicomSeries dicomSeries) {
+    public DicomVideoSeries(DicomSeries dicomSeries) {
         super(TagElement.SubseriesInstanceUID, dicomSeries.getTagValue(TagElement.SubseriesInstanceUID),
             TagElement.SubseriesInstanceUID);
 
@@ -127,7 +127,16 @@ public class DicomVideo extends Series<DicomVideoElement> {
 
     @Override
     public String getMimeType() {
-        return DicomMediaIO.VIDEO_MIMETYPE;
+        return DicomMediaIO.SERIES_VIDEO_MIMETYPE;
+    }
+
+    @Override
+    public File getExtractFile() {
+        DicomVideoElement media = getMedia(MEDIA_POSITION.FIRST);
+        if (media != null) {
+            return media.getVideoFile();
+        }
+        return null;
     }
 
 }

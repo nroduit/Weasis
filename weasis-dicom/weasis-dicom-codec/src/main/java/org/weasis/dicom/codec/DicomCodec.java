@@ -23,8 +23,8 @@ public class DicomCodec implements Codec {
 
     @Override
     public String[] getReaderMIMETypes() {
-        return new String[] { DicomMediaIO.MIMETYPE, DicomMediaIO.IMAGE_XDSI, DicomMediaIO.IMAGE_MIMETYPE,
-            DicomMediaIO.VIDEO_MIMETYPE };
+        return new String[] { DicomMediaIO.MIMETYPE, DicomMediaIO.SERIES_XDSI, DicomMediaIO.IMAGE_MIMETYPE,
+            DicomMediaIO.SERIES_VIDEO_MIMETYPE, DicomMediaIO.SERIES_ENCAP_DOC_MIMETYPE };
     }
 
     @Override

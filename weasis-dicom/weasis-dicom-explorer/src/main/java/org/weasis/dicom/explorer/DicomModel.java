@@ -42,10 +42,11 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideo;
+import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
@@ -389,7 +390,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                     splitSeries(dicomReader, initialSeries);
                 }
-            } else if (original instanceof DicomVideo) {
+            } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
                 if (frames < 1) {
                     original.addMedia(dicomReader);
                 } else {

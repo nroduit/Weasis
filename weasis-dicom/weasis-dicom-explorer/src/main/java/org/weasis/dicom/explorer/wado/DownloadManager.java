@@ -52,7 +52,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideo;
+import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
@@ -365,7 +365,7 @@ public class DownloadManager {
             if (dicomInstances.size() == 1
                 && "1.2.840.10008.1.2.4.100".equals(dicomInstances.get(0).getTransferSyntaxUID())) { //$NON-NLS-1$
                 model.removeHierarchyNode(study, dicomSeries);
-                dicomSeries = new DicomVideo((DicomSeries) dicomSeries);
+                dicomSeries = new DicomVideoSeries((DicomSeries) dicomSeries);
                 model.addHierarchyNode(study, dicomSeries);
             }
 
