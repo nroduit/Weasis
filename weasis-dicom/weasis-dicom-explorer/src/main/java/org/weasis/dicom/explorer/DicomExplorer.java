@@ -13,7 +13,6 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -32,8 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +79,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -93,16 +89,14 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.WrapLayout;
-import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.DicomVideoSeries;
-import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -1174,21 +1168,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
     }
 
-    private List<DicomSeries> getSplitSeries(DicomSeries series) {
-        MediaSeriesGroup study = model.getParent(series, DicomModel.study);
-        Object splitNb = series.getTagValue(TagElement.SplitSeriesNumber);
-        List<DicomSeries> list = new ArrayList<DicomSeries>();
+    private List<Series> getSplitSeries(Series dcm) {
+        MediaSeriesGroup study = model.getParent(dcm, DicomModel.study);
+        Object splitNb = dcm.getTagValue(TagElement.SplitSeriesNumber);
+        List<Series> list = new ArrayList<Series>();
         if (splitNb == null || study == null) {
-            list.add(series);
+            list.add(dcm);
             return list;
         }
-        String uid = (String) series.getTagValue(TagElement.SeriesInstanceUID);
+        String uid = (String) dcm.getTagValue(TagElement.SeriesInstanceUID);
         if (uid != null) {
             Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup group = it.next();
-                if (group instanceof DicomSeries) {
-                    DicomSeries s = (DicomSeries) group;
+                if (group instanceof Series) {
+                    Series s = (Series) group;
                     if (uid.equals(s.getTagValue(TagElement.SeriesInstanceUID))) {
                         list.add(s);
                     }
@@ -1198,11 +1192,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         return list;
     }
 
-    private void updateSplitSeries(DicomSeries series) {
-        MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+    private void updateSplitSeries(Series dcm) {
+        MediaSeriesGroup study = model.getParent(dcm, DicomModel.study);
         StudyPane studyPane = createStudyPaneInstance(study, null);
 
-        List<DicomSeries> list = getSplitSeries(series);
+        List<Series> list = getSplitSeries(dcm);
         List<SeriesPane> seriesList = study2series.get(study);
         if (seriesList == null) {
             seriesList = new ArrayList<SeriesPane>();
@@ -1210,7 +1204,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
         boolean addSeries = patientContainer.isStudyVisible(study);
         boolean repaintStudy = false;
-        for (DicomSeries dicomSeries : list) {
+        for (Series dicomSeries : list) {
             int[] positionSeries = new int[1];
             createSeriesPaneInstance(dicomSeries, positionSeries);
             if (addSeries && positionSeries[0] != -1) {
@@ -1428,8 +1422,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 }
                 // update
                 else if (ObservableEvent.BasicAction.Update.equals(action)) {
-                    if (newVal instanceof DicomSeries) {
-                        DicomSeries dcm = (DicomSeries) newVal;
+                    if (newVal instanceof Series) {
+                        Series dcm = (Series) newVal;
                         if (DicomModel.isSpecialModality(dcm)) {
                             addSpecialModalityToStudy(dcm);
                         } else {
@@ -1440,7 +1434,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                     }
                 }
-            } else if (evt.getSource() instanceof ViewerPlugin) {
+            } else if (evt.getSource() instanceof SeriesViewer) {
                 if (ObservableEvent.BasicAction.Select.equals(action)) {
                     if (newVal instanceof Series) {
                         Series dcm = (Series) newVal;
@@ -1448,7 +1442,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         if (!isSelectedPatient(patient)) {
                             modelPatient.setSelectedItem(patient);
                             // focus get back to viewer
-                            ((ViewerPlugin) evt.getSource()).requestFocusInWindow();
+                            if (evt.getSource() instanceof ViewerPlugin) {
+                                ((ViewerPlugin) evt.getSource()).requestFocusInWindow();
+                            }
                         }
                     }
                 }
@@ -1641,52 +1637,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                         });
                                         popupMenu.add(item2);
                                     }
-                                }
-                            } else if (series instanceof DicomVideoSeries || series instanceof DicomEncapDocSeries) {
-
-                                if (Desktop.isDesktopSupported()) {
-                                    final Desktop desktop = Desktop.getDesktop();
-                                    if (desktop.isSupported(Desktop.Action.OPEN)) {
-                                        popupMenu.add(new JSeparator());
-                                        JMenuItem item2 = new JMenuItem("Open with default system application");
-                                        item2.addActionListener(new ActionListener() {
-
-                                            public void actionPerformed(ActionEvent e) {
-                                                FileExtractor extractor = (FileExtractor) series;
-                                                File file = extractor.getExtractFile();
-                                                if (file != null) {
-                                                    try {
-                                                        desktop.open(file);
-                                                    } catch (IOException e1) {
-                                                        LOGGER.error(
-                                                            "Cannot open {} with the default system application",
-                                                            file.getName());
-                                                    }
-                                                }
-                                            }
-                                        });
-                                        popupMenu.add(item2);
-                                    }
-                                } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) {
-                                    popupMenu.add(new JSeparator());
-                                    JMenuItem item2 = new JMenuItem("Open with the default system application");
-                                    item2.addActionListener(new ActionListener() {
-
-                                        public void actionPerformed(ActionEvent e) {
-                                            FileExtractor extractor = (FileExtractor) series;
-                                            File file = extractor.getExtractFile();
-                                            if (file != null) {
-                                                try {
-                                                    String cmd = String.format("xdg-open %s", file.getAbsolutePath());
-                                                    Runtime.getRuntime().exec(cmd);
-                                                } catch (IOException e1) {
-                                                    LOGGER.error("Cannot open {} with the default system application",
-                                                        file.getName());
-                                                }
-                                            }
-                                        }
-                                    });
-                                    popupMenu.add(item2);
                                 }
                             }
                             popupMenu.add(new JSeparator());

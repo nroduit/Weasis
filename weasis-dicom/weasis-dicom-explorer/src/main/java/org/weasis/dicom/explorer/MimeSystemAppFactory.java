@@ -10,12 +10,13 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
 
-public class MimeSystemOpenFactory implements SeriesViewerFactory {
+public class MimeSystemAppFactory implements SeriesViewerFactory {
 
     public final static String NAME = "default system application"; //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
+    public final static MimeSystemAppViewer mimeSystemViewer = new MimeSystemAppViewer();
 
-    public MimeSystemOpenFactory() {
+    public MimeSystemAppFactory() {
     }
 
     @Override
@@ -46,7 +47,7 @@ public class MimeSystemOpenFactory implements SeriesViewerFactory {
 
     @Override
     public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
-        return null;
+        return mimeSystemViewer;
     }
 
     @Override

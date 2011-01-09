@@ -269,6 +269,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
     }
 
     private final void openMedia(SeriesViewerFactory factory, MediaElement media) {
+        // TODO should be the SeriesViewer type
         ViewerPlugin view = (ViewerPlugin) factory.createSeriesViewer(null);
 
         if (view != null) {
@@ -578,8 +579,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
      * <p>
      * Each observer has its <code>update</code> method called with two arguments: this observable object and
      * <code>null</code>. In other words, this method is equivalent to: <blockquote><tt>
-	 * notifyObservers(null)</tt>
-     * </blockquote>
+     * notifyObservers(null)</tt> </blockquote>
      * 
      * @see java.util.Observable#clearChanged()
      * @see java.util.Observable#hasChanged()

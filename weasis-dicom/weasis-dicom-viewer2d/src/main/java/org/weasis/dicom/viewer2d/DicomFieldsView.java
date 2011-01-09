@@ -10,13 +10,17 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.Iterator;
 
 import javax.media.jai.PlanarImage;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 
 import org.dcm4che2.data.DicomElement;
@@ -25,12 +29,12 @@ import org.dcm4che2.data.VR;
 import org.dcm4che2.util.TagUtils;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 
-public class DicomFieldsView extends JScrollPane implements SeriesViewerListener {
+public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
     private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
 
@@ -39,9 +43,23 @@ public class DicomFieldsView extends JScrollPane implements SeriesViewerListener
             return new char[96];
         }
     };
+    private JScrollPane dumpPane = new JScrollPane();
 
     public DicomFieldsView() {
+
+        JPanel dump = new JPanel();
+        dump.setLayout(new BorderLayout());
+        dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        addTab("Raw DICOM attributes", null, dump, null);
+        dump.add(dumpPane, BorderLayout.CENTER);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        addTab("Main DICOM attributes", null, panel, null);
+
         setPreferredSize(new Dimension(1024, 1024));
+
     }
 
     public StringBuffer toStringBuffer(DicomElement element, DicomObject dcmObj) {
@@ -113,7 +131,7 @@ public class DicomFieldsView extends JScrollPane implements SeriesViewerListener
             JList jListElement = new JList(listModel);
             jListElement.setLayoutOrientation(JList.VERTICAL);
             jListElement.setBorder(new EmptyBorder(5, 5, 5, 5));
-            setViewportView(jListElement);
+            dumpPane.setViewportView(jListElement);
         }
     }
 }

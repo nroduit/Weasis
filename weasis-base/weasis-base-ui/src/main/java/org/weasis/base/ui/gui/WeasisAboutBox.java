@@ -31,6 +31,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.text.BadLocationException;
@@ -102,7 +103,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
         StyledDocument doc = jTextPane1.getStyledDocument();
-        JMVUtils.addStylesToDocument(doc);
+        JMVUtils.addStylesToDocument(doc, UIManager.getColor("TextPane.foreground"));
 
         try {
             Style regular = doc.getStyle("regular"); //$NON-NLS-1$
@@ -110,8 +111,8 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
             doc.insertString(doc.getLength(), "Weasis v" + AbstractProperties.WEASIS_VERSION + "\n", doc //$NON-NLS-1$ //$NON-NLS-2$
                 .getStyle("title")); //$NON-NLS-1$
             doc.insertString(doc.getLength(), "\n", regular); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "Copyright © 2009, \n", regular); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "University Hospitals of Geneva\n", regular); //$NON-NLS-1$
+            doc.insertString(doc.getLength(), "Copyright © 2009-2011, \n", regular); //$NON-NLS-1$
+            doc.insertString(doc.getLength(), "Weasis Team\n", regular); //$NON-NLS-1$
         } catch (BadLocationException ble) {
         }
 

@@ -75,6 +75,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -261,8 +262,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
                                     List<MediaSeries> seriesList = entry.getValue();
-                                    openSeriesInViewerPlugin(factory, model, group, seriesList
-                                        .toArray(new MediaSeries[seriesList.size()]));
+                                    openSeriesInViewerPlugin(factory, model, group,
+                                        seriesList.toArray(new MediaSeries[seriesList.size()]));
 
                                 }
                             }
@@ -327,14 +328,14 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         if (seriesList == null || seriesList.length == 0) {
             return;
         }
-        ImageViewerPlugin viewer = null;
+
         if (factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
 
-                        viewer = ((ImageViewerPlugin) p);
+                        ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
                         viewer.changeLayoutModel(viewer.getBestDefaultViewLayout(seriesList.length));
 
                         p.setSelectedAndGetFocus();
@@ -355,8 +356,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         if (seriesList.length > 1) {
             properties.put(DefaultView2d.class.getName(), seriesList.length);
         }
-        viewer = (ImageViewerPlugin) factory.createSeriesViewer(properties);
-        if (viewer != null) {
+        SeriesViewer seriesViewer = factory.createSeriesViewer(properties);
+        if (seriesViewer instanceof ImageViewerPlugin) {
+            ImageViewerPlugin viewer = (ImageViewerPlugin) seriesViewer;
             if (group != null) {
                 viewer.setGroupID(group);
                 viewer.setPluginName(group.toString());
@@ -364,10 +366,14 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             registerPlugin(viewer);
             viewer.setSelectedAndGetFocus();
             selectLayoutPositionForAddingSeries(viewer, seriesList.length);
-            for (int i = 0; i < seriesList.length; i++) {
-                viewer.addSeries(seriesList[i]);
+            for (MediaSeries m : seriesList) {
+                viewer.addSeries(m);
             }
             viewer.setSelected(true);
+        } else if (seriesViewer != null) {
+            for (MediaSeries m : seriesList) {
+                seriesViewer.addSeries(m);
+            }
         }
     }
 

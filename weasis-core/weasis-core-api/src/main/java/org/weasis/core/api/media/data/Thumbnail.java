@@ -77,8 +77,8 @@ import org.weasis.core.api.util.FontTools;
 public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSourceListener, DragSourceMotionListener,
     FocusListener {
 
-    public static final RenderingHints DownScaleQualityHints =
-        new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
+        RenderingHints.VALUE_RENDER_QUALITY);
     static {
         DownScaleQualityHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
     }
@@ -91,8 +91,8 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
     private File thumbnailPath = null;
     private int thumbnailSize;
     // Get the closest cursor size regarding to the platform
-    private final Border onMouseOverBorder =
-        new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(Color.orange, 2));
+    private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
+        Color.orange, 2));
     private final Border outMouseOverBorder = new EmptyBorder(4, 4, 2, 4);
     private JProgressBar progressBar;
     private final MediaSeries<E> series;
@@ -151,7 +151,7 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
 
     private synchronized void buildThumbnail() {
         imageSoftRef = null;
-        Icon icon = MimeInspector.textIcon;
+        Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
         Object media = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE);
         if (media instanceof MediaElement) {
@@ -166,6 +166,17 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
             } else if (mime.startsWith("audio")) { //$NON-NLS-1$
                 type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
                 icon = MimeInspector.audioIcon;
+            } else if (mime.startsWith("txt")) { //$NON-NLS-1$
+                type = "Text";
+                icon = MimeInspector.textIcon;
+            } else if (mime.endsWith("html")) { //$NON-NLS-1$
+                type = "HTML";
+                icon = MimeInspector.htmlIcon;
+            } else if (mime.equals("application/pdf")) { //$NON-NLS-1$
+                type = "PDF";
+                icon = MimeInspector.pdfIcon;
+            } else {
+                type = mime;
             }
         }
         setIcon(icon, type);

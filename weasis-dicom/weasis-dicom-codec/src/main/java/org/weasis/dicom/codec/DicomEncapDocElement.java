@@ -15,6 +15,7 @@ import java.net.URI;
 
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.TagElement;
 
 public class DicomEncapDocElement extends MediaElement<URI> {
     private File document = null;
@@ -28,6 +29,12 @@ public class DicomEncapDocElement extends MediaElement<URI> {
         if (mediaIO != null) {
             mediaIO.close();
         }
+    }
+
+    @Override
+    public String getMimeType() {
+        String val = (String) getTagValue(TagElement.MIMETypeOfEncapsulatedDocument);
+        return val == null ? super.getMimeType() : val;
     }
 
     public File getDocument() {

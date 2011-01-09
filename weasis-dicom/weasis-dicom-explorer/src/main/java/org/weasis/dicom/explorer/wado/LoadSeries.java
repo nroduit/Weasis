@@ -77,6 +77,7 @@ import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
 
 public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImporter {
@@ -977,11 +978,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                             public void run() {
                                 boolean firstImage = dicomSeries.size() == 0;
-                                if (dicomSeries instanceof DicomSeries) {
-                                    dicomModel.applySplittingRules(dicomSeries, dicomReader);
-                                } else {
-                                    dicomSeries.addMedia(dicomReader);
-                                }
+                                dicomModel.applySplittingRules(dicomSeries, dicomReader);
+
                                 dicomReader.reset();
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
                                 if (thumb != null) {
@@ -1004,7 +1002,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     if (openNewTab) {
                                         SeriesViewerFactory plugin =
                                             UIManager.getViewerFactory(dicomSeries.getMimeType());
-                                        if (plugin != null) {
+                                        if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                                             LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries },
                                                 dicomModel);
                                         }

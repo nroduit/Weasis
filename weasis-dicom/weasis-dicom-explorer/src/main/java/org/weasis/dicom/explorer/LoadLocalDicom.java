@@ -171,7 +171,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
                 if (open) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
-                    if (plugin != null) {
+                    if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;
                         LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries }, dicomModel);
                     }
@@ -224,7 +224,10 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                         dicomReader.getTagValue(TagElement.SOPInstanceUID))) {
                         continue seriesList;
                     }
-                    dicomModel.applySplittingRules(dicomSeries, dicomReader);
+                    if (dicomModel.applySplittingRules(dicomSeries, dicomReader)) {
+                        // When the Series is split, build a thumbnail and add it to the dicom explorer
+                        dicomseriesList.add(dicomSeries);
+                    }
                 }
             } catch (Exception e) {
                 dicomReader.reset();
@@ -254,7 +257,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         if (open && dicomseriesList.size() > 0) {
             final Series series = dicomseriesList.get(0);
             SeriesViewerFactory plugin = UIManager.getViewerFactory(series.getMimeType());
-            if (plugin != null) {
+            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                 openPlugin = false;
                 LoadSeries.openSequenceInPlugin(plugin, new Series[] { series }, dicomModel);
             }

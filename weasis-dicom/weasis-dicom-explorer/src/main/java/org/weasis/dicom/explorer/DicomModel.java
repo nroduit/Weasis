@@ -343,7 +343,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
     }
 
-    public void applySplittingRules(Series original, MediaReader mediaLoader) {
+    public boolean applySplittingRules(Series original, MediaReader mediaLoader) {
         if (mediaLoader instanceof DicomMediaIO) {
             DicomMediaIO dicomReader = (DicomMediaIO) mediaLoader;
             int frames = dicomReader.getMediaElementNumber();
@@ -359,10 +359,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality)) {
                         if (frames > 1 && initialSeries.getMedias().size() > 0) {
                             splitSeries(dicomReader, initialSeries);
+                            return true;
                         } else {
                             dicomSeries.addMedia(dicomReader);
+                            return false;
                         }
-                        return;
                     }
                     if (rules == null) {
                         rules = splittingRules.get(Modality.Default);
@@ -370,7 +371,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (isSimilar(rules, initialSeries, dicomReader)) {
                         dicomSeries.addMedia(dicomReader);
-                        return;
+                        return false;
                     }
                     MediaSeriesGroup study = getParent(original, DicomModel.study);
                     String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
@@ -381,7 +382,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         if (group instanceof DicomSeries) {
                             if (isSimilar(rules, (DicomSeries) group, dicomReader)) {
                                 ((DicomSeries) group).addMedia(dicomReader);
-                                return;
+                                return false;
                             }
                         } else {
                             break;
@@ -391,13 +392,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     splitSeries(dicomReader, initialSeries);
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
-                if (frames < 1) {
-                    original.addMedia(dicomReader);
-                } else {
+                if (original.getMedias().size() > 0) {
                     splitSeries(dicomReader, original);
+                    return true;
+                } else {
+                    original.addMedia(dicomReader);
                 }
             }
         }
+        return false;
     }
 
     private boolean isSimilar(TagElement[] rules, DicomSeries series, final DicomMediaIO dicomReader) {

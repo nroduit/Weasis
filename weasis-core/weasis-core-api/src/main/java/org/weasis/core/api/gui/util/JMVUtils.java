@@ -322,19 +322,23 @@ public class JMVUtils {
         return jButtonHelp;
     }
 
-    public static void addStylesToDocument(StyledDocument doc) {
+    public static void addStylesToDocument(StyledDocument doc, Color textColor) {
         // Initialize some styles.
         final MutableAttributeSet def = new SimpleAttributeSet();
         Style style = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
         Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
         StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
+        if (textColor == null) {
+            textColor = UIManager.getColor("text");
+        }
+        StyleConstants.setForeground(def, textColor);
         TabStop[] tabs = new TabStop[1];
         tabs[0] = new TabStop(25.0f, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE);
         StyleConstants.setTabSet(def, new TabSet(tabs));
         doc.setParagraphAttributes(0, Integer.MAX_VALUE, def, true);
         Style s = doc.addStyle("title", regular); //$NON-NLS-1$
-        StyleConstants.setFontSize(s, 14);
-        StyleConstants.setUnderline(s, true);
+        StyleConstants.setFontSize(s, 16);
+        StyleConstants.setBold(s, true);
         s = doc.addStyle("bold", regular); //$NON-NLS-1$
         StyleConstants.setBold(s, true);
         s = doc.addStyle("small", regular); //$NON-NLS-1$

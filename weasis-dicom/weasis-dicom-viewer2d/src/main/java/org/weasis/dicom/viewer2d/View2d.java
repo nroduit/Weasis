@@ -93,6 +93,7 @@ import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
+import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
@@ -585,7 +586,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (!p1.equals(p2)) {
                         SeriesViewerFactory plugin =
                             UIManager.getViewerFactory(eventManager.getSelectedView2dContainer());
-                        if (plugin != null) {
+                        if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                             LoadSeries.openSequenceInPlugin(plugin, new Series[] { seq }, model);
 
                         }
