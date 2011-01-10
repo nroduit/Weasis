@@ -311,20 +311,20 @@ public class TagElement implements Transferable, Serializable {
         return id;
     }
 
-    public String getFormattedText(Object value) {
+    public static String getFormattedText(Object value, TagType type, String format) {
         if (value == null) {
             return ""; //$NON-NLS-1$
         }
 
         String str;
 
-        if (TagType.Date.equals(this.getType())) {
+        if (TagType.Date.equals(type)) {
             str = formatDate.format((Date) value);
-        } else if (TagType.Time.equals(this.getType())) {
+        } else if (TagType.Time.equals(type)) {
             str = formatTime.format((Date) value);
-        } else if (TagType.DateTime.equals(this.getType())) {
+        } else if (TagType.DateTime.equals(type)) {
             str = formatDateTime.format((Date) value);
-        } else if (TagType.Period.equals(this.getType())) {
+        } else if (TagType.Period.equals(type)) {
             // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
             // For ex: DICOM (0010,1010) = 031Y
             str = value.toString();
@@ -364,10 +364,10 @@ public class TagElement implements Transferable, Serializable {
                 // If the value ($V) is followed by ':' that means a number formatter is used
                 if (suffix && format.charAt(index + fmLength) == ':') {
                     fmLength++;
-                    if (format.charAt(index + fmLength) == 'f' && TagType.Float.equals(this.getType())
-                        || TagType.Double.equals(this.getType())) {
+                    if (format.charAt(index + fmLength) == 'f' && TagType.Float.equals(type)
+                        || TagType.Double.equals(type)) {
                         fmLength++;
-                        String pattern = getPattern(index + fmLength);
+                        String pattern = getPattern(index + fmLength, format);
                         if (pattern != null) {
                             fmLength += pattern.length() + 2;
                             try {
@@ -377,7 +377,7 @@ public class TagElement implements Transferable, Serializable {
                         }
                     } else if (format.charAt(index + fmLength) == 'l') {
                         fmLength++;
-                        String pattern = getPattern(index + fmLength);
+                        String pattern = getPattern(index + fmLength, format);
                         if (pattern != null) {
                             fmLength += pattern.length() + 2;
                             try {
@@ -401,13 +401,17 @@ public class TagElement implements Transferable, Serializable {
         return str;
     }
 
-    protected String getPattern(int startIndex) {
+    private static String getPattern(int startIndex, String format) {
         int beginIndex = format.indexOf('$', startIndex);
         int endIndex = format.indexOf('$', startIndex + 2);
         if (beginIndex == -1 || endIndex == -1) {
             return null;
         }
         return format.substring(beginIndex + 1, endIndex);
+    }
+
+    public String getFormattedText(Object value) {
+        return getFormattedText(value, type, format);
     }
 
     public synchronized void setFormat(String format) {

@@ -14,8 +14,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import org.weasis.core.api.Messages;
+import java.util.Map.Entry;
 
 public abstract class MediaElement<E> {
 
@@ -78,6 +77,10 @@ public abstract class MediaElement<E> {
             }
         }
         return null;
+    }
+
+    public Iterator<Entry<TagElement, Object>> getTagIterator() {
+        return tags.entrySet().iterator();
     }
 
     public void clearAllTags() {
