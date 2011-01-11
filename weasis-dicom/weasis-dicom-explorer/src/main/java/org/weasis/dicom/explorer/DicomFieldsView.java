@@ -15,7 +15,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.util.Iterator;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
@@ -48,10 +47,7 @@ import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
@@ -200,8 +196,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     private void displayAllDicomInfo(Series series, MediaElement media) {
         DefaultListModel listModel = new DefaultListModel();
-        if (media instanceof DicomImageElement) {
-            MediaReader<PlanarImage> loader = ((DicomImageElement) media).getMediaReader();
+        if (media != null) {
+            MediaReader loader = media.getMediaReader();
             if (loader instanceof DicomMediaIO) {
                 DicomObject dcmObj = ((DicomMediaIO) loader).getDicomObject();
                 Iterator it = dcmObj.fileMetaInfoIterator();

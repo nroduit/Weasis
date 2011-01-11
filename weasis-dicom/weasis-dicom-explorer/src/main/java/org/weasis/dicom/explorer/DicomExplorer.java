@@ -1555,17 +1555,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     }
                                 });
                                 popupMenu.add(item4);
-                                if (viewerFactory instanceof MimeSystemAppViewer) {
+                                if (viewerFactory instanceof MimeSystemAppFactory) {
                                     final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
-                                    item4.addActionListener(new ActionListener() {
+                                    item5.addActionListener(new ActionListener() {
 
                                         public void actionPerformed(ActionEvent e) {
                                             JFrame frame = new JFrame("DICOM Information");
-                                            frame.setSize(400, 500);
+                                            frame.setSize(500, 630);
                                             DicomFieldsView view = new DicomFieldsView();
-                                            view.changingViewContentEvent(new SeriesViewerEvent(null, series, series
+                                            view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
+                                                .createSeriesViewer(null), series, series
                                                 .getMedia(MEDIA_POSITION.FIRST), EVENT.SELECT));
-                                            frame.getRootPane().add(view, BorderLayout.CENTER);
+                                            JPanel panel = new JPanel();
+                                            panel.setLayout(new BorderLayout());
+                                            panel.add(view);
+                                            frame.add(panel);
                                             frame.setVisible(true);
                                         }
                                     });
