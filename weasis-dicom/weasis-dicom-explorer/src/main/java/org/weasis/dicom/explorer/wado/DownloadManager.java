@@ -256,8 +256,7 @@ public class DownloadManager {
             study.setTag(TagElement.AccessionNumber,
                 getTagAttribute(xmler, TagElement.AccessionNumber.getTagName(), null));
             study.setTag(TagElement.StudyID, getTagAttribute(xmler, TagElement.StudyID.getTagName(), null));
-            study.setTag(TagElement.ReferringPhysicianName,
-                getTagAttribute(xmler, TagElement.ReferringPhysicianName.getTagName(), null));
+
             model.addHierarchyNode(patient, study);
         }
 
@@ -299,6 +298,8 @@ public class DownloadManager {
             dicomSeries.setTag(TagElement.Modality, getTagAttribute(xmler, TagElement.Modality.getTagName(), null));
             dicomSeries.setTag(TagElement.SeriesDescription,
                 getTagAttribute(xmler, TagElement.SeriesDescription.getTagName(), "")); //$NON-NLS-1$
+            dicomSeries.setTag(TagElement.ReferringPhysicianName,
+                getTagAttribute(xmler, TagElement.ReferringPhysicianName.getTagName(), null));
             dicomSeries.setTag(TagElement.WadoTransferSyntaxUID,
                 getTagAttribute(xmler, TagElement.WadoTransferSyntaxUID.getTagName(), null));
             dicomSeries.setTag(TagElement.WadoCompressionRate,

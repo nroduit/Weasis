@@ -68,7 +68,6 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         fillMap(TagElement.StudyTime);
         fillMap(TagElement.StudyDescription);
         fillMap(TagElement.AccessionNumber);
-        fillMap(TagElement.ReferringPhysicianName);
         fillMap(TagElement.ModalitiesInStudy);
         fillMap(TagElement.NumberOfStudyRelatedInstances);
         fillMap(TagElement.NumberOfStudyRelatedSeries);
@@ -81,6 +80,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         fillMap(TagElement.SeriesDate);
         fillMap(TagElement.SeriesDescription);
         fillMap(TagElement.RetrieveAETitle);
+        fillMap(TagElement.ReferringPhysicianName);
         fillMap(TagElement.InstitutionName);
         fillMap(TagElement.InstitutionalDepartmentName);
         fillMap(TagElement.StationName);

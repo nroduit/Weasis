@@ -33,7 +33,9 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.ZoomSetting;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -74,11 +76,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             public void stateChanged(BoundedRangeModel model) {
 
                 int index = model.getValue() - 1;
-                ImageElement media = null;
+                Series series = null;
+                ImageElement image = null;
                 if (selectedView2dContainer != null) {
                     DefaultView2d selectedImagePane = selectedView2dContainer.getSelectedImagePane();
-                    if (selectedImagePane.getSeries() != null) {
-                        media = (ImageElement) selectedImagePane.getSeries().getMedia(index);
+                    if (selectedImagePane.getSeries() instanceof Series) {
+                        series = (Series) selectedImagePane.getSeries();
+                        MediaElement media = series.getMedia(index);
+                        if (media instanceof ImageElement) {
+                            image = (ImageElement) media;
+                        }
                     }
                 }
                 Number location = index;
@@ -95,8 +102,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
                 // Model contains display value, value-1 is the index value of a sequence
                 firePropertyChange(action.cmd(), null, location);
-                if (media != null) {
-                    fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, media, EVENT.SELECT));
+                if (image != null) {
+                    fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
+                        EVENT.SELECT));
                 }
             }
 

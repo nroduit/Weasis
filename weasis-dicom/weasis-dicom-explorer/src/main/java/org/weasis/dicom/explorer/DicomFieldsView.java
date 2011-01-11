@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.dicom.viewer2d;
+package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -39,19 +39,40 @@ import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.util.TagUtils;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.DicomModel;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
-    private final TagElement[] PATIENTS = { TagElement.PatientName, TagElement.PatientID, TagElement.PatientSex,
+    private final TagElement[] PATIENT = { TagElement.PatientName, TagElement.PatientID, TagElement.PatientSex,
         TagElement.PatientBirthDate };
+    private final TagElement[] STATION = { TagElement.Manufacturer, TagElement.ManufacturerModelName,
+        TagElement.StationName, };
+    private final TagElement[] STUDY = { TagElement.StudyInstanceUID, TagElement.StudyDate, TagElement.StudyID,
+        TagElement.AccessionNumber, TagElement.ReferringPhysicianName, TagElement.StudyDescription };
+    private final TagElement[] SERIES = { TagElement.SeriesInstanceUID, TagElement.SeriesDate, TagElement.SeriesNumber,
+        TagElement.Modality, TagElement.ReferringPhysicianName, TagElement.InstitutionName,
+        TagElement.InstitutionalDepartmentName, TagElement.BodyPartExamined };
+    private final TagElement[] IMAGE = { TagElement.SOPInstanceUID, TagElement.ImageType, TagElement.TransferSyntaxUID,
+        TagElement.InstanceNumber, TagElement.PhotometricInterpretation, TagElement.SamplesPerPixel,
+        TagElement.PixelRepresentation, TagElement.Columns, TagElement.Rows, TagElement.ImageComments,
+        TagElement.ImageWidth, TagElement.ImageHeight, TagElement.ImageDepth, TagElement.BitsAllocated,
+        TagElement.BitsStored };
+    private final TagElement[] IMAGE_PLANE = { TagElement.PixelSpacing, TagElement.SliceLocation,
+        TagElement.SliceThickness };
+    private final TagElement[] IMAGE_ACQ = { TagElement.KVP, TagElement.ContrastBolusAgent };
+
     private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
 
         @Override
@@ -62,7 +83,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private final JScrollPane allPane = new JScrollPane();
     private final JScrollPane limitedPane = new JScrollPane();
     private final JTextPane jTextPane1 = new JTextPane();
-    private MediaElement currentMedia = null;
+    private MediaElement currentMedia;
+    private Series currentSeries;
 
     public DicomFieldsView() {
         JPanel panel = new JPanel();
@@ -86,7 +108,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
         ChangeListener changeListener = new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
-                changeDicomInfo(currentMedia);
+                changeDicomInfo(currentSeries, currentMedia);
             }
         };
         this.addChangeListener(changeListener);
@@ -162,20 +184,21 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     public void changingViewContentEvent(SeriesViewerEvent event) {
         if (event.getEventType().equals(EVENT.SELECT) || event.getEventType().equals(EVENT.LAYOUT)) {
             currentMedia = event.getMediaElement();
-            changeDicomInfo(currentMedia);
+            currentSeries = event.getSeries();
+            changeDicomInfo(currentSeries, currentMedia);
         }
     }
 
-    private void changeDicomInfo(MediaElement media) {
+    private void changeDicomInfo(Series series, MediaElement media) {
         int index = getSelectedIndex();
         if (index == 0) {
-            displayLimitedDicomInfo(media);
+            displayLimitedDicomInfo(series, media);
         } else {
-            displayAllDicomInfo(media);
+            displayAllDicomInfo(series, media);
         }
     }
 
-    private void displayAllDicomInfo(MediaElement media) {
+    private void displayAllDicomInfo(Series series, MediaElement media) {
         DefaultListModel listModel = new DefaultListModel();
         if (media instanceof DicomImageElement) {
             MediaReader<PlanarImage> loader = ((DicomImageElement) media).getMediaReader();
@@ -206,32 +229,62 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         allPane.setViewportView(jListElement);
     }
 
-    private void displayLimitedDicomInfo(MediaElement media) {
+    private void displayLimitedDicomInfo(Series series, MediaElement media) {
 
         StyledDocument doc = jTextPane1.getStyledDocument();
         try {
             // clear previous text
             doc.remove(0, doc.getLength());
             if (media != null) {
-                Style regular = doc.getStyle("regular"); //$NON-NLS-1$
-                Style title = doc.getStyle("title"); //$NON-NLS-1$
-                Style italic = doc.getStyle("italic"); //$NON-NLS-1$
+                DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
 
-                MediaReader loader = media.getMediaReader();
-                if (loader instanceof DicomMediaIO) {
-                    DicomObject dcmObj = ((DicomMediaIO) loader).getDicomObject();
-                    doc.insertString(doc.getLength(), "Patient\n", title); //$NON-NLS-1$ 
-                    for (TagElement t : PATIENTS) {
-                        String val = dcmObj.getString(t.getId());
-                        doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
-                        doc.insertString(doc.getLength(), ": " + val + "\n", regular); //$NON-NLS-1$
+                if (dicomView != null) {
+                    DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+                    MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+
+                    Style regular = doc.getStyle("regular"); //$NON-NLS-1$
+                    Style title = doc.getStyle("title"); //$NON-NLS-1$
+                    Style italic = doc.getStyle("italic"); //$NON-NLS-1$
+
+                    MediaReader loader = media.getMediaReader();
+                    if (loader instanceof DicomMediaIO) {
+                        doc.insertString(doc.getLength(), "Patient\n", title);
+                        writeItems(PATIENT, model.getParent(series, DicomModel.patient), doc);
+                        doc.insertString(doc.getLength(), "\nStation\n", title);
+                        writeItems(STATION, series, doc);
+                        doc.insertString(doc.getLength(), "\nStudy\n", title);
+                        writeItems(STUDY, model.getParent(series, DicomModel.study), doc);
+                        doc.insertString(doc.getLength(), "\nSeries\n", title);
+                        writeItems(SERIES, series, doc);
+                        doc.insertString(doc.getLength(), "\nImage\n", title);
+                        writeItems(IMAGE, null, doc);
+                        doc.insertString(doc.getLength(), "\nImage Plane\n", title);
+                        writeItems(IMAGE_PLANE, null, doc);
+                        doc.insertString(doc.getLength(), "\nImage Acquisition\n", title);
+                        writeItems(IMAGE_ACQ, null, doc);
                     }
                 }
-
             }
         } catch (BadLocationException ble) {
             ble.getStackTrace();
         }
         limitedPane.setViewportView(jTextPane1);
+    }
+
+    private void writeItems(TagElement[] tags, MediaSeriesGroup group, StyledDocument doc) {
+        Style regular = doc.getStyle("regular"); //$NON-NLS-1$
+        Style italic = doc.getStyle("italic"); //$NON-NLS-1$
+
+        for (TagElement t : tags) {
+            try {
+                Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
+                if (val != null) {
+                    doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
+                    doc.insertString(doc.getLength(), ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
+                }
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -223,7 +223,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             group.setTag(TagElement.StudyDescription, header.getString(Tag.StudyDescription));
 
             group.setTag(TagElement.AccessionNumber, header.getString(Tag.AccessionNumber));
-            group.setTag(TagElement.ReferringPhysicianName, header.getString(Tag.ReferringPhysicianName));
             group.setTag(TagElement.ModalitiesInStudy, header.getString(Tag.ModalitiesInStudy));
             group.setTag(TagElement.NumberOfStudyRelatedInstances, header.getInt(Tag.NumberOfStudyRelatedInstances));
             group.setTag(TagElement.NumberOfStudyRelatedSeries, header.getInt(Tag.NumberOfStudyRelatedSeries));
@@ -241,6 +240,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 header.getDate(Tag.SeriesDate, getDateFromDicomElement(header, Tag.StudyDate, null)));
             group.setTag(TagElement.SeriesDescription, header.getString(Tag.SeriesDescription));
             group.setTag(TagElement.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
+            group.setTag(TagElement.ReferringPhysicianName, header.getString(Tag.ReferringPhysicianName));
             group.setTag(TagElement.InstitutionName, header.getString(Tag.InstitutionName));
             group.setTag(TagElement.InstitutionalDepartmentName, header.getString(Tag.InstitutionalDepartmentName));
             group.setTag(TagElement.StationName, header.getString(Tag.StationName));

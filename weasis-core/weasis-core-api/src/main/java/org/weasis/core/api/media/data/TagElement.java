@@ -142,7 +142,7 @@ public class TagElement implements Transferable, Serializable {
     public final static TagElement InstitutionName = new TagElement(0x00080080, "Institution Name", TagType.String, 3); //$NON-NLS-1$
 
     public final static TagElement ReferringPhysicianName = new TagElement(0x00080090,
-        "Referring Physician Name", TagType.String, 2); //$NON-NLS-1$
+        "Referring Physician Name", TagType.String, 3); //$NON-NLS-1$
     public final static TagElement StationName = new TagElement(0x00081010, "Station Name", TagType.String, 3); //$NON-NLS-1$
     public final static TagElement StudyDescription =
         new TagElement(0x00081030, "Study Description", TagType.String, 2); //$NON-NLS-1$
@@ -328,7 +328,9 @@ public class TagElement implements Transferable, Serializable {
 
         String str;
 
-        if (TagType.Date.equals(type)) {
+        if (TagType.String.equals(type)) {
+            str = value.toString();
+        } else if (TagType.Date.equals(type)) {
             str = formatDate.format((Date) value);
         } else if (TagType.Time.equals(type)) {
             str = formatTime.format((Date) value);
@@ -362,6 +364,36 @@ public class TagElement implements Transferable, Serializable {
                         break;
                 }
             }
+        } else if (value instanceof float[]) {
+            float[] array = (float[]) value;
+            StringBuffer s = new StringBuffer();
+            for (int i = 0; i < array.length; i++) {
+                s.append(array[i]);
+                if (i < array.length - 1) {
+                    s.append(", ");
+                }
+            }
+            str = s.toString();
+        } else if (value instanceof double[]) {
+            double[] array = (double[]) value;
+            StringBuffer s = new StringBuffer();
+            for (int i = 0; i < array.length; i++) {
+                s.append(array[i]);
+                if (i < array.length - 1) {
+                    s.append(", ");
+                }
+            }
+            str = s.toString();
+        } else if (value instanceof int[]) {
+            int[] array = (int[]) value;
+            StringBuffer s = new StringBuffer();
+            for (int i = 0; i < array.length; i++) {
+                s.append(array[i]);
+                if (i < array.length - 1) {
+                    s.append(", ");
+                }
+            }
+            str = s.toString();
         } else {
             str = value.toString();
         }

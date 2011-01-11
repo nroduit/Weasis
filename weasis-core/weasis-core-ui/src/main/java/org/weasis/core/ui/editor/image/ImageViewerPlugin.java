@@ -34,6 +34,7 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -253,9 +254,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         setDrawActions();
         selectedImagePane.setSelected(true);
         eventManager.updateComponentsListener(selectedImagePane);
-        if (selectedImagePane.getSeries() != null) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, selectedImagePane.getSeries().getMedia(
-                selectedImagePane.getFrameIndex()), EVENT.LAYOUT));
+        if (selectedImagePane.getSeries() instanceof Series) {
+            Series series = (Series) selectedImagePane.getSeries();
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, series, series
+                .getMedia(selectedImagePane.getFrameIndex()), EVENT.LAYOUT));
         }
     }
 
@@ -273,9 +275,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             eventManager.updateComponentsListener(defaultView2d);
 
         }
-        if (defaultView2d != null && defaultView2d.getSeries() != null) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, defaultView2d.getSeries().getMedia(
-                defaultView2d.getFrameIndex()), EVENT.SELECT));
+        if (defaultView2d != null && defaultView2d.getSeries() instanceof Series) {
+            Series series = (Series) selectedImagePane.getSeries();
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, series, series.getMedia(defaultView2d
+                .getFrameIndex()), EVENT.SELECT));
         }
     }
 

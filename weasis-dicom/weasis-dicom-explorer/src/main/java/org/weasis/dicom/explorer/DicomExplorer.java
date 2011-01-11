@@ -54,6 +54,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -81,6 +82,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -90,6 +92,8 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
@@ -1551,6 +1555,22 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     }
                                 });
                                 popupMenu.add(item4);
+                                if (viewerFactory instanceof MimeSystemAppViewer) {
+                                    final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
+                                    item4.addActionListener(new ActionListener() {
+
+                                        public void actionPerformed(ActionEvent e) {
+                                            JFrame frame = new JFrame("DICOM Information");
+                                            frame.setSize(400, 500);
+                                            DicomFieldsView view = new DicomFieldsView();
+                                            view.changingViewContentEvent(new SeriesViewerEvent(null, series, series
+                                                .getMedia(MEDIA_POSITION.FIRST), EVENT.SELECT));
+                                            frame.getRootPane().add(view, BorderLayout.CENTER);
+                                            frame.setVisible(true);
+                                        }
+                                    });
+                                    popupMenu.add(item5);
+                                }
                             }
                             if (series instanceof DicomSeries) {
                                 popupMenu.add(new JSeparator());
