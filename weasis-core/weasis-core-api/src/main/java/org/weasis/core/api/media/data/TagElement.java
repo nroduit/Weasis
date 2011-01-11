@@ -54,7 +54,7 @@ public class TagElement implements Transferable, Serializable {
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)
     public final static TagElement PatientPseudoUID = new TagElement(
-        Messages.getString("TagElement.pat_uid"), TagType.String); //$NON-NLS-1$
+        Messages.getString("TagElement.pat_uid"), TagType.String, 1); //$NON-NLS-1$
     public static final TagElement SeriesLoading = new TagElement(
         Messages.getString("TagElement.laod"), TagType.Integer); //$NON-NLS-1$
     public static final TagElement Thumbnail =
@@ -99,61 +99,64 @@ public class TagElement implements Transferable, Serializable {
     public final static TagElement TransferSyntaxUID =
         new TagElement(0x00020010, "Transfer Syntax UID", TagType.String); //$NON-NLS-1$
 
-    public final static TagElement PatientName = new TagElement(0x00100010, "Patient Name", TagType.String); //$NON-NLS-1$
-    public final static TagElement PatientID = new TagElement(0x00100020, "PatientID", TagType.String); //$NON-NLS-1$
+    public final static TagElement PatientName = new TagElement(0x00100010, "Patient Name", TagType.String, 1); //$NON-NLS-1$
+    public final static TagElement PatientID = new TagElement(0x00100020, "PatientID", TagType.String, 1); //$NON-NLS-1$
 
-    public final static TagElement IssuerOfPatientID =
-        new TagElement(0x00100021, "Issuer of PatientID", TagType.String); //$NON-NLS-1$
-    public final static TagElement PatientBirthDate = new TagElement(0x00100030, "Patient Birth Date", TagType.Date); //$NON-NLS-1$
-    public final static TagElement PatientBirthTime = new TagElement(0x00100032, "Patient Birth Time", TagType.Time); //$NON-NLS-1$
-    public final static TagElement PatientSex = new TagElement(0x00100040, "Patient Sex", TagType.String); //$NON-NLS-1$
-    public final static TagElement PatientComments = new TagElement(0x00104000, "Patient Comments", TagType.String); //$NON-NLS-1$
+    public final static TagElement IssuerOfPatientID = new TagElement(0x00100021,
+        "Issuer of PatientID", TagType.String, 1); //$NON-NLS-1$
+    public final static TagElement PatientBirthDate = new TagElement(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
+    public final static TagElement PatientBirthTime = new TagElement(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
+    public final static TagElement PatientSex = new TagElement(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
+    public final static TagElement PatientComments = new TagElement(0x00104000, "Patient Comments", TagType.String, 1); //$NON-NLS-1$
 
-    public final static TagElement StudyInstanceUID = new TagElement(0x0020000D, "Study Instance UID", TagType.String); //$NON-NLS-1$
-    public final static TagElement SubseriesInstanceUID = new TagElement("Subseries Instance UID", TagType.String); //$NON-NLS-1$
-    public final static TagElement SeriesInstanceUID =
-        new TagElement(0x0020000E, "Series Instance UID", TagType.String); //$NON-NLS-1$
-    public final static TagElement StudyID = new TagElement(0x00200010, "Study ID", TagType.String); //$NON-NLS-1$
-    public final static TagElement InstanceNumber = new TagElement(0x00200013, "Instance Number", TagType.Integer); //$NON-NLS-1$
+    public final static TagElement StudyInstanceUID = new TagElement(0x0020000D,
+        "Study Instance UID", TagType.String, 2); //$NON-NLS-1$
+    public final static TagElement SubseriesInstanceUID = new TagElement("Subseries Instance UID", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement SeriesInstanceUID = new TagElement(0x0020000E,
+        "Series Instance UID", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement StudyID = new TagElement(0x00200010, "Study ID", TagType.String, 2); //$NON-NLS-1$
+    public final static TagElement InstanceNumber = new TagElement(0x00200013, "Instance Number", TagType.Integer, 4); //$NON-NLS-1$
     public static final TagElement ImagePositionPatient = new TagElement(0x00200032,
-        "Image Position Patient", TagType.DoubleArray); //$NON-NLS-1$
+        "Image Position Patient", TagType.DoubleArray, 4); //$NON-NLS-1$
     public static final TagElement ImageOrientationPatient = new TagElement(0x00200037,
-        "Image Orientation", TagType.DoubleArray); //$NON-NLS-1$
-    public final static TagElement SliceLocation = new TagElement(0x00201041, "Slice Location", TagType.Float); //$NON-NLS-1$
-    public final static TagElement SliceThickness = new TagElement(0x00180050, "Slice Thickness", TagType.Float); //$NON-NLS-1$
+        "Image Orientation", TagType.DoubleArray, 4); //$NON-NLS-1$
+    public final static TagElement SliceLocation = new TagElement(0x00201041, "Slice Location", TagType.Float, 4); //$NON-NLS-1$
+    public final static TagElement SliceThickness = new TagElement(0x00180050, "Slice Thickness", TagType.Float, 4); //$NON-NLS-1$
 
-    public final static TagElement ImageType = new TagElement(0x00080008, "Image Type", TagType.String); //$NON-NLS-1$
+    public final static TagElement ImageType = new TagElement(0x00080008, "Image Type", TagType.String, 4); //$NON-NLS-1$
 
-    public final static TagElement SOPClassUID = new TagElement(0x00080016, "SOP Class UID", TagType.String); //$NON-NLS-1$
-    public final static TagElement SOPInstanceUID = new TagElement(0x00080018, "SOP Instance UID", TagType.String); //$NON-NLS-1$
-    public final static TagElement StudyDate = new TagElement(0x00080020, "Study Date", TagType.Date); //$NON-NLS-1$
-    public final static TagElement SeriesDate = new TagElement(0x00080021, "Series Date", TagType.Date); //$NON-NLS-1$
-    public final static TagElement AcquisitionDate = new TagElement(0x00080022, "Acquisition Date", TagType.Date); //$NON-NLS-1$
+    public final static TagElement SOPClassUID = new TagElement(0x00080016, "SOP Class UID", TagType.String, 4); //$NON-NLS-1$
+    public final static TagElement SOPInstanceUID = new TagElement(0x00080018, "SOP Instance UID", TagType.String, 4); //$NON-NLS-1$
+    public final static TagElement StudyDate = new TagElement(0x00080020, "Study Date", TagType.Date, 2); //$NON-NLS-1$
+    public final static TagElement SeriesDate = new TagElement(0x00080021, "Series Date", TagType.Date, 3); //$NON-NLS-1$
+    public final static TagElement AcquisitionDate = new TagElement(0x00080022, "Acquisition Date", TagType.Date, 4); //$NON-NLS-1$
 
-    public final static TagElement StudyTime = new TagElement(0x00080030, "Study Time", TagType.Time); //$NON-NLS-1$
-    public final static TagElement AcquisitionTime = new TagElement(0x00080032, "Acquisition Time", TagType.Time); //$NON-NLS-1$
-    public final static TagElement AccessionNumber = new TagElement(0x00080050, "Accession Number", TagType.String); //$NON-NLS-1$
-    public final static TagElement RetrieveAETitle = new TagElement(0x00080054, "Retrieve AE Title", TagType.String); //$NON-NLS-1$
-    public final static TagElement Modality = new TagElement(0x00080060, "Modality", TagType.String); //$NON-NLS-1$
-    public final static TagElement ModalitiesInStudy =
-        new TagElement(0x00080061, "Modalities in Study", TagType.String); //$NON-NLS-1$
-    public final static TagElement Manufacturer = new TagElement(0x00080070, "Manufacturer", TagType.String); //$NON-NLS-1$
-    public final static TagElement InstitutionName = new TagElement(0x00080080, "Institution Name", TagType.String); //$NON-NLS-1$
+    public final static TagElement StudyTime = new TagElement(0x00080030, "Study Time", TagType.Time, 2); //$NON-NLS-1$
+    public final static TagElement AcquisitionTime = new TagElement(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
+    public final static TagElement AccessionNumber = new TagElement(0x00080050, "Accession Number", TagType.String, 2); //$NON-NLS-1$
+    public final static TagElement RetrieveAETitle = new TagElement(0x00080054, "Retrieve AE Title", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement Modality = new TagElement(0x00080060, "Modality", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement ModalitiesInStudy = new TagElement(0x00080061,
+        "Modalities in Study", TagType.String, 2); //$NON-NLS-1$
+    public final static TagElement Manufacturer = new TagElement(0x00080070, "Manufacturer", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement InstitutionName = new TagElement(0x00080080, "Institution Name", TagType.String, 3); //$NON-NLS-1$
 
     public final static TagElement ReferringPhysicianName = new TagElement(0x00080090,
-        "Referring Physician Name", TagType.String); //$NON-NLS-1$
-    public final static TagElement StationName = new TagElement(0x00081010, "Station Name", TagType.String); //$NON-NLS-1$
-    public final static TagElement StudyDescription = new TagElement(0x00081030, "Study Description", TagType.String); //$NON-NLS-1$
+        "Referring Physician Name", TagType.String, 2); //$NON-NLS-1$
+    public final static TagElement StationName = new TagElement(0x00081010, "Station Name", TagType.String, 3); //$NON-NLS-1$
+    public final static TagElement StudyDescription =
+        new TagElement(0x00081030, "Study Description", TagType.String, 2); //$NON-NLS-1$
     public final static TagElement ProcedureCodeSequence = new TagElement(0x00081032,
-        "Procedure Code Sequence", TagType.Sequence); //$NON-NLS-1$
-    public final static TagElement SeriesDescription = new TagElement(0x0008103E, "Series Description", TagType.String); //$NON-NLS-1$
+        "Procedure Code Sequence", TagType.Sequence, 2); //$NON-NLS-1$
+    public final static TagElement SeriesDescription = new TagElement(0x0008103E,
+        "Series Description", TagType.String, 3); //$NON-NLS-1$
     public final static TagElement InstitutionalDepartmentName = new TagElement(0x00081040,
-        "Institutional Department Name", TagType.String); //$NON-NLS-1$
+        "Institutional Department Name", TagType.String, 3); //$NON-NLS-1$
     public final static TagElement ManufacturerModelName = new TagElement(0x00081090,
-        "Manufacturer Model Name", TagType.String); //$NON-NLS-1$
+        "Manufacturer Model Name", TagType.String, 3); //$NON-NLS-1$
 
     public final static TagElement ReferencedPerformedProcedureStepSequence = new TagElement(0x00081111,
-        "Referenced Performed Procedure Step Sequence", TagType.Sequence); //$NON-NLS-1$
+        "Referenced Performed Procedure Step Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public final static TagElement ReferencedImageSequence = new TagElement(0x00081140,
         "Referenced Image Sequence", TagType.Sequence); //$NON-NLS-1$
 
@@ -196,16 +199,17 @@ public class TagElement implements Transferable, Serializable {
         "Smallest ImagePixel Value", TagType.Float); //$NON-NLS-1$
     public static final TagElement LargestImagePixelValue = new TagElement(0x00280107,
         "Largest Image PixelValue", TagType.Float); //$NON-NLS-1$
-    public final static TagElement BodyPartExamined = new TagElement(0x00180015, "Body Part Examined", TagType.String); //$NON-NLS-1$
+    public final static TagElement BodyPartExamined = new TagElement(0x00180015,
+        "Body Part Examined", TagType.String, 3); //$NON-NLS-1$
 
-    public static final TagElement SeriesNumber = new TagElement(0x00200011, "Series Number", TagType.Integer); //$NON-NLS-1$
+    public static final TagElement SeriesNumber = new TagElement(0x00200011, "Series Number", TagType.Integer, 3); //$NON-NLS-1$
 
-    public final static TagElement Laterality = new TagElement(0x00200060, "Laterality", TagType.String); //$NON-NLS-1$
+    public final static TagElement Laterality = new TagElement(0x00200060, "Laterality", TagType.String, 3); //$NON-NLS-1$
 
     public static final TagElement NumberOfStudyRelatedSeries = new TagElement(0x00201206,
-        "Number of Study Related Series", TagType.Integer); //$NON-NLS-1$
+        "Number of Study Related Series", TagType.Integer, 2); //$NON-NLS-1$
     public static final TagElement NumberOfStudyRelatedInstances = new TagElement(0x00201208,
-        "Number of Study Related Instances", TagType.Integer); //$NON-NLS-1$
+        "Number of Study Related Instances", TagType.Integer, 2); //$NON-NLS-1$
     public static final TagElement NumberOfSeriesRelatedInstances = new TagElement(0x00201209,
         "Number of Series Related Instances", TagType.Integer); //$NON-NLS-1$
     public static final TagElement ImageComments = new TagElement(0x00204000, "Image Comments", TagType.String); //$NON-NLS-1$
@@ -227,13 +231,13 @@ public class TagElement implements Transferable, Serializable {
     public static final TagElement PixelRepresentation = new TagElement(0x00280103,
         "Pixel Representation", TagType.Integer); //$NON-NLS-1$
 
-    public final static TagElement StudyStatusID = new TagElement(0x0032000A, "Study StatusID", TagType.String); //$NON-NLS-1$
+    public final static TagElement StudyStatusID = new TagElement(0x0032000A, "Study StatusID", TagType.String, 2); //$NON-NLS-1$
     public final static TagElement PerformedProcedureStepStartDate = new TagElement(0x00400244,
-        "Performed Procedure Step Start Date", TagType.Date); //$NON-NLS-1$
+        "Performed Procedure Step Start Date", TagType.Date, 3); //$NON-NLS-1$
     public final static TagElement PerformedProcedureStepStartTime = new TagElement(0x00400245,
-        "Performed Procedure Step Start Time", TagType.Time); //$NON-NLS-1$
+        "Performed Procedure Step Start Time", TagType.Time, 3); //$NON-NLS-1$
     public final static TagElement RequestAttributesSequence = new TagElement(0x00400275,
-        "Request Attributes Sequence", TagType.Sequence); //$NON-NLS-1$
+        "Request Attributes Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public final static TagElement Units = new TagElement(0x00541001, "Units", TagType.String); //$NON-NLS-1$
 
     public static final TagElement MIMETypeOfEncapsulatedDocument = new TagElement(0x00420012,
@@ -254,19 +258,21 @@ public class TagElement implements Transferable, Serializable {
     private final static DataFlavor[] flavors = { infoElementDataFlavor };
 
     protected final int id;
+    protected final int level;
     protected final String name;
     protected final TagType type;
     protected String format;
 
-    public TagElement(int id, String name) {
-        this(id, name, null);
-    }
-
-    public TagElement(int id, String name, TagType type) {
+    public TagElement(int id, String name, TagType type, int level) {
         this.id = id;
         this.name = name;
         this.type = type == null ? TagType.String : type;
         this.format = null;
+        this.level = level;
+    }
+
+    public TagElement(int id, String name, TagType type) {
+        this(id, name, type, 0);
     }
 
     public TagElement(String name) {
@@ -275,6 +281,10 @@ public class TagElement implements Transferable, Serializable {
 
     public TagElement(String name, TagType type) {
         this(idCounter.getAndDecrement(), name, type);
+    }
+
+    public TagElement(String name, TagType type, int level) {
+        this(idCounter.getAndDecrement(), name, type, level);
     }
 
     public int getId() {

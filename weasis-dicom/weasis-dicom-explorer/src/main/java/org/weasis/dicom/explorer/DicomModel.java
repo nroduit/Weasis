@@ -62,12 +62,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public final static TreeModelNode patient = new TreeModelNode(1, 0, TagElement.PatientPseudoUID);
     public final static TreeModelNode study = new TreeModelNode(2, 0, TagElement.StudyInstanceUID);
     public final static TreeModelNode series = new TreeModelNode(3, 0, TagElement.SubseriesInstanceUID);
-    public final static ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(4);
+    public final static TreeModelNode instance = new TreeModelNode(4, 0, TagElement.SOPInstanceUID);
+
+    public final static ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
     static {
         modelStrucure.add(root);
         modelStrucure.add(patient);
         modelStrucure.add(study);
         modelStrucure.add(series);
+        modelStrucure.add(instance);
     }
     public final static Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private final Tree<MediaSeriesGroup> model;
