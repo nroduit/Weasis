@@ -39,7 +39,6 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
@@ -47,6 +46,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
@@ -246,9 +246,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         removeSeries(series);
                     }
                 }
+                base.sort(SortSeriesStack.instanceNumber);
                 // update observer
-                this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                    new SeriesEvent(SeriesEvent.Action.AddImage, base, 1)));
+                this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base,
+                    base));
 
             }
         }

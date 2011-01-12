@@ -273,6 +273,19 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                         }
                     }
                 }
+            } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
+                if (newVal instanceof Series) {
+                    Series series = (Series) newVal;
+                    for (DefaultView2d<ImageElement> v : view2ds) {
+                        MediaSeries<ImageElement> s = v.getSeries();
+                        if (series.equals(s)) {
+                            // Set to null to be sure that all parameters from the view are apply again to the Series
+                            // (in case for instance it is the same series with more images)
+                            v.setSeries(null);
+                            v.setSeries(series, -1);
+                        }
+                    }
+                }
             }
         }
     }

@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.ui.docking.PluginTool;
@@ -340,8 +341,20 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         }
                     }
                 }
+            } else if (ObservableEvent.BasicAction.Replace.equals(action)) {
+                if (newVal instanceof Series) {
+                    Series series = (Series) newVal;
+                    for (DefaultView2d<DicomImageElement> v : view2ds) {
+                        MediaSeries<DicomImageElement> s = v.getSeries();
+                        if (series.equals(s)) {
+                            // Set to null to be sure that all parameters from the view are apply again to the Series
+                            // (for instance it is the same series with more images)
+                            v.setSeries(null);
+                            v.setSeries(series, -1);
+                        }
+                    }
+                }
             }
-
         }
     }
 
