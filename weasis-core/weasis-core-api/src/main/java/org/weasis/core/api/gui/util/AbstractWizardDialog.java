@@ -56,7 +56,7 @@ public abstract class AbstractWizardDialog extends JDialog {
     protected DefaultMutableTreeNode pagesRoot = new DefaultMutableTreeNode("root"); //$NON-NLS-1$
     private final JPanel jPanelRootPanel = new JPanel();
     private final BorderLayout borderLayout3 = new BorderLayout();
-    private final JButton jButtonCancel = new JButton();
+    protected final JButton jButtonClose = new JButton();
     private final BorderLayout borderLayout2 = new BorderLayout();
     private final TreeSelection tree = new TreeSelection();
     protected JPanel jPanelButtom = new JPanel();
@@ -80,13 +80,13 @@ public abstract class AbstractWizardDialog extends JDialog {
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         jPanelMain.setLayout(borderLayout2);
 
-        jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
+        jButtonClose.addActionListener(new java.awt.event.ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 cancel();
             }
         });
-        jButtonCancel.setText(Messages.getString("AbstractWizardDialog.close")); //$NON-NLS-1$
+        jButtonClose.setText(Messages.getString("AbstractWizardDialog.close")); //$NON-NLS-1$
 
         jPanelRootPanel.setLayout(borderLayout3);
         // jScrollPanePage.getViewport().setBackground(new Color(147, 182, 210));
@@ -96,7 +96,7 @@ public abstract class AbstractWizardDialog extends JDialog {
         jPanelRootPanel.add(jPanelMain, BorderLayout.CENTER);
         jPanelMain.add(jScrollPanePage, BorderLayout.CENTER);
         jPanelRootPanel.add(jPanelButtom, BorderLayout.SOUTH);
-        jPanelButtom.add(jButtonCancel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST,
+        jPanelButtom.add(jButtonClose, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(10, 10, 10, 15), 0, 0));
         jPanelRootPanel.add(jScrollPane1, java.awt.BorderLayout.WEST);
         jScrollPane1.getViewport().add(tree);
@@ -224,14 +224,6 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     public void expandNode(int position) {
         tree.expandRow(position);
-    }
-
-    public JPanel getJPanelButtom() {
-        return jPanelButtom;
-    }
-
-    public JButton getJButtonCancel() {
-        return jButtonCancel;
     }
 
 }

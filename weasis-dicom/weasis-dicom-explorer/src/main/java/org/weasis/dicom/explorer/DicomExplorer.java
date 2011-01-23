@@ -1196,11 +1196,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         return list;
     }
 
-    private void updateSplitSeries(Series dcm) {
-        MediaSeriesGroup study = model.getParent(dcm, DicomModel.study);
+    private void updateSplitSeries(Series dcmSeries) {
+        MediaSeriesGroup study = model.getParent(dcmSeries, DicomModel.study);
         StudyPane studyPane = createStudyPaneInstance(study, null);
 
-        List<Series> list = getSplitSeries(dcm);
+        List<Series> list = getSplitSeries(dcmSeries);
         List<SeriesPane> seriesList = study2series.get(study);
         if (seriesList == null) {
             seriesList = new ArrayList<SeriesPane>();
@@ -1219,6 +1219,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             if (thumb != null) {
                 thumb.reBuildThumbnail();
             }
+        }
+        Integer nb = (Integer) dcmSeries.getTagValue(TagElement.SplitSeriesNumber);
+        // Convention -> split number inferior to 0 is a Series that has been replaced (ex. when a DicomSeries is
+        // converted DicomVideoSeries after downloading files).
+        if (nb != null && nb < 0) {
+            model.removeSeries(dcmSeries);
+            repaintStudy = true;
         }
         if (repaintStudy) {
             studyPane.removeAll();

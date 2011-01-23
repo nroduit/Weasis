@@ -19,11 +19,14 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -33,6 +36,7 @@ import java.util.Map.Entry;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -40,6 +44,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -72,6 +77,9 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -82,6 +90,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
+import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class WeasisWin extends JFrame implements PropertyChangeListener {
@@ -102,7 +111,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         toolbarContainer = new ToolBarContainer();
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
         this.setTitle("Weasis v" + AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
-        this.setIconImage(new ImageIcon(getClass().getResource("/logo-button.png")).getImage()); //$NON-NLS-1$
+        this.setIconImage(new ImageIcon(UIManager.class.getResource("/icon/16x16/logo.png")).getImage()); //$NON-NLS-1$
     }
 
     public static WeasisWin getInstance() {
@@ -152,18 +161,18 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         contentManagerUI.setMinimizable(false);
         contentManagerUI.setShowAlwaysTab(true);
         contentManagerUI.setTabPlacement(TabbedContentManagerUI.TabPlacement.TOP);
+        JComponent mainContainer = (JComponent) UIManager.toolWindowManager.getMainContainer();
+        // Require to remove droptarget (seems to be recreate automatically)
+        mainContainer.setDropTarget(null);
+        mainContainer.setTransferHandler(new SequenceHandler());
         contentManagerUI.addContentManagerUIListener(new ContentManagerUIListener() {
 
             public boolean contentUIRemoving(ContentManagerUIEvent event) {
-                // boolean ok = JOptionPane.showConfirmDialog(instance, "Are you sure?") == JOptionPane.OK_OPTION;
-                // if (ok) {
                 Component c = event.getContentUI().getContent().getComponent();
                 if (c instanceof ViewerPlugin) {
-                    UIManager.VIEWER_PLUGINS.remove(c);
                     // close the content of the plugin
                     ((ViewerPlugin) c).close();
                 }
-                // }
                 return true;
             }
 
@@ -247,16 +256,15 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         DataExplorerModel model = builder.getModel();
                         MediaSeries[] series = builder.getSeries();
 
-                        if (builder.isCompareEntryToBuildNewViewer() && builder.getEntry() != null
-                            && model instanceof TreeModel) {
+                        if (builder.isCompareEntryToBuildNewViewer() && model.getTreeModelNodeForNewPlugin() != null) {
                             TreeModel treeModel = (TreeModel) model;
                             if (series.length == 1) {
                                 MediaSeries s = series[0];
-                                MediaSeriesGroup group = treeModel.getParent(s, builder.getEntry());
+                                MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
                                 openSeriesInViewerPlugin(factory, model, group, series);
                             } else if (series.length > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
-                                    getSeriesByEntry(treeModel, series, builder.getEntry());
+                                    getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
                                 for (Iterator<Entry<MediaSeriesGroup, List<MediaSeries>>> iterator =
                                     map.entrySet().iterator(); iterator.hasNext();) {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
@@ -264,7 +272,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     List<MediaSeries> seriesList = entry.getValue();
                                     openSeriesInViewerPlugin(factory, model, group,
                                         seriesList.toArray(new MediaSeries[seriesList.size()]));
-
                                 }
                             }
 
@@ -325,10 +332,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
         MediaSeries[] seriesList) {
-        if (seriesList == null || seriesList.length == 0) {
+        if (factory == null || seriesList == null || seriesList.length == 0) {
             return;
         }
-
         if (factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
@@ -610,8 +616,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuFile.removeAll();
         final JMenu importMenu = new JMenu(Messages.getString("WeasisWin.import")); //$NON-NLS-1$
         JPopupMenu menuImport = importMenu.getPopupMenu();
-        // #WEA-6 - workaround, PopupMenuListener don't work on Mac
-        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+        // #WEA-6 - workaround, PopupMenuListener don't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
             importMenu.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
@@ -644,8 +650,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         final JMenu exportMenu = new JMenu(Messages.getString("WeasisWin.export")); //$NON-NLS-1$
         JPopupMenu menuExport = exportMenu.getPopupMenu();
-        // #WEA-6 - workaround, PopupMenuListener don't work on Mac
-        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+        // #WEA-6 - workaround, PopupMenuListener don't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
             exportMenu.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
@@ -681,4 +687,105 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuFile.add(new JMenuItem(ExitAction.getInstance()));
     }
 
+    private class SequenceHandler extends TransferHandler {
+
+        public SequenceHandler() {
+            super("series"); //$NON-NLS-1$
+        }
+
+        @Override
+        public Transferable createTransferable(JComponent comp) {
+            if (comp instanceof Thumbnail) {
+                MediaSeries t = ((Thumbnail) comp).getSeries();
+                if (t instanceof Series) {
+                    return t;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            if (!support.isDrop()) {
+                return false;
+            }
+            if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
+                || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            Transferable transferable = support.getTransferable();
+
+            List<File> files = null;
+            // Not supported on Linux
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                try {
+                    files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropFiles(files, null);
+            }
+            // When dragging a file or group of files from a Gnome or Kde environment
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
+            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                try {
+                    // Files with spaces in the filename trigger an error
+                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
+                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    files = UriListFlavor.textURIListToFileList(val);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropFiles(files, null);
+            }
+
+            Series seq;
+            try {
+                seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                if (seq != null) {
+                    synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
+                        for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
+                            if (factory.canReadMimeType(seq.getMimeType())) {
+                                DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagElement.ExplorerModel);
+                                if (model instanceof TreeModel) {
+                                    TreeModel treeModel = (TreeModel) model;
+                                    MediaSeriesGroup group =
+                                        treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
+                                    openSeriesInViewerPlugin(factory, model, group, new MediaSeries[] { seq });
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            } catch (Exception e) {
+                return false;
+            }
+
+            return true;
+
+        }
+
+        private boolean dropFiles(List<File> files, DataExplorerView explorer) {
+            // TODO get the current explorer
+            if (files != null) {
+
+                // LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
+                // DicomModel.loadingExecutor.execute(dicom);
+                return true;
+            }
+            return false;
+        }
+    }
 }

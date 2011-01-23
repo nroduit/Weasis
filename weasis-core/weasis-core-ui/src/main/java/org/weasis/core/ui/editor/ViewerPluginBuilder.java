@@ -11,7 +11,6 @@
 package org.weasis.core.ui.editor;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.media.data.MediaSeries;
 
 public class ViewerPluginBuilder<E> {
@@ -19,19 +18,17 @@ public class ViewerPluginBuilder<E> {
     private final SeriesViewerFactory factory;
     private final MediaSeries<E>[] series;
     private final DataExplorerModel model;
-    private final TreeModelNode entry;
     private final boolean compareEntryToBuildNewViewer;
 
     public ViewerPluginBuilder(SeriesViewerFactory factory, MediaSeries<E>[] series, DataExplorerModel model) {
-        this(factory, series, model, null, false);
+        this(factory, series, model, true);
     }
 
     public ViewerPluginBuilder(SeriesViewerFactory factory, MediaSeries<E>[] series, DataExplorerModel model,
-        TreeModelNode entry, boolean compareEntryToBuildNewViewer) {
+        boolean compareEntryToBuildNewViewer) {
         this.factory = factory;
         this.series = series;
         this.model = model;
-        this.entry = entry;
         this.compareEntryToBuildNewViewer = compareEntryToBuildNewViewer;
     }
 
@@ -45,10 +42,6 @@ public class ViewerPluginBuilder<E> {
 
     public DataExplorerModel getModel() {
         return model;
-    }
-
-    public TreeModelNode getEntry() {
-        return entry;
     }
 
     public boolean isCompareEntryToBuildNewViewer() {

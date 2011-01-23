@@ -21,6 +21,9 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 
 /**
@@ -30,6 +33,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
  */
 public class PolygonGraphic extends AbstractDragGraphic {
 
+    public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
     protected float points[];
     protected int numPoints;
     protected boolean closed;
@@ -396,5 +400,20 @@ public class PolygonGraphic extends AbstractDragGraphic {
             }
         }
         return new Rectangle2D.Float(rect[0], rect[1], rect[2], rect[3]);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return "Polyline";
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
     }
 }

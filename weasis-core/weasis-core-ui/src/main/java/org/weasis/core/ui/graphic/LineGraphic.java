@@ -22,6 +22,9 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
@@ -36,6 +39,7 @@ import org.weasis.core.ui.Messages;
 public class LineGraphic extends AbstractDragGraphic implements Cloneable {
 
     private static final long serialVersionUID = -6023305795757471234L;
+    public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
     private float x1, y1, x2, y2;
 
     /**
@@ -320,8 +324,23 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
     public Point2D getEndPoint() {
         return new Point2D.Float(x2, y2);
     }
+
     /*
      * public ArrayList<ChainPoint> getCoordinates() { return RasterizeGraphicsToCoord.rasterizeSegment((int)x1,
      * (int)y1, (int)x2, (int)y2); }
      */
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.line");
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
+    }
 }

@@ -38,6 +38,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.graphic.Graphic;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -116,8 +117,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             Preferences prefNode = pref.node("mouse.sensivity");
             windowAction.setMouseSensivity(prefNode.getDouble(windowAction.getActionW().cmd(), 1.25));
             levelAction.setMouseSensivity(prefNode.getDouble(levelAction.getActionW().cmd(), 1.25));
-            moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(),
-                0.1));
+            moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(), 0.1));
             rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
         }
@@ -173,7 +173,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void setSelectedView2dContainer(ImageViewerPlugin<ImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions();
+            this.selectedView2dContainer.setDrawActions(null);
             moveTroughSliceAction.stop();
 
         }
@@ -183,7 +183,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
-            selectedView2dContainer.setDrawActions();
+            Graphic graphic = null;
+            ActionState action = getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            selectedView2dContainer.setDrawActions(graphic);
         }
     }
 
@@ -269,8 +274,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
             ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
-        rotateAction
-            .setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
+        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
         flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
             .getActionValue(ActionW.ZOOM.cmd()))));

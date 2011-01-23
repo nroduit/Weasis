@@ -637,7 +637,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             return;
         }
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, dicomModel, null,
-            new ViewerPluginBuilder(factory, series, dicomModel, DicomModel.patient, true)));
+            new ViewerPluginBuilder(factory, series, dicomModel, true)));
 
     }
 
@@ -977,8 +977,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             public void run() {
-                                boolean firstImage = dicomSeries.size() == 0;
                                 dicomModel.applySplittingRules(dicomSeries, dicomReader);
+                                boolean firstImage = dicomSeries.size() == 1;
 
                                 dicomReader.reset();
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);

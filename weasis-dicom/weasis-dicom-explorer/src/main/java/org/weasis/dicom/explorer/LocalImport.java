@@ -16,6 +16,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.URI;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -24,10 +25,13 @@ import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalImport.class);
 
     private JCheckBox chckbxSearch;
     private JLabel lblImportAFolder;
@@ -159,6 +163,15 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
                 File file = new File(path);
                 if (file.canRead()) {
                     files = new File[] { file };
+                } else {
+                    try {
+                        file = new File(new URI(path));
+                        if (file.canRead()) {
+                            files = new File[] { file };
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Cannot import DICOM from {}", path);
+                    }
                 }
             }
         }

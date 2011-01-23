@@ -153,8 +153,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     protected void sortStack() {
-        Comparator<ImageElement> sortComparator =
-            (Comparator<ImageElement>) actionsInView.get(ActionW.SORTSTACK.cmd());
+        Comparator<ImageElement> sortComparator = (Comparator<ImageElement>) actionsInView.get(ActionW.SORTSTACK.cmd());
         if (sortComparator != null) {
             series.sort((Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd()) ? Collections
                 .reverseOrder(sortComparator) : sortComparator);
@@ -317,8 +316,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                 public void actionPerformed(ActionEvent e) {
                                     if (e.getSource() instanceof JRadioButtonMenuItem) {
                                         JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                        toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT,
-                                            item.getActionCommand());
+                                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
                                     }
                                 }
                             };

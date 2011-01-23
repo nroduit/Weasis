@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.Locale;
 import java.util.Properties;
 
+import javax.swing.LookAndFeel;
+
 import org.weasis.core.api.util.FileUtil;
 
 /**
@@ -56,8 +58,8 @@ public abstract class AbstractProperties {
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$;
 
     /** This array contains the 16 hex digits '0'-'F'. */
-    public static final char[] hexDigits =
-        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    public static final char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+        'F' };
     /** Container for Properties */
     protected static Properties s_prop = new Properties();
     public final static GhostGlassPane glassPane = new GhostGlassPane();
@@ -67,6 +69,16 @@ public abstract class AbstractProperties {
         result = s_prop.getProperty(key, defaultValue);
         s_prop.setProperty(key, result);
         return result;
+    }
+
+    public static boolean isMacNativeLookAndFeel() {
+        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+            LookAndFeel laf = javax.swing.UIManager.getLookAndFeel();
+            if (laf != null && laf.isNativeLookAndFeel()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void setProperty(String key, String value) {
@@ -256,83 +268,7 @@ public abstract class AbstractProperties {
         return s_prop;
     }
 
-    /**
-     * Load INI parameters
-     * 
-     */
-    // public static void loadProperties() {
-    // File propsFile = new File(APP_CONFIG_DIR, APP_PROPERTY_FILE);
-    // System.out.println("Load properties: " + propsFile);
-    // boolean loadOK = true;
-    // s_prop = new Properties();
-    // FileInputStream fis = null;
-    // try {
-    // fis = new FileInputStream(propsFile);
-    // s_prop.load(fis);
-    // fis.close();
-    // }
-    // catch (FileNotFoundException e) {
-    // System.err.println("Load properties: " + propsFile + " not found");
-    // loadOK = false;
-    // }
-    // catch (Exception e) {
-    // System.err.println("Load properties: " + propsFile + " - " + e.toString());
-    // loadOK = false;
-    // }
-    // catch (Throwable t) {
-    // System.err.println("Load properties: " + propsFile + " - " + t.toString());
-    // loadOK = false;
-    // }
-    //
-    // // Check/set properties defaults
-    // for (int i = 0; i < PROPERTIES.length; i++) {
-    // if (VALUES[i].length() > 0) {
-    // checkProperty(PROPERTIES[i], VALUES[i]);
-    // }
-    // }
-    // //
-    // String tempDir = System.getProperty("java.io.tmpdir");
-    // if (tempDir == null || tempDir.length() == 1) {
-    // File tempFolder = new File(APP_CONFIG_DIR, "Temp");
-    // tempFolder.mkdirs();
-    // tempDir = tempFolder.getPath();
-    // }
-    // checkProperty(P_TEMP_DIR, tempDir);
-    // // Save if not exist or could not be read
-    // if (!loadOK) {
-    // // la premiï¿½re fois que le programme est lancï¿½e, le paramï¿½tre locale est initialisï¿½ au locale de la
-    // // machine
-    // AbstractProperties.setProperty(IniProps.P_LOCALE, Locale.getDefault());
-    // String os = System.getProperty("os.name").toLowerCase();
-    // if (os.startsWith("win")) {
-    // LookAndFeelInfo[] lookInfo = UIManager.getInstalledLookAndFeels();
-    // String look = UIManager.getSystemLookAndFeelClassName();
-    // for (int i = 0; i < lookInfo.length; i++) {
-    // if (look.equals(lookInfo[i].getClassName())) {
-    // AbstractProperties.setProperty(IniProps.P_UI_LOOK, lookInfo[i].getName());
-    // }
-    // }
-    // }
-    // // saveProperties();
-    // }
-    // }
-
-    // public static ModalityInfoData[] getModlatityInfos() {
-    // if (modalities == null) {
-    // loadModalityDisplayPreferences();
-    // }
-    // return modalities;
-    // }
-    //
-    // public static ModalityInfoData getModlatityInfos(Modality mod) {
-    // for (int i = 0; i < modalities.length; i++) {
-    // if (modalities[i].getModality().equals(mod)) {
-    // return modalities[i];
-    // }
-    // }
-    // return modalities[0];
-    // }
-
+    // TODO move to explorer preferences
     public static boolean isThumbnailSortDesend() {
         // TODO Auto-generated method stub
         return true;

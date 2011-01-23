@@ -33,7 +33,6 @@ import javax.media.jai.iterator.RectIterFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 
@@ -228,6 +227,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             // firePropertyChange("selected", !flag, flag);
             firePropertyChange("bounds", null, getTransformedBounds()); //$NON-NLS-1$
         }
+    }
+
+    @Override
+    public String toString() {
+        return getUIName();
     }
 
     public boolean isSelected() {

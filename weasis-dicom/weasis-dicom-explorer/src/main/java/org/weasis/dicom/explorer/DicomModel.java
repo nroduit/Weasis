@@ -58,7 +58,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public final static String NAME = "DICOM"; //$NON-NLS-1$
     public final static String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
 
-    public final static TreeModelNode root = new TreeModelNode(0, 0, TagElement.RootElement);
     public final static TreeModelNode patient = new TreeModelNode(1, 0, TagElement.PatientPseudoUID);
     public final static TreeModelNode study = new TreeModelNode(2, 0, TagElement.StudyInstanceUID);
     public final static TreeModelNode series = new TreeModelNode(3, 0, TagElement.SubseriesInstanceUID);
@@ -345,12 +344,46 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
     }
 
+    private void replaceSeries(DicomMediaIO dicomReader, Series original) {
+        MediaSeriesGroup study = getParent(original, DicomModel.study);
+        String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
+        int k = 1;
+        while (true) {
+            String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+            MediaSeriesGroup group = getHierarchyNode(study, uid);
+            if (group == null) {
+                break;
+            }
+            k++;
+        }
+        String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+        Series s = dicomReader.buildSeries(uid);
+        dicomReader.writeMetaData(s);
+        Object val = original.getTagValue(TagElement.SplitSeriesNumber);
+        if (val == null) {
+            // -1 convention to exclude this Series
+            original.setTag(TagElement.SplitSeriesNumber, -1);
+        }
+        s.setTag(TagElement.SplitSeriesNumber, k);
+        s.setTag(TagElement.ExplorerModel, this);
+        addHierarchyNode(study, s);
+        s.addMedia(dicomReader);
+        LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
+    }
+
     public boolean applySplittingRules(Series original, MediaReader mediaLoader) {
         if (mediaLoader instanceof DicomMediaIO) {
             DicomMediaIO dicomReader = (DicomMediaIO) mediaLoader;
-            int frames = dicomReader.getMediaElementNumber();
             if (original instanceof DicomSeries) {
+                // Handle cases when the Series is created before getting the image (downloading)
+                String mime = dicomReader.getMimeType();
+                if (DicomMediaIO.SERIES_VIDEO_MIMETYPE.equals(mime)
+                    || DicomMediaIO.SERIES_ENCAP_DOC_MIMETYPE.equals(mime)) {
+                    replaceSeries(dicomReader, original);
+                    return true;
+                }
                 DicomSeries initialSeries = (DicomSeries) original;
+                int frames = dicomReader.getMediaElementNumber();
                 if (frames < 1) {
                     initialSeries.addMedia(dicomReader);
                 } else {
@@ -520,6 +553,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
             }
         });
+    }
+
+    @Override
+    public TreeModelNode getTreeModelNodeForNewPlugin() {
+        return patient;
     }
 
 }

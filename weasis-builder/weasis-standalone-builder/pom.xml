@@ -30,7 +30,6 @@
 		<weasis.jmc.version>0.5.5-SNAPSHOT</weasis.jmc.version>
 		<weasis.base.version>0.5.5-SNAPSHOT</weasis.base.version>
 		<weasis.dicom.version>0.5.5-SNAPSHOT</weasis.dicom.version>
-		<weasis.imageioext.j2k.codec.version>0.5.5-SNAPSHOT</weasis.imageioext.j2k.codec.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>6.1.0-b02</substance.version>
@@ -230,53 +229,7 @@
 									<version>${weasis.imageio.native.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-
-								<!-- ===================================== -->
-								<!-- Weasis Imageio-ext bundles -->
-								<!-- ===================================== -->
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec</artifactId>
-									<version>${weasis.imageioext.j2k.codec.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec-linux-x86</artifactId>
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec-linux-x86-64</artifactId>
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec-macosx-x86</artifactId>
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec-macosx-x86-64</artifactId>
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageioext</groupId>
-									<artifactId>weasis-imageioext-j2k-codec-windows-x86</artifactId>
-									<version>${weasis.imageioext.kakadu.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<!-- <artifactItem> -->
-								<!-- <groupId>org.weasis.imageioext</groupId> -->
-								<!-- <artifactId>weasis-imageioext-j2k-codec-windows-x86-64</artifactId> -->
-								<!-- <version>${weasis.imageioext.kakadu.native.version}</version> -->
-								<!-- <outputDirectory>${tmp.bundle.dir}</outputDirectory>> -->
-								<!-- </artifactItem> -->
-
+						
 								<!-- ===================================== -->
 								<!-- Weasis Base bundles -->
 								<!-- ===================================== -->

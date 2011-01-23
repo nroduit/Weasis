@@ -15,8 +15,10 @@ import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.TagElement;
 
 public interface DataExplorerModel {
+    public final static TreeModelNode root = new TreeModelNode(0, 0, TagElement.RootElement);
 
     public List<Codec> getCodecPlugins();
 
@@ -25,5 +27,7 @@ public interface DataExplorerModel {
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
 
     public void firePropertyChange(ObservableEvent event);
+
+    public TreeModelNode getTreeModelNodeForNewPlugin();
 
 }

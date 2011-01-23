@@ -18,7 +18,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -32,10 +31,9 @@ public class DicomImport extends AbstractWizardDialog {
     public DicomImport(final DicomModel dicomModel) {
         super(null, Messages.getString("DicomImport.imp_dicom"), true, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        final JPanel panel = getJPanelButtom();
-        panel.removeAll();
+        jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
-        panel.setLayout(gridBagLayout);
+        jPanelButtom.setLayout(gridBagLayout);
 
         final JProgressBar info = new JProgressBar();
         info.setFont(FontTools.getFont10());
@@ -46,7 +44,7 @@ public class DicomImport extends AbstractWizardDialog {
         gridBagConstraints_0.gridy = 0;
         gridBagConstraints_0.gridx = 0;
         gridBagConstraints_0.weightx = 1.0;
-        panel.add(info, gridBagConstraints_0);
+        jPanelButtom.add(info, gridBagConstraints_0);
 
         final JButton importButton = new JButton();
         importButton.addActionListener(new ActionListener() {
@@ -70,15 +68,14 @@ public class DicomImport extends AbstractWizardDialog {
         gridBagConstraints_1.gridy = 0;
         gridBagConstraints_1.gridx = 1;
         // gridBagConstraints_1.weightx = 1.0;
-        panel.add(importButton, gridBagConstraints_1);
+        jPanelButtom.add(importButton, gridBagConstraints_1);
 
-        final JButton closeButton = getJButtonCancel();
-        closeButton.setText(Messages.getString("DicomExport.close")); //$NON-NLS-1$
+        jButtonClose.setText(Messages.getString("DicomExport.close")); //$NON-NLS-1$
         final GridBagConstraints gridBagConstraints_2 = new GridBagConstraints();
         gridBagConstraints_2.insets = new Insets(10, 15, 10, 15);
         gridBagConstraints_2.gridy = 0;
         gridBagConstraints_2.gridx = 2;
-        panel.add(closeButton, gridBagConstraints_2);
+        jPanelButtom.add(jButtonClose, gridBagConstraints_2);
 
         initializePages();
         pack();

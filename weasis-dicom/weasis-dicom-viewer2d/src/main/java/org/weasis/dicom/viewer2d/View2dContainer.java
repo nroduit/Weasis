@@ -14,18 +14,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
 import org.noos.xing.mydoggy.Content;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -56,6 +64,7 @@ import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
     // TODO read and store models
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
@@ -409,9 +418,46 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public Action[] getExportActions() {
+        Action[] actions = null;
         if (selectedImagePane != null) {
-            return new Action[] { selectedImagePane.getExportToClipboardAction() };
+            actions = new Action[] { selectedImagePane.getExportToClipboardAction() };
         }
-        return null;
+        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+            AbstractAction importAll =
+                new AbstractAction(
+                    "Export all DICOM to Osirix", new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        String cmd = "/usr/bin/open -a Osirix " + AbstractProperties.APP_TEMP_DIR;
+                        System.out.println("Execute cmd:" + cmd);
+                        try {
+                            Process p = Runtime.getRuntime().exec(cmd);
+                            BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+                            String data;
+                            while ((data = buffer.readLine()) != null) {
+                                System.out.println(data);
+                            }
+                            int val = 0;
+                            if (p.waitFor() != 0) {
+                                val = p.exitValue();
+                            }
+                            if (val != 0) {
+                                JOptionPane.showMessageDialog(View2dContainer.this, "Cannot find or open Osirix!",
+                                    "Export all DICOM to Osirix", JOptionPane.ERROR_MESSAGE);
+                            }
+
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        } catch (InterruptedException e2) {
+                            LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage());
+                        }
+                    }
+                };
+
+            actions = new Action[] { selectedImagePane.getExportToClipboardAction(), importAll };
+        }
+        return actions;
     }
 }

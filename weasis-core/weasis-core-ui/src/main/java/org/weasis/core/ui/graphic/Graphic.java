@@ -18,6 +18,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 
+import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 
 /**
@@ -25,7 +26,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
  * 
  * @author Nicolas Roduit
  */
-public interface Graphic {
+public interface Graphic extends GUIEntry {
 
     public void setLayer(AbstractLayer layer);
 
@@ -68,4 +69,5 @@ public interface Graphic {
     public void fireRemoveAction();
 
     public Shape getShape();
+
 }

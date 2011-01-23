@@ -18,6 +18,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 // TODO: Auto-generated Javadoc
 /**
  * The Class FreeHandGraphic.
@@ -44,6 +47,7 @@ import java.awt.geom.GeneralPath;
 public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
 
     private static final long serialVersionUID = 5814470994233416436L;
+    public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
     private transient GeneralPath generalPath;
     protected float points[];
     protected int numPoints;
@@ -274,5 +278,21 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
 
     public float getLastY() {
         return points[points.length - 1];
+    }
+
+    @Override
+    public Icon getIcon() {
+        // TODO build icon
+        return null;
+    }
+
+    @Override
+    public String getUIName() {
+        return "Freehand";
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
     }
 }

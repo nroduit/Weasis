@@ -18,6 +18,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.media.jai.PlanarImage;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
@@ -33,6 +35,7 @@ import org.weasis.core.ui.Messages;
 public class RectangleGraphic extends AbstractDragGraphic {
 
     private static final long serialVersionUID = 5487817085724004342L;
+    public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
     protected int x;
     protected int y;
     protected int width;
@@ -98,8 +101,8 @@ public class RectangleGraphic extends AbstractDragGraphic {
                 ArrayList<String> list = new ArrayList<String>(5);
                 Unit unit = imageElement.getPixelSpacingUnit();
                 list.add(Messages.getString("RectangleGraphic.area") //$NON-NLS-1$
-                    + DecFormater.oneDecimalUngroup(getGraphicArea(imageElement.getPixelSizeX(), imageElement
-                        .getPixelSizeY())) + " " + unit.getAbbreviation() + "2"); //$NON-NLS-1$ //$NON-NLS-2$
+                    + DecFormater.oneDecimalUngroup(getGraphicArea(imageElement.getPixelSizeX(),
+                        imageElement.getPixelSizeY())) + " " + unit.getAbbreviation() + "2"); //$NON-NLS-1$ //$NON-NLS-2$
 
                 PlanarImage image = imageElement.getImage();
                 try {
@@ -186,5 +189,18 @@ public class RectangleGraphic extends AbstractDragGraphic {
     // this.height = rect.height;
     // updateShapeOnDrawing(null);
     // }
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
 
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.rect");
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
+    }
 }

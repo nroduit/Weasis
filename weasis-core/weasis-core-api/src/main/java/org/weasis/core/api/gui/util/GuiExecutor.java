@@ -17,16 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
-/**
- * GuiExecutor
- * <p/>
- * Executor built atop SwingUtilities
- * 
- * @author Brian Goetz and Tim Peierls
- */
 public class GuiExecutor extends AbstractExecutorService {
 
-    // Singletons have a private constructor and a public factory
     private static final GuiExecutor instance = new GuiExecutor();
 
     private GuiExecutor() {

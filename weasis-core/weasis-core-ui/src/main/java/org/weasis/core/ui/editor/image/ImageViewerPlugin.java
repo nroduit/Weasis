@@ -38,7 +38,8 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
 
@@ -251,7 +252,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             }
             v.enableMouseAndKeyListener(mouseActions);
         }
-        setDrawActions();
+        Graphic graphic = null;
+        ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
+        if (action instanceof ComboItemListener) {
+            graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+        }
+        setDrawActions(graphic);
         selectedImagePane.setSelected(true);
         eventManager.updateComponentsListener(selectedImagePane);
         if (selectedImagePane.getSeries() instanceof Series) {
@@ -319,10 +325,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
-    public synchronized void setDrawActions() {
-        WtoolBar toolBar = getViewerToolBar();
-        if (toolBar != null) {
-            ((ViewerToolBar) toolBar).getMeasureToolBar().setDrawActions();
+    public synchronized void setDrawActions(Graphic graphic) {
+        for (DefaultView2d<E> v : getImagePanels()) {
+            AbstractLayerModel model = v.getLayerModel();
+            if (model != null) {
+                model.setCreateGraphic(graphic);
+            }
         }
     }
 

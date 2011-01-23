@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -36,7 +37,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
@@ -46,48 +46,21 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.MEASURE,
             ActionW.CONTEXTMENU };
     public final static ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
+    public static final Icon MouseLeftIcon =
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png"));
+    public static final Icon MouseRightIcon = new ImageIcon(
+        MouseActions.class.getResource("/icon/32x32/mouse-right.png"));
+    public static final Icon MouseMiddleIcon = new ImageIcon(
+        MouseActions.class.getResource("/icon/32x32/mouse-middle.png"));
+    public static final Icon MouseWheelIcon = new ImageIcon(
+        MouseActions.class.getResource("/icon/32x32/mouse-wheel.png"));
 
     protected final ImageViewerEventManager<E> eventManager;
     private final DropDownButton mouseLeft;
     private DropDownButton mouseMiddle;
     private DropDownButton mouseRight;
     private DropDownButton mouseWheel;
-    private final MeasureToolBar measureToolBar = new MeasureToolBar() {
-
-        @Override
-        public void setDrawActions() {
-            ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
-            if (container != null) {
-                for (DefaultView2d<E> v : container.getImagePanels()) {
-                    AbstractLayerModel model = v.getLayerModel();
-                    if (model != null) {
-                        if (jTgleButtonArrow.isSelected()) {
-                            model.setCreateGraphic(null);
-                        } else if (jTgleButtonLine.isSelected()) {
-                            model.setCreateGraphic(lineGraphic);
-                        } else if (jTgleButtonRectangle.isSelected()) {
-                            model.setCreateGraphic(rectangleGraphic);
-                        } else if (jTgleButtonEllipse.isSelected()) {
-                            model.setCreateGraphic(circleGraphic);
-                        } else if (jTgleButtonAngle.isSelected()) {
-                            model.setCreateGraphic(angleToolGraphic);
-                        } else {
-                            model.setCreateGraphic(null);
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        protected AbstractLayerModel getCurrentLayerModel() {
-            DefaultView2d view = eventManager.getSelectedViewPane();
-            if (view != null) {
-                return view.getLayerModel();
-            }
-            return null;
-        }
-    };
+    private final MeasureToolBar<E> measureToolBar;
 
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager) {
         super("viewer2dBar", TYPE.main); //$NON-NLS-1$
@@ -95,6 +68,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
         this.eventManager = eventManager;
+        measureToolBar = new MeasureToolBar<E>(eventManager);
+
         MouseActions actions = eventManager.getMouseActions();
         int active = actions.getActiveButtons();
         mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
@@ -110,9 +85,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         if (((active & MouseActions.SCROLL_MASK) == MouseActions.SCROLL_MASK)) {
             mouseWheel =
-                new DropDownButton(MouseActions.WHEEL, new DropButtonIcon(new ImageIcon(
-                    MouseActions.class
-                        .getResource("/icon/32x32/mouse-wheel-" + actions.getAction(MouseActions.WHEEL) + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$
+                new DropDownButton(MouseActions.WHEEL, buildMouseIcon(MouseActions.WHEEL,
+                    actions.getAction(MouseActions.WHEEL))) {
 
                     @Override
                     protected JPopupMenu getPopupMenu() {
@@ -153,7 +127,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         addSeparator(WtoolBar.SEPARATOR_2x24);
 
         final JButton jButtonActualZoom =
-            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-original.png"))); //$NON-NLS-1$
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
         jButtonActualZoom.addActionListener(new ActionListener() {
 
@@ -167,7 +141,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         add(jButtonActualZoom);
 
         final JButton jButtonBestFit =
-            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-bestfit.png"))); //$NON-NLS-1$
         jButtonBestFit.setToolTipText(Messages.getString("ViewerToolBar.zoom_b")); //$NON-NLS-1$
         jButtonBestFit.addActionListener(new ActionListener() {
 
@@ -180,7 +154,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         add(jButtonBestFit);
 
         final JToggleButton jButtonLens =
-            new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom.png"))); //$NON-NLS-1$
+            new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
         jButtonLens.setToolTipText("Show the magnifying lens"); //$NON-NLS-1$
         ActionState lens = eventManager.getAction(ActionW.LENS);
         if (lens instanceof ToggleButtonListener) {
@@ -193,9 +167,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {
         String action = actions.getAction(actionLabel);
-        final DropDownButton button =
-            new DropDownButton(actionLabel, new DropButtonIcon(new ImageIcon(
-                MouseActions.class.getResource("/icon/32x32/mouse-" + actionLabel + "-" + action + ".png")))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final DropDownButton button = new DropDownButton(actionLabel, buildMouseIcon(actionLabel, action)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                 @Override
                 protected JPopupMenu getPopupMenu() {
@@ -241,11 +213,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     public MeasureToolBar getMeasureToolBar() {
         return measureToolBar;
-    }
-
-    @Override
-    public void initialize() {
-        measureToolBar.initialize();
     }
 
     private JPopupMenu getPopupMenuButton(DropDownButton dropButton) {
@@ -301,23 +268,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                     view.setMouseActions(mouseActions);
                 }
                 if (pop.getInvoker() instanceof DropDownButton) {
-                    changeButtonState((DropDownButton) pop.getInvoker(), pop.getLabel(), item.getActionCommand());
-                    // AbstractProperties.setProperty("mouse_" + pop.getLabel(), item.getActionCommand());
+                    changeButtonState(pop.getLabel(), item.getActionCommand());
                 }
             }
         }
     }
 
     private void displayMeasureToobar() {
-        final String measCmd = ActionW.MEASURE.cmd();
-        int active = eventManager.getMouseActions().getActiveButtons();
-        if (measCmd.equals(mouseLeft.getActionCommand())
-            || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK) && measCmd.equals(mouseMiddle
-                .getActionCommand()))
-            || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK) && measCmd.equals(mouseRight
-                .getActionCommand()))) {
+        if (isCommandActive(ActionW.MEASURE.cmd())) {
             measureToolBar.setVisible(true);
-            measureToolBar.initialize();
         } else {
             measureToolBar.setVisible(false);
         }
@@ -325,18 +284,92 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         repaint();
     }
 
-    public void changeButtonState(DropDownButton button, String type, String action) {
-        Icon icon = null;
-        try {
-            icon = new DropButtonIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-" + type + "-" //$NON-NLS-1$ //$NON-NLS-2$
-                + action + ".png"))); //$NON-NLS-1$
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
+    public boolean isCommandActive(String cmd) {
+        int active = eventManager.getMouseActions().getActiveButtons();
+        if (cmd != null
+            && cmd.equals(mouseLeft.getActionCommand())
+            || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK) && ((mouseMiddle == null)
+                ? false : cmd.equals(mouseMiddle.getActionCommand())))
+            || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK) && ((mouseRight == null)
+                ? false : cmd.equals(mouseRight.getActionCommand())))) {
+            return true;
         }
-        button.setIcon(icon);
-        button.setActionCommand(action);
-        displayMeasureToobar();
+        return false;
+    }
+
+    public void changeButtonState(String type, String action) {
+        DropDownButton button = getDropDownButton(type);
+        if (button != null) {
+            Icon icon = buildMouseIcon(type, action);
+            button.setIcon(icon);
+            button.setActionCommand(action);
+            displayMeasureToobar();
+        }
+    }
+
+    private Icon buildMouseIcon(String type, String action) {
+        final Icon mouseIcon = getMouseIcon(type);
+        ActionW actionW = getAction(actionsButtons, action);
+        final Icon smallIcon = actionW == null ? null : actionW.getIcon();
+        return new DropButtonIcon(new Icon() {
+
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                mouseIcon.paintIcon(c, g, x, y);
+                if (smallIcon != null) {
+                    x += mouseIcon.getIconWidth() - smallIcon.getIconWidth();
+                    y += mouseIcon.getIconHeight() - smallIcon.getIconHeight();
+                    smallIcon.paintIcon(c, g, x, y);
+                }
+            }
+
+            @Override
+            public int getIconWidth() {
+                return mouseIcon.getIconWidth();
+            }
+
+            @Override
+            public int getIconHeight() {
+                return mouseIcon.getIconHeight();
+            }
+        });
+    }
+
+    public DropDownButton getDropDownButton(String type) {
+        if (MouseActions.LEFT.equals(type)) {
+            return mouseLeft;
+        } else if (MouseActions.RIGHT.equals(type)) {
+            return mouseRight;
+        } else if (MouseActions.MIDDLE.equals(type)) {
+            return mouseMiddle;
+        } else if (MouseActions.WHEEL.equals(type)) {
+            return mouseWheel;
+        }
+        return null;
+    }
+
+    private ActionW getAction(ActionW[] actions, String command) {
+        if (actions != null) {
+            for (ActionW a : actions) {
+                if (a.cmd().equals(command)) {
+                    return a;
+                }
+            }
+        }
+        return null;
+    }
+
+    private Icon getMouseIcon(String type) {
+        if (MouseActions.LEFT.equals(type)) {
+            return MouseLeftIcon;
+        } else if (MouseActions.RIGHT.equals(type)) {
+            return MouseRightIcon;
+        } else if (MouseActions.MIDDLE.equals(type)) {
+            return MouseMiddleIcon;
+        } else if (MouseActions.WHEEL.equals(type)) {
+            return MouseWheelIcon;
+        }
+        return MouseLeftIcon;
     }
 
     public final static ActionW getNextCommand(ActionW[] actions, String command) {

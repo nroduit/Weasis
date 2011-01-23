@@ -10,6 +10,7 @@ import javax.swing.tree.TreeNode;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.service.BundleTools;
 
@@ -55,6 +56,11 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
     @Override
     public List<Codec> getCodecPlugins() {
         return BundleTools.CODEC_PLUGINS;
+    }
+
+    @Override
+    public TreeModelNode getTreeModelNodeForNewPlugin() {
+        return null;
     }
 
 }

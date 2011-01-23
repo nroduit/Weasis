@@ -696,9 +696,7 @@ public class WeasisLauncher {
                 String sys = sys_spec.substring(0, index);
                 look = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
             }
-            if (look == null) {
-                look = UIManager.getSystemLookAndFeelClassName();
-            }
+
         }
 
         Properties common_prop;
@@ -713,17 +711,23 @@ public class WeasisLauncher {
         String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // Force changing Look and Feel when upgrade version
-        if (LookAndFeels.installSubstanceLookAndFeels() && versionNew != null && !versionNew.equals(versionOld)) {
+        if (look == null && LookAndFeels.installSubstanceLookAndFeels() && versionNew != null
+            && !versionNew.equals(versionOld)) {
             look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel";
         }
-
+        if (look == null) {
+            look = UIManager.getSystemLookAndFeelClassName();
+        }
+        // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
-                JFrame.setDefaultLookAndFeelDecorated(true);
-                JDialog.setDefaultLookAndFeelDecorated(true);
+                if (look.startsWith("org.pushingpixels")) {
+                    JFrame.setDefaultLookAndFeelDecorated(true);
+                    JDialog.setDefaultLookAndFeelDecorated(true);
+                }
                 look = setLookAndFeel(look);
             }
+
         });
 
         // Splash screen that shows bundles loading

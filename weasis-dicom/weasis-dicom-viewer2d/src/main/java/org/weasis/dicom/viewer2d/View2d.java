@@ -650,8 +650,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 public void actionPerformed(ActionEvent e) {
                                     if (e.getSource() instanceof JRadioButtonMenuItem) {
                                         JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                        toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT,
-                                            item.getActionCommand());
+                                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
                                     }
                                 }
                             };

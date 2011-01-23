@@ -18,12 +18,18 @@ import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
+import org.weasis.core.ui.Messages;
+
 /**
  * The Class SelectGraphic.
  * 
  * @author Nicolas Roduit
  */
 public class SelectGraphic extends RectangleGraphic {
+    public static final Icon ICON = new ImageIcon(SelectGraphic.class.getResource("/icon/22x22/draw-selection.png")); //$NON-NLS-1$
 
     /**
      * The Class SelectedDragSequence.
@@ -89,5 +95,20 @@ public class SelectGraphic extends RectangleGraphic {
     @Override
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
         return new SelectedDragSequence(i);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.sel");
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
     }
 }

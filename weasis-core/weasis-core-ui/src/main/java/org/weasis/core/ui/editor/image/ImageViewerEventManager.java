@@ -40,6 +40,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> {
@@ -412,6 +413,21 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
+    protected ComboItemListener newMeasurementAction(Graphic[] graphics) {
+        if (graphics == null) {
+            graphics = new Graphic[0];
+        }
+        return new ComboItemListener(ActionW.DRAW_MEASURE, graphics) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof Graphic && selectedView2dContainer != null) {
+                    selectedView2dContainer.setDrawActions((Graphic) object);
+                }
+            }
+        };
+    }
+
     public abstract boolean updateComponentsListener(DefaultView2d<E> defaultView2d);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
@@ -614,12 +630,17 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     public void setSelectedView2dContainer(ImageViewerPlugin<E> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions();
+            this.selectedView2dContainer.setDrawActions(null);
         }
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
             selectedView2dContainer.setMouseActions(mouseActions);
-            selectedView2dContainer.setDrawActions();
+            Graphic graphic = null;
+            ActionState action = getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            selectedView2dContainer.setDrawActions(graphic);
         }
     }
 

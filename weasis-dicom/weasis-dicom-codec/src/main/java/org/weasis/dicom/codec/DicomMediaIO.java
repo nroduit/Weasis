@@ -171,6 +171,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return false;
     }
 
+    public String getMimeType() {
+        return mimeType;
+    }
+
     public void setTag(TagElement tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
@@ -661,6 +665,11 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     @Override
     public HashMap<TagElement, Object> getMediaFragmentTags(Object key) {
+        if (key instanceof Integer) {
+            if ((Integer) key > 0) {
+                return (HashMap<TagElement, Object>) tags.clone();
+            }
+        }
         return tags;
     }
 

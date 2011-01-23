@@ -832,7 +832,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (view != null) {
                         view.setMouseActions(mouseActions);
                     }
-                    toolBar.changeButtonState(toolBar.getMouseLeft(), MouseActions.LEFT, command);
+                    toolBar.changeButtonState(MouseActions.LEFT, command);
                 }
             }
         }

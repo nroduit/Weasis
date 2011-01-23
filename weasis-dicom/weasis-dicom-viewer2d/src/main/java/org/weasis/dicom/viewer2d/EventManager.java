@@ -45,9 +45,11 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -91,6 +93,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener viewingProtocolAction;
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
+    private final ComboItemListener measureAction;
 
     private final PannerListener panAction;
 
@@ -136,7 +139,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(viewingProtocolAction = newViewingProtocolAction());
         iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
         iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
-
+        iniAction(measureAction =
+            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
@@ -497,7 +501,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void setSelectedView2dContainer(ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            this.selectedView2dContainer.setDrawActions();
+            this.selectedView2dContainer.setDrawActions(null);
             moveTroughSliceAction.stop();
 
         }
@@ -507,7 +511,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
-            selectedView2dContainer.setDrawActions();
+            Graphic graphic = null;
+            ActionState action = getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            selectedView2dContainer.setDrawActions(graphic);
         }
     }
 

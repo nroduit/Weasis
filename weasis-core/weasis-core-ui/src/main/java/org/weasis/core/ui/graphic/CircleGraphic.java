@@ -14,6 +14,11 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
+import org.weasis.core.ui.Messages;
+
 /**
  * The Class CircleGraphic.
  * 
@@ -22,6 +27,7 @@ import java.awt.event.MouseEvent;
 public class CircleGraphic extends RectangleGraphic {
 
     private static final long serialVersionUID = -436581811233324820L;
+    public static final Icon ICON = new ImageIcon(CircleGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
     public CircleGraphic(float lineThickness, Color paint, boolean fill) {
         super(lineThickness, paint, fill);
@@ -51,6 +57,16 @@ public class CircleGraphic extends RectangleGraphic {
     @Override
     public Graphic clone(int i, int j) {
         return super.clone(i, j);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.ellipse");
     }
 
 }

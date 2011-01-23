@@ -88,9 +88,6 @@ public class WtoolBar extends JPanel {
         return type;
     }
 
-    public void initialize() {
-    }
-
     public void addSeparator(Dimension dim) {
         JSeparator s = new JSeparator(JSeparator.VERTICAL);
         s.setPreferredSize(dim);

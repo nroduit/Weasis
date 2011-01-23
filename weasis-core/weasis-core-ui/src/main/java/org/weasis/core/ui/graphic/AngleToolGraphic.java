@@ -25,8 +25,12 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 
 /**
@@ -35,7 +39,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
  * @author Nicolas Roduit
  */
 public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
-
+    public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
     public final static int ARC_RADIUS = 14;
     public final static double PI2 = 2.0 * Math.PI;
     protected float points[];
@@ -474,5 +478,20 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
             }
         }
         return new Rectangle2D.Float(rect[0], rect[1], rect[2], rect[3]);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.angle");
+    }
+
+    @Override
+    public String getDescription() {
+        return null;
     }
 }
