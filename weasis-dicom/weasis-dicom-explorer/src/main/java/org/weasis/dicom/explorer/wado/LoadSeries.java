@@ -15,8 +15,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -397,6 +401,33 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
     }
 
+    private static void removeAnonymousMouseAndKeyListener(Thumbnail tumbnail) {
+        MouseListener[] listener = tumbnail.getMouseListeners();
+        MouseMotionListener[] motionListeners = tumbnail.getMouseMotionListeners();
+        KeyListener[] keyListeners = tumbnail.getKeyListeners();
+        MouseWheelListener[] wheelListeners = tumbnail.getMouseWheelListeners();
+        for (int i = 0; i < listener.length; i++) {
+            if (listener[i].getClass().isAnonymousClass()) {
+                tumbnail.removeMouseListener(listener[i]);
+            }
+        }
+        for (int i = 0; i < motionListeners.length; i++) {
+            if (motionListeners[i].getClass().isAnonymousClass()) {
+                tumbnail.removeMouseMotionListener(motionListeners[i]);
+            }
+        }
+        for (int i = 0; i < wheelListeners.length; i++) {
+            if (wheelListeners[i].getClass().isAnonymousClass()) {
+                tumbnail.removeMouseWheelListener(wheelListeners[i]);
+            }
+        }
+        for (int i = 0; i < keyListeners.length; i++) {
+            if (keyListeners[i].getClass().isAnonymousClass()) {
+                tumbnail.removeKeyListener(keyListeners[i]);
+            }
+        }
+    }
+
     private static void addListenerToThumbnail(final Thumbnail thumbnail, final LoadSeries loadSeries,
         final DicomModel dicomModel) {
         final Series series = loadSeries.getDicomSeries();
@@ -515,7 +546,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 Thumbnail thumbnail =
                                     (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagElement.Thumbnail);
                                 if (thumbnail != null) {
-                                    thumbnail.removeMouseAndKeyListener();
+                                    LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                     addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                                 }
                                 LoadRemoteDicom.loadingQueue.offer(taskResume);
@@ -1095,7 +1126,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             taskResume.setPriority(s.getPriority());
                             Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagElement.Thumbnail);
                             if (thumbnail != null) {
-                                thumbnail.removeMouseAndKeyListener();
+                                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                 addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                             }
                             LoadRemoteDicom.loadingQueue.offer(taskResume);
