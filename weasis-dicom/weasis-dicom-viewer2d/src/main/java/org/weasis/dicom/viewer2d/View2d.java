@@ -627,8 +627,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         @Override
         public void mousePressed(final MouseEvent mouseevent) {
             int buttonMask = getButtonMaskEx();
+            // Context menu
             if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
-                if (eventManager.updateComponentsListener(View2d.this)) {
+                if (View2d.this.getSourceImage() != null) {
                     JPopupMenu popupMenu = new JPopupMenu();
                     final EventManager event = EventManager.getInstance();
                     JMenuItem item = new JMenuItem(Messages.getString("View2d.left_mouse")); //$NON-NLS-1$

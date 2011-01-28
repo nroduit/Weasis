@@ -540,13 +540,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void resetAllActions() {
+        firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+        if (selectedView2dContainer != null) {
+            DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
+            if (viewPane != null) {
+                viewPane.center();
+            }
+        }
         presetAction.setSelectedItem(PresetWindowLevel.DEFAULT);
         flipAction.setSelected(false);
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
         lutAction.setSelectedItem(ByteLut.defaultLUT);
         filterAction.setSelectedItem(KernelData.NONE);
-        firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
     }
 
     public void reset(ResetTools action) {
@@ -586,14 +592,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
-        ImageElement image = defaultView2d.getImage();
-        if (image == null || image.getImage() == null) {
+        if (defaultView2d.getSourceImage() == null) {
             enableActions(false);
             return false;
         }
         if (!enabledAction) {
             enableActions(true);
         }
+        ImageElement image = defaultView2d.getImage();
         MediaSeries<DicomImageElement> series = defaultView2d.getSeries();
         windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
             ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
