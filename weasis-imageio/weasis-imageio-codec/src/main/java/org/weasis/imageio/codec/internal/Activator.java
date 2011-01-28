@@ -25,7 +25,6 @@ public class Activator implements BundleActivator {
         // Register imageio SPI with the classloader of this bundle
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
         IIORegistry registry = IIORegistry.getDefaultInstance();
-
         registerServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi.class);
         registerServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi.class);
 
@@ -50,7 +49,7 @@ public class Activator implements BundleActivator {
         registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi.class);
 
         // Register the ImageRead and ImageWrite operation for JAI
-        new ImageReadWriteSpi().updateRegistry(JAI.getDefaultInstance().getOperationRegistry());
+        new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
     }
 
     public void stop(BundleContext bundleContext) throws Exception {
@@ -80,16 +79,16 @@ public class Activator implements BundleActivator {
 
     }
 
-    // public static JAI getJAI(BundleContext bundleContext) {
-    // // Issue Resolution: necessary when jai already exist in JRE
-    // // Change to the bundle classloader for loading the services providers (spi) correctly.
-    // ClassLoader bundleClassLoader = JAI.class.getClassLoader();
-    // ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    // Thread.currentThread().setContextClassLoader(bundleClassLoader);
-    // JAI jai = JAI.getDefaultInstance();
-    // Thread.currentThread().setContextClassLoader(originalClassLoader);
-    // return jai;
-    // }
+    public static JAI getJAI() {
+        // Issue Resolution: necessary when jai already exist in JRE
+        // Change to the bundle classloader for loading the services providers (spi) correctly.
+        ClassLoader bundleClassLoader = JAI.class.getClassLoader();
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(bundleClassLoader);
+        JAI jai = JAI.getDefaultInstance();
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+        return jai;
+    }
 
     private static void registerServiceProvider(IIORegistry registry, Class clazz) {
         Class spiClass = null;

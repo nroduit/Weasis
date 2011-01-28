@@ -26,6 +26,7 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 
+import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagElement;
 
@@ -41,7 +42,7 @@ public class ImageToolkit {
      * Initialise JAI memory used by the Tile Cache.
      */
     public static void setJaiCacheMemoryCapacity(long tileCacheMB) {
-        JAI.getDefaultInstance().getTileCache().setMemoryCapacity(tileCacheMB * 1024L * 1024L);
+        Activator.getJAI().getTileCache().setMemoryCapacity(tileCacheMB * 1024L * 1024L);
     }
 
     /**

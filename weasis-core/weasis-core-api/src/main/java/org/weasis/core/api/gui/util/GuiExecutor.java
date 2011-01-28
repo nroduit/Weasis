@@ -17,7 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GuiExecutor extends AbstractExecutorService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GuiExecutor.class);
 
     private static final GuiExecutor instance = new GuiExecutor();
 
@@ -43,7 +47,7 @@ public class GuiExecutor extends AbstractExecutorService {
             try {
                 SwingUtilities.invokeAndWait(r);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error("Interrupted Exception of {}", r);
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }

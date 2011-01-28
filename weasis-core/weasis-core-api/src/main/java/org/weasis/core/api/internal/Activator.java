@@ -62,10 +62,10 @@ public class Activator implements BundleActivator, ServiceListener {
                 LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
             }
         }
+        JAI jai = getJAI();
+        OperationRegistry or = jai.getOperationRegistry();
 
-        OperationRegistry or = JAI.getDefaultInstance().getOperationRegistry();
-
-        JAI.getDefaultInstance().setImagingListener(new ImagingListener() {
+        jai.setImagingListener(new ImagingListener() {
 
             public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
                 throws RuntimeException {
@@ -92,17 +92,17 @@ public class Activator implements BundleActivator, ServiceListener {
         BundleTools.saveSystemPreferences();
     }
 
-    // public static JAI getJAI(BundleContext bundleContext) {
-    // // Issue Resolution: necessary when jai already exist in JRE
-    // // Change to the bundle classloader for loading the services providers (spi) correctly.
-    // ClassLoader bundleClassLoader = JAI.class.getClassLoader();
-    // ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-    //
-    // Thread.currentThread().setContextClassLoader(bundleClassLoader);
-    // JAI jai = JAI.getDefaultInstance();
-    // Thread.currentThread().setContextClassLoader(originalClassLoader);
-    // return jai;
-    // }
+    public static JAI getJAI() {
+        // Issue Resolution: necessary when jai already exist in JRE
+        // Change to the bundle classloader for loading the services providers (spi) correctly.
+        ClassLoader bundleClassLoader = JAI.class.getClassLoader();
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+
+        Thread.currentThread().setContextClassLoader(bundleClassLoader);
+        JAI jai = JAI.getDefaultInstance();
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+        return jai;
+    }
 
     public static void registerOp(OperationRegistry or, OperationDescriptorImpl descriptor) {
         String name = descriptor.getName();

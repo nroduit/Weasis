@@ -10,8 +10,11 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import javax.imageio.spi.IIORegistry;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
@@ -26,6 +29,26 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 (SingleInstanceService) ServiceManager.lookup("javax.jnlp.SingleInstanceService"); //$NON-NLS-1$
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException use) {
+        }
+
+        // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15
+        // If imageio.jar is located in the JRE ext directory, unregister imageio services.
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        Iterator<Class<?>> categories = registry.getCategories();
+        ArrayList toRemove = new ArrayList();
+        while (categories.hasNext()) {
+            Class<?> class1 = categories.next();
+            Iterator<?> providers = registry.getServiceProviders(class1, false);
+            while (providers.hasNext()) {
+                Object provider = providers.next();
+                if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) {
+                    toRemove.add(provider);
+
+                }
+            }
+        }
+        for (Object provider : toRemove) {
+            registry.deregisterServiceProvider(provider);
         }
     }
 
