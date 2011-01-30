@@ -94,7 +94,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // if (media != null && synch instanceof ComboItemListener) {
                 // SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
                 // if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
-                // Float val = (Float) media.getTagValue(TagElement.SliceLocation);
+                // Float val = (Float) media.getTagValue(TagW.SliceLocation);
                 // if (val != null) {
                 // location = val;
                 // }

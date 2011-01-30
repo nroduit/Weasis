@@ -27,12 +27,11 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class LoadLocalDicom extends SwingWorker<Boolean, String> {
@@ -127,44 +126,44 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
 
     private void buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
 
-        String patientPseudoUID = (String) dicomReader.getTagValue(TagElement.PatientPseudoUID);
+        String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
-            patient = new MediaSeriesGroupNode(TagElement.PatientPseudoUID, patientPseudoUID, TagElement.PatientName);
+            patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
             writeInfo(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
         }
 
-        String studyUID = (String) dicomReader.getTagValue(TagElement.StudyInstanceUID);
+        String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
         MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
         if (study == null) {
-            study = new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID, TagElement.StudyDate);
+            study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
             dicomReader.writeMetaData(study);
             dicomModel.addHierarchyNode(patient, study);
         }
 
-        String seriesUID = (String) dicomReader.getTagValue(TagElement.SeriesInstanceUID);
+        String seriesUID = (String) dicomReader.getTagValue(TagW.SeriesInstanceUID);
         Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
         try {
             if (dicomSeries == null) {
                 dicomSeries = dicomReader.buildSeries(seriesUID);
-                dicomSeries.setTag(TagElement.ExplorerModel, dicomModel);
+                dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                 dicomReader.writeMetaData(dicomSeries);
                 dicomModel.addHierarchyNode(study, dicomSeries);
                 dicomSeries.addMedia(dicomReader);
 
                 // Load image and create thumbnail in this Thread
-                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (thumb == null) {
                     thumb = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
-                    dicomSeries.setTag(TagElement.Thumbnail, thumb);
+                    dicomSeries.setTag(TagW.Thumbnail, thumb);
                 }
 
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null,
                     dicomSeries));
-                Integer splitNb = (Integer) dicomSeries.getTagValue(TagElement.SplitSeriesNumber);
-                Object dicomObject = dicomSeries.getTagValue(TagElement.DicomSpecialElement);
+                Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
                 if (splitNb != null || dicomObject != null) {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel,
                         null, dicomSeries));
@@ -190,30 +189,29 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private void buildDicomStructure(ArrayList<DicomMediaIO> seriesList, boolean open) {
         ArrayList<Series> dicomseriesList = new ArrayList<Series>();
         seriesList: for (DicomMediaIO dicomReader : seriesList) {
-            String patientPseudoUID = (String) dicomReader.getTagValue(TagElement.PatientPseudoUID);
+            String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
             if (patient == null) {
-                patient =
-                    new MediaSeriesGroupNode(TagElement.PatientPseudoUID, patientPseudoUID, TagElement.PatientName);
+                patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
                 dicomReader.writeMetaData(patient);
                 dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
                 writeInfo(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
             }
 
-            String studyUID = (String) dicomReader.getTagValue(TagElement.StudyInstanceUID);
+            String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
             MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
             if (study == null) {
-                study = new MediaSeriesGroupNode(TagElement.StudyInstanceUID, studyUID, TagElement.StudyDate);
+                study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
                 dicomReader.writeMetaData(study);
                 dicomModel.addHierarchyNode(patient, study);
             }
 
-            String seriesUID = (String) dicomReader.getTagValue(TagElement.SeriesInstanceUID);
+            String seriesUID = (String) dicomReader.getTagValue(TagW.SeriesInstanceUID);
             Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
             try {
                 if (dicomSeries == null) {
                     dicomSeries = dicomReader.buildSeries(seriesUID);
-                    dicomSeries.setTag(TagElement.ExplorerModel, dicomModel);
+                    dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                     dicomReader.writeMetaData(dicomSeries);
                     dicomModel.addHierarchyNode(study, dicomSeries);
                     dicomseriesList.add(dicomSeries);
@@ -221,7 +219,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 } else {
                     // Test if SOPInstanceUID already exists
                     if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
-                        dicomReader.getTagValue(TagElement.SOPInstanceUID))) {
+                        dicomReader.getTagValue(TagW.SOPInstanceUID))) {
                         continue seriesList;
                     }
                     if (dicomModel.applySplittingRules(dicomSeries, dicomReader)) {
@@ -238,16 +236,16 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         for (int i = 0; i < dicomseriesList.size(); i++) {
             final Series series = dicomseriesList.get(i);
             // Load image and create thumbnail in this Thread
-            Thumbnail thumb = (Thumbnail) series.getTagValue(TagElement.Thumbnail);
+            Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
             if (thumb == null) {
                 thumb = DicomExplorer.createThumbnail(series, dicomModel, Thumbnail.DEFAULT_SIZE);
-                series.setTag(TagElement.Thumbnail, thumb);
+                series.setTag(TagW.Thumbnail, thumb);
             }
             series.resetLoaders();
             dicomModel
                 .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, series));
-            Integer splitNb = (Integer) series.getTagValue(TagElement.SplitSeriesNumber);
-            Object dicomObject = series.getTagValue(TagElement.DicomSpecialElement);
+            Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
+            Object dicomObject = series.getTagValue(TagW.DicomSpecialElement);
             if (splitNb != null || dicomObject != null) {
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null,
                     series));
@@ -265,20 +263,20 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {
-        if (dicomSeries.hasMediaContains(TagElement.SOPInstanceUID, sopUID)) {
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
             return true;
         }
-        Object splitNb = dicomSeries.getTagValue(TagElement.SplitSeriesNumber);
+        Object splitNb = dicomSeries.getTagValue(TagW.SplitSeriesNumber);
         if (splitNb != null && study != null) {
-            String uid = (String) dicomSeries.getTagValue(TagElement.SeriesInstanceUID);
+            String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
             if (uid != null) {
                 Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
-                    if (group instanceof DicomSeries) {
-                        DicomSeries s = (DicomSeries) group;
-                        if (uid.equals(s.getTagValue(TagElement.SeriesInstanceUID))) {
-                            if (s.hasMediaContains(TagElement.SOPInstanceUID, sopUID)) {
+                    if (dicomSeries != group && group instanceof Series) {
+                        Series s = (Series) group;
+                        if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
+                            if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
                                 return true;
                             }
                         }

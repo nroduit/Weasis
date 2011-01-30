@@ -37,7 +37,7 @@ public interface MediaReader<E> {
 
     public String getMediaFragmentMimeType(Object key);
 
-    public HashMap<TagElement, Object> getMediaFragmentTags(Object key);
+    public HashMap<TagW, Object> getMediaFragmentTags(Object key);
 
     public void close();
 

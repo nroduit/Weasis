@@ -35,7 +35,7 @@ import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -172,7 +172,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     public boolean writeFile(DicomImageElement dicom) {
-        File file = new File(outputFolder, (String) dicom.getTagValue(TagElement.SOPInstanceUID) + ".j2k"); //$NON-NLS-1$
+        File file = new File(outputFolder, (String) dicom.getTagValue(TagW.SOPInstanceUID) + ".j2k"); //$NON-NLS-1$
         if (file.exists() && !file.canWrite()) {
             return false;
         }

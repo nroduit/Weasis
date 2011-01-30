@@ -11,7 +11,7 @@
 package org.weasis.core.api.explorer.model;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 /**
  * A tree model node defines the type and the position of the node in TreeModelNode. An instance of TreeModelNode must
@@ -23,11 +23,11 @@ public class TreeModelNode {
 
     private final int depth;
     private final int nodePosition;
-    private final TagElement tagElement;
+    private final TagW tagElement;
 
-    public TreeModelNode(int depth, int nodePosition, TagElement tagElement) {
+    public TreeModelNode(int depth, int nodePosition, TagW tagElement) {
         if (tagElement == null) {
-            throw new IllegalArgumentException("TagElement is null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("TagW is null"); //$NON-NLS-1$
         }
         this.depth = depth;
         this.nodePosition = nodePosition;
@@ -42,7 +42,7 @@ public class TreeModelNode {
         return nodePosition;
     }
 
-    public TagElement getTagElement() {
+    public TagW getTagElement() {
         return tagElement;
     }
 

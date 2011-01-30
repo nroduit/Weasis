@@ -78,7 +78,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
@@ -111,7 +111,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         toolbarContainer = new ToolBarContainer();
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
         this.setTitle("Weasis v" + AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
-        this.setIconImage(new ImageIcon(UIManager.class.getResource("/icon/16x16/logo.png")).getImage()); //$NON-NLS-1$
+        this.setIconImage(new ImageIcon(UIManager.class.getResource("/icon/logo-button.png")).getImage()); //$NON-NLS-1$
     }
 
     public static WeasisWin getInstance() {
@@ -756,7 +756,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
                         for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
                             if (factory.canReadMimeType(seq.getMimeType())) {
-                                DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagElement.ExplorerModel);
+                                DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                                 if (model instanceof TreeModel) {
                                     TreeModel treeModel = (TreeModel) model;
                                     MediaSeriesGroup group =

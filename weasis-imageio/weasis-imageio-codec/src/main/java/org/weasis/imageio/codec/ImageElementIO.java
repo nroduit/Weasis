@@ -36,7 +36,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public class ImageElementIO implements MediaReader<PlanarImage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElementIO.class);
@@ -124,7 +124,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public MediaSeries<ImageElement> getMediaSeries() {
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagElement.CurrentFolder, this.toString(), null) {
+        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.CurrentFolder, this.toString(), null) {
 
             @Override
             public String getMimeType() {
@@ -161,8 +161,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public HashMap<TagElement, Object> getMediaFragmentTags(Object key) {
-        return new HashMap<TagElement, Object>();
+    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
+        return new HashMap<TagW, Object>();
     }
 
     @Override

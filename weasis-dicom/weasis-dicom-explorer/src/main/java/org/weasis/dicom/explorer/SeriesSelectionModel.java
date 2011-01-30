@@ -18,7 +18,7 @@ import java.util.Collection;
 import javax.swing.JPanel;
 
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesSelectionModel extends ArrayList<Series> {
@@ -115,7 +115,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
 
     private void setBackgroundColor(Series series, boolean selected) {
         if (series != null) {
-            Thumbnail thumb = (Thumbnail) series.getTagValue(TagElement.Thumbnail);
+            Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 Container parent = thumb.getParent();
                 if (parent instanceof JPanel) {

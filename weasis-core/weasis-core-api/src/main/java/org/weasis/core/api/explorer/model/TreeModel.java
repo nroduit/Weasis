@@ -15,13 +15,13 @@ import java.util.List;
 
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public interface TreeModel {
 
     public final static String ROOT_IDENTIFIER = "__ROOT__"; //$NON-NLS-1$
     public final static MediaSeriesGroup rootNode =
-        new MediaSeriesGroupNode(TagElement.RootElement, ROOT_IDENTIFIER, TagElement.RootElement);
+        new MediaSeriesGroupNode(TagW.RootElement, ROOT_IDENTIFIER, TagW.RootElement);
 
     public List<TreeModelNode> getModelStructure();
 

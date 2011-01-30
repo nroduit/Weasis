@@ -28,7 +28,7 @@ import javax.media.jai.RenderedOp;
 
 import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 /**
  * An image manipulation toolkit.
@@ -351,7 +351,7 @@ public class ImageToolkit {
          * be used only when Samples per Pixel (0028,0002) has a value of 1.
          */
         boolean monochrome1 =
-            "monochrome1".equalsIgnoreCase((String) image.getTagValue(TagElement.PhotometricInterpretation)); //$NON-NLS-1$
+            "monochrome1".equalsIgnoreCase((String) image.getTagValue(TagW.PhotometricInterpretation)); //$NON-NLS-1$
         int minValue = (int) image.getPixelLevel(image.getMinValue());
         int maxValue = (int) image.getPixelLevel(image.getMaxValue());
         int tableLength = (maxValue - minValue + 1);
@@ -368,8 +368,8 @@ public class ImageToolkit {
         double y_int = 255.0 - slope * high;
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-            // Integer paddingValue = (Integer) image.getTagValue(TagElement.PixelPaddingValue);
-            // Integer paddingLimit = (Integer) image.getTagValue(TagElement.PixelPaddingRangeLimit);
+            // Integer paddingValue = (Integer) image.getTagValue(TagW.PixelPaddingValue);
+            // Integer paddingLimit = (Integer) image.getTagValue(TagW.PixelPaddingRangeLimit);
             byte[][] lut;
             // if (paddingValue != null && paddingValue > 0) {
             // if (paddingLimit == 0) {

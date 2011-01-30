@@ -43,7 +43,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -51,23 +51,23 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
-    private final TagElement[] PATIENT = { TagElement.PatientName, TagElement.PatientID, TagElement.PatientSex,
-        TagElement.PatientBirthDate };
-    private final TagElement[] STATION = { TagElement.Manufacturer, TagElement.ManufacturerModelName,
-        TagElement.StationName, };
-    private final TagElement[] STUDY = { TagElement.StudyInstanceUID, TagElement.StudyDate, TagElement.StudyID,
-        TagElement.AccessionNumber, TagElement.ReferringPhysicianName, TagElement.StudyDescription };
-    private final TagElement[] SERIES = { TagElement.SeriesInstanceUID, TagElement.SeriesDate, TagElement.SeriesNumber,
-        TagElement.Modality, TagElement.ReferringPhysicianName, TagElement.InstitutionName,
-        TagElement.InstitutionalDepartmentName, TagElement.BodyPartExamined };
-    private final TagElement[] IMAGE = { TagElement.SOPInstanceUID, TagElement.ImageType, TagElement.TransferSyntaxUID,
-        TagElement.InstanceNumber, TagElement.PhotometricInterpretation, TagElement.SamplesPerPixel,
-        TagElement.PixelRepresentation, TagElement.Columns, TagElement.Rows, TagElement.ImageComments,
-        TagElement.ImageWidth, TagElement.ImageHeight, TagElement.ImageDepth, TagElement.BitsAllocated,
-        TagElement.BitsStored };
-    private final TagElement[] IMAGE_PLANE = { TagElement.PixelSpacing, TagElement.SliceLocation,
-        TagElement.SliceThickness };
-    private final TagElement[] IMAGE_ACQ = { TagElement.KVP, TagElement.ContrastBolusAgent };
+    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.PatientSex,
+        TagW.PatientBirthDate };
+    private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName,
+        TagW.StationName, };
+    private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID,
+        TagW.AccessionNumber, TagW.ReferringPhysicianName, TagW.StudyDescription };
+    private final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber,
+        TagW.Modality, TagW.ReferringPhysicianName, TagW.InstitutionName,
+        TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
+    private final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID,
+        TagW.InstanceNumber, TagW.PhotometricInterpretation, TagW.SamplesPerPixel,
+        TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageComments,
+        TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth, TagW.BitsAllocated,
+        TagW.BitsStored };
+    private final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation,
+        TagW.SliceThickness };
+    private final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
     private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
 
@@ -238,26 +238,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                     MediaSeriesGroup study = model.getParent(series, DicomModel.study);
 
-                    Style regular = doc.getStyle("regular"); //$NON-NLS-1$
-                    Style title = doc.getStyle("title"); //$NON-NLS-1$
-                    Style italic = doc.getStyle("italic"); //$NON-NLS-1$
-
                     MediaReader loader = media.getMediaReader();
                     if (loader instanceof DicomMediaIO) {
-                        doc.insertString(doc.getLength(), "Patient\n", title);
-                        writeItems(PATIENT, model.getParent(series, DicomModel.patient), doc);
-                        doc.insertString(doc.getLength(), "\nStation\n", title);
-                        writeItems(STATION, series, doc);
-                        doc.insertString(doc.getLength(), "\nStudy\n", title);
-                        writeItems(STUDY, model.getParent(series, DicomModel.study), doc);
-                        doc.insertString(doc.getLength(), "\nSeries\n", title);
-                        writeItems(SERIES, series, doc);
-                        doc.insertString(doc.getLength(), "\nImage\n", title);
-                        writeItems(IMAGE, null, doc);
-                        doc.insertString(doc.getLength(), "\nImage Plane\n", title);
-                        writeItems(IMAGE_PLANE, null, doc);
-                        doc.insertString(doc.getLength(), "\nImage Acquisition\n", title);
-                        writeItems(IMAGE_ACQ, null, doc);
+                        writeItems("Patient\n", PATIENT, model.getParent(series, DicomModel.patient), doc);
+                        writeItems("\nStation\n", STATION, series, doc);
+                        writeItems("\nStudy\n", STUDY, model.getParent(series, DicomModel.study), doc);
+                        writeItems("\nSeries\n", SERIES, series, doc);
+                        writeItems("\nDICOM Object\n", IMAGE, null, doc);
+                        writeItems("\nImage Plane\n", IMAGE_PLANE, null, doc);
+                        writeItems("\nImage Acquisition\n", IMAGE_ACQ, null, doc);
                     }
                 }
             }
@@ -267,17 +256,26 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         limitedPane.setViewportView(jTextPane1);
     }
 
-    private void writeItems(TagElement[] tags, MediaSeriesGroup group, StyledDocument doc) {
+    private void writeItems(String title, TagW[] tags, MediaSeriesGroup group, StyledDocument doc) {
         Style regular = doc.getStyle("regular"); //$NON-NLS-1$
         Style italic = doc.getStyle("italic"); //$NON-NLS-1$
-
-        for (TagElement t : tags) {
+        int insertTitle = doc.getLength();
+        boolean exist = false;
+        for (TagW t : tags) {
             try {
                 Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
                 if (val != null) {
+                    exist = true;
                     doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
                     doc.insertString(doc.getLength(), ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
                 }
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
+        if (exist) {
+            try {
+                doc.insertString(insertTitle, title, doc.getStyle("title"));
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }

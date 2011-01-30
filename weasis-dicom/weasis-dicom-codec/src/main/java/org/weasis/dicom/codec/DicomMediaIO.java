@@ -34,7 +34,6 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
-import org.dcm4che2.image.ColorModelFactory;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
@@ -52,7 +51,7 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -81,7 +80,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private DicomObject dicomObject = null;
     private int numberOfFrame;
     private int stored;
-    private final HashMap<TagElement, Object> tags;
+    private final HashMap<TagW, Object> tags;
     private MediaElement image = null;
     private ImageInputStream imageStream = null;
     private volatile String mimeType;
@@ -90,7 +89,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         super(readerSpi);
         this.uri = uri;
         numberOfFrame = 0;
-        this.tags = new HashMap<TagElement, Object>();
+        this.tags = new HashMap<TagW, Object>();
         mimeType = MIMETYPE;
     }
 
@@ -175,23 +174,23 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return mimeType;
     }
 
-    public void setTag(TagElement tag, Object value) {
+    public void setTag(TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
-    public void setTagIfValueNotNull(TagElement tag, Object value) {
+    public void setTagNoNull(TagW tag, Object value) {
         if (tag != null && value != null) {
             tags.put(tag, value);
         }
     }
 
-    public Object getTagValue(TagElement tag) {
+    public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
 
-    private void writeTag(MediaSeriesGroup group, TagElement tag) {
+    private void writeTag(MediaSeriesGroup group, TagW tag) {
         group.setTag(tag, getTagValue(tag));
     }
 
@@ -203,225 +202,250 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         DicomObject header = getDicomObject();
 
         // Patient Group
-        if (TagElement.PatientPseudoUID.equals(group.getTagID())) {
-            group.setTag(TagElement.PatientID, getTagValue(TagElement.PatientID));
-            group.setTag(TagElement.PatientName, getTagValue(TagElement.PatientName));
-            group.setTag(TagElement.PatientBirthDate, getTagValue(TagElement.PatientBirthDate));
+        if (TagW.PatientPseudoUID.equals(group.getTagID())) {
+            // -------- Mandatory Tags --------
+            group.setTag(TagW.PatientID, getTagValue(TagW.PatientID));
+            group.setTag(TagW.PatientName, getTagValue(TagW.PatientName));
+            // -------- End of Mandatory Tags --------
 
-            group.setTag(TagElement.PatientBirthTime, getDateFromDicomElement(header, Tag.PatientBirthTime, null));
+            group.setTagNoNull(TagW.PatientBirthDate, getTagValue(TagW.PatientBirthDate));
+            group.setTagNoNull(TagW.PatientBirthTime, getDateFromDicomElement(header, Tag.PatientBirthTime, null));
             // Sex attribute can have the following values: M(male), F(female), or O(other)
             String val = header.getString(Tag.PatientSex, "O"); //$NON-NLS-1$
             group
                 .setTag(
-                    TagElement.PatientSex,
+                    TagW.PatientSex,
                     val.startsWith("F") ? Messages.getString("DicomMediaIO.female") : val.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-            group.setTag(TagElement.IssuerOfPatientID, header.getString(Tag.IssuerOfPatientID));
-            group.setTag(TagElement.PatientComments, header.getString(Tag.PatientComments));
+            group.setTagNoNull(TagW.IssuerOfPatientID, header.getString(Tag.IssuerOfPatientID));
+            group.setTagNoNull(TagW.PatientComments, header.getString(Tag.PatientComments));
         }
         // Study Group
-        else if (TagElement.StudyInstanceUID.equals(group.getTagID())) {
+        else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
+            // -------- Mandatory Tags --------
             // StudyInstanceUID is the unique identifying tag for this study group
-            group.setTag(TagElement.StudyID, header.getString(Tag.StudyID));
-            group.setTag(TagElement.StudyDate, getDateFromDicomElement(header, Tag.StudyDate, null));
-            group.setTag(TagElement.StudyTime, getDateFromDicomElement(header, Tag.StudyTime, null));
-            group.setTag(TagElement.StudyDescription, header.getString(Tag.StudyDescription));
+            // -------- End of Mandatory Tags --------
 
-            group.setTag(TagElement.AccessionNumber, header.getString(Tag.AccessionNumber));
-            group.setTag(TagElement.ModalitiesInStudy, header.getString(Tag.ModalitiesInStudy));
-            group.setTag(TagElement.NumberOfStudyRelatedInstances, header.getInt(Tag.NumberOfStudyRelatedInstances));
-            group.setTag(TagElement.NumberOfStudyRelatedSeries, header.getInt(Tag.NumberOfStudyRelatedSeries));
+            group.setTagNoNull(TagW.StudyID, header.getString(Tag.StudyID));
+            group.setTagNoNull(TagW.StudyDate, getDateFromDicomElement(header, Tag.StudyDate, null));
+            group.setTagNoNull(TagW.StudyTime, getDateFromDicomElement(header, Tag.StudyTime, null));
+            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
-            group.setTag(TagElement.StudyStatusID, header.getString(Tag.StudyStatusID));
+            group.setTagNoNull(TagW.AccessionNumber, header.getString(Tag.AccessionNumber));
+            group.setTagNoNull(TagW.ModalitiesInStudy, header.getString(Tag.ModalitiesInStudy));
+            group.setTagNoNull(TagW.NumberOfStudyRelatedInstances,
+                getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedInstances, null));
+            group.setTagNoNull(TagW.NumberOfStudyRelatedSeries,
+                getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedSeries, null));
+
+            group.setTagNoNull(TagW.StudyStatusID, header.getString(Tag.StudyStatusID));
             // TODO sequence: define data structure
-            group.setTag(TagElement.ProcedureCodeSequence, header.get(Tag.ProcedureCodeSequence));
+            group.setTagNoNull(TagW.ProcedureCodeSequence, header.get(Tag.ProcedureCodeSequence));
         }
         // Series Group
-        else if (TagElement.SubseriesInstanceUID.equals(group.getTagID())) {
+        else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
+            // -------- Mandatory Tags --------
             // SubseriesInstanceUID is the unique identifying tag for this series group
-            group.setTag(TagElement.SeriesInstanceUID, getTagValue(TagElement.SeriesInstanceUID));
-            group.setTag(TagElement.Modality, getTagValue(TagElement.Modality));
-            group.setTag(TagElement.SeriesDate,
+            group.setTag(TagW.SeriesInstanceUID, getTagValue(TagW.SeriesInstanceUID));
+            group.setTag(TagW.Modality, getTagValue(TagW.Modality));
+            // -------- End of Mandatory Tags --------
+
+            group.setTagNoNull(TagW.SeriesDate,
                 header.getDate(Tag.SeriesDate, getDateFromDicomElement(header, Tag.StudyDate, null)));
-            group.setTag(TagElement.SeriesDescription, header.getString(Tag.SeriesDescription));
-            group.setTag(TagElement.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
-            group.setTag(TagElement.ReferringPhysicianName, header.getString(Tag.ReferringPhysicianName));
-            group.setTag(TagElement.InstitutionName, header.getString(Tag.InstitutionName));
-            group.setTag(TagElement.InstitutionalDepartmentName, header.getString(Tag.InstitutionalDepartmentName));
-            group.setTag(TagElement.StationName, header.getString(Tag.StationName));
-            group.setTag(TagElement.Manufacturer, header.getString(Tag.Manufacturer));
-            group.setTag(TagElement.ManufacturerModelName, header.getString(Tag.ManufacturerModelName));
+
+            group.setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
+            group.setTagNoNull(TagW.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
+            group.setTagNoNull(TagW.ReferringPhysicianName, header.getString(Tag.ReferringPhysicianName));
+            group.setTagNoNull(TagW.InstitutionName, header.getString(Tag.InstitutionName));
+            group.setTagNoNull(TagW.InstitutionalDepartmentName, header.getString(Tag.InstitutionalDepartmentName));
+            group.setTagNoNull(TagW.StationName, header.getString(Tag.StationName));
+            group.setTagNoNull(TagW.Manufacturer, header.getString(Tag.Manufacturer));
+            group.setTagNoNull(TagW.ManufacturerModelName, header.getString(Tag.ManufacturerModelName));
             // TODO sequence: define data structure
-            group.setTag(TagElement.ReferencedPerformedProcedureStepSequence,
+            group.setTagNoNull(TagW.ReferencedPerformedProcedureStepSequence,
                 header.get(Tag.ReferencedPerformedProcedureStepSequence));
-            group.setTag(TagElement.SeriesNumber, getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
-            group.setTag(TagElement.PreferredPlaybackSequencing, header.getInt(Tag.PreferredPlaybackSequencing, 0));
-            group.setTag(TagElement.CineRate,
-                header.getInt(Tag.CineRate, header.getInt(Tag.RecommendedDisplayFrameRate, 20)));
-            group.setTag(TagElement.KVP, header.getFloat(Tag.KVP, Float.NaN));
-            group.setTag(TagElement.Laterality, header.getString(Tag.Laterality));
-            group.setTag(TagElement.BodyPartExamined, header.getString(Tag.BodyPartExamined));
-            group.setTag(TagElement.ReferencedImageSequence, header.get(Tag.ReferencedImageSequence));
-            group.setTag(TagElement.FrameOfReferenceUID, header.getString(Tag.FrameOfReferenceUID));
-            group.setTag(TagElement.NumberOfSeriesRelatedInstances, header.getInt(Tag.NumberOfSeriesRelatedInstances));
-            group.setTag(TagElement.PerformedProcedureStepStartDate,
+            group.setTagNoNull(TagW.SeriesNumber, getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
+            group.setTagNoNull(TagW.PreferredPlaybackSequencing,
+                getIntegerFromDicomElement(header, Tag.PreferredPlaybackSequencing, null));
+            group.setTagNoNull(
+                TagW.CineRate,
+                getIntegerFromDicomElement(header, Tag.CineRate,
+                    getIntegerFromDicomElement(header, Tag.RecommendedDisplayFrameRate, null)));
+            group.setTagNoNull(TagW.KVP, getFloatFromDicomElement(header, Tag.KVP, null));
+            group.setTagNoNull(TagW.Laterality, header.getString(Tag.Laterality));
+            group.setTagNoNull(TagW.BodyPartExamined, header.getString(Tag.BodyPartExamined));
+            group.setTagNoNull(TagW.ReferencedImageSequence, header.get(Tag.ReferencedImageSequence));
+            group.setTagNoNull(TagW.FrameOfReferenceUID, header.getString(Tag.FrameOfReferenceUID));
+            group.setTagNoNull(TagW.NumberOfSeriesRelatedInstances,
+                getIntegerFromDicomElement(header, Tag.NumberOfSeriesRelatedInstances, null));
+            group.setTagNoNull(TagW.PerformedProcedureStepStartDate,
                 getDateFromDicomElement(header, Tag.PerformedProcedureStepStartDate, null));
-            group.setTag(TagElement.PerformedProcedureStepStartTime,
+            group.setTagNoNull(TagW.PerformedProcedureStepStartTime,
                 getDateFromDicomElement(header, Tag.PerformedProcedureStepStartTime, null));
             // TODO sequence: define data structure
-            group.setTag(TagElement.RequestAttributesSequence, header.get(Tag.RequestAttributesSequence));
+            group.setTagNoNull(TagW.RequestAttributesSequence, header.get(Tag.RequestAttributesSequence));
 
             // Information for series ToolTips
-            group.setTag(TagElement.PatientName, getTagValue(TagElement.PatientName));
-            group.setTag(TagElement.StudyDescription, header.getString(Tag.StudyDescription));
+            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
+            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
         }
     }
 
     private void writeInstanceTags() {
         if (dicomObject != null) {
+            // -------- Mandatory Tags --------
             // Tags for identifying group (Patient, Study, Series)
-            setTag(TagElement.PatientID,
-                dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
             String name = dicomObject.getString(Tag.PatientName, Messages.getString("DicomMediaIO.unknown")); //$NON-NLS-1$
             if (name.trim().equals("")) { //$NON-NLS-1$
                 name = Messages.getString("DicomMediaIO.unknown"); //$NON-NLS-1$
             }
             name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
-            setTag(TagElement.PatientName, name);
-            setTag(TagElement.PatientBirthDate, getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null));
+            setTag(TagW.PatientName, name);
+            setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null));
             // Identifier for the patient. Tend to be unique.
             // TODO set preferences for what is PatientUID
-            setTag(
-                TagElement.PatientPseudoUID,
-                getTagValue(TagElement.PatientID).toString()
-                    + TagElement.formatDate((Date) getTagValue(TagElement.PatientBirthDate)));
-            setTag(TagElement.StudyInstanceUID,
+            setTag(TagW.PatientPseudoUID,
+                getTagValue(TagW.PatientID).toString() + TagW.formatDate((Date) getTagValue(TagW.PatientBirthDate)));
+            setTag(TagW.StudyInstanceUID,
                 dicomObject.getString(Tag.StudyInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            setTag(TagElement.SeriesInstanceUID,
+            setTag(TagW.SeriesInstanceUID,
                 dicomObject.getString(Tag.SeriesInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            setTag(TagElement.Modality, dicomObject.getString(Tag.Modality, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagW.Modality, dicomObject.getString(Tag.Modality, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagW.InstanceNumber, dicomObject.getInt(Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
+            setTag(TagW.SOPInstanceUID,
+                dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
+            // -------- End of Mandatory Tags --------
+
             // Instance tags
-            setTag(TagElement.ImageType, dicomObject.getString(Tag.ImageType));
-            setTag(TagElement.ImageComments, dicomObject.getString(Tag.ImageComments));
-            setTag(TagElement.ContrastBolusAgent, dicomObject.getString(Tag.ContrastBolusAgent));
-            setTag(TagElement.TransferSyntaxUID, dicomObject.getString(Tag.TransferSyntaxUID));
-            setTag(TagElement.InstanceNumber, dicomObject.getInt(Tag.InstanceNumber, 0));
-            setTag(TagElement.SOPInstanceUID,
-                dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagElement.InstanceNumber).toString()));
-            setTag(TagElement.SOPClassUID, dicomObject.getString(Tag.SOPClassUID));
-            setTag(TagElement.ScanningSequence, dicomObject.getString(Tag.ScanningSequence));
-            setTag(TagElement.SequenceVariant, dicomObject.getString(Tag.SequenceVariant));
-            setTag(TagElement.ScanOptions, dicomObject.getString(Tag.ScanOptions));
-            setTag(TagElement.RepetitionTime, dicomObject.getFloat(Tag.RepetitionTime));
-            setTag(TagElement.EchoTime, dicomObject.getFloat(Tag.EchoTime));
-            setTag(TagElement.InversionTime, dicomObject.getFloat(Tag.InversionTime));
-            setTag(TagElement.EchoNumbers, getIntegerFromDicomElement(dicomObject, Tag.EchoNumbers, null));
-            setTag(TagElement.GantryDetectorTilt, dicomObject.getFloat(Tag.GantryDetectorTilt));
-            setTag(TagElement.ConvolutionKernel, dicomObject.getString(Tag.ConvolutionKernel));
-            setTag(TagElement.FlipAngle, dicomObject.getFloat(Tag.FlipAngle));
-            setTag(TagElement.SliceLocation, getFloatFromDicomElement(dicomObject, Tag.SliceLocation, null));
-            setTag(TagElement.SliceThickness, getFloatFromDicomElement(dicomObject, Tag.SliceThickness, null));
-            setTag(TagElement.AcquisitionDate, getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null));
-            setTag(TagElement.AcquisitionTime, getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
+            setTagNoNull(TagW.ImageType, dicomObject.getString(Tag.ImageType));
+            setTagNoNull(TagW.ImageComments, dicomObject.getString(Tag.ImageComments));
+            setTagNoNull(TagW.ContrastBolusAgent, dicomObject.getString(Tag.ContrastBolusAgent));
+            setTagNoNull(TagW.TransferSyntaxUID, dicomObject.getString(Tag.TransferSyntaxUID));
+            setTagNoNull(TagW.SOPClassUID, dicomObject.getString(Tag.SOPClassUID));
+            setTagNoNull(TagW.ScanningSequence, dicomObject.getString(Tag.ScanningSequence));
+            setTagNoNull(TagW.SequenceVariant, dicomObject.getString(Tag.SequenceVariant));
+            setTagNoNull(TagW.ScanOptions, dicomObject.getString(Tag.ScanOptions));
+            setTagNoNull(TagW.RepetitionTime, getFloatFromDicomElement(dicomObject, Tag.RepetitionTime, null));
+            setTagNoNull(TagW.EchoTime, getFloatFromDicomElement(dicomObject, Tag.EchoTime, null));
+            setTagNoNull(TagW.InversionTime, getFloatFromDicomElement(dicomObject, Tag.InversionTime, null));
+            setTagNoNull(TagW.EchoNumbers, getIntegerFromDicomElement(dicomObject, Tag.EchoNumbers, null));
+            setTagNoNull(TagW.GantryDetectorTilt, getFloatFromDicomElement(dicomObject, Tag.GantryDetectorTilt, null));
+            setTagNoNull(TagW.ConvolutionKernel, dicomObject.getString(Tag.ConvolutionKernel));
+            setTagNoNull(TagW.FlipAngle, getFloatFromDicomElement(dicomObject, Tag.FlipAngle, null));
+            setTagNoNull(TagW.SliceLocation, getFloatFromDicomElement(dicomObject, Tag.SliceLocation, null));
+            setTagNoNull(TagW.SliceThickness, getFloatFromDicomElement(dicomObject, Tag.SliceThickness, null));
+            setTagNoNull(TagW.AcquisitionDate, getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null));
+            setTagNoNull(TagW.AcquisitionTime, getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
 
-            setTag(TagElement.ImagePositionPatient, dicomObject.getDoubles(Tag.ImagePositionPatient));
-            setTag(TagElement.ImageOrientationPatient, dicomObject.getDoubles(Tag.ImageOrientationPatient));
-            setTag(
-                TagElement.ImageOrientationPlane,
+            setTagNoNull(TagW.ImagePositionPatient, dicomObject.getDoubles(Tag.ImagePositionPatient, (double[]) null));
+            setTagNoNull(TagW.ImageOrientationPatient,
+                dicomObject.getDoubles(Tag.ImageOrientationPatient, (double[]) null));
+            setTagNoNull(
+                TagW.ImageOrientationPlane,
                 ImageOrientation
-                    .makeImageOrientationLabelFromImageOrientationPatient((double[]) getTagValue(TagElement.ImageOrientationPatient)));
+                    .makeImageOrientationLabelFromImageOrientationPatient((double[]) getTagValue(TagW.ImageOrientationPatient)));
 
-            setTag(TagElement.ImagerPixelSpacing, dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
-            setTag(TagElement.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[]) null));
-            setTag(TagElement.PixelSpacingCalibrationDescription,
+            setTagNoNull(TagW.ImagerPixelSpacing, dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
+            setTagNoNull(TagW.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[]) null));
+            setTagNoNull(TagW.PixelSpacingCalibrationDescription,
                 dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
 
-            setTag(TagElement.WindowWidth, dicomObject.getFloat(Tag.WindowWidth, Float.NaN));
-            setTag(TagElement.WindowCenter, dicomObject.getFloat(Tag.WindowCenter, Float.NaN));
+            setTagNoNull(TagW.WindowWidth, getFloatFromDicomElement(dicomObject, Tag.WindowWidth, null));
+            setTagNoNull(TagW.WindowCenter, getFloatFromDicomElement(dicomObject, Tag.WindowCenter, null));
 
-            setTag(TagElement.RescaleSlope, dicomObject.getFloat(Tag.RescaleSlope, 1.f));
-            setTag(TagElement.RescaleIntercept, dicomObject.getFloat(Tag.RescaleIntercept, 0.f));
-            setTag(TagElement.RescaleType, dicomObject.getString(Tag.RescaleType));
-            setTag(TagElement.Units, dicomObject.getString(Tag.Units));
+            setTagNoNull(TagW.RescaleSlope, getFloatFromDicomElement(dicomObject, Tag.RescaleSlope, null));
+            setTagNoNull(TagW.RescaleIntercept, getFloatFromDicomElement(dicomObject, Tag.RescaleIntercept, null));
+            setTagNoNull(TagW.RescaleType, dicomObject.getString(Tag.RescaleType));
+            setTagNoNull(TagW.Units, dicomObject.getString(Tag.Units));
 
-            setTag(TagElement.SmallestImagePixelValue,
-                ((Integer) dicomObject.getInt(Tag.SmallestImagePixelValue, 0)).floatValue());
-            setTag(TagElement.LargestImagePixelValue,
-                ((Integer) dicomObject.getInt(Tag.LargestImagePixelValue, 0)).floatValue());
-            setTag(TagElement.PixelPaddingValue, dicomObject.getInt(Tag.PixelPaddingValue, 0));
-            setTag(TagElement.NumberOfFrames, dicomObject.getInt(Tag.NumberOfFrames, 1));
-            setTag(TagElement.PixelPaddingRangeLimit, dicomObject.getInt(Tag.PixelPaddingRangeLimit, 0));
-            setTag(TagElement.OverlayRows, dicomObject.getInt(Tag.OverlayRows, 0));
+            setTagNoNull(TagW.SmallestImagePixelValue,
+                getIntegerFromDicomElement(dicomObject, Tag.SmallestImagePixelValue, null));
+            setTagNoNull(TagW.LargestImagePixelValue,
+                getIntegerFromDicomElement(dicomObject, Tag.LargestImagePixelValue, null));
+            setTagNoNull(TagW.PixelPaddingValue, getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingValue, null));
+            setTagNoNull(TagW.NumberOfFrames, getIntegerFromDicomElement(dicomObject, Tag.NumberOfFrames, null));
+            setTagNoNull(TagW.PixelPaddingRangeLimit,
+                getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingRangeLimit, null));
+            setTagNoNull(TagW.OverlayRows, getIntegerFromDicomElement(dicomObject, Tag.OverlayRows, null));
 
-            setTag(TagElement.SamplesPerPixel, dicomObject.getInt(Tag.SamplesPerPixel, 1));
-            setTag(TagElement.MonoChrome, ColorModelFactory.isMonochrome(dicomObject));
-            setTag(TagElement.PhotometricInterpretation, dicomObject.getString(Tag.PhotometricInterpretation));
+            Integer samplesPerPixel = getIntegerFromDicomElement(dicomObject, Tag.SamplesPerPixel, null);
+            setTagNoNull(TagW.SamplesPerPixel, samplesPerPixel);
+            String photometricInterpretation = dicomObject.getString(Tag.PhotometricInterpretation);
+            setTagNoNull(TagW.PhotometricInterpretation, photometricInterpretation);
+            if (samplesPerPixel != null) {
+                setTag(TagW.MonoChrome,
+                    samplesPerPixel == 1 && !"PALETTE COLOR".equalsIgnoreCase(photometricInterpretation));
+            }
 
-            setTag(TagElement.Rows, dicomObject.getInt(Tag.Rows, 0));
-            setTag(TagElement.Columns, dicomObject.getInt(Tag.Columns, 0));
-            setTag(TagElement.BitsAllocated, dicomObject.getInt(Tag.BitsAllocated, 8));
-            setTag(TagElement.BitsStored,
-                dicomObject.getInt(Tag.BitsStored, (Integer) getTagValue(TagElement.BitsAllocated)));
-            setTag(TagElement.PixelRepresentation, dicomObject.getInt(Tag.PixelRepresentation, 0));
+            setTagNoNull(TagW.Rows, getIntegerFromDicomElement(dicomObject, Tag.Rows, null));
+            setTagNoNull(TagW.Columns, getIntegerFromDicomElement(dicomObject, Tag.Columns, null));
+            setTagNoNull(TagW.BitsAllocated, getIntegerFromDicomElement(dicomObject, Tag.BitsAllocated, null));
+            setTagNoNull(TagW.BitsStored,
+                getIntegerFromDicomElement(dicomObject, Tag.BitsStored, (Integer) getTagValue(TagW.BitsAllocated)));
+            setTagNoNull(TagW.PixelRepresentation,
+                getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, null));
 
-            setTagIfValueNotNull(TagElement.MIMETypeOfEncapsulatedDocument,
-                dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
+            setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
             validateDicomImageValues();
             computeSlicePositionVector();
         }
     }
 
     private void validateDicomImageValues() {
-        Float window = (Float) getTagValue(TagElement.WindowWidth);
-        float minValue = (Float) getTagValue(TagElement.SmallestImagePixelValue);
-        float maxValue = (Float) getTagValue(TagElement.LargestImagePixelValue);
-        // Test if DICOM min and max pixel values are consistent
-        if (minValue != 0 || maxValue != 0) {
-            Float level = (Float) getTagValue(TagElement.WindowCenter);
-            float min = pixel2rescale(minValue);
-            float max = pixel2rescale(maxValue);
-            if (!level.isNaN() && !window.isNaN()) {
+        Float window = (Float) getTagValue(TagW.WindowWidth);
+        Float level = (Float) getTagValue(TagW.WindowCenter);
+        if (window != null && level != null) {
+            Integer minValue = (Integer) getTagValue(TagW.SmallestImagePixelValue);
+            Integer maxValue = (Integer) getTagValue(TagW.LargestImagePixelValue);
+            // Test if DICOM min and max pixel values are consistent
+            if (minValue != null && maxValue != null) {
+                float min = pixel2rescale(minValue.floatValue());
+                float max = pixel2rescale(maxValue.floatValue());
                 // Empirical test
                 float low = level - window / 4.0f;
                 float high = level + window / 4.0f;
                 if (low < min || high > max) {
                     // Min and Max seems to be not consistent
-                    // Set to 0, it will search in min and max in pixel data
-                    setTag(TagElement.SmallestImagePixelValue, 0.0f);
-                    setTag(TagElement.LargestImagePixelValue, 0.0f);
+                    // Remove them, it will search in min and max in pixel data
+                    tags.remove(TagW.SmallestImagePixelValue);
+                    tags.remove(TagW.LargestImagePixelValue);
+                }
+            }
+            Integer bitsStored = (Integer) getTagValue(TagW.BitsStored);
+            if (bitsStored != null) {
+                if (window > (1 << bitsStored)) {
+                    // Remove w/l values that are not consistent to the bits stored
+                    tags.remove(TagW.WindowCenter);
+                    tags.remove(TagW.WindowWidth);
                 }
             }
         }
-        if (!window.isNaN()) {
-            int bitsStored = (Integer) getTagValue(TagElement.BitsStored);
-            if (window > (1 << bitsStored)) {
-                // Reset w/l values that are not consistent to the bits stored
-                setTag(TagElement.WindowCenter, Float.NaN);
-                setTag(TagElement.WindowWidth, Float.NaN);
-            }
-        }
     }
 
-    public float pixel2rescale(float pixelValue) {
+    private float pixel2rescale(float pixelValue) {
         // Hounsfield units: hu
         // hu = pixelValue * rescale slope + intercept value
-        return (pixelValue * (Float) getTagValue(TagElement.RescaleSlope) + (Float) getTagValue(TagElement.RescaleIntercept));
-
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
+        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
+        if (slope != null || intercept != null) {
+            return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+        }
+        return pixelValue;
     }
 
     private void computeSlicePositionVector() {
-        double[] slicePosition = null;
-        double[] patientPos = (double[]) getTagValue(TagElement.ImagePositionPatient);
+        double[] patientPos = (double[]) getTagValue(TagW.ImagePositionPatient);
         if (patientPos != null && patientPos.length == 3) {
             double[] imgOrientation =
-                ImageOrientation.computeNormalVectorOfPlan((double[]) getTagValue(TagElement.ImageOrientationPatient));
+                ImageOrientation.computeNormalVectorOfPlan((double[]) getTagValue(TagW.ImageOrientationPatient));
             if (imgOrientation != null) {
-                slicePosition = new double[3];
+                double[] slicePosition = new double[3];
                 slicePosition[0] = imgOrientation[0] * patientPos[0];
                 slicePosition[1] = imgOrientation[1] * patientPos[1];
                 slicePosition[2] = imgOrientation[2] * patientPos[2];
+                setTag(TagW.SlicePosition, slicePosition);
             }
         }
-        setTag(TagElement.SlicePosition, slicePosition);
     }
 
     private Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
@@ -499,7 +523,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     // }
 
     public boolean containTag(int id) {
-        for (Iterator<TagElement> it = tags.keySet().iterator(); it.hasNext();) {
+        for (Iterator<TagW> it = tags.keySet().iterator(); it.hasNext();) {
             if (it.next().getId() == id) {
                 return true;
             }
@@ -559,18 +583,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             return dcm;
         }
         return dicomObject;
-    }
-
-    // public LookupTable getLookupTable(int frame) {
-    // if (monochrome) {
-    // return createLut((DicomImageReadParam) this.getDefaultReadParam(), 0,
-    // getSrcImage(frame).getData()
-    // .getDataBuffer());
-    // }
-    // return null;
-    // }
-    public int getImageNumber() {
-        return (Integer) getTagValue(TagElement.InstanceNumber);
     }
 
     public URI getUri() {
@@ -643,7 +655,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public MediaSeries getMediaSeries() {
         Series series = null;
         if (readMediaTags()) {
-            String seriesUID = (String) getTagValue(TagElement.SeriesInstanceUID);
+            String seriesUID = (String) getTagValue(TagW.SeriesInstanceUID);
             series = buildSeries(seriesUID);
             writeMetaData(series);
             // no need to apply splitting rules
@@ -664,10 +676,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     @Override
-    public HashMap<TagElement, Object> getMediaFragmentTags(Object key) {
+    public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
         if (key instanceof Integer) {
             if ((Integer) key > 0) {
-                return (HashMap<TagElement, Object>) tags.clone();
+                return (HashMap<TagW, Object>) tags.clone();
             }
         }
         return tags;
@@ -697,7 +709,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         try {
             imgReader =
                 ImageReaderFactory.getInstance().getReaderForTransferSyntax(
-                    (String) getTagValue(TagElement.TransferSyntaxUID));
+                    (String) getTagValue(TagW.TransferSyntaxUID));
         } catch (Exception e1) {
             // Do nothing
         }

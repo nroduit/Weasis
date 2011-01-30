@@ -22,7 +22,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOperation;
 import org.weasis.core.api.image.combineTwoImagesOperation;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.OverlayUtils;
@@ -44,17 +44,19 @@ public class OverlayOperation extends AbstractOperation {
         } else if (overlay) {
             RenderedImage imgOverlay = null;
             ImageElement image = imageOperation.getImage();
-            Integer row = (Integer) image.getTagValue(TagElement.OverlayRows);
+            Integer row = (Integer) image.getTagValue(TagW.OverlayRows);
             if (row != null && row != 0 && image.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
                 try {
                     if (image.getKey() instanceof Integer) {
                         int frame = (Integer) image.getKey();
-                        int height = (Integer) reader.getTagValue(TagElement.Rows);
-                        int width = (Integer) reader.getTagValue(TagElement.Columns);
-                        imgOverlay =
-                            PlanarImage.wrapRenderedImage(OverlayUtils.getOverlays(imageOperation.getImage(), reader,
-                                frame, width, height));
+                        Integer height = (Integer) reader.getTagValue(TagW.Rows);
+                        Integer width = (Integer) reader.getTagValue(TagW.Columns);
+                        if (height != null && width != null) {
+                            imgOverlay =
+                                PlanarImage.wrapRenderedImage(OverlayUtils.getOverlays(imageOperation.getImage(),
+                                    reader, frame, width, height));
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

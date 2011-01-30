@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public abstract class InfoViewListPanel extends JPanel {
 
@@ -26,7 +26,7 @@ public abstract class InfoViewListPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    protected abstract void setInfoElement(TagElement tag, Point dropPoint);
+    protected abstract void setInfoElement(TagW tag, Point dropPoint);
 
     private class InfoElementHandler extends TransferHandler {
 
@@ -39,7 +39,7 @@ public abstract class InfoViewListPanel extends JPanel {
             if (!support.isDrop()) {
                 return false;
             }
-            return support.isDataFlavorSupported(TagElement.infoElementDataFlavor);
+            return support.isDataFlavorSupported(TagW.infoElementDataFlavor);
         }
 
         @Override
@@ -48,10 +48,10 @@ public abstract class InfoViewListPanel extends JPanel {
                 return false;
             }
             Transferable transferable = support.getTransferable();
-            TagElement tag;
+            TagW tag;
 
             try {
-                tag = (TagElement) transferable.getTransferData(TagElement.infoElementDataFlavor);
+                tag = (TagW) transferable.getTransferData(TagW.infoElementDataFlavor);
                 setInfoElement(tag, support.getDropLocation().getDropPoint());
             } catch (Exception e) {
                 // TODO Auto-generated catch block

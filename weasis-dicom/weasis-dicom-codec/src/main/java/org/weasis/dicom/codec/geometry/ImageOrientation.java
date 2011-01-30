@@ -6,8 +6,8 @@ import javax.media.jai.operator.TransposeType;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagElement;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 
 /**
@@ -136,7 +136,7 @@ abstract public class ImageOrientation {
 
     public static final String makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
         if (v == null || v.length < 6) {
-            return LABELS[0];
+            return null;
         }
         return ImageOrientation
             .makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4], v[5]);
@@ -306,9 +306,9 @@ abstract public class ImageOrientation {
         // Test if the two images have the same orientation
         if (image1 != null && image2 != null) {
             double[] postion1 =
-                computeNormalVectorOfPlan((double[]) image1.getTagValue(TagElement.ImageOrientationPatient));
+                computeNormalVectorOfPlan((double[]) image1.getTagValue(TagW.ImageOrientationPatient));
             double[] postion2 =
-                computeNormalVectorOfPlan((double[]) image2.getTagValue(TagElement.ImageOrientationPatient));
+                computeNormalVectorOfPlan((double[]) image2.getTagValue(TagW.ImageOrientationPatient));
             if (postion1 != null && postion2 != null) {
                 double prod = postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
                 // A little tolerance

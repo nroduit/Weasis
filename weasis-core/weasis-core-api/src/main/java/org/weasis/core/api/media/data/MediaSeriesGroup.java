@@ -14,21 +14,23 @@ import java.util.Comparator;
 
 public interface MediaSeriesGroup {
 
-    public TagElement getTagID();
+    public TagW getTagID();
 
     public boolean equals(Object obj);
 
-    public void setTag(TagElement tag, Object value);
+    public void setTag(TagW tag, Object value);
 
-    public boolean containTagKey(TagElement tag);
+    public boolean containTagKey(TagW tag);
 
-    public Object getTagValue(TagElement tag);
+    public Object getTagValue(TagW tag);
 
-    public TagElement getTagElement(int id);
+    public TagW getTagElement(int id);
 
     public void dispose();
 
-    public void setComparator(Comparator<TagElement> comparator);
+    public void setComparator(Comparator<TagW> comparator);
 
-    public Comparator<TagElement> getComparator();
+    public Comparator<TagW> getComparator();
+
+    public void setTagNoNull(TagW tag, Object value);
 }

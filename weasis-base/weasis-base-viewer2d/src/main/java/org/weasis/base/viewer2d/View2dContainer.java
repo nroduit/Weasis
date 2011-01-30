@@ -229,25 +229,24 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                         if (source instanceof Series) {
                             Series series = (Series) source;
                             DefaultView2d view2DPane = eventManager.getSelectedViewPane();
-                            if (view2DPane.getSeries() == series) {
+                            ImageElement img = view2DPane.getImage();
+                            if (img != null && view2DPane.getSeries() == series) {
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                                 if (seqAction instanceof SliderCineListener) {
                                     SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    int frameIndex = sliceAction.getValue();
                                     if (param instanceof Integer) {
-                                        // Model contains display value, value-1 is the index
-                                        // value of a sequence
-                                        frameIndex = (Integer) param <= frameIndex ? frameIndex + 1 : frameIndex;
+                                        int imgIndex = series.getImageIndex(img);
                                         int size = series.size();
-                                        // When the action AddImage add the first image of the
-                                        // series
-                                        if (frameIndex > size) {
-                                            frameIndex = size;
+
+                                        if (imgIndex < 0) {
+                                            imgIndex = 0;
                                             // add again the series for registering listeners
                                             // (require at least one image)
                                             view2DPane.setSeries(series, -1);
                                         }
-                                        sliceAction.setMinMaxValue(1, size, frameIndex);
+                                        if (imgIndex >= 0) {
+                                            sliceAction.setMinMaxValue(1, size, imgIndex + 1);
+                                        }
                                     }
                                 }
                             }

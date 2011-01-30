@@ -50,37 +50,37 @@ public class DicomCodec implements Codec {
     //
     // if (selectedMedia instanceof DicomImageElement || selectedMedia instanceof DicomVideoElement) {
     //
-    // String patientID = (String) selectedMedia.getTagValue(TagElement.PatientID);
+    // String patientID = (String) selectedMedia.getTagValue(TagW.PatientID);
     // HierarchyNode patient = model.getHierarchyNode(null, patientID);
     // if (patient == null) {
-    // patient = new HierarchyNode(TagElement.PatientID, TagElement.PatientName);
-    // patient.addTag(TagElement.PatientID, patientID);
-    // patient.addTag(TagElement.PatientName, (String) selectedMedia.getTagValue(TagElement.PatientName));
-    // patient.addTag(TagElement.PatientBirthDate, selectedMedia.getTagValue(TagElement.PatientBirthDate));
-    // patient.addTag(TagElement.PatientSex, selectedMedia.getTagValue(TagElement.PatientSex));
+    // patient = new HierarchyNode(TagW.PatientID, TagW.PatientName);
+    // patient.addTag(TagW.PatientID, patientID);
+    // patient.addTag(TagW.PatientName, (String) selectedMedia.getTagValue(TagW.PatientName));
+    // patient.addTag(TagW.PatientBirthDate, selectedMedia.getTagValue(TagW.PatientBirthDate));
+    // patient.addTag(TagW.PatientSex, selectedMedia.getTagValue(TagW.PatientSex));
     //
     // model.addHierarchyNode(model.rootNode, patient);
     // }
     //
-    // String studyUID = (String) selectedMedia.getTagValue(TagElement.StudyInstanceUID);
+    // String studyUID = (String) selectedMedia.getTagValue(TagW.StudyInstanceUID);
     //
     // HierarchyNode study = model.getHierarchyNode(patient, studyUID);
     // if (study == null) {
-    // study = new HierarchyNode(TagElement.StudyInstanceUID, TagElement.StudyDate);
-    // study.addTag(TagElement.StudyInstanceUID, studyUID);
-    // study.addTag(TagElement.StudyDate, selectedMedia.getTagValue(TagElement.StudyDate));
-    // study.addTag(TagElement.StudyDescription, selectedMedia.getTagValue(TagElement.StudyDescription));
+    // study = new HierarchyNode(TagW.StudyInstanceUID, TagW.StudyDate);
+    // study.addTag(TagW.StudyInstanceUID, studyUID);
+    // study.addTag(TagW.StudyDate, selectedMedia.getTagValue(TagW.StudyDate));
+    // study.addTag(TagW.StudyDescription, selectedMedia.getTagValue(TagW.StudyDescription));
     // model.addHierarchyNode(patient, study);
     // }
     //
-    // String seriesUID = (String) selectedMedia.getTagValue(TagElement.SeriesInstanceUID);
+    // String seriesUID = (String) selectedMedia.getTagValue(TagW.SeriesInstanceUID);
     // DicomSeriesAdapter dicomSeries = (DicomSeriesAdapter) model.getHierarchyNode(study, seriesUID);
     // if (dicomSeries == null) {
     // dicomSeries = (selectedMedia instanceof DicomImageElement) ? new DicomSeries() : new DicomVideo();
-    // dicomSeries.addTag(TagElement.SeriesInstanceUID, seriesUID);
-    // dicomSeries.addTag(TagElement.Modality, selectedMedia.getTagValue(TagElement.Modality));
-    // dicomSeries.addTag(TagElement.SeriesDate, selectedMedia.getTagValue(TagElement.SeriesDate));
-    // dicomSeries.addTag(TagElement.SeriesDescription, selectedMedia.getTagValue(TagElement.SeriesDescription));
+    // dicomSeries.addTag(TagW.SeriesInstanceUID, seriesUID);
+    // dicomSeries.addTag(TagW.Modality, selectedMedia.getTagValue(TagW.Modality));
+    // dicomSeries.addTag(TagW.SeriesDate, selectedMedia.getTagValue(TagW.SeriesDate));
+    // dicomSeries.addTag(TagW.SeriesDescription, selectedMedia.getTagValue(TagW.SeriesDescription));
     // dicomSeries.addMedia((selectedMedia instanceof DicomImageElement) ? ((DicomImageElement) selectedMedia)
     // .getDicomImageLoader() : ((DicomVideoElement) selectedMedia).getDicomImageLoader());
     // model.addHierarchyNode(study, (HierarchyNode) dicomSeries);
@@ -94,7 +94,7 @@ public class DicomCodec implements Codec {
     // for (MediaElement media : mediaList) {
     // if (media instanceof DicomImageElement) {
     // final DicomImageElement e = (DicomImageElement) media;
-    // if (seriesUID.equals(e.getTagValue(TagElement.SeriesInstanceUID))) {
+    // if (seriesUID.equals(e.getTagValue(TagW.SeriesInstanceUID))) {
     // dicomSeries.add(e);
     // }
     // }

@@ -459,7 +459,7 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
         if (series.isSelected()) {
             g2d.drawRect(x + 12, y + 3, 5, 5);
         }
-        Integer splitNb = (Integer) series.getTagValue(TagElement.SplitSeriesNumber);
+        Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
         g2d.setFont(FontTools.getFont10());
         if (splitNb != null) {
             g2d.drawString("#" + splitNb + " [" + series.getMedias().size() + "]", x + 2, y + height - 2); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$

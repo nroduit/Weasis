@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 public abstract class MediaElement<E> {
 
     // Metadata of the media
-    protected final HashMap<TagElement, Object> tags;
+    protected final HashMap<TagW, Object> tags;
     // Reader of the media (local or remote)
     protected final MediaReader<E> mediaIO;
     // Key to identify the media (the URI passed to the Reader can contain several media elements)
@@ -36,8 +36,8 @@ public abstract class MediaElement<E> {
         }
         this.mediaIO = mediaIO;
         this.key = key;
-        HashMap<TagElement, Object> t = mediaIO.getMediaFragmentTags(key);
-        this.tags = t == null ? new HashMap<TagElement, Object>() : t;
+        HashMap<TagW, Object> t = mediaIO.getMediaFragmentTags(key);
+        this.tags = t == null ? new HashMap<TagW, Object>() : t;
         URI uri = mediaIO.getMediaFragmentURI(key);
         if (uri == null) {
             localFile = false;
@@ -54,24 +54,24 @@ public abstract class MediaElement<E> {
         return mediaIO;
     }
 
-    public void setTag(TagElement tag, Object value) {
+    public void setTag(TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
-    public boolean containTagKey(TagElement tag) {
+    public boolean containTagKey(TagW tag) {
         return tags.containsKey(tag);
     }
 
-    public Object getTagValue(TagElement tag) {
+    public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
 
-    public TagElement getTagElement(int id) {
-        Iterator<TagElement> enumVal = tags.keySet().iterator();
+    public TagW getTagElement(int id) {
+        Iterator<TagW> enumVal = tags.keySet().iterator();
         while (enumVal.hasNext()) {
-            TagElement e = enumVal.next();
+            TagW e = enumVal.next();
             if (e.id == id) {
                 return e;
             }
@@ -79,7 +79,7 @@ public abstract class MediaElement<E> {
         return null;
     }
 
-    public Iterator<Entry<TagElement, Object>> getTagIterator() {
+    public Iterator<Entry<TagW, Object>> getTagIterator() {
         return tags.entrySet().iterator();
     }
 

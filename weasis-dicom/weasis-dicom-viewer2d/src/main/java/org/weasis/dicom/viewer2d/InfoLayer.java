@@ -29,7 +29,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
@@ -89,7 +89,7 @@ public class InfoLayer implements AnnotationsLayer {
             return;
         }
         ModalityInfoData modality;
-        Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagElement.Modality));
+        Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
         modality = ModalityPrefView.getModlatityInfos(mod);
 
         final Rectangle bound = view2DPane.getBounds();
@@ -110,7 +110,7 @@ public class InfoLayer implements AnnotationsLayer {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
             paintRedFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y);
-            String tsuid = (String) image.getTagValue(TagElement.TransferSyntaxUID);
+            String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
             if (tsuid != null) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + tsuid; //$NON-NLS-1$
                 y += fontHeight;
@@ -137,9 +137,9 @@ public class InfoLayer implements AnnotationsLayer {
         // For image Orientation and compression
         if (dcm != null) {
             drawY -= fontHeight;
-            String tsuid = getLossyTransferSyntaxUID((String) dcm.getTagValue(TagElement.TransferSyntaxUID));
+            String tsuid = getLossyTransferSyntaxUID((String) dcm.getTagValue(TagW.TransferSyntaxUID));
             if (tsuid != null) {
-                Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagElement.WadoCompressionRate);
+                Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
                 paintRedFontOutline(
                     g2,
                     Messages.getString("InfoLayer.lossy") + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + Messages.getString("InfoLayer.percent_symb")), BORDER, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -180,7 +180,7 @@ public class InfoLayer implements AnnotationsLayer {
         if (getDisplayPreferences(FRAME)) {
             String instance = ""; //$NON-NLS-1$
             if (dcm != null) {
-                Integer inst = (Integer) dcm.getTagValue(TagElement.InstanceNumber);
+                Integer inst = (Integer) dcm.getTagValue(TagW.InstanceNumber);
                 if (inst != null && inst != 0) {
                     instance = "[" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
                 }
@@ -199,7 +199,7 @@ public class InfoLayer implements AnnotationsLayer {
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
             drawY = fontHeight;
-            TagElement[] infos = corner.getInfos();
+            TagW[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
                 if (infos[j] != null) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
@@ -239,14 +239,22 @@ public class InfoLayer implements AnnotationsLayer {
             //            String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
             // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
 
-            double[] v = (double[]) dcm.getTagValue(TagElement.ImageOrientationPatient);
-            String orientation =
-                mod.name() + " (" + dcm.getTagValue(TagElement.Columns) + "x" + dcm.getTagValue(TagElement.Rows) + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null) {
-                orientation +=
-                    " - " //$NON-NLS-1$
-                        + ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
-                            v[4], v[5]);
+            double[] v = (double[]) dcm.getTagValue(TagW.ImageOrientationPatient);
+            Integer rows = (Integer) dcm.getTagValue(TagW.Rows);
+            Integer columns = (Integer) dcm.getTagValue(TagW.Columns);
+            StringBuffer orientation = new StringBuffer(mod.name());
+            if (rows != null && columns != null) {
+                orientation.append(" (");//$NON-NLS-1$ 
+                orientation.append(dcm.getTagValue(TagW.Columns));
+                orientation.append("x");//$NON-NLS-1$ 
+                orientation.append(dcm.getTagValue(TagW.Rows));
+                orientation.append(")");//$NON-NLS-1$ 
+
+            }
+            if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
+                orientation.append(" - ");//$NON-NLS-1$ 
+                orientation.append(ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
+                    v[2], v[3], v[4], v[5]));
                 char colLeft = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
                 char rowTop = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
                 if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
@@ -271,7 +279,7 @@ public class InfoLayer implements AnnotationsLayer {
                 paintFontOutline(g2, "[" + colLeft + "]", BORDER, midy + fontHeight / 2); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            paintFontOutline(g2, orientation, BORDER, bound.height - BORDER);
+            paintFontOutline(g2, orientation.toString(), BORDER, bound.height - BORDER);
 
         }
 
@@ -314,7 +322,7 @@ public class InfoLayer implements AnnotationsLayer {
         return null;
     }
 
-    private Object getTagValue(TagElement tag, MediaSeriesGroup patient, MediaSeriesGroup study, DicomSeries series,
+    private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, DicomSeries series,
         DicomImageElement image) {
         if (image.containTagKey(tag)) {
             return image.getTagValue(tag);

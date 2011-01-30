@@ -15,10 +15,10 @@ import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.Codec;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public interface DataExplorerModel {
-    public final static TreeModelNode root = new TreeModelNode(0, 0, TagElement.RootElement);
+    public final static TreeModelNode root = new TreeModelNode(0, 0, TagW.RootElement);
 
     public List<Codec> getCodecPlugins();
 

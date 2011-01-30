@@ -61,7 +61,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -268,7 +268,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 double min = Double.MAX_VALUE;
                 double max = -Double.MAX_VALUE;
                 for (DicomImageElement dcm : list) {
-                    double[] loc = (double[]) dcm.getTagValue(TagElement.SlicePosition);
+                    double[] loc = (double[]) dcm.getTagValue(TagW.SlicePosition);
                     if (loc != null) {
                         double position = loc[0] + loc[1] + loc[2];
                         if (min > position) {
@@ -462,7 +462,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         // message.append(" (I = " + c[0] + ", H = " + c[1] + ", S = " + c[2] + ")");
                     }
                     message.append(" - (" + p.x + "," + p.y + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    // double[] pixelSpacing = (double[]) imageElement.getTagValue(TagElement.PixelSpacing);
+                    // double[] pixelSpacing = (double[]) imageElement.getTagValue(TagW.PixelSpacing);
                     // Unit unit = pixelSpacing == null ? Unit.PIXEL : Unit.MILLIMETER;
                     // if (pixelSpacing != null) {
                     // message.append(" (" + DecFormater.twoDecimal(imageElement.getPixelSizeX() * p.x));

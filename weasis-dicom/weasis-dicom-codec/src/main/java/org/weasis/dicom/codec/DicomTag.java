@@ -12,9 +12,9 @@ package org.weasis.dicom.codec;
 
 import org.dcm4che2.data.VR;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
-public class DicomTag extends TagElement {
+public class DicomTag extends TagW {
 
     private final VR vr;
     private final String vm;
@@ -38,7 +38,7 @@ public class DicomTag extends TagElement {
 
     public String getFormattedText(MediaElement image) {
         // Let possiblity to search in series (mediaGroupNode) and its parent
-        TagElement tag = image.getTagElement(id);
+        TagW tag = image.getTagElement(id);
         if (tag == null) {
             return ""; //$NON-NLS-1$
         }

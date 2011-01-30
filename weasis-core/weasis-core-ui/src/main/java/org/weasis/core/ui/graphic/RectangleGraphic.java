@@ -24,7 +24,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.Messages;
 
 /**
@@ -111,8 +111,8 @@ public class RectangleGraphic extends AbstractDragGraphic {
                         int band = image.getSampleModel().getNumBands();
                         if (band == 1) {
                             // Hounsfield = pixelValue * rescale slope + intercept value
-                            Float slope = (Float) imageElement.getTagValue(TagElement.RescaleSlope);
-                            Float intercept = (Float) imageElement.getTagValue(TagElement.RescaleIntercept);
+                            Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
+                            Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
                             double min = Double.MAX_VALUE;
                             double max = -Double.MAX_VALUE;
                             double sum = 0;
@@ -141,7 +141,9 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
                             stdv = Math.sqrt(stdv / (pList.size() - 1.0));
 
-                            if (slope != null && intercept != null) {
+                            if (slope != null || intercept != null) {
+                                slope = slope == null ? 1.0f : slope;
+                                intercept = intercept == null ? 0.0f : intercept;
                                 mean = mean * slope + intercept;
                                 stdv = stdv * slope + intercept;
                                 min = min * slope + intercept;

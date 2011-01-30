@@ -39,7 +39,7 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -58,9 +58,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public final static String NAME = "DICOM"; //$NON-NLS-1$
     public final static String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
 
-    public final static TreeModelNode patient = new TreeModelNode(1, 0, TagElement.PatientPseudoUID);
-    public final static TreeModelNode study = new TreeModelNode(2, 0, TagElement.StudyInstanceUID);
-    public final static TreeModelNode series = new TreeModelNode(3, 0, TagElement.SubseriesInstanceUID);
+    public final static TreeModelNode patient = new TreeModelNode(1, 0, TagW.PatientPseudoUID);
+    public final static TreeModelNode study = new TreeModelNode(2, 0, TagW.StudyInstanceUID);
+    public final static TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID);
 
     public final static ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
     static {
@@ -72,7 +72,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public final static Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
-    private final HashMap<Modality, TagElement[]> splittingRules = new HashMap<Modality, TagElement[]>();
+    private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
 
     public DicomModel() {
         model = new Tree<MediaSeriesGroup>(rootNode);
@@ -81,16 +81,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         } else {
             Preferences p = prefs.node(PREFERENCE_NODE);
         }
-        splittingRules.put(Modality.Default, new TagElement[] { TagElement.ImageType, TagElement.ContrastBolusAgent,
-            TagElement.SOPClassUID });
-        splittingRules.put(Modality.CT, new TagElement[] { TagElement.ImageType, TagElement.ContrastBolusAgent,
-            TagElement.SOPClassUID, TagElement.ImageOrientationPlane, TagElement.GantryDetectorTilt,
-            TagElement.ConvolutionKernel });
+        splittingRules.put(Modality.Default, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID });
+        splittingRules.put(Modality.CT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
+            TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
         splittingRules.put(Modality.PT, splittingRules.get(Modality.CT));
-        splittingRules.put(Modality.MR, new TagElement[] { TagElement.ImageType, TagElement.ContrastBolusAgent,
-            TagElement.SOPClassUID, TagElement.ImageOrientationPlane, TagElement.ScanningSequence,
-            TagElement.SequenceVariant, TagElement.ScanOptions, TagElement.RepetitionTime, TagElement.EchoTime,
-            TagElement.InversionTime, TagElement.FlipAngle });
+        splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
+            TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
+            TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
     }
 
     public synchronized List<Codec> getCodecPlugins() {
@@ -219,11 +216,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void mergeSeries(Series[] seriesList) {
         if (seriesList != null && seriesList.length > 1) {
-            String uid = (String) seriesList[0].getTagValue(TagElement.SeriesInstanceUID);
+            String uid = (String) seriesList[0].getTagValue(TagW.SeriesInstanceUID);
             boolean sameOrigin = true;
             if (uid != null) {
                 for (int i = 1; i < seriesList.length; i++) {
-                    if (!uid.equals(seriesList[i].getTagValue(TagElement.SeriesInstanceUID))) {
+                    if (!uid.equals(seriesList[i].getTagValue(TagW.SeriesInstanceUID))) {
                         sameOrigin = false;
                         break;
                     }
@@ -233,7 +230,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 int min = Integer.MAX_VALUE;
                 Series base = seriesList[0];
                 for (Series series : seriesList) {
-                    Integer splitNb = (Integer) series.getTagValue(TagElement.SplitSeriesNumber);
+                    Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                     if (splitNb != null && min > splitNb) {
                         min = splitNb;
                         base = series;
@@ -314,13 +311,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public static boolean isSpecialModality(Series series) {
-        String modality = series == null ? null : (String) series.getTagValue(TagElement.Modality);
+        String modality = series == null ? null : (String) series.getTagValue(TagW.Modality);
         return (modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
-        String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
+        String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
         int k = 1;
         while (true) {
             String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
@@ -333,12 +330,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
         Series s = dicomReader.buildSeries(uid);
         dicomReader.writeMetaData(s);
-        Object val = original.getTagValue(TagElement.SplitSeriesNumber);
+        Object val = original.getTagValue(TagW.SplitSeriesNumber);
         if (val == null) {
-            original.setTag(TagElement.SplitSeriesNumber, 1);
+            original.setTag(TagW.SplitSeriesNumber, 1);
         }
-        s.setTag(TagElement.SplitSeriesNumber, k + 1);
-        s.setTag(TagElement.ExplorerModel, this);
+        s.setTag(TagW.SplitSeriesNumber, k + 1);
+        s.setTag(TagW.ExplorerModel, this);
         addHierarchyNode(study, s);
         s.addMedia(dicomReader);
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
@@ -346,7 +343,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private void replaceSeries(DicomMediaIO dicomReader, Series original) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
-        String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
+        String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
         int k = 1;
         while (true) {
             String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
@@ -359,13 +356,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
         Series s = dicomReader.buildSeries(uid);
         dicomReader.writeMetaData(s);
-        Object val = original.getTagValue(TagElement.SplitSeriesNumber);
+        Object val = original.getTagValue(TagW.SplitSeriesNumber);
         if (val == null) {
             // -1 convention to exclude this Series
-            original.setTag(TagElement.SplitSeriesNumber, -1);
+            original.setTag(TagW.SplitSeriesNumber, -1);
         }
-        s.setTag(TagElement.SplitSeriesNumber, k);
-        s.setTag(TagElement.ExplorerModel, this);
+        s.setTag(TagW.SplitSeriesNumber, k);
+        s.setTag(TagW.ExplorerModel, this);
         addHierarchyNode(study, s);
         s.addMedia(dicomReader);
         LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
@@ -387,9 +384,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (frames < 1) {
                     initialSeries.addMedia(dicomReader);
                 } else {
-                    Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagElement.Modality));
+                    Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagW.Modality));
                     DicomSeries dicomSeries = initialSeries;
-                    TagElement[] rules = splittingRules.get(modality);
+                    TagW[] rules = splittingRules.get(modality);
 
                     if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality)) {
                         if (frames > 1 && initialSeries.getMedias().size() > 0) {
@@ -409,7 +406,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         return false;
                     }
                     MediaSeriesGroup study = getParent(original, DicomModel.study);
-                    String seriesUID = (String) original.getTagValue(TagElement.SeriesInstanceUID);
+                    String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
                     int k = 1;
                     while (true) {
                         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
@@ -438,13 +435,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private boolean isSimilar(TagElement[] rules, DicomSeries series, final DicomMediaIO dicomReader) {
+    private boolean isSimilar(TagW[] rules, DicomSeries series, final DicomMediaIO dicomReader) {
         final DicomImageElement media = series.getMedia(0);
         if (media == null) {
             // no image
             return true;
         }
-        for (TagElement tagElement : rules) {
+        for (TagW tagElement : rules) {
             Object tag = dicomReader.getTagValue(tagElement);
             Object tag2 = media.getTagValue(tagElement);
             // special case if both are null

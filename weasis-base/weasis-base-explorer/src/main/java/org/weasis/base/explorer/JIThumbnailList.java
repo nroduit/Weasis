@@ -29,7 +29,7 @@ import javax.swing.event.ListSelectionEvent;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -276,7 +276,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
 
             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, view));
 
-            Object patient = media.getTagValue(TagElement.PatientName);
+            Object patient = media.getTagValue(TagW.PatientName);
 
             if (patient != null) {
                 view.setPluginName(patient.toString());
@@ -289,7 +289,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
                 if (media.getClass().isAssignableFrom(element.getClass())) {
                     series.add(element);
                     if (patient != null) {
-                        if (!patient.equals(element.getTagValue(TagElement.PatientName))) {
+                        if (!patient.equals(element.getTagValue(TagW.PatientName))) {
                             multiPatient = true;
                         }
                     }

@@ -37,7 +37,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -242,7 +242,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     && synch instanceof ComboItemListener) {
                     SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
                     if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
-                        double[] val = (double[]) image.getTagValue(TagElement.SlicePosition);
+                        double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
                         if (val != null) {
                             location = val[0] + val[1] + val[2];
                         }
@@ -252,7 +252,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         for (DefaultView2d<DicomImageElement> p : panes) {
                             Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
                             if (cutlines != null && cutlines) {
-                                double[] val = (double[]) image.getTagValue(TagElement.SlicePosition);
+                                double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
                                 if (val != null) {
                                     location = val[0] + val[1] + val[2];
                                 } else {
@@ -614,12 +614,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (lensZoom != null) {
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
         }
-        PresetWindowLevel[] presets =
-            PresetWindowLevel.getPresetCollection((String) series.getTagValue(TagElement.Modality));
+        PresetWindowLevel[] presets = PresetWindowLevel.getPresetCollection((String) series.getTagValue(TagW.Modality));
         presetAction.setDataList(presets);
         presetAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.PRESET.cmd()));
         moveTroughSliceAction.setMinMaxValue(1, series.size(), defaultView2d.getFrameIndex() + 1);
-        Integer speed = (Integer) series.getTagValue(TagElement.CineRate);
+        Integer speed = (Integer) series.getTagValue(TagW.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
@@ -662,7 +661,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
                 if (SynchView.NONE.equals(synchView)) {
-                    String fruid = (String) series.getTagValue(TagElement.FrameOfReferenceUID);
                     for (int i = 0; i < panes.size(); i++) {
                         DefaultView2d<DicomImageElement> pane = panes.get(i);
                         AbstractLayer layer = pane.getLayerModel().getLayer(Tools.CROSSLINES.getId());
@@ -670,8 +668,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             layer.deleteAllGraphic();
                         }
                         MediaSeries<DicomImageElement> s = pane.getSeries();
-                        if (s != null) {
-                            if (fruid.equals(s.getTagValue(TagElement.FrameOfReferenceUID))) {
+                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                        if (s != null && fruid != null) {
+                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                 if (!ImageOrientation.hasSameOrientation(series, s)) {
                                     pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
                                     propertySupport.addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
@@ -685,9 +684,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // TODO if Pan is activated than rotation is required
                     if (Mode.Stack.equals(synchView.getMode())) {
                         boolean hasLink = false;
-                        String fruid = (String) series.getTagValue(TagElement.FrameOfReferenceUID);
+                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                         DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE);
-                        double[] val = img == null ? null : (double[]) img.getTagValue(TagElement.SlicePosition);
+                        double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
 
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
@@ -697,7 +696,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             }
                             MediaSeries<DicomImageElement> s = pane.getSeries();
                             if (s != null && fruid != null && val != null) {
-                                if (fruid.equals(s.getTagValue(TagElement.FrameOfReferenceUID))) {
+                                if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                     if (ImageOrientation.hasSameOrientation(series, s)) {
                                         hasLink = true;
                                         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), true);

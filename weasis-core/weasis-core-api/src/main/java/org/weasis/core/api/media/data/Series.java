@@ -46,15 +46,15 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     protected final List<E> medias;
     protected SeriesImporter seriesLoader;
 
-    public Series(TagElement tagID, Object identifier, TagElement displayTag) {
+    public Series(TagW tagID, Object identifier, TagW displayTag) {
         this(tagID, identifier, displayTag, null);
     }
 
-    public Series(TagElement tagID, Object identifier, TagElement displayTag, int initialCapacity) {
+    public Series(TagW tagID, Object identifier, TagW displayTag, int initialCapacity) {
         this(tagID, identifier, displayTag, new ArrayList<E>(initialCapacity));
     }
 
-    public Series(TagElement tagID, Object identifier, TagElement displayTag, List<E> list) {
+    public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list) {
         super(tagID, identifier, displayTag);
         if (list == null) {
             list = new ArrayList<E>();
@@ -159,7 +159,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             }
         }
         medias.clear();
-        Thumbnail thumb = (Thumbnail) getTagValue(TagElement.Thumbnail);
+        Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
         if (thumb != null) {
             thumb.dispose();
         }
@@ -232,7 +232,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     public boolean isOpen() {
-        Boolean open = (Boolean) getTagValue(TagElement.SeriesOpen);
+        Boolean open = (Boolean) getTagValue(TagW.SeriesOpen);
         return open == null ? false : open;
     }
 
@@ -257,7 +257,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         return toolTips.toString();
     }
 
-    protected void addToolTipsElement(StringBuffer toolTips, String title, TagElement tag) {
+    protected void addToolTipsElement(StringBuffer toolTips, String title, TagW tag) {
         Object tagValue = getTagValue(tag);
         toolTips.append(title);
         toolTips.append(tagValue == null ? "" : tagValue); //$NON-NLS-1$
@@ -266,8 +266,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     public void setOpen(boolean open) {
         if (this.isOpen() != open) {
-            setTag(TagElement.SeriesOpen, open);
-            Thumbnail thumb = (Thumbnail) getTagValue(TagElement.Thumbnail);
+            setTag(TagW.SeriesOpen, open);
+            Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.repaint();
             }
@@ -275,14 +275,14 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     public boolean isSelected() {
-        Boolean selected = (Boolean) getTagValue(TagElement.SeriesSelected);
+        Boolean selected = (Boolean) getTagValue(TagW.SeriesSelected);
         return selected == null ? false : selected;
     }
 
     public void setSelected(boolean selected, int selectedImage) {
         if (this.isSelected() != selected) {
-            setTag(TagElement.SeriesSelected, selected);
-            Thumbnail thumb = (Thumbnail) getTagValue(TagElement.Thumbnail);
+            setTag(TagW.SeriesSelected, selected);
+            Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.repaint();
             }
@@ -300,7 +300,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         }
     }
 
-    public boolean hasMediaContains(TagElement tag, Object val) {
+    public boolean hasMediaContains(TagW tag, Object val) {
         if (val != null) {
             synchronized (medias) {
                 for (int i = 0; i < medias.size(); i++) {

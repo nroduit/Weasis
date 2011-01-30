@@ -41,7 +41,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.InfoViewElementPanel;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
@@ -51,101 +51,101 @@ import org.weasis.dicom.explorer.Messages;
 
 public class ModalityPrefView extends AbstractItemDialogPage implements DragGestureListener {
 
-    public final static HashMap<Integer, TagElement> tagList = new HashMap<Integer, TagElement>();
+    public final static HashMap<Integer, TagW> tagList = new HashMap<Integer, TagW>();
     static {
         // Patient
-        fillMap(TagElement.PatientID);
-        fillMap(TagElement.PatientName);
-        fillMap(TagElement.PatientBirthDate);
-        fillMap(TagElement.PatientBirthTime);
-        fillMap(TagElement.PatientSex);
-        fillMap(TagElement.IssuerOfPatientID);
-        fillMap(TagElement.PatientComments);
+        fillMap(TagW.PatientID);
+        fillMap(TagW.PatientName);
+        fillMap(TagW.PatientBirthDate);
+        fillMap(TagW.PatientBirthTime);
+        fillMap(TagW.PatientSex);
+        fillMap(TagW.IssuerOfPatientID);
+        fillMap(TagW.PatientComments);
 
         // Study
-        fillMap(TagElement.StudyID);
-        fillMap(TagElement.StudyDate);
-        fillMap(TagElement.StudyTime);
-        fillMap(TagElement.StudyDescription);
-        fillMap(TagElement.AccessionNumber);
-        fillMap(TagElement.ModalitiesInStudy);
-        fillMap(TagElement.NumberOfStudyRelatedInstances);
-        fillMap(TagElement.NumberOfStudyRelatedSeries);
-        fillMap(TagElement.StudyStatusID);
-        fillMap(TagElement.ProcedureCodeSequence);
+        fillMap(TagW.StudyID);
+        fillMap(TagW.StudyDate);
+        fillMap(TagW.StudyTime);
+        fillMap(TagW.StudyDescription);
+        fillMap(TagW.AccessionNumber);
+        fillMap(TagW.ModalitiesInStudy);
+        fillMap(TagW.NumberOfStudyRelatedInstances);
+        fillMap(TagW.NumberOfStudyRelatedSeries);
+        fillMap(TagW.StudyStatusID);
+        fillMap(TagW.ProcedureCodeSequence);
 
         // Series
-        fillMap(TagElement.SeriesInstanceUID);
-        fillMap(TagElement.Modality);
-        fillMap(TagElement.SeriesDate);
-        fillMap(TagElement.SeriesDescription);
-        fillMap(TagElement.RetrieveAETitle);
-        fillMap(TagElement.ReferringPhysicianName);
-        fillMap(TagElement.InstitutionName);
-        fillMap(TagElement.InstitutionalDepartmentName);
-        fillMap(TagElement.StationName);
-        fillMap(TagElement.Manufacturer);
-        fillMap(TagElement.ManufacturerModelName);
-        fillMap(TagElement.ReferencedPerformedProcedureStepSequence);
-        fillMap(TagElement.SeriesNumber);
-        fillMap(TagElement.PreferredPlaybackSequencing);
-        fillMap(TagElement.CineRate);
-        fillMap(TagElement.Laterality);
-        fillMap(TagElement.BodyPartExamined);
-        fillMap(TagElement.NumberOfSeriesRelatedInstances);
-        fillMap(TagElement.PerformedProcedureStepStartDate);
-        fillMap(TagElement.PerformedProcedureStepStartTime);
-        fillMap(TagElement.RequestAttributesSequence);
+        fillMap(TagW.SeriesInstanceUID);
+        fillMap(TagW.Modality);
+        fillMap(TagW.SeriesDate);
+        fillMap(TagW.SeriesDescription);
+        fillMap(TagW.RetrieveAETitle);
+        fillMap(TagW.ReferringPhysicianName);
+        fillMap(TagW.InstitutionName);
+        fillMap(TagW.InstitutionalDepartmentName);
+        fillMap(TagW.StationName);
+        fillMap(TagW.Manufacturer);
+        fillMap(TagW.ManufacturerModelName);
+        fillMap(TagW.ReferencedPerformedProcedureStepSequence);
+        fillMap(TagW.SeriesNumber);
+        fillMap(TagW.PreferredPlaybackSequencing);
+        fillMap(TagW.CineRate);
+        fillMap(TagW.Laterality);
+        fillMap(TagW.BodyPartExamined);
+        fillMap(TagW.NumberOfSeriesRelatedInstances);
+        fillMap(TagW.PerformedProcedureStepStartDate);
+        fillMap(TagW.PerformedProcedureStepStartTime);
+        fillMap(TagW.RequestAttributesSequence);
 
         // Instance
-        fillMap(TagElement.ImageType);
-        fillMap(TagElement.ImageComments);
-        fillMap(TagElement.ContrastBolusAgent);
-        fillMap(TagElement.TransferSyntaxUID);
-        fillMap(TagElement.InstanceNumber);
-        fillMap(TagElement.SOPInstanceUID);
-        fillMap(TagElement.SOPClassUID);
-        fillMap(TagElement.ScanningSequence);
-        fillMap(TagElement.SequenceVariant);
-        fillMap(TagElement.ScanOptions);
-        fillMap(TagElement.RepetitionTime);
-        fillMap(TagElement.EchoTime);
-        fillMap(TagElement.InversionTime);
-        fillMap(TagElement.EchoNumbers);
-        fillMap(TagElement.GantryDetectorTilt);
-        fillMap(TagElement.ConvolutionKernel);
-        fillMap(TagElement.FlipAngle);
-        fillMap(TagElement.SliceLocation);
-        fillMap(TagElement.SliceThickness);
-        fillMap(TagElement.AcquisitionDate);
-        fillMap(TagElement.AcquisitionTime);
+        fillMap(TagW.ImageType);
+        fillMap(TagW.ImageComments);
+        fillMap(TagW.ContrastBolusAgent);
+        fillMap(TagW.TransferSyntaxUID);
+        fillMap(TagW.InstanceNumber);
+        fillMap(TagW.SOPInstanceUID);
+        fillMap(TagW.SOPClassUID);
+        fillMap(TagW.ScanningSequence);
+        fillMap(TagW.SequenceVariant);
+        fillMap(TagW.ScanOptions);
+        fillMap(TagW.RepetitionTime);
+        fillMap(TagW.EchoTime);
+        fillMap(TagW.InversionTime);
+        fillMap(TagW.EchoNumbers);
+        fillMap(TagW.GantryDetectorTilt);
+        fillMap(TagW.ConvolutionKernel);
+        fillMap(TagW.FlipAngle);
+        fillMap(TagW.SliceLocation);
+        fillMap(TagW.SliceThickness);
+        fillMap(TagW.AcquisitionDate);
+        fillMap(TagW.AcquisitionTime);
 
-        fillMap(TagElement.ImagePositionPatient);
-        fillMap(TagElement.ImageOrientationPatient);
-        fillMap(TagElement.ImageOrientationPlane);
-        fillMap(TagElement.PixelSpacing);
-        fillMap(TagElement.WindowWidth);
-        fillMap(TagElement.WindowCenter);
+        fillMap(TagW.ImagePositionPatient);
+        fillMap(TagW.ImageOrientationPatient);
+        fillMap(TagW.ImageOrientationPlane);
+        fillMap(TagW.PixelSpacing);
+        fillMap(TagW.WindowWidth);
+        fillMap(TagW.WindowCenter);
 
-        fillMap(TagElement.RescaleSlope);
-        fillMap(TagElement.RescaleIntercept);
+        fillMap(TagW.RescaleSlope);
+        fillMap(TagW.RescaleIntercept);
 
-        fillMap(TagElement.SmallestImagePixelValue);
-        fillMap(TagElement.LargestImagePixelValue);
-        fillMap(TagElement.PixelPaddingValue);
-        fillMap(TagElement.NumberOfFrames);
-        fillMap(TagElement.PixelPaddingRangeLimit);
-        fillMap(TagElement.OverlayRows);
+        fillMap(TagW.SmallestImagePixelValue);
+        fillMap(TagW.LargestImagePixelValue);
+        fillMap(TagW.PixelPaddingValue);
+        fillMap(TagW.NumberOfFrames);
+        fillMap(TagW.PixelPaddingRangeLimit);
+        fillMap(TagW.OverlayRows);
 
-        fillMap(TagElement.SamplesPerPixel);
-        fillMap(TagElement.MonoChrome);
-        fillMap(TagElement.PhotometricInterpretation);
+        fillMap(TagW.SamplesPerPixel);
+        fillMap(TagW.MonoChrome);
+        fillMap(TagW.PhotometricInterpretation);
 
-        fillMap(TagElement.Rows);
-        fillMap(TagElement.Columns);
-        fillMap(TagElement.BitsAllocated);
-        fillMap(TagElement.BitsStored);
-        fillMap(TagElement.PixelRepresentation);
+        fillMap(TagW.Rows);
+        fillMap(TagW.Columns);
+        fillMap(TagW.BitsAllocated);
+        fillMap(TagW.BitsStored);
+        fillMap(TagW.PixelRepresentation);
     }
     private JList list;
     private DragSource ds;
@@ -175,7 +175,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         changCornerView();
     }
 
-    private static void fillMap(TagElement tag) {
+    private static void fillMap(TagW tag) {
         tagList.put(tag.getId(), tag);
     }
 
@@ -252,7 +252,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         jButtonFormat.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                TagElement element = (TagElement) jListPosition.getSelectedValue();
+                TagW element = (TagW) jListPosition.getSelectedValue();
                 if (element != null) {
                     String result =
                         JOptionPane.showInputDialog(ModalityPrefView.this, element.getName(), element.getFormat());
@@ -296,35 +296,35 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             infos = new ModalityInfoData[modalities.length - 1];
             for (int i = 0; i < infos.length; i++) {
                 infos[i] = new ModalityInfoData(modalities[i + 1]);
-                TagElement[] disElements = infos[i].getCornerInfo(CornerDisplay.TOP_LEFT).getInfos();
-                disElements[0] = TagElement.PatientName;
-                disElements[1] = TagElement.PatientBirthDate;
-                disElements[2] = TagElement.PatientID;
+                TagW[] disElements = infos[i].getCornerInfo(CornerDisplay.TOP_LEFT).getInfos();
+                disElements[0] = TagW.PatientName;
+                disElements[1] = TagW.PatientBirthDate;
+                disElements[2] = TagW.PatientID;
                 // TODO set format once at the beginning
                 disElements[2].setFormat(Messages.getString("ModalityPrefView.id")); //$NON-NLS-1$
-                disElements[3] = TagElement.PatientSex;
+                disElements[3] = TagW.PatientSex;
                 disElements[3].setFormat(Messages.getString("ModalityPrefView.sex")); //$NON-NLS-1$
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
-                disElements[0] = TagElement.InstitutionName;
-                disElements[1] = TagElement.StudyID;
+                disElements[0] = TagW.InstitutionName;
+                disElements[1] = TagW.StudyID;
                 disElements[1].setFormat(Messages.getString("ModalityPrefView.study")); //$NON-NLS-1$
-                disElements[2] = TagElement.StudyDescription;
+                disElements[2] = TagW.StudyDescription;
                 disElements[2].setFormat(Messages.getString("ModalityPrefView.study_des")); //$NON-NLS-1$
-                disElements[3] = TagElement.AcquisitionDate;
+                disElements[3] = TagW.AcquisitionDate;
                 disElements[3].setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
-                disElements[4] = TagElement.AcquisitionTime;
+                disElements[4] = TagW.AcquisitionTime;
                 disElements[4].setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
-                disElements[2] = TagElement.SeriesNumber;
+                disElements[2] = TagW.SeriesNumber;
                 disElements[2].setFormat(Messages.getString("ModalityPrefView.series_nb")); //$NON-NLS-1$
-                disElements[3] = TagElement.ContrastBolusAgent;
-                disElements[4] = TagElement.SeriesDescription;
+                disElements[3] = TagW.ContrastBolusAgent;
+                disElements[4] = TagW.SeriesDescription;
                 disElements[4].setFormat(Messages.getString("ModalityPrefView.series_desc")); //$NON-NLS-1$
-                disElements[5] = TagElement.SliceThickness;
+                disElements[5] = TagW.SliceThickness;
                 disElements[5].setFormat(Messages.getString("ModalityPrefView.thick")); //$NON-NLS-1$
-                disElements[6] = TagElement.SliceLocation;
+                disElements[6] = TagW.SliceLocation;
                 disElements[6].setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
             }
         }
@@ -364,7 +364,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         Component component = dge.getComponent();
         Transferable t = null;
         if (component instanceof JList) {
-            t = (TagElement) ((JList) component).getSelectedValue();
+            t = (TagW) ((JList) component).getSelectedValue();
         }
         if (t != null) {
             try {
@@ -375,7 +375,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         }
     }
 
-    public static TagElement getInfoElement(int id) {
+    public static TagW getInfoElement(int id) {
         return tagList.get(id);
     }
 

@@ -21,7 +21,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.dcm4che2.data.VR;
-import org.weasis.core.api.media.data.TagElement.TagType;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;

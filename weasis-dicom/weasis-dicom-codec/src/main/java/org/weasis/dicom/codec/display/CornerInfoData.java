@@ -12,25 +12,25 @@ package org.weasis.dicom.codec.display;
 
 import java.io.Serializable;
 
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public class CornerInfoData implements Serializable {
 
     private static final long serialVersionUID = 5017001560431431636L;
     public final static int ELEMENT_NUMBER = 7;
     private final CornerDisplay corner;
-    private TagElement[] infos;
+    private TagW[] infos;
 
     public CornerInfoData(CornerDisplay corner) {
         this.corner = corner;
-        this.infos = new TagElement[ELEMENT_NUMBER];
+        this.infos = new TagW[ELEMENT_NUMBER];
     }
 
-    public TagElement[] getInfos() {
+    public TagW[] getInfos() {
         return infos;
     }
 
-    public void setInfos(TagElement[] infos) {
+    public void setInfos(TagW[] infos) {
         this.infos = infos;
     }
 

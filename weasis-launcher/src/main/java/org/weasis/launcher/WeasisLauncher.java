@@ -692,13 +692,16 @@ public class WeasisLauncher {
         } else {
             forceLook = true;
         }
-        if (look == null) {
-            String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
-            int index = sys_spec.indexOf("-"); //$NON-NLS-1$
-            if (index > 0) {
-                String sys = sys_spec.substring(0, index);
-                look = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
+        String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
+        int index = sys_spec.indexOf("-"); //$NON-NLS-1$
+        if (index > 0) {
+            String sys = sys_spec.substring(0, index);
+            String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
+            if (weasisNativeLaf != null) {
                 forceLook = true;
+            }
+            if (look == null) {
+                look = weasisNativeLaf;
             }
 
         }

@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.wado;
 
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.Messages;
 
 public class WadoParameters {
@@ -72,7 +72,7 @@ public class WadoParameters {
         return overrideDicomTagIDList;
     }
 
-    public boolean isOverrideTag(TagElement tagElement) {
+    public boolean isOverrideTag(TagW tagElement) {
         if (overrideDicomTagIDList != null) {
             int tagID = tagElement.getId();
             for (int overTag : overrideDicomTagIDList) {

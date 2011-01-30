@@ -24,7 +24,7 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.InfoViewListPanel;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.dicom.codec.display.CornerInfoData;
 
@@ -49,7 +49,7 @@ public class InfoViewElementPanel extends InfoViewListPanel {
     public void setCorner(CornerInfoData corner) {
         this.corner = corner;
         if (corner != null) {
-            TagElement[] elements = corner.getInfos();
+            TagW[] elements = corner.getInfos();
             for (int i = 0; i < infoView.length; i++) {
                 infoView[i].setInfoElement(elements[i]);
             }
@@ -58,7 +58,7 @@ public class InfoViewElementPanel extends InfoViewListPanel {
     }
 
     @Override
-    protected void setInfoElement(TagElement tag, Point dropPoint) {
+    protected void setInfoElement(TagW tag, Point dropPoint) {
         Component c = this.getComponentAt(dropPoint);
         if (c instanceof InfoView) {
             int index = getInfoViewIndex((InfoView) c);
@@ -81,18 +81,18 @@ public class InfoViewElementPanel extends InfoViewListPanel {
 
     private static class InfoView extends JComponent {
 
-        private TagElement infoElement;
+        private TagW infoElement;
 
         public InfoView() {
             setBackground(Color.BLACK);
             setForeground(Color.WHITE);
         }
 
-        public TagElement getInfoElement() {
+        public TagW getInfoElement() {
             return infoElement;
         }
 
-        public void setInfoElement(TagElement infoElement) {
+        public void setInfoElement(TagW infoElement) {
             this.infoElement = infoElement;
         }
 
@@ -126,7 +126,7 @@ public class InfoViewElementPanel extends InfoViewListPanel {
             if (!support.isDrop()) {
                 return false;
             }
-            return support.isDataFlavorSupported(TagElement.infoElementDataFlavor);
+            return support.isDataFlavorSupported(TagW.infoElementDataFlavor);
         }
 
         @Override
@@ -138,7 +138,7 @@ public class InfoViewElementPanel extends InfoViewListPanel {
             DicomTag tag;
 
             try {
-                tag = (DicomTag) transferable.getTransferData(TagElement.infoElementDataFlavor);
+                tag = (DicomTag) transferable.getTransferData(TagW.infoElementDataFlavor);
                 setInfoElement(tag, support.getDropLocation().getDropPoint());
             } catch (Exception e) {
                 // TODO Auto-generated catch block

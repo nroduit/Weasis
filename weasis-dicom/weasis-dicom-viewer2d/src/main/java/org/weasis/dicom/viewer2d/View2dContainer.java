@@ -46,7 +46,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -275,27 +275,26 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
                         if (dcmSeries instanceof DicomSeries) {
-                            DicomSeries dcm = (DicomSeries) dcmSeries;
-                            DefaultView2d view2DPane = eventManager.getSelectedViewPane();
-                            if (view2DPane.getSeries() == dcm) {
+                            DicomSeries series = (DicomSeries) dcmSeries;
+                            DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
+                            DicomImageElement img = view2DPane.getImage();
+                            if (img != null && view2DPane.getSeries() == series) {
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                                 if (seqAction instanceof SliderCineListener) {
                                     SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    int frameIndex = sliceAction.getValue();
                                     if (param instanceof Integer) {
-                                        // Model contains display value, value-1 is the index
-                                        // value of a sequence
-                                        frameIndex = (Integer) param <= frameIndex ? frameIndex + 1 : frameIndex;
-                                        int size = dcm.size();
-                                        // When the action AddImage add the first image of the
-                                        // series
-                                        if (frameIndex > size) {
-                                            frameIndex = size;
+                                        int imgIndex = series.getImageIndex(img);
+                                        int size = series.size();
+
+                                        if (imgIndex < 0) {
+                                            imgIndex = 0;
                                             // add again the series for registering listeners
                                             // (require at least one image)
-                                            view2DPane.setSeries(dcm, -1);
+                                            view2DPane.setSeries(series, -1);
                                         }
-                                        sliceAction.setMinMaxValue(1, size, frameIndex);
+                                        if (imgIndex >= 0) {
+                                            sliceAction.setMinMaxValue(1, size, imgIndex + 1);
+                                        }
                                     }
                                 }
                             }
@@ -323,7 +322,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 } else if (newVal instanceof MediaSeriesGroup) {
                     MediaSeriesGroup group = (MediaSeriesGroup) newVal;
                     // Patient Group
-                    if (TagElement.PatientPseudoUID.equals(group.getTagID())) {
+                    if (TagW.PatientPseudoUID.equals(group.getTagID())) {
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
@@ -336,7 +335,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         }
                     }
                     // Study Group
-                    else if (TagElement.StudyInstanceUID.equals(group.getTagID())) {
+                    else if (TagW.StudyInstanceUID.equals(group.getTagID())) {
                         if (event.getSource() instanceof DicomModel) {
                             DicomModel model = (DicomModel) event.getSource();
                             for (MediaSeriesGroup s : model.getChildren(group)) {

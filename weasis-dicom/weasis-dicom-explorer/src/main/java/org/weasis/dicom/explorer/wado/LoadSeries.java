@@ -62,8 +62,8 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
-import org.weasis.core.api.media.data.TagElement;
-import org.weasis.core.api.media.data.TagElement.TagType;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
@@ -74,7 +74,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.task.CircularProgressBar;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.wado.WadoParameters;
@@ -108,7 +107,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         final List<DicomInstance> sopList =
-            (List<DicomInstance>) dicomSeries.getTagValue(TagElement.WadoInstanceReferenceList);
+            (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
             @Override
@@ -144,15 +143,19 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         if (progressBar.getValue() == progressBar.getMaximum()) {
             LoadRemoteDicom.currentTasks.remove(this);
-            Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+            Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
                 thumbnail.repaint();
             }
-            Integer splitNb = (Integer) dicomSeries.getTagValue(TagElement.SplitSeriesNumber);
-            Object dicomObject = dicomSeries.getTagValue(TagElement.DicomSpecialElement);
+            Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+            Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
             if (splitNb != null || dicomObject != null) {
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null,
+                    dicomSeries));
+            } else if (dicomSeries.size() == 0) {
+                // Remove in case of split Series and all the SopInstanceUIDs already exist
+                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, dicomModel, null,
                     dicomSeries));
             }
         }
@@ -160,31 +163,31 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
-        if (dicomSeries.hasMediaContains(TagElement.SOPInstanceUID, sopUID)) {
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
             return true;
         }
-        Object splitNb = dicomSeries.getTagValue(TagElement.SplitSeriesNumber);
-        if (splitNb != null && study != null) {
-            String uid = (String) dicomSeries.getTagValue(TagElement.SeriesInstanceUID);
-            if (uid != null) {
-                Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                    MediaSeriesGroup group = it.next();
-                    if (group instanceof DicomSeries) {
-                        DicomSeries s = (DicomSeries) group;
-                        if (uid.equals(s.getTagValue(TagElement.SeriesInstanceUID))) {
-                            if (s.hasMediaContains(TagElement.SOPInstanceUID, sopUID)) {
-                                return true;
-                            }
+        // Search in split Series, cannot use "has this series a SplitNumber" because splitting can be executed later
+        // for Dicom Video and other special Dicom
+        String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+        if (study != null && uid != null) {
+            Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
+            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                MediaSeriesGroup group = it.next();
+                if (dicomSeries != group && group instanceof Series) {
+                    Series s = (Series) group;
+                    if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
+                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+                            return true;
                         }
                     }
                 }
             }
         }
+
         return false;
     }
 
-    private void setProgressBarValue(final int value) {
+    private void incrementProgressBarValue() {
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
@@ -201,15 +204,21 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         log.info("Downloading series of {} [{}]", patient, dicomSeries); //$NON-NLS-1$
 
         final List<DicomInstance> sopList =
-            (List<DicomInstance>) dicomSeries.getTagValue(TagElement.WadoInstanceReferenceList);
-        final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagElement.WadoParameters);
+            (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
+        final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
         if (wado == null) {
             return false;
         }
         ExecutorService imageDownloader = Executors.newFixedThreadPool(CODOWNLOAD_NUMBER);
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
-        setProgressBarValue(0);
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                progressBar.setValue(0);
+            }
+        });
         for (int k = 0; k < sopList.size(); k++) {
             DicomInstance instance = sopList.get(dindex[k]);
             if (isCancelled()) {
@@ -217,9 +226,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
             // Test if SOPInstanceUID already exists
             if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
-                setProgressBarValue(k + 1);
+                incrementProgressBarValue();
+                log.debug("DICOM instance {} already exists, skip.", instance.getSopInstanceUID()); //$NON-NLS-1$
                 continue;
             }
+
             URL url = null;
             try {
 
@@ -231,8 +242,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 String studyUID = ""; //$NON-NLS-1$
                 String seriesUID = ""; //$NON-NLS-1$
                 if (!wado.isRequireOnlySOPInstanceUID()) {
-                    studyUID = (String) study.getTagValue(TagElement.StudyInstanceUID);
-                    seriesUID = (String) dicomSeries.getTagValue(TagElement.SeriesInstanceUID);
+                    studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
+                    seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
                 }
                 StringBuffer request = new StringBuffer(wado.getWadoURL());
                 request.append("?requestType=WADO&studyUID="); //$NON-NLS-1$
@@ -244,9 +255,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 request.append("&contentType=application%2Fdicom"); //$NON-NLS-1$
                 TransferSyntax transcoding = DicomManager.getInstance().getWadoTSUID();
                 if (transcoding.getTransferSyntaxUID() != null) {
-                    dicomSeries.setTag(TagElement.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
+                    dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
                 }
-                String wado_tsuid = (String) dicomSeries.getTagValue(TagElement.WadoTransferSyntaxUID);
+                String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                 if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
                     // Mac does not have native jpeg2000 decoder (J2KImageReaderCodecLib), will use J2KImageReader
                     // if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
@@ -256,9 +267,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     request.append("&transferSyntax="); //$NON-NLS-1$
                     request.append(wado_tsuid);
                     if (transcoding.getTransferSyntaxUID() != null) {
-                        dicomSeries.setTag(TagElement.WadoCompressionRate, transcoding.getCompression());
+                        dicomSeries.setTag(TagW.WadoCompressionRate, transcoding.getCompression());
                     }
-                    Integer rate = (Integer) dicomSeries.getTagValue(TagElement.WadoCompressionRate);
+                    Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
                     if (rate != null && rate > 0) {
                         request.append("&imageQuality="); //$NON-NLS-1$
                         request.append(rate);
@@ -279,7 +290,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 log.error(e1.getMessage(), e1.getCause());
                 continue;
             }
-
+            log.debug("Download DICOM instance {} index {}.", url, k); //$NON-NLS-1$
             Download ref = new Download(url, wado);
             tasks.add(ref);
             // Future future = imageDownloader.submit(ref);
@@ -310,7 +321,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     public void startDownloadImageReference(final WadoParameters wadoParameters) {
         final List<DicomInstance> sopList =
-            (List<DicomInstance>) dicomSeries.getTagValue(TagElement.WadoInstanceReferenceList);
+            (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         if (sopList.size() > 0) {
             // Sort the UIDs for building the thumbnail that is in the middle of
             // the Series
@@ -354,8 +365,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     String seriesUID = ""; //$NON-NLS-1$
                     if (!wadoParameters.isRequireOnlySOPInstanceUID()) {
                         MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                        studyUID = (String) study.getTagValue(TagElement.StudyInstanceUID);
-                        seriesUID = (String) dicomSeries.getTagValue(TagElement.SeriesInstanceUID);
+                        studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
+                        seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
                     }
                     File file = null;
                     try {
@@ -370,7 +381,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             @Override
                             public void run() {
 
-                                Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                                Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumbnail == null) {
                                     thumbnail = new Thumbnail(dicomSeries, finalfile, Thumbnail.DEFAULT_SIZE);
                                 }
@@ -383,7 +394,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 }
                                 addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
                                 thumbnail.registerListeners();
-                                dicomSeries.setTag(TagElement.Thumbnail, thumbnail);
+                                dicomSeries.setTag(TagW.Thumbnail, thumbnail);
                             }
 
                         });
@@ -484,7 +495,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                         public void actionPerformed(ActionEvent e) {
 
-                            String fruid = (String) series.getTagValue(TagElement.FrameOfReferenceUID);
+                            String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                             if (fruid != null) {
                                 selList.clear();
                                 MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
@@ -494,7 +505,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         MediaSeriesGroup seq = it.next();
                                         if (seq instanceof Series) {
                                             Series s = (Series) seq;
-                                            if (fruid.equals(s.getTagValue(TagElement.FrameOfReferenceUID))) {
+                                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                                 selList.add(s);
                                             }
                                         }
@@ -508,7 +519,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     item2.addActionListener(new ActionListener() {
 
                         public void actionPerformed(ActionEvent e) {
-                            String fruid = (String) series.getTagValue(TagElement.FrameOfReferenceUID);
+                            String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                             if (fruid != null) {
                                 selList.clear();
                                 MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
@@ -518,7 +529,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         MediaSeriesGroup seq = it.next();
                                         if (seq instanceof Series) {
                                             Series s = (Series) seq;
-                                            if (fruid.equals(s.getTagValue(TagElement.FrameOfReferenceUID))) {
+                                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                                 if (ImageOrientation.hasSameOrientation(series, s)) {
                                                     selList.add(s);
                                                 }
@@ -544,7 +555,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
                                 taskResume.setPriority(p);
                                 Thumbnail thumbnail =
-                                    (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagElement.Thumbnail);
+                                    (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
                                 if (thumbnail != null) {
                                     LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                     addListenerToThumbnail(thumbnail, taskResume, dicomModel);
@@ -568,13 +579,13 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         popupMenu.add(new JSeparator());
                     }
 
-                    Object splitNb = series.getTagValue(TagElement.SplitSeriesNumber);
+                    Object splitNb = series.getTagValue(TagW.SplitSeriesNumber);
                     if (splitNb != null && selList.size() > 1 && loadSeries.isDone()) {
-                        String uid = (String) series.getTagValue(TagElement.SeriesInstanceUID);
+                        String uid = (String) series.getTagValue(TagW.SeriesInstanceUID);
                         boolean sameOrigin = true;
                         if (uid != null) {
                             for (Series s : selList) {
-                                if (!uid.equals(s.getTagValue(TagElement.SeriesInstanceUID))) {
+                                if (!uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
                                     sameOrigin = false;
                                     break;
                                 }
@@ -905,8 +916,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         // Download file.
         public Boolean call() throws Exception {
-            // Increment progress bar (prevent exception) and repaint when downloaded
-            setProgressBarValue(progressBar.getValue() + 1);
+            // Increment progress bar in EDT and repaint when downloaded
+            incrementProgressBarValue();
 
             // RandomAccessFile file = null;
             InputStream stream = null;
@@ -960,9 +971,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 // stateChanged();
             }
             final DicomMediaIO dicomReader = new DicomMediaIO(tempFile);
-
+            log.debug("Download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
             if (dicomSeries != null) {
-                final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagElement.WadoParameters);
+                final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                 if (wado == null) {
                     return false;
                 }
@@ -985,7 +996,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             public void run() {
-                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumb != null) {
                                     thumb.repaint();
                                 }
@@ -1012,7 +1023,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 boolean firstImage = dicomSeries.size() == 1;
 
                                 dicomReader.reset();
-                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagElement.Thumbnail);
+                                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumb != null) {
                                     thumb.repaint();
                                 }
@@ -1066,7 +1077,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
                     VRMap vrMap = VRMap.getVRMap();
                     for (int tag : overrideList) {
-                        TagElement tagElement = patient.getTagElement(tag);
+                        TagW tagElement = patient.getTagElement(tag);
                         Object value = null;
                         if (tagElement == null) {
                             tagElement = study.getTagElement(tag);
@@ -1124,7 +1135,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar());
                             s.cancel(true);
                             taskResume.setPriority(s.getPriority());
-                            Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagElement.Thumbnail);
+                            Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
                             if (thumbnail != null) {
                                 LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                 addListenerToThumbnail(thumbnail, taskResume, dicomModel);

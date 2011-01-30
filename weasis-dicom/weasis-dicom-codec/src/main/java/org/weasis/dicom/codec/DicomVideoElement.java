@@ -14,7 +14,7 @@ import java.io.File;
 
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 
 public class DicomVideoElement extends AudioVideoElement {
 
@@ -28,9 +28,9 @@ public class DicomVideoElement extends AudioVideoElement {
     public DicomVideoElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
         // Physical distance in mm between the center of each pixel (ratio in mm)
-        double[] val = (double[]) mediaIO.getTagValue(TagElement.PixelSpacing);
+        double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
         if (val == null) {
-            val = (double[]) mediaIO.getTagValue(TagElement.ImagerPixelSpacing);
+            val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
         }
         if (val != null) {
             pixelSizeX = val[0];

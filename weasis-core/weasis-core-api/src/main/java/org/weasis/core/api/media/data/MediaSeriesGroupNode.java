@@ -21,30 +21,30 @@ import org.weasis.core.api.Messages;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
-    private final TagElement tagID;
-    private final TagElement displayTag;
-    private final HashMap<TagElement, Object> tags;
-    private Comparator<TagElement> comparator;
+    private final TagW tagID;
+    private final TagW displayTag;
+    private final HashMap<TagW, Object> tags;
+    private Comparator<TagW> comparator;
 
-    public MediaSeriesGroupNode(TagElement tagID, Object identifier) {
+    public MediaSeriesGroupNode(TagW tagID, Object identifier) {
         this(tagID, identifier, null);
     }
 
-    public MediaSeriesGroupNode(TagElement tagID, Object identifier, TagElement displayTag) {
+    public MediaSeriesGroupNode(TagW tagID, Object identifier, TagW displayTag) {
         if (tagID == null || identifier == null) {
             throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
         }
         this.displayTag = displayTag == null ? tagID : displayTag;
-        this.tags = new HashMap<TagElement, Object>();
+        this.tags = new HashMap<TagW, Object>();
         this.tagID = tagID;
         tags.put(tagID, identifier);
     }
 
-    public TagElement getTagID() {
+    public TagW getTagID() {
         return tagID;
     }
 
-    public boolean containTagKey(TagElement tag) {
+    public boolean containTagKey(TagW tag) {
         return tags.containsKey(tag);
     }
 
@@ -87,20 +87,26 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return val.hashCode();
     }
 
-    public void setTag(TagElement tag, Object value) {
+    public void setTag(TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
-    public Object getTagValue(TagElement tag) {
+    public void setTagNoNull(TagW tag, Object value) {
+        if (tag != null && value != null) {
+            tags.put(tag, value);
+        }
+    }
+
+    public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
 
-    public TagElement getTagElement(int id) {
-        Iterator<TagElement> enumVal = tags.keySet().iterator();
+    public TagW getTagElement(int id) {
+        Iterator<TagW> enumVal = tags.keySet().iterator();
         while (enumVal.hasNext()) {
-            TagElement e = enumVal.next();
+            TagW e = enumVal.next();
             if (e.getId() == id) {
                 return e;
             }
@@ -108,7 +114,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return null;
     }
 
-    public Iterator<Entry<TagElement, Object>> getTagEntrySetIterator() {
+    public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
         return tags.entrySet().iterator();
     }
 
@@ -118,12 +124,12 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     // can be null
     @Override
-    public Comparator<TagElement> getComparator() {
+    public Comparator<TagW> getComparator() {
         return comparator;
     }
 
     @Override
-    public void setComparator(Comparator<TagElement> comparator) {
+    public void setComparator(Comparator<TagW> comparator) {
         this.comparator = comparator;
 
     }

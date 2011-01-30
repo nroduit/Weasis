@@ -21,34 +21,34 @@ import javax.media.jai.RenderedOp;
 
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
 public class DicomImageElement extends ImageElement {
 
     public DicomImageElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
-        String modality = (String) mediaIO.getTagValue(TagElement.Modality);
+        String modality = (String) mediaIO.getTagValue(TagW.Modality);
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
             // Physical distance in mm between the center of each pixel (ratio in mm)
-            double[] val = (double[]) mediaIO.getTagValue(TagElement.PixelSpacing);
+            double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
             if (val == null) {
-                val = (double[]) mediaIO.getTagValue(TagElement.ImagerPixelSpacing);
-                // Follows D. Clunies recommendations
+                val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
+                // Follows D. Clunie recommendations
                 pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector"); //$NON-NLS-1$
 
             } else {
                 pixelSizeCalibrationDescription =
-                    (String) mediaIO.getTagValue(TagElement.PixelSpacingCalibrationDescription);
+                    (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
             if (val != null) {
                 pixelSizeX = val[0];
                 pixelSizeY = val[1];
                 pixelSpacingUnit = Unit.MILLIMETER;
             }
-            pixelValueUnit = (String) getTagValue(TagElement.RescaleType);
+            pixelValueUnit = (String) getTagValue(TagW.RescaleType);
             if (pixelValueUnit == null) {
-                pixelValueUnit = (String) getTagValue(TagElement.Units);
+                pixelValueUnit = (String) getTagValue(TagW.Units);
             }
             if (pixelValueUnit == null && "CT".equals(modality)) { //$NON-NLS-1$
                 pixelValueUnit = "HU"; //$NON-NLS-1$
@@ -59,7 +59,11 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     public float getPixelWindow(float window) {
-        return window /= (Float) getTagValue(TagElement.RescaleSlope);
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
+        if (slope != null) {
+            return window /= slope;
+        }
+        return window;
     }
 
     @Override
@@ -69,7 +73,8 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     protected boolean isGrayImage(RenderedImage source) {
-        return (Boolean) getTagValue(TagElement.MonoChrome);
+        Boolean val = (Boolean) getTagValue(TagW.MonoChrome);
+        return val == null ? true : val;
     }
 
     @Override
@@ -77,8 +82,10 @@ public class DicomImageElement extends ImageElement {
         // This function can be called several times from the inner class Load.
         // Not necessary to find again min and max
         if (minValue == 0.0f && maxValue == 0.0f) {
-            minValue = (Float) getTagValue(TagElement.SmallestImagePixelValue);
-            maxValue = (Float) getTagValue(TagElement.LargestImagePixelValue);
+            Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
+            Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
+            minValue = min == null ? 0.0f : min.floatValue();
+            maxValue = max == null ? 0.0f : max.floatValue();
             /*
              * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
              * be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both
@@ -86,10 +93,10 @@ public class DicomImageElement extends ImageElement {
              * image contrast manipulations shall not be applied to those pixels with values in the range between the
              * values of Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive."
              */
-            int paddingValue = (Integer) getTagValue(TagElement.PixelPaddingValue);
-            int paddingLimit = (Integer) getTagValue(TagElement.PixelPaddingRangeLimit);
-            if (paddingValue > 0) {
-                if (paddingLimit == 0) {
+            Integer paddingValue = (Integer) getTagValue(TagW.PixelPaddingValue);
+            Integer paddingLimit = (Integer) getTagValue(TagW.PixelPaddingRangeLimit);
+            if (paddingValue != null) {
+                if (paddingLimit == null) {
                     paddingLimit = paddingValue;
                 } else if (paddingLimit < paddingValue) {
                     int temp = paddingValue;
@@ -139,8 +146,8 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     public float getDefaultWindow() {
-        Float val = (Float) getTagValue(TagElement.WindowWidth);
-        if (val.isNaN()) {
+        Float val = (Float) getTagValue(TagW.WindowWidth);
+        if (val == null) {
             return super.getDefaultWindow();
         }
         return val;
@@ -148,8 +155,8 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     public float getDefaultLevel() {
-        Float val = (Float) getTagValue(TagElement.WindowCenter);
-        if (val.isNaN()) {
+        Float val = (Float) getTagValue(TagW.WindowCenter);
+        if (val == null) {
             return super.getDefaultLevel();
         }
         return val;
@@ -158,29 +165,38 @@ public class DicomImageElement extends ImageElement {
     public float pixel2rescale(float pixelValue) {
         // Hounsfield units: hu
         // hu = pixelValue * rescale slope + intercept value
-        return (pixelValue * (Float) getTagValue(TagElement.RescaleSlope) + (Float) getTagValue(TagElement.RescaleIntercept));
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
+        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
+        if (slope != null || intercept != null) {
+            return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+        }
+        return pixelValue;
 
     }
 
     public float rescale2pixel(float hounsfieldValue) {
         // Hounsfield units: hu
         // pixelValue = (hu - intercept value) / rescale slope
-        return (hounsfieldValue - (Float) getTagValue(TagElement.RescaleIntercept))
-            / (Float) getTagValue(TagElement.RescaleSlope);
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
+        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
+        if (slope != null || intercept != null) {
+            return (hounsfieldValue - (intercept == null ? 0.0f : intercept)) / (slope == null ? 1.0f : slope);
+        }
+        return hounsfieldValue;
 
     }
 
     public GeometryOfSlice getSliceGeometry() {
-        double[] imgOr = (double[]) getTagValue(TagElement.ImageOrientationPatient);
+        double[] imgOr = (double[]) getTagValue(TagW.ImageOrientationPatient);
         if (imgOr != null && imgOr.length == 6) {
-            double[] pos = (double[]) getTagValue(TagElement.ImagePositionPatient);
+            double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
             if (pos != null && pos.length == 3) {
                 double[] spacing = { getPixelSizeX(), getPixelSizeY(), 0.0 };
-                Float sliceTickness = (Float) getTagValue(TagElement.SliceThickness);
+                Float sliceTickness = (Float) getTagValue(TagW.SliceThickness);
                 if (sliceTickness != null) {
-                    int rows = (Integer) getTagValue(TagElement.Rows);
-                    int columns = (Integer) getTagValue(TagElement.Columns);
-                    if (rows > 0 && columns > 0) {
+                    Integer rows = (Integer) getTagValue(TagW.Rows);
+                    Integer columns = (Integer) getTagValue(TagW.Columns);
+                    if (rows != null && columns != null && rows > 0 && columns > 0) {
                         return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] {
                             imgOr[3], imgOr[4], imgOr[5] }, pos, spacing, sliceTickness.doubleValue(), new double[] {
                             rows, columns, 1 });

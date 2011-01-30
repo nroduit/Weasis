@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SwingWorker;
 
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
@@ -78,8 +78,8 @@ public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
             if (rep != 0) {
                 return rep;
             }
-            String s1 = (String) o1.getDicomSeries().getTagValue(TagElement.SubseriesInstanceUID);
-            String s2 = (String) o2.getDicomSeries().getTagValue(TagElement.SubseriesInstanceUID);
+            String s1 = (String) o1.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
+            String s2 = (String) o2.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
             return s1.compareTo(s2);
         }
     }

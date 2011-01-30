@@ -25,22 +25,22 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FileExtractor {
 
     public DicomEncapDocSeries(String subseriesInstanceUID) {
-        super(TagElement.SubseriesInstanceUID, subseriesInstanceUID, TagElement.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, TagW.SubseriesInstanceUID);
     }
 
     public DicomEncapDocSeries(DicomSeries dicomSeries) {
-        super(TagElement.SubseriesInstanceUID, dicomSeries.getTagValue(TagElement.SubseriesInstanceUID),
-            TagElement.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
+            TagW.SubseriesInstanceUID);
 
-        Iterator<Entry<TagElement, Object>> iter = dicomSeries.getTagEntrySetIterator();
+        Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
-            Entry<TagElement, Object> e = iter.next();
+            Entry<TagW, Object> e = iter.next();
             setTag(e.getKey(), e.getValue());
         }
     }
@@ -84,11 +84,11 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     public String getToolTips() {
         StringBuffer toolTips = new StringBuffer();
         toolTips.append("<html>"); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagElement.PatientName); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagElement.Modality); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagElement.SeriesNumber); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagElement.StudyDescription); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagElement.SeriesDescription); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagW.PatientName); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagW.Modality); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
         toolTips.append(Messages.getString("DicomSeries.date") + getDate() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
@@ -96,11 +96,11 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
     @Override
     public String toString() {
-        return (String) getTagValue(TagElement.SubseriesInstanceUID);
+        return (String) getTagValue(TagW.SubseriesInstanceUID);
     }
 
     public String getDate() {
-        Date seriesDate = (Date) getTagValue(TagElement.SeriesDate);
+        Date seriesDate = (Date) getTagValue(TagW.SeriesDate);
         if (seriesDate != null) {
             return new SimpleDateFormat("dd/MM/yyyy").format(seriesDate); //$NON-NLS-1$
         }

@@ -74,7 +74,7 @@ import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -321,13 +321,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         E img = imageLayer.getSourceImage();
         if (img != null) {
             DragLayer layer = getLayerModel().getMeasureLayer();
-            List<Graphic> list = (List<Graphic>) img.getTagValue(TagElement.MeasurementGraphics);
+            List<Graphic> list = (List<Graphic>) img.getTagValue(TagW.MeasurementGraphics);
             List graphics = layer.getGraphics();
             // if (list == null) {
             if (graphics.size() > 0) {
-                img.setTag(TagElement.MeasurementGraphics, new ArrayList(layer.getGraphics()));
+                img.setTag(TagW.MeasurementGraphics, new ArrayList(layer.getGraphics()));
             } else if (list != null) {
-                img.setTag(TagElement.MeasurementGraphics, null);
+                img.setTag(TagW.MeasurementGraphics, null);
             }
             // }
             // else {
@@ -336,7 +336,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // }
             // // TODO list can contain delete elements
             // list.addAll(layer.getGraphics());
-            // img.setTag(TagElement.MeasurementGraphics, list);
+            // img.setTag(TagW.MeasurementGraphics, list);
             // }
 
         }
@@ -355,7 +355,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             int width = source == null ? ImageFiler.TILESIZE : source.getWidth();
             int height = source == null ? ImageFiler.TILESIZE : source.getHeight();
             final Rectangle modelArea = new Rectangle(0, 0, width, height);
-            List list = (List) img.getTagValue(TagElement.MeasurementGraphics);
+            List list = (List) img.getTagValue(TagW.MeasurementGraphics);
             if (list != null) {
                 for (Object graphic : list) {
                     layer.addGraphic((Graphic) graphic);
