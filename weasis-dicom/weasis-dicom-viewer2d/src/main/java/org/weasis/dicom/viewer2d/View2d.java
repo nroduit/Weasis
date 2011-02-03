@@ -656,14 +656,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 }
                             };
 
-                            for (int i = 0; i < ViewerToolBar.actionsButtons.length; i++) {
+                            for (int i = 0; i < actionsButtons.length; i++) {
+                                ActionW actionW = actionsButtons[i];
                                 JRadioButtonMenuItem radio =
-                                    new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(),
-                                        actionsButtons[i].cmd().equals(action));
-
-                                radio.setActionCommand(actionsButtons[i].cmd());
-                                radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
-                                    actionsButtons[i].getModifier()));
+                                    new JRadioButtonMenuItem(actionW.getTitle(), actionW.getIcon(), actionW.cmd()
+                                        .equals(action));
+                                radio.setActionCommand(actionW.cmd());
+                                radio
+                                    .setAccelerator(KeyStroke.getKeyStroke(actionW.getKeyCode(), actionW.getModifier()));
                                 // Trigger the selected mouse action
                                 radio.addActionListener(toolBar);
                                 // Update the state of the button in the toolbar

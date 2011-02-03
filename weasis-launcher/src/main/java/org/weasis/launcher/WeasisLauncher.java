@@ -11,6 +11,7 @@
 package org.weasis.launcher;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.io.File;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -36,6 +38,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -798,23 +802,61 @@ public class WeasisLauncher {
                 }
             });
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            final String str = Messages.getString("WeasisLauncher.news");
-            if (!"".equals(str.trim())) {
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                        JTextPane jTextPane1 = new JTextPane();
-                        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
-                        jTextPane1.setEditable(false);
-                        jTextPane1.setBackground(Color.WHITE);
-                        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                        ss.addRule("p {font-size:12}");
-                        jTextPane1.setText(str);
-                        jTextPane1.setPreferredSize(new Dimension(550, 300));
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    final JTextPane jTextPane1 = new JTextPane();
+                    jTextPane1.setContentType("text/html"); //$NON-NLS-1$
+                    jTextPane1.setEditable(false);
+                    jTextPane1.addHyperlinkListener(new HyperlinkListener() {
+                        public void hyperlinkUpdate(HyperlinkEvent e) {
+                            if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                                jTextPane1.setToolTipText(e.getDescription());
+                            } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                                jTextPane1.setToolTipText(null);
+                            } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) {
+                                    try {
+                                        String cmd = String.format("xdg-open %s", e.getURL());
+                                        Runtime.getRuntime().exec(cmd);
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                } else if (Desktop.isDesktopSupported()) {
+                                    final Desktop desktop = Desktop.getDesktop();
+                                    if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                                        try {
+                                            desktop.browse(e.getURL().toURI());
+
+                                        } catch (IOException ex) {
+                                            ex.printStackTrace();
+                                        } catch (URISyntaxException ex2) {
+                                            ex2.printStackTrace();
+                                        }
+                                    }
+                                } else {
+                                    try {
+                                        jTextPane1.setPage(e.getURL());
+                                    } catch (IOException ex) {
+                                        ex.printStackTrace();
+                                    }
+
+                                }
+                            }
+                        }
+                    });
+                    jTextPane1.setBackground(Color.WHITE);
+                    StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+                    ss.addRule("p {font-size:12}");
+                    try {
+                        jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html"));
+                        jTextPane1.setPreferredSize(new Dimension(630, 375));
                         JScrollPane sp = new JScrollPane(jTextPane1);
                         JOptionPane.showMessageDialog(loader.getWindow(), sp, "News", JOptionPane.PLAIN_MESSAGE);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                });
-            }
+                }
+            });
         }
         return loader;
     }

@@ -529,10 +529,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     }
 
     public ActionW getActionFromkeyEvent(int keyEvent) {
-        for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
-            ActionW action = iterator.next();
-            if (action.getKeyCode() == keyEvent) {
-                return action;
+        if (keyEvent != 0) {
+            for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
+                ActionW action = iterator.next();
+                if (action.getKeyCode() == keyEvent) {
+                    return action;
+                }
             }
         }
         return null;
