@@ -27,6 +27,8 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -545,7 +547,21 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuBar.add(menuFile);
         menuBar.add(menuSelectedPlugin);
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
-
+        final JMenuItem webMenuItem = new JMenuItem("Release Notes");
+        webMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    URL url =
+                        new URL(
+                            "http://www.dcm4che.org/jira/browse/WEA#selectedTab=com.atlassian.jira.plugin.system.project%3Achangelog-panel");
+                    JMVUtils.OpenInDefaultBrowser(webMenuItem, url);
+                } catch (MalformedURLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        helpMenuItem.add(webMenuItem);
         final JMenuItem aboutMenuItem = new JMenuItem(Messages.getString("WeasisAboutBox.title")); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 

@@ -11,6 +11,8 @@
 package org.weasis.core.api.gui.util;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
@@ -18,6 +20,9 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -32,15 +37,19 @@ import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.basic.BasicComboPopup;
@@ -423,5 +432,49 @@ public class JMVUtils {
                 }
             });
         }
+    }
+
+    public static void OpenInDefaultBrowser(Component parent, URL url) {
+        if (url != null) {
+            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) {
+                try {
+                    String cmd = String.format("xdg-open %s", url);
+                    Runtime.getRuntime().exec(cmd);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            } else if (Desktop.isDesktopSupported()) {
+                final Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    try {
+                        desktop.browse(url.toURI());
+
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    } catch (URISyntaxException ex2) {
+                        ex2.printStackTrace();
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(parent, "Cannot open in default browser: " + url, "Error Message",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static HyperlinkListener buildHyperlinkListener() {
+        return new HyperlinkListener() {
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                JTextPane pane = (JTextPane) e.getSource();
+                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                    pane.setToolTipText(e.getDescription());
+                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                    pane.setToolTipText(null);
+                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    Component parent = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                    OpenInDefaultBrowser(parent, e.getURL());
+                }
+            }
+        };
     }
 }

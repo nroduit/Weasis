@@ -804,15 +804,16 @@ public class WeasisLauncher {
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                    final JTextPane jTextPane1 = new JTextPane();
+                    JTextPane jTextPane1 = new JTextPane();
                     jTextPane1.setContentType("text/html"); //$NON-NLS-1$
                     jTextPane1.setEditable(false);
                     jTextPane1.addHyperlinkListener(new HyperlinkListener() {
                         public void hyperlinkUpdate(HyperlinkEvent e) {
+                            JTextPane pane = (JTextPane) e.getSource();
                             if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                                jTextPane1.setToolTipText(e.getDescription());
+                                pane.setToolTipText(e.getDescription());
                             } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                                jTextPane1.setToolTipText(null);
+                                pane.setToolTipText(null);
                             } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                 if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) {
                                     try {
@@ -833,13 +834,6 @@ public class WeasisLauncher {
                                             ex2.printStackTrace();
                                         }
                                     }
-                                } else {
-                                    try {
-                                        jTextPane1.setPage(e.getURL());
-                                    } catch (IOException ex) {
-                                        ex.printStackTrace();
-                                    }
-
                                 }
                             }
                         }
