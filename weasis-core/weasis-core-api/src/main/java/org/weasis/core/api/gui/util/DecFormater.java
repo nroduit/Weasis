@@ -12,7 +12,8 @@ package org.weasis.core.api.gui.util;
 
 import java.text.DecimalFormat;
 
-import org.weasis.core.api.Messages;
+import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.NumberFormatter;
 
 /**
  * The Class DecFormater.
@@ -51,5 +52,16 @@ public class DecFormater {
 
     public static String scientificFormat(double val) {
         return df4.format(val);
+    }
+
+    public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {
+        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##"));
+        displayFormatter.setValueClass(Double.class);
+        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############"));
+        editFormatter.setValueClass(Double.class);
+        editFormatter.setMinimum(min);
+        editFormatter.setMaximum(max);
+        editFormatter.setAllowsInvalid(true);
+        return new DefaultFormatterFactory(displayFormatter, displayFormatter, editFormatter);
     }
 }

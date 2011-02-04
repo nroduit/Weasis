@@ -68,6 +68,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         this.operations = manager;
         // tileListener = new TileListener();
         this.sourceImage = image;
+        this.buildIterator = buildIterator;
         // this.view2DPane = view2DPane;
         _transform = transform;
         this.listenerList = new ArrayList<ImageLayerChangeListener<E>>();

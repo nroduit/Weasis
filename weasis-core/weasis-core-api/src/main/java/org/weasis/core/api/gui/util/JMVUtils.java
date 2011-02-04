@@ -254,14 +254,11 @@ public class JMVUtils {
 
     public static Number getFormattedValue(JFormattedTextField textField) {
         AbstractFormatterFactory formatter = textField.getFormatterFactory();
-        // Formatter uniquement en mode ï¿½dition, autrement le valeur du display avec moins de dï¿½cimales est
-        // transmise
         if (formatter instanceof DefaultFormatterFactory
             && textField.getFormatter().equals(((DefaultFormatterFactory) formatter).getEditFormatter())) {
             try {
-                textField.commitEdit(); // pour formater le champ en mode ï¿½dition (quand la fenï¿½tre est fermï¿½, pas
-                // de
-                // lostfocus dï¿½clenchï¿½)
+                // to be sure that the value is commit (by default it is when the JFormattedTextField losing the focus)
+                textField.commitEdit();
             } catch (ParseException pe) {
             }
         }
