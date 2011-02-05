@@ -3,6 +3,7 @@ package org.weasis.dicom.explorer;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -47,6 +48,9 @@ public class MimeSystemAppViewer implements SeriesViewer {
 
                 FileExtractor extractor = (FileExtractor) series;
                 File file = extractor.getExtractFile();
+                URI uri = file.toURI();
+                File file2 = new File(uri);
+                System.out.println(file2.getAbsolutePath());
                 if (file != null) {
                     try {
                         String cmd = String.format("xdg-open %s", file.getAbsolutePath());

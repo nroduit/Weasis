@@ -217,30 +217,33 @@ public class DicomSeries extends Series<DicomImageElement> {
         private void loadArrays(DicomImageElement img, DataExplorerModel model) {
             // Do not load an image if another process already loading it
             if (preloading && !img.isLoading()) {
-                long start = System.currentTimeMillis();
-                PlanarImage i = img.getImage();
-                if (i != null) {
-                    int tymin = i.getMinTileY();
-                    int tymax = i.getMaxTileY();
-                    int txmin = i.getMinTileX();
-                    int txmax = i.getMaxTileX();
-                    for (int tj = tymin; tj <= tymax; tj++) {
-                        for (int ti = txmin; ti <= txmax; ti++) {
-                            try {
-                                i.getTile(ti, tj);
-                            } catch (OutOfMemoryError e) {
-                                System.out.println("Out of memory when loading image: " + img); //$NON-NLS-1$
-                                freeMemory();
-                                return;
+                Boolean cache = (Boolean) img.getTagValue(TagW.ImageCache);
+                if (cache == null || !cache) {
+                    long start = System.currentTimeMillis();
+                    PlanarImage i = img.getImage();
+                    if (i != null) {
+                        int tymin = i.getMinTileY();
+                        int tymax = i.getMaxTileY();
+                        int txmin = i.getMinTileX();
+                        int txmax = i.getMaxTileX();
+                        for (int tj = tymin; tj <= tymax; tj++) {
+                            for (int ti = txmin; ti <= txmax; ti++) {
+                                try {
+                                    i.getTile(ti, tj);
+                                } catch (OutOfMemoryError e) {
+                                    LOGGER.error("Out of memory when loading image: {}", img); //$NON-NLS-1$
+                                    freeMemory();
+                                    return;
+                                }
                             }
                         }
                     }
-                }
-                long stop = System.currentTimeMillis();
-                LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img.getMediaURI()); //$NON-NLS-1$
-                if (model != null) {
-                    model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                        new SeriesEvent(SeriesEvent.Action.loadImageInMemory, DicomSeries.this, img)));
+                    long stop = System.currentTimeMillis();
+                    LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img.getMediaURI()); //$NON-NLS-1$
+                    if (model != null) {
+                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                            new SeriesEvent(SeriesEvent.Action.loadImageInMemory, DicomSeries.this, img)));
+                    }
                 }
             }
         }

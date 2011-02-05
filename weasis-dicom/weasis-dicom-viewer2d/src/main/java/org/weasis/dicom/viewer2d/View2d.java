@@ -36,6 +36,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
@@ -65,6 +66,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -74,6 +76,8 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.DragLayer;
+import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
@@ -743,7 +747,32 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             popupMenu.add(menu);
                         }
                     }
+                    AbstractLayer layer = getLayerModel().getLayer(Tools.MEASURE.getId());
+                    if (layer != null) {
+                        ArrayList<Graphic> sel = layer.getShowDrawing().getSelectedGraphics();
+                        if (sel.size() == 1) {
+                            final Graphic graph = sel.get(0);
+                            if (graph instanceof LineGraphic) {
+                                popupMenu.add(new JSeparator());
+                                final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
+                                calibMenu.addActionListener(new ActionListener() {
 
+                                    public void actionPerformed(ActionEvent e) {
+                                        CalibrationView calibrationDialog =
+                                            new CalibrationView((LineGraphic) graph, View2d.this);
+                                        int res =
+                                            JOptionPane.showConfirmDialog(calibMenu, calibrationDialog,
+                                                "Manual Calibration", JOptionPane.OK_CANCEL_OPTION);
+                                        if (res == JOptionPane.OK_OPTION) {
+                                            calibrationDialog.applyNewCalibration();
+                                        }
+                                    }
+                                });
+                                popupMenu.add(calibMenu);
+
+                            }
+                        }
+                    }
                     popupMenu.add(new JSeparator());
                     popupMenu.add(ResetTools.createUnregisteredJMenu());
                     JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$

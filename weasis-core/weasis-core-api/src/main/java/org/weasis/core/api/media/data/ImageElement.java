@@ -50,6 +50,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
             if (key != null) {
                 hash.remove(key);
                 MediaReader<PlanarImage> reader = key.getMediaReader();
+                key.setTag(TagW.ImageCache, false);
                 if (reader != null) {
                     // Close the image stream
                     reader.close();
@@ -139,8 +140,24 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return pixelSizeY;
     }
 
+    public void setPixelSizeX(double pixelSizeX) {
+        this.pixelSizeX = pixelSizeX;
+    }
+
+    public void setPixelSizeY(double pixelSizeY) {
+        this.pixelSizeY = pixelSizeY;
+    }
+
+    public void setPixelValueUnit(String pixelValueUnit) {
+        this.pixelValueUnit = pixelValueUnit;
+    }
+
     public Unit getPixelSpacingUnit() {
         return pixelSpacingUnit;
+    }
+
+    public void setPixelSpacingUnit(Unit pixelSpacingUnit) {
+        this.pixelSpacingUnit = pixelSpacingUnit;
     }
 
     public String getPixelValueUnit() {
@@ -235,6 +252,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
                 readable = true;
                 mCache.put(this, img);
                 cacheImage = img;
+                this.setTag(TagW.ImageCache, true);
             }
             setAsLoaded();
         }

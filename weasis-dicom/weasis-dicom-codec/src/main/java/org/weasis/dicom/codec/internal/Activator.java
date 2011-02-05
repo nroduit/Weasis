@@ -10,11 +10,17 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.internal;
 
+import java.util.Dictionary;
+import java.util.Hashtable;
+
 import javax.imageio.spi.IIORegistry;
 
 import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
@@ -36,6 +42,20 @@ public class Activator implements BundleActivator {
         // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi.class);
         // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi.class);
 
+        ServiceReference configurationAdminReference =
+            bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
+        if (configurationAdminReference != null) {
+            ConfigurationAdmin confAdmin = (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
+
+            Configuration configuration =
+                confAdmin.createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null);
+            Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+            loggingProperties.put("pid", this.getClass().getName());
+            loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
+            loggingProperties.put("org.apache.sling.commons.log.names", "org.dcm4che2.imageio.ItemParser");
+            configuration.update(loggingProperties);
+
+        }
     }
 
     // @Override

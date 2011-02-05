@@ -159,4 +159,14 @@ public enum Unit {
         }
         return null;
     }
+
+    public static ArrayList<Unit> getUniExceptPixel() {
+        ArrayList<Unit> list = new ArrayList<Unit>();
+        for (Unit u : Unit.values()) {
+            if (u.getId() != Unit.PIXEL.getId()) {
+                list.add(u);
+            }
+        }
+        return list;
+    }
 }

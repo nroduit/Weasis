@@ -66,6 +66,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ImageDepth = new TagW(Messages.getString("TagW.img_d"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageOrientationPlane = new TagW(Messages.getString("TagW.img_or"), TagType.String); //$NON-NLS-1$
     public static final TagW ImageBitsPerPixel = new TagW(Messages.getString("TagW.img_bpp"), TagType.Integer); //$NON-NLS-1$
+    public static final TagW ImageCache = new TagW("Image Cache", TagType.Boolean); //$NON-NLS-1$
 
     // Do not internationalize WadoTransferSyntaxUID and WadoCompressionRate because they are defined in wado_query.xsd
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
