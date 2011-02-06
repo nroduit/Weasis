@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.internal;
 
+import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -18,6 +19,7 @@ import javax.imageio.spi.IIORegistry;
 import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -25,6 +27,9 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 public class Activator implements BundleActivator {
+
+    private static final String LOGGER_KEY = "always.info.ItemParser";
+    private static final String LOGGER_VAL = "org.dcm4che2.imageio.ItemParser";
     public final static BundlePreferences PREFERENCES = new BundlePreferences();
     private BundleContext bundleContext = null;
 
@@ -41,21 +46,39 @@ public class Activator implements BundleActivator {
         registry.registerServiceProvider(new RLEImageReaderSpi());
         // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi.class);
         // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi.class);
-
         ServiceReference configurationAdminReference =
             bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
         if (configurationAdminReference != null) {
             ConfigurationAdmin confAdmin = (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
-
-            Configuration configuration =
-                confAdmin.createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null);
-            Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
-            loggingProperties.put("pid", this.getClass().getName());
-            loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
-            loggingProperties.put("org.apache.sling.commons.log.names", "org.dcm4che2.imageio.ItemParser");
-            configuration.update(loggingProperties);
-
+            if (confAdmin != null) {
+                Configuration logConfiguration = getLogConfiguration(confAdmin);
+                if (logConfiguration == null) {
+                    logConfiguration =
+                        confAdmin.createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config",
+                            null);
+                    Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                    loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
+                    // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
+                    loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
+                    // add this property to give us something unique to re-find this configuration
+                    loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
+                    logConfiguration.update(loggingProperties);
+                }
+            }
         }
+    }
+
+    private Configuration getLogConfiguration(ConfigurationAdmin confAdmin) throws IOException {
+        Configuration logConfiguration = null;
+        try {
+            Configuration[] configs = confAdmin.listConfigurations("(" + LOGGER_KEY + "=" + LOGGER_VAL + ")");
+            if (configs != null && configs.length > 0) {
+                logConfiguration = configs[0];
+            }
+        } catch (InvalidSyntaxException e) {
+            // ignore this as we'll create what we need
+        }
+        return logConfiguration;
     }
 
     // @Override
