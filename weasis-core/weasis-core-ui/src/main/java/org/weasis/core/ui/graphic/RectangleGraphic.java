@@ -94,9 +94,15 @@ public class RectangleGraphic extends AbstractDragGraphic {
         return (width < 1 ? 1 : width) * scaleX * (height < 1 ? 1 : height) * scaleY;
     }
 
-    public void updateLabel(MouseEvent mouseevent) {
+    @Override
+    public void updateLabel(Object source) {
         if (showLabel) {
-            ImageElement imageElement = getImageElement(mouseevent);
+            ImageElement imageElement = null;
+            if (source instanceof MouseEvent) {
+                imageElement = getImageElement((MouseEvent) source);
+            } else if (source instanceof ImageElement) {
+                imageElement = (ImageElement) source;
+            }
             if (imageElement != null) {
                 ArrayList<String> list = new ArrayList<String>(5);
                 Unit unit = imageElement.getPixelSpacingUnit();

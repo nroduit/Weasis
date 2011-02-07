@@ -101,7 +101,6 @@ public class AbstractLayerModel implements LayerModel {
         selectedGraphics = new ArrayList<Graphic>();
         singleList = new ArrayList(1);
         listenerList = new ArrayList();
-        // naewin = WeasisWin.getInstance();
         setAlpha(0f);
         setAntialiasing(false);
     }
@@ -329,7 +328,7 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public java.util.List<Graphic> getSelectedClassifGraphics() {
-        ArrayList arraylist = new ArrayList();
+        ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
         for (int i = selectedGraphics.size() - 1; i >= 0; i--) {
             Graphic graphic = selectedGraphics.get(i);
             // if (graphic instanceof AbstractClassifGraphic) {
@@ -340,7 +339,7 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public java.util.List<Graphic> getSelectedAllGraphicsIntersecting(Rectangle rectangle) {
-        ArrayList arraylist = new ArrayList();
+        ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {
@@ -351,7 +350,7 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public java.util.List<Graphic> getdAllGraphics() {
-        ArrayList arraylist = new ArrayList();
+        ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {

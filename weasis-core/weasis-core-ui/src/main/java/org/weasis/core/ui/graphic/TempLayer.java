@@ -41,7 +41,7 @@ public class TempLayer extends DragLayer {
 
     @Override
     public void addGraphic(Graphic graphic) {
-        if (!graphics.contains(graphic)) {
+        if (graphics != null && !graphics.contains(graphic)) {
             // pour le mode manuel de calibration
             if (graphic instanceof LineGraphic) {
                 deleteAllGraphic();
@@ -63,14 +63,16 @@ public class TempLayer extends DragLayer {
 
     @Override
     public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle bound) {
-        for (int i = 0; i < graphics.size(); i++) {
-            Graphic graphic = graphics.get(i);
-            // rectangle correspond ï¿½ la zone d'affiche de ImageDisplay (zone de l'image visible)
-            // si le rectangle intersecte (si le bounding box du graphic est contenu ou intesecte avec le rectangle)
-            // revoie
-            // true
-            if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
-                graphic.paint(g2, transform);
+        if (graphics != null) {
+            for (int i = 0; i < graphics.size(); i++) {
+                Graphic graphic = graphics.get(i);
+                // rectangle correspond ï¿½ la zone d'affiche de ImageDisplay (zone de l'image visible)
+                // si le rectangle intersecte (si le bounding box du graphic est contenu ou intesecte avec le rectangle)
+                // revoie
+                // true
+                if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
+                    graphic.paint(g2, transform);
+                }
             }
         }
         if (points != null) {
@@ -80,36 +82,6 @@ public class TempLayer extends DragLayer {
                 g2.drawRect(p.x - 1, p.y - 1, 3, 3);
             }
         }
-
-        // TODO change
-        // java.util.List list = new ArrayList();
-        // for (int i = 0; i < canvas.size(); i++) {
-        // list.addAll(canvas.get(i).getSelectedGraphics());
-        // }
-        // for (int i = 0; i < list.size(); i++) {
-        // Graphic graphic = (Graphic) list.get(i);
-        // // rectangle correspond ï¿½ la zone d'affiche de ImageDisplay (zone de l'image visible)
-        // // si le rectangle intersecte (si le bounding box du graphic est contenu ou intesecte avec le rectangle)
-        // revoie
-        // // true
-        // if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
-        // // graphic.paintHandles(g2, transform);
-        // }
-        // }
-        // if (layer != null) {
-        // // g2.setPaint(color);
-        // g2.setFont(font);
-        // java.util.List list2 = layer.getGraphicsBoundsInArea(bound);
-        // for (int i = 0; i < list2.size(); i++) {
-        // Graphic lab = (Graphic) list2.get(i);
-        // if (lab.getLabel() != null) {
-        // Rectangle rect = lab.getBounds();
-        // Point2D dest = transform.transform(new Point2D.Float(rect.x + rect.width / 2.0f, rect.y + rect.height
-        // / 2.0f), null);
-        // paintFontOutline(g2, lab.getLabel(), (float) dest.getX(), (float) dest.getY());
-        // }
-        // }
-        // }
     }
 
     // @Override

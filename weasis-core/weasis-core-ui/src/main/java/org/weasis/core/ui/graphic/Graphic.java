@@ -46,6 +46,8 @@ public interface Graphic extends GUIEntry {
 
     public void paintHandles(Graphics2D g2, AffineTransform transform);
 
+    public void updateLabel(Object source);
+
     /**
      * The bound of the shape. Attention, this function does not return accurate bound for complex shape, use instead
      * getArea().

@@ -18,8 +18,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 
@@ -31,13 +31,13 @@ import org.weasis.core.ui.graphic.Graphic;
 public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
-    // protected ProjectSettingsData settingsData;
-    protected PropertyChangeListener pcl;
-    protected transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
+
+    final protected PropertyChangeListener pcl;
+    final protected transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
     private boolean masked;
     private int level;
     private final int drawType;
-    protected ArrayList<Graphic> graphics;
+    protected volatile List<Graphic> graphics;
 
     /**
      * The Class PropertyChangeHandler.
@@ -51,8 +51,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             Object obj = propertychangeevent.getSource();
             String s = propertychangeevent.getPropertyName();
             if ("bounds".equals(s)) { //$NON-NLS-1$
-                graphicBoundsChanged((Rectangle) propertychangeevent.getOldValue(), (Rectangle) propertychangeevent
-                    .getNewValue());
+                graphicBoundsChanged((Rectangle) propertychangeevent.getOldValue(),
+                    (Rectangle) propertychangeevent.getNewValue());
             } else if ("updatePane".equals(s)) { //$NON-NLS-1$
             }
             // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
@@ -79,18 +79,25 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         this.canvas.add(canvas1);
         graphics = new ArrayList<Graphic>();
         pcl = new PropertyChangeHandler();
-        // settingsData = WeasisWin.getInstance().getProjectSettingsData();
     }
 
     public void toFront(Graphic graphic) {
-        graphics.remove(graphic);
-        graphics.add(graphic);
+        if (graphics != null) {
+            graphics.remove(graphic);
+            graphics.add(graphic);
+        }
         // repaint(graphic.getv);
     }
 
+    public synchronized void setGraphics(List<Graphic> graphics) {
+        this.graphics = graphics == null ? new ArrayList<Graphic>() : graphics;
+    }
+
     public void toBack(Graphic graphic) {
-        graphics.remove(graphic);
-        graphics.add(0, graphic);
+        if (graphics != null) {
+            graphics.remove(graphic);
+            graphics.add(0, graphic);
+        }
         // repaint(graphic.getRepaintBounds());
     }
 
@@ -99,7 +106,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if (!canvas.contains(canvas1)) {
                 this.canvas.add(canvas1);
             }
-            // settingsData = WeasisWin.getInstance().getProjectSettingsData();
         }
     }
 
@@ -124,7 +130,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void removeGraphicAndRepaint(Graphic graphic) {
-        graphics.remove(graphic);
+        if (graphics != null) {
+            graphics.remove(graphic);
+        }
         graphic.removePropertyChangeListener(pcl);
         if (graphic instanceof AbstractDragGraphic) {
             repaint(((AbstractDragGraphic) graphic).getTransformedBounds());
@@ -138,7 +146,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void removeGraphic(Graphic graphic) {
-        graphics.remove(graphic);
+        if (graphics != null) {
+            graphics.remove(graphic);
+        }
         graphic.removePropertyChangeListener(pcl);
         graphic.setLayer(null);
         if (graphic.isSelected()) {
@@ -146,13 +156,13 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    public java.util.List getGraphics() {
+    public java.util.List<Graphic> getGraphics() {
         return graphics;
     }
 
-    public abstract java.util.List getGraphicsSurfaceInArea(Rectangle rect);
+    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect);
 
-    public abstract java.util.List getGraphicsBoundsInArea(Rectangle rect);
+    public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
     public abstract Graphic getGraphicContainPoint(Point pos);
 

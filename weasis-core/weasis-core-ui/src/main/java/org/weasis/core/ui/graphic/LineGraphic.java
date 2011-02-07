@@ -140,9 +140,15 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
         }
     }
 
-    public void updateLabel(MouseEvent mouseevent) {
+    @Override
+    public void updateLabel(Object source) {
         if (showLabel) {
-            ImageElement image = getImageElement(mouseevent);
+            ImageElement image = null;
+            if (source instanceof MouseEvent) {
+                image = getImageElement((MouseEvent) source);
+            } else if (source instanceof ImageElement) {
+                image = (ImageElement) source;
+            }
             if (image != null) {
                 Unit unit = image.getPixelSpacingUnit();
                 String value = DecFormater.twoDecimal(getSegmentLength(image.getPixelSizeX(), image.getPixelSizeY()));
@@ -343,4 +349,5 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
     public String getDescription() {
         return null;
     }
+
 }

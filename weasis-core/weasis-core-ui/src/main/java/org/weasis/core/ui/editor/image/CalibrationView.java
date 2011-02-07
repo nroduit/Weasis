@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.geom.Point2D;
+import java.util.List;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
@@ -18,6 +19,9 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 
 public class CalibrationView extends JPanel {
@@ -115,23 +119,41 @@ public class CalibrationView extends JPanel {
                         lineLength = 1.0;
                     }
                     if (ratioX != ratioY) {
-                        // TODO find best to calibrate non-square pixels
                         Point2D p1 = line.getStartPoint();
                         Point2D p2 = line.getEndPoint();
                         double dx = Math.abs(p1.getX() - p2.getX());
                         double dy = Math.abs(p1.getY() - p2.getY());
-                        double newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
-                        double newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
+                        double newRatioX;
+                        double newRatioY;
                         if (dx > dy) {
-
+                            newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
+                            newRatioY = ratioY * newRatioX / ratioX;
                         } else {
-
+                            newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
+                            newRatioX = ratioX * newRatioY / ratioY;
                         }
                     } else {
                         double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
                         if (ratioX != newRatio) {
-                            image.setPixelSizeX(newRatio);
-                            image.setPixelSizeY(newRatio);
+                            // TODO message if new calibration, pixel must be rectangle
+                            if (radioButtonSeries.isSelected()) {
+                                MediaSeries seriesList = view2d.getSeries();
+                                if (seriesList != null) {
+                                    for (Object media : seriesList.getMedias()) {
+                                        if (media instanceof ImageElement) {
+                                            ImageElement img = (ImageElement) media;
+                                            img.setPixelSizeX(newRatio);
+                                            img.setPixelSizeY(newRatio);
+                                            updateLabel(img);
+                                        }
+                                    }
+                                }
+                            } else {
+                                image.setPixelSizeX(newRatio);
+                                image.setPixelSizeY(newRatio);
+                                updateLabel(image);
+                            }
+                            view2d.repaint();
                         }
                     }
                 }
@@ -139,8 +161,12 @@ public class CalibrationView extends JPanel {
         }
     }
 
-    public static double convertDistanceToFactor(double knownDistance, double lineLength, Unit unit) {
-        return (knownDistance * unit.getConvFactor()) / lineLength;
+    private void updateLabel(ImageElement image) {
+        List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
+        if (list != null) {
+            for (Graphic graphic : list) {
+                graphic.updateLabel(image);
+            }
+        }
     }
-
 }

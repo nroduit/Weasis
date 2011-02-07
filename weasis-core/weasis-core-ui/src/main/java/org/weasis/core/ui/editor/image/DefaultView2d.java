@@ -314,51 +314,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         series.setOpen(open);
         series.setSelected(false, 0);
-        saveGraphics();
-    }
-
-    protected void saveGraphics() {
-        E img = imageLayer.getSourceImage();
-        if (img != null) {
-            DragLayer layer = getLayerModel().getMeasureLayer();
-            List<Graphic> list = (List<Graphic>) img.getTagValue(TagW.MeasurementGraphics);
-            List graphics = layer.getGraphics();
-            // if (list == null) {
-            if (graphics.size() > 0) {
-                img.setTag(TagW.MeasurementGraphics, new ArrayList(layer.getGraphics()));
-            } else if (list != null) {
-                img.setTag(TagW.MeasurementGraphics, null);
-            }
-            // }
-            // else {
-            // for (Graphic graphic : list) {
-            //
-            // }
-            // // TODO list can contain delete elements
-            // list.addAll(layer.getGraphics());
-            // img.setTag(TagW.MeasurementGraphics, list);
-            // }
-
-        }
+        // saveGraphics();
     }
 
     protected void setImage(E img, boolean bestFit) {
         E oldImage = imageLayer.getSourceImage();
         if (img != null && !img.equals(oldImage)) {
-            DragLayer layer = getLayerModel().getMeasureLayer();
-            if (oldImage != null) {
-                saveGraphics();
-            }
-            getLayerModel().deleteAllGraphics();
 
             RenderedImage source = img.getImage();
             int width = source == null ? ImageFiler.TILESIZE : source.getWidth();
             int height = source == null ? ImageFiler.TILESIZE : source.getHeight();
             final Rectangle modelArea = new Rectangle(0, 0, width, height);
-            List list = (List) img.getTagValue(TagW.MeasurementGraphics);
-            if (list != null) {
-                for (Object graphic : list) {
-                    layer.addGraphic((Graphic) graphic);
+            DragLayer layer = getLayerModel().getMeasureLayer();
+            synchronized (this) {
+                List<Graphic> list = (List<Graphic>) img.getTagValue(TagW.MeasurementGraphics);
+                if (list != null) {
+                    layer.setGraphics(list);
+                } else {
+                    ArrayList<Graphic> graphics = new ArrayList<Graphic>();
+                    img.setTag(TagW.MeasurementGraphics, graphics);
+                    layer.setGraphics(graphics);
                 }
             }
             setWindowLevel(img);

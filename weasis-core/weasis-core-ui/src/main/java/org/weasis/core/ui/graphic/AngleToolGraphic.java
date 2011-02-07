@@ -220,9 +220,15 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
         return new PolygonDragSequence(mouseevent == null, i);
     }
 
-    public void updateLabel(MouseEvent mouseevent) {
+    @Override
+    public void updateLabel(Object source) {
         if (showLabel) {
-            ImageElement image = getImageElement(mouseevent);
+            ImageElement image = null;
+            if (source instanceof MouseEvent) {
+                image = getImageElement((MouseEvent) source);
+            } else if (source instanceof ImageElement) {
+                image = (ImageElement) source;
+            }
             if (image != null) {
                 String value = DecFormater.twoDecimal(getAngleBetweenTwoSegments() * 180.0 / Math.PI);
                 value = value + " °"; //$NON-NLS-1$

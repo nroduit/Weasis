@@ -258,6 +258,11 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
         updateShapeOnDrawing(mouseevent);
     }
 
+    @Override
+    public void updateLabel(Object source) {
+
+    }
+
     // délcancher lors du redimensionnement du desssin, i représente un des 9 coins du handle
     @Override
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {

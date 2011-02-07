@@ -18,7 +18,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.LayerModel;
 
@@ -36,7 +35,7 @@ public class DragLayer extends AbstractLayer {
     }
 
     public void addGraphic(Graphic graphic) {
-        if (!graphics.contains(graphic)) {
+        if (graphics != null && !graphics.contains(graphic)) {
             graphic.setSelected(false);
             graphics.add(graphic);
             graphic.setLayer(this);
@@ -47,19 +46,21 @@ public class DragLayer extends AbstractLayer {
 
     @Override
     public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle bound) {
-        for (int i = 0; i < graphics.size(); i++) {
-            Graphic graphic = graphics.get(i);
-            // only repaints graphics that intersects or are contained in the clip bound
-            if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
-                graphic.paint(g2, transform);
-            } else if (graphic.getLabelBound() != null) {
-                Rectangle2D labelBound = graphic.getLabelBound();
-                Point2D p = new Point.Double(labelBound.getX(), labelBound.getY());
-                inverseTransform.transform(p, p);
-                if (bound.intersects(new Rectangle((int) Math.floor(p.getX()), (int) Math.floor(p.getY()), (int) Math
-                    .ceil(labelBound.getWidth()), (int) Math.ceil(labelBound.getHeight())))) {
-                    // TODO repaint label separately
+        if (graphics != null) {
+            for (int i = 0; i < graphics.size(); i++) {
+                Graphic graphic = graphics.get(i);
+                // only repaints graphics that intersects or are contained in the clip bound
+                if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
                     graphic.paint(g2, transform);
+                } else if (graphic.getLabelBound() != null) {
+                    Rectangle2D labelBound = graphic.getLabelBound();
+                    Point2D p = new Point.Double(labelBound.getX(), labelBound.getY());
+                    inverseTransform.transform(p, p);
+                    if (bound.intersects(new Rectangle((int) Math.floor(p.getX()), (int) Math.floor(p.getY()),
+                        (int) Math.ceil(labelBound.getWidth()), (int) Math.ceil(labelBound.getHeight())))) {
+                        // TODO repaint label separately
+                        graphic.paint(g2, transform);
+                    }
                 }
             }
         }
@@ -75,14 +76,16 @@ public class DragLayer extends AbstractLayer {
     @Override
     public java.util.List getGraphicsSurfaceInArea(Rectangle rect) {
         ArrayList arraylist = new ArrayList();
-        for (int j = graphics.size() - 1; j >= 0; j--) {
-            Graphic graphic = graphics.get(j);
-            // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-            // checker
-            // sur shape directement)
-            if (graphic.getBounds().intersects(rect)) {
-                if (graphic.intersects(rect)) {
-                    arraylist.add(graphic);
+        if (graphics != null) {
+            for (int j = graphics.size() - 1; j >= 0; j--) {
+                Graphic graphic = graphics.get(j);
+                // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
+                // checker
+                // sur shape directement)
+                if (graphic.getBounds().intersects(rect)) {
+                    if (graphic.intersects(rect)) {
+                        arraylist.add(graphic);
+                    }
                 }
             }
         }
@@ -92,10 +95,12 @@ public class DragLayer extends AbstractLayer {
     @Override
     public java.util.List getGraphicsBoundsInArea(Rectangle rect) {
         ArrayList arraylist = new ArrayList();
-        for (int j = graphics.size() - 1; j >= 0; j--) {
-            Graphic graphic = graphics.get(j);
-            if (graphic.getRepaintBounds().intersects(rect)) {
-                arraylist.add(graphic);
+        if (graphics != null) {
+            for (int j = graphics.size() - 1; j >= 0; j--) {
+                Graphic graphic = graphics.get(j);
+                if (graphic.getRepaintBounds().intersects(rect)) {
+                    arraylist.add(graphic);
+                }
             }
         }
         return arraylist;
@@ -110,14 +115,16 @@ public class DragLayer extends AbstractLayer {
      */
     @Override
     public Graphic getGraphicContainPoint(Point pos) {
-        for (int j = graphics.size() - 1; j >= 0; j--) {
-            AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
-            // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-            // checker
-            // sur shape directement)
-            if (graphic.getRepaintBounds().contains(pos)) {
-                if (graphic.getArea().contains(pos) || graphic.getResizeCorner(pos) != -1) {
-                    return graphic;
+        if (graphics != null) {
+            for (int j = graphics.size() - 1; j >= 0; j--) {
+                AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
+                // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
+                // checker
+                // sur shape directement)
+                if (graphic.getRepaintBounds().contains(pos)) {
+                    if (graphic.getArea().contains(pos) || graphic.getResizeCorner(pos) != -1) {
+                        return graphic;
+                    }
                 }
             }
         }

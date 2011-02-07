@@ -265,6 +265,11 @@ public class PolygonGraphic extends AbstractDragGraphic {
     }
 
     @Override
+    public void updateLabel(Object source) {
+
+    }
+
+    @Override
     public int getResizeCorner(final Point pos) {
         int k = getHandleSize() + 2;
         // Enable to get a better selection of the handle with a low or high magnification zoom
