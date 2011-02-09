@@ -41,7 +41,8 @@ public class SelectGraphic extends RectangleGraphic {
         @Override
         public boolean completeDrag(MouseEvent mouseevent) {
             // updateSelection();
-            getLayer().removeGraphicAndRepaint(SelectGraphic.this);
+            fireRemoveAndRepaintAction();
+            // getLayer().removeGraphicAndRepaint(SelectGraphic.this);
             return true;
         }
 

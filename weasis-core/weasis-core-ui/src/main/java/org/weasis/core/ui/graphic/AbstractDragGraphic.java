@@ -33,7 +33,6 @@ import javax.media.jai.iterator.RectIterFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 
 /**
@@ -46,7 +45,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected float lineThickness;
     protected Paint paint;
     protected boolean filled;
-    private transient AbstractLayer layer;
+    // private transient AbstractLayer layer;
     protected transient PropertyChangeSupport pcs;
     protected transient boolean selected;
     protected transient boolean showLabel;
@@ -57,7 +56,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected transient Shape shape;
     private transient String[] label;
     protected transient Rectangle2D labelBound;
-    private transient ArrayList<GraphicsChangeListener> graphicsChangeListener;
 
     /**
      * The Class DefaultDragSequence.
@@ -192,13 +190,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         this.showLabel = true;
     }
 
-    public void setLayer(AbstractLayer layer1) {
-        layer = layer1;
-    }
-
-    public AbstractLayer getLayer() {
-        return layer;
-    }
+    // public void setLayer(AbstractLayer layer1) {
+    // layer = layer1;
+    // }
+    //
+    // public AbstractLayer getLayer() {
+    // return layer;
+    // }
 
     protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
         if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
@@ -292,16 +290,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     public int getHandleSize() {
-        if (layer == null) {
-            return 0;
-        } else {
-            // if (layer.getSettingsData() == null) {
-            return 6;
-            // }
-            // else {
-            // return layer.getSettingsData().getDis_handleDisplaySize();
-            // }
-        }
+        // if (layer.getSettingsData() == null) {
+        return 6;
+        // }
+        // else {
+        // return layer.getSettingsData().getDis_handleDisplaySize();
+        // }
+
     }
 
     public void setPaint(Paint paint1) {
@@ -685,50 +680,44 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     protected void firePropertyChange(String s, Object obj, Object obj1) {
-        if (pcs != null && layer != null) {
-            // if (layer.getSettingsData() != null) {
+        if (pcs != null) {
             pcs.firePropertyChange(s, obj, obj1);
-            // }
         }
     }
 
     protected void firePropertyChange(String s, int i, int j) {
-        if (pcs != null && layer != null) {
-            // if (layer.getSettingsData() != null) {
+        if (pcs != null) {
             pcs.firePropertyChange(s, i, j);
-            // }
         }
     }
 
     protected void firePropertyChange(String s, boolean flag, boolean flag1) {
-        if (pcs != null && layer != null) {
-            // if (layer.getSettingsData() != null) {
+        if (pcs != null) {
             pcs.firePropertyChange(s, flag, flag1);
-            // }
         }
     }
 
     protected void fireAddAction() {
-        if (graphicsChangeListener != null) {
-            for (int i = 0; i < graphicsChangeListener.size(); i++) {
-                graphicsChangeListener.get(i).handleGraphicAdded(this);
-            }
+        if (pcs != null) {
+            pcs.firePropertyChange("add.graphic", null, this);
         }
     }
 
     protected void fireMoveAction() {
-        if (graphicsChangeListener != null) {
-            for (int i = 0; i < graphicsChangeListener.size(); i++) {
-                graphicsChangeListener.get(i).handleGraphicMoved(this);
-            }
+        if (pcs != null) {
+            pcs.firePropertyChange("move.graphic", null, this);
         }
     }
 
     public void fireRemoveAction() {
-        if (graphicsChangeListener != null) {
-            for (int i = 0; i < graphicsChangeListener.size(); i++) {
-                graphicsChangeListener.get(i).handleGraphicRemoved(this);
-            }
+        if (pcs != null) {
+            pcs.firePropertyChange("remove.graphic", null, this);
+        }
+    }
+
+    public void fireRemoveAndRepaintAction() {
+        if (pcs != null) {
+            pcs.firePropertyChange("remove.repaint.graphic", null, this);
         }
     }
 
@@ -736,25 +725,18 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (pcs == null) {
             pcs = new PropertyChangeSupport(this);
         }
+        // Do not add if already exists
+        for (PropertyChangeListener listener : pcs.getPropertyChangeListeners()) {
+            if (listener == propertychangelistener) {
+                return;
+            }
+        }
         pcs.addPropertyChangeListener(propertychangelistener);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
         if (pcs != null) {
             pcs.removePropertyChangeListener(propertychangelistener);
-        }
-    }
-
-    public void addChangeListener(GraphicsChangeListener changelistener) {
-        if (graphicsChangeListener == null) {
-            graphicsChangeListener = new ArrayList<GraphicsChangeListener>(1);
-        }
-        graphicsChangeListener.add(changelistener);
-    }
-
-    public void removeChangeListener(GraphicsChangeListener changelistener) {
-        if (graphicsChangeListener != null) {
-            graphicsChangeListener.remove(changelistener);
         }
     }
 

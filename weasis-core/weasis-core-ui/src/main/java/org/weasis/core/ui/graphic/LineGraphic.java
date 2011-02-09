@@ -229,11 +229,7 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
 
     @Override
     public int getHandleSize() {
-        if (getLayer() == null) {
-            return 0;
-        } else {
-            return 16;
-        }
+        return 16;
     }
 
     @Override

@@ -31,7 +31,6 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
 
 /**
  * The Class AngleToolGraphic.
@@ -170,15 +169,15 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
     // updateShapeOnDrawing(null);
     // }
 
-    @Override
-    public void setLayer(AbstractLayer layer) {
-        // redéfinition si le graph est effacé, on ferme le graph (remplace double clique), il faut quand même
-        // recliquer une fois pour que la dragSequence retourne false
-        if (layer == null) {
-            createPoints = false;
-        }
-        super.setLayer(layer);
-    }
+    // @Override
+    // public void setLayer(AbstractLayer layer) {
+    // // redéfinition si le graph est effacé, on ferme le graph (remplace double clique), il faut quand même
+    // // recliquer une fois pour que la dragSequence retourne false
+    // if (layer == null) {
+    // createPoints = false;
+    // }
+    // super.setLayer(layer);
+    // }
 
     public boolean isClosed() {
         return closed;

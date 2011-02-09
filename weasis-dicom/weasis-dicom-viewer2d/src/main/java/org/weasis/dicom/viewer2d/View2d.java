@@ -319,8 +319,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 Color color = fill ? Color.blue : Color.cyan;
                 PolygonGraphic graphic = new PolygonGraphic(xyCoord, 1.0f, color, fill, true);
                 AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
-                if (layer instanceof DragLayer) {
-                    ((DragLayer) layer).addGraphic(graphic);
+                if (layer != null) {
+                    layer.addGraphic(graphic);
                 }
             }
         }

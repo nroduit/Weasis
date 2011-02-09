@@ -118,8 +118,6 @@ public interface LayerModel {
 
     void repaint();
 
-    void oneSelectedGraphicUpdateInterface();
-
     ArrayList<Graphic> getSelectedGraphics();
 
     void setSelectedGraphics(List<Graphic> list);

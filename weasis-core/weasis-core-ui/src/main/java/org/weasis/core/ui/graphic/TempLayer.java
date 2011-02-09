@@ -39,20 +39,6 @@ public class TempLayer extends DragLayer {
         super(canvas1, Tools.TEMPDRAGLAYER.getId());
     }
 
-    @Override
-    public void addGraphic(Graphic graphic) {
-        if (graphics != null && !graphics.contains(graphic)) {
-            // pour le mode manuel de calibration
-            if (graphic instanceof LineGraphic) {
-                deleteAllGraphic();
-            }
-            graphics.add(graphic);
-            graphic.setLayer(this);
-            graphic.addPropertyChangeListener(pcl);
-            // repaint(graphic.getRepaintBounds());
-        }
-    }
-
     public ArrayList<Point> getPoints() {
         return points;
     }

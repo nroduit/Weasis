@@ -53,7 +53,13 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if ("bounds".equals(s)) { //$NON-NLS-1$
                 graphicBoundsChanged((Rectangle) propertychangeevent.getOldValue(),
                     (Rectangle) propertychangeevent.getNewValue());
-            } else if ("updatePane".equals(s)) { //$NON-NLS-1$
+            } else if ("add.graphic".equals(s)) { //$NON-NLS-1$
+                addGraphic((Graphic) propertychangeevent.getNewValue());
+            } else if ("move.graphic".equals(s)) { //$NON-NLS-1$
+            } else if ("remove.graphic".equals(s)) { //$NON-NLS-1$
+                removeGraphic((Graphic) propertychangeevent.getNewValue());
+            } else if ("remove.repaint.graphic".equals(s)) { //$NON-NLS-1$
+                removeGraphicAndRepaint((Graphic) propertychangeevent.getNewValue());
             }
             // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
             else {
@@ -81,6 +87,16 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         pcl = new PropertyChangeHandler();
     }
 
+    public void addGraphic(Graphic graphic) {
+        if (graphics != null && !graphics.contains(graphic)) {
+            // graphic.setSelected(false);
+            graphics.add(graphic);
+            // graphic.setLayer(this);
+            graphic.addPropertyChangeListener(pcl);
+            // repaint(graphic.getRepaintBounds());
+        }
+    }
+
     public void toFront(Graphic graphic) {
         if (graphics != null) {
             graphics.remove(graphic);
@@ -90,7 +106,25 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public synchronized void setGraphics(List<Graphic> graphics) {
+        unRegisterGraphics();
         this.graphics = graphics == null ? new ArrayList<Graphic>() : graphics;
+        registerGraphics();
+    }
+
+    private synchronized void unRegisterGraphics() {
+        if (graphics != null) {
+            for (Graphic graphic : graphics) {
+                graphic.removePropertyChangeListener(pcl);
+            }
+        }
+    }
+
+    private synchronized void registerGraphics() {
+        if (graphics != null) {
+            for (Graphic graphic : graphics) {
+                graphic.addPropertyChangeListener(pcl);
+            }
+        }
     }
 
     public void toBack(Graphic graphic) {
@@ -139,7 +173,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         } else {
             repaint(graphic.getRepaintBounds());
         }
-        graphic.setLayer(null);
+        // graphic.setLayer(null);
         if (graphic.isSelected()) {
             getShowDrawing().getSelectedGraphics().remove(graphic);
         }
@@ -150,7 +184,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             graphics.remove(graphic);
         }
         graphic.removePropertyChangeListener(pcl);
-        graphic.setLayer(null);
+        // graphic.setLayer(null);
         if (graphic.isSelected()) {
             getShowDrawing().getSelectedGraphics().remove(graphic);
         }

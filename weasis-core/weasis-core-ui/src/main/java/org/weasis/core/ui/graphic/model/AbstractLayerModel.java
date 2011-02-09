@@ -22,9 +22,6 @@ import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +62,7 @@ public class AbstractLayerModel implements LayerModel {
     protected boolean shapeAction = false;
     private final ArrayList<AbstractLayer> layers;
     private final ArrayList<Graphic> singleList;
-    private PropertyChangeSupport pcs;
+
     private final ArrayList<Graphic> selectedGraphics;
     private Graphic createGraphic;
     private final ArrayList listenerList;
@@ -76,24 +73,6 @@ public class AbstractLayerModel implements LayerModel {
     public Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
     private final boolean crossHairMode = false;
     private Object antialiasing;
-
-    /**
-     * The Class PropertyChangeHandler.
-     * 
-     * @author Nicolas Roduit
-     */
-    class PropertyChangeHandler implements PropertyChangeListener {
-
-        public void propertyChange(PropertyChangeEvent propertychangeevent) {
-            String s = propertychangeevent.getPropertyName();
-            if ("visible".equals(s)) { //$NON-NLS-1$
-                layerVisibilityChanged((AbstractLayer) propertychangeevent.getSource());
-            }
-        }
-
-        private PropertyChangeHandler() {
-        }
-    }
 
     public AbstractLayerModel(GraphicsPane canvas) {
         this.canvas = canvas;
@@ -238,12 +217,10 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void setSelectedGraphics(List<Graphic> list) {
-        boolean flag = false;
         for (int i = selectedGraphics.size() - 1; i >= 0; i--) {
             Graphic graphic = selectedGraphics.get(i);
             if (list == null || !list.contains(graphic)) {
                 graphic.setSelected(false);
-                flag = true;
             }
         }
         selectedGraphics.clear();
@@ -251,22 +228,9 @@ public class AbstractLayerModel implements LayerModel {
             selectedGraphics.addAll(list);
             for (int j = selectedGraphics.size() - 1; j >= 0; j--) {
                 (selectedGraphics.get(j)).setSelected(true);
-                flag = true;
             }
         }
-        if (flag && pcs != null) {
-            if (selectedGraphics.size() == 1) {
-                oneSelectedGraphicUpdateInterface();
-            } else {
-                pcs.firePropertyChange("selectedGraphics", null, null); //$NON-NLS-1$
-            }
-        }
-    }
 
-    public void oneSelectedGraphicUpdateInterface() {
-        if (pcs != null) {
-            pcs.firePropertyChange("selectedGraphic", null, null); //$NON-NLS-1$
-        }
     }
 
     public ArrayList<Graphic> getSelectedGraphics() {
@@ -381,19 +345,6 @@ public class AbstractLayerModel implements LayerModel {
         setSelectedGraphics(singleList);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-        pcs.addPropertyChangeListener(propertychangelistener);
-    }
-
-    public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
-        if (pcs != null) {
-            pcs.removePropertyChangeListener(propertychangelistener);
-        }
-    }
-
     public void deleteAllGraphics() {
         final AbstractLayer[] layerList = getLayers();
         final int n = layerList.length;
@@ -415,12 +366,7 @@ public class AbstractLayerModel implements LayerModel {
                 for (int i = list.size() - 1; i >= 0; i--) {
                     Graphic graphic = null;
                     graphic = (Graphic) list.get(i);
-                    AbstractLayer layer = graphic.getLayer();
-                    layer.removeGraphic(graphic);
-                    // fireRemoveAction() peut utiliser le layer pour dï¿½clencher l'action
-                    graphic.setLayer(layer);
                     graphic.fireRemoveAction();
-                    graphic.setLayer(null);
                 }
             }
             repaint();
@@ -434,9 +380,7 @@ public class AbstractLayerModel implements LayerModel {
                 AbstractDragGraphic graphic = (AbstractDragGraphic) dragGaphs.get(i);
                 graphic.move(0, x, y, null);
             }
-            if (dragGaphs.size() == 1) {
-                oneSelectedGraphicUpdateInterface();
-            }
+
         }
     }
 

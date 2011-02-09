@@ -19,7 +19,6 @@ import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 
 import org.weasis.core.api.gui.util.GUIEntry;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
 
 /**
  * The Interface Graphic.
@@ -28,9 +27,9 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
  */
 public interface Graphic extends GUIEntry {
 
-    public void setLayer(AbstractLayer layer);
-
-    public AbstractLayer getLayer();
+    // public void setLayer(AbstractLayer layer);
+    //
+    // public AbstractLayer getLayer();
 
     public Area getArea();
 

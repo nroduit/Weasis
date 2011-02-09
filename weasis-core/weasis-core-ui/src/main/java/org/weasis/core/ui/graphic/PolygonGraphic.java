@@ -24,8 +24,6 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.ui.graphic.model.AbstractLayer;
-
 /**
  * The Class PolygonGraphic.
  * 
@@ -119,7 +117,7 @@ public class PolygonGraphic extends AbstractDragGraphic {
                         updateShapeOnDrawing(mouseevent);
                         createPoints = false;
                         // comme le drag doit être annulé, pas de mise à jour dans imageDisplay
-                        getLayer().getShowDrawing().oneSelectedGraphicUpdateInterface();
+                        // getLayer().getShowDrawing().oneSelectedGraphicUpdateInterface();
                     }
                     update(mouseevent);
                     return true;
@@ -172,17 +170,17 @@ public class PolygonGraphic extends AbstractDragGraphic {
     // updateShapeOnDrawing(affineTransform);
     // }
 
-    @Override
-    public void setLayer(AbstractLayer layer) {
-        // redéfinition si le graph est deleter, on ferme le graph (remplace double clique), il faut quand même
-        // recliquer
-        // une
-        // fois pour la dragSequence retourne false
-        if (layer == null) {
-            createPoints = false;
-        }
-        super.setLayer(layer);
-    }
+    // @Override
+    // public void setLayer(AbstractLayer layer) {
+    // // redéfinition si le graph est deleter, on ferme le graph (remplace double clique), il faut quand même
+    // // recliquer
+    // // une
+    // // fois pour la dragSequence retourne false
+    // if (layer == null) {
+    // createPoints = false;
+    // }
+    // super.setLayer(layer);
+    // }
 
     public boolean isClosed() {
         return closed;

@@ -36,9 +36,9 @@ public class DragLayer extends AbstractLayer {
 
     public void addGraphic(Graphic graphic) {
         if (graphics != null && !graphics.contains(graphic)) {
-            graphic.setSelected(false);
+            // graphic.setSelected(false);
             graphics.add(graphic);
-            graphic.setLayer(this);
+            // graphic.setLayer(this);
             graphic.addPropertyChangeListener(pcl);
             // repaint(graphic.getRepaintBounds());
         }
