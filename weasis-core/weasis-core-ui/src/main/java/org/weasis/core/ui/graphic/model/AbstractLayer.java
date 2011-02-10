@@ -18,6 +18,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -32,11 +33,14 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
-    final protected PropertyChangeListener pcl;
-    final protected transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
+    private static final HashMap<List<Graphic>, List<AbstractLayer>> shareGraphicsManager =
+        new HashMap<List<Graphic>, List<AbstractLayer>>();
+    protected final PropertyChangeListener pcl;
+    protected final transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
     private boolean masked;
     private int level;
     private final int drawType;
+    private boolean originalExternalGraphics = false;
     protected volatile List<Graphic> graphics;
 
     /**
@@ -89,11 +93,20 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void addGraphic(Graphic graphic) {
         if (graphics != null && !graphics.contains(graphic)) {
-            // graphic.setSelected(false);
             graphics.add(graphic);
-            // graphic.setLayer(this);
             graphic.addPropertyChangeListener(pcl);
             // repaint(graphic.getRepaintBounds());
+            List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+            if (layers != null) {
+                // for (AbstractLayer layer : layers) {
+                // if (layer != this) {
+                // layer.addGraphic(graphic.clone());
+                // }
+                // }
+                if (layers.size() == 0) {
+                    shareGraphicsManager.remove(layers);
+                }
+            }
         }
     }
 
@@ -102,27 +115,90 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             graphics.remove(graphic);
             graphics.add(graphic);
         }
-        // repaint(graphic.getv);
     }
 
     public synchronized void setGraphics(List<Graphic> graphics) {
-        unRegisterGraphics();
-        this.graphics = graphics == null ? new ArrayList<Graphic>() : graphics;
-        registerGraphics();
-    }
+        if (this.graphics != graphics) {
+            unRegisterGraphics();
+            if (graphics == null) {
+                this.graphics = new ArrayList<Graphic>();
+                originalExternalGraphics = false;
+            } else {
+                List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+                if (layers == null) {
+                    layers = new ArrayList<AbstractLayer>();
+                    shareGraphicsManager.put(graphics, layers);
+                }
 
-    private synchronized void unRegisterGraphics() {
-        if (graphics != null) {
-            for (Graphic graphic : graphics) {
-                graphic.removePropertyChangeListener(pcl);
+                if (layers.isEmpty()) {
+                    for (Graphic graphic : graphics) {
+                        graphic.addPropertyChangeListener(pcl);
+                    }
+                    this.graphics = graphics;
+                    originalExternalGraphics = true;
+                } else {
+                    for (AbstractLayer layer : layers) {
+                        if (layer.originalExternalGraphics) {
+                            if (layer == this) {
+                                return;
+                            }
+                            graphics = layer.getGraphics();
+                        }
+                    }
+
+                    this.graphics = new ArrayList<Graphic>();
+                    for (Graphic graphic : graphics) {
+                        if (graphic instanceof AbstractDragGraphic) {
+                            try {
+                                Graphic g = (Graphic) ((AbstractDragGraphic) graphic).clone();
+                                g.addPropertyChangeListener(pcl);
+                                this.graphics.add(g);
+                            } catch (CloneNotSupportedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    originalExternalGraphics = false;
+                }
+                layers.add(this);
             }
         }
     }
 
-    private synchronized void registerGraphics() {
-        if (graphics != null) {
-            for (Graphic graphic : graphics) {
-                graphic.addPropertyChangeListener(pcl);
+    private void unRegisterGraphics() {
+        if (this.graphics != null) {
+            List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+            if (layers != null) {
+                layers.remove(this);
+                if (this.originalExternalGraphics && layers.size() > 0) {
+                    AbstractLayer layer = layers.get(0);
+                    List<AbstractLayer> tempLayers = new ArrayList<AbstractLayer>(layers);
+                    layers.clear();
+                    layer.setGraphics(this.graphics);
+                    shareGraphicsManager.put(graphics, tempLayers);
+                    return;
+                } else {
+                    for (Graphic g : graphics) {
+                        g.removePropertyChangeListener(pcl);
+                    }
+                }
+                if (layers.size() == 0) {
+                    shareGraphicsManager.remove(graphics);
+                }
+            }
+        }
+    }
+
+    private static void duplicateGraphics(AbstractLayer layer, List<Graphic> inGraphics, List<Graphic> outGraphics) {
+        for (Graphic graphic : inGraphics) {
+            if (graphic instanceof AbstractDragGraphic) {
+                try {
+                    Graphic g = (Graphic) ((AbstractDragGraphic) graphic).clone();
+                    g.addPropertyChangeListener(layer.pcl);
+                    outGraphics.add(g);
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -180,12 +256,23 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void removeGraphic(Graphic graphic) {
+        List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+        if (layers != null) {
+            for (AbstractLayer layer : layers) {
+                removeGraphic(layer, graphic, layer == this);
+            }
+        } else {
+            removeGraphic(this, graphic, true);
+        }
+    }
+
+    private void removeGraphic(AbstractLayer layer, Graphic graphic, boolean deselect) {
+        List<Graphic> graphics = layer.getGraphics();
         if (graphics != null) {
             graphics.remove(graphic);
         }
-        graphic.removePropertyChangeListener(pcl);
-        // graphic.setLayer(null);
-        if (graphic.isSelected()) {
+        graphic.removePropertyChangeListener(layer.pcl);
+        if (deselect && graphic.isSelected()) {
             getShowDrawing().getSelectedGraphics().remove(graphic);
         }
     }

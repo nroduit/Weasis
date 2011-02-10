@@ -183,14 +183,12 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void repaint(Rectangle rectangle) {
-
         double viewScale = canvas.getViewModel().getViewScale();
-        rectangle.x -= canvas.getViewModel().getModelOffsetX() * viewScale;
-        rectangle.y -= canvas.getViewModel().getModelOffsetY() * viewScale;
+        int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
+        int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
         // System.out.println(rectangle.toString());
         // rectangle.grow(5, 5);
-        canvas.repaint(rectangle);
-        // WeasisWin.getInstance().getZoomOptionPanel().repaintZoomWindow(rectangle);
+        canvas.repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
     }
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {

@@ -597,9 +597,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         AbstractDragGraphic abstractgraphic = (AbstractDragGraphic) super.clone();
-        abstractgraphic.pcs = null;
-        abstractgraphic.selected = false;
-        abstractgraphic.filled = filled;
         return abstractgraphic;
     }
 
