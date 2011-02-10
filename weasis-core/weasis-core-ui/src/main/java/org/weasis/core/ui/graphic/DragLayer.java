@@ -34,16 +34,6 @@ public class DragLayer extends AbstractLayer {
         super(canvas1, drawMode);
     }
 
-    public void addGraphic(Graphic graphic) {
-        if (graphics != null && !graphics.contains(graphic)) {
-            // graphic.setSelected(false);
-            graphics.add(graphic);
-            // graphic.setLayer(this);
-            graphic.addPropertyChangeListener(pcl);
-            // repaint(graphic.getRepaintBounds());
-        }
-    }
-
     @Override
     public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle bound) {
         if (graphics != null) {

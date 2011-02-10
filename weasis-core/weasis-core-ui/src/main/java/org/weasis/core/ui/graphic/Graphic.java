@@ -71,4 +71,6 @@ public interface Graphic extends GUIEntry {
 
     public Shape getShape();
 
+    public Object clone() throws CloneNotSupportedException;
+
 }

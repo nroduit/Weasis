@@ -18,7 +18,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -33,8 +32,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
-    private static final HashMap<List<Graphic>, List<AbstractLayer>> shareGraphicsManager =
-        new HashMap<List<Graphic>, List<AbstractLayer>>();
+    private static final List<ShareGraphics> shareGraphicsManager = new ArrayList<ShareGraphics>();
     protected final PropertyChangeListener pcl;
     protected final transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
     private boolean masked;
@@ -76,8 +74,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             }
         }
 
-        // version 1.0 n'avait pas de UID
-        // protected static final long serialVersionUID = -9094820911680205527L;
         private static final long serialVersionUID = -9094820911680205527L;
 
         private PropertyChangeHandler() {
@@ -91,20 +87,46 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         pcl = new PropertyChangeHandler();
     }
 
+    private ShareGraphics getShareGraphics(List<Graphic> graphics) {
+        for (ShareGraphics g : shareGraphicsManager) {
+            if (g.getGraphics() == graphics) {
+                return g;
+            }
+            for (AbstractLayer layer : g.getLayers()) {
+                if (layer.getGraphics() == graphics) {
+                    return g;
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<AbstractLayer> getShareLayers(List<Graphic> graphics) {
+        ShareGraphics shareGraphics = getShareGraphics(graphics);
+        if (shareGraphics != null) {
+            return shareGraphics.getLayers();
+        }
+        return null;
+    }
+
     public void addGraphic(Graphic graphic) {
         if (graphics != null && !graphics.contains(graphic)) {
-            graphics.add(graphic);
             graphic.addPropertyChangeListener(pcl);
-            // repaint(graphic.getRepaintBounds());
-            List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+            graphics.add(graphic);
+
+            List<AbstractLayer> layers = getShareLayers(graphics);
             if (layers != null) {
-                // for (AbstractLayer layer : layers) {
-                // if (layer != this) {
-                // layer.addGraphic(graphic.clone());
-                // }
-                // }
-                if (layers.size() == 0) {
-                    shareGraphicsManager.remove(layers);
+                for (AbstractLayer layer : layers) {
+                    if (layer != this) {
+                        try {
+                            Graphic g = (Graphic) graphic.clone();
+                            g.addPropertyChangeListener(layer.pcl);
+                            layer.graphics.add(g);
+                            layer.repaint(g.getRepaintBounds());
+                        } catch (CloneNotSupportedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         }
@@ -124,12 +146,12 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 this.graphics = new ArrayList<Graphic>();
                 originalExternalGraphics = false;
             } else {
-                List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
-                if (layers == null) {
-                    layers = new ArrayList<AbstractLayer>();
-                    shareGraphicsManager.put(graphics, layers);
+                ShareGraphics shareGraphics = getShareGraphics(graphics);
+                if (shareGraphics == null) {
+                    shareGraphics = new ShareGraphics(graphics, null);
+                    shareGraphicsManager.add(shareGraphics);
                 }
-
+                List<AbstractLayer> layers = shareGraphics.getLayers();
                 if (layers.isEmpty()) {
                     for (Graphic graphic : graphics) {
                         graphic.addPropertyChangeListener(pcl);
@@ -167,37 +189,26 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private void unRegisterGraphics() {
         if (this.graphics != null) {
-            List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
-            if (layers != null) {
+            ShareGraphics shareGraphics = getShareGraphics(graphics);
+            if (shareGraphics != null) {
+                List<AbstractLayer> layers = shareGraphics.getLayers();
                 layers.remove(this);
                 if (this.originalExternalGraphics && layers.size() > 0) {
-                    AbstractLayer layer = layers.get(0);
-                    List<AbstractLayer> tempLayers = new ArrayList<AbstractLayer>(layers);
+                    AbstractLayer[] tempLayers = layers.toArray(new AbstractLayer[layers.size()]);
+                    // Clear to set new graphics as it has no shared layers.
                     layers.clear();
-                    layer.setGraphics(this.graphics);
-                    shareGraphicsManager.put(graphics, tempLayers);
-                    return;
+                    tempLayers[0].setGraphics(this.graphics);
+                    tempLayers[0].originalExternalGraphics = true;
+                    for (AbstractLayer layer : tempLayers) {
+                        layers.add(layer);
+                    }
                 } else {
                     for (Graphic g : graphics) {
                         g.removePropertyChangeListener(pcl);
                     }
                 }
                 if (layers.size() == 0) {
-                    shareGraphicsManager.remove(graphics);
-                }
-            }
-        }
-    }
-
-    private static void duplicateGraphics(AbstractLayer layer, List<Graphic> inGraphics, List<Graphic> outGraphics) {
-        for (Graphic graphic : inGraphics) {
-            if (graphic instanceof AbstractDragGraphic) {
-                try {
-                    Graphic g = (Graphic) ((AbstractDragGraphic) graphic).clone();
-                    g.addPropertyChangeListener(layer.pcl);
-                    outGraphics.add(g);
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
+                    shareGraphicsManager.remove(shareGraphics);
                 }
             }
         }
@@ -256,7 +267,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void removeGraphic(Graphic graphic) {
-        List<AbstractLayer> layers = shareGraphicsManager.get(graphics);
+        List<AbstractLayer> layers = getShareLayers(graphics);
         if (layers != null) {
             for (AbstractLayer layer : layers) {
                 removeGraphic(layer, graphic, layer == this);
@@ -334,7 +345,26 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         repaint();
     }
 
-    // public ProjectSettingsData getSettingsData() {
-    // return settingsData;
-    // }
+    static class ShareGraphics {
+        private final List<AbstractLayer> layers;
+        private final List<Graphic> graphics;
+
+        public ShareGraphics(List<Graphic> graphics, List<AbstractLayer> layers) {
+            if (graphics == null) {
+                throw new IllegalArgumentException("graphics parameter cannot be null");
+            }
+            this.graphics = graphics;
+            this.layers = layers == null ? new ArrayList<AbstractLayer>() : layers;
+        }
+
+        public List<AbstractLayer> getLayers() {
+            return layers;
+        }
+
+        public List<Graphic> getGraphics() {
+            return graphics;
+        }
+
+    }
+
 }
