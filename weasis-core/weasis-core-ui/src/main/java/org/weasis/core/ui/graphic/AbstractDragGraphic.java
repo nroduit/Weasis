@@ -190,14 +190,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         this.showLabel = true;
     }
 
-    // public void setLayer(AbstractLayer layer1) {
-    // layer = layer1;
-    // }
-    //
-    // public AbstractLayer getLayer() {
-    // return layer;
-    // }
-
     protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
         if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
@@ -597,6 +589,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         AbstractDragGraphic abstractgraphic = (AbstractDragGraphic) super.clone();
+        abstractgraphic.pcs = null;
+        abstractgraphic.selected = false;
+        abstractgraphic.filled = filled;
         return abstractgraphic;
     }
 

@@ -3,7 +3,6 @@ package org.weasis.dicom.explorer;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -45,12 +44,8 @@ public class MimeSystemAppViewer implements SeriesViewer {
             // in KDE session, but actually does not support it.
             // http://bugs.sun.com/view_bug.do?bug_id=6486393
             if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) {
-
                 FileExtractor extractor = (FileExtractor) series;
                 File file = extractor.getExtractFile();
-                URI uri = file.toURI();
-                File file2 = new File(uri);
-                System.out.println(file2.getAbsolutePath());
                 if (file != null) {
                     try {
                         String cmd = String.format("xdg-open %s", file.getAbsolutePath());
@@ -60,6 +55,11 @@ public class MimeSystemAppViewer implements SeriesViewer {
                     }
                 }
 
+            } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) {
+                // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
+                FileExtractor extractor = (FileExtractor) series;
+                File file = extractor.getExtractFile();
+                startAssociatedProgram(file.getAbsolutePath());
             } else if (Desktop.isDesktopSupported()) {
                 final Desktop desktop = Desktop.getDesktop();
                 if (desktop.isSupported(Desktop.Action.OPEN)) {
@@ -75,6 +75,15 @@ public class MimeSystemAppViewer implements SeriesViewer {
                     }
                 }
             }
+        }
+    }
+
+    public static void startAssociatedProgram(String file) {
+        try {
+            Runtime.getRuntime().exec("cmd /c \"" + file + '"');
+        } catch (IOException e) {
+            LOGGER.error("Cannot open {} with the default system application", file);
+            e.printStackTrace();
         }
     }
 

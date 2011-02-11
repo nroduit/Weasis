@@ -166,9 +166,7 @@ public class AbstractLayerModel implements LayerModel {
                         JOptionPane.ERROR_MESSAGE);
                 return null;
             }
-            if (layer instanceof DragLayer) {
-                ((DragLayer) layer).addGraphic((obj));
-            }
+            layer.addGraphic(obj);
         }
         return ((AbstractDragGraphic) (obj));
     }

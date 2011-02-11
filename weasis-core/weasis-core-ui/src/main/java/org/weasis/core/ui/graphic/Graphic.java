@@ -27,10 +27,6 @@ import org.weasis.core.api.gui.util.GUIEntry;
  */
 public interface Graphic extends GUIEntry {
 
-    // public void setLayer(AbstractLayer layer);
-    //
-    // public AbstractLayer getLayer();
-
     public Area getArea();
 
     public String[] getLabel();
@@ -70,7 +66,5 @@ public interface Graphic extends GUIEntry {
     public void fireRemoveAction();
 
     public Shape getShape();
-
-    public Object clone() throws CloneNotSupportedException;
 
 }
