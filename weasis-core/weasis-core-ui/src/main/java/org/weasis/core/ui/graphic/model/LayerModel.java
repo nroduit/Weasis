@@ -124,13 +124,5 @@ public interface LayerModel {
 
     Rectangle getBounds();
 
-    // TempClassLayer getTemporyClassifLayer();
-    //
-    // TempLayer getTemporyDragLayer();
-    //
-    // DragLayer getMeasure2DLayer();
-    //
-    // RoiLayer getRoiLayer();
-    //
-    // ObjectsLayer getObjectExtractLayer();
+    GraphicsPane getGraphicsPane();
 }

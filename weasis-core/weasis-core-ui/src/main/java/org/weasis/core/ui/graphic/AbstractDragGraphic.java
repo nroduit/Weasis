@@ -21,6 +21,7 @@ import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -51,11 +52,14 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected transient boolean showLabel;
     protected transient boolean createPoints;
     protected transient Stroke stroke;
-    protected transient AffineTransform affineTransform;
-    protected transient Shape transformedShape;
+    // protected transient AffineTransform affineTransform;
+    // protected transient Shape transformedShape;
     protected transient Shape shape;
-    private transient String[] label;
-    protected transient Rectangle2D labelBound;
+    private transient String[] labels;
+
+    protected transient Double labelHeight = null;
+
+    protected transient GraphicLabel graphicLabel = null;
 
     /**
      * The Class DefaultDragSequence.
@@ -190,6 +194,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         this.showLabel = true;
     }
 
+    protected Graphics2D getGraphics2D(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof GraphicsPane) {
+            return (Graphics2D) ((GraphicsPane) mouseevent.getSource()).getGraphics();
+        }
+        return null;
+    }
+
     protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
         if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
@@ -215,7 +226,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (selected != flag) {
             selected = flag;
             // firePropertyChange("selected", !flag, flag);
-            firePropertyChange("bounds", null, getTransformedBounds()); //$NON-NLS-1$
+            firePropertyChange("bounds", null, shape); //$NON-NLS-1$
         }
     }
 
@@ -230,51 +241,44 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     public void setShape(Shape shape, MouseEvent mouseevent) {
         if (shape != null) {
-            Rectangle rectangle = getTransformedBounds();
+            Shape oldShape = this.shape;
             this.shape = shape;
-            affineTransform = getAffineTransform(mouseevent);
-            this.transformedShape = affineTransform == null ? shape : affineTransform.createTransformedShape(shape);
+            // Fire event to repaint the old shape and the new shape of the graphic
+            firePropertyChange("bounds", oldShape, shape); //$NON-NLS-1$
+        }
+    }
 
-            if (showLabel && label != null) {
-                Rectangle rectangleOld = labelBound == null ? null : labelBound.getBounds();
-                buildLabelBound(mouseevent);
-                firePropertyChange("bounds", null, rectangleUnion(rectangleOld, labelBound.getBounds())); //$NON-NLS-1$
+    protected void buildLabelBound(Graphics2D g2d) {
+        if (showLabel && labels != null && g2d != null) {
+
+            Rectangle2D longestBound = null;
+            for (String l : labels) {
+                Rectangle2D bound = g2d.getFont().getStringBounds(l, g2d.getFontRenderContext());
+                // Find out the longest labels
+                if (longestBound == null || bound.getWidth() > longestBound.getWidth()) {
+                    longestBound = bound;
+                }
             }
-            // Fire event to repaint the old position and the new postion of the graphic
-            firePropertyChange("bounds", null, rectangleUnion(rectangle, getTransformedBounds())); //$NON-NLS-1$
-        }
-    }
+            if (longestBound == null) {
+                graphicLabel = null;
+                labelHeight = null;
+            } else {
+                labelHeight = longestBound.getHeight();
+                Rectangle rect = shape.getBounds();
+                if (graphicLabel == null) {
+                    graphicLabel = new GraphicLabel();
 
-    protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
-        if (rectangle == null) {
-            return rectangle1;
-        }
-        return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
-    }
-
-    protected void buildLabelBound(MouseEvent mouseevent) {
-        if (showLabel && label != null) {
-            if (mouseevent != null && mouseevent.getSource() instanceof GraphicsPane
-                && ((GraphicsPane) mouseevent.getSource()).getGraphics() instanceof Graphics2D) {
-                Graphics2D g2d = (Graphics2D) ((GraphicsPane) mouseevent.getSource()).getGraphics();
-                labelBound = null;
-                for (String l : label) {
-                    Rectangle2D bound = g2d.getFont().getStringBounds(l, g2d.getFontRenderContext());
-                    if (labelBound == null || bound.getWidth() > labelBound.getWidth()) {
-                        labelBound = bound;
-                    }
                 }
-                if (labelBound != null) {
-                    Point p = getLabelPosition();
-                    double h = labelBound.getHeight() * label.length + 6;
-                    labelBound.setRect(p.x, p.y - h, labelBound.getWidth() + 6, h);
-                }
+                Rectangle oldBound = graphicLabel.getBound();
+                graphicLabel.setLabelBound(rect.x + rect.width, rect.y + rect.height * 0.5,
+                    longestBound.getWidth() + 6, labelHeight * labels.length + 6);
+                firePropertyChange("graphicLabel", oldBound, graphicLabel); //$NON-NLS-1$
             }
         }
     }
 
-    public Rectangle2D getLabelBound() {
-        return labelBound;
+    public GraphicLabel getGraphicLabel() {
+        return graphicLabel;
     }
 
     public Shape getShape() {
@@ -294,7 +298,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public void setPaint(Paint paint1) {
         paint = paint1;
         // firePropertyChange("paint", paint2, paint1);
-        firePropertyChange("bounds", null, getTransformedBounds()); //$NON-NLS-1$
+        firePropertyChange("bounds", null, shape); //$NON-NLS-1$
     }
 
     public Paint getPaint() {
@@ -304,7 +308,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public void setFilled(boolean flag) {
         if (filled != flag) {
             filled = flag;
-            firePropertyChange("bounds", null, getTransformedBounds()); //$NON-NLS-1$
+            firePropertyChange("bounds", null, shape); //$NON-NLS-1$
             // firePropertyChange("selected", !flag, flag);
         }
     }
@@ -314,7 +318,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     protected void updateShape() {
-        firePropertyChange("bounds", null, getTransformedBounds()); //$NON-NLS-1$
+        firePropertyChange("bounds", null, shape); //$NON-NLS-1$
         // firePropertyChange("shape", null, shape);
     }
 
@@ -333,11 +337,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         return lineThickness;
     }
 
-    public Point getLabelPosition() {
-        if (labelBound != null) {
-            Rectangle rect = transformedShape.getBounds();
-            return new Point(rect.x + 3 + rect.width, (int) (rect.y + 6 + rect.height / 2 + labelBound.getHeight()
-                * label.length * 0.5));
+    public Point getLabelPosition(Shape shape) {
+        if (labelHeight != null) {
+            Rectangle rect = shape.getBounds();
+            return new Point(rect.x + 3 + rect.width, (int) (rect.y + 6 + rect.height / 2 - labelHeight * labels.length
+                * 0.5));
         }
         return null;
     }
@@ -347,8 +351,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape != null) {
             g2d.setPaint(getPaint());
             g2d.setStroke(stroke);
-            affineTransform = transform;
-            transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
+            Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
             if (isFilled()) {
                 // draw filled shape
                 g2d.fill(transformedShape);
@@ -358,25 +361,23 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             if (selected && !createPoints) {
                 paintHandles(g2d, transform);
             }
-            if (showLabel && label != null) {
-                labelBound = null;
-                for (String l : label) {
-                    Rectangle2D bound = g2d.getFont().getStringBounds(l, g2d.getFontRenderContext());
-                    if (labelBound == null || bound.getWidth() > labelBound.getWidth()) {
-                        labelBound = bound;
-                    }
-                }
-                if (labelBound != null) {
-                    Point p = getLabelPosition();
-                    for (int i = 0; i < label.length; i++) {
-                        paintFontOutline(g2d, label[i], p.x + 3, p.y - 6 - (int) labelBound.getHeight() * i);
-                    }
-                    double h = labelBound.getHeight() * label.length + 6;
-                    labelBound.setRect(p.x, p.y - h, labelBound.getWidth() + 6, h);
+            paintLabel(g2d, transform);
+        }
+    }
+
+    public void paintLabel(Graphics2D g2d, AffineTransform transform) {
+        if (showLabel && labels != null) {
+            if (graphicLabel != null && labelHeight != null) {
+                Rectangle2D labelBound = graphicLabel.getLabelBound();
+                Point2D.Double p = new Point2D.Double(labelBound.getX(), labelBound.getY());
+                transform.transform(p, p);
+                p.x += graphicLabel.getOffsetX();
+                p.y += graphicLabel.getOffsetY();
+                for (int i = 0; i < labels.length; i++) {
+                    paintFontOutline(g2d, labels[i], (float) (p.x + 3), (float) (p.y + labelHeight * (i + 1)));
                 }
                 // Test, show bound to repaint
-                // g2d.draw(getTransformedBounds());
-                // g2d.draw(labelBound);
+                g2d.drawRect((int) p.x, (int) p.y, (int) labelBound.getWidth(), (int) labelBound.getHeight());
             }
         }
     }
@@ -464,17 +465,19 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
      * of handles)
      */
     public Rectangle getRepaintBounds() {
-        Shape shape1 = getShape();
-        if (shape1 == null) {
-            return null;
-        } else {
-            Rectangle rectangle = shape1.getBounds();
-            growHandles(rectangle);
-            return rectangle;
-        }
+        return getRepaintBounds(shape);
     }
 
-    private void growHandles(Rectangle rectangle) {
+    public Rectangle getRepaintBounds(Shape shape) {
+        if (shape == null) {
+            return null;
+        }
+        Rectangle rectangle = shape.getBounds();
+        growHandles(rectangle);
+        return rectangle;
+    }
+
+    public void growHandles(Rectangle rectangle) {
         int i = getHandleSize();
         int thick = (int) Math.ceil(lineThickness);
         if (thick > i) {
@@ -489,11 +492,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         rectangle.y -= i;
     }
 
-    public Rectangle getTransformedBounds() {
+    public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform) {
+        // Get the bounds of the transformed shape + the handles.
         if (affineTransform == null) {
-            return getRepaintBounds();
+            return getRepaintBounds(shape);
         }
-        Rectangle rectangle = affineTransform.createTransformedShape(getBounds()).getBounds();
+        Rectangle rectangle = affineTransform.createTransformedShape(shape).getBounds();
         growHandles(rectangle);
         return rectangle;
     }
@@ -521,7 +525,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     public DragSequence createDragSequence(DragSequence dragsequence, MouseEvent mouseevent) {
         int i = 1;
-        if (mouseevent != null && (dragsequence != null || (i = getResizeCorner(mouseevent.getPoint())) == -1)) {
+        if (mouseevent != null && (dragsequence != null || (i = getResizeCorner(mouseevent)) == -1)) {
             return createMoveDrag(dragsequence, mouseevent);
         } else {
             // let drag the handle i to resize the graphic
@@ -543,15 +547,17 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         return new Area(getShape());
     }
 
-    public int getResizeCorner(final Point pos) {
+    public int getResizeCorner(MouseEvent mouseevent) {
         // return the selected handle point position
         /*
          * 1 2 3 8 4 7 6 5
          */
+        final Point pos = mouseevent.getPoint();
         Rectangle rect = getBounds();
         int k = getHandleSize() + 2;
-        // Enable to get a better selection of the handle with a low or high magnification zoom
+        AffineTransform affineTransform = getAffineTransform(mouseevent);
         if (affineTransform != null) {
+            // Enable to get a better selection of the handle with a low or high magnification zoom
             double scale = affineTransform.getScaleX();
             k = (int) Math.ceil(k / scale + 1);
         }
@@ -689,27 +695,21 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         }
     }
 
-    protected void fireAddAction() {
-        if (pcs != null) {
-            pcs.firePropertyChange("add.graphic", null, this);
-        }
-    }
-
     protected void fireMoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("move.graphic", null, this);
+            pcs.firePropertyChange("move", null, this);
         }
     }
 
     public void fireRemoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove.graphic", null, this);
+            pcs.firePropertyChange("remove", null, this);
         }
     }
 
     public void fireRemoveAndRepaintAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove.repaint.graphic", null, this);
+            pcs.firePropertyChange("remove.repaint", null, this);
         }
     }
 
@@ -737,11 +737,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     public String[] getLabel() {
-        return label;
+        return labels;
     }
 
-    public void setLabel(String[] label) {
-        this.label = label;
+    public void setLabel(String[] label, Graphics2D g2d) {
+        this.labels = label;
+        buildLabelBound(g2d);
     }
 
     protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {

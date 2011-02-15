@@ -263,15 +263,17 @@ public class PolygonGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source) {
+    public void updateLabel(Object source, Graphics2D g2d) {
 
     }
 
     @Override
-    public int getResizeCorner(final Point pos) {
+    public int getResizeCorner(MouseEvent mouseevent) {
+        final Point pos = mouseevent.getPoint();
         int k = getHandleSize() + 2;
-        // Enable to get a better selection of the handle with a low or high magnification zoom
+        AffineTransform affineTransform = getAffineTransform(mouseevent);
         if (affineTransform != null) {
+            // Enable to get a better selection of the handle with a low or high magnification zoom
             double scale = affineTransform.getScaleX();
             k = (int) Math.ceil(k / scale + 1);
         }

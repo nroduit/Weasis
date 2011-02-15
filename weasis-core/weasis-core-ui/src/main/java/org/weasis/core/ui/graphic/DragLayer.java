@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -35,21 +36,29 @@ public class DragLayer extends AbstractLayer {
     }
 
     @Override
-    public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle bound) {
+    public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bound) {
         if (graphics != null) {
             for (int i = 0; i < graphics.size(); i++) {
                 Graphic graphic = graphics.get(i);
                 // only repaints graphics that intersects or are contained in the clip bound
                 if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
                     graphic.paint(g2, transform);
-                } else if (graphic.getLabelBound() != null) {
-                    Rectangle2D labelBound = graphic.getLabelBound();
-                    Point2D p = new Point.Double(labelBound.getX(), labelBound.getY());
-                    inverseTransform.transform(p, p);
-                    if (bound.intersects(new Rectangle((int) Math.floor(p.getX()), (int) Math.floor(p.getY()),
-                        (int) Math.ceil(labelBound.getWidth()), (int) Math.ceil(labelBound.getHeight())))) {
-                        // TODO repaint label separately
-                        graphic.paint(g2, transform);
+                } else {
+                    if (graphic.getGraphicLabel() != null) {
+                        Rectangle2D labelBound = graphic.getGraphicLabel().getLabelBound();
+                        if (labelBound != null) {
+                            // As the size of the graphicLabel does not change with the zoom, it requires an inverse
+                            // transform for
+                            // comparing in real coordinates
+                            Point2D.Double p = new Point2D.Double(labelBound.getWidth(), labelBound.getHeight());
+                            inverseTransform.transform(p, p);
+                            Rectangle rect =
+                                new Rectangle((int) labelBound.getX(), (int) labelBound.getY(), (int) Math.ceil(p.x),
+                                    (int) Math.ceil(p.y));
+                            if (bound.intersects(rect)) {
+                                graphic.paintLabel(g2, transform);
+                            }
+                        }
                     }
                 }
             }
@@ -104,15 +113,16 @@ public class DragLayer extends AbstractLayer {
      * @return List
      */
     @Override
-    public Graphic getGraphicContainPoint(Point pos) {
+    public Graphic getGraphicContainPoint(MouseEvent mouseevent) {
         if (graphics != null) {
+            final Point pos = mouseevent.getPoint();
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
                 // checker
                 // sur shape directement)
                 if (graphic.getRepaintBounds().contains(pos)) {
-                    if (graphic.getArea().contains(pos) || graphic.getResizeCorner(pos) != -1) {
+                    if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
                         return graphic;
                     }
                 }

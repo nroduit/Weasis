@@ -10,19 +10,15 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
-import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
-
-import org.weasis.core.ui.Messages;
 
 public class GraphicLabel {
 
-    protected Color filledColor;
-    protected String label;
+    protected String[] label;
     protected Rectangle2D labelBound;
 
     public GraphicLabel() {
@@ -32,20 +28,12 @@ public class GraphicLabel {
     public void paint(Graphics2D g2d, Font font) {
         if (!label.equals(this.label)) {
             FontRenderContext frc = g2d.getFontRenderContext();
-            TextLayout tl = new TextLayout(label, font, frc);
-            labelBound = tl.getBounds();
+            // TextLayout tl = new TextLayout(graphicLabel, font, frc);
+            // labelBound = tl.getBounds();
         }
     }
 
-    public Color getFilledColor() {
-        return filledColor;
-    }
-
-    public void setFilledColor(Color filledColor) {
-        this.filledColor = filledColor;
-    }
-
-    public String getLabel() {
+    public String[] getLabel() {
         return label;
     }
 
@@ -55,14 +43,36 @@ public class GraphicLabel {
             this.label = null;
         } else if (!label.equals(this.label)) {
             // FontRenderContext frc = g2d.getFontRenderContext();
-            // TextLayout tl = new TextLayout(label, font, frc);
+            // TextLayout tl = new TextLayout(graphicLabel, font, frc);
             // labelBound = tl.getBounds();
-            // this.label = label;
+            // this.label = graphicLabel;
         }
     }
 
-    public Rectangle2D getLabelBound() {
-        return labelBound;
+    public void setLabelBound(double x, double y, double width, double height) {
+        if (labelBound == null) {
+            labelBound = new Rectangle2D.Double(x, y, width, height);
+        } else {
+            labelBound.setRect(x, y, width, height);
+        }
     }
 
+    public double getOffsetX() {
+        return 3.0;
+    }
+
+    public double getOffsetY() {
+        if (labelBound == null) {
+            return 0;
+        }
+        return -10;
+    }
+
+    public Rectangle2D getLabelBound() {
+        return labelBound == null ? null : labelBound.getBounds2D();
+    }
+
+    public Rectangle getBound() {
+        return labelBound == null ? null : labelBound.getBounds2D().getBounds();
+    }
 }

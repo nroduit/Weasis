@@ -12,6 +12,7 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -68,8 +69,8 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseevent) {
-        updateLabel(mouseevent);
         setShape(new Rectangle(x, y, width < 1 ? 1 : width, height < 1 ? 1 : height), mouseevent);
+        updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 
     @Override
@@ -95,7 +96,7 @@ public class RectangleGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source) {
+    public void updateLabel(Object source, Graphics2D g2d) {
         if (showLabel) {
             ImageElement imageElement = null;
             if (source instanceof MouseEvent) {
@@ -168,7 +169,7 @@ public class RectangleGraphic extends AbstractDragGraphic {
                 } catch (ArrayIndexOutOfBoundsException ex) {
                 }
 
-                setLabel(list.toArray(new String[list.size()]));
+                setLabel(list.toArray(new String[list.size()]), g2d);
             }
         }
     }

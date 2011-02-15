@@ -15,7 +15,6 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 
 import org.weasis.core.api.gui.util.GUIEntry;
@@ -31,7 +30,7 @@ public interface Graphic extends GUIEntry {
 
     public String[] getLabel();
 
-    public void setLabel(String[] label);
+    public void setLabel(String[] label, Graphics2D g2d);
 
     public void setSelected(boolean flag);
 
@@ -39,9 +38,9 @@ public interface Graphic extends GUIEntry {
 
     public void paint(Graphics2D g2, AffineTransform transform);
 
-    public void paintHandles(Graphics2D g2, AffineTransform transform);
+    public void paintLabel(Graphics2D g2, AffineTransform transform);
 
-    public void updateLabel(Object source);
+    public void updateLabel(Object source, Graphics2D g2d);
 
     /**
      * The bound of the shape. Attention, this function does not return accurate bound for complex shape, use instead
@@ -53,7 +52,7 @@ public interface Graphic extends GUIEntry {
 
     public Rectangle getRepaintBounds();
 
-    public Rectangle2D getLabelBound();
+    public GraphicLabel getGraphicLabel();
 
     public void showProperties();
 
@@ -66,5 +65,7 @@ public interface Graphic extends GUIEntry {
     public void fireRemoveAction();
 
     public Shape getShape();
+
+    public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform);
 
 }

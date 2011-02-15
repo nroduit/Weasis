@@ -22,6 +22,7 @@ import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,7 +97,7 @@ public class AbstractLayerModel implements LayerModel {
                     canvas.setCursor(cursor);
                     return;
                 }
-                int direction = graph.getResizeCorner(p);
+                int direction = graph.getResizeCorner(mouseevent);
                 if (direction < 0) {
                     if (graph.getArea().contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
@@ -134,7 +135,7 @@ public class AbstractLayerModel implements LayerModel {
         } else if (dragGaphs.size() > 1 && !shift) {
             for (int i = 0; i < dragGaphs.size(); i++) {
                 AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(i);
-                if (graph.getResizeCorner(p) < 0) {
+                if (graph.getResizeCorner(mouseevent) < 0) {
                     if (graph.getArea().contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         // setCreateGraphic(null);
@@ -150,8 +151,9 @@ public class AbstractLayerModel implements LayerModel {
 
     public AbstractDragGraphic createGraphic(MouseEvent mouseevent) {
         Graphic obj = getCreateGraphic();
+        // TODO should be according to the selected Tool
         Tools tool = Tools.MEASURE;
-        if (obj == null) {
+        if (obj == null || obj instanceof SelectGraphic) {
             tool = Tools.TEMPDRAGLAYER;
             obj = selectGraphic;
         }
@@ -181,12 +183,13 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void repaint(Rectangle rectangle) {
-        double viewScale = canvas.getViewModel().getViewScale();
-        int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
-        int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
-        // System.out.println(rectangle.toString());
-        // rectangle.grow(5, 5);
-        canvas.repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
+        if (rectangle != null) {
+            // Add the offset of the canvas
+            double viewScale = canvas.getViewModel().getViewScale();
+            int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
+            int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
+            canvas.repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
+        }
     }
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {
@@ -235,6 +238,11 @@ public class AbstractLayerModel implements LayerModel {
 
     public Rectangle getBounds() {
         return canvas.getBounds();
+    }
+
+    @Override
+    public GraphicsPane getGraphicsPane() {
+        return canvas;
     }
 
     public void repaintWithRelativeCoord(Rectangle rectangle) {
@@ -320,11 +328,11 @@ public class AbstractLayerModel implements LayerModel {
         return arraylist;
     }
 
-    public Graphic getFirstGraphicIntersecting(Point pos) {
+    public Graphic getFirstGraphicIntersecting(MouseEvent mouseevent) {
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {
-                Graphic graph = layer.getGraphicContainPoint(pos);
+                Graphic graph = layer.getGraphicContainPoint(mouseevent);
                 if (graph != null) {
                     return graph;
                 }
@@ -350,7 +358,7 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void deleteSelectedGraphics() {
-        java.util.List list = getSelectedGraphics();
+        java.util.List<Graphic> list = getSelectedGraphics();
         if (list != null && list.size() > 0) {
             int response =
                 JOptionPane
@@ -359,13 +367,12 @@ public class AbstractLayerModel implements LayerModel {
                         String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$ //$NON-NLS-2$
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (response == 0) {
-                for (int i = list.size() - 1; i >= 0; i--) {
-                    Graphic graphic = null;
-                    graphic = (Graphic) list.get(i);
+                java.util.List<Graphic> selectionList = new ArrayList<Graphic>(list);
+                for (Graphic graphic : selectionList) {
                     graphic.fireRemoveAction();
                 }
+                repaint();
             }
-            repaint();
         }
     }
 
@@ -403,10 +410,10 @@ public class AbstractLayerModel implements LayerModel {
     // }
 
     public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        Rectangle bound = null;
+        Rectangle2D bound = null;
         // Get the visible view in real coordinates
         Shape area = inverseTransform.createTransformedShape(g2d.getClipBounds());
-        bound = area.getBounds();
+        bound = area.getBounds2D();
         g2d.translate(0.5, 0.5);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasingOn);
         // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));

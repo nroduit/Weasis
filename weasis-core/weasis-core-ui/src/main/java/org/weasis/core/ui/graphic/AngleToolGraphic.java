@@ -42,7 +42,6 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
     public final static int ARC_RADIUS = 14;
     public final static double PI2 = 2.0 * Math.PI;
     protected float points[];
-    protected Shape arc;
     protected int numPoints;
     protected boolean closed;
     protected transient boolean closeShape;
@@ -220,7 +219,7 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public void updateLabel(Object source) {
+    public void updateLabel(Object source, Graphics2D g2d) {
         if (showLabel) {
             ImageElement image = null;
             if (source instanceof MouseEvent) {
@@ -231,7 +230,7 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
             if (image != null) {
                 String value = DecFormater.twoDecimal(getAngleBetweenTwoSegments() * 180.0 / Math.PI);
                 value = value + " °"; //$NON-NLS-1$
-                setLabel(new String[] { value });
+                setLabel(new String[] { value }, g2d);
             }
         }
     }
@@ -244,35 +243,17 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
         for (int j = numPoints * 2; i < j; i++) {
             generalpath.lineTo(points[i], points[++i]);
         }
-        updateLabel(mouseevent);
-        setShape(generalpath, mouseevent);
-    }
-
-    @Override
-    public void setShape(Shape shape, MouseEvent mouseevent) {
-        if (shape != null) {
-            AffineTransform affineTransform = getAffineTransform(mouseevent);
-            Rectangle rectangle = getTransformedBounds();
-            if (points != null && points.length == 6) {
-                double segA = Math.atan2(-(points[1] - points[3]), points[0] - points[2]);
-                double segB = Math.atan2(-(points[5] - points[3]), points[4] - points[2]);
-                Arc2D arcOr =
-                    new Arc2D.Double(points[2] - ARC_RADIUS / 2, points[3] - ARC_RADIUS / 2, ARC_RADIUS, ARC_RADIUS,
-                        segA * 180 / Math.PI, ((segB + PI2 - segA) % PI2) * 180 / Math.PI, Arc2D.OPEN);
-                arc = affineTransform == null ? arcOr : affineTransform.createTransformedShape(arcOr);
-            }
-
-            this.shape = shape;
-            this.transformedShape = affineTransform == null ? shape : affineTransform.createTransformedShape(shape);
-
-            if (showLabel && getLabel() != null) {
-                Rectangle rectangleOld = labelBound == null ? null : labelBound.getBounds();
-                buildLabelBound(mouseevent);
-                firePropertyChange("bounds", null, rectangleUnion(rectangleOld, labelBound.getBounds())); //$NON-NLS-1$
-            }
-            // Fire event to repaint the old position and the new postion of the graphic
-            firePropertyChange("bounds", null, rectangleUnion(rectangle, getTransformedBounds())); //$NON-NLS-1$
+        if (points != null && points.length == 6) {
+            double segA = Math.atan2(-(points[1] - points[3]), points[0] - points[2]);
+            double segB = Math.atan2(-(points[5] - points[3]), points[4] - points[2]);
+            Arc2D arc =
+                new Arc2D.Double(points[2] - ARC_RADIUS / 2, points[3] - ARC_RADIUS / 2, ARC_RADIUS, ARC_RADIUS, segA
+                    * 180 / Math.PI, ((segB + PI2 - segA) % PI2) * 180 / Math.PI, Arc2D.OPEN);
+            generalpath.append(arc, false);
         }
+
+        setShape(generalpath, mouseevent);
+        updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 
     @Override
@@ -296,10 +277,12 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public int getResizeCorner(final Point pos) {
+    public int getResizeCorner(MouseEvent mouseevent) {
+        final Point pos = mouseevent.getPoint();
         int k = getHandleSize() + 2;
-        // Enable to get a better selection of the handle with a low or high magnification zoom
+        AffineTransform affineTransform = getAffineTransform(mouseevent);
         if (affineTransform != null) {
+            // Enable to get a better selection of the handle with a low or high magnification zoom
             double scale = affineTransform.getScaleX();
             k = (int) Math.ceil(k / scale + 1);
         }
@@ -318,40 +301,9 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public Point getLabelPosition() {
-        if (labelBound != null) {
-            Rectangle rect = transformedShape.getBounds();
-            return new Point(rect.x - 3 + rect.width / 2, rect.y + 6 + rect.height / 2);
-        }
-        return null;
-    }
-
-    @Override
-    public Rectangle getTransformedBounds() {
-        Rectangle rectangle = super.getTransformedBounds();
-        if (rectangle != null && arc != null) {
-            Rectangle bound = arc.getBounds();
-            bound.grow(2, 2);
-            return rectangle.union(bound);
-        }
-        return rectangle;
-    }
-
-    @Override
-    public void paint(Graphics2D g2d, AffineTransform transform) {
-        super.paint(g2d, transform);
-        if (points != null && points.length == 6) {
-            double segA = Math.atan2(-(points[1] - points[3]), points[0] - points[2]);
-            double segB = Math.atan2(-(points[5] - points[3]), points[4] - points[2]);
-
-            Arc2D arcOr =
-                new Arc2D.Double(points[2] - ARC_RADIUS / 2, points[3] - ARC_RADIUS / 2, ARC_RADIUS, ARC_RADIUS, segA
-                    * 180 / Math.PI, ((segB + PI2 - segA) % PI2) * 180 / Math.PI, Arc2D.OPEN);
-            arc = transform == null ? arcOr : transform.createTransformedShape(arcOr);
-
-            g2d.setPaint(getPaint());
-            g2d.draw(arc);
-        }
+    public Point getLabelPosition(Shape transformedShape) {
+        Rectangle rect = transformedShape.getBounds();
+        return new Point(rect.x - 3 + rect.width / 2, rect.y + 6 + rect.height / 2);
     }
 
     @Override

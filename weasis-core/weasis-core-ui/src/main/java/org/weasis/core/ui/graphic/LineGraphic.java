@@ -121,8 +121,8 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseevent) {
-        updateLabel(mouseevent);
         setShape(new Line2D.Double(x1, y1, x2, y2), mouseevent);
+        updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 
     @Override
@@ -133,7 +133,7 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
     @Override
     public DragSequence createDragSequence(DragSequence dragsequence, MouseEvent mouseevent) {
         int i = 6;
-        if (mouseevent != null && (dragsequence != null || (i = getResizeCorner(mouseevent.getPoint())) == -1)) {
+        if (mouseevent != null && (dragsequence != null || (i = getResizeCorner(mouseevent)) == -1)) {
             return createMoveDrag(dragsequence, mouseevent);
         } else {
             return createResizeDrag(mouseevent, i);
@@ -141,7 +141,7 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public void updateLabel(Object source) {
+    public void updateLabel(Object source, Graphics2D g2d) {
         if (showLabel) {
             ImageElement image = null;
             if (source instanceof MouseEvent) {
@@ -153,7 +153,7 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
                 Unit unit = image.getPixelSpacingUnit();
                 String value = DecFormater.twoDecimal(getSegmentLength(image.getPixelSizeX(), image.getPixelSizeY()));
                 value = value + " " + unit.getAbbreviation(); //$NON-NLS-1$
-                setLabel(new String[] { value });
+                setLabel(new String[] { value }, g2d);
             }
         }
     }
@@ -197,10 +197,12 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public int getResizeCorner(final Point pos) {
+    public int getResizeCorner(MouseEvent mouseevent) {
+        final Point pos = mouseevent.getPoint();
         int k = getHandleSize() + 2;
-        // Enable to get a better selection of the handle with a low or high magnification zoom
+        AffineTransform affineTransform = getAffineTransform(mouseevent);
         if (affineTransform != null) {
+            // Enable to get a better selection of the handle with a low or high magnification zoom
             double scale = affineTransform.getScaleX();
             k = (int) Math.ceil(k / scale + 1);
         }

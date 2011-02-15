@@ -14,8 +14,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import org.weasis.core.api.util.FontTools;
@@ -48,7 +48,7 @@ public class TempLayer extends DragLayer {
     }
 
     @Override
-    public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle bound) {
+    public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bound) {
         if (graphics != null) {
             for (int i = 0; i < graphics.size(); i++) {
                 Graphic graphic = graphics.get(i);

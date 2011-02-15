@@ -13,7 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -66,9 +66,9 @@ public class SelectGraphic extends RectangleGraphic {
         Stroke oldStroke = g2d.getStroke();
         g2d.setPaint(Color.white);
         float dash[] = { 5F };
-        Rectangle rectangle = getBounds();
-        affineTransform = transform;
-        transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
+        // Rectangle rectangle = getBounds();
+        // affineTransform = transform;
+        Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
 
         g2d.setStroke(new BasicStroke(1.0F, 0, 0, 5F, dash, 0));
         // boolean drawable = rectangle.width > 1 && rectangle.height > 1;

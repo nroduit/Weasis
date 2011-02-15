@@ -202,7 +202,7 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public int getResizeCorner(final Point pos) {
+    public int getResizeCorner(MouseEvent mouseevent) {
         return -1;
     }
 
@@ -259,7 +259,7 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
-    public void updateLabel(Object source) {
+    public void updateLabel(Object source, Graphics2D g2d) {
 
     }
 

@@ -68,9 +68,6 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private SYNCH_TYPE type = SYNCH_TYPE.None;
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
 
-    private final AffineTransform affineTransform = new AffineTransform();
-    private final AffineTransform inverseTransform = new AffineTransform();
-
     public ZoomWin(DefaultView2d<E> view2d) {
         super(view2d.getLayerModel(), null);
         this.view2d = view2d;

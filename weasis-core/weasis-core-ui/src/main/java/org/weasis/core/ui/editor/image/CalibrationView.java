@@ -2,6 +2,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -144,14 +145,14 @@ public class CalibrationView extends JPanel {
                                             ImageElement img = (ImageElement) media;
                                             img.setPixelSizeX(newRatio);
                                             img.setPixelSizeY(newRatio);
-                                            updateLabel(img);
+                                            updateLabel(img, (Graphics2D) view2d.getGraphics());
                                         }
                                     }
                                 }
                             } else {
                                 image.setPixelSizeX(newRatio);
                                 image.setPixelSizeY(newRatio);
-                                updateLabel(image);
+                                updateLabel(image, (Graphics2D) view2d.getGraphics());
                             }
                             view2d.repaint();
                         }
@@ -161,11 +162,11 @@ public class CalibrationView extends JPanel {
         }
     }
 
-    private void updateLabel(ImageElement image) {
+    private void updateLabel(ImageElement image, Graphics2D g2d) {
         List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
         if (list != null) {
             for (Graphic graphic : list) {
-                graphic.updateLabel(image);
+                graphic.updateLabel(image, g2d);
             }
         }
     }

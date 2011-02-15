@@ -37,7 +37,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
@@ -90,6 +89,7 @@ import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.core.ui.graphic.model.Tools;
 
@@ -134,8 +134,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected static final Color focusColor = Color.orange;
     protected AnnotationsLayer infoLayer;
     protected int tileOffset;
-    protected final AffineTransform affineTransform = new AffineTransform();
-    protected final AffineTransform inverseTransform = new AffineTransform();
+
     protected final ImageViewerEventManager<E> eventManager;
 
     private final DragPoint startedDragPoint = new DragPoint(STATE.Started);
@@ -314,7 +313,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         series.setOpen(open);
         series.setSelected(false, 0);
-        // saveGraphics();
     }
 
     protected void setImage(E img, boolean bestFit) {
@@ -327,11 +325,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             final Rectangle modelArea = new Rectangle(0, 0, width, height);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {
-                List<Graphic> list = (List<Graphic>) img.getTagValue(TagW.MeasurementGraphics);
+                GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
                 if (list != null) {
                     layer.setGraphics(list);
                 } else {
-                    ArrayList<Graphic> graphics = new ArrayList<Graphic>();
+                    GraphicList graphics = new GraphicList();
                     img.setTag(TagW.MeasurementGraphics, graphics);
                     layer.setGraphics(graphics);
                 }
@@ -415,14 +413,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return image.getImage();
     }
 
-    public AffineTransform getAffineTransform() {
-        return affineTransform;
-    }
-
-    public AffineTransform getInverseTransform() {
-        return inverseTransform;
-    }
-
     public final void center() {
         Rectangle2D bound = getViewModel().getModelArea();
         setCenter(bound.getWidth() / 2.0, bound.getHeight() / 2.0);
@@ -478,7 +468,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public void setSelected(boolean selected) {
         setBorder(selected ? focusBorder : normalBorder);
-
+        // Remove the selection of graphics
+        getLayerModel().setSelectedGraphic(null);
     }
 
     /** paint routine */
@@ -853,15 +844,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
     }
 
-    public Point getRealCoordinates(Point p) {
-        double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(p.x + getViewModel().getModelOffsetX() * viewScale, p.y
-                + getViewModel().getModelOffsetY() * viewScale);
-        inverseTransform.transform(p2, p2);
-        return new Point((int) Math.floor(p2.getX()), (int) Math.floor(p2.getY()));
-    }
-
     protected void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null) {
             Point pView = mouseevent.getPoint();
@@ -926,7 +908,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 if (ctrlDown || showDraws.getCreateGraphic() == null) { // mode de sélection
                     // avec la flèche
-                    Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(mouseevent.getPoint());
+                    Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(mouseevent);
                     ArrayList selGraph = new ArrayList(showDraws.getSelectedGraphics());
                     if (pointedGraphic == null && shiftDown) {
                         return;

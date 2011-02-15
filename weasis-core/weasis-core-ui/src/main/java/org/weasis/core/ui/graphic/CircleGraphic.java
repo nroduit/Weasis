@@ -49,9 +49,9 @@ public class CircleGraphic extends RectangleGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseevent) {
-        updateLabel(mouseevent);
         setShape(new java.awt.geom.Ellipse2D.Double(x, y, (width < 1 ? 1 : width), (height < 1 ? 1 : height)),
             mouseevent);
+        updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 
     @Override

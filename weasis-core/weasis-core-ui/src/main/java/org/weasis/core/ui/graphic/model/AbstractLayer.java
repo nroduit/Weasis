@@ -11,17 +11,19 @@
 package org.weasis.core.ui.graphic.model;
 
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 
-import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.GraphicLabel;
 
 /**
  * The Class AbstractLayer.
@@ -32,12 +34,12 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
-    final protected PropertyChangeListener pcl;
-    final protected transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
+    protected final PropertyChangeListener pcl;
+    protected final transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
     private boolean masked;
     private int level;
     private final int drawType;
-    protected volatile List<Graphic> graphics;
+    protected volatile GraphicList graphics;
 
     /**
      * The Class PropertyChangeHandler.
@@ -50,22 +52,28 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         public void propertyChange(PropertyChangeEvent propertychangeevent) {
             Object obj = propertychangeevent.getSource();
             String s = propertychangeevent.getPropertyName();
-            if ("bounds".equals(s)) { //$NON-NLS-1$
-                graphicBoundsChanged((Rectangle) propertychangeevent.getOldValue(),
-                    (Rectangle) propertychangeevent.getNewValue());
-            } else if ("remove.graphic".equals(s)) { //$NON-NLS-1$
-                removeGraphic((Graphic) propertychangeevent.getNewValue());
-            } else if ("remove.repaint.graphic".equals(s)) { //$NON-NLS-1$
-                removeGraphicAndRepaint((Graphic) propertychangeevent.getNewValue());
-            }
-            // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
-            else {
-                // if (obj instanceof AbstractDragGraphic) {
-                // repaint(((AbstractDragGraphic) obj).getRepaintBounds());
-                // }
-                // else {
-                // repaint(((Graphic) obj).getRepaintBounds());
-                // }
+            if (obj instanceof Graphic) {
+                Graphic graph = (Graphic) obj;
+                if ("bounds".equals(s)) { //$NON-NLS-1$
+                    graphicBoundsChanged(graph, (Shape) propertychangeevent.getOldValue(),
+                        (Shape) propertychangeevent.getNewValue(), getAffineTransform());
+                } else if ("graphicLabel".equals(s)) { //$NON-NLS-1$
+                    labelBoundsChanged(graph, (Rectangle) propertychangeevent.getOldValue(),
+                        (GraphicLabel) propertychangeevent.getNewValue(), getAffineTransform());
+                } else if ("remove".equals(s)) { //$NON-NLS-1$
+                    removeGraphic(graph);
+                } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
+                    removeGraphicAndRepaint(graph);
+                }
+                // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
+                else {
+                    // if (obj instanceof AbstractDragGraphic) {
+                    // repaint(((AbstractDragGraphic) obj).getRepaintBounds());
+                    // }
+                    // else {
+                    // repaint(((Graphic) obj).getRepaintBounds());
+                    // }
+                }
             }
         }
 
@@ -80,7 +88,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     public AbstractLayer(LayerModel canvas1, int drawMode) {
         this.drawType = drawMode;
         this.canvas.add(canvas1);
-        graphics = new ArrayList<Graphic>();
+        graphics = new GraphicList();
         pcl = new PropertyChangeHandler();
     }
 
@@ -88,8 +96,14 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         if (graphics != null && !graphics.contains(graphic)) {
             // graphic.setSelected(false);
             graphics.add(graphic);
-            // graphic.setLayer(this);
             graphic.addPropertyChangeListener(pcl);
+            ArrayList<AbstractLayer> layers = graphics.getLayers();
+            if (layers != null) {
+                for (AbstractLayer layer : layers) {
+                    graphic.addPropertyChangeListener(layer.pcl);
+                    layer.repaint(graphic.getRepaintBounds());
+                }
+            }
             // repaint(graphic.getRepaintBounds());
         }
     }
@@ -102,24 +116,23 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         // repaint(graphic.getv);
     }
 
-    public synchronized void setGraphics(List<Graphic> graphics) {
-        unRegisterGraphics();
-        this.graphics = graphics == null ? new ArrayList<Graphic>() : graphics;
-        registerGraphics();
-    }
-
-    private synchronized void unRegisterGraphics() {
-        if (graphics != null) {
-            for (Graphic graphic : graphics) {
-                graphic.removePropertyChangeListener(pcl);
+    public synchronized void setGraphics(GraphicList graphics) {
+        if (this.graphics != graphics) {
+            if (this.graphics != null) {
+                this.graphics.removeLayer(this);
+                for (Graphic graphic : this.graphics) {
+                    graphic.removePropertyChangeListener(pcl);
+                }
+                getShowDrawing().setSelectedGraphics(null);
             }
-        }
-    }
-
-    private synchronized void registerGraphics() {
-        if (graphics != null) {
-            for (Graphic graphic : graphics) {
-                graphic.addPropertyChangeListener(pcl);
+            if (graphics == null) {
+                this.graphics = new GraphicList();
+            } else {
+                this.graphics = graphics;
+                this.graphics.addLayer(this);
+                for (Graphic graphic : this.graphics) {
+                    graphic.addPropertyChangeListener(pcl);
+                }
             }
         }
     }
@@ -160,16 +173,24 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return level;
     }
 
+    private AffineTransform getAffineTransform() {
+        LayerModel layerModel = getShowDrawing();
+        if (layerModel != null) {
+            GraphicsPane graphicsPane = layerModel.getGraphicsPane();
+            if (graphicsPane != null) {
+                return graphicsPane.getAffineTransform();
+            }
+        }
+        return null;
+    }
+
     public void removeGraphicAndRepaint(Graphic graphic) {
         if (graphics != null) {
             graphics.remove(graphic);
         }
         graphic.removePropertyChangeListener(pcl);
-        if (graphic instanceof AbstractDragGraphic) {
-            repaint(((AbstractDragGraphic) graphic).getTransformedBounds());
-        } else {
-            repaint(graphic.getRepaintBounds());
-        }
+        repaint(graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
+
         if (graphic.isSelected()) {
             getShowDrawing().getSelectedGraphics().remove(graphic);
         }
@@ -193,10 +214,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
-    public abstract Graphic getGraphicContainPoint(Point pos);
+    public abstract Graphic getGraphicContainPoint(MouseEvent mouseevent);
 
     public abstract void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform,
-        Rectangle bound);
+        Rectangle2D bound);
 
     // public abstract void paintSVG(SVGGraphics2D g2);
 
@@ -219,13 +240,59 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    protected void graphicBoundsChanged(Rectangle rectangle, Rectangle rectangle1) {
+    protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
         if (rectangle == null) {
-            if (rectangle1 != null) {
-                repaint(rectangle1);
+            return rectangle1;
+        }
+        return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
+    }
+
+    protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape, AffineTransform affineTransform) {
+        if (oldShape == null) {
+            if (shape != null) {
+                Rectangle rect = graphic.getTransformedBounds(shape, affineTransform);
+                if (rect != null) {
+                    repaint(rect);
+                }
             }
-        } else if (rectangle1 != null) {
-            repaint(rectangle.union(rectangle1));
+        } else if (shape != null) {
+            Rectangle rect =
+                rectangleUnion(graphic.getTransformedBounds(oldShape, affineTransform),
+                    graphic.getTransformedBounds(shape, affineTransform));
+            if (rect != null) {
+                repaint(rect);
+            }
+        }
+    }
+
+    private void transformLabelBound(Rectangle shape, AffineTransform affineTransform, GraphicLabel label) {
+        if (affineTransform != null) {
+            Point2D.Double p = new Point2D.Double(shape.getX(), shape.getY());
+            affineTransform.transform(p, p);
+            shape.x = (int) (p.x + label.getOffsetX());
+            shape.y = (int) (p.y + label.getOffsetY());
+        }
+    }
+
+    protected void labelBoundsChanged(Graphic graphic, Rectangle oldShape, GraphicLabel label,
+        AffineTransform affineTransform) {
+        if (label != null) {
+            Rectangle bound = label.getBound();
+            if (oldShape == null && bound != null) {
+                transformLabelBound(bound, affineTransform, label);
+                bound.grow(2, 2);
+                repaint(bound);
+
+            } else if (bound != null) {
+                transformLabelBound(oldShape, affineTransform, label);
+                transformLabelBound(bound, affineTransform, label);
+                Rectangle rect = rectangleUnion(oldShape, bound);
+                if (rect != null) {
+                    rect.grow(2, 2);
+                    repaint(rect);
+                }
+            }
+
         }
     }
 
@@ -235,11 +302,15 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void deleteAllGraphic() {
         if (graphics != null) {
-            for (int i = graphics.size() - 1; i >= 0; i--) {
-                removeGraphic(graphics.get(i));
+            if (graphics.getLayerSize() >= 0) {
+                setGraphics(null);
+            } else {
+                for (int i = graphics.size() - 1; i >= 0; i--) {
+                    removeGraphic(graphics.get(i));
+                }
             }
+            repaint();
         }
-        repaint();
     }
 
 }
