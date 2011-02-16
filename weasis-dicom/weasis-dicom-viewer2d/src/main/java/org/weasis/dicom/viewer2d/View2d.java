@@ -85,8 +85,10 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.UriListFlavor;
+import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.OverlayOperation;
@@ -564,10 +566,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 return dropDicomFiles(files, model);
             }
 
-            DicomSeries seq;
+            Series seq;
             try {
-                seq = (DicomSeries) transferable.getTransferData(Series.sequenceDataFlavor);
-                if (seq != null) {
+                seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                if (seq instanceof DicomSeries) {
                     MediaSeriesGroup p1 = model.getParent(seq, DicomModel.patient);
                     MediaSeriesGroup p2 = null;
                     ViewerPlugin openPlugin = null;
@@ -601,6 +603,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         openPlugin.setSelected(true);
                         return false;
                     }
+                } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
+                    LoadSeries.openSequenceInDefaultPlugin(new Series[] { seq }, model);
                 }
             } catch (Exception e) {
                 return false;

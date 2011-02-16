@@ -29,6 +29,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
@@ -194,7 +195,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
 
         if (getDisplayPreferences(ANNOTATIONS) && dcm != null) {
-            DicomSeries series = (DicomSeries) view2DPane.getSeries();
+            Series series = (Series) view2DPane.getSeries();
             MediaSeriesGroup study = model.getParent(series, DicomModel.study);
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
@@ -322,8 +323,8 @@ public class InfoLayer implements AnnotationsLayer {
         return null;
     }
 
-    private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, DicomSeries series,
-        DicomImageElement image) {
+    private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, Series series,
+        ImageElement image) {
         if (image.containTagKey(tag)) {
             return image.getTagValue(tag);
         }
