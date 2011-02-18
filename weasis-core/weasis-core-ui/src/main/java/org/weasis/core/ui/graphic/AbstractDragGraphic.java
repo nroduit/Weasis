@@ -377,7 +377,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                     paintFontOutline(g2d, labels[i], (float) (p.x + 3), (float) (p.y + labelHeight * (i + 1)));
                 }
                 // Test, show bound to repaint
-                g2d.drawRect((int) p.x, (int) p.y, (int) labelBound.getWidth(), (int) labelBound.getHeight());
+                // g2d.drawRect((int) p.x, (int) p.y, (int) labelBound.getWidth(), (int) labelBound.getHeight());
             }
         }
     }

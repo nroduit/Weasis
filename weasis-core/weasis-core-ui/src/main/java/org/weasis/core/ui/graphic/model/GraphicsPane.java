@@ -25,7 +25,6 @@ import javax.swing.JComponent;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
-import org.weasis.core.api.util.FontTools;
 
 /**
  * The Class GraphicsPane.
@@ -49,9 +48,6 @@ public class GraphicsPane extends JComponent {
 
     public GraphicsPane(AbstractLayerModel layerModel, ViewModel viewModel) {
         setOpaque(false);
-        // Do not override this properties in the components that inherit GraphicsPane, otherwise refreshing labels of
-        // graphics won't be accurate
-        this.setFont(FontTools.getFont10());
         this.viewModel = viewModel == null ? new DefaultViewModel() : viewModel;
         viewModelHandler = new ViewModelHandler();
         this.viewModel.addViewModelChangeListener(this.viewModelHandler);

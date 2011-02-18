@@ -284,6 +284,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 repaint(bound);
 
             } else if (bound != null) {
+                // Get new instance to avoid changing the oldShape for other for other layers
+                oldShape = oldShape.getBounds();
                 transformLabelBound(oldShape, affineTransform, label);
                 transformLabelBound(bound, affineTransform, label);
                 Rectangle rect = rectangleUnion(oldShape, bound);

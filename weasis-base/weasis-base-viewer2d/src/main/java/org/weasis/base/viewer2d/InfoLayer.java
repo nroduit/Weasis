@@ -72,7 +72,6 @@ public class InfoLayer implements AnnotationsLayer {
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
 
-        g2.setFont(view2DPane.getFont());
         g2.setPaint(color);
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
@@ -109,8 +108,10 @@ public class InfoLayer implements AnnotationsLayer {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            paintFontOutline(g2, "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
-                + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
+            paintFontOutline(
+                g2,
+                "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
+                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -119,8 +120,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", BORDER,
-                drawY);
+            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", BORDER, drawY);
             drawY -= fontHeight;
         }
 

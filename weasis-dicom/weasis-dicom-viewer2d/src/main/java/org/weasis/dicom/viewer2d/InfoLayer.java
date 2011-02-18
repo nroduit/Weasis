@@ -97,7 +97,6 @@ public class InfoLayer implements AnnotationsLayer {
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
 
-        g2.setFont(view2DPane.getFont());
         g2.setPaint(color);
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2);

@@ -1,6 +1,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -15,6 +16,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextPane;
 
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -55,6 +57,8 @@ public class CalibrationView extends JPanel {
     }
 
     void jbInit() throws Exception {
+        gridBagLayout2.rowWeights = new double[] { 1.0, 0.0 };
+        gridBagLayout2.columnWeights = new double[] { 0.0, 1.0, 0.0, 0.0 };
         jPanelMode.setLayout(gridBagLayout2);
         JMVUtils.setPreferredWidth(jTextFieldLineWidth, 170);
         jTextFieldLineWidth.setFormatterFactory(DecFormater.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
@@ -65,11 +69,12 @@ public class CalibrationView extends JPanel {
         this.setLayout(borderLayout1);
 
         this.add(jPanelMode, BorderLayout.CENTER);
-        jPanelMode.add(jComboBoxUnit, new GridBagConstraints(3, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+
+        jPanelMode.add(jComboBoxUnit, new GridBagConstraints(3, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(0, 3, 0, 0), 0, 0));
-        jPanelMode.add(jLabelKnownDist, new GridBagConstraints(0, 4, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
+        jPanelMode.add(jLabelKnownDist, new GridBagConstraints(0, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(0, 10, 0, 5), 0, 0));
-        jPanelMode.add(jTextFieldLineWidth, new GridBagConstraints(2, 4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
+        jPanelMode.add(jTextFieldLineWidth, new GridBagConstraints(2, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 5), 0, 0));
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setHgap(10);
@@ -82,6 +87,7 @@ public class CalibrationView extends JPanel {
         radioButtonSeries.setSelected(true);
         panel.add(radioButtonSeries);
         panel.add(radioButtonImage);
+
     }
 
     private void initialize() {
@@ -91,8 +97,22 @@ public class CalibrationView extends JPanel {
             if (!Unit.PIXEL.equals(unit)) {
                 jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSizeX(), image.getPixelSizeY()));
             } else {
+                JTextPane warningMessage = new JTextPane();
+                GridBagConstraints gbc_textPane = new GridBagConstraints();
+                gbc_textPane.gridwidth = 4;
+                gbc_textPane.insets = new Insets(0, 0, 5, 5);
+                gbc_textPane.fill = GridBagConstraints.HORIZONTAL;
+                gbc_textPane.gridx = 0;
+                gbc_textPane.gridy = 0;
+                warningMessage.setEditable(false);
+                warningMessage
+                    .setText("Warning: If the image has non-square pixels (where pixel spacing differs in the x and y direction), this tool cannot be used to peform an accurate calibration.");
+                // TODO guess the size
+                warningMessage.setPreferredSize(new Dimension(350, 75));
+                jPanelMode.add(warningMessage, gbc_textPane);
                 unit = Unit.MILLIMETER;
             }
+
             jComboBoxUnit.setSelectedItem(unit);
         }
     }

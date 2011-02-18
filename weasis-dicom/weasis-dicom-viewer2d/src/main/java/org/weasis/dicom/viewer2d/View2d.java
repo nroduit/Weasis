@@ -605,6 +605,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                 } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
                     LoadSeries.openSequenceInDefaultPlugin(new Series[] { seq }, model);
+                    return true;
                 }
             } catch (Exception e) {
                 return false;
@@ -614,6 +615,23 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 pane.addSeries(seq);
                 return true;
             }
+
+            // ArrayList<DefaultView2d<DicomImageElement>> view2ds = pane.getImagePanels();
+            // for (DefaultView2d<DicomImageElement> v : view2ds) {
+            // if (v.getSeries() == null) {
+            // pane.setSelectedImagePane(v);
+            // pane.addSeries(seq);
+            // requestFocusInWindow();
+            // return true;
+            // }
+            // }
+            //
+            // pane.changeLayoutModel(pane.getBestDefaultViewLayout(view2ds.size() + 1));
+            // view2ds = pane.getImagePanels();
+            // pane.setSelectedImagePane(view2ds.get(view2ds.size() - 1));
+            // pane.addSeries(seq);
+            // requestFocusInWindow();
+
             setSeries(seq);
             requestFocusInWindow();
             return true;
