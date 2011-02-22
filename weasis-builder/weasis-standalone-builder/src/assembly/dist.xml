@@ -10,7 +10,7 @@
 		<fileSet>
 			<!-- Copy bundles + repository.xml -->
 			<directory>target/tmp</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory>/weasis</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- Direct resources copy -->
@@ -20,10 +20,8 @@
 		<fileSet>
 			<!-- copy OSGI framework config -->
 			<directory>etc/config</directory>
-			<outputDirectory>/conf</outputDirectory>
+			<outputDirectory>/weasis/conf</outputDirectory>
 			<filtered>true</filtered>
 		</fileSet>
 	</fileSets>
-
-
 </assembly>

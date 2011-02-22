@@ -1,0 +1,2 @@
+#!/bin/sh
+java -Xms64m -Xmx512m -Dfelix.properties=file:conf/config.properties -classpath "weasis/bin/weasis-launcher.jar:weasis/bin/felix.jar:weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher

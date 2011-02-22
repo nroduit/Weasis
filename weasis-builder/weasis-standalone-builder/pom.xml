@@ -328,24 +328,22 @@
 							<goal>launch4j</goal>
 						</goals>
 						<configuration>
-							<headerType>console</headerType>
+							<headerType>gui</headerType>
 							<dontWrapJar>true</dontWrapJar>
-							<outfile>${project.build.directory}/dist/weasis/weasis.exe</outfile>
-							<jar>bin/weasis-launcher.jar</jar>
+							<outfile>${project.build.directory}/dist/weasis/weasis-win32.exe</outfile>
+							<jar>weasis/bin/weasis-launcher.jar</jar>
 							<errTitle>weasis</errTitle>
 							<icon>etc/weasis.ico</icon>
-							
+							<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
 							<classPath>
 								<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
 								<addDependencies>false</addDependencies>
-								<preCp>bin\felix.jar;bin\substance.jar</preCp>
+								<preCp>weasis\bin\felix.jar;weasis\bin\substance.jar</preCp>
 							</classPath>
 							<jre>
-								<minVersion>1.6.0</minVersion>
+								<minVersion>1.6.0_10</minVersion>
 								<maxHeapSize>512</maxHeapSize>
 							</jre>
-
-
 						</configuration>
 					</execution>
 				</executions>
