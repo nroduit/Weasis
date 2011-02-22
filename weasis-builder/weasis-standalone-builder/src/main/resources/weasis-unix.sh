@@ -1,2 +1,2 @@
 #!/bin/sh
-java -Xms64m -Xmx512m -Dfelix.properties=file:conf/config.properties -classpath "weasis/bin/weasis-launcher.jar:weasis/bin/felix.jar:weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher
+java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dfelix.properties=file:conf/config.properties -classpath "weasis/bin/weasis-launcher.jar:weasis/bin/felix.jar:weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher
