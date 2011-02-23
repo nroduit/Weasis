@@ -334,6 +334,7 @@
 							<jar>weasis/bin/weasis-launcher.jar</jar>
 							<errTitle>weasis</errTitle>
 							<icon>etc/weasis.ico</icon>
+							<!-- Setting it to . will change the current dir to the same directory as the executable -->
 							<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
 							<chdir>.</chdir>
 							<classPath>
@@ -349,6 +350,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			
 		</plugins>
 	</build>
 
