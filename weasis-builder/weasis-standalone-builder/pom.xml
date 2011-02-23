@@ -335,6 +335,7 @@
 							<errTitle>weasis</errTitle>
 							<icon>etc/weasis.ico</icon>
 							<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
+							<chdir>.</chdir>
 							<classPath>
 								<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
 								<addDependencies>false</addDependencies>
