@@ -187,8 +187,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     protected SliderCineListener getMoveTroughSliceAction(int speed, TIME time, double mouseSensivity) {
         return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
 
-            private volatile boolean cining = true;
-
             protected CineThread currentCine;
 
             @Override
@@ -288,6 +286,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 private volatile int wait;
                 private volatile int currentCineRate;
                 private volatile long start;
+                private volatile boolean cining = true;
 
                 @Override
                 public void run() {
@@ -305,9 +304,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         GuiExecutor.instance().execute(new Runnable() {
 
                             public void run() {
-                                int frameIndex = getValue() + 1;
-                                frameIndex = frameIndex > getMax() ? 0 : frameIndex;
-                                setValue(frameIndex);
+                                if (cining) {
+                                    int frameIndex = getValue() + 1;
+                                    frameIndex = frameIndex > getMax() ? 0 : frameIndex;
+                                    setValue(frameIndex);
+                                }
                             }
                         });
 
@@ -343,8 +344,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 public void iniSpeed() {
                     iteration = 0;
-                    wait = 1000 / getSpeed();
                     currentCineRate = getSpeed();
+                    wait = 1000 / currentCineRate;
                     start = System.currentTimeMillis();
                 }
 
@@ -362,7 +363,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     stop();
                 }
                 if (getMax() - getMin() > 0) {
-                    cining = true;
                     currentCine = new CineThread();
                     currentCine.start();
                 }
@@ -375,7 +375,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 CineThread moribund = currentCine;
                 currentCine = null;
                 if (moribund != null) {
-                    cining = false;
+                    moribund.cining = false;
                     moribund.interrupt();
                 }
             }

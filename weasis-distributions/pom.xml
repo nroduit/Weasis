@@ -8,10 +8,11 @@
 	<name>Weasis WEB Distribution</name>
 	<version>1.0.8-SNAPSHOT</version>
 	<properties>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
-			in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources 
+			files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
+		<tmp.bin.dir>${project.build.directory}/tmp/bin</tmp.bin.dir>
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
 		<felix.framework.version>3.0.8</felix.framework.version>
@@ -68,16 +69,22 @@
 									<groupId>org.apache.felix</groupId>
 									<artifactId>org.apache.felix.framework</artifactId>
 									<version>${felix.framework.version}</version>
-									<outputDirectory>${tmp.dir}</outputDirectory>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
 									<destFileName>felix.jar</destFileName>
 								</artifactItem>
-
 								<artifactItem>
 									<groupId>org.weasis.launcher</groupId>
 									<artifactId>weasis-launcher</artifactId>
 									<version>${weasis.launcher.version}</version>
-									<outputDirectory>${tmp.dir}</outputDirectory>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
 									<destFileName>weasis-launcher.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty</groupId>
+									<artifactId>substance</artifactId>
+									<version>${substance.version}</version>
+									<outputDirectory>${tmp.bin.dir}</outputDirectory>
+									<destFileName>substance.jar</destFileName>
 								</artifactItem>
 
 								<!-- ===================================== -->
@@ -177,13 +184,6 @@
 									<version>${com.sun.media.j3d.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty</groupId>
-									<artifactId>substance</artifactId>
-									<version>${substance.version}</version>
-									<outputDirectory>${tmp.dir}</outputDirectory>
-									<destFileName>substance.jar</destFileName>
-								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis Core bundles -->
@@ -261,7 +261,6 @@
 									<version>${weasis.dicom.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-
 							</artifactItems>
 						</configuration>
 					</execution>
@@ -281,11 +280,12 @@
 						<configuration>
 							<tasks>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+								<taskdef name="bindex"
+									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
 									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
-									name="Weasis Bundle Repository">
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
+									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
+									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</tasks>
@@ -293,14 +293,48 @@
 					</execution>
 				</executions>
 			</plugin>
-
+			<plugin>
+				<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+				<artifactId>launch4j-plugin</artifactId>
+				<version>1.5.0.0</version>
+				<executions>
+					<execution>
+						<id>l4j-clui</id>
+						<phase>package</phase>
+						<goals>
+							<goal>launch4j</goal>
+						</goals>
+						<configuration>
+							<headerType>gui</headerType>
+							<dontWrapJar>true</dontWrapJar>
+							<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
+							<jar>weasis/bin/weasis-launcher.jar</jar>
+							<errTitle>weasis</errTitle>
+							<icon>etc/weasis.ico</icon>
+							<!-- Setting it to . will change the current dir to the same directory 
+								as the executable -->
+							<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
+							<chdir>.</chdir>
+							<classPath>
+								<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
+								<addDependencies>false</addDependencies>
+								<preCp>weasis\bin\felix.jar;weasis\bin\substance.jar</preCp>
+							</classPath>
+							<jre>
+								<minVersion>1.6.0_10</minVersion>
+								<maxHeapSize>512</maxHeapSize>
+							</jre>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.2-beta-5</version>
 				<executions>
 					<execution>
-						<id>obr-repository</id>
+						<id>web</id>
 						<phase>package</phase>
 						<goals>
 							<goal>attached</goal>
@@ -308,21 +342,39 @@
 						<configuration>
 							<finalName>weasis</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
-							<outputDirectory>${project.build.directory}/dist</outputDirectory>
+							<outputDirectory>${project.build.directory}/web-dist</outputDirectory>
 							<descriptors>
-								<descriptor>src/assembly/dist.xml</descriptor>
+								<descriptor>src/assembly/web-dist.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+					<execution>
+						<id>portable</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attached</goal>
+						</goals>
+						<configuration>
+							<finalName>weasis-portable</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>
+							<descriptors>
+								<descriptor>src/assembly/portable-dist.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+
+
 		</plugins>
 	</build>
 	<profiles>
 		<profile>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" 
+					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -344,7 +396,7 @@
 								<configuration>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
 									<includes>
-										<include>*.jar</include>
+										<include>**/*.jar</include>
 									</includes>
 								</configuration>
 							</execution>

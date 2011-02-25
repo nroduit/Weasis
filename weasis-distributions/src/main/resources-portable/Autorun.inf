@@ -1,0 +1,5 @@
+[Autorun]
+Open=weasis-win32.exe
+Action=Open Images with Weasis
+Icon=weasis-win32.exe
+Label=Weasis
