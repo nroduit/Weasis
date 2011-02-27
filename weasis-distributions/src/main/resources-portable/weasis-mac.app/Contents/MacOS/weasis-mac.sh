@@ -59,7 +59,7 @@ for i in {1..2} ; do
 			else
 				echo "JAVA_HOME points to an unavailable installation of Java. Looking for other available installations..."
 			fi
-			# JAVA_HOME is less than 1.6, what is the highest version available?
+			# JAVA_HOME is less than 1.6, whats the highest version available?
 			versions="`ls -r /System/Library/Frameworks/JavaVM.framework/Versions | grep '[0-9]'`"
 			declare -a versions=($versions)
 			# versions array contains version numbers highest to lowest, so pick the 1st
@@ -69,10 +69,13 @@ for i in {1..2} ; do
 			open "$macospath/failure.app"
 			exit 0
 		fi
+	else
+		break
 	fi
 done
 
 echo "Launching Weasis with JAVA_HOME set to $JAVA_HOME"
 
 # launch
+
 $JAVA_HOME/bin/java -Xms64m -Xmx512m -Xdock:name=Weasis -Xdock:icon="$resourcespath/logo-button.icns" -Dapple.laf.useScreenMenuBar=true -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.codebase.url="file://$basepath/weasis" -classpath "$basepath/weasis/bin/weasis-launcher.jar:$basepath/weasis/bin/felix.jar:$basepath/weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get -l "$basepath/DICOM"

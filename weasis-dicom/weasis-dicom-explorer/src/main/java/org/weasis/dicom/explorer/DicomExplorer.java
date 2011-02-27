@@ -102,6 +102,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.explorer.wado.DownloadPriority;
+import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomExplorer extends PluginTool implements DataExplorerView {
@@ -214,7 +216,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         @Override
         public void addElement(Object anObject) {
             int index = binarySearch(anObject, studyComparator);
-            // TODO handle same dates.
             if (index < 0) {
                 super.insertElementAt(anObject, -(index + 1));
             } else {
@@ -1489,260 +1490,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             @Override
             public Thumbnail call() throws Exception {
                 final Thumbnail thumb = new Thumbnail(series, thumbnailSize);
-
-                thumb.addMouseListener(new MouseAdapter() {
-
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        if (e.getClickCount() == 2) {
-                            DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                            if (explorer instanceof DicomExplorer) {
-                                ((DicomExplorer) explorer).getSelectionList().clear();
-                            }
-                            LoadSeries.openSequenceInDefaultPlugin(new Series[] { series }, dicomModel);
-                        }
-                    }
-
-                    @Override
-                    public void mousePressed(MouseEvent mouseevent) {
-                        Component c = mouseevent.getComponent();
-                        if (!c.isFocusOwner()) {
-                            thumb.requestFocusInWindow();
-                        }
-                        DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                        final SeriesSelectionModel selList =
-                            explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                                : new SeriesSelectionModel(1);
-
-                        if (SwingUtilities.isRightMouseButton(mouseevent)) {
-                            JPopupMenu popupMenu = new JPopupMenu();
-
-                            List<SeriesViewerFactory> plugins =
-                                UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
-                            if (!selList.contains(series)) {
-                                selList.add(series);
-                            }
-                            for (final SeriesViewerFactory viewerFactory : plugins) {
-                                final JMenuItem item4 =
-                                    new JMenuItem(
-                                        Messages.getString("DicomExplorer.open_series") + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
-                                item4.addActionListener(new ActionListener() {
-
-                                    public void actionPerformed(ActionEvent e) {
-                                        final Series[] seriesList =
-                                            selList.size() == 0 ? new Series[] { series } : selList
-                                                .toArray(new Series[selList.size()]);
-                                        selList.clear();
-                                        LoadSeries.openSequenceInPlugin(viewerFactory, seriesList, dicomModel);
-                                    }
-                                });
-                                popupMenu.add(item4);
-                                if (viewerFactory instanceof MimeSystemAppFactory) {
-                                    final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
-                                    item5.addActionListener(new ActionListener() {
-
-                                        public void actionPerformed(ActionEvent e) {
-                                            JFrame frame = new JFrame("DICOM Information");
-                                            frame.setSize(500, 630);
-                                            DicomFieldsView view = new DicomFieldsView();
-                                            view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
-                                                .createSeriesViewer(null), series, series
-                                                .getMedia(MEDIA_POSITION.FIRST), EVENT.SELECT));
-                                            JPanel panel = new JPanel();
-                                            panel.setLayout(new BorderLayout());
-                                            panel.add(view);
-                                            frame.add(panel);
-                                            frame.setVisible(true);
-                                        }
-                                    });
-                                    popupMenu.add(item5);
-                                }
-                            }
-                            if (series instanceof DicomSeries) {
-                                popupMenu.add(new JSeparator());
-                                JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series")); //$NON-NLS-1$
-                                item2.addActionListener(new ActionListener() {
-
-                                    public void actionPerformed(ActionEvent e) {
-
-                                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                                        if (fruid != null) {
-                                            selList.clear();
-                                            MediaSeriesGroup studyGroup =
-                                                dicomModel.getParent(series, DicomModel.study);
-                                            Collection<MediaSeriesGroup> seriesList =
-                                                dicomModel.getChildren(studyGroup);
-                                            synchronized (seriesList) {
-                                                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it
-                                                    .hasNext();) {
-                                                    MediaSeriesGroup seq = it.next();
-                                                    if (seq instanceof Series) {
-                                                        Series s = (Series) seq;
-                                                        if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
-                                                            selList.add(s);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                                popupMenu.add(item2);
-                                item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis")); //$NON-NLS-1$
-                                item2.addActionListener(new ActionListener() {
-
-                                    public void actionPerformed(ActionEvent e) {
-                                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                                        if (fruid != null) {
-                                            selList.clear();
-                                            MediaSeriesGroup studyGroup =
-                                                dicomModel.getParent(series, DicomModel.study);
-                                            Collection<MediaSeriesGroup> seriesList =
-                                                dicomModel.getChildren(studyGroup);
-                                            synchronized (seriesList) {
-                                                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it
-                                                    .hasNext();) {
-                                                    MediaSeriesGroup seq = it.next();
-                                                    if (seq instanceof Series) {
-                                                        Series s = (Series) seq;
-                                                        if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
-                                                            if (ImageOrientation.hasSameOrientation(series, s)) {
-                                                                selList.add(s);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                                popupMenu.add(item2);
-
-                                Object splitNb = series.getTagValue(TagW.SplitSeriesNumber);
-                                if (splitNb != null && selList.size() > 1) {
-                                    String uid = (String) series.getTagValue(TagW.SeriesInstanceUID);
-                                    boolean sameOrigin = true;
-                                    if (uid != null) {
-                                        for (Series s : selList) {
-                                            if (!uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                                                sameOrigin = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (sameOrigin) {
-                                        final Series[] seriesList = selList.toArray(new Series[selList.size()]);
-                                        popupMenu.add(new JSeparator());
-                                        item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
-                                        item2.addActionListener(new ActionListener() {
-
-                                            public void actionPerformed(ActionEvent e) {
-                                                selList.clear();
-                                                dicomModel.mergeSeries(seriesList);
-                                            }
-                                        });
-                                        popupMenu.add(item2);
-                                    }
-                                }
-                            }
-                            popupMenu.add(new JSeparator());
-                            JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series")); //$NON-NLS-1$
-                            item2.addActionListener(new ActionListener() {
-
-                                public void actionPerformed(ActionEvent e) {
-                                    dicomModel.removeSeries(series);
-                                }
-                            });
-                            popupMenu.add(item2);
-                            item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study")); //$NON-NLS-1$
-                            item2.addActionListener(new ActionListener() {
-
-                                public void actionPerformed(ActionEvent e) {
-                                    MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                                    dicomModel.removeStudy(studyGroup);
-                                }
-                            });
-                            popupMenu.add(item2);
-                            item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat")); //$NON-NLS-1$
-                            item2.addActionListener(new ActionListener() {
-
-                                public void actionPerformed(ActionEvent e) {
-                                    MediaSeriesGroup patientGroup =
-                                        dicomModel.getParent(dicomModel.getParent(series, DicomModel.study),
-                                            DicomModel.patient);
-                                    dicomModel.removePatient(patientGroup);
-                                }
-                            });
-                            popupMenu.add(item2);
-                            popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
-
-                        } else {
-                            if (selList.contains(series)) {
-                                if (mouseevent.isControlDown()) {
-                                    selList.remove(series);
-                                } else {
-                                    selList.clear();
-                                    selList.add(series);
-                                }
-                            } else {
-                                if (mouseevent.isControlDown()) {
-                                    selList.add(series);
-                                } else if (mouseevent.isShiftDown()) {
-                                    if (explorer instanceof DicomExplorer) {
-                                        ArrayList<Series> seriesList = new ArrayList<Series>();
-                                        DicomExplorer exp = (DicomExplorer) explorer;
-                                        for (PatientPane p : exp.patientContainer.getPatientPaneList()) {
-                                            for (StudyPane studyPane : p.getStudyPaneList()) {
-                                                for (SeriesPane series : studyPane.getSeriesPaneList()) {
-                                                    if (series.getSequence() instanceof Series) {
-                                                        seriesList.add((Series) series.getSequence());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        int lastIndex = seriesList.indexOf(selList.get(selList.size() - 1));
-                                        int newIndex = seriesList.indexOf(series);
-                                        if (lastIndex >= 0 && newIndex >= 0) {
-                                            if (lastIndex > newIndex) {
-                                                int temp = lastIndex;
-                                                lastIndex = newIndex;
-                                                newIndex = temp;
-                                            }
-                                            for (int i = lastIndex; i <= newIndex; i++) {
-                                                selList.add(seriesList.get(i));
-                                            }
-                                        } else {
-                                            selList.add(series);
-                                        }
-                                    } else {
-                                        selList.add(series);
-                                    }
-                                } else {
-                                    selList.clear();
-                                    selList.add(series);
-                                }
-                            }
-                        }
-                    }
-                });
-
-                thumb.addKeyListener(new KeyAdapter() {
-
-                    @Override
-                    public void keyPressed(KeyEvent e) {
-                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                            DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                            final SeriesSelectionModel selList =
-                                explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                                    : new SeriesSelectionModel(1);
-                            if (selList.size() == 0) {
-                                selList.add(series);
-                            }
-                            LoadSeries.openSequenceInDefaultPlugin(selList.toArray(new Series[selList.size()]),
-                                dicomModel);
-                        }
-                    }
-                });
+                thumb.addMouseListener(createThumbnailMouseAdapter(series, dicomModel, null));
+                thumb.addKeyListener(createThumbnailKeyListener(series, dicomModel));
                 thumb.registerListeners();
                 return thumb;
             }
@@ -1758,6 +1507,295 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public static MouseAdapter createThumbnailMouseAdapter(final Series series, final DicomModel dicomModel,
+        final LoadSeries loadSeries) {
+        return new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                    if (explorer instanceof DicomExplorer) {
+                        ((DicomExplorer) explorer).getSelectionList().clear();
+                    }
+                    LoadSeries.openSequenceInDefaultPlugin(new Series[] { series }, dicomModel);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseevent) {
+                Component c = mouseevent.getComponent();
+                if (!c.isFocusOwner()) {
+                    c.requestFocusInWindow();
+                }
+                DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                final SeriesSelectionModel selList =
+                    explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
+                        : new SeriesSelectionModel(1);
+
+                if (SwingUtilities.isRightMouseButton(mouseevent)) {
+                    JPopupMenu popupMenu = new JPopupMenu();
+
+                    List<SeriesViewerFactory> plugins =
+                        UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
+                    if (!selList.contains(series)) {
+                        selList.add(series);
+                    }
+                    for (final SeriesViewerFactory viewerFactory : plugins) {
+                        final JMenuItem item4 =
+                            new JMenuItem(
+                                Messages.getString("DicomExplorer.open_series") + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
+                        item4.addActionListener(new ActionListener() {
+
+                            public void actionPerformed(ActionEvent e) {
+                                final Series[] seriesList =
+                                    selList.size() == 0 ? new Series[] { series } : selList.toArray(new Series[selList
+                                        .size()]);
+                                selList.clear();
+                                LoadSeries.openSequenceInPlugin(viewerFactory, seriesList, dicomModel);
+                            }
+                        });
+                        popupMenu.add(item4);
+                        if (viewerFactory instanceof MimeSystemAppFactory) {
+                            final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
+                            item5.addActionListener(new ActionListener() {
+
+                                public void actionPerformed(ActionEvent e) {
+                                    JFrame frame = new JFrame("DICOM Information");
+                                    frame.setSize(500, 630);
+                                    DicomFieldsView view = new DicomFieldsView();
+                                    view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
+                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST),
+                                        EVENT.SELECT));
+                                    JPanel panel = new JPanel();
+                                    panel.setLayout(new BorderLayout());
+                                    panel.add(view);
+                                    frame.add(panel);
+                                    frame.setVisible(true);
+                                }
+                            });
+                            popupMenu.add(item5);
+                        }
+                    }
+                    if (series instanceof DicomSeries) {
+                        popupMenu.add(new JSeparator());
+                        JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series")); //$NON-NLS-1$
+                        item2.addActionListener(new ActionListener() {
+
+                            public void actionPerformed(ActionEvent e) {
+
+                                String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                                if (fruid != null) {
+                                    selList.clear();
+                                    MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
+                                    Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
+                                    synchronized (seriesList) {
+                                        for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                                            MediaSeriesGroup seq = it.next();
+                                            if (seq instanceof Series) {
+                                                Series s = (Series) seq;
+                                                if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                                    selList.add(s);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        popupMenu.add(item2);
+                        item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis")); //$NON-NLS-1$
+                        item2.addActionListener(new ActionListener() {
+
+                            public void actionPerformed(ActionEvent e) {
+                                String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                                if (fruid != null) {
+                                    selList.clear();
+                                    MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
+                                    Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
+                                    synchronized (seriesList) {
+                                        for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                                            MediaSeriesGroup seq = it.next();
+                                            if (seq instanceof Series) {
+                                                Series s = (Series) seq;
+                                                if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                                    if (ImageOrientation.hasSameOrientation(series, s)) {
+                                                        selList.add(s);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        popupMenu.add(item2);
+
+                        if (loadSeries != null) {
+                            if (loadSeries.isCancelled()) {
+                                popupMenu.add(new JSeparator());
+                                JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume")); //$NON-NLS-1$
+                                item3.addActionListener(new ActionListener() {
+
+                                    public void actionPerformed(ActionEvent e) {
+                                        LoadSeries taskResume =
+                                            new LoadSeries(series, dicomModel, loadSeries.getProgressBar());
+                                        DownloadPriority p = loadSeries.getPriority();
+                                        p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
+                                        taskResume.setPriority(p);
+                                        Thumbnail thumbnail =
+                                            (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
+                                        if (thumbnail != null) {
+                                            LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+                                            thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(
+                                                taskResume.getDicomSeries(), dicomModel, taskResume));
+                                            thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(
+                                                taskResume.getDicomSeries(), dicomModel));
+                                        }
+                                        LoadRemoteDicom.loadingQueue.offer(taskResume);
+                                    }
+                                });
+                                popupMenu.add(item3);
+                            } else if (!loadSeries.isDone()) {
+                                popupMenu.add(new JSeparator());
+                                JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop")); //$NON-NLS-1$
+                                item3.addActionListener(new ActionListener() {
+
+                                    public void actionPerformed(ActionEvent e) {
+                                        loadSeries.cancel(true);
+                                    }
+                                });
+                                popupMenu.add(item3);
+                            }
+                        }
+
+                        Object splitNb = series.getTagValue(TagW.SplitSeriesNumber);
+                        if (splitNb != null && selList.size() > 1) {
+                            String uid = (String) series.getTagValue(TagW.SeriesInstanceUID);
+                            boolean sameOrigin = true;
+                            if (uid != null) {
+                                for (Series s : selList) {
+                                    if (!uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
+                                        sameOrigin = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (sameOrigin) {
+                                final Series[] seriesList = selList.toArray(new Series[selList.size()]);
+                                popupMenu.add(new JSeparator());
+                                item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
+                                item2.addActionListener(new ActionListener() {
+
+                                    public void actionPerformed(ActionEvent e) {
+                                        selList.clear();
+                                        dicomModel.mergeSeries(seriesList);
+                                    }
+                                });
+                                popupMenu.add(item2);
+                            }
+                        }
+                    }
+                    popupMenu.add(new JSeparator());
+                    JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series")); //$NON-NLS-1$
+                    item2.addActionListener(new ActionListener() {
+
+                        public void actionPerformed(ActionEvent e) {
+                            dicomModel.removeSeries(series);
+                        }
+                    });
+                    popupMenu.add(item2);
+                    item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study")); //$NON-NLS-1$
+                    item2.addActionListener(new ActionListener() {
+
+                        public void actionPerformed(ActionEvent e) {
+                            MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
+                            dicomModel.removeStudy(studyGroup);
+                        }
+                    });
+                    popupMenu.add(item2);
+                    item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat")); //$NON-NLS-1$
+                    item2.addActionListener(new ActionListener() {
+
+                        public void actionPerformed(ActionEvent e) {
+                            MediaSeriesGroup patientGroup =
+                                dicomModel.getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
+                            dicomModel.removePatient(patientGroup);
+                        }
+                    });
+                    popupMenu.add(item2);
+                    popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
+
+                } else {
+                    if (selList.contains(series)) {
+                        if (mouseevent.isControlDown()) {
+                            selList.remove(series);
+                        } else {
+                            selList.clear();
+                            selList.add(series);
+                        }
+                    } else {
+                        if (mouseevent.isControlDown()) {
+                            selList.add(series);
+                        } else if (mouseevent.isShiftDown()) {
+                            if (explorer instanceof DicomExplorer) {
+                                ArrayList<Series> seriesList = new ArrayList<Series>();
+                                DicomExplorer exp = (DicomExplorer) explorer;
+                                for (PatientPane p : exp.patientContainer.getPatientPaneList()) {
+                                    for (StudyPane studyPane : p.getStudyPaneList()) {
+                                        for (SeriesPane series : studyPane.getSeriesPaneList()) {
+                                            if (series.getSequence() instanceof Series) {
+                                                seriesList.add((Series) series.getSequence());
+                                            }
+                                        }
+                                    }
+                                }
+                                int lastIndex = seriesList.indexOf(selList.get(selList.size() - 1));
+                                int newIndex = seriesList.indexOf(series);
+                                if (lastIndex >= 0 && newIndex >= 0) {
+                                    if (lastIndex > newIndex) {
+                                        int temp = lastIndex;
+                                        lastIndex = newIndex;
+                                        newIndex = temp;
+                                    }
+                                    for (int i = lastIndex; i <= newIndex; i++) {
+                                        selList.add(seriesList.get(i));
+                                    }
+                                } else {
+                                    selList.add(series);
+                                }
+                            } else {
+                                selList.add(series);
+                            }
+                        } else {
+                            selList.clear();
+                            selList.add(series);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    public static KeyAdapter createThumbnailKeyListener(final Series series, final DicomModel dicomModel) {
+        return new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                    final SeriesSelectionModel selList =
+                        explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
+                            : new SeriesSelectionModel(1);
+                    if (selList.size() == 0) {
+                        selList.add(series);
+                    }
+                    LoadSeries.openSequenceInDefaultPlugin(selList.toArray(new Series[selList.size()]), dicomModel);
+                }
+            }
+        };
     }
 
     @Override

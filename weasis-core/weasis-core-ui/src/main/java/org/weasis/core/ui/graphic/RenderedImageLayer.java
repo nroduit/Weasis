@@ -23,6 +23,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 
+import javax.media.jai.PlanarImage;
 import javax.media.jai.iterator.RandomIter;
 import javax.media.jai.iterator.RandomIterFactory;
 
@@ -40,7 +41,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     private final OperationsManager operations;
     private E sourceImage;
-    private AffineTransform _transform;
     private RandomIter readIterator;
     private ArrayList<ImageLayerChangeListener<E>> listenerList;
     private boolean buildIterator = false;
@@ -50,18 +50,10 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     // private final Image2DViewer view2DPane;
 
     public RenderedImageLayer(OperationsManager manager, boolean buildIterator) {
-        this(manager, null, buildIterator, null);
+        this(manager, null, buildIterator);
     }
 
     public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator) {
-        this(manager, image, buildIterator, null);
-    }
-
-    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator, int x, int y) {
-        this(manager, image, buildIterator, AffineTransform.getTranslateInstance(x, y));
-    }
-
-    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator, AffineTransform transform) {
         if (manager == null) {
             throw new IllegalArgumentException("OperationsManager argument cannot be null"); //$NON-NLS-1$
         }
@@ -70,7 +62,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         this.sourceImage = image;
         this.buildIterator = buildIterator;
         // this.view2DPane = view2DPane;
-        _transform = transform;
         this.listenerList = new ArrayList<ImageLayerChangeListener<E>>();
         if (image != null) {
             // cache(operations.updateAllOperations());
@@ -104,15 +95,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
     }
 
-    public AffineTransform getTransform() {
-        return _transform;
-    }
-
-    public void setTransform(AffineTransform transform) {
-        this._transform = transform;
-        fireLayerChanged();
-    }
-
     public void drawImage(Graphics2D g2d) {
         // Get the clipping rectangle
         if (!visible || displayImage == null) {
@@ -126,8 +108,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            // TODO rotation issue, left and top image are cropped
-            // efface le débordement des derniers tiles en x et y
             Rectangle2D rect =
                 new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth() - 1,
                     displayImage.getHeight() - 1);
@@ -269,16 +249,17 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     private final int XtoTileX(int x) {
         if (displayImage == null) {
+
             return 0;
         }
-        return (x - displayImage.getTileGridXOffset()) / displayImage.getTileWidth();
+        return PlanarImage.XToTileX(x, displayImage.getTileGridXOffset(), displayImage.getTileWidth());
     }
 
     private final int YtoTileY(int y) {
         if (displayImage == null) {
             return 0;
         }
-        return (y - displayImage.getTileGridYOffset()) / displayImage.getTileHeight();
+        return PlanarImage.YToTileY(y, displayImage.getTileGridYOffset(), displayImage.getTileHeight());
     }
 
     private final int TileXtoX(int tx) {
@@ -297,7 +278,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     public void dispose() {
         sourceImage = null;
-        _transform = null;
         listenerList.clear();
         listenerList = null;
     }
@@ -364,6 +344,16 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     public void setLevel(int i) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public AffineTransform getTransform() {
+        return null;
+    }
+
+    @Override
+    public void setTransform(AffineTransform transform) {
+        // Does handle affine transform for image, already in operation manager
     }
 
 }

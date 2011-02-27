@@ -7,16 +7,19 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.geom.Point2D;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JTextPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -97,24 +100,36 @@ public class CalibrationView extends JPanel {
             if (!Unit.PIXEL.equals(unit)) {
                 jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSizeX(), image.getPixelSizeY()));
             } else {
-                JTextPane warningMessage = new JTextPane();
                 GridBagConstraints gbc_textPane = new GridBagConstraints();
                 gbc_textPane.gridwidth = 4;
                 gbc_textPane.insets = new Insets(0, 0, 5, 5);
                 gbc_textPane.fill = GridBagConstraints.HORIZONTAL;
                 gbc_textPane.gridx = 0;
                 gbc_textPane.gridy = 0;
-                warningMessage.setEditable(false);
-                warningMessage
-                    .setText("Warning: If the image has non-square pixels (where pixel spacing differs in the x and y direction), this tool cannot be used to peform an accurate calibration.");
-                // TODO guess the size
-                warningMessage.setPreferredSize(new Dimension(350, 75));
-                jPanelMode.add(warningMessage, gbc_textPane);
+                gbc_textPane.weightx = 1.0;
+                gbc_textPane.weighty = 1.0;
+                JScrollPane scroll =
+                    new JScrollPane(
+                        createArea(
+                            "Warning: If the image has non-square pixels (where pixel spacing differs in the x and y direction), this tool cannot be used to peform an accurate calibration.",
+                            true, 0));
+                scroll.setPreferredSize(new Dimension(300, 75));
+                jPanelMode.add(scroll, gbc_textPane);
                 unit = Unit.MILLIMETER;
             }
 
             jComboBoxUnit.setSelectedItem(unit);
         }
+    }
+
+    private JTextArea createArea(String text, boolean lineWrap, int columns) {
+        JTextArea area = new JTextArea(text);
+        area.setBorder(new CompoundBorder(BorderFactory.createRaisedBevelBorder(), new EmptyBorder(3, 5, 3, 5)));
+        area.setLineWrap(lineWrap);
+        area.setWrapStyleWord(true);
+        area.setEditable(false);
+        area.setColumns(columns);
+        return area;
     }
 
     public void applyNewCalibration() {
@@ -140,23 +155,23 @@ public class CalibrationView extends JPanel {
                         lineLength = 1.0;
                     }
                     if (ratioX != ratioY) {
-                        Point2D p1 = line.getStartPoint();
-                        Point2D p2 = line.getEndPoint();
-                        double dx = Math.abs(p1.getX() - p2.getX());
-                        double dy = Math.abs(p1.getY() - p2.getY());
-                        double newRatioX;
-                        double newRatioY;
-                        if (dx > dy) {
-                            newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
-                            newRatioY = ratioY * newRatioX / ratioX;
-                        } else {
-                            newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
-                            newRatioX = ratioX * newRatioY / ratioY;
-                        }
+                        return;
+                        // Point2D p1 = line.getStartPoint();
+                        // Point2D p2 = line.getEndPoint();
+                        // double dx = Math.abs(p1.getX() - p2.getX());
+                        // double dy = Math.abs(p1.getY() - p2.getY());
+                        // double newRatioX;
+                        // double newRatioY;
+                        // if (dx > dy) {
+                        // newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
+                        // newRatioY = ratioY * newRatioX / ratioX;
+                        // } else {
+                        // newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
+                        // newRatioX = ratioX * newRatioY / ratioY;
+                        // }
                     } else {
                         double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
                         if (ratioX != newRatio) {
-                            // TODO message if new calibration, pixel must be rectangle
                             if (radioButtonSeries.isSelected()) {
                                 MediaSeries seriesList = view2d.getSeries();
                                 if (seriesList != null) {

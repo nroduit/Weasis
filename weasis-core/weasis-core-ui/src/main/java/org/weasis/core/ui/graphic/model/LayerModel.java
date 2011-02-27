@@ -58,18 +58,12 @@ public interface LayerModel {
     void removeLayer(AbstractLayer layer);
 
     /**
-     * Computes the bounding box given as sum of the bounding boxes of all visible layers.
-     * 
-     * @return the bounding box
-     */
-    // Rectangle2D getVisibleBoundingBox(Rectangle2D r);
-    /**
      * Draws all visible layers of this model.
      * 
      * @param g2d
      *            the 2D graphics context
      * @param transform
-     *            TODO
+     * 
      */
     void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform);
 

@@ -10,14 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
@@ -42,11 +35,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
-import javax.swing.JSeparator;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.dcm4che2.data.DicomObject;
@@ -55,7 +44,6 @@ import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -75,13 +63,10 @@ import org.weasis.core.ui.task.CircularProgressBar;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
-import org.weasis.dicom.explorer.SeriesSelectionModel;
 
 public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImporter {
 
@@ -412,7 +397,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
     }
 
-    private static void removeAnonymousMouseAndKeyListener(Thumbnail tumbnail) {
+    public static void removeAnonymousMouseAndKeyListener(Thumbnail tumbnail) {
         MouseListener[] listener = tumbnail.getMouseListeners();
         MouseMotionListener[] motionListeners = tumbnail.getMouseMotionListeners();
         KeyListener[] keyListeners = tumbnail.getKeyListeners();
@@ -442,236 +427,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static void addListenerToThumbnail(final Thumbnail thumbnail, final LoadSeries loadSeries,
         final DicomModel dicomModel) {
         final Series series = loadSeries.getDicomSeries();
-        thumbnail.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                    if (explorer instanceof DicomExplorer) {
-                        ((DicomExplorer) explorer).getSelectionList().clear();
-                    }
-                    LoadSeries.openSequenceInDefaultPlugin(new Series[] { series }, dicomModel);
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent mouseevent) {
-                Component c = mouseevent.getComponent();
-                if (!c.isFocusOwner()) {
-                    c.requestFocusInWindow();
-                }
-                DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                final SeriesSelectionModel selList =
-                    explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                        : new SeriesSelectionModel(1);
-
-                if (SwingUtilities.isRightMouseButton(mouseevent)) {
-                    JPopupMenu popupMenu = new JPopupMenu();
-                    List<SeriesViewerFactory> plugins =
-                        UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
-                    if (!selList.contains(series)) {
-                        selList.add(series);
-                    }
-                    for (final SeriesViewerFactory factory : plugins) {
-                        final JMenuItem item4 =
-                            new JMenuItem(
-                                Messages.getString("DicomExplorer.open_series") + factory.getUIName(), factory.getIcon()); //$NON-NLS-1$
-                        item4.addActionListener(new ActionListener() {
-
-                            public void actionPerformed(ActionEvent e) {
-                                final Series[] seriesList =
-                                    selList.size() == 0 ? new Series[] { series } : selList.toArray(new Series[selList
-                                        .size()]);
-                                selList.clear();
-                                LoadSeries.openSequenceInPlugin(factory, seriesList, dicomModel);
-                            }
-                        });
-                        popupMenu.add(item4);
-                    }
-                    popupMenu.add(new JSeparator());
-                    JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series")); //$NON-NLS-1$
-                    item2.addActionListener(new ActionListener() {
-
-                        public void actionPerformed(ActionEvent e) {
-
-                            String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                            if (fruid != null) {
-                                selList.clear();
-                                MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                                Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
-                                synchronized (seriesList) {
-                                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                                        MediaSeriesGroup seq = it.next();
-                                        if (seq instanceof Series) {
-                                            Series s = (Series) seq;
-                                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
-                                                selList.add(s);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    popupMenu.add(item2);
-                    item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis")); //$NON-NLS-1$
-                    item2.addActionListener(new ActionListener() {
-
-                        public void actionPerformed(ActionEvent e) {
-                            String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                            if (fruid != null) {
-                                selList.clear();
-                                MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                                Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
-                                synchronized (seriesList) {
-                                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                                        MediaSeriesGroup seq = it.next();
-                                        if (seq instanceof Series) {
-                                            Series s = (Series) seq;
-                                            if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
-                                                if (ImageOrientation.hasSameOrientation(series, s)) {
-                                                    selList.add(s);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    popupMenu.add(item2);
-
-                    popupMenu.add(new JSeparator());
-                    boolean addSeparator = false;
-                    if (loadSeries.isCancelled()) {
-                        addSeparator = true;
-                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume")); //$NON-NLS-1$
-                        item3.addActionListener(new ActionListener() {
-
-                            public void actionPerformed(ActionEvent e) {
-                                LoadSeries taskResume = new LoadSeries(series, dicomModel, loadSeries.getProgressBar());
-                                DownloadPriority p = loadSeries.getPriority();
-                                p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-                                taskResume.setPriority(p);
-                                Thumbnail thumbnail =
-                                    (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
-                                if (thumbnail != null) {
-                                    LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-                                    addListenerToThumbnail(thumbnail, taskResume, dicomModel);
-                                }
-                                LoadRemoteDicom.loadingQueue.offer(taskResume);
-                            }
-                        });
-                        popupMenu.add(item3);
-                    } else if (!loadSeries.isDone()) {
-                        addSeparator = true;
-                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop")); //$NON-NLS-1$
-                        item3.addActionListener(new ActionListener() {
-
-                            public void actionPerformed(ActionEvent e) {
-                                loadSeries.cancel(true);
-                            }
-                        });
-                        popupMenu.add(item3);
-                    }
-                    if (addSeparator) {
-                        popupMenu.add(new JSeparator());
-                    }
-
-                    Object splitNb = series.getTagValue(TagW.SplitSeriesNumber);
-                    if (splitNb != null && selList.size() > 1 && loadSeries.isDone()) {
-                        String uid = (String) series.getTagValue(TagW.SeriesInstanceUID);
-                        boolean sameOrigin = true;
-                        if (uid != null) {
-                            for (Series s : selList) {
-                                if (!uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                                    sameOrigin = false;
-                                    break;
-                                }
-                            }
-                        }
-                        if (sameOrigin) {
-                            final Series[] seriesList = selList.toArray(new Series[selList.size()]);
-                            item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
-                            item2.addActionListener(new ActionListener() {
-
-                                public void actionPerformed(ActionEvent e) {
-                                    selList.clear();
-                                    dicomModel.mergeSeries(seriesList);
-                                }
-                            });
-                            popupMenu.add(item2);
-                            popupMenu.add(new JSeparator());
-                        }
-                    }
-
-                    item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series")); //$NON-NLS-1$
-                    item2.addActionListener(new ActionListener() {
-
-                        public void actionPerformed(ActionEvent e) {
-                            dicomModel.removeSeries(series);
-                        }
-                    });
-                    popupMenu.add(item2);
-                    item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study")); //$NON-NLS-1$
-                    item2.addActionListener(new ActionListener() {
-
-                        public void actionPerformed(ActionEvent e) {
-                            MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
-                            dicomModel.removeStudy(studyGroup);
-                        }
-                    });
-                    popupMenu.add(item2);
-                    item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat")); //$NON-NLS-1$
-                    item2.addActionListener(new ActionListener() {
-
-                        public void actionPerformed(ActionEvent e) {
-                            MediaSeriesGroup patientGroup =
-                                dicomModel.getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
-                            dicomModel.removePatient(patientGroup);
-                        }
-                    });
-                    popupMenu.add(item2);
-                    popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
-
-                } else {
-                    if (selList.contains(series)) {
-                        if (mouseevent.isControlDown()) {
-                            selList.remove(series);
-                        } else {
-                            selList.clear();
-                            selList.add(series);
-                        }
-                    } else {
-                        if (mouseevent.isControlDown()) {
-                            selList.add(series);
-                        } else {
-                            selList.clear();
-                            selList.add(series);
-                        }
-                    }
-                }
-            }
-        });
-
-        thumbnail.addKeyListener(new KeyAdapter() {
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                    final SeriesSelectionModel selList =
-                        explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                            : new SeriesSelectionModel(1);
-                    if (selList.size() == 0) {
-                        selList.add(series);
-                    }
-                    LoadSeries.openSequenceInDefaultPlugin(selList.toArray(new Series[selList.size()]), dicomModel);
-                }
-            }
-        });
-
+        thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(series, dicomModel, loadSeries));
+        thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(series, dicomModel));
     }
 
     public static void openSequenceInPlugin(SeriesViewerFactory factory, Series[] series, DicomModel dicomModel) {
@@ -716,7 +473,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     // + "&seriesUID=" + SeriesUID + "&objectUID=" + SOPInstanceUID +
     // "&contentType=application%2Fdicom");
     //
-    // // TODO set proxy
     // HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
     // // HttpURLConnection httpCon = (HttpURLConnection)
     // // url.openConnection(DownloadManager.PROXY);

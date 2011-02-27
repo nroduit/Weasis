@@ -13,9 +13,9 @@ REQUIRED_VERSION=`echo $REQUIRED_TEXT_VERSION | sed -e 's;\.;0;g'`
 if [ $JAVA_HOME ]
 then
 	JAVA_EXE=$JAVA_HOME/bin/java
-	$JAVA_EXE -version 2> tmp.ver
-	VERSION=`cat tmp.ver | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
-	rm tmp.ver
+	# Create temp file containing the java version. This file is automatically removed by weasis or by the system.
+	$JAVA_EXE -version 2> /tmp/weasis/java_tmp.ver 1> /dev/null
+	VERSION=`cat /tmp/weasis/java_tmp.ver | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
 	VERSION=`echo $VERSION | awk '{ print substr($1, 1, 3); }' | sed -e 's;\.;0;g'`
 	if [ $VERSION ]
 	then
@@ -43,9 +43,9 @@ else
 		then
 			:
 		else
-			$JAVA_EXE -version 2> tmp.ver 1> /dev/null
-			VERSION=`cat tmp.ver | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
-			rm tmp.ver
+			# Create temp file containing the java version. This file is automatically removed by weasis or by the system.
+			$JAVA_EXE -version 2> /tmp/weasis/java_tmp.ver 1> /dev/null
+			VERSION=`cat /tmp/weasis/java_tmp.ver | grep "java version" | awk '{ print substr($3, 2, length($3)-2); }'`
 			VERSION=`echo $VERSION | awk '{ print substr($1, 1, 3); }' | sed -e 's;\.;0;g'`
 			if [ $VERSION ]
 			then
@@ -63,8 +63,8 @@ if [ $JAVA_HOME ]
 then
 	export JAVA_HOME
 	curPath=$(dirname $(readlink -f $0))
-	echo Weasis launcher path: $curPath
-	$JAVA_HOME/bin/java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.codebase.url="file:///$curPath/weasis" -classpath "$curPath/weasis/bin/weasis-launcher.jar:$curPath/weasis/bin/felix.jar:$curPath/weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher $dicom:get -l "$curPath/DICOM"
+	echo Java Home: $JAVA_HOME/bin/java
+	echo Weasis launcher directory: $curPath
+	$JAVA_HOME/bin/java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.codebase.url="file:///$curPath/weasis" -classpath "$curPath/weasis/bin/weasis-launcher.jar:$curPath/weasis/bin/felix.jar:$curPath/weasis/bin/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get -l "$curPath/DICOM"
 else echo 'Weasis requires Java Runtime '$REQUIRED_TEXT_VERSION' or higher, please install it'
 fi
-

@@ -58,6 +58,7 @@ import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -263,7 +264,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         DefaultView2d view2DPane = eventManager.getSelectedViewPane();
         MediaSeries<DicomImageElement> selSeries = view2DPane == null ? null : view2DPane.getSeries();
         if (selSeries != null) {
-            // TODO change slicelocation to
             // Get the current image of the selected Series
             DicomImageElement selImage = selSeries.getMedia(selSeries.getNearestIndex(location));
             // Get the first and the last image of the selected Series according to Slice Location
@@ -780,11 +780,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 calibMenu.addActionListener(new ActionListener() {
 
                                     public void actionPerformed(ActionEvent e) {
+                                        String title = "Manual Calibration";
+                                        ImageElement image = View2d.this.getImage();
+                                        if (image != null) {
+                                            if (image.getPixelSizeX() != image.getPixelSizeY()) {
+                                                JOptionPane.showMessageDialog(calibMenu,
+                                                    "This tool cannot handle image with non-square pixels", title,
+                                                    JOptionPane.ERROR_MESSAGE);
+                                                return;
+                                            }
+                                        }
                                         CalibrationView calibrationDialog =
                                             new CalibrationView((LineGraphic) graph, View2d.this);
                                         int res =
-                                            JOptionPane.showConfirmDialog(calibMenu, calibrationDialog,
-                                                "Manual Calibration", JOptionPane.OK_CANCEL_OPTION);
+                                            JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
+                                                JOptionPane.OK_CANCEL_OPTION);
                                         if (res == JOptionPane.OK_OPTION) {
                                             calibrationDialog.applyNewCalibration();
                                         }

@@ -360,7 +360,6 @@ public class DownloadManager {
         }
 
         if (dicomInstances.size() > 0) {
-            // TODO Manage video if tsuid is not present
             if (dicomInstances.size() == 1
                 && "1.2.840.10008.1.2.4.100".equals(dicomInstances.get(0).getTransferSyntaxUID())) { //$NON-NLS-1$
                 model.removeHierarchyNode(study, dicomSeries);
