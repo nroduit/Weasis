@@ -34,6 +34,7 @@ import javax.media.jai.operator.NullDescriptor;
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.VR;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
@@ -186,6 +187,18 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
+    public void setTag(HashMap<TagW, Object> tags, TagW tag, Object value) {
+        if (tag != null) {
+            tags.put(tag, value);
+        }
+    }
+
+    public void setTagNoNull(HashMap<TagW, Object> tags, TagW tag, Object value) {
+        if (tag != null && value != null) {
+            tags.put(tag, value);
+        }
+    }
+
     public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
@@ -316,6 +329,28 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
             // -------- End of Mandatory Tags --------
 
+            writeOnlyinstance(dicomObject);
+            writeSharedFunctionalGroupsSequence(dicomObject);
+
+            validateDicomImageValues();
+            computeSlicePositionVector();
+        }
+    }
+
+    private void writeSharedFunctionalGroupsSequence(DicomObject dicomObject) {
+        if (dicomObject != null) {
+            // If multiframe overrides with
+            DicomElement seq = dicomObject.get(Tag.SharedFunctionalGroupsSequence);
+            if (seq != null && seq.vr() == VR.SQ) {
+                for (int i = 0, n = seq.countItems(); i < n; ++i) {
+                    writeOnlyinstance(seq.getDicomObject(i));
+                }
+            }
+        }
+    }
+
+    private void writeOnlyinstance(DicomObject dicomObject) {
+        if (dicomObject != null && tags != null) {
             // Instance tags
             setTagNoNull(TagW.ImageType, dicomObject.getString(Tag.ImageType));
             setTagNoNull(TagW.ImageComments, dicomObject.getString(Tag.ImageComments));
@@ -386,8 +421,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, null));
 
             setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
-            validateDicomImageValues();
-            computeSlicePositionVector();
         }
     }
 
@@ -679,10 +712,68 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public HashMap<TagW, Object> getMediaFragmentTags(Object key) {
         if (key instanceof Integer) {
             if ((Integer) key > 0) {
-                return (HashMap<TagW, Object>) tags.clone();
+                HashMap<TagW, Object> tagList = (HashMap<TagW, Object>) tags.clone();
+                writePerFrameFunctionalGroupsSequence(tagList, dicomObject, (Integer) key);
+                return tagList;
             }
         }
         return tags;
+    }
+
+    private void writePerFrameFunctionalGroupsSequence(HashMap<TagW, Object> tagList, DicomObject dicomObject, int index) {
+        if (dicomObject != null && tagList != null) {
+            DicomElement seq = dicomObject.get(Tag.PerFrameFunctionalGroupsSequence);
+            if (seq != null && seq.vr() == VR.SQ) {
+                DicomObject dcm = null;
+                try {
+                    dcm = seq.getDicomObject(index);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (dcm != null) {
+                    seq = dcm.get(Tag.PlanePositionSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        setTagNoNull(tagList, TagW.ImagePositionPatient,
+                            seq.getDicomObject(0).getDoubles(Tag.ImagePositionPatient, (double[]) null));
+                    }
+                    seq = dcm.get(Tag.PlaneOrientationSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        double[] imgOrientation =
+                            seq.getDicomObject(0).getDoubles(Tag.ImageOrientationPatient, (double[]) null);
+                        setTagNoNull(tagList, TagW.ImageOrientationPatient, imgOrientation);
+                        setTagNoNull(tagList, TagW.ImageOrientationPlane,
+                            ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(imgOrientation));
+                    }
+                    seq = dcm.get(Tag.FrameVOILUTSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        DicomObject lut = seq.getDicomObject(0);
+                        setTagNoNull(tagList, TagW.WindowWidth, getFloatFromDicomElement(lut, Tag.WindowWidth, null));
+                        setTagNoNull(tagList, TagW.WindowCenter, getFloatFromDicomElement(lut, Tag.WindowCenter, null));
+                    }
+
+                    seq = dcm.get(Tag.PixelValueTransformationSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        DicomObject pix = seq.getDicomObject(0);
+                        setTagNoNull(tagList, TagW.RescaleSlope, getFloatFromDicomElement(pix, Tag.RescaleSlope, null));
+                        setTagNoNull(tagList, TagW.RescaleIntercept,
+                            getFloatFromDicomElement(pix, Tag.RescaleIntercept, null));
+                        setTagNoNull(tagList, TagW.RescaleType, pix.getString(Tag.RescaleType));
+                    }
+                    // setTagNoNull(tagList, TagW.ImagerPixelSpacing,
+                    // dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
+                    // setTagNoNull(tagList, TagW.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[])
+                    // null));
+                    // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
+                    // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
+                    // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));
+
+                    // TODO set static values
+                    validateDicomImageValues();
+                    computeSlicePositionVector();
+                }
+
+            }
+        }
     }
 
     @Override
