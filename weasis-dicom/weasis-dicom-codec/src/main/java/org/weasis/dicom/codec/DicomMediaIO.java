@@ -187,13 +187,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    public void setTag(HashMap<TagW, Object> tags, TagW tag, Object value) {
+    public static void setTag(HashMap<TagW, Object> tags, TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
-    public void setTagNoNull(HashMap<TagW, Object> tags, TagW tag, Object value) {
+    public static void setTagNoNull(HashMap<TagW, Object> tags, TagW tag, Object value) {
         if (tag != null && value != null) {
             tags.put(tag, value);
         }
@@ -331,9 +331,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             writeOnlyinstance(dicomObject);
             writeSharedFunctionalGroupsSequence(dicomObject);
+            writePerFrameFunctionalGroupsSequence(tags, dicomObject, 0);
 
-            validateDicomImageValues();
-            computeSlicePositionVector();
+            validateDicomImageValues(tags);
+            computeSlicePositionVector(tags);
         }
     }
 
@@ -424,59 +425,63 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private void validateDicomImageValues() {
-        Float window = (Float) getTagValue(TagW.WindowWidth);
-        Float level = (Float) getTagValue(TagW.WindowCenter);
-        if (window != null && level != null) {
-            Integer minValue = (Integer) getTagValue(TagW.SmallestImagePixelValue);
-            Integer maxValue = (Integer) getTagValue(TagW.LargestImagePixelValue);
-            // Test if DICOM min and max pixel values are consistent
-            if (minValue != null && maxValue != null) {
-                float min = pixel2rescale(minValue.floatValue());
-                float max = pixel2rescale(maxValue.floatValue());
-                // Empirical test
-                float low = level - window / 4.0f;
-                float high = level + window / 4.0f;
-                if (low < min || high > max) {
-                    // Min and Max seems to be not consistent
-                    // Remove them, it will search in min and max in pixel data
-                    tags.remove(TagW.SmallestImagePixelValue);
-                    tags.remove(TagW.LargestImagePixelValue);
+    private static void validateDicomImageValues(HashMap<TagW, Object> tagList) {
+        if (tagList != null) {
+            Float window = (Float) tagList.get(TagW.WindowWidth);
+            Float level = (Float) tagList.get(TagW.WindowCenter);
+            if (window != null && level != null) {
+                Integer minValue = (Integer) tagList.get(TagW.SmallestImagePixelValue);
+                Integer maxValue = (Integer) tagList.get(TagW.LargestImagePixelValue);
+                // Test if DICOM min and max pixel values are consistent
+                if (minValue != null && maxValue != null) {
+                    float min = pixel2rescale(tagList, minValue.floatValue());
+                    float max = pixel2rescale(tagList, maxValue.floatValue());
+                    // Empirical test
+                    float low = level - window / 4.0f;
+                    float high = level + window / 4.0f;
+                    if (low < min || high > max) {
+                        // Min and Max seems to be not consistent
+                        // Remove them, it will search in min and max in pixel data
+                        tagList.remove(TagW.SmallestImagePixelValue);
+                        tagList.remove(TagW.LargestImagePixelValue);
+                    }
                 }
-            }
-            Integer bitsStored = (Integer) getTagValue(TagW.BitsStored);
-            if (bitsStored != null) {
-                if (window > (1 << bitsStored)) {
-                    // Remove w/l values that are not consistent to the bits stored
-                    tags.remove(TagW.WindowCenter);
-                    tags.remove(TagW.WindowWidth);
+                Integer bitsStored = (Integer) tagList.get(TagW.BitsStored);
+                if (bitsStored != null) {
+                    if (window > (1 << bitsStored)) {
+                        // Remove w/l values that are not consistent to the bits stored
+                        tagList.remove(TagW.WindowCenter);
+                        tagList.remove(TagW.WindowWidth);
+                    }
                 }
             }
         }
     }
 
-    private float pixel2rescale(float pixelValue) {
-        // Hounsfield units: hu
-        // hu = pixelValue * rescale slope + intercept value
-        Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null) {
-            return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+    private static float pixel2rescale(HashMap<TagW, Object> tagList, float pixelValue) {
+        if (tagList != null) {
+            // Hounsfield units: hu
+            // hu = pixelValue * rescale slope + intercept value
+            Float slope = (Float) tagList.get(TagW.RescaleSlope);
+            Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
+            if (slope != null || intercept != null) {
+                return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+            }
         }
         return pixelValue;
     }
 
-    private void computeSlicePositionVector() {
-        double[] patientPos = (double[]) getTagValue(TagW.ImagePositionPatient);
+    private static void computeSlicePositionVector(HashMap<TagW, Object> tagList) {
+        double[] patientPos = (double[]) tagList.get(TagW.ImagePositionPatient);
         if (patientPos != null && patientPos.length == 3) {
             double[] imgOrientation =
-                ImageOrientation.computeNormalVectorOfPlan((double[]) getTagValue(TagW.ImageOrientationPatient));
+                ImageOrientation.computeNormalVectorOfPlan((double[]) tagList.get(TagW.ImageOrientationPatient));
             if (imgOrientation != null) {
                 double[] slicePosition = new double[3];
                 slicePosition[0] = imgOrientation[0] * patientPos[0];
                 slicePosition[1] = imgOrientation[1] * patientPos[1];
                 slicePosition[2] = imgOrientation[2] * patientPos[2];
-                setTag(TagW.SlicePosition, slicePosition);
+                setTag(tagList, TagW.SlicePosition, slicePosition);
             }
         }
     }
@@ -759,19 +764,23 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             getFloatFromDicomElement(pix, Tag.RescaleIntercept, null));
                         setTagNoNull(tagList, TagW.RescaleType, pix.getString(Tag.RescaleType));
                     }
+
+                    seq = dcm.get(Tag.PixelMeasuresSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        DicomObject measure = seq.getDicomObject(0);
+                        setTagNoNull(tagList, TagW.PixelSpacing, measure.getDoubles(Tag.PixelSpacing, (double[]) null));
+                        setTagNoNull(tagList, TagW.SliceThickness,
+                            getFloatFromDicomElement(measure, Tag.SliceThickness, null));
+                    }
                     // setTagNoNull(tagList, TagW.ImagerPixelSpacing,
-                    // dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
-                    // setTagNoNull(tagList, TagW.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[])
-                    // null));
+
                     // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                     // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
                     // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));
 
-                    // TODO set static values
-                    validateDicomImageValues();
-                    computeSlicePositionVector();
+                    validateDicomImageValues(tagList);
+                    computeSlicePositionVector(tagList);
                 }
-
             }
         }
     }

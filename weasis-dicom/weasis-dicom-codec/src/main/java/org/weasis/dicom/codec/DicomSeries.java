@@ -81,6 +81,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     }
                     medias.add(insertIndex, dicom);
                     for (int i = 1; i < frames; i++) {
+                        // TODO multiframe are not split
                         medias.add(insertIndex + i, new DicomImageElement(dicomImageLoader, i));
                     }
                 }

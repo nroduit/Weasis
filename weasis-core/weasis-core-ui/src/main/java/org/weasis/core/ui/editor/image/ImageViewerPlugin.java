@@ -38,6 +38,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 
@@ -209,6 +210,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 oldViews.remove(i).dispose();
             }
         }
+        for (JComponent c : components) {
+            if (c instanceof SeriesViewerListener) {
+                eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
+            }
+        }
+        components.clear();
 
         final LinkedHashMap<LayoutConstraints, JComponent> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();

@@ -38,8 +38,7 @@ public class DicomImageElement extends ImageElement {
                 pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector"); //$NON-NLS-1$
 
             } else {
-                pixelSizeCalibrationDescription =
-                    (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
+                pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
             if (val != null) {
                 pixelSizeX = val[0];
