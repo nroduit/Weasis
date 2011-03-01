@@ -793,10 +793,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         DicomObject measure = seq.getDicomObject(0);
                         setTagNoNull(tagList, TagW.PixelSpacing, measure.getDoubles(Tag.PixelSpacing, (double[]) null));
                         setTagNoNull(tagList, TagW.SliceThickness,
-                            getFloatFromDicomElement(measure, Tag.SliceThickness, 1.0f));
+                            getFloatFromDicomElement(measure, Tag.SliceThickness, null));
                     }
-                    // setTagNoNull(tagList, TagW.ImagerPixelSpacing,
-
                     // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                     // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
                     // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));

@@ -776,14 +776,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             public void run() {
-                                boolean firstImage = false;
+                                boolean firstImageToDisplay = false;
                                 MediaElement[] medias = dicomReader.getMediaElement();
                                 if (medias != null) {
+                                    firstImageToDisplay = dicomSeries.size() == 0;
                                     for (MediaElement media : medias) {
                                         dicomModel.applySplittingRules(dicomSeries, media);
                                     }
-                                    // TODO not a good test
-                                    firstImage = dicomSeries.size() == 1;
+                                    if (firstImageToDisplay && dicomSeries.size() == 0) {
+                                        firstImageToDisplay = false;
+                                    }
                                 }
 
                                 dicomReader.reset();
@@ -792,7 +794,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     thumb.repaint();
                                 }
 
-                                if (firstImage) {
+                                if (firstImageToDisplay) {
                                     boolean openNewTab = true;
                                     MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
                                     if (entry1 != null) {

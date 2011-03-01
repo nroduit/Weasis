@@ -305,15 +305,30 @@ abstract public class ImageOrientation {
     public static boolean hasSameOrientation(DicomImageElement image1, DicomImageElement image2) {
         // Test if the two images have the same orientation
         if (image1 != null && image2 != null) {
-            double[] postion1 =
-                computeNormalVectorOfPlan((double[]) image1.getTagValue(TagW.ImageOrientationPatient));
-            double[] postion2 =
-                computeNormalVectorOfPlan((double[]) image2.getTagValue(TagW.ImageOrientationPatient));
-            if (postion1 != null && postion2 != null) {
-                double prod = postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
-                // A little tolerance
-                if (prod > 0.95) {
-                    return true;
+            double[] v1 = (double[]) image1.getTagValue(TagW.ImageOrientationPatient);
+            double[] v2 = (double[]) image2.getTagValue(TagW.ImageOrientationPatient);
+            if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
+                String label1 =
+                    ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v1[0], v1[1], v1[2], v1[3],
+                        v1[4], v1[5]);
+                String label2 =
+                    ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
+                        v2[4], v2[5]);
+
+                if (label1 != null && !label1.equals(LABELS[4])) {
+                    return label1.equals(label2);
+                }
+                // If oblique search if the plan has approximately the same orientation
+                double[] postion1 =
+                    computeNormalVectorOfPlan((double[]) image1.getTagValue(TagW.ImageOrientationPatient));
+                double[] postion2 =
+                    computeNormalVectorOfPlan((double[]) image2.getTagValue(TagW.ImageOrientationPatient));
+                if (postion1 != null && postion2 != null) {
+                    double prod = postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
+                    // A little tolerance
+                    if (prod > 0.95) {
+                        return true;
+                    }
                 }
             }
         }

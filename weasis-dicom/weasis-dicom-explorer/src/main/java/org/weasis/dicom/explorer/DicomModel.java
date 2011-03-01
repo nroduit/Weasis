@@ -41,10 +41,12 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
@@ -372,9 +374,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
             if (original instanceof DicomSeries) {
                 // Handle cases when the Series is created before getting the image (downloading)
-                String mime = dicomReader.getMimeType();
-                if (DicomMediaIO.SERIES_VIDEO_MIMETYPE.equals(mime)
-                    || DicomMediaIO.SERIES_ENCAP_DOC_MIMETYPE.equals(mime)) {
+                if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
                     replaceSeries(dicomReader, original, media);
                     return true;
                 }
@@ -384,24 +384,26 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     initialSeries.addMedia(media);
                 } else {
                     Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagW.Modality));
-                    DicomSeries dicomSeries = initialSeries;
+
                     TagW[] rules = splittingRules.get(modality);
 
-                    if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality)) {
-                        if (frames > 1 && initialSeries.getMedias().size() > 0) {
-                            splitSeries(dicomReader, initialSeries, media);
-                            return true;
-                        } else {
-                            dicomSeries.addMedia(media);
-                            return false;
-                        }
-                    }
+                    // if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality))
+                    // {
+                    // if (initialSeries.getMedias().size() > 0
+                    // && dicomReader != initialSeries.getMedia(MEDIA_POSITION.LAST).getMediaReader()) {
+                    // splitSeries(dicomReader, initialSeries, media);
+                    // return true;
+                    // } else {
+                    // initialSeries.addMedia(media);
+                    // return false;
+                    // }
+                    // }
                     if (rules == null) {
                         rules = splittingRules.get(Modality.Default);
                     }
 
-                    if (isSimilar(rules, initialSeries, dicomReader)) {
-                        dicomSeries.addMedia(media);
+                    if (isSimilar(rules, initialSeries, media)) {
+                        initialSeries.addMedia(media);
                         return false;
                     }
                     MediaSeriesGroup study = getParent(original, DicomModel.study);
@@ -411,7 +413,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
-                            if (isSimilar(rules, (DicomSeries) group, dicomReader)) {
+                            if (isSimilar(rules, (DicomSeries) group, media)) {
                                 ((DicomSeries) group).addMedia(media);
                                 return false;
                             }
@@ -421,6 +423,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         k++;
                     }
                     splitSeries(dicomReader, initialSeries, media);
+                    return true;
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
                 if (original.getMedias().size() > 0) {
@@ -434,15 +437,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private boolean isSimilar(TagW[] rules, DicomSeries series, final DicomMediaIO dicomReader) {
-        final DicomImageElement media = series.getMedia(0);
-        if (media == null) {
+    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
+        final DicomImageElement firstMedia = series.getMedia(0);
+        if (firstMedia == null) {
             // no image
             return true;
         }
         for (TagW tagElement : rules) {
-            Object tag = dicomReader.getTagValue(tagElement);
-            Object tag2 = media.getTagValue(tagElement);
+            Object tag = media.getTagValue(tagElement);
+            Object tag2 = firstMedia.getTagValue(tagElement);
             // special case if both are null
             if (tag == null && tag2 == null) {
                 continue;
