@@ -15,7 +15,14 @@ import javax.vecmath.Vector3d;
 public class IntersectVolume extends LocalizerPoster {
 
     // package scope ... applications use LocalizerPosterFactory
-    IntersectVolume() {
+
+    public IntersectVolume(GeometryOfSlice geometry) {
+        localizerRow = geometry.getRow();
+        localizerColumn = geometry.getColumn();
+        localizerTLHC = geometry.getTLHC();
+        localizerVoxelSpacing = geometry.getVoxelSpacing();
+        localizerDimensions = geometry.getDimensions();
+        doCommonConstructorStuff();
     }
 
     @Override

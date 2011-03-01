@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
@@ -775,8 +776,15 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             public void run() {
-                                dicomModel.applySplittingRules(dicomSeries, dicomReader);
-                                boolean firstImage = dicomSeries.size() == 1;
+                                boolean firstImage = false;
+                                MediaElement[] medias = dicomReader.getMediaElement();
+                                if (medias != null) {
+                                    for (MediaElement media : medias) {
+                                        dicomModel.applySplittingRules(dicomSeries, media);
+                                    }
+                                    // TODO not a good test
+                                    firstImage = dicomSeries.size() == 1;
+                                }
 
                                 dicomReader.reset();
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);

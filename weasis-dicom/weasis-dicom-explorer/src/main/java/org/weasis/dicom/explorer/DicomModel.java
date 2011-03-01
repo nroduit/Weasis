@@ -36,7 +36,7 @@ import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.Codec;
-import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -246,7 +246,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 // update observer
                 this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base,
                     base));
-
             }
         }
     }
@@ -315,7 +314,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return (modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    private void splitSeries(DicomMediaIO dicomReader, Series original) {
+    private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
         String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
         int k = 1;
@@ -337,11 +336,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagW.SplitSeriesNumber, k + 1);
         s.setTag(TagW.ExplorerModel, this);
         addHierarchyNode(study, s);
-        s.addMedia(dicomReader);
+        s.addMedia(media);
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
     }
 
-    private void replaceSeries(DicomMediaIO dicomReader, Series original) {
+    private void replaceSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
         String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
         int k = 1;
@@ -364,25 +363,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagW.SplitSeriesNumber, k);
         s.setTag(TagW.ExplorerModel, this);
         addHierarchyNode(study, s);
-        s.addMedia(dicomReader);
+        s.addMedia(media);
         LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
     }
 
-    public boolean applySplittingRules(Series original, MediaReader mediaLoader) {
-        if (mediaLoader instanceof DicomMediaIO) {
-            DicomMediaIO dicomReader = (DicomMediaIO) mediaLoader;
+    public boolean applySplittingRules(Series original, MediaElement media) {
+        if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
+            DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
             if (original instanceof DicomSeries) {
                 // Handle cases when the Series is created before getting the image (downloading)
                 String mime = dicomReader.getMimeType();
                 if (DicomMediaIO.SERIES_VIDEO_MIMETYPE.equals(mime)
                     || DicomMediaIO.SERIES_ENCAP_DOC_MIMETYPE.equals(mime)) {
-                    replaceSeries(dicomReader, original);
+                    replaceSeries(dicomReader, original, media);
                     return true;
                 }
                 DicomSeries initialSeries = (DicomSeries) original;
                 int frames = dicomReader.getMediaElementNumber();
                 if (frames < 1) {
-                    initialSeries.addMedia(dicomReader);
+                    initialSeries.addMedia(media);
                 } else {
                     Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagW.Modality));
                     DicomSeries dicomSeries = initialSeries;
@@ -390,10 +389,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality)) {
                         if (frames > 1 && initialSeries.getMedias().size() > 0) {
-                            splitSeries(dicomReader, initialSeries);
+                            splitSeries(dicomReader, initialSeries, media);
                             return true;
                         } else {
-                            dicomSeries.addMedia(dicomReader);
+                            dicomSeries.addMedia(media);
                             return false;
                         }
                     }
@@ -402,7 +401,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
 
                     if (isSimilar(rules, initialSeries, dicomReader)) {
-                        dicomSeries.addMedia(dicomReader);
+                        dicomSeries.addMedia(media);
                         return false;
                     }
                     MediaSeriesGroup study = getParent(original, DicomModel.study);
@@ -413,7 +412,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
                             if (isSimilar(rules, (DicomSeries) group, dicomReader)) {
-                                ((DicomSeries) group).addMedia(dicomReader);
+                                ((DicomSeries) group).addMedia(media);
                                 return false;
                             }
                         } else {
@@ -421,14 +420,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         }
                         k++;
                     }
-                    splitSeries(dicomReader, initialSeries);
+                    splitSeries(dicomReader, initialSeries, media);
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
                 if (original.getMedias().size() > 0) {
-                    splitSeries(dicomReader, original);
+                    splitSeries(dicomReader, original, media);
                     return true;
                 } else {
-                    original.addMedia(dicomReader);
+                    original.addMedia(media);
                 }
             }
         }

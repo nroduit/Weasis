@@ -15,6 +15,8 @@ import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 
 public interface DataExplorerModel {
@@ -29,5 +31,7 @@ public interface DataExplorerModel {
     public void firePropertyChange(ObservableEvent event);
 
     public TreeModelNode getTreeModelNodeForNewPlugin();
+
+    public boolean applySplittingRules(Series original, MediaElement media);
 
 }

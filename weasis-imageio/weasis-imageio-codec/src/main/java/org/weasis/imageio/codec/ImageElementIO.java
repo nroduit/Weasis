@@ -118,8 +118,12 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     }
 
     @Override
-    public MediaElement<PlanarImage> getMediaElement() {
-        return getSingleImage();
+    public MediaElement[] getMediaElement() {
+        MediaElement element = getSingleImage();
+        if (element != null) {
+            return new MediaElement[] { element };
+        }
+        return null;
     }
 
     @Override
@@ -133,7 +137,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
             }
 
             @Override
-            public void addMedia(MediaReader mediaLoader) {
+            public void addMedia(MediaElement media) {
                 // TODO Auto-generated method stub
 
             }

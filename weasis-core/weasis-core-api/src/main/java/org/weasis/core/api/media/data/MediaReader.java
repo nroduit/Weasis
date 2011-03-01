@@ -21,7 +21,7 @@ public interface MediaReader<E> {
 
     public URI getUri();
 
-    public MediaElement<E> getMediaElement();
+    public MediaElement[] getMediaElement();
 
     public MediaSeries getMediaSeries();
 

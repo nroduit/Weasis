@@ -23,7 +23,7 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     public void sort(Comparator<E> comparator);
 
-    public void addMedia(MediaReader mediaLoader);
+    public void addMedia(MediaElement media);
 
     public void add(E media);
 

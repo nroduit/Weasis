@@ -297,6 +297,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 GeometryOfSlice sliceGeometry = image.getSliceGeometry();
                 if (sliceGeometry != null) {
                     IntersectSlice slice = new IntersectSlice(sliceGeometry);
+                    // IntersectVolume slice = new IntersectVolume(sliceGeometry);
                     if (firstImage != null) {
                         addCrossline(firstImage, slice, false);
                     }

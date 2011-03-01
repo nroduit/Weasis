@@ -23,7 +23,7 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
@@ -35,8 +35,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     }
 
     public DicomEncapDocSeries(DicomSeries dicomSeries) {
-        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
-            TagW.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), TagW.SubseriesInstanceUID);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -46,35 +45,37 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     }
 
     @Override
-    public void addMedia(MediaReader mediaLoader) {
-        if (mediaLoader instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) mediaLoader;
-            byte[] doc = null;
-            String extension = "tmp";
-            try {
-                DicomObject dicom = dicomImageLoader.getDicomObject();
-                String mime = dicom.getString(Tag.MIMETypeOfEncapsulatedDocument);
-                String[] extensions = MimeInspector.getExtensions(mime);
-                if (extensions.length > 0) {
-                    extension = extensions[0];
-                }
-                doc = dicom.getBytes(Tag.EncapsulatedDocument);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (doc != null) {
-                OutputStream tempFileStream = null;
+    public void addMedia(MediaElement media) {
+        if (media instanceof DicomEncapDocElement) {
+            if (media.getMediaReader() instanceof DicomMediaIO) {
+                DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+                byte[] doc = null;
+                String extension = "tmp";
                 try {
-                    File file = File.createTempFile("encap_", "." + extension, AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    tempFileStream = new BufferedOutputStream(new FileOutputStream(file));
-                    tempFileStream.write(doc);
-                    DicomEncapDocElement dicom = (DicomEncapDocElement) dicomImageLoader.getMediaElement();
-                    dicom.setDocument(file);
-                    medias.add(dicom);
+                    DicomObject dicom = dicomImageLoader.getDicomObject();
+                    String mime = dicom.getString(Tag.MIMETypeOfEncapsulatedDocument);
+                    String[] extensions = MimeInspector.getExtensions(mime);
+                    if (extensions.length > 0) {
+                        extension = extensions[0];
+                    }
+                    doc = dicom.getBytes(Tag.EncapsulatedDocument);
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    FileUtil.safeClose(tempFileStream);
+                }
+                if (doc != null) {
+                    OutputStream tempFileStream = null;
+                    try {
+                        File file = File.createTempFile("encap_", "." + extension, AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        tempFileStream = new BufferedOutputStream(new FileOutputStream(file));
+                        tempFileStream.write(doc);
+                        DicomEncapDocElement dicom = (DicomEncapDocElement) media;
+                        dicom.setDocument(file);
+                        medias.add(dicom);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        FileUtil.safeClose(tempFileStream);
+                    }
                 }
             }
         }

@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
@@ -59,17 +59,18 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public void addMedia(MediaReader mediaLoader) {
-        if (mediaLoader instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) mediaLoader;
-            int frames = dicomImageLoader.getMediaElementNumber();
-            if (frames > 0) {
+    public void addMedia(MediaElement media) {
+        if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
+            DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+
+            if (media instanceof DicomImageElement) {
+
                 int insertIndex;
 
                 synchronized (medias) {
                     // add image or multi-frame sorted by Instance Number (0020,0013) order
-                    DicomImageElement dicom = (DicomImageElement) dicomImageLoader.getMediaElement();
-                    int index = Collections.binarySearch(medias, dicom, SortSeriesStack.instanceNumber);
+                    int index =
+                        Collections.binarySearch(medias, (DicomImageElement) media, SortSeriesStack.instanceNumber);
                     if (index < 0) {
                         insertIndex = -(index + 1);
                     } else {
@@ -79,25 +80,15 @@ public class DicomSeries extends Series<DicomImageElement> {
                     if (insertIndex < 0 || insertIndex > size()) {
                         insertIndex = medias.size();
                     }
-                    medias.add(insertIndex, dicom);
-                    for (int i = 1; i < frames; i++) {
-                        // TODO multiframe are not split
-                        medias.add(insertIndex + i, new DicomImageElement(dicomImageLoader, i));
-                    }
+                    medias.add(insertIndex, (DicomImageElement) media);
                 }
                 DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                 if (model != null) {
                     model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                        new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex + frames)));
+                        new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex)));
                 }
-            } else {
-                String modality = (String) getTagValue(TagW.Modality);
-                boolean ps =
-                    modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                if (ps) {
-                    DicomSpecialElement dicom = new DicomSpecialElement(mediaLoader, null);
-                    setTag(TagW.DicomSpecialElement, dicom);
-                }
+            } else if (media instanceof DicomSpecialElement) {
+                setTag(TagW.DicomSpecialElement, media);
             }
         }
     }

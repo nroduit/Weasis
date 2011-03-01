@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.weasis.core.api.gui.util.AbstractProperties;
-import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 
@@ -35,8 +35,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
     }
 
     public DicomVideoSeries(DicomSeries dicomSeries) {
-        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
-            TagW.SubseriesInstanceUID);
+        super(TagW.SubseriesInstanceUID, dicomSeries.getTagValue(TagW.SubseriesInstanceUID), TagW.SubseriesInstanceUID);
 
         Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
         while (iter.hasNext()) {
@@ -46,46 +45,47 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
     }
 
     @Override
-    public void addMedia(MediaReader mediaLoader) {
-        if (mediaLoader instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) mediaLoader;
-            frames = dicomImageLoader.getMediaElementNumber();
-            byte[] mpeg = null;
-            try {
-                width = dicomImageLoader.getWidth(0);
-                height = dicomImageLoader.getHeight(0);
-                dicomImageLoader.readPixelData();
-                mpeg = dicomImageLoader.getDicomObject().get(TagW.PixelData.getId()).getFragment(1);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (mpeg != null) {
-                OutputStream tempFileStream = null;
+    public void addMedia(MediaElement media) {
+        if (media instanceof DicomVideoElement) {
+            if (media.getMediaReader() instanceof DicomMediaIO) {
+                DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+                frames = dicomImageLoader.getMediaElementNumber();
+                byte[] mpeg = null;
                 try {
-                    File videoFile = File.createTempFile("video_", ".mpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    tempFileStream = new BufferedOutputStream(new FileOutputStream(videoFile));
-                    tempFileStream.write(mpeg);
-                    DicomVideoElement dicom = (DicomVideoElement) dicomImageLoader.getMediaElement();
-                    dicom.setVideoFile(videoFile);
-                    medias.add(dicom);
-
+                    width = dicomImageLoader.getWidth(0);
+                    height = dicomImageLoader.getHeight(0);
+                    dicomImageLoader.readPixelData();
+                    mpeg = dicomImageLoader.getDicomObject().get(TagW.PixelData.getId()).getFragment(1);
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    // Close file.
-                    if (tempFileStream != null) {
-                        try {
-                            tempFileStream.close();
-                        } catch (Exception e) {
+                }
+                if (mpeg != null) {
+                    OutputStream tempFileStream = null;
+                    try {
+                        File videoFile = File.createTempFile("video_", ".mpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        tempFileStream = new BufferedOutputStream(new FileOutputStream(videoFile));
+                        tempFileStream.write(mpeg);
+                        DicomVideoElement dicom = (DicomVideoElement) media;
+                        dicom.setVideoFile(videoFile);
+                        medias.add(dicom);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        // Close file.
+                        if (tempFileStream != null) {
+                            try {
+                                tempFileStream.close();
+                            } catch (Exception e) {
+                            }
                         }
                     }
                 }
+                // DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                // if (model != null) {
+                // model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                // new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex + frames)));
+                // }
             }
-            // DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-            // if (model != null) {
-            // model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-            // new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex + frames)));
-            // }
         }
     }
 

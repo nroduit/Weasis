@@ -24,6 +24,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -151,7 +152,12 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                 dicomReader.writeMetaData(dicomSeries);
                 dicomModel.addHierarchyNode(study, dicomSeries);
-                dicomSeries.addMedia(dicomReader);
+                MediaElement[] medias = dicomReader.getMediaElement();
+                if (medias != null) {
+                    for (MediaElement media : medias) {
+                        dicomModel.applySplittingRules(dicomSeries, media);
+                    }
+                }
 
                 // Load image and create thumbnail in this Thread
                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
@@ -176,7 +182,12 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     }
                 }
             } else {
-                dicomModel.applySplittingRules(dicomSeries, dicomReader);
+                MediaElement[] medias = dicomReader.getMediaElement();
+                if (medias != null) {
+                    for (MediaElement media : medias) {
+                        dicomModel.applySplittingRules(dicomSeries, media);
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -215,16 +226,26 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     dicomReader.writeMetaData(dicomSeries);
                     dicomModel.addHierarchyNode(study, dicomSeries);
                     dicomseriesList.add(dicomSeries);
-                    dicomSeries.addMedia(dicomReader);
+                    MediaElement[] medias = dicomReader.getMediaElement();
+                    if (medias != null) {
+                        for (MediaElement media : medias) {
+                            dicomModel.applySplittingRules(dicomSeries, media);
+                        }
+                    }
                 } else {
                     // Test if SOPInstanceUID already exists
                     if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
                         dicomReader.getTagValue(TagW.SOPInstanceUID))) {
                         continue seriesList;
                     }
-                    if (dicomModel.applySplittingRules(dicomSeries, dicomReader)) {
-                        // When the Series is split, build a thumbnail and add it to the dicom explorer
-                        dicomseriesList.add(dicomSeries);
+                    MediaElement[] medias = dicomReader.getMediaElement();
+                    if (medias != null) {
+                        for (MediaElement media : medias) {
+                            if (dicomModel.applySplittingRules(dicomSeries, media)) {
+                                // When the Series is split, build a thumbnail and add it to the dicom explorer
+                                dicomseriesList.add(dicomSeries);
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {

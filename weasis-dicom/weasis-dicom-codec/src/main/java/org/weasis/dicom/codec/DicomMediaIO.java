@@ -82,7 +82,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private int numberOfFrame;
     private int stored;
     private final HashMap<TagW, Object> tags;
-    private MediaElement image = null;
+    private MediaElement[] image = null;
     private ImageInputStream imageStream = null;
     private volatile String mimeType;
 
@@ -659,18 +659,11 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     private MediaElement getSingleImage() {
-        if (image == null) {
-            if (readMediaTags()) {
-                if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
-                    image = new DicomVideoElement(this, null);
-                } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
-                    image = new DicomEncapDocElement(this, null);
-                } else {
-                    image = new DicomImageElement(this, 0);
-                }
-            }
+        MediaElement[] elements = getMediaElement();
+        if (elements != null && elements.length > 0) {
+            return elements[0];
         }
-        return image;
+        return null;
     }
 
     @Override
@@ -685,8 +678,32 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     @Override
-    public MediaElement getMediaElement() {
-        return getSingleImage();
+    public MediaElement[] getMediaElement() {
+        if (image == null) {
+            if (readMediaTags()) {
+                if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
+                    image = new MediaElement[] { new DicomVideoElement(this, null) };
+                } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
+                    image = new MediaElement[] { new DicomEncapDocElement(this, null) };
+                } else {
+                    image = new MediaElement[numberOfFrame];
+                    for (int i = 0; i < image.length; i++) {
+                        if (numberOfFrame > 0) {
+                            image[i] = new DicomImageElement(this, i);
+                        } else {
+                            String modality = (String) getTagValue(TagW.Modality);
+                            boolean ps =
+                                modality != null
+                                    && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            if (ps) {
+                                image[i] = new DicomSpecialElement(this, null);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return image;
     }
 
     @Override
@@ -698,7 +715,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             writeMetaData(series);
             // no need to apply splitting rules
             // also no model
-            series.addMedia(this);
+            MediaElement[] elements = getMediaElement();
+            if (elements != null) {
+                for (MediaElement media : elements) {
+                    series.addMedia(media);
+                }
+            }
+
         }
         return series;
     }
@@ -770,7 +793,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         DicomObject measure = seq.getDicomObject(0);
                         setTagNoNull(tagList, TagW.PixelSpacing, measure.getDoubles(Tag.PixelSpacing, (double[]) null));
                         setTagNoNull(tagList, TagW.SliceThickness,
-                            getFloatFromDicomElement(measure, Tag.SliceThickness, null));
+                            getFloatFromDicomElement(measure, Tag.SliceThickness, 1.0f));
                     }
                     // setTagNoNull(tagList, TagW.ImagerPixelSpacing,
 

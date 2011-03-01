@@ -12,6 +12,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 
 public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel {
@@ -61,6 +63,11 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
     @Override
     public TreeModelNode getTreeModelNodeForNewPlugin() {
         return null;
+    }
+
+    @Override
+    public boolean applySplittingRules(Series original, MediaElement media) {
+        return false;
     }
 
 }
