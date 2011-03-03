@@ -29,7 +29,6 @@ import org.weasis.core.api.media.data.TagW;
 public class DicomSeries extends Series<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeries.class);
 
-    private volatile boolean preloading = true;
     protected PreloadingTask preloadingTask;
 
     public DicomSeries(String subseriesInstanceUID) {
@@ -163,7 +162,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         if (preloadingTask != null) {
             stop();
         }
-        preloading = true;
+        // System.err.println("Start preloading :" + getTagValue(getTagID()));
         preloadingTask = new PreloadingTask(new ArrayList<DicomImageElement>(medias), index);
         preloadingTask.start();
     }
@@ -172,19 +171,29 @@ public class DicomSeries extends Series<DicomImageElement> {
         PreloadingTask moribund = preloadingTask;
         preloadingTask = null;
         if (moribund != null) {
-            preloading = false;
+            // System.err.println("Stop preloading :" + getTagValue(getTagID()));
+            moribund.setPreloading(false);
             moribund.interrupt();
         }
 
     }
 
     class PreloadingTask extends Thread {
+        private volatile boolean preloading = true;
         private final int index;
         private final ArrayList<DicomImageElement> imageList;
 
         public PreloadingTask(ArrayList<DicomImageElement> imageList, int index) {
             this.imageList = imageList;
             this.index = index;
+        }
+
+        public synchronized boolean isPreloading() {
+            return preloading;
+        }
+
+        public synchronized void setPreloading(boolean preloading) {
+            this.preloading = preloading;
         }
 
         private void freeMemory() {

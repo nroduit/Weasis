@@ -383,6 +383,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (frames < 1) {
                     initialSeries.addMedia(media);
                 } else {
+                    boolean multiframe = frames > 1;
                     Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagW.Modality));
 
                     TagW[] rules = splittingRules.get(modality);
@@ -402,7 +403,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         rules = splittingRules.get(Modality.Default);
                     }
 
-                    if (isSimilar(rules, initialSeries, media)) {
+                    if (isSimilar(rules, initialSeries, media, multiframe)) {
                         initialSeries.addMedia(media);
                         return false;
                     }
@@ -413,7 +414,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
-                            if (isSimilar(rules, (DicomSeries) group, media)) {
+                            if (isSimilar(rules, (DicomSeries) group, media, multiframe)) {
                                 ((DicomSeries) group).addMedia(media);
                                 return false;
                             }
@@ -437,11 +438,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
+    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media, boolean multiframe) {
         final DicomImageElement firstMedia = series.getMedia(0);
         if (firstMedia == null) {
             // no image
             return true;
+        }
+        if (multiframe) {
+            Object tag = media.getTagValue(TagW.StackID);
+            Object tag2 = firstMedia.getTagValue(TagW.StackID);
+            if (tag != null && !tag.equals(tag2)) {
+                return false;
+            }
         }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);

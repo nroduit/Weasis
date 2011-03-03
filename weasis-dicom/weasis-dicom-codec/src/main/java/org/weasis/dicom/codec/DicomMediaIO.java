@@ -777,6 +777,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         DicomObject lut = seq.getDicomObject(0);
                         setTagNoNull(tagList, TagW.WindowWidth, getFloatFromDicomElement(lut, Tag.WindowWidth, null));
                         setTagNoNull(tagList, TagW.WindowCenter, getFloatFromDicomElement(lut, Tag.WindowCenter, null));
+                        // setTagNoNull(tagList, TagW.WindowCenterWidthExplanation,
+                        // lut.getString(Tag.WindowCenterWidthExplanation));
+                        // setTagNoNull(tagList, TagW.VOILUTFunction, lut.getString(Tag.VOILUTFunction));
                     }
 
                     seq = dcm.get(Tag.PixelValueTransformationSequence);
@@ -795,6 +798,17 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         setTagNoNull(tagList, TagW.SliceThickness,
                             getFloatFromDicomElement(measure, Tag.SliceThickness, null));
                     }
+
+                    seq = dcm.get(Tag.FrameContentSequence);
+                    if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                        DicomObject frame = seq.getDicomObject(0);
+                        setTagNoNull(tagList, TagW.StackID, frame.getString(Tag.StackID));
+                        setTagNoNull(tagList, TagW.InstanceNumber,
+                            getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
+                    }
+
+                    // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Frame Display Shutter
+
                     // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                     // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
                     // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));

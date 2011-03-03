@@ -187,6 +187,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW NumberOfSeriesRelatedInstances = new TagW(0x00201209,
         "Number of Series Related Instances", TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageComments = new TagW(0x00204000, "Image Comments", TagType.String); //$NON-NLS-1$
+    public static final TagW StackID = new TagW(0x00209056, "Stack ID", TagType.String); //$NON-NLS-1$
     public static final TagW NumberOfFrames = new TagW(0x00280008, "Number of Frames", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelPaddingValue = new TagW(0x00280120, "Pixel Padding Value", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelPaddingRangeLimit =
