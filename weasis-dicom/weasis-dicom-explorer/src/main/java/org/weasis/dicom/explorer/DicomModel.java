@@ -388,17 +388,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     TagW[] rules = splittingRules.get(modality);
 
-                    // if (Modality.US.equals(modality) || Modality.NM.equals(modality) || Modality.XA.equals(modality))
-                    // {
-                    // if (initialSeries.getMedias().size() > 0
-                    // && dicomReader != initialSeries.getMedia(MEDIA_POSITION.LAST).getMediaReader()) {
-                    // splitSeries(dicomReader, initialSeries, media);
-                    // return true;
-                    // } else {
-                    // initialSeries.addMedia(media);
-                    // return false;
-                    // }
-                    // }
                     if (rules == null) {
                         rules = splittingRules.get(Modality.Default);
                     }

@@ -35,7 +35,7 @@
 		<module>weasis-parent</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
-		<module>weasis-imageioext</module>
+<!--		<module>weasis-imageioext</module>-->
 		<module>weasis-base</module>
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>
