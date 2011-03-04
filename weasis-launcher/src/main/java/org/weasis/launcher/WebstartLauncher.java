@@ -30,6 +30,11 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException use) {
         }
+        // Workaround for http://www.dcm4che.org/jira/browse/WEA-30
+        if (System.getProperty("java.version", "").equals("1.6.0_24")) {
+            // Mode that does not support bundle extension
+            System.setProperty("felix.extensions.enabled", "false");
+        }
 
         // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15
         // If imageio.jar is located in the JRE ext directory, unregister imageio services.
@@ -43,7 +48,6 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 Object provider = providers.next();
                 if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) {
                     toRemove.add(provider);
-
                 }
             }
         }
