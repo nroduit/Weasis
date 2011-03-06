@@ -347,21 +347,6 @@
 							</descriptors>
 						</configuration>
 					</execution>
-					<execution>
-						<id>portable</id>
-						<phase>package</phase>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<configuration>
-							<finalName>weasis-portable</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-							<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>
-							<descriptors>
-								<descriptor>src/assembly/portable-dist.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 		</plugins>
@@ -403,11 +388,67 @@
 			</build>
 		</profile>
 		<profile>
+			<id>portable.builder</id>
+			<activation>
+				<!-- Build Standalone Version -->
+				<property>
+					<name>portable</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.bah.maven</groupId>
+						<artifactId>maven-installjammer-plugin</artifactId>
+						<version>1.2</version>
+						<executions>
+							<execution>
+								<id>installer</id>
+								<phase>package</phase>
+								<goals>
+									<goal>build-installer</goal>
+								</goals>
+								<configuration>
+									<appName>Weasis</appName>
+									<version>${project.version}</version>
+									<installVersion>${project.version}</installVersion>
+									<projectFile>/home/nicolas/InstallJammerProjects/Weasis/Weasis.mpi</projectFile>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2-beta-5</version>
+				<executions>
+					<execution>
+						<id>portable</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attached</goal>
+						</goals>
+						<configuration>
+							<finalName>weasis-portable</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>
+							<descriptors>
+								<descriptor>src/assembly/portable-dist.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>standalone.builder</id>
 			<activation>
 				<!-- Build Standalone Version -->
 				<property>
-					<name>standalone.dist</name>
+					<name>standalone</name>
 					<value>true</value>
 				</property>
 			</activation>
