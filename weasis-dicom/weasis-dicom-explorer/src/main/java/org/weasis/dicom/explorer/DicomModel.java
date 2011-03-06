@@ -74,6 +74,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public final static Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
+    private final TagW[] multiframeSplittingRules = new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType,
+        TagW.FrameAcquisitionNumber, TagW.StackID };
     private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
 
     public DicomModel() {
@@ -90,6 +92,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
             TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
             TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
+
     }
 
     public synchronized List<Codec> getCodecPlugins() {
@@ -383,16 +386,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (frames < 1) {
                     initialSeries.addMedia(media);
                 } else {
-                    boolean multiframe = frames > 1;
                     Modality modality = Modality.getModality((String) initialSeries.getTagValue(TagW.Modality));
 
-                    TagW[] rules = splittingRules.get(modality);
+                    TagW[] rules = frames > 1 ? multiframeSplittingRules : splittingRules.get(modality);
 
                     if (rules == null) {
                         rules = splittingRules.get(Modality.Default);
                     }
 
-                    if (isSimilar(rules, initialSeries, media, multiframe)) {
+                    if (isSimilar(rules, initialSeries, media)) {
                         initialSeries.addMedia(media);
                         return false;
                     }
@@ -403,7 +405,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
-                            if (isSimilar(rules, (DicomSeries) group, media, multiframe)) {
+                            if (isSimilar(rules, (DicomSeries) group, media)) {
                                 ((DicomSeries) group).addMedia(media);
                                 return false;
                             }
@@ -427,18 +429,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media, boolean multiframe) {
+    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
         final DicomImageElement firstMedia = series.getMedia(0);
         if (firstMedia == null) {
             // no image
             return true;
-        }
-        if (multiframe) {
-            Object tag = media.getTagValue(TagW.StackID);
-            Object tag2 = firstMedia.getTagValue(TagW.StackID);
-            if (tag != null && !tag.equals(tag2)) {
-                return false;
-            }
         }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);

@@ -140,6 +140,7 @@ public class TagW implements Transferable, Serializable {
         "Referenced Performed Procedure Step Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public final static TagW ReferencedImageSequence = new TagW(0x00081140,
         "Referenced Image Sequence", TagType.Sequence); //$NON-NLS-1$
+    public static final TagW FrameType = new TagW(0x00089007, "Frame Type", TagType.String, 4); //$NON-NLS-1$
 
     public final static TagW ContrastBolusAgent = new TagW(0x00180010, "Contras tBolus Agent", TagType.String); //$NON-NLS-1$
     public final static TagW ScanningSequence = new TagW(0x00180020, "Scanning Sequence", TagType.String); //$NON-NLS-1$
@@ -187,7 +188,10 @@ public class TagW implements Transferable, Serializable {
     public static final TagW NumberOfSeriesRelatedInstances = new TagW(0x00201209,
         "Number of Series Related Instances", TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageComments = new TagW(0x00204000, "Image Comments", TagType.String); //$NON-NLS-1$
-    public static final TagW StackID = new TagW(0x00209056, "Stack ID", TagType.String); //$NON-NLS-1$
+    public static final TagW StackID = new TagW(0x00209056, "Stack ID", TagType.String, 4); //$NON-NLS-1$
+    public static final TagW FrameAcquisitionNumber = new TagW(0x00209156,
+        "Frame Acquisition Number", TagType.Integer, 4); //$NON-NLS-1$
+
     public static final TagW NumberOfFrames = new TagW(0x00280008, "Number of Frames", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelPaddingValue = new TagW(0x00280120, "Pixel Padding Value", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelPaddingRangeLimit =

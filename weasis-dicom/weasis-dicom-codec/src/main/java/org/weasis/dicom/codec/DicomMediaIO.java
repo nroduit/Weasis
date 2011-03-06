@@ -820,9 +820,27 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         getFloatFromDicomElement(measure, Tag.SliceThickness, null));
                 }
 
+                // Identifies the characteristics of this frame. Only a single Item shall be permitted in this sequence.
+                seq = dcm.get(Tag.MRImageFrameTypeSequence);
+                if (seq == null) {
+                    seq = dcm.get(Tag.CTImageFrameTypeSequence);
+                }
+                if (seq == null) {
+                    seq = dcm.get(Tag.MRSpectroscopyFrameTypeSequence);
+                }
+                if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                    DicomObject frame = seq.getDicomObject(0);
+                    // Type of Frame. A multi-valued attribute analogous to the Image Type (0008,0008).
+                    // Enumerated Values and Defined Terms are the same as those for the four values of the Image Type
+                    // (0008,0008) attribute, except that the value MIXED is not allowed. See C.8.16.1 and C.8.13.3.1.1.
+                    setTagNoNull(tagList, TagW.FrameType, frame.getString(Tag.FrameType));
+                }
+
                 seq = dcm.get(Tag.FrameContentSequence);
                 if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
                     DicomObject frame = seq.getDicomObject(0);
+                    setTagNoNull(tagList, TagW.FrameAcquisitionNumber,
+                        getIntegerFromDicomElement(frame, Tag.FrameAcquisitionNumber, null));
                     setTagNoNull(tagList, TagW.StackID, frame.getString(Tag.StackID));
                     setTagNoNull(tagList, TagW.InstanceNumber,
                         getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
