@@ -66,7 +66,7 @@
 								<!-- (only one version, referenced in JNLP) -->
 								<!-- ===================================== -->
 								<artifactItem>
-									<!-- Change groupId momently for bug http://www.dcm4che.org/jira/browse/WEA-30  -->
+									<!-- Change groupId momently for bug http://www.dcm4che.org/jira/browse/WEA-30 -->
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>org.apache.felix.framework</artifactId>
 									<version>${felix.framework.version}</version>
@@ -293,40 +293,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
-				<artifactId>launch4j-plugin</artifactId>
-				<version>1.5.0.0</version>
-				<executions>
-					<execution>
-						<id>l4j-clui</id>
-						<phase>package</phase>
-						<goals>
-							<goal>launch4j</goal>
-						</goals>
-						<configuration>
-							<headerType>gui</headerType>
-							<dontWrapJar>true</dontWrapJar>
-							<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
-							<jar>weasis/bin/weasis-launcher.jar</jar>
-							<errTitle>weasis</errTitle>
-							<icon>etc/weasis.ico</icon>
-							<!-- Setting it to . will change the current dir to the same directory as the executable -->
-							<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
-							<chdir>.</chdir>
-							<classPath>
-								<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
-								<addDependencies>false</addDependencies>
-								<preCp>weasis\bin\felix.jar;weasis\bin\substance.jar</preCp>
-							</classPath>
-							<jre>
-								<minVersion>1.6.0_10</minVersion>
-								<maxHeapSize>512</maxHeapSize>
-							</jre>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -390,7 +357,7 @@
 		<profile>
 			<id>portable.builder</id>
 			<activation>
-				<!-- Build Standalone Version -->
+				<!-- Build Portable Version -->
 				<property>
 					<name>portable</name>
 					<value>true</value>
@@ -399,47 +366,61 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>com.bah.maven</groupId>
-						<artifactId>maven-installjammer-plugin</artifactId>
-						<version>1.2</version>
+						<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
+						<artifactId>launch4j-plugin</artifactId>
+						<version>1.5.0.0</version>
 						<executions>
 							<execution>
-								<id>installer</id>
+								<id>l4j-clui</id>
 								<phase>package</phase>
 								<goals>
-									<goal>build-installer</goal>
+									<goal>launch4j</goal>
 								</goals>
 								<configuration>
-									<appName>Weasis</appName>
-									<version>${project.version}</version>
-									<installVersion>${project.version}</installVersion>
-									<projectFile>/home/nicolas/InstallJammerProjects/Weasis/Weasis.mpi</projectFile>
+									<headerType>gui</headerType>
+									<dontWrapJar>true</dontWrapJar>
+									<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
+									<jar>weasis/bin/weasis-launcher.jar</jar>
+									<errTitle>weasis</errTitle>
+									<icon>etc/weasis.ico</icon>
+									<!-- Setting it to . will change the current dir to the same directory as the executable -->
+									<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
+									<chdir>.</chdir>
+									<classPath>
+										<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
+										<addDependencies>false</addDependencies>
+										<preCp>weasis\bin\felix.jar;weasis\bin\substance.jar</preCp>
+									</classPath>
+									<jre>
+										<minVersion>1.6.0_10</minVersion>
+										<maxHeapSize>512</maxHeapSize>
+									</jre>
 								</configuration>
 							</execution>
 						</executions>
 					</plugin>
 					<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-5</version>
-				<executions>
-					<execution>
-						<id>portable</id>
-						<phase>package</phase>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<configuration>
-							<finalName>weasis-portable</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-							<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>
-							<descriptors>
-								<descriptor>src/assembly/portable-dist.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<version>2.2-beta-5</version>
+						<executions>
+							<execution>
+								<id>portable</id>
+								<phase>package</phase>
+								<goals>
+									<goal>attached</goal>
+								</goals>
+								<configuration>
+									<finalName>weasis-portable</finalName>
+									<appendAssemblyId>false</appendAssemblyId>
+									<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>
+									<descriptors>
+										<descriptor>src/assembly/portable-dist.xml</descriptor>
+									</descriptors>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 				</plugins>
 			</build>
 		</profile>
