@@ -352,6 +352,7 @@ public class ImageToolkit {
          */
         boolean monochrome1 =
             "monochrome1".equalsIgnoreCase((String) image.getTagValue(TagW.PhotometricInterpretation)); //$NON-NLS-1$
+        // Get pixel values of Min and Max (they are store as rescaled values)
         int minValue = (int) image.getPixelLevel(image.getMinValue());
         int maxValue = (int) image.getPixelLevel(image.getMaxValue());
         int tableLength = (maxValue - minValue + 1);
@@ -368,25 +369,34 @@ public class ImageToolkit {
         double y_int = 255.0 - slope * high;
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-            // Integer paddingValue = (Integer) image.getTagValue(TagW.PixelPaddingValue);
-            // Integer paddingLimit = (Integer) image.getTagValue(TagW.PixelPaddingRangeLimit);
+            /*
+             * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
+             * be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both
+             * Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121) are present in the image then
+             * image contrast manipulations shall not be applied to those pixels with values in the range between the
+             * values of Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive." The
+             * value is a pixel value (not rescaled)
+             */
+            Integer paddingValue = (Integer) image.getTagValue(TagW.PixelPaddingValue);
+            Integer paddingLimit = (Integer) image.getTagValue(TagW.PixelPaddingRangeLimit);
             byte[][] lut;
-            // if (paddingValue != null && paddingValue > 0) {
-            // if (paddingLimit == 0) {
-            // paddingLimit = paddingValue;
-            // }
-            // else if (paddingLimit < paddingValue) {
-            // int temp = paddingValue;
-            // paddingValue = paddingLimit;
-            // paddingLimit = temp;
-            // }
-            // }
-            // if (paddingLimit != null && paddingLimit > 0 && paddingValue >= tableLength) {
-            // lut = new byte[1][paddingLimit + 1];
-            // }
-            // else {
+            if (paddingValue != null) {
+                if (paddingLimit == null) {
+                    paddingLimit = paddingValue;
+                } else if (paddingLimit < paddingValue) {
+                    int temp = paddingValue;
+                    paddingValue = paddingLimit;
+                    paddingLimit = temp;
+                }
+                if (paddingValue < minValue) {
+                    minValue = paddingValue;
+                }
+                if (paddingLimit > maxValue) {
+                    maxValue = paddingLimit;
+                }
+                tableLength = (maxValue - minValue + 1);
+            }
             lut = new byte[1][tableLength];
-            // }
 
             for (int i = 0; i < tableLength; i++) {
                 int value = (int) (slope * (i + minValue) + y_int);
@@ -403,11 +413,16 @@ public class ImageToolkit {
                 lut[0][i] = (byte) value;
             }
 
-            // if (paddingLimit != null && paddingLimit > 0) {
-            // for (int i = paddingValue; i < paddingLimit + 1; i++) {
-            // lut[0][paddingValue] = 0;
-            // }
-            // }
+            if (paddingValue != null) {
+                // Set padding values to 0 in case they are in the range of the current LUT values
+                int i = paddingValue - minValue;
+                int max = paddingLimit - minValue + 1;
+                if (i >= 0 && max <= tableLength) {
+                    for (; i < max; i++) {
+                        lut[0][i] = 0;
+                    }
+                }
+            }
 
             LookupTableJAI lookup = new LookupTableJAI(lut, minValue);
 
