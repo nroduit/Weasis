@@ -14,11 +14,13 @@ import javax.swing.JProgressBar;
 
 public interface SeriesImporter {
 
-    boolean isCancelled();
+    public boolean isStopped();
 
-    JProgressBar getProgressBar();
+    public JProgressBar getProgressBar();
 
-    boolean cancel(boolean b);
+    public boolean stop();
+
+    public void resume();
 
     public void setPriority();
 

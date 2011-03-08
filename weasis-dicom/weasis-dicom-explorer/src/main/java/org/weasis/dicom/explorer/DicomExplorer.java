@@ -102,8 +102,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.explorer.wado.DownloadPriority;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomExplorer extends PluginTool implements DataExplorerView {
@@ -1634,27 +1632,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         popupMenu.add(item2);
 
                         if (loadSeries != null) {
-                            if (loadSeries.isCancelled()) {
+                            if (loadSeries.isStopped()) {
                                 popupMenu.add(new JSeparator());
                                 JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume")); //$NON-NLS-1$
                                 item3.addActionListener(new ActionListener() {
 
                                     public void actionPerformed(ActionEvent e) {
-                                        LoadSeries taskResume =
-                                            new LoadSeries(series, dicomModel, loadSeries.getProgressBar());
-                                        DownloadPriority p = loadSeries.getPriority();
-                                        p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-                                        taskResume.setPriority(p);
-                                        Thumbnail thumbnail =
-                                            (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
-                                        if (thumbnail != null) {
-                                            LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-                                            thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(
-                                                taskResume.getDicomSeries(), dicomModel, taskResume));
-                                            thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(
-                                                taskResume.getDicomSeries(), dicomModel));
-                                        }
-                                        LoadRemoteDicom.loadingQueue.offer(taskResume);
+                                        loadSeries.resume();
                                     }
                                 });
                                 popupMenu.add(item3);
@@ -1664,7 +1648,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                 item3.addActionListener(new ActionListener() {
 
                                     public void actionPerformed(ActionEvent e) {
-                                        loadSeries.cancel(true);
+                                        loadSeries.stop();
                                     }
                                 });
                                 popupMenu.add(item3);

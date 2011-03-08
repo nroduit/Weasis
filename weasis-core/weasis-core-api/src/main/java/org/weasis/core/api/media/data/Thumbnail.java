@@ -31,6 +31,7 @@ import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
@@ -67,6 +68,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -74,8 +76,8 @@ import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 
-public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSourceListener, DragSourceMotionListener,
-    FocusListener {
+public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureListener, DragSourceListener,
+    DragSourceMotionListener, FocusListener {
 
     public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
         RenderingHints.VALUE_RENDER_QUALITY);
@@ -105,6 +107,9 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
 
     public Thumbnail(final MediaSeries<E> sequence, File thumbnailPath, int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
+        if (sequence == null) {
+            throw new IllegalArgumentException("Sequence cannot be null");
+        }
         this.thumbnailSize = thumbnailSize;
         this.series = sequence;
         this.thumbnailPath = thumbnailPath;
@@ -124,7 +129,11 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
     }
 
     public void setProgressBar(JProgressBar progressBar) {
+        removeMouseListener(this);
         this.progressBar = progressBar;
+        if (progressBar != null) {
+            addMouseListener(this);
+        }
     }
 
     public void registerListeners() {
@@ -507,5 +516,41 @@ public class Thumbnail<E> extends JLabel implements DragGestureListener, DragSou
             // return loadImage(path);
         }
 
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (progressBar instanceof JProgressBar) {
+            CircularProgressBar cricleBar = (CircularProgressBar) progressBar;
+            Rectangle rect = cricleBar.getBounds();
+            rect.x = thumbnailSize - rect.width - 2;
+            rect.y = thumbnailSize - rect.height - 2;
+            if (rect.contains(e.getPoint())) {
+                SeriesImporter loader = series.getSeriesLoader();
+                if (loader != null) {
+                    if (loader.isStopped()) {
+                        loader.resume();
+                    } else {
+                        loader.stop();
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
     }
 }

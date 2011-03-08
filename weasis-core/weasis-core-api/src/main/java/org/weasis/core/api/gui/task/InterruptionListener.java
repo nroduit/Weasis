@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.ui.task;
+package org.weasis.core.api.gui.task;
 
 /**
  * An interface that requests an interruption of the task.

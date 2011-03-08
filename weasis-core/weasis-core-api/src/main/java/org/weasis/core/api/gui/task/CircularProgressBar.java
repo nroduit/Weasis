@@ -8,14 +8,12 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.ui.task;
+package org.weasis.core.api.gui.task;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Vector;
@@ -23,7 +21,6 @@ import java.util.Vector;
 import javax.swing.JProgressBar;
 
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.Messages;
 
 public class CircularProgressBar extends JProgressBar {
     private final static Color BACK_COLOR = new Color(82, 152, 219);
@@ -41,9 +38,6 @@ public class CircularProgressBar extends JProgressBar {
 
     private void init() {
         this.setOpaque(false);
-
-        this.setToolTipText(Messages.getString("CircularProgressBar.tip")); //$NON-NLS-1$
-        this.addMouseListener(new MouseClickMonitor());
     }
 
     @Override
@@ -89,21 +83,16 @@ public class CircularProgressBar extends JProgressBar {
         return interruptionListeners.remove(interruptionListener);
     }
 
-    private class MouseClickMonitor extends MouseAdapter {
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            // TODO mettre dans Thumbnail
-            Iterator<InterruptionListener> i = interruptionListeners.iterator();
-            while (i.hasNext()) {
-                try {
-                    i.next().interruptionRequested();
-                    continue;
-                } catch (ConcurrentModificationException modEx) {
-                    System.err.println("Process completed before interruption could be requested."); //$NON-NLS-1$
-                }
-                break;
+    public void interruptionRequested() {
+        Iterator<InterruptionListener> i = interruptionListeners.iterator();
+        while (i.hasNext()) {
+            try {
+                i.next().interruptionRequested();
+                continue;
+            } catch (ConcurrentModificationException modEx) {
+                System.err.println("Process completed before interruption could be requested."); //$NON-NLS-1$
             }
+            break;
         }
     }
 

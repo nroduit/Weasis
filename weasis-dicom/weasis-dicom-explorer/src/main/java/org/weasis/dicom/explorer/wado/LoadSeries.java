@@ -45,6 +45,7 @@ import org.dcm4che2.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
@@ -60,7 +61,6 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.task.CircularProgressBar;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -122,6 +122,37 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     public JProgressBar getProgressBar() {
         return progressBar;
+    }
+
+    @Override
+    public boolean isStopped() {
+        return isCancelled();
+    }
+
+    @Override
+    public boolean stop() {
+        if (!isDone()) {
+            boolean val = cancel(true);
+            dicomSeries.setSeriesLoader(this);
+            return val;
+        }
+        return true;
+    }
+
+    @Override
+    public void resume() {
+        LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar);
+        DownloadPriority p = this.getPriority();
+        p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
+        taskResume.setPriority(p);
+        Thumbnail thumbnail = (Thumbnail) this.getDicomSeries().getTagValue(TagW.Thumbnail);
+        if (thumbnail != null) {
+            LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+            thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(taskResume.getDicomSeries(),
+                dicomModel, taskResume));
+            thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(), dicomModel));
+        }
+        LoadRemoteDicom.loadingQueue.offer(taskResume);
     }
 
     @Override
@@ -914,4 +945,5 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
         }
     }
+
 }
