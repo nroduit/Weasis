@@ -45,6 +45,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     private PropertyChangeSupport propertyChange = null;
     protected final List<E> medias;
     protected SeriesImporter seriesLoader;
+    private double fileSize;
 
     public Series(TagW tagID, Object identifier, TagW displayTag) {
         this(tagID, identifier, displayTag, null);
@@ -58,6 +59,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         super(tagID, identifier, displayTag);
         if (list == null) {
             list = new ArrayList<E>();
+            fileSize = 0.0;
         }
         medias = Collections.synchronizedList(list);
     }
@@ -317,6 +319,14 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public int getNearestIndex(double location) {
         return -1;
+    }
+
+    public void setFileSize(double size) {
+        fileSize = size;
+    }
+
+    public double getFileSize() {
+        return fileSize;
     }
 
 }

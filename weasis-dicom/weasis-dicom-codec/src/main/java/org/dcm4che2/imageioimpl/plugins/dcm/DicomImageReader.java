@@ -270,12 +270,15 @@ public class DicomImageReader extends ImageReader {
         height = ds.getInt(Tag.Rows);
         frames = ds.getInt(Tag.NumberOfFrames);
         allocated = ds.getInt(Tag.BitsAllocated, 8);
+        samples = ds.getInt(Tag.SamplesPerPixel, 1);
         banded = ds.getInt(Tag.PlanarConfiguration) != 0;
         // dataType = allocated <= 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_USHORT;
         dataType =
             allocated <= 8 ? DataBuffer.TYPE_BYTE : ds.getInt(Tag.PixelRepresentation) != 0 ? DataBuffer.TYPE_SHORT
                 : DataBuffer.TYPE_USHORT;
-        samples = ds.getInt(Tag.SamplesPerPixel, 1);
+        if (allocated > 16 && samples == 1) {
+            dataType = DataBuffer.TYPE_INT;
+        }
         paletteColor = ColorModelFactory.isPaletteColor(ds);
         monochrome = ColorModelFactory.isMonochrome(ds);
         pmi = ds.getString(Tag.PhotometricInterpretation);

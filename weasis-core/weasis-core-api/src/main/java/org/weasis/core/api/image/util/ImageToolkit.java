@@ -435,8 +435,8 @@ public class ImageToolkit {
             || datatype == DataBuffer.TYPE_DOUBLE) {
             ParameterBlock pb = new ParameterBlock();
             pb.addSource(source);
-            pb.add(slope);
-            pb.add(y_int);
+            pb.add(new double[] { slope });
+            pb.add(new double[] { y_int });
             result = JAI.create("rescale", pb, null); //$NON-NLS-1$
 
             // produce a byte image

@@ -74,6 +74,7 @@ import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 
 public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureListener, DragSourceListener,
@@ -470,15 +471,19 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         }
         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
         g2d.setFont(FontTools.getFont10());
+        int hbleft = y + height - 2;
         if (splitNb != null) {
-            g2d.drawString("#" + splitNb + " [" + series.getMedias().size() + "]", x + 2, y + height - 2); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$
+            g2d.drawString("#" + splitNb + " [" + series.getMedias().size() + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$
         } else {
-            g2d.drawString("[" + series.getMedias().size() + "]", x + 2, y + height - 2); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
+            g2d.drawString("[" + series.getMedias().size() + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
         }
 
         // To avoid concurrency issue
         final JProgressBar bar = progressBar;
         if (bar != null) {
+            if (series.getFileSize() > 0.0) {
+                g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
+            }
             g2d.translate(width - bar.getWidth() + x - 2, height - bar.getHeight() + y - 2);
             bar.paint(g2d);
         }

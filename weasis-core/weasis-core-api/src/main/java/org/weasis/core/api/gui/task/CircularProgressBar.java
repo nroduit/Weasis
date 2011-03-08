@@ -14,9 +14,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.Vector;
 
 import javax.swing.JProgressBar;
 
@@ -24,7 +21,7 @@ import org.weasis.core.api.util.FontTools;
 
 public class CircularProgressBar extends JProgressBar {
     private final static Color BACK_COLOR = new Color(82, 152, 219);
-    private final Vector<InterruptionListener> interruptionListeners = new Vector<InterruptionListener>();
+    private String message;
 
     public CircularProgressBar() {
         super();
@@ -69,35 +66,23 @@ public class CircularProgressBar extends JProgressBar {
 
         g2.setPaint(BACK_COLOR);
         g2.fillArc(0, 0, w, h, a, 360 - a);
+
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
         g2.setPaint(Color.BLACK);
         g2.drawString(str, x, y);
     }
 
-    public void addInterruptionListener(InterruptionListener interruptionListener) {
-        interruptionListeners.add(interruptionListener);
-    }
+    @Override
+    public void setIndeterminate(boolean indeterminate) {
+        if (indeterminate) {
 
-    public boolean removeInterruptionListener(InterruptionListener interruptionListener) {
-        return interruptionListeners.remove(interruptionListener);
-    }
-
-    public void interruptionRequested() {
-        Iterator<InterruptionListener> i = interruptionListeners.iterator();
-        while (i.hasNext()) {
-            try {
-                i.next().interruptionRequested();
-                continue;
-            } catch (ConcurrentModificationException modEx) {
-                System.err.println("Process completed before interruption could be requested."); //$NON-NLS-1$
-            }
-            break;
         }
+        super.setIndeterminate(indeterminate);
     }
 
-    public void setMessage(String string) {
-        // TODO Auto-generated method stub
+    public void setMessage(String message) {
+        this.message = message;
 
     }
 

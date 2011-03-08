@@ -60,4 +60,6 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
     public void setSelected(boolean b, int selectedImage);
 
     public int getNearestIndex(double location);
+
+    public double getFileSize();
 }

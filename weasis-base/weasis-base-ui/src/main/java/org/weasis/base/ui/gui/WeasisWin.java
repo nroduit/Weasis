@@ -547,6 +547,22 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuBar.add(menuFile);
         menuBar.add(menuSelectedPlugin);
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
+        final String helpURL = System.getProperty("weasis.help.url");
+        if (helpURL != null) {
+            final JMenuItem helpContentMenuItem = new JMenuItem("User's Manual");
+            helpContentMenuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        JMVUtils.OpenInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
+                    } catch (MalformedURLException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
+            helpMenuItem.add(helpContentMenuItem);
+        }
+
         final JMenuItem webMenuItem = new JMenuItem("Release Notes");
         webMenuItem.addActionListener(new ActionListener() {
             @Override

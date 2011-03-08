@@ -73,6 +73,9 @@ public class ColorModelFactory {
         int dataType =
             allocated <= 8 ? DataBuffer.TYPE_BYTE : ds.getInt(Tag.PixelRepresentation) != 0 ? DataBuffer.TYPE_SHORT
                 : DataBuffer.TYPE_USHORT;
+        if (allocated > 16 && samples == 1) {
+            dataType = DataBuffer.TYPE_INT;
+        }
         int[] bits = new int[samples];
         Arrays.fill(bits, stored);
         ColorSpace cs = null;

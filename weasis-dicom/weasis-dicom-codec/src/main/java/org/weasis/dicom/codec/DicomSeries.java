@@ -25,6 +25,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 
 public class DicomSeries extends Series<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeries.class);
@@ -103,8 +104,9 @@ public class DicomSeries extends Series<DicomImageElement> {
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
         String date = TagW.formatDate((Date) getTagValue(TagW.SeriesDate));
         toolTips.append(Messages.getString("DicomSeries.date") + (date == null ? "" : date) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        toolTips.append(Messages.getString("DicomSeries.nb_frame") //$NON-NLS-1$
-            + (seriesLoader == null ? medias.size() : seriesLoader.getProgressBar().getMaximum()) + "<br>"); //$NON-NLS-1$
+        if (getFileSize() > 0.0) {
+            toolTips.append("Size: " + FileUtil.formatSize(getFileSize()) + "<br>"); //$NON-NLS-2$
+        }
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

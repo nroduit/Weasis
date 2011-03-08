@@ -767,7 +767,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
                 int[] overrideList = wado.getOverrideDicomTagIDList();
                 if (overrideList == null) {
-                    FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+                    if (progressBar instanceof CircularProgressBar) {
+                        FileUtil.writeFile(stream, new FileOutputStream(tempFile), dicomSeries);
+                    } else {
+                        FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+                    }
                 } else {
                     writFile(stream, new FileOutputStream(tempFile), overrideList);
                 }

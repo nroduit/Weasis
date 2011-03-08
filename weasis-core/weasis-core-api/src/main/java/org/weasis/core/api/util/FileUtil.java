@@ -24,13 +24,18 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.text.DecimalFormat;
 
 import javax.imageio.stream.ImageInputStream;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.weasis.core.api.media.data.Series;
+
 public class FileUtil {
+    private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
+    private static final DecimalFormat df = new DecimalFormat("#.##");
 
     public static void safeClose(final Closeable object) {
         try {
@@ -174,6 +179,42 @@ public class FileUtil {
             FileUtil.safeClose(inputStream);
             FileUtil.safeClose(out);
         }
+    }
+
+    public static boolean writeFile(InputStream inputStream, OutputStream out, Series series) {
+        if (inputStream == null && out == null) {
+            return false;
+        }
+        try {
+            double size = series.getFileSize();
+            byte[] buf = new byte[4096];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+                size += offset;
+                series.setFileSize(size);
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            FileUtil.safeClose(inputStream);
+            FileUtil.safeClose(out);
+        }
+    }
+
+    public static String formatSize(double size) {
+        if (size >= GB) {
+            return df.format(size / GB) + " GB";
+        }
+        if (size >= MB) {
+            return df.format(size / MB) + " MB";
+        }
+        if (size >= KB) {
+            return df.format(size / KB) + " KB";
+        }
+        return "" + (int) size + " bytes";
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {

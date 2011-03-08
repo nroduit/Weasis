@@ -229,6 +229,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     MediaElement[] medias = dicomReader.getMediaElement();
                     if (medias != null) {
                         for (MediaElement media : medias) {
+                            dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                             dicomModel.applySplittingRules(dicomSeries, media);
                         }
                     }
@@ -241,6 +242,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     MediaElement[] medias = dicomReader.getMediaElement();
                     if (medias != null) {
                         for (MediaElement media : medias) {
+                            dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                             if (dicomModel.applySplittingRules(dicomSeries, media)) {
                                 // When the Series is split, build a thumbnail and add it to the dicom explorer
                                 dicomseriesList.add(dicomSeries);
