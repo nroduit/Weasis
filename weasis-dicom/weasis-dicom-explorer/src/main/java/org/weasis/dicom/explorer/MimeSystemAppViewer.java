@@ -25,7 +25,7 @@ public class MimeSystemAppViewer implements SeriesViewer {
 
     @Override
     public String getPluginName() {
-        return "Default System Application";
+        return Messages.getString("MimeSystemAppViewer.app"); //$NON-NLS-1$
     }
 
     @Override
@@ -43,19 +43,19 @@ public class MimeSystemAppViewer implements SeriesViewer {
             // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
             // in KDE session, but actually does not support it.
             // http://bugs.sun.com/view_bug.do?bug_id=6486393
-            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) {
+            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
                 FileExtractor extractor = (FileExtractor) series;
                 File file = extractor.getExtractFile();
                 if (file != null) {
                     try {
-                        String cmd = String.format("xdg-open %s", file.getAbsolutePath());
+                        String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //$NON-NLS-1$
                         Runtime.getRuntime().exec(cmd);
                     } catch (IOException e1) {
-                        LOGGER.error("Cannot open {} with the default system application", file.getName());
+                        LOGGER.error("Cannot open {} with the default system application", file.getName()); //$NON-NLS-1$
                     }
                 }
 
-            } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) {
+            } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
                 // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
                 FileExtractor extractor = (FileExtractor) series;
                 File file = extractor.getExtractFile();
@@ -70,7 +70,7 @@ public class MimeSystemAppViewer implements SeriesViewer {
                         try {
                             desktop.open(file);
                         } catch (IOException e1) {
-                            LOGGER.error("Cannot open {} with the default system application", file.getName());
+                            LOGGER.error("Cannot open {} with the default system application", file.getName()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -80,9 +80,9 @@ public class MimeSystemAppViewer implements SeriesViewer {
 
     public static void startAssociatedProgram(String file) {
         try {
-            Runtime.getRuntime().exec("cmd /c \"" + file + '"');
+            Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
         } catch (IOException e) {
-            LOGGER.error("Cannot open {} with the default system application", file);
+            LOGGER.error("Cannot open {} with the default system application", file); //$NON-NLS-1$
             e.printStackTrace();
         }
     }

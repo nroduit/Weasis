@@ -13,6 +13,7 @@ import javax.swing.JRadioButtonMenuItem;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ZoomWin.SYNCH_TYPE;
 
 /**
@@ -39,7 +40,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
     private final JRadioButtonMenuItem jMenuItemMagnifyOther = new JRadioButtonMenuItem();
     private final JCheckBoxMenuItem jCheckBoxMenuItemDraw = new JCheckBoxMenuItem();
     private final JCheckBoxMenuItem jCheckBoxMenutemSychronize = new JCheckBoxMenuItem();
-    private final JMenuItem resetFreeze = new JMenuItem("Reset freeze");
+    private final JMenuItem resetFreeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.reset")); //$NON-NLS-1$
 
     public PopUpMenuOnZoom(ZoomWin zoomWin) {
         if (zoomWin == null) {
@@ -54,14 +55,14 @@ public class PopUpMenuOnZoom extends JPopupMenu {
     }
 
     private void jbInit() throws Exception {
-        jMenuItemZoom.setText("Hide Lens");
+        jMenuItemZoom.setText(Messages.getString("PopUpMenuOnZoom.hide")); //$NON-NLS-1$
         jMenuItemZoom.addActionListener(new java.awt.event.ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 zoomWin.hideZoom();
             }
         });
-        jCheckBoxMenuItemDraw.setText("Show Drawings");
+        jCheckBoxMenuItemDraw.setText(Messages.getString("PopUpMenuOnZoom.showDraw")); //$NON-NLS-1$
         jCheckBoxMenuItemDraw.addActionListener(new java.awt.event.ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -69,8 +70,8 @@ public class PopUpMenuOnZoom extends JPopupMenu {
                 zoomWin.repaint();
             }
         });
-        jMenuImage.setText("Image");
-        final JMenuItem freezParams = new JMenuItem("Freeze parameters");
+        jMenuImage.setText(Messages.getString("PopUpMenuOnZoom.image")); //$NON-NLS-1$
+        final JMenuItem freezParams = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freeze")); //$NON-NLS-1$
         freezParams.addActionListener(new ActionListener() {
 
             @Override
@@ -79,7 +80,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
             }
         });
         jMenuImage.add(freezParams);
-        final JMenuItem freeze = new JMenuItem("Freeze image");
+        final JMenuItem freeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freezeImg")); //$NON-NLS-1$
         freeze.addActionListener(new ActionListener() {
 
             @Override
@@ -98,8 +99,8 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         });
         jMenuImage.add(resetFreeze);
 
-        jMenuMagnify.setText("Magnify");
-        jCheckBoxMenutemSychronize.setText("Synchronize to parent zoom");
+        jMenuMagnify.setText(Messages.getString("PopUpMenuOnZoom.magnify")); //$NON-NLS-1$
+        jCheckBoxMenutemSychronize.setText(Messages.getString("PopUpMenuOnZoom.synch")); //$NON-NLS-1$
         jCheckBoxMenutemSychronize.addActionListener(new java.awt.event.ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -121,7 +122,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jRadioButtonMenuItemMagnify = new JRadioButtonMenuItem[magnify.length];
         for (int i = 0; i < jRadioButtonMenuItemMagnify.length; i++) {
             JRadioButtonMenuItem item = new JRadioButtonMenuItem();
-            item.setText(magnify[i] + "X");
+            item.setText(magnify[i] + "X"); //$NON-NLS-1$
             buttonMagnify.add(item);
             item.addActionListener(magnifyListener);
             jMenuMagnify.add(item);
@@ -158,7 +159,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         }
         if (noselection) {
             ratio = Math.abs(ratio);
-            jMenuItemMagnifyOther.setText(ratio + "X");
+            jMenuItemMagnifyOther.setText(ratio + "X"); //$NON-NLS-1$
             buttonMagnify.add(jMenuItemMagnifyOther);
             if ((magnify[magnify.length - 1]) < ratio) {
                 jMenuMagnify.add(jMenuItemMagnifyOther);

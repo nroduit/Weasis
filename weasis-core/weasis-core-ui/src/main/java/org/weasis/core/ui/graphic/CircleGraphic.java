@@ -66,7 +66,7 @@ public class CircleGraphic extends RectangleGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.ellipse");
+        return Messages.getString("MeasureToolBar.ellipse"); //$NON-NLS-1$
     }
 
 }

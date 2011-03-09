@@ -3,6 +3,7 @@ package org.weasis.core.api.image.util;
 import java.awt.Color;
 
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundlePreferences;
 
 public class ZoomSetting {
@@ -24,14 +25,14 @@ public class ZoomSetting {
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
-            interpolation = p.getInt("interpolation", 1);
+            interpolation = p.getInt("interpolation", 1); //$NON-NLS-1$
         }
     }
 
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
-            BundlePreferences.putIntPreferences(p, "interpolation", interpolation);
+            BundlePreferences.putIntPreferences(p, "interpolation", interpolation); //$NON-NLS-1$
 
         }
     }

@@ -105,7 +105,7 @@ public class SelectGraphic extends RectangleGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.sel");
+        return Messages.getString("MeasureToolBar.sel"); //$NON-NLS-1$
     }
 
     @Override

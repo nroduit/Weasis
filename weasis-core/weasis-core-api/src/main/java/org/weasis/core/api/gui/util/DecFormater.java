@@ -55,9 +55,9 @@ public class DecFormater {
     }
 
     public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {
-        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##"));
+        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##")); //$NON-NLS-1$
         displayFormatter.setValueClass(Double.class);
-        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############"));
+        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############")); //$NON-NLS-1$
         editFormatter.setValueClass(Double.class);
         editFormatter.setMinimum(min);
         editFormatter.setMaximum(max);

@@ -31,9 +31,9 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         } catch (UnavailableServiceException use) {
         }
         // Workaround for http://www.dcm4che.org/jira/browse/WEA-30
-        if (System.getProperty("java.version", "").equals("1.6.0_24")) {
+        if (System.getProperty("java.version", "").equals("1.6.0_24")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             // Mode that does not support bundle extension
-            System.setProperty("felix.extensions.enabled", "false");
+            System.setProperty("felix.extensions.enabled", "false"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15
@@ -46,7 +46,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
             Iterator<?> providers = registry.getServiceProviders(class1, false);
             while (providers.hasNext()) {
                 Object provider = providers.next();
-                if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) {
+                if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) { //$NON-NLS-1$
                     toRemove.add(provider);
                 }
             }

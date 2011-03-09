@@ -676,14 +676,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
         } else if (command.equals(ActionW.PAN.cmd())) {
-            DragPoint point = (DragPoint) evt.getNewValue();
+            Object point = evt.getNewValue();
             // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
             // if (view != null) {
             // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
             //
             // }
             // }
-            moveOrigin(point);
+            if (point instanceof DragPoint) {
+                moveOrigin((DragPoint) evt.getNewValue());
+            } else if (point instanceof Point) {
+                Point p = (Point) point;
+                moveOrigin(p.getX(), p.getY());
+            }
+
         } else if (command.equals(ActionW.FLIP.cmd())) {
             actionsInView.put(ActionW.FLIP.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FlipOperation.name);

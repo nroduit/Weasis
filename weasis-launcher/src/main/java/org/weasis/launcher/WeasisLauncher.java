@@ -647,10 +647,10 @@ public class WeasisLauncher {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
 
-        String portable = System.getProperty("weasis.portable.dir");
+        String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             System
-                .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory"));
+                .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
@@ -676,13 +676,13 @@ public class WeasisLauncher {
         String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         // Set the locale of the previous launch if exists
         lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
-        if (!lang.equals("en")) {
-            String translation_modules = System.getProperty("weasis.i18n", null);
+        if (!lang.equals("en")) { //$NON-NLS-1$
+            String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
             if (translation_modules != null) {
 
                 try {
                     translation_modules +=
-                        translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties";
+                        translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     modulesi18n = readProperties(new URL(translation_modules));
                 } catch (MalformedURLException ex) {
                     System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
@@ -733,13 +733,13 @@ public class WeasisLauncher {
         // changing Look and Feel when upgrade version
         if (LookAndFeels.installSubstanceLookAndFeels() && !forceLook && versionNew != null
             && !versionNew.equals(versionOld)) {
-            look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel";
+            look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
         }
 
         // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                if (look.startsWith("org.pushingpixels")) {
+                if (look.startsWith("org.pushingpixels")) { //$NON-NLS-1$
                     JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                 }
@@ -821,9 +821,9 @@ public class WeasisLauncher {
                             } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
                                 pane.setToolTipText(null);
                             } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) {
+                                if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                                     try {
-                                        String cmd = String.format("xdg-open %s", e.getURL());
+                                        String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
                                         Runtime.getRuntime().exec(cmd);
                                     } catch (IOException e1) {
                                         e1.printStackTrace();
@@ -846,12 +846,12 @@ public class WeasisLauncher {
                     });
                     jTextPane1.setBackground(Color.WHITE);
                     StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                    ss.addRule("p {font-size:12}");
+                    ss.addRule("p {font-size:12}"); //$NON-NLS-1$
                     try {
-                        jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html"));
+                        jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html")); //$NON-NLS-1$
                         jTextPane1.setPreferredSize(new Dimension(630, 375));
                         JScrollPane sp = new JScrollPane(jTextPane1);
-                        JOptionPane.showMessageDialog(loader.getWindow(), sp, "News", JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.showMessageDialog(loader.getWindow(), sp, Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

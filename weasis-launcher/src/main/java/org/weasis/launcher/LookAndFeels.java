@@ -8,39 +8,39 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 public final class LookAndFeels {
 
-    private final transient static String[] names = { "Substance Autumn", "Substance BusinessBlackSteel",
-        "Substance BusinessBlueSteel", "Substance Business", "Substance ChallengerDeep (dark)",
-        "Substance CremeCoffee", "Substance Creme", "Substance DustCoffee (saturated)", "Substance Dust (saturated)",
-        "Substance EmeraldDusk (dark)", "Substance Gemini", "Substance GraphiteAqua", "Substance GraphiteGlass (dark)",
-        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance MistAqua", "Substance MistSilver",
-        "Substance Moderate", "Substance NebulaBrickWall", "Substance Nebula", "Substance OfficeBlue2007 (saturated)",
-        "Substance OfficeSilver2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" };
+    private final transient static String[] names = { "Substance Autumn", "Substance BusinessBlackSteel", //$NON-NLS-1$ //$NON-NLS-2$
+        "Substance BusinessBlueSteel", "Substance Business", "Substance ChallengerDeep (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance CremeCoffee", "Substance Creme", "Substance DustCoffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance EmeraldDusk (dark)", "Substance Gemini", "Substance GraphiteAqua", "Substance GraphiteGlass (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance MistAqua", "Substance MistSilver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance Moderate", "Substance NebulaBrickWall", "Substance Nebula", "Substance OfficeBlue2007 (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance OfficeSilver2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     private final transient static String[] classes = {
-        "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceChallengerDeepLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceDustCoffeeLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceDustLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceEmeraldDuskLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceGeminiLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceGraphiteAquaLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceGraphiteLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceMagellanLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceMistAquaLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceMistSilverLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceNebulaBrickWallLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceOfficeBlue2007LookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceOfficeSilver2007LookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceRavenLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel",
-        "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel" };
+        "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceChallengerDeepLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceDustCoffeeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceDustLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceEmeraldDuskLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGeminiLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteAquaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMagellanLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMistAquaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMistSilverLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceNebulaBrickWallLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceOfficeBlue2007LookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceOfficeSilver2007LookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceRavenLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel" }; //$NON-NLS-1$
 
     public static boolean installSubstanceLookAndFeels() {
         try {

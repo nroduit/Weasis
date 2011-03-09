@@ -59,8 +59,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private Color backgroundColor;
     private Stroke stroke;
 
-    public final static String SYNCH_CMD = "synchronize";
-    public final static String FREEZE_CMD = "freeze";
+    public final static String SYNCH_CMD = "synchronize"; //$NON-NLS-1$
+    public final static String FREEZE_CMD = "freeze"; //$NON-NLS-1$
     private PopUpMenuOnZoom popup = null;
     private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
@@ -93,7 +93,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         actionsInView.put(FREEZE_CMD, null);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, z.getInterpolation());
 
-        Color bckColor = UIManager.getColor("Panel.background");
+        Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
         this.setLensDecoration(z.getLensLineWidth(), z.getLensLineColor(), bckColor, z.isLensRound());
         this.setSize(z.getLensWidth(), z.getLensHeight());
         this.setLocation(-1, -1);

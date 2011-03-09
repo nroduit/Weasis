@@ -49,7 +49,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
     public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(2.0f, Color.YELLOW);
     public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, false);
     public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, false);
-    public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png"));
+    public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
     static {
         graphicList.add(selectionGraphic);
@@ -76,7 +76,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
                     return getMeasureToolPopupMenuButton(this);
                 }
             };
-        measureButton.setToolTipText("Measurement tools");
+        measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
         add(measureButton);
 
         // add(measureButtonGap);

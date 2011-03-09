@@ -444,7 +444,7 @@ public class AngleToolGraphic extends AbstractDragGraphic implements Cloneable {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.angle");
+        return Messages.getString("MeasureToolBar.angle"); //$NON-NLS-1$
     }
 
     @Override

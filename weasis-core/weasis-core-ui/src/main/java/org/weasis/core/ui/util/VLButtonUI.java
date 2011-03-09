@@ -35,7 +35,7 @@ public class VLButtonUI extends BasicToggleButtonUI {
                 g.translate(1, 1);
             } else {
                 if (!selected) {
-                    g.setColor(UIManager.getColor("controlHighlight"));
+                    g.setColor(UIManager.getColor("controlHighlight")); //$NON-NLS-1$
                     g.fillRect(1, 1, btn.getWidth() - 2, btn.getHeight() - 2);
                 }
             }

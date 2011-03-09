@@ -284,7 +284,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (!e.isTemporary()) {
             ImageViewerPlugin<ImageElement> pane = eventManager.getSelectedView2dContainer();
             if (pane != null && pane.isContainingView(this)) {
-                pane.setSelectedImagePane(this);
+                pane.setSelectedImagePaneFromFocus(this);
             }
         }
     }

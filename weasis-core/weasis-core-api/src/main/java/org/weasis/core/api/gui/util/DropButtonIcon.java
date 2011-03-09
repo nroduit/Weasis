@@ -32,9 +32,9 @@ public class DropButtonIcon implements Icon {
         if (c instanceof DropDownButton) {
             ButtonModel model = ((DropDownButton) c).getModel();
             if (model.isRollover() && !model.isPressed()) {
-                g2d.setPaint(UIManager.getColor("controlShadow"));
+                g2d.setPaint(UIManager.getColor("controlShadow")); //$NON-NLS-1$
             } else {
-                g2d.setPaint(UIManager.getColor("controlHighlight"));
+                g2d.setPaint(UIManager.getColor("controlHighlight")); //$NON-NLS-1$
             }
         }
         int shiftx = x + leftIcon.getIconWidth() + 1;

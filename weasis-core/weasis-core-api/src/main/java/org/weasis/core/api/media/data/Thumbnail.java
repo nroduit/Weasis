@@ -109,7 +109,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     public Thumbnail(final MediaSeries<E> sequence, File thumbnailPath, int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
         if (sequence == null) {
-            throw new IllegalArgumentException("Sequence cannot be null");
+            throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
         this.thumbnailSize = thumbnailSize;
         this.series = sequence;
@@ -177,13 +177,13 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
                 icon = MimeInspector.audioIcon;
             } else if (mime.startsWith("txt")) { //$NON-NLS-1$
-                type = "Text";
+                type = Messages.getString("Thumbnail.text"); //$NON-NLS-1$
                 icon = MimeInspector.textIcon;
             } else if (mime.endsWith("html")) { //$NON-NLS-1$
-                type = "HTML";
+                type = Messages.getString("Thumbnail.html"); //$NON-NLS-1$
                 icon = MimeInspector.htmlIcon;
             } else if (mime.equals("application/pdf")) { //$NON-NLS-1$
-                type = "PDF";
+                type = Messages.getString("Thumbnail.pdf"); //$NON-NLS-1$
                 icon = MimeInspector.pdfIcon;
             } else {
                 type = mime;

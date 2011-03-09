@@ -31,11 +31,12 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.media.data.Series;
 
 public class FileUtil {
     private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
-    private static final DecimalFormat df = new DecimalFormat("#.##");
+    private static final DecimalFormat df = new DecimalFormat("#.##"); //$NON-NLS-1$
 
     public static void safeClose(final Closeable object) {
         try {
@@ -206,15 +207,15 @@ public class FileUtil {
 
     public static String formatSize(double size) {
         if (size >= GB) {
-            return df.format(size / GB) + " GB";
+            return df.format(size / GB) + Messages.getString("FileUtil.gb"); //$NON-NLS-1$
         }
         if (size >= MB) {
-            return df.format(size / MB) + " MB";
+            return df.format(size / MB) + Messages.getString("FileUtil.mb"); //$NON-NLS-1$
         }
         if (size >= KB) {
-            return df.format(size / KB) + " KB";
+            return df.format(size / KB) + Messages.getString("FileUtil.kb"); //$NON-NLS-1$
         }
-        return "" + (int) size + " bytes";
+        return (int) size + Messages.getString("FileUtil.bytes"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {

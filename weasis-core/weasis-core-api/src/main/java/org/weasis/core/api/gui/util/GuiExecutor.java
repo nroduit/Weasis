@@ -47,7 +47,7 @@ public class GuiExecutor extends AbstractExecutorService {
             try {
                 SwingUtilities.invokeAndWait(r);
             } catch (InterruptedException e) {
-                LOGGER.error("Interrupted Exception of {}", r);
+                LOGGER.error("Interrupted Exception of {}", r); //$NON-NLS-1$
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }

@@ -86,18 +86,18 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        addTab("Limited DICOM attributes", null, panel, null);
+        addTab(Messages.getString("DicomFieldsView.limited"), null, panel, null); //$NON-NLS-1$
         panel.add(limitedPane, BorderLayout.CENTER);
         jTextPane1.setBorder(new EmptyBorder(5, 5, 5, 5));
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
         StyledDocument doc = jTextPane1.getStyledDocument();
-        addStylesToDocument(doc, UIManager.getColor("TextPane.foreground"));
+        addStylesToDocument(doc, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
 
         JPanel dump = new JPanel();
         dump.setLayout(new BorderLayout());
         dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        addTab("All DICOM attributes", null, dump, null);
+        addTab(Messages.getString("DicomFieldsView.all"), null, dump, null); //$NON-NLS-1$
         dump.add(allPane, BorderLayout.CENTER);
 
         setPreferredSize(new Dimension(1024, 1024));
@@ -119,7 +119,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
         StyleConstants.setFontSize(def, 12);
         if (textColor == null) {
-            textColor = UIManager.getColor("text");
+            textColor = UIManager.getColor("text"); //$NON-NLS-1$
         }
         StyleConstants.setForeground(def, textColor);
         Style s = doc.addStyle("title", regular); //$NON-NLS-1$
@@ -240,13 +240,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
                     MediaReader loader = media.getMediaReader();
                     if (loader instanceof DicomMediaIO) {
-                        writeItems("Patient\n", PATIENT, model.getParent(series, DicomModel.patient), doc);
-                        writeItems("\nStation\n", STATION, series, doc);
-                        writeItems("\nStudy\n", STUDY, model.getParent(series, DicomModel.study), doc);
-                        writeItems("\nSeries\n", SERIES, series, doc);
-                        writeItems("\nDICOM Object\n", IMAGE, null, doc);
-                        writeItems("\nImage Plane\n", IMAGE_PLANE, null, doc);
-                        writeItems("\nImage Acquisition\n", IMAGE_ACQ, null, doc);
+                        writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, model.getParent(series, DicomModel.patient), doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.study"), STUDY, model.getParent(series, DicomModel.study), doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$
+                        writeItems(Messages.getString("DicomFieldsView.acqu"), IMAGE_ACQ, null, doc); //$NON-NLS-1$
                     }
                 }
             }
@@ -267,7 +267,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 if (val != null) {
                     exist = true;
                     doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
-                    doc.insertString(doc.getLength(), ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$
+                    doc.insertString(doc.getLength(), ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             } catch (BadLocationException e) {
                 e.printStackTrace();
@@ -275,7 +275,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
         if (exist) {
             try {
-                doc.insertString(insertTitle, title, doc.getStyle("title"));
+                doc.insertString(insertTitle, title, doc.getStyle("title")); //$NON-NLS-1$
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }

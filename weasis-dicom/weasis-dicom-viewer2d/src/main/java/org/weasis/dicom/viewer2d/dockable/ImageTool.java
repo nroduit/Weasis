@@ -209,7 +209,7 @@ public class ImageTool extends PluginTool {
         if (filterAction instanceof ComboItemListener) {
             final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
             final JLabel lutLabel = new JLabel();
-            lutLabel.setText("Filter");
+            lutLabel.setText(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
             panel_4.add(lutLabel);
             final JComboBox filtercomboBox = ((ComboItemListener) filterAction).createCombo();
             panel_4.add(filtercomboBox);

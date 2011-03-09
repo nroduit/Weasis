@@ -697,19 +697,19 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     protected void fireMoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("move", null, this);
+            pcs.firePropertyChange("move", null, this); //$NON-NLS-1$
         }
     }
 
     public void fireRemoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove", null, this);
+            pcs.firePropertyChange("remove", null, this); //$NON-NLS-1$
         }
     }
 
     public void fireRemoveAndRepaintAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove.repaint", null, this);
+            pcs.firePropertyChange("remove.repaint", null, this); //$NON-NLS-1$
         }
     }
 

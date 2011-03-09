@@ -92,6 +92,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
+    public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
+        setSelectedImagePane(defaultView2d);
+        if (defaultView2d != null && defaultView2d.getSeries() instanceof DicomSeries) {
+            DicomSeries.startPreloading((DicomSeries) defaultView2d.getSeries(), defaultView2d.getFrameIndex());
+        }
+    }
+
+    @Override
     public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
         if (menuRoot != null) {
             menuRoot.removeAll();
@@ -119,7 +127,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             ActionState filterAction = eventManager.getAction(ActionW.FILTER);
             if (filterAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) filterAction).createMenu("Filter");
+                JMenu menu =
+                    ((ComboItemListener) filterAction).createMenu(Messages.getString("View2dContainer.filter")); //$NON-NLS-1$
                 menuRoot.add(menu);
             }
             ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
@@ -424,12 +433,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
                 new AbstractAction(
-                    "Export all DICOM to Osirix", new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$
+                    Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) {  //$NON-NLS-1$//$NON-NLS-2$
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String cmd = "/usr/bin/open -a Osirix " + AbstractProperties.APP_TEMP_DIR;
-                        System.out.println("Execute cmd:" + cmd);
+                        String cmd = "/usr/bin/open -a Osirix " + AbstractProperties.APP_TEMP_DIR; //$NON-NLS-1$
+                        System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
                         try {
                             Process p = Runtime.getRuntime().exec(cmd);
                             BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -443,14 +452,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 val = p.exitValue();
                             }
                             if (val != 0) {
-                                JOptionPane.showMessageDialog(View2dContainer.this, "Cannot find or open Osirix!",
-                                    "Export all DICOM to Osirix", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(View2dContainer.this,
+                                    Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
+                                    Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
                             }
 
                         } catch (IOException e1) {
                             e1.printStackTrace();
                         } catch (InterruptedException e2) {
-                            LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage());
+                            LOGGER.error("Cannot get the exit status of the open Osirix command: ", e2.getMessage()); //$NON-NLS-1$
                         }
                     }
                 };
@@ -459,4 +469,5 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
         return actions;
     }
+
 }

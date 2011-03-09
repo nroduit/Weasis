@@ -24,6 +24,8 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.ui.Messages;
+
 /**
  * The Class PolygonGraphic.
  * 
@@ -414,7 +416,7 @@ public class PolygonGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Polyline";
+        return Messages.getString("PolygonGraphic.title"); //$NON-NLS-1$
     }
 
     @Override

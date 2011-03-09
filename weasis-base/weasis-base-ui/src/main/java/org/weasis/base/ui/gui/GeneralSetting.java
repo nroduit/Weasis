@@ -51,7 +51,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JCheckBox chckbxConfirmClosing = new JCheckBox(
         Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
-    private final JButton button = new JButton("Show");
+    private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
 
     public GeneralSetting() {
         setTitle(pageName);
@@ -74,7 +74,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gridBagLayout1.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0 };
         gridBagLayout1.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0 };
         this.setLayout(gridBagLayout1);
-        jLabelMLook.setText(Messages.getString("LookSetting.lf"));
+        jLabelMLook.setText(Messages.getString("LookSetting.lf")); //$NON-NLS-1$
 
         GridBagConstraints gbc_label = new GridBagConstraints();
         gbc_label.insets = new Insets(15, 10, 5, 5);
@@ -107,7 +107,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
                             UIManager.setLookAndFeel(finalLafClassName);
                             SwingUtilities.updateComponentTreeUI(dialog);
                         } catch (Exception exception) {
-                            System.out.println("Can't change look and feel");
+                            System.out.println("Can't change look and feel"); //$NON-NLS-1$
                         }
                     }
                 };
@@ -198,7 +198,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
                         }
 
                     } catch (Exception exception) {
-                        System.out.println("Can't change look and feel");
+                        System.out.println("Can't change look and feel"); //$NON-NLS-1$
                     }
                 }
             };

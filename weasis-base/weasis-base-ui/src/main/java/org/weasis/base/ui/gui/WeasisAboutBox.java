@@ -103,7 +103,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
         StyledDocument doc = jTextPane1.getStyledDocument();
-        JMVUtils.addStylesToDocument(doc, UIManager.getColor("TextPane.foreground"));
+        JMVUtils.addStylesToDocument(doc, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
 
         try {
             Style regular = doc.getStyle("regular"); //$NON-NLS-1$

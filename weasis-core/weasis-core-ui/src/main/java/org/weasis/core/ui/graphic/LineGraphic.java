@@ -340,7 +340,7 @@ public class LineGraphic extends AbstractDragGraphic implements Cloneable {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.line");
+        return Messages.getString("MeasureToolBar.line"); //$NON-NLS-1$
     }
 
     @Override

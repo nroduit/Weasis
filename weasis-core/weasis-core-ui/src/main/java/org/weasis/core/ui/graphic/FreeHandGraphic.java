@@ -21,6 +21,8 @@ import java.awt.geom.GeneralPath;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.ui.Messages;
+
 // TODO: Auto-generated Javadoc
 /**
  * The Class FreeHandGraphic.
@@ -293,7 +295,7 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
 
     @Override
     public String getUIName() {
-        return "Freehand";
+        return Messages.getString("FreeHandGraphic.title"); //$NON-NLS-1$
     }
 
     @Override

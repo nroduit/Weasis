@@ -29,8 +29,7 @@ import org.weasis.core.api.util.FileUtil;
 
 public class DicomSeries extends Series<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeries.class);
-
-    protected PreloadingTask preloadingTask;
+    private static volatile PreloadingTask preloadingTask;
 
     public DicomSeries(String subseriesInstanceUID) {
         this(TagW.SubseriesInstanceUID, subseriesInstanceUID, null);
@@ -105,7 +104,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         String date = TagW.formatDate((Date) getTagValue(TagW.SeriesDate));
         toolTips.append(Messages.getString("DicomSeries.date") + (date == null ? "" : date) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         if (getFileSize() > 0.0) {
-            toolTips.append("Size: " + FileUtil.formatSize(getFileSize()) + "<br>"); //$NON-NLS-2$
+            toolTips.append(Messages.getString("DicomSeries.size") + FileUtil.formatSize(getFileSize()) + "<br>"); //$NON-NLS-1$//$NON-NLS-2$
         }
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
@@ -124,20 +123,8 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public void setSelected(boolean selected, int selectedImage) {
-        if (this.isSelected() != selected) {
-            super.setSelected(selected, selectedImage);
-            if (selected) {
-                start(selectedImage);
-            } else {
-                stop();
-            }
-        }
-    }
-
-    @Override
     public void dispose() {
-        stop();
+        stopPreloading(this);
         super.dispose();
     }
 
@@ -160,38 +147,48 @@ public class DicomSeries extends Series<DicomImageElement> {
         }
     }
 
-    public synchronized void start(int index) {
-        if (preloadingTask != null) {
-            stop();
+    public static synchronized void startPreloading(DicomSeries series, int index) {
+        if (series != null) {
+            if (preloadingTask != null) {
+                if (preloadingTask.getSeries() == series) {
+                    return;
+                }
+                stopPreloading(preloadingTask.getSeries());
+            }
+            preloadingTask = new PreloadingTask(series, index);
+            preloadingTask.start();
         }
-        // System.err.println("Start preloading :" + getTagValue(getTagID()));
-        preloadingTask = new PreloadingTask(new ArrayList<DicomImageElement>(medias), index);
-        preloadingTask.start();
     }
 
-    public synchronized void stop() {
-        PreloadingTask moribund = preloadingTask;
-        preloadingTask = null;
-        if (moribund != null) {
-            // System.err.println("Stop preloading :" + getTagValue(getTagID()));
-            moribund.setPreloading(false);
-            moribund.interrupt();
+    public static synchronized void stopPreloading(DicomSeries series) {
+        if (preloadingTask != null && preloadingTask.getSeries() == series) {
+            PreloadingTask moribund = preloadingTask;
+            preloadingTask = null;
+            if (moribund != null) {
+                moribund.setPreloading(false);
+                moribund.interrupt();
+            }
         }
-
     }
 
-    class PreloadingTask extends Thread {
+    static class PreloadingTask extends Thread {
         private volatile boolean preloading = true;
         private final int index;
         private final ArrayList<DicomImageElement> imageList;
+        private final DicomSeries series;
 
-        public PreloadingTask(ArrayList<DicomImageElement> imageList, int index) {
-            this.imageList = imageList;
+        public PreloadingTask(DicomSeries series, int index) {
+            this.series = series;
+            this.imageList = new ArrayList<DicomImageElement>(series.getMedias());
             this.index = index;
         }
 
         public synchronized boolean isPreloading() {
             return preloading;
+        }
+
+        public DicomSeries getSeries() {
+            return series;
         }
 
         public synchronized void setPreloading(boolean preloading) {
@@ -245,7 +242,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     LOGGER.debug("Reading time: {} ms of image: {}", (stop - start), img.getMediaURI()); //$NON-NLS-1$
                     if (model != null) {
                         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                            new SeriesEvent(SeriesEvent.Action.loadImageInMemory, DicomSeries.this, img)));
+                            new SeriesEvent(SeriesEvent.Action.loadImageInMemory, series, img)));
                     }
                 }
             }
@@ -254,7 +251,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         @Override
         public void run() {
             if (imageList != null) {
-                DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
                 int size = imageList.size();
                 if (model == null || index < 0 || index >= size) {
                     return;
@@ -290,4 +287,5 @@ public class DicomSeries extends Series<DicomImageElement> {
             }
         }
     }
+
 }

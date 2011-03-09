@@ -53,19 +53,20 @@ public class TagW implements Transferable, Serializable {
     // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an institution,
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)
-    public final static TagW PatientPseudoUID = new TagW(Messages.getString("TagW.pat_uid"), TagType.String, 1); //$NON-NLS-1$
-    public static final TagW SeriesLoading = new TagW(Messages.getString("TagW.laod"), TagType.Integer); //$NON-NLS-1$
-    public static final TagW Thumbnail = new TagW(Messages.getString("TagW.thumb"), TagType.Thumbnail); //$NON-NLS-1$
-    public static final TagW ExplorerModel = new TagW(Messages.getString("TagW.exp_model"), TagType.Object); //$NON-NLS-1$
-    public static final TagW MeasurementGraphics = new TagW(Messages.getString("TagW.measure_graph"), TagType.List);; //$NON-NLS-1$
-    public static final TagW SplitSeriesNumber = new TagW(Messages.getString("TagW.split_no"), TagType.Boolean); //$NON-NLS-1$
-    public static final TagW SeriesSelected = new TagW(Messages.getString("TagW.select"), TagType.Boolean); //$NON-NLS-1$
-    public static final TagW SeriesOpen = new TagW(Messages.getString("TagW.open"), TagType.Boolean); //$NON-NLS-1$
-    public static final TagW ImageWidth = new TagW(Messages.getString("TagW.img_w"), TagType.Integer); //$NON-NLS-1$
-    public static final TagW ImageHeight = new TagW(Messages.getString("TagW.img_h"), TagType.Integer); //$NON-NLS-1$
-    public static final TagW ImageDepth = new TagW(Messages.getString("TagW.img_d"), TagType.Integer); //$NON-NLS-1$
-    public static final TagW ImageOrientationPlane = new TagW(Messages.getString("TagW.img_or"), TagType.String); //$NON-NLS-1$
-    public static final TagW ImageBitsPerPixel = new TagW(Messages.getString("TagW.img_bpp"), TagType.Integer); //$NON-NLS-1$
+    public final static TagW PatientPseudoUID = new TagW(Messages.getString("TagElement.pat_uid"), TagType.String, 1); //$NON-NLS-1$
+    public static final TagW SeriesLoading = new TagW(Messages.getString("TagElement.laod"), TagType.Integer); //$NON-NLS-1$
+    public static final TagW Thumbnail = new TagW(Messages.getString("TagElement.thumb"), TagType.Thumbnail); //$NON-NLS-1$
+    public static final TagW ExplorerModel = new TagW(Messages.getString("TagElement.exp_model"), TagType.Object); //$NON-NLS-1$
+    public static final TagW MeasurementGraphics = new TagW(
+        Messages.getString("TagElement.measure_graph"), TagType.List);; //$NON-NLS-1$
+    public static final TagW SplitSeriesNumber = new TagW(Messages.getString("TagElement.split_no"), TagType.Boolean); //$NON-NLS-1$
+    public static final TagW SeriesSelected = new TagW(Messages.getString("TagElement.select"), TagType.Boolean); //$NON-NLS-1$
+    public static final TagW SeriesOpen = new TagW(Messages.getString("TagElement.open"), TagType.Boolean); //$NON-NLS-1$
+    public static final TagW ImageWidth = new TagW(Messages.getString("TagElement.img_w"), TagType.Integer); //$NON-NLS-1$
+    public static final TagW ImageHeight = new TagW(Messages.getString("TagElement.img_h"), TagType.Integer); //$NON-NLS-1$
+    public static final TagW ImageDepth = new TagW(Messages.getString("TagElement.img_d"), TagType.Integer); //$NON-NLS-1$
+    public static final TagW ImageOrientationPlane = new TagW(Messages.getString("TagElement.img_or"), TagType.String); //$NON-NLS-1$
+    public static final TagW ImageBitsPerPixel = new TagW(Messages.getString("TagElement.img_bpp"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageCache = new TagW("Image Cache", TagType.Boolean); //$NON-NLS-1$
 
     // Do not internationalize WadoTransferSyntaxUID and WadoCompressionRate because they are defined in wado_query.xsd
@@ -79,7 +80,7 @@ public class TagW implements Transferable, Serializable {
     public final static TagW SlicePosition = new TagW("Slice Position", TagType.DoubleArray); //$NON-NLS-1$
 
     public final static TagW RootElement = new TagW("Root Element", TagType.String); //$NON-NLS-1$
-    public final static TagW CurrentFolder = new TagW(Messages.getString("TagW.cur_dir"), TagType.String); //$NON-NLS-1$
+    public final static TagW CurrentFolder = new TagW(Messages.getString("TagElement.cur_dir"), TagType.String); //$NON-NLS-1$
 
     /**
      * DICOM common tags
@@ -347,7 +348,7 @@ public class TagW implements Transferable, Serializable {
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {
-                    s.append(", ");
+                    s.append(", "); //$NON-NLS-1$
                 }
             }
             str = s.toString();
@@ -357,7 +358,7 @@ public class TagW implements Transferable, Serializable {
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {
-                    s.append(", ");
+                    s.append(", "); //$NON-NLS-1$
                 }
             }
             str = s.toString();
@@ -367,7 +368,7 @@ public class TagW implements Transferable, Serializable {
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {
-                    s.append(", ");
+                    s.append(", "); //$NON-NLS-1$
                 }
             }
             str = s.toString();

@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 public class ToolBarContainer extends JPanel {
-    public final static WtoolBar EMPTY = ToolBarFactory.buildEmptyToolBar("empty");
+    public final static WtoolBar EMPTY = ToolBarFactory.buildEmptyToolBar("empty"); //$NON-NLS-1$
     private Map<String, WtoolBar> toolBarsByName = new HashMap<String, WtoolBar>();
 
     public ToolBarContainer() {

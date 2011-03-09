@@ -205,7 +205,7 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.rect");
+        return Messages.getString("MeasureToolBar.rect"); //$NON-NLS-1$
     }
 
     @Override

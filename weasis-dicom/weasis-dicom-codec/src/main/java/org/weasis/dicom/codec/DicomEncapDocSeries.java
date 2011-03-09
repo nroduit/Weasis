@@ -50,7 +50,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
                 byte[] doc = null;
-                String extension = "tmp";
+                String extension = "tmp"; //$NON-NLS-1$
                 try {
                     DicomObject dicom = dicomImageLoader.getDicomObject();
                     String mime = dicom.getString(Tag.MIMETypeOfEncapsulatedDocument);

@@ -27,6 +27,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 
@@ -42,11 +43,11 @@ public class CalibrationView extends JPanel {
     private final JLabel jLabelKnownDist = new JLabel();
     private final BorderLayout borderLayout1 = new BorderLayout();
     private final GridBagLayout gridBagLayout2 = new GridBagLayout();
-    private final JLabel lblApplyTo = new JLabel("Apply to:");
+    private final JLabel lblApplyTo = new JLabel(Messages.getString("CalibrationView.apply")); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
     private final ButtonGroup ratioGroup = new ButtonGroup();
-    private final JRadioButton radioButtonSeries = new JRadioButton("Series");
-    private final JRadioButton radioButtonImage = new JRadioButton("Current Image");
+    private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series")); //$NON-NLS-1$
+    private final JRadioButton radioButtonImage = new JRadioButton(Messages.getString("CalibrationView.current")); //$NON-NLS-1$
 
     public CalibrationView(LineGraphic line, DefaultView2d view2d) {
         this.line = line;
@@ -68,7 +69,7 @@ public class CalibrationView extends JPanel {
         jTextFieldLineWidth.setValue(1.0);
         JMVUtils.addCheckAction(jTextFieldLineWidth);
 
-        jLabelKnownDist.setText("Known distance :");
+        jLabelKnownDist.setText(Messages.getString("CalibrationView.known")); //$NON-NLS-1$
         this.setLayout(borderLayout1);
 
         this.add(jPanelMode, BorderLayout.CENTER);
@@ -111,7 +112,7 @@ public class CalibrationView extends JPanel {
                 JScrollPane scroll =
                     new JScrollPane(
                         createArea(
-                            "Warning: If the image has non-square pixels (where pixel spacing differs in the x and y direction), this tool cannot be used to peform an accurate calibration.",
+                            Messages.getString("CalibrationView.warn"), //$NON-NLS-1$
                             true, 0));
                 scroll.setPreferredSize(new Dimension(300, 75));
                 jPanelMode.add(scroll, gbc_textPane);

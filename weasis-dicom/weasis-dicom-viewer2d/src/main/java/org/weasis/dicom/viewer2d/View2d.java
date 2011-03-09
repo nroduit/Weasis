@@ -496,7 +496,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (!e.isTemporary()) {
             ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
             if (pane != null && pane.isContainingView(this)) {
-                pane.setSelectedImagePane(this);
+                pane.setSelectedImagePaneFromFocus(this);
             }
         }
     }
@@ -781,12 +781,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 calibMenu.addActionListener(new ActionListener() {
 
                                     public void actionPerformed(ActionEvent e) {
-                                        String title = "Manual Calibration";
+                                        String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
                                         ImageElement image = View2d.this.getImage();
                                         if (image != null) {
                                             if (image.getPixelSizeX() != image.getPixelSizeY()) {
                                                 JOptionPane.showMessageDialog(calibMenu,
-                                                    "This tool cannot handle image with non-square pixels", title,
+                                                    Messages.getString("View2d.calibWarn"), title, //$NON-NLS-1$
                                                     JOptionPane.ERROR_MESSAGE);
                                                 return;
                                             }

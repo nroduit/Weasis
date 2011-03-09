@@ -170,7 +170,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
                             files = new File[] { file };
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Cannot import DICOM from {}", path);
+                        LOGGER.error("Cannot import DICOM from {}", path); //$NON-NLS-1$
                     }
                 }
             }

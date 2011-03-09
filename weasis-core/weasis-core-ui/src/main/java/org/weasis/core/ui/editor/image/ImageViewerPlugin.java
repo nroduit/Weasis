@@ -274,6 +274,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
+    public void setSelectedImagePaneFromFocus(DefaultView2d<E> defaultView2d) {
+        setSelectedImagePane(defaultView2d);
+    }
+
     public void setSelectedImagePane(DefaultView2d<E> defaultView2d) {
         if (this.selectedImagePane.getSeries() != null) {
             this.selectedImagePane.getSeries().setSelected(false, 0);

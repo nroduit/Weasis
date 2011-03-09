@@ -63,10 +63,10 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         JPanel panel_1 = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
         flowLayout.setAlignment(FlowLayout.LEADING);
-        panel_1.setBorder(new TitledBorder(null, "Zoom", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panel_1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel_1);
 
-        JLabel lblInterpolation = new JLabel("Interpolation:");
+        JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp")); //$NON-NLS-1$
         panel_1.add(lblInterpolation);
         EventManager eventManager = EventManager.getInstance();
 

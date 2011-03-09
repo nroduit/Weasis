@@ -47,13 +47,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             ActionW.CONTEXTMENU };
     public final static ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
     public static final Icon MouseLeftIcon =
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png"));
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png")); //$NON-NLS-1$
     public static final Icon MouseRightIcon = new ImageIcon(
-        MouseActions.class.getResource("/icon/32x32/mouse-right.png"));
+        MouseActions.class.getResource("/icon/32x32/mouse-right.png")); //$NON-NLS-1$
     public static final Icon MouseMiddleIcon = new ImageIcon(
-        MouseActions.class.getResource("/icon/32x32/mouse-middle.png"));
+        MouseActions.class.getResource("/icon/32x32/mouse-middle.png")); //$NON-NLS-1$
     public static final Icon MouseWheelIcon = new ImageIcon(
-        MouseActions.class.getResource("/icon/32x32/mouse-wheel.png"));
+        MouseActions.class.getResource("/icon/32x32/mouse-wheel.png")); //$NON-NLS-1$
 
     protected final ImageViewerEventManager<E> eventManager;
     private final DropDownButton mouseLeft;

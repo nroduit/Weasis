@@ -17,6 +17,7 @@ import javax.media.jai.JAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.KernelData;
@@ -24,7 +25,7 @@ import org.weasis.core.api.image.util.KernelData;
 public class FilterOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterOperation.class);
 
-    public final static String name = "Filter";
+    public final static String name = Messages.getString("FilterOperation.title"); //$NON-NLS-1$
 
     public String getOperationName() {
         return name;
@@ -41,7 +42,7 @@ public class FilterOperation extends AbstractOperation {
             ParameterBlock paramBlock = new ParameterBlock();
             paramBlock.addSource(source);
             paramBlock.add(kernel.getKernelJAI());
-            result = JAI.create("convolve", paramBlock, null);
+            result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
         }
         return result;
     }

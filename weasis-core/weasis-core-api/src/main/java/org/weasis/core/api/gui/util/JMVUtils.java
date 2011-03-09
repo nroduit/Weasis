@@ -65,6 +65,8 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
+import org.weasis.core.api.Messages;
+
 /**
  * The Class JMVUtils.
  * 
@@ -335,7 +337,7 @@ public class JMVUtils {
         Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
         StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
         if (textColor == null) {
-            textColor = UIManager.getColor("text");
+            textColor = UIManager.getColor("text"); //$NON-NLS-1$
         }
         StyleConstants.setForeground(def, textColor);
         TabStop[] tabs = new TabStop[1];
@@ -433,9 +435,9 @@ public class JMVUtils {
 
     public static void OpenInDefaultBrowser(Component parent, URL url) {
         if (url != null) {
-            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) {
+            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
                 try {
-                    String cmd = String.format("xdg-open %s", url);
+                    String cmd = String.format("xdg-open %s", url); //$NON-NLS-1$
                     Runtime.getRuntime().exec(cmd);
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -453,7 +455,7 @@ public class JMVUtils {
                     }
                 }
             } else {
-                JOptionPane.showMessageDialog(parent, "Cannot open in default browser: " + url, "Error Message",
+                JOptionPane.showMessageDialog(parent, Messages.getString("JMVUtils.browser") + url, Messages.getString("JMVUtils.error"), //$NON-NLS-1$ //$NON-NLS-2$
                     JOptionPane.ERROR_MESSAGE);
             }
         }

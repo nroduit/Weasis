@@ -46,7 +46,7 @@ public class AutoProcessor {
     /**
      * The property name used to specify auto-deploy start level.
      **/
-    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERY = "felix.auto.deploy.startlevel";
+    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERY = "felix.auto.deploy.startlevel"; //$NON-NLS-1$
     /**
      * The name used for the auto-deploy install action.
      **/
@@ -292,18 +292,18 @@ public class AutoProcessor {
                     if (WeasisLauncher.modulesi18n != null) {
                         Version v = b.getVersion();
                         StringBuffer p = new StringBuffer(b.getSymbolicName());
-                        p.append("-i18n-");
+                        p.append("-i18n-"); //$NON-NLS-1$
                         p.append(v.getMajor());
-                        p.append(".");
+                        p.append("."); //$NON-NLS-1$
                         p.append(v.getMinor());
-                        p.append(".");
+                        p.append("."); //$NON-NLS-1$
                         p.append(v.getMicro());
-                        p.append(".jar");
+                        p.append(".jar"); //$NON-NLS-1$
                         String prop = p.toString();
                         String value = WeasisLauncher.modulesi18n.getProperty(prop);
                         if (value != null) {
-                            String translation_modules = System.getProperty("weasis.i18n", "");
-                            translation_modules += translation_modules.endsWith("/") ? prop : "/" + prop;
+                            String translation_modules = System.getProperty("weasis.i18n", ""); //$NON-NLS-1$ //$NON-NLS-2$
+                            translation_modules += translation_modules.endsWith("/") ? prop : "/" + prop; //$NON-NLS-1$ //$NON-NLS-2$
                             Bundle b2 = context.installBundle(translation_modules, null);
                             sl.setBundleStartLevel(b2, startLevel);
                             if (!value.equals(b2.getVersion().getQualifier())) {

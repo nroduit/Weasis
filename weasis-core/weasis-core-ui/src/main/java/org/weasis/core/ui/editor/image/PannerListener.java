@@ -127,13 +127,13 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            setPoint(new Point(10, 0));
+            setPoint(new Point(5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-            setPoint(new Point(0, 10));
+            setPoint(new Point(0, 5));
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            setPoint(new Point(-10, 0));
+            setPoint(new Point(-5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            setPoint(new Point(0, -10));
+            setPoint(new Point(0, -5));
         }
     }
 

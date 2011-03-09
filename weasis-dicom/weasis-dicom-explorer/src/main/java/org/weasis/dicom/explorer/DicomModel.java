@@ -458,7 +458,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
+        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();
             return;
         }
@@ -485,14 +485,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 // executable file
                 else if (opt.isSet("portable")) { //$NON-NLS-1$
 
-                    String prop = System.getProperty("weasis.portable.dicom.directory");
-                    String baseDir = System.getProperty("weasis.portable.dir");
+                    String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
+                    String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
 
                     if (prop != null && baseDir != null) {
                         String[] dirs = prop.split(","); //$NON-NLS-1$
                         File[] files = new File[dirs.length];
                         for (int i = 0; i < files.length; i++) {
-                            files[i] = new File(baseDir, dirs[i].trim().replaceAll("/", File.separator));
+                            files[i] = new File(baseDir, dirs[i].trim().replaceAll("/", File.separator)); //$NON-NLS-1$
                         }
                         loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                     }

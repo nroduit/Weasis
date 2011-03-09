@@ -1561,7 +1561,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             item5.addActionListener(new ActionListener() {
 
                                 public void actionPerformed(ActionEvent e) {
-                                    JFrame frame = new JFrame("DICOM Information");
+                                    JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                                     frame.setSize(500, 630);
                                     DicomFieldsView view = new DicomFieldsView();
                                     view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory

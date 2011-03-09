@@ -106,13 +106,13 @@ public class WtoolBar extends JPanel {
 
     /** Adds a new button to this toolbar */
     public Component add(AbstractButton button) {
-        boolean substanceLaf = javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance");
+        boolean substanceLaf = javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance"); //$NON-NLS-1$
         if (useCustomUI && !substanceLaf) {
             installButtonUI(button);
         }
         super.add(button);
         if (substanceLaf) {
-            button.putClientProperty("substancelaf.componentFlat", Boolean.TRUE);
+            button.putClientProperty("substancelaf.componentFlat", Boolean.TRUE); //$NON-NLS-1$
         } else {
             configureButton(button);
             installMouseHandler(button);
