@@ -647,6 +647,12 @@ public class WeasisLauncher {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
 
+        String portable = System.getProperty("weasis.portable.dir");
+        if (portable != null) {
+            System
+                .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory"));
+        }
+
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         File basdir;
         if (user == null) {

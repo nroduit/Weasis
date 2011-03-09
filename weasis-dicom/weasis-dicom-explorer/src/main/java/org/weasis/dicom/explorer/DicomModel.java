@@ -452,12 +452,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load DICOM files remotely or locally", "Usage: dicom:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
             "  -l --local		Open DICOMs from local disk", //$NON-NLS-1$
+            "  -p --portable       Open DICOMs from default directories at the same level of the executable", //$NON-NLS-1$
             "  -w --wado		Open DICOMs from an XML file containing UIDs", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -479,6 +480,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
                     loadingExecutor.execute(new LoadRemoteDicom(args.toArray(new String[args.size()]), DicomModel.this));
+                }
+                // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
+                // executable file
+                else if (opt.isSet("portable")) { //$NON-NLS-1$
+
+                    String prop = System.getProperty("weasis.portable.dicom.directory");
+                    String baseDir = System.getProperty("weasis.portable.dir");
+
+                    if (prop != null && baseDir != null) {
+                        String[] dirs = prop.split(","); //$NON-NLS-1$
+                        File[] files = new File[dirs.length];
+                        for (int i = 0; i < files.length; i++) {
+                            files[i] = new File(baseDir, dirs[i].trim().replaceAll("/", File.separator));
+                        }
+                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                    }
                 }
             }
         });

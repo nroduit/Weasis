@@ -13,7 +13,7 @@
 			<directory>target/tmp</directory>
 			<outputDirectory>/weasis</outputDirectory>
 			<includes>
-				<include>bin/**</include>
+				<include>/*.jar</include>
 				<include>bundle/**</include>
 			</includes>
 		</fileSet>

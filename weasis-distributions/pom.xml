@@ -8,11 +8,11 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<version>1.0.8-SNAPSHOT</version>
 	<properties>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
-			in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources 
+			files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
-		<tmp.bin.dir>${project.build.directory}/tmp/bin</tmp.bin.dir>
+
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
 		<felix.framework.version>3.0.9</felix.framework.version>
@@ -70,21 +70,21 @@
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>org.apache.felix.framework</artifactId>
 									<version>${felix.framework.version}</version>
-									<outputDirectory>${tmp.bin.dir}</outputDirectory>
+									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>felix.jar</destFileName>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.launcher</groupId>
 									<artifactId>weasis-launcher</artifactId>
 									<version>${weasis.launcher.version}</version>
-									<outputDirectory>${tmp.bin.dir}</outputDirectory>
+									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>weasis-launcher.jar</destFileName>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>substance</artifactId>
 									<version>${substance.version}</version>
-									<outputDirectory>${tmp.bin.dir}</outputDirectory>
+									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>substance.jar</destFileName>
 								</artifactItem>
 
@@ -281,11 +281,12 @@
 						<configuration>
 							<tasks>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+								<taskdef name="bindex"
+									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
 									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
-									name="Weasis Bundle Repository">
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
+									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
+									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</tasks>
@@ -322,8 +323,9 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" 
+					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -380,20 +382,27 @@
 									<headerType>gui</headerType>
 									<dontWrapJar>true</dontWrapJar>
 									<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
-									<jar>weasis/bin/weasis-launcher.jar</jar>
+									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
 									<icon>etc/weasis.ico</icon>
-									<!-- Setting it to . will change the current dir to the same directory as the executable -->
-									<cmdLine>$dicom:get -l "./DICOM"</cmdLine>
+									<!-- Setting it to . will change the current dir to the same directory 
+										as the executable -->
+									<cmdLine>$dicom:get --portable</cmdLine>
 									<chdir>.</chdir>
 									<classPath>
 										<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
 										<addDependencies>false</addDependencies>
-										<preCp>weasis\bin\felix.jar;weasis\bin\substance.jar</preCp>
+										<preCp>weasis\felix.jar;weasis\substance.jar</preCp>
 									</classPath>
 									<jre>
 										<minVersion>1.6.0_10</minVersion>
+										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>512</maxHeapSize>
+										<opts>
+											<opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
+											<opt>-Dweasis.codebase.url=&quot;file:///%EXEDIR%/weasis&quot;</opt>
+											<opt>-Dfelix.config.properties=&quot;file:///%EXEDIR%/weasis/conf/config.properties&quot;</opt>
+										</opts>
 									</jre>
 								</configuration>
 							</execution>

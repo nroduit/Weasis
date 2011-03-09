@@ -1,4 +1,5 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
 	<id>web-dist</id>
@@ -9,14 +10,13 @@
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<fileSets>
 		<fileSet>
-			<!-- Copy jws jars -->
-			<directory>target/tmp/bin</directory>
+			<!-- Copy jars -->
+			<directory>target/tmp</directory>
 			<outputDirectory>/</outputDirectory>
-		</fileSet>
-		<fileSet>
-			<!-- Copy bundles + repository.xml -->
-			<directory>target/tmp/bundle</directory>
-			<outputDirectory>/bundle</outputDirectory>
+			<includes>
+				<include>/*.jar</include>
+				<include>bundle/**</include>
+			</includes>
 		</fileSet>
 		<fileSet>
 			<!-- Direct resources copy -->
