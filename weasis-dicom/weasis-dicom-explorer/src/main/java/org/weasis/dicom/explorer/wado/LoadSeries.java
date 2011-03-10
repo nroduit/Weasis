@@ -74,6 +74,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public final static String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
     public final static int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
+    public final static File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom");
+    static {
+        try {
+            DICOM_TMP_DIR.mkdirs();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -733,7 +741,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
 
             if (tempFile == null) {
-                tempFile = File.createTempFile("image_", ".dcm", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
             stream = httpCon.getInputStream();

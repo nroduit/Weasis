@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -433,11 +434,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
                 new AbstractAction(
-                    Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) {  //$NON-NLS-1$//$NON-NLS-2$
+                    Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$//$NON-NLS-2$
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String cmd = "/usr/bin/open -a Osirix " + AbstractProperties.APP_TEMP_DIR; //$NON-NLS-1$
+                        String cmd =
+                            "/usr/bin/open -a Osirix " + AbstractProperties.APP_TEMP_DIR.getAbsolutePath() + File.separator + "dicom"; //$NON-NLS-1$
                         System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
                         try {
                             Process p = Runtime.getRuntime().exec(cmd);
