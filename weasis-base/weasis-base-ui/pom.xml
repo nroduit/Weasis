@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-base-parent</artifactId>
 		<groupId>org.weasis.base</groupId>
-		<version>1.4</version>
+		<version>1.5-SNAPSHOT</version>
 		<relativePath>../weasis-base-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-base-ui</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis Base UI [${project.artifactId}]</name>
-	<version>0.5.5</version>
+	<version>0.5.6-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.base.ui</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>

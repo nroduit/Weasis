@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>1.4</version>
+		<version>1.5-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>2D DICOM Viewer [${project.artifactId}]</name>
-	<version>0.5.5</version>
+	<version>0.5.6-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
@@ -33,25 +33,25 @@
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>0.5.5</version>
+			<version>0.5.6-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>0.5.5</version>
+			<version>0.5.6-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>0.5.5</version>
+			<version>0.5.6-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>0.7.3</version>
+			<version>0.7.4-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
