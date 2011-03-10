@@ -641,7 +641,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         private boolean dropDicomFiles(List<File> files, DicomModel model) {
             if (files != null) {
-                LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
+                LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model, false);
                 DicomModel.loadingExecutor.execute(dicom);
                 return true;
             }

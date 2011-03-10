@@ -42,9 +42,10 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private final DicomModel dicomModel;
     private final boolean recursive;
     private boolean openPlugin;
+    private final boolean flatSearch;
     private JProgressBar progressBar = null;
 
-    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
+    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel, boolean flatSearch) {
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -52,6 +53,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         this.files = files;
         this.recursive = recursive;
         this.openPlugin = true;
+        this.flatSearch = flatSearch;
     }
 
     public JProgressBar getProgressBar() {
@@ -68,7 +70,11 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        addSelection(files, true);
+        if (flatSearch) {
+            addSelectionAndnotify(files, true);
+        } else {
+            addSelection(files, true);
+        }
         return true;
     }
 
@@ -85,6 +91,38 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
             progressBar.setString(text);
         }
         log.info(text);
+    }
+
+    public void addSelectionAndnotify(File[] file, boolean firstLevel) {
+        if (file == null || file.length < 1) {
+            return;
+        }
+        final ArrayList<File> folders = new ArrayList<File>();
+        for (int i = 0; i < file.length; i++) {
+            if (file[i].isDirectory()) {
+                if (firstLevel || recursive) {
+                    folders.add(file[i]);
+                }
+            } else {
+                if (file[i].canRead()) {
+                    String mime = null;
+                    try {
+                        mime = MimeInspector.getMimeType(file[i]);
+                    } catch (IOException e) {
+                    }
+                    if (DicomMediaIO.MIMETYPE.equals(mime)) {
+                        DicomMediaIO loader = new DicomMediaIO(file[i]);
+                        if (loader.readMediaTags()) {
+                            // Issue: must handle adding image to viewer and building thumbnail (middle image)
+                            buildDicomStructure(loader, openPlugin);
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < folders.size(); i++) {
+            addSelectionAndnotify(folders.get(i).listFiles(), false);
+        }
     }
 
     public void addSelection(File[] file, boolean firstLevel) {
@@ -155,6 +193,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
+                        dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
                 }
@@ -185,7 +224,15 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
+                        dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                         dicomModel.applySplittingRules(dicomSeries, media);
+                    }
+                    if (medias.length > 0) {
+                        // Load image and create thumbnail in this Thread
+                        Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                        if (thumb == null) {
+                            thumb.repaint();
+                        }
                     }
                 }
             }

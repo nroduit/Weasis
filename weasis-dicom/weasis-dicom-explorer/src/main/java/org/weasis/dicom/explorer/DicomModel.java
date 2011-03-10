@@ -475,7 +475,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < files.length; i++) {
                         files[i] = new File(args.get(i));
                     }
-                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, false));
                 }
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
@@ -494,7 +494,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         for (int i = 0; i < files.length; i++) {
                             files[i] = new File(baseDir, dirs[i].trim().replaceAll("/", File.separator)); //$NON-NLS-1$
                         }
-                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, true));
                     }
                 }
             }
