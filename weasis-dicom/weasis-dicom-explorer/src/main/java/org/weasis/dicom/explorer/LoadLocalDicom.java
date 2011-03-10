@@ -228,9 +228,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
                     if (medias.length > 0) {
-                        // Load image and create thumbnail in this Thread
                         Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                        if (thumb == null) {
+                        if (thumb != null) {
                             thumb.repaint();
                         }
                     }

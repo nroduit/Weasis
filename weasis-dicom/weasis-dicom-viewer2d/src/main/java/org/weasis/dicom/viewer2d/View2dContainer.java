@@ -438,7 +438,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String cmd = "/usr/bin/open -a Osirix";
+                        String cmd = "/usr/bin/open -a OsiriX";
                         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
                         if (baseDir != null) {
                             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
@@ -446,11 +446,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 String[] dirs = prop.split(","); //$NON-NLS-1$
                                 File[] files = new File[dirs.length];
                                 for (int i = 0; i < files.length; i++) {
-                                    cmd += " " + baseDir + File.separator + dirs[i].trim();
+                                    File file = new File(baseDir, dirs[i].trim());
+                                    if (file.canRead()) {
+                                        cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                                    }
                                 }
                             }
                         } else {
-                            cmd += " " + AbstractProperties.APP_TEMP_DIR.getAbsolutePath() + File.separator + "dicom"; //$NON-NLS-1$
+                            File file = new File(AbstractProperties.APP_TEMP_DIR, "dicom");
+                            if (file.canRead()) {
+                                cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                            }
                         }
                         System.out.println("Execute cmd:" + cmd); //$NON-NLS-1$
                         try {
