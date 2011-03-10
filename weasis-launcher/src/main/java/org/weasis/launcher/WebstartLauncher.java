@@ -31,7 +31,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         } catch (UnavailableServiceException use) {
         }
         // Workaround for http://www.dcm4che.org/jira/browse/WEA-30
-        if (System.getProperty("java.version", "").equals("1.6.0_24")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        if (System.getProperty("javawebstart.version", "").equals("javaws-1.6.0_24")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             // Mode that does not support bundle extension
             System.setProperty("felix.extensions.enabled", "false"); //$NON-NLS-1$ //$NON-NLS-2$
         }
