@@ -6,7 +6,7 @@
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.0.8-SNAPSHOT</version>
+	<version>1.0.8</version>
 	<properties>
 		<!-- dollar property to avoid replacing some variables when filtering resources 
 			files (ex. ${user.home} in config.properties) -->
