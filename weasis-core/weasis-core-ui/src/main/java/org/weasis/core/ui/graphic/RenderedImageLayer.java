@@ -158,25 +158,27 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         tymax = Math.min(tymax, displayImage.getMinTileY() + displayImage.getNumYTiles() - 1);
         final ColorModel cm = displayImage.getColorModel();
         final SampleModel sm = displayImage.getSampleModel();
-        // Loop over tiles within the clipping region
-        for (int tj = tymin; tj <= tymax; tj++) {
-            for (int ti = txmin; ti <= txmax; ti++) {
-                int tx = TileXtoX(ti);
-                int ty = TileYtoY(tj);
-                Raster tile = null;
-                try {
-                    tile = displayImage.getTile(ti, tj);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                if (tile != null) {
-                    WritableRaster wr = Raster.createWritableRaster(sm, tile.getDataBuffer(), null);
-                    BufferedImage bi = new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
-                    // AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
-                    // if (_transform != null) {
-                    // at.concatenate(_transform);
-                    // }
-                    g2d.drawImage(bi, tx, ty, null);
+        if (sm != null && cm != null) {
+            // Loop over tiles within the clipping region
+            for (int tj = tymin; tj <= tymax; tj++) {
+                for (int ti = txmin; ti <= txmax; ti++) {
+                    int tx = TileXtoX(ti);
+                    int ty = TileYtoY(tj);
+                    Raster tile = null;
+                    try {
+                        tile = displayImage.getTile(ti, tj);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    if (tile != null) {
+                        WritableRaster wr = Raster.createWritableRaster(sm, tile.getDataBuffer(), null);
+                        BufferedImage bi = new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
+                        // AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
+                        // if (_transform != null) {
+                        // at.concatenate(_transform);
+                        // }
+                        g2d.drawImage(bi, tx, ty, null);
+                    }
                 }
             }
         }

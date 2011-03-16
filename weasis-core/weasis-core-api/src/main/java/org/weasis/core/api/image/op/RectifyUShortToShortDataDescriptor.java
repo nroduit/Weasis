@@ -11,7 +11,10 @@
 package org.weasis.core.api.image.op;
 
 import java.awt.RenderingHints;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.image.BandedSampleModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.PixelInterleavedSampleModel;
@@ -138,9 +141,10 @@ public class RectifyUShortToShortDataDescriptor extends OperationDescriptorImpl 
                 new SinglePixelPackedSampleModel(DataBuffer.TYPE_SHORT, cast.getWidth(), cast.getHeight(),
                     scanlineStride, bitMasks);
         }
-
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         layout.setSampleModel(model);
+        layout.setColorModel(new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), new int[] { 16 },
+            false, false, Transparency.OPAQUE, DataBuffer.TYPE_SHORT));
         renderHints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
         renderHints.add(hints);
         return new RectifyUShortToShortDataOpImage(args.getRenderedSource(0), renderHints, layout);
