@@ -85,6 +85,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -365,23 +366,25 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             properties.put(DefaultView2d.class.getName(), seriesList.length);
         }
         SeriesViewer seriesViewer = factory.createSeriesViewer(properties);
-        if (seriesViewer instanceof ImageViewerPlugin) {
-            ImageViewerPlugin viewer = (ImageViewerPlugin) seriesViewer;
+        if (seriesViewer instanceof MimeSystemAppViewer) {
+            for (MediaSeries m : seriesList) {
+                seriesViewer.addSeries(m);
+            }
+        } else if (seriesViewer instanceof ViewerPlugin) {
+            ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
             if (group != null) {
                 viewer.setGroupID(group);
                 viewer.setPluginName(group.toString());
             }
             registerPlugin(viewer);
             viewer.setSelectedAndGetFocus();
-            selectLayoutPositionForAddingSeries(viewer, seriesList.length);
+            if (seriesViewer instanceof ImageViewerPlugin) {
+                selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.length);
+            }
             for (MediaSeries m : seriesList) {
                 viewer.addSeries(m);
             }
             viewer.setSelected(true);
-        } else if (seriesViewer != null) {
-            for (MediaSeries m : seriesList) {
-                seriesViewer.addSeries(m);
-            }
         }
     }
 

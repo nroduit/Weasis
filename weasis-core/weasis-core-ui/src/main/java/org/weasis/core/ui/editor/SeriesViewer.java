@@ -28,9 +28,9 @@ public interface SeriesViewer<E extends MediaElement> {
 
     public List<MediaSeries<E>> getOpenSeries();
 
-    public void addSeries(MediaSeries<E> sequence);
+    public void addSeries(MediaSeries<E> series);
 
-    public void removeSeries(MediaSeries<E> sequence);
+    public void removeSeries(MediaSeries<E> series);
 
     public JMenu fillSelectedPluginMenu(JMenu menu);
 
