@@ -57,9 +57,9 @@
 		WeasisLauncher) -->
 	<dependencies>
 		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
+			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
-			<version>3.0.9</version>
+			<version>3.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

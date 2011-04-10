@@ -166,7 +166,7 @@ public class AutoProcessor {
                     }
                     // If the bundle is already installed, then update it
                     // if the 'update' action is present.
-                    else if (actionList.contains(AUTO_DEPLOY_UPDATE_VALUE)) {
+                    else if (b != null && actionList.contains(AUTO_DEPLOY_UPDATE_VALUE)) {
                         b.update();
                     }
 

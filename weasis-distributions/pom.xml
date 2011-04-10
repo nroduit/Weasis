@@ -15,7 +15,7 @@
 
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<felix.framework.version>3.0.9</felix.framework.version>
+		<felix.framework.version>3.2.0</felix.framework.version>
 		<felix.gogo.version>0.8.0</felix.gogo.version>
 		<felix.servlet.version>1.0.0</felix.servlet.version>
 		<felix.bundlerepository.version>1.6.4</felix.bundlerepository.version>
@@ -66,8 +66,7 @@
 								<!-- (only one version, referenced in JNLP) -->
 								<!-- ===================================== -->
 								<artifactItem>
-									<!-- Change groupId momently for bug http://www.dcm4che.org/jira/browse/WEA-30 -->
-									<groupId>org.weasis.thirdparty</groupId>
+									<groupId>org.apache.felix</groupId>
 									<artifactId>org.apache.felix.framework</artifactId>
 									<version>${felix.framework.version}</version>
 									<outputDirectory>${tmp.dir}</outputDirectory>
