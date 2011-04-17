@@ -22,7 +22,7 @@
 		<felix.configadmin.version>1.2.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.scr.version>1.6.0</felix.scr.version>
-		<sling.commons.log.version>2.1.0</sling.commons.log.version>
+		<sling.commons.log.version>2.1.2</sling.commons.log.version>
 
 		<weasis.launcher.version>0.5.6-SNAPSHOT</weasis.launcher.version>
 		<weasis.core.version>0.5.6-SNAPSHOT</weasis.core.version>
