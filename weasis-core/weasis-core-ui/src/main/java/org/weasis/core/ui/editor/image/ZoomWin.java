@@ -475,12 +475,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                     case Cursor.SE_RESIZE_CURSOR:
                         int nw = pickWidth + dx;
                         int nh = pickHeight + dy;
-                        if (nw > 50 && nh > 50 && nw < 500 && nh < 500) {
-                            setSize(pickWidth + dx, pickHeight + dy);
-                            if (getParent() != null) {
-                                // ((JComponent) getParent()).revalidate();
-                            }
-                        }
+                        nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
+                        nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
+                        setSize(nw, nh);
+                        zoom(getCenterX(), getCenterY(), getViewModel().getViewScale());
                         break;
 
                     default:
