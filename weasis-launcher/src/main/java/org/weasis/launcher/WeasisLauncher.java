@@ -210,6 +210,18 @@ public class WeasisLauncher {
         // Load system properties.
         WeasisLauncher.loadSystemProperties();
 
+        String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+        if (portable != null) {
+            File basePortableDir = new File(portable);
+            String baseURL = "";
+            try {
+                baseURL = basePortableDir.toURI().toURL().toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.setProperty("weasis.codebase.url", baseURL + "weasis");
+            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties");
+        }
         // Read configuration properties.
         Properties configProps = WeasisLauncher.loadConfigProperties();
         // If no configuration properties were found, then create
@@ -851,7 +863,8 @@ public class WeasisLauncher {
                         jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html")); //$NON-NLS-1$
                         jTextPane1.setPreferredSize(new Dimension(630, 375));
                         JScrollPane sp = new JScrollPane(jTextPane1);
-                        JOptionPane.showMessageDialog(loader.getWindow(), sp, Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(loader.getWindow(), sp,
+                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -1,28 +1,56 @@
 #!/bin/bash
 
-wdirpath=`pwd`
-execpath="$0"
+function real_path {
+  OIFS=$IFS
+  IFS='/'
+  for I in $1
+  do
+    # Resolve relative path punctuation.
+    if [ "$I" = "." ] || [ -z "$I" ]
+      then continue
+    elif [ "$I" = ".." ]
+      then FOO="${FOO%%/${FOO##*/}}"
+           continue
+      else FOO="${FOO}/${I}"
+    fi
 
-if [ "$wdirpath" = "/" ] ; then
-	fullpath="$execpath"
-else
-	fullpath="$wdirpath/$execpath"
-fi
-#echo "$fullpath"
+    # Dereference symbolic links.
+    if [ -h "$FOO" ] && [ -x "/bin/ls" ]
+      then IFS=$OIFS
+           set `/bin/ls -l "$FOO"`
+           while shift ;
+           do
+             if [ "$1" = "->" ]
+               then FOO=$2
+                    shift $#
+                    break
+             fi
+           done
+    fi
+  done
+  IFS=$OIFS
+  echo "$FOO"
+}
 
-macospath=`dirname $fullpath`
-contentspath=`dirname $macospath`
+fullpath=`pwd -P``real_path "$0"`
+echo "Launcher Path: $fullpath"
+
+macospath=`dirname "$fullpath"`
+contentspath=`dirname "$macospath"`
 resourcespath="$contentspath/Resources"
 basepath="$contentspath"
 for i in {1..2} ; do
-	basepath=`dirname $basepath`
+	basepath=`dirname "$basepath"`
 done
-#echo "$basepath"
+echo "Base Path: $basepath"
 
 # JAVA_HOME is often not in env
 if [ -z "$JAVA_HOME" ] ; then
 	export JAVA_HOME='/System/Library/Frameworks/JavaVM.framework/Home'
 fi
+
+
+
 
 function jversion {
 	if [ -e "$1/bin/java" ] ; then
@@ -78,4 +106,4 @@ echo "Launching Weasis with JAVA_HOME set to $JAVA_HOME"
 
 # launch
 
-$JAVA_HOME/bin/java -Xms64m -Xmx512m -Xdock:name=Weasis -Xdock:icon="$resourcespath/logo-button.icns" -Dapple.laf.useScreenMenuBar=true -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.portable.dir="$basepath" -Dweasis.codebase.url="file://$basepath/weasis" -Dfelix.config.properties="file://$basepath/weasis/conf/config.properties" -classpath "$basepath/weasis/weasis-launcher.jar:$basepath/weasis/felix.jar:$basepath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable
+$JAVA_HOME/bin/java -Xms64m -Xmx512m -Xdock:name=Weasis -Xdock:icon="$resourcespath/logo-button.icns" -Dapple.laf.useScreenMenuBar=true -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.portable.dir="$basepath" -classpath "$basepath/weasis/weasis-launcher.jar:$basepath/weasis/felix.jar:$basepath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable

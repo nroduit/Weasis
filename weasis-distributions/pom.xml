@@ -394,13 +394,11 @@
 										<preCp>weasis\felix.jar;weasis\substance.jar</preCp>
 									</classPath>
 									<jre>
-										<minVersion>1.6.0_10</minVersion>
+										<minVersion>1.6.0</minVersion>
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>512</maxHeapSize>
 										<opts>
 											<opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
-											<opt>-Dweasis.codebase.url=&quot;file:///%EXEDIR%/weasis&quot;</opt>
-											<opt>-Dfelix.config.properties=&quot;file:///%EXEDIR%/weasis/conf/config.properties&quot;</opt>
 										</opts>
 									</jre>
 								</configuration>
