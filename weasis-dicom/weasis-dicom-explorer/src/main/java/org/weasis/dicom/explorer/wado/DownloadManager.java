@@ -71,10 +71,11 @@ public class DownloadManager {
         InputStream stream = null;
         try {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            URL url = uri.toURL();
-            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
 
             String path = uri.getPath();
+
+            URL url = uri.toURL();
+            LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = GzipManager.gzipUncompressToStream(url);
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
@@ -91,8 +92,13 @@ public class DownloadManager {
                     }
                 }
             }
-            File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-            FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+            File tempFile = null;
+            if (uri.toString().startsWith("file:")) {
+                tempFile = new File(path);
+            } else {
+                tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+            }
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
 
             Source xmlFile = new StAXSource(xmler);

@@ -93,6 +93,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     protected boolean readable = true;
     private File thumbnailPath = null;
     private int thumbnailSize;
+    private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
     // Get the closest cursor size regarding to the platform
     private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
         Color.orange, 2));
@@ -150,6 +151,16 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         dragSource.addDragSourceMotionListener(this);
     }
 
+    public synchronized void reBuildThumbnail(MediaSeries.MEDIA_POSITION position) {
+        mediaPosition = position;
+        File old = thumbnailPath;
+        thumbnailPath = null;
+        buildThumbnail();
+        if (old != null) {
+            old.delete();
+        }
+    }
+
     public synchronized void reBuildThumbnail() {
         File old = thumbnailPath;
         thumbnailPath = null;
@@ -163,7 +174,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
-        Object media = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE);
+        Object media = series.getMedia(mediaPosition);
         if (media instanceof MediaElement) {
             MediaElement m = (MediaElement) media;
             String mime = m.getMimeType();
@@ -266,7 +277,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             readable = false;
             BufferedImage thumb = null;
             if (thumbnailPath == null || !thumbnailPath.canRead()) {
-                Object media = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE);
+                Object media = series.getMedia(mediaPosition);
                 if (media instanceof ImageElement) {
                     ImageElement image = (ImageElement) media;
                     PlanarImage imgPl = image.getImage();

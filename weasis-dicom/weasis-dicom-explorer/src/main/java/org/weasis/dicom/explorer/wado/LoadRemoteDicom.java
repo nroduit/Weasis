@@ -34,8 +34,8 @@ import org.weasis.dicom.explorer.DicomModel;
 public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
 
     public final static String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
-    public static final BlockingQueue<Runnable> loadingQueue =
-        new PriorityBlockingQueue<Runnable>(10, new PriorityTaskComparator());
+    public static final BlockingQueue<Runnable> loadingQueue = new PriorityBlockingQueue<Runnable>(10,
+        new PriorityTaskComparator());
     public static final ThreadPoolExecutor executor =
         new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_SERIES_NB, 3),
             BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_SERIES_NB, 3), 0L, TimeUnit.MILLISECONDS,
@@ -92,35 +92,50 @@ public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
         this.dicomModel = (DicomModel) explorerModel;
     }
 
+    public LoadRemoteDicom(File[] xmlFiles, DataExplorerModel explorerModel) {
+        if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
+            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
+        String[] xmlRef = new String[xmlFiles.length];
+        for (int i = 0; i < xmlFiles.length; i++) {
+            if (xmlFiles[i] != null) {
+                xmlRef[i] = xmlFiles[i].getAbsolutePath();
+            }
+        }
+        this.xmlFiles = xmlRef;
+        this.dicomModel = (DicomModel) explorerModel;
+    }
+
     @Override
     protected Boolean doInBackground() throws Exception {
         for (int i = 0; i < xmlFiles.length; i++) {
-            URI uri = null;
-            try {
-                if (!xmlFiles[i].startsWith("http")) { //$NON-NLS-1$
-                    try {
-                        File file = new File(xmlFiles[i]);
-                        if (file.canRead()) {
-                            uri = file.toURI();
+            if (xmlFiles[i] != null) {
+                URI uri = null;
+                try {
+                    if (!xmlFiles[i].startsWith("http")) { //$NON-NLS-1$
+                        try {
+                            File file = new File(xmlFiles[i]);
+                            if (file.canRead()) {
+                                uri = file.toURI();
+                            }
+                        } catch (Exception e) {
                         }
-                    } catch (Exception e) {
                     }
-                }
-                if (uri == null) {
-                    uri = new URL(xmlFiles[i]).toURI();
-                }
-                ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
-                if (wadoTasks != null) {
-                    for (LoadSeries s : wadoTasks) {
-                        loadingQueue.offer(s);
+                    if (uri == null) {
+                        uri = new URL(xmlFiles[i]).toURI();
                     }
+                    ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
+                    if (wadoTasks != null) {
+                        for (LoadSeries s : wadoTasks) {
+                            loadingQueue.offer(s);
+                        }
+                    }
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
                 }
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
             }
-
         }
 
         Runnable[] tasks = loadingQueue.toArray(new Runnable[loadingQueue.size()]);

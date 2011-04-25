@@ -373,7 +373,9 @@ public class WeasisLauncher {
                 list.add(command);
             }
         }
-        // System.out.println("Arguments:" + result.toString());
+        // for (StringBuffer stringBuffer : list) {
+        // System.out.println("Command:" + stringBuffer);
+        // }
         return list;
     }
 

@@ -56,6 +56,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -82,6 +83,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -1710,6 +1712,46 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                     });
                     popupMenu.add(item2);
+                    if (series.getMedias().size() > 1) {
+                        if (series.getMedia(0) instanceof ImageElement) {
+                            popupMenu.add(new JSeparator());
+                            JMenu menu = new JMenu("Rebuild Thumbnail");
+                            item2 = new JMenuItem("From first image");
+                            item2.addActionListener(new ActionListener() {
+
+                                public void actionPerformed(ActionEvent e) {
+                                    Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                    if (t != null) {
+                                        t.reBuildThumbnail(MEDIA_POSITION.FIRST);
+                                    }
+                                }
+                            });
+                            menu.add(item2);
+                            item2 = new JMenuItem("From middle image");
+                            item2.addActionListener(new ActionListener() {
+
+                                public void actionPerformed(ActionEvent e) {
+                                    Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                    if (t != null) {
+                                        t.reBuildThumbnail(MEDIA_POSITION.MIDDLE);
+                                    }
+                                }
+                            });
+                            menu.add(item2);
+                            item2 = new JMenuItem("From last image");
+                            item2.addActionListener(new ActionListener() {
+
+                                public void actionPerformed(ActionEvent e) {
+                                    Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                    if (t != null) {
+                                        t.reBuildThumbnail(MEDIA_POSITION.LAST);
+                                    }
+                                }
+                            });
+                            menu.add(item2);
+                            popupMenu.add(menu);
+                        }
+                    }
                     popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
 
                 } else {

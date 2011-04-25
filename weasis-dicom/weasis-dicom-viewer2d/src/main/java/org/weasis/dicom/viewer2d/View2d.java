@@ -767,8 +767,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             menu.add(new JSeparator());
                             menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
                                 .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
-                            popupMenu.add(menu);
                         }
+                        popupMenu.add(menu);
                     }
                     AbstractLayer layer = getLayerModel().getLayer(Tools.MEASURE.getId());
                     if (layer != null) {

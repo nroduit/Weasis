@@ -12,7 +12,9 @@ package org.weasis.dicom.explorer;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +26,7 @@ import java.util.concurrent.Executors;
 
 import javax.swing.SwingUtilities;
 
+import org.noos.xing.mydoggy.plaf.persistence.xml.Base64;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +37,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.Tree;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -41,6 +45,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -453,7 +458,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final String[] usage = { "Load DICOM files remotely or locally", "Usage: dicom:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
             "  -l --local		Open DICOMs from local disk", //$NON-NLS-1$
             "  -p --portable       Open DICOMs from default directories at the same level of the executable", //$NON-NLS-1$
-            "  -w --wado		Open DICOMs from an XML file containing UIDs", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+            "  -i --iwado        Open DICOMs from an XML (GZIP, Base64) file containing UIDs", //$NON-NLS-1$
+            "  -w --wado		Open DICOMs from an XML (URL) file containing UIDs", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
@@ -480,6 +486,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
                     loadingExecutor.execute(new LoadRemoteDicom(args.toArray(new String[args.size()]), DicomModel.this));
+                } else if (opt.isSet("iwado")) { //$NON-NLS-1$
+                    String[] xmlRef = args.toArray(new String[args.size()]);
+                    File[] xmlFiles = new File[args.size()];
+                    for (int i = 0; i < xmlFiles.length; i++) {
+                        try {
+                            File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            FileUtil.writeFile(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
+                                new FileOutputStream(tempFile));
+                            xmlFiles[i] = tempFile;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    loadingExecutor.execute(new LoadRemoteDicom(xmlFiles, DicomModel.this));
                 }
                 // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
                 // executable file

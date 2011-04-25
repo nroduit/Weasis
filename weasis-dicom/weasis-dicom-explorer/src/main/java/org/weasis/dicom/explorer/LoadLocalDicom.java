@@ -25,6 +25,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -97,6 +98,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         if (file == null || file.length < 1) {
             return;
         }
+        final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
             if (file[i].isDirectory()) {
@@ -114,10 +116,20 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                            buildDicomStructure(loader, openPlugin);
+                            Thumbnail t = buildDicomStructure(loader, openPlugin);
+                            if (t != null) {
+                                thumbs.add(t);
+                            }
                         }
                     }
                 }
+            }
+        }
+        for (Thumbnail t : thumbs) {
+            MediaSeries series = t.getSeries();
+            // Avoid to rebuild most of CR series thumbnail
+            if (series != null && series.getMedias().size() > 2) {
+                t.reBuildThumbnail();
             }
         }
         for (int i = 0; i < folders.size(); i++) {
@@ -146,8 +158,6 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     if (DicomMediaIO.MIMETYPE.equals(mime)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
-                            // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                            // buildDicomStructure(loader, openPlugin);
                             files.add(loader);
                         }
                     }
@@ -163,8 +173,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         }
     }
 
-    private void buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
-
+    private Thumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
+        Thumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
@@ -199,14 +209,16 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
 
                 // Load image and create thumbnail in this Thread
-                Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                if (thumb == null) {
-                    thumb = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
-                    dicomSeries.setTag(TagW.Thumbnail, thumb);
+                Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                if (t == null) {
+                    t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
+                    dicomSeries.setTag(TagW.Thumbnail, t);
                 }
 
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null,
                     dicomSeries));
+                // After the thumbnail is sent to interface, it will be return to be rebuilt later
+                thumb = t;
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
                 Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
                 if (splitNb != null || dicomObject != null) {
@@ -228,19 +240,20 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
                     if (medias.length > 0) {
-                        Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                        if (thumb != null) {
-                            thumb.repaint();
+                        // Refresh the number of images on the thumbnail
+                        Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                        if (t != null) {
+                            t.repaint();
                         }
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return;
         } finally {
             dicomReader.reset();
         }
+        return thumb;
     }
 
     private void buildDicomStructure(ArrayList<DicomMediaIO> seriesList, boolean open) {
