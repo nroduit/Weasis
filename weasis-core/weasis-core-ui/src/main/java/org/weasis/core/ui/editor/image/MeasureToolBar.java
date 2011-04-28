@@ -101,7 +101,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         JPopupMenu popupMouseButtons = new JPopupMenu();
         if (measure instanceof ComboItemListener) {
-            JMenu menu = ((ComboItemListener) measure).createUnregisteredRadioMenu("measure"); //$NON-NLS-1$
+            JMenu menu = ((ComboItemListener) measure).createMenu(ActionW.DRAW_MEASURE.cmd()); //$NON-NLS-1$
             popupMouseButtons.setInvoker(dropDownButton);
             Component[] cps = menu.getMenuComponents();
             for (int i = 0; i < cps.length; i++) {

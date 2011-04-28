@@ -41,9 +41,9 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MiniToolDockable;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
@@ -153,7 +153,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public synchronized PluginTool[] getToolPanel() {
         if (toolPanels == null) {
             toolPanels = new PluginTool[3];
-            toolPanels[0] = new MiniToolDockable("Mini", null) {
+            toolPanels[0] = new MiniTool("Mini", null) {
 
                 @Override
                 public SliderChangeListener[] getActions() {

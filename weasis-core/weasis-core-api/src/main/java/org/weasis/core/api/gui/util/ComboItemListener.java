@@ -25,7 +25,7 @@ import javax.swing.event.ListDataListener;
 public abstract class ComboItemListener implements ListDataListener, ChangeListener, ActionState {
 
     protected final ActionW action;
-    protected final ArrayList<JComponent> itemList;
+    protected final ArrayList<Object> itemList;
     protected final DefaultComboBoxModel model;
     private boolean enable;
 
@@ -33,7 +33,7 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         super();
         this.action = action;
         enable = true;
-        itemList = new ArrayList<JComponent>();
+        itemList = new ArrayList<Object>();
         model = new DefaultComboBoxModel(objects);
         model.addListDataListener(this);
     }
@@ -53,8 +53,12 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
 
     public void enableAction(boolean enabled) {
         this.enable = enabled;
-        for (JComponent c : itemList) {
-            c.setEnabled(enabled);
+        for (Object c : itemList) {
+            if (c instanceof JComponent) {
+                ((JComponent) c).setEnabled(enabled);
+            } else if (c instanceof JToogleButtonGroup) {
+                ((JToogleButtonGroup) c).setEnabled(enabled);
+            }
         }
     }
 
@@ -74,26 +78,29 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
      * 
      * @param slider
      */
-    public void registerComponent(JComponent component) {
+    public void registerComponent(Object component) {
         if (!itemList.contains(component)) {
             itemList.add(component);
             if (component instanceof JComboBox) {
                 ((JComboBox) component).setModel(model);
                 ((JComboBox) component).setEnabled(enable);
-            }
-            if (component instanceof JMenu) {
+            } else if (component instanceof JMenu) {
                 setUnregisteredRadioMenu((JMenu) component);
+            } else if (component instanceof JToogleButtonGroup) {
+                ((JToogleButtonGroup) component).setModel(model);
+                ((JToogleButtonGroup) component).setEnabled(enable);
             }
         }
     }
 
-    public void unregisterJComponent(JComponent component) {
+    public void unregisterJComponent(Object component) {
         itemList.remove(component);
         if (component instanceof JComboBox) {
             ((JComboBox) component).setModel(new DefaultComboBoxModel());
-        }
-        if (component instanceof JMenu) {
+        } else if (component instanceof JMenu) {
             ((JMenu) component).setModel(new DefaultButtonModel());
+        } else if (component instanceof JToogleButtonGroup) {
+            ((JToogleButtonGroup) component).setModel(null);
         }
     }
 
@@ -133,9 +140,11 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
                 }
             }
 
-            for (JComponent c : itemList) {
+            for (Object c : itemList) {
                 if (c instanceof JMenu) {
                     setUnregisteredRadioMenu((JMenu) c);
+                } else if (c instanceof JToogleButtonGroup) {
+                    ((JToogleButtonGroup) c).setModel(model);
                 }
             }
 
@@ -162,6 +171,12 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
             menu.setEnabled(false);
         }
         return menu;
+    }
+
+    public JToogleButtonGroup createButtonGroup() {
+        final JToogleButtonGroup group = new JToogleButtonGroup();
+        registerComponent(group);
+        return group;
     }
 
     public JComboBox createCombo() {

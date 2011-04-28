@@ -53,9 +53,10 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MiniToolDockable;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -199,8 +200,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public PluginTool[] getToolPanel() {
         if (toolPanels == null) {
-            toolPanels = new PluginTool[3];
-            toolPanels[0] = new MiniToolDockable(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+            toolPanels = new PluginTool[4];
+            toolPanels[0] = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
 
                     @Override
                     public SliderChangeListener[] getActions() {
@@ -227,6 +228,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             toolPanels[1].registerToolAsDockable();
             toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME, null);
             toolPanels[2].registerToolAsDockable();
+            toolPanels[3] = new MeasureTool(MeasureTool.BUTTON_NAME, null, eventManager);
+            toolPanels[3].registerToolAsDockable();
             eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
             // toolPanels[3] = new DrawToolsDockable();
         }

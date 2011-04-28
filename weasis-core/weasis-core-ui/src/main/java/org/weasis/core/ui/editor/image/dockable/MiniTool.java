@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.ui.editor.image;
+package org.weasis.core.ui.editor.image.dockable;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -33,14 +33,14 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.util.WtoolBar;
 
-public abstract class MiniToolDockable extends PluginTool implements ActionListener {
+public abstract class MiniTool extends PluginTool implements ActionListener {
 
     public final static String BUTTON_NAME = Messages.getString("MiniToolDockable.title"); //$NON-NLS-1$
 
     private SliderChangeListener currentAction;
     private final JSliderW slider;
 
-    public MiniToolDockable(String pluginName, Icon icon) {
+    public MiniTool(String pluginName, Icon icon) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
         setDockableWidth(40);
         currentAction = getActions()[0];
