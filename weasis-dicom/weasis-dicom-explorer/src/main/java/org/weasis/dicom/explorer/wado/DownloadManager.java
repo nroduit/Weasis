@@ -93,7 +93,7 @@ public class DownloadManager {
                 }
             }
             File tempFile = null;
-            if (uri.toString().startsWith("file:")) {
+            if (uri.toString().startsWith("file:") && path.endsWith(".xml")) {
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$

@@ -262,6 +262,10 @@ public class DicomImageReader extends ImageReader {
         dis = new DicomInputStream(iis);
         dis.setHandler(new StopTagInputHandler(Tag.PixelData));
         ds = dis.readDicomObject();
+        while (dis.tag() == 0xFFFCFFFC) {
+            dis.readBytes(dis.valueLength());
+            dis.readDicomObject(ds, -1);
+        }
         streamMetaData = new DicomStreamMetaData();
         streamMetaData.setDicomObject(ds);
         bigEndian = dis.getTransferSyntax().bigEndian();
