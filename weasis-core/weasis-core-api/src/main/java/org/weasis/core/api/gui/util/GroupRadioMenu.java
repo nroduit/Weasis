@@ -21,10 +21,8 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JMenu;
 import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
-
-public class GroupRadioMenu implements ActionListener, ListDataListener {
+public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
 
     protected final List<RadioMenuItem> itemList;
     protected ComboBoxModel dataModel;
@@ -123,6 +121,30 @@ public class GroupRadioMenu implements ActionListener, ListDataListener {
 
     public Object getSelectedItem() {
         return dataModel.getSelectedItem();
+    }
+
+    public ComboBoxModel getModel() {
+        return dataModel;
+    }
+
+    @Override
+    public void setModel(ComboBoxModel dataModel) {
+        boolean changeListener = dataModel != null && dataModel != this.dataModel;
+        if (this.dataModel != null) {
+            this.dataModel.removeListDataListener(this);
+        }
+        this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
+        init();
+        if (changeListener) {
+            this.dataModel.addListDataListener(this);
+        }
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        for (int i = 0; i < itemList.size(); i++) {
+            itemList.get(i).setEnabled(enabled);
+        }
     }
 
 }

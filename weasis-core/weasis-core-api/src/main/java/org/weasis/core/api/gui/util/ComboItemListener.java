@@ -12,10 +12,8 @@ package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
 
-import javax.swing.DefaultButtonModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -25,7 +23,7 @@ import javax.swing.event.ListDataListener;
 public abstract class ComboItemListener implements ListDataListener, ChangeListener, ActionState {
 
     protected final ActionW action;
-    protected final ArrayList<Object> itemList;
+    protected final ArrayList<ComboBoxModelAdapter> itemList;
     protected final DefaultComboBoxModel model;
     private boolean enable;
 
@@ -33,7 +31,7 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         super();
         this.action = action;
         enable = true;
-        itemList = new ArrayList<Object>();
+        itemList = new ArrayList<ComboBoxModelAdapter>();
         model = new DefaultComboBoxModel(objects);
         model.addListDataListener(this);
     }
@@ -53,12 +51,8 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
 
     public void enableAction(boolean enabled) {
         this.enable = enabled;
-        for (Object c : itemList) {
-            if (c instanceof JComponent) {
-                ((JComponent) c).setEnabled(enabled);
-            } else if (c instanceof JToogleButtonGroup) {
-                ((JToogleButtonGroup) c).setEnabled(enabled);
-            }
+        for (ComboBoxModelAdapter c : itemList) {
+            c.setEnabled(enabled);
         }
     }
 
@@ -78,30 +72,17 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
      * 
      * @param slider
      */
-    public void registerComponent(Object component) {
+    public void registerComponent(ComboBoxModelAdapter component) {
         if (!itemList.contains(component)) {
             itemList.add(component);
-            if (component instanceof JComboBox) {
-                ((JComboBox) component).setModel(model);
-                ((JComboBox) component).setEnabled(enable);
-            } else if (component instanceof JMenu) {
-                setUnregisteredRadioMenu((JMenu) component);
-            } else if (component instanceof JToogleButtonGroup) {
-                ((JToogleButtonGroup) component).setModel(model);
-                ((JToogleButtonGroup) component).setEnabled(enable);
-            }
+            component.setModel(model);
+            component.setEnabled(enable);
         }
     }
 
-    public void unregisterJComponent(Object component) {
+    public void unregisterJComponent(ComboBoxModelAdapter component) {
         itemList.remove(component);
-        if (component instanceof JComboBox) {
-            ((JComboBox) component).setModel(new DefaultComboBoxModel());
-        } else if (component instanceof JMenu) {
-            ((JMenu) component).setModel(new DefaultButtonModel());
-        } else if (component instanceof JToogleButtonGroup) {
-            ((JToogleButtonGroup) component).setModel(null);
-        }
+        component.setModel(new DefaultComboBoxModel());
     }
 
     public synchronized Object[] getAllItem() {
@@ -140,12 +121,8 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
                 }
             }
 
-            for (Object c : itemList) {
-                if (c instanceof JMenu) {
-                    setUnregisteredRadioMenu((JMenu) c);
-                } else if (c instanceof JToogleButtonGroup) {
-                    ((JToogleButtonGroup) c).setModel(model);
-                }
+            for (ComboBoxModelAdapter c : itemList) {
+                c.setModel(model);
             }
 
             model.addListDataListener(this);
@@ -180,14 +157,26 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
     }
 
     public JComboBox createCombo() {
-        final JComboBox combo = new JComboBox();
+        final ComboItems combo = new ComboItems();
         registerComponent(combo);
         return combo;
     }
 
     public JMenu createMenu(String title) {
         JMenu menu = new JMenu(title);
-        registerComponent(menu);
+        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        radioMenu.fillMenu(menu);
+        // registerComponent(radioMenu);
         return menu;
+    }
+
+    public GroupRadioMenu createGroupRadioMenu() {
+        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        registerComponent(radioMenu);
+        return radioMenu;
+    }
+
+    static class ComboItems extends JComboBox implements ComboBoxModelAdapter {
+
     }
 }

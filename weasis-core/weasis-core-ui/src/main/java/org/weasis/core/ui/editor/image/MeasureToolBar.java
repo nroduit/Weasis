@@ -109,6 +109,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         JPopupMenu popupMouseButtons = new JPopupMenu();
         if (measure instanceof ComboItemListener) {
+            // Create dropbutton with the model GroupRadioMenu
+            // GroupRadioMenu menu = ((ComboItemListener) measure).createGroupRadioMenu();
             JMenu menu = ((ComboItemListener) measure).createMenu(ActionW.DRAW_MEASURE.cmd()); //$NON-NLS-1$
             popupMouseButtons.setInvoker(dropDownButton);
             Component[] cps = menu.getMenuComponents();

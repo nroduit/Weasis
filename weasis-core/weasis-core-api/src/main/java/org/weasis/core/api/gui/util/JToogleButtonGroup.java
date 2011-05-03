@@ -22,9 +22,8 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JToggleButton;
 import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
-public class JToogleButtonGroup implements ActionListener, ListDataListener {
+public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter {
 
     protected final List<JToggleButton> itemList;
     protected final HashMap<JToggleButton, Object> map = new HashMap<JToggleButton, Object>();
@@ -53,7 +52,8 @@ public class JToogleButtonGroup implements ActionListener, ListDataListener {
         }
     }
 
-    void setModel(DefaultComboBoxModel dataModel) {
+    @Override
+    public void setModel(ComboBoxModel dataModel) {
         boolean changeListener = dataModel != null && dataModel != this.dataModel;
         if (this.dataModel != null) {
             this.dataModel.removeListDataListener(this);
@@ -124,6 +124,7 @@ public class JToogleButtonGroup implements ActionListener, ListDataListener {
         return dataModel.getSelectedItem();
     }
 
+    @Override
     public void setEnabled(boolean enabled) {
         for (int i = 0; i < itemList.size(); i++) {
             itemList.get(i).setEnabled(enabled);
