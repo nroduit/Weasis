@@ -10,7 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.api.image.util;
 
-import java.util.Vector;
+import java.awt.Point;
+import java.util.ArrayList;
 
 public class Statistics {
 
@@ -27,13 +28,14 @@ public class Statistics {
      * This constructor creates a new <tt>Statistics</tt> object, and initializes the data array with an array of
      * Objects that must be convertable to numeric values.
      */
-    public Statistics(Vector sumXY) {
-        x = new int[sumXY.size()];
-        y = new int[sumXY.size()];
+    public Statistics(ArrayList<Point> arrayList) {
+        x = new int[arrayList.size()];
+        y = new int[arrayList.size()];
 
-        for (int i = 0; i < sumXY.size(); i++) {
-            x[i] = ((int[]) (sumXY.elementAt(i)))[0];
-            y[i] = ((int[]) (sumXY.elementAt(i)))[1];
+        for (int i = 0; i < arrayList.size(); i++) {
+            Point p = arrayList.get(i);
+            x[i] = p.x;
+            y[i] = p.y;
         }
         mx = mean(x);
         my = mean(y);

@@ -25,6 +25,8 @@ import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -42,7 +44,7 @@ import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.WtoolBar;
 
-public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
+public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements ChangeListener {
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
     public static final LineGraphic lineGraphic = new LineGraphic(2.0f, Color.YELLOW);
@@ -77,6 +79,12 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
                 }
             };
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
+        ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
+        if (measure instanceof ComboItemListener) {
+            // ((ComboItemListener) measure).registerComponent(measureButton);
+            // measureButton.addChangeListener(this);
+        }
+
         add(measureButton);
 
         // add(measureButtonGap);
@@ -107,7 +115,21 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
             for (int i = 0; i < cps.length; i++) {
                 if (cps[i] instanceof JRadioButtonMenuItem) {
                     JRadioButtonMenuItem item = (JRadioButtonMenuItem) cps[i];
-                    item.addActionListener(this);
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (e.getSource() instanceof JRadioButtonMenuItem) {
+                                JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
+                                if (item.getParent() instanceof JPopupMenu) {
+                                    JPopupMenu pop = (JPopupMenu) item.getParent();
+                                    if (pop.getInvoker() instanceof DropDownButton) {
+                                        changeButtonState(item.getActionCommand());
+                                    }
+                                }
+                            }
+                        }
+                    });
                     popupMouseButtons.add(item);
                 }
             }
@@ -124,11 +146,13 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
     }
 
     public void changeButtonState(String action) {
-        final Graphic graphic = getGraphic(action);
-        Icon icon = buildIcon(graphic);
-        measureButton.setIcon(icon);
-        measureButton.setActionCommand(action);
-
+        String cmd = measureButton.getActionCommand();
+        if (!(action == null && cmd == null) && (action == null || !action.equals(measureButton.getActionCommand()))) {
+            final Graphic graphic = getGraphic(action);
+            Icon icon = buildIcon(graphic);
+            measureButton.setIcon(icon);
+            measureButton.setActionCommand(action);
+        }
     }
 
     private Icon buildIcon(final Graphic graphic) {
@@ -171,7 +195,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         return null;
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+    public void stateChanged(ChangeEvent e) {
         if (e.getSource() instanceof JRadioButtonMenuItem) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
             if (item.getParent() instanceof JPopupMenu) {

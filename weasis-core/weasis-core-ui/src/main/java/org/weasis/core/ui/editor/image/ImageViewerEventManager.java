@@ -425,6 +425,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                     selectedView2dContainer.setDrawActions((Graphic) object);
                 }
             }
+
         };
     }
 
