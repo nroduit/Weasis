@@ -63,6 +63,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final ToggleButtonListener inverseLutAction;
     private final ToggleButtonListener inverseStackAction;
     private final ToggleButtonListener showLensAction;
+    private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener lutAction;
     private final ComboItemListener filterAction;
@@ -103,6 +104,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(inverseLutAction = newInverseLutAction());
         iniAction(inverseStackAction = newInverseStackAction());
         iniAction(showLensAction = newLensAction());
+        iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(lutAction = getLutAction());
         iniAction(filterAction = getFilterAction());

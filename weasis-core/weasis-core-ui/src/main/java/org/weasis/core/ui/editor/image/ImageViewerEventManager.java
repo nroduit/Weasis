@@ -429,6 +429,17 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
+    protected ToggleButtonListener newDrawOnlyOnceAction() {
+        return new ToggleButtonListener(ActionW.DRAW_ONLY_ONCE, true) {
+
+            @Override
+            public void actionPerformed(boolean selected) {
+                firePropertyChange(action.cmd(), null, selected);
+            }
+
+        };
+    }
+
     public abstract boolean updateComponentsListener(DefaultView2d<E> defaultView2d);
 
     private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {

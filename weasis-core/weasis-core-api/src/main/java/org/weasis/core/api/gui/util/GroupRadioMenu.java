@@ -20,6 +20,7 @@ import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JMenu;
+import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
 
 public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
@@ -28,10 +29,7 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
     protected ComboBoxModel dataModel;
 
     public GroupRadioMenu(DefaultComboBoxModel dataModel) {
-        this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
         this.itemList = new ArrayList<RadioMenuItem>();
-        init();
-        this.dataModel.addListDataListener(this);
     }
 
     private void init() {
@@ -58,6 +56,14 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
             menu.add(itemList.get(i));
         }
         return menu;
+    }
+
+    public JPopupMenu createJPopupMenu() {
+        JPopupMenu popupMouseButtons = new JPopupMenu();
+        for (int i = 0; i < itemList.size(); i++) {
+            popupMouseButtons.add(itemList.get(i));
+        }
+        return popupMouseButtons;
     }
 
     public JMenu createMenu(String title) {

@@ -15,24 +15,22 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import javax.swing.Box;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.ListDataEvent;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
@@ -44,7 +42,7 @@ import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.WtoolBar;
 
-public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements ChangeListener {
+public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic();
     public static final LineGraphic lineGraphic = new LineGraphic(2.0f, Color.YELLOW);
@@ -62,7 +60,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
     }
     protected final JButton jButtondelete = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
-    protected final DropDownButton measureButton;
+    protected final MeasureButton measureButton;
     protected final ImageViewerEventManager<E> eventManager;
 
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager) {
@@ -71,19 +69,16 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
         this.eventManager = eventManager;
-        measureButton = new DropDownButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic)) { //$NON-NLS-1$
 
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    return getMeasureToolPopupMenuButton(this);
-                }
-            };
-        measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
+        GroupRadioMenu menu = null;
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         if (measure instanceof ComboItemListener) {
-            // ((ComboItemListener) measure).registerComponent(measureButton);
-            // measureButton.addChangeListener(this);
+            ComboItemListener m = (ComboItemListener) measure;
+            menu = new MeasureGroupMenu(m.getModel());
+            m.registerComponent(menu);
         }
+        measureButton = new MeasureButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu);
+        measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
 
         add(measureButton);
 
@@ -105,40 +100,6 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         add(jButtondelete);
     }
 
-    private JPopupMenu getMeasureToolPopupMenuButton(final DropDownButton dropDownButton) {
-        ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
-        JPopupMenu popupMouseButtons = new JPopupMenu();
-        if (measure instanceof ComboItemListener) {
-            // Create dropbutton with the model GroupRadioMenu
-            // GroupRadioMenu menu = ((ComboItemListener) measure).createGroupRadioMenu();
-            JMenu menu = ((ComboItemListener) measure).createMenu(ActionW.DRAW_MEASURE.cmd()); //$NON-NLS-1$
-            popupMouseButtons.setInvoker(dropDownButton);
-            Component[] cps = menu.getMenuComponents();
-            for (int i = 0; i < cps.length; i++) {
-                if (cps[i] instanceof JRadioButtonMenuItem) {
-                    JRadioButtonMenuItem item = (JRadioButtonMenuItem) cps[i];
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            if (e.getSource() instanceof JRadioButtonMenuItem) {
-                                JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                if (item.getParent() instanceof JPopupMenu) {
-                                    JPopupMenu pop = (JPopupMenu) item.getParent();
-                                    if (pop.getInvoker() instanceof DropDownButton) {
-                                        changeButtonState(item.getActionCommand());
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    popupMouseButtons.add(item);
-                }
-            }
-        }
-        return popupMouseButtons;
-    }
-
     protected AbstractLayerModel getCurrentLayerModel() {
         DefaultView2d view = eventManager.getSelectedViewPane();
         if (view != null) {
@@ -147,17 +108,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         return null;
     }
 
-    public void changeButtonState(String action) {
-        String cmd = measureButton.getActionCommand();
-        if (!(action == null && cmd == null) && (action == null || !action.equals(measureButton.getActionCommand()))) {
-            final Graphic graphic = getGraphic(action);
-            Icon icon = buildIcon(graphic);
-            measureButton.setIcon(icon);
-            measureButton.setActionCommand(action);
-        }
-    }
-
-    private Icon buildIcon(final Graphic graphic) {
+    public static Icon buildIcon(final Graphic graphic) {
 
         return new DropButtonIcon(new Icon() {
 
@@ -186,7 +137,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         });
     }
 
-    public Graphic getGraphic(String action) {
+    public static Graphic getGraphic(String action) {
         if (action != null) {
             for (Graphic g : graphicList) {
                 if (action.equals(g.toString())) {
@@ -197,17 +148,42 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar implements 
         return null;
     }
 
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        if (e.getSource() instanceof JRadioButtonMenuItem) {
-            JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-            if (item.getParent() instanceof JPopupMenu) {
-                JPopupMenu pop = (JPopupMenu) item.getParent();
-                if (pop.getInvoker() instanceof DropDownButton) {
-                    changeButtonState(item.getActionCommand());
-                }
+    static class MeasureButton extends DropDownButton {
+        private final GroupRadioMenu model;
+
+        public MeasureButton(String type, Icon icon, GroupRadioMenu model) {
+            super(type, icon);
+            this.model = model;
+        }
+
+        @Override
+        protected JPopupMenu getPopupMenu() {
+            JPopupMenu menu = (model == null) ? new JPopupMenu() : model.createJPopupMenu();
+            menu.setInvoker(this);
+            return menu;
+        }
+
+    }
+
+    class MeasureGroupMenu extends GroupRadioMenu {
+
+        public MeasureGroupMenu(DefaultComboBoxModel dataModel) {
+            super(dataModel);
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent e) {
+            super.contentsChanged(e);
+            changeButtonState();
+        }
+
+        public void changeButtonState() {
+            Object sel = dataModel.getSelectedItem();
+            if (sel instanceof Graphic && measureButton != null) {
+                Icon icon = buildIcon((Graphic) sel);
+                measureButton.setIcon(icon);
+                measureButton.setActionCommand(sel.toString());
             }
         }
     }
-
 }

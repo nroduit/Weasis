@@ -39,6 +39,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -51,6 +52,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
+import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -85,6 +87,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ToggleButtonListener inverseStackAction;
     private final ToggleButtonListener showLensAction;
     private final ToggleButtonListener imageOverlayAction;
+    private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener presetAction;
     private final ComboItemListener lutAction;
@@ -131,6 +134,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(showLensAction = newLensAction());
         iniAction(lensZoomAction = newLensZoomAction());
         iniAction(imageOverlayAction = newImageOverlayAction());
+        iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(presetAction = newPresetAction());
         iniAction(lutAction = newLutAction());
@@ -635,6 +639,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             .cmd()));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
+
+        for (PluginTool p : selectedView2dContainer.getToolPanel()) {
+            if (p instanceof GraphicsListener) {
+                defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+            }
+        }
+
         return true;
     }
 

@@ -69,6 +69,7 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         getModel().setRollover(false);
         getModel().setSelected(false);
         ((JPopupMenu) e.getSource()).removePopupMenuListener(this);
+        ((JPopupMenu) e.getSource()).removeAll();
     }
 
     public void popupMenuCanceled(PopupMenuEvent e) {

@@ -43,7 +43,16 @@ public class JToogleButtonGroup implements ActionListener, ComboBoxModelAdapter 
             if (object instanceof GUIEntry) {
                 icon = ((GUIEntry) object).getIcon();
             }
-            JToggleButton b = new JToggleButton(object.toString(), icon);
+            JToggleButton b = new JToggleButton(icon);
+            b.setToolTipText(object.toString());
+            // b.setMargin(new Insets(2, 2, 2, 2));
+            // // b.setUI(new VLButtonUI());
+            // b.setBorder(null);
+            // b.setRolloverEnabled(true);
+            // b.setContentAreaFilled(false);
+            // b.setOpaque(false);
+            // b.setBorderPainted(false);
+
             map.put(b, object);
             b.setSelected(object == selectedItem);
             group.add(b);

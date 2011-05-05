@@ -58,8 +58,10 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -885,6 +887,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (ds != null) {
                     if (ds.completeDrag(mouseevent)) {
                         ds = null;
+
+                        ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
+                        if (drawOnceAction instanceof ToggleButtonListener) {
+                            if (((ToggleButtonListener) drawOnceAction).isSelected()) {
+                                ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
+                                if (measure instanceof ComboItemListener) {
+                                    ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
+                                }
+                            }
+                        }
                     }
                     return;
                 }
@@ -1006,10 +1018,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
 
                     if (ds.completeDrag(mouseevent)) {
-                        // int j = showDraws.getSelectedGraphics() != null ? showDraws.getSelectedGraphics().size() : 0;
-                        // if (j == 1) {
-                        // showDraws.oneSelectedGraphicUpdateInterface();
-                        // }
+                        // Throws to the tool listener the current graphic selection.
+                        model.fireGraphicsSelectionChanged(getImage());
+
+                        ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
+                        if (drawOnceAction instanceof ToggleButtonListener) {
+                            if (((ToggleButtonListener) drawOnceAction).isSelected()) {
+                                ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
+                                if (measure instanceof ComboItemListener) {
+                                    ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
+                                }
+                            }
+                        }
                         ds = null;
                     }
                     model.changeCursorDesign(mouseevent);

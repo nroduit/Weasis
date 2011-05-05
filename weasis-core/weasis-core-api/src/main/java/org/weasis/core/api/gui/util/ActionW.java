@@ -62,7 +62,8 @@ public class ActionW {
     public static final ActionW DRAW = new ActionW(Messages.getString("ActionW.draw"), "draw", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW MEASURE = new ActionW(
         Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW DRAW_MEASURE = new ActionW(Messages.getString("ActionW.measurement"), "measurement", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW DRAW_MEASURE = new ActionW(
+        Messages.getString("ActionW.measurement"), "measurement", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW CONTEXTMENU = new ActionW(
         Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -78,7 +79,8 @@ public class ActionW {
     public static final ActionW LENS = new ActionW("", "showLens", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW FILTER = new ActionW("", "filter", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
-    public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$ 
+    public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW DRAW_ONLY_ONCE = new ActionW("Draw only once", "drawOnce", 0, 0, null); //$NON-NLS-2$
 
     // keep TempLayer in last position
 

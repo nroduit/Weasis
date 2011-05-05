@@ -1,6 +1,5 @@
 package org.weasis.core.ui.graphic;
 
-import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
@@ -8,7 +7,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Statistics;
 
@@ -18,35 +16,23 @@ import org.weasis.core.api.image.util.Statistics;
 
 public class Measure2DAnalyse {
     public final static String[] measurList = { "Box X min", "Box Y min", "Box X width", "Box Y height", "Area",
-        "Perimeter", "Barycenter x", "Barycenter y", "Orientation", "Length", "width", "Eccentricity", "Color (RGB)" };
+        "Perimeter", "Barycenter x", "Barycenter y", "Orientation", "Length", "width", "Eccentricity" };
     public final static int[] positionParameters = { 0, 1, 2, 3, 6, 7 };
-    public final static int[] basicParameters = { 4, 5, 8, 9, 10, 11, 12 };
+    public final static int[] basicParameters = { 4, 5, 8, 9, 10, 11 };
 
     private Statistics stat;
     private Shape shape;
     private MeasurementsAdapter adapter;
     private BlobAnalyse2D blob = null;
-    private Color color = null;
 
-    public Measure2DAnalyse(Shape shape, MeasurementsAdapter adapter, Color color) {
+    public Measure2DAnalyse(Shape shape, MeasurementsAdapter adapter) {
+        // TODO transform the shape according the x y calibration
         this.shape = shape;
         this.adapter = adapter;
-        this.color = color;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        this.shape = null;
-        this.adapter = null;
-        this.stat = null;
-        this.blob = null;
-        this.color = null;
-        super.finalize();
     }
 
     public java.util.List getAnalyse(boolean[] selected, int nbMeasures) {
         ArrayList measVal = new ArrayList(nbMeasures);
-        double calibRatio = adapter.getCalibrationRatio();
         // Mesure 3, 4, 5 et 6 : boundingBox
         if (selected[0]) {
             measVal.add(adapter.getXCalibratedValue(shape.getBounds().getX()));
@@ -62,11 +48,11 @@ public class Measure2DAnalyse {
         }
         if (selected[4]) {
             // Mesure 7 : Area, retourne l'aire du blob calibré ou non calibré
-            measVal.add(calibRatio * calibRatio * getArea());
+            measVal.add(adapter.getCalibRatioX() * adapter.getCalibRatioY() * getArea());
         }
         if (selected[5]) {
             // Mesure 8 : Perimeter, retourne le périmètre du blob calibré ou non calibré
-            measVal.add(calibRatio * getPerimeter());
+            measVal.add(adapter.getCalibRatioX() * getPerimeter());
         }
         if (selected[6] || selected[7] || selected[8] || selected[9] || selected[10] || selected[11]) {
             // cas ou une polyline forme un trait et une aire de 0
@@ -95,19 +81,19 @@ public class Measure2DAnalyse {
                 // Mesure 13 : 90 degree height
                 double[] minorAndMajorAxis = getLengthAndWidth(shape, getOrientation());
                 if (selected[9]) {
-                    measVal.add(calibRatio * minorAndMajorAxis[0]);
+                    measVal.add(adapter.getCalibRatioX() * minorAndMajorAxis[0]);
                 }
                 if (selected[10]) {
-                    measVal.add(calibRatio * minorAndMajorAxis[1]);
+                    measVal.add(adapter.getCalibRatioX() * minorAndMajorAxis[1]);
                 }
             }
             if (selected[11]) {
                 // Mesure 14 : Eccentricity
                 measVal.add(getEccentricity());
             }
-            if (selected[12]) {
-                measVal.add(JMVUtils.getValueRGBasText2(color));
-            }
+            // if (selected[12]) {
+            // measVal.add(JMVUtils.getValueRGBasText2(color));
+            // }
 
         }
         return measVal;

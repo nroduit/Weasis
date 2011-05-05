@@ -150,6 +150,14 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         return menu;
     }
 
+    public ArrayList<ComboBoxModelAdapter> getItemList() {
+        return itemList;
+    }
+
+    public DefaultComboBoxModel getModel() {
+        return model;
+    }
+
     public JToogleButtonGroup createButtonGroup() {
         final JToogleButtonGroup group = new JToogleButtonGroup();
         registerComponent(group);

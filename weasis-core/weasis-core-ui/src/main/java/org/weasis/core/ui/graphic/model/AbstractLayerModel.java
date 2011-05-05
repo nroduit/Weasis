@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.LayoutUtil;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
@@ -65,6 +66,7 @@ public class AbstractLayerModel implements LayerModel {
     private final ArrayList<Graphic> singleList;
 
     private final ArrayList<Graphic> selectedGraphics;
+    private final ArrayList<GraphicsListener> selectedGraphicsListener;
     private Graphic createGraphic;
     private final ArrayList listenerList;
     private boolean layerModelChangeFireingSuspended;
@@ -81,6 +83,7 @@ public class AbstractLayerModel implements LayerModel {
         selectedGraphics = new ArrayList<Graphic>();
         singleList = new ArrayList(1);
         listenerList = new ArrayList();
+        selectedGraphicsListener = new ArrayList<GraphicsListener>();
         setAlpha(0f);
         setAntialiasing(false);
     }
@@ -432,6 +435,7 @@ public class AbstractLayerModel implements LayerModel {
         final AbstractLayer[] layerList = getLayers();
         layers.clear();
         listenerList.clear();
+        selectedGraphicsListener.clear();
         final int n = layerList.length;
         for (int i = n - 1; i >= 0; i--) {
             layerList[i].deleteAllGraphic();
@@ -485,6 +489,29 @@ public class AbstractLayerModel implements LayerModel {
                 ((LayerModelChangeListener) listenerList.get(i)).handleLayerModelChanged(this);
             }
         }
+    }
+
+    public GraphicsListener[] getGraphicSelectionListeners() {
+        return selectedGraphicsListener.toArray(new GraphicsListener[selectedGraphicsListener.size()]);
+    }
+
+    public void addGraphicSelectionListener(GraphicsListener listener) {
+        if (listener != null && !selectedGraphicsListener.contains(listener)) {
+            selectedGraphicsListener.add(listener);
+        }
+    }
+
+    public void removeGraphicSelectionListener(GraphicsListener listener) {
+        if (listener != null) {
+            selectedGraphicsListener.remove(listener);
+        }
+    }
+
+    public void fireGraphicsSelectionChanged(ImageElement img) {
+        for (int i = 0; i < selectedGraphicsListener.size(); i++) {
+            (selectedGraphicsListener.get(i)).handle((List<Graphic>) selectedGraphics.clone(), img);
+        }
+
     }
 
     public static PlanarImage getGraphicsAsImage(Rectangle bound, java.util.List graphics2dlist) {
