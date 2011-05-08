@@ -5,17 +5,17 @@
 	<artifactId>weasis-core</artifactId>
 	<name>Core Plug-ins [${project.artifactId}]</name>
 	<packaging>pom</packaging>
-	<version>1.5-SNAPSHOT</version>
+	<version>1.5</version>
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.6-SNAPSHOT</version>
+		<version>1.6</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-core</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-core</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-core</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.9/weasis-core</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.9/weasis-core</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.0.9/weasis-core</url>
 	</scm>
 	<modules>
 		<module>weasis-core-parent</module>
