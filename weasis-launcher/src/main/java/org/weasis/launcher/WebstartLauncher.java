@@ -65,9 +65,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
             if (argv.length > 0) {
                 m_tracker.open();
                 Object commandSession = getCommandSession(m_tracker.getService());
-                System.out.println("New Activation: Session" + commandSession); //$NON-NLS-1$
                 List<StringBuffer> commandList = splitCommand(argv);
-                System.out.println("New Activation: command List" + commandList); //$NON-NLS-1$
                 if (commandSession != null) {
                     // Set the main window visible and to the front
                     commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$

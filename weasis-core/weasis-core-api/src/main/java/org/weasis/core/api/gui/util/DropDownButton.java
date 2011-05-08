@@ -66,10 +66,11 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
     }
 
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        // TODO unregister listener
         getModel().setRollover(false);
         getModel().setSelected(false);
         ((JPopupMenu) e.getSource()).removePopupMenuListener(this);
-        ((JPopupMenu) e.getSource()).removeAll();
+        // ((JPopupMenu) e.getSource()).removeAll();
     }
 
     public void popupMenuCanceled(PopupMenuEvent e) {

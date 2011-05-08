@@ -137,12 +137,14 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
     }
 
     protected JMenu setUnregisteredRadioMenu(JMenu menu) {
-        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
         return radioMenu.fillMenu(menu);
     }
 
     public JMenu createUnregisteredRadioMenu(String title) {
-        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
         JMenu menu = radioMenu.createMenu(title);
         if (!enable) {
             menu.setEnabled(false);
@@ -172,14 +174,15 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
 
     public JMenu createMenu(String title) {
         JMenu menu = new JMenu(title);
-        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
         radioMenu.fillMenu(menu);
         // registerComponent(radioMenu);
         return menu;
     }
 
     public GroupRadioMenu createGroupRadioMenu() {
-        GroupRadioMenu radioMenu = new GroupRadioMenu(model);
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
         registerComponent(radioMenu);
         return radioMenu;
     }

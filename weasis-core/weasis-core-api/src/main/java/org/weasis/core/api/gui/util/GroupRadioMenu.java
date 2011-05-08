@@ -28,7 +28,7 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
     protected final List<RadioMenuItem> itemList;
     protected ComboBoxModel dataModel;
 
-    public GroupRadioMenu(DefaultComboBoxModel dataModel) {
+    public GroupRadioMenu() {
         this.itemList = new ArrayList<RadioMenuItem>();
     }
 
