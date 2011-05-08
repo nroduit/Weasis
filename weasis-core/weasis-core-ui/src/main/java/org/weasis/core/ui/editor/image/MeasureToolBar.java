@@ -168,7 +168,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     class MeasureGroupMenu extends GroupRadioMenu {
 
         public MeasureGroupMenu(DefaultComboBoxModel dataModel) {
-            super(dataModel);
+            super();
         }
 
         @Override

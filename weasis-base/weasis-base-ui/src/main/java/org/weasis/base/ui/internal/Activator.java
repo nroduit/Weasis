@@ -44,24 +44,15 @@ public class Activator implements BundleActivator, ServiceListener {
         // Load the bundle preferences
         // PREFERENCES.init(context);
 
-        // Register "weasis" command
-        Dictionary<String, Object> dict = new Hashtable<String, Object>();
-        dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //$NON-NLS-1$
-        dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisApp.functions);
-        context.registerService(WeasisApp.class.getName(), WeasisApp.getInstance(), dict);
-
         prefs_tracker = new ServiceTracker(context, PageProps.class.getName(), null);
-        // Explorer (with non immediate instance) and WeasisWin must be instantiate in the EDT
-        GuiExecutor.instance().execute(new Runnable() {
+        // WeasisWin must be instantiate in the EDT
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
 
             public void run() {
                 final WeasisWin app = WeasisWin.getInstance();
                 try {
                     app.createMainPanel();
                     app.showWindow();
-                    // Must keep the tracker open, because calling close() will unget service. This is a problem because
-                    // the desactivate method is called although the service stay alive in UI.
-                    prefs_tracker.open();
 
                 } catch (Exception ex) {
                     // Nimbus bug, hangs GUI: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
@@ -69,6 +60,27 @@ public class Activator implements BundleActivator, ServiceListener {
                     System.err.println("Could not start GUI: " + ex); //$NON-NLS-1$
                     ex.printStackTrace();
                     System.exit(-1);
+                }
+            }
+        });
+
+        // Register "weasis" command
+        Dictionary<String, Object> dict = new Hashtable<String, Object>();
+        dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //$NON-NLS-1$
+        dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisApp.functions);
+        context.registerService(WeasisApp.class.getName(), WeasisApp.getInstance(), dict);
+
+        // Explorer (with non immediate instance)
+        GuiExecutor.instance().execute(new Runnable() {
+
+            public void run() {
+                try {
+                    // Must keep the tracker open, because calling close() will unget service. This is a problem because
+                    // the desactivate method is called although the service stay alive in UI.
+                    prefs_tracker.open();
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
 
                 ServiceTracker m_tracker = new ServiceTracker(context, DataExplorerView.class.getName(), null);
@@ -94,6 +106,7 @@ public class Activator implements BundleActivator, ServiceListener {
                             }
 
                             if (explorer instanceof DockableTool) {
+                                System.err.println("Register explorer: " + explorer);
                                 final DockableTool dockable = (DockableTool) explorer;
                                 dockable.registerToolAsDockable();
                                 dockable.showDockable();
@@ -185,4 +198,5 @@ public class Activator implements BundleActivator, ServiceListener {
     public static Object[] getPreferencesPages() {
         return prefs_tracker == null ? null : prefs_tracker.getServices();
     }
+
 }
