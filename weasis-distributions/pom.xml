@@ -2,11 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.weasis.builder</groupId>
+	<groupId>org.weasis</groupId>
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.0.9</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<properties>
 		<!-- dollar property to avoid replacing some variables when filtering resources 
 			files (ex. ${user.home} in config.properties) -->
@@ -24,12 +24,12 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.1.2</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.6</weasis.launcher.version>
-		<weasis.core.version>0.5.6</weasis.core.version>
-		<weasis.imageio.version>0.7.4</weasis.imageio.version>
-		<weasis.jmc.version>0.5.6</weasis.jmc.version>
-		<weasis.base.version>0.5.6</weasis.base.version>
-		<weasis.dicom.version>0.5.6</weasis.dicom.version>
+		<weasis.launcher.version>0.5.7-SNAPSHOT</weasis.launcher.version>
+		<weasis.core.version>0.5.7-SNAPSHOT</weasis.core.version>
+		<weasis.imageio.version>0.7.5-SNAPSHOT</weasis.imageio.version>
+		<weasis.jmc.version>0.5.7-SNAPSHOT</weasis.jmc.version>
+		<weasis.base.version>0.5.7-SNAPSHOT</weasis.base.version>
+		<weasis.dicom.version>0.5.7-SNAPSHOT</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>6.1.0-b02</substance.version>
