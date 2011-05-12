@@ -147,9 +147,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager, AbstractLayerModel layerModel, ViewModel viewModel) {
         super(layerModel, viewModel);
-        if (eventManager == null) {
+        if (eventManager == null)
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
-        }
         this.eventManager = eventManager;
         tileOffset = 0;
         initActionWState();
@@ -218,6 +217,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected static class BulkDragSequence implements DragSequence {
 
+        @Override
         public void startDrag(MouseEvent mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
@@ -225,6 +225,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         }
 
+        @Override
         public void drag(MouseEvent mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
@@ -232,6 +233,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         }
 
+        @Override
         public boolean completeDrag(MouseEvent mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
@@ -293,9 +295,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void closingSeries(MediaSeries<E> series) {
-        if (series == null) {
+        if (series == null)
             return;
-        }
         boolean open = false;
         synchronized (UIManager.VIEWER_PLUGINS) {
             List<ViewerPlugin> plugins = UIManager.VIEWER_PLUGINS;
@@ -376,6 +377,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return viewScale;
     }
 
+    @Override
     public RenderedImageLayer<E> getImageLayer() {
         return imageLayer;
     }
@@ -392,26 +394,27 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.tileOffset = tileOffset;
     }
 
+    @Override
     public MediaSeries<E> getSeries() {
         return series;
     }
 
     public int getCurrentImageIndex() {
-        if (series instanceof Series) {
+        if (series instanceof Series)
             return ((Series) series).getImageIndex(imageLayer.getSourceImage());
-        }
         return 0;
     }
 
+    @Override
     public E getImage() {
         return imageLayer.getSourceImage();
     }
 
+    @Override
     public RenderedImage getSourceImage() {
         E image = getImage();
-        if (image == null) {
+        if (image == null)
             return null;
-        }
         return image.getImage();
     }
 
@@ -448,15 +451,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public Font getFont() {
         final Rectangle bound = getBounds();
-        if (bound.height < 300 || bound.width < 300) {
+        if (bound.height < 300 || bound.width < 300)
             return FontTools.getFont8();
-        } else if (bound.height < 500 || bound.width < 500) {
+        else if (bound.height < 500 || bound.width < 500)
             return FontTools.getFont10();
-        } else {
+        else
             return FontTools.getFont12();
-        }
     }
 
+    @Override
     public int getFrameIndex() {
         return frameIndex;
     }
@@ -583,9 +586,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public Object getLensActionValue(String action) {
-        if (lens == null) {
+        if (lens == null)
             return null;
-        }
         return lens.getActionValue(action);
     }
 
@@ -602,10 +604,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (series == null) {
+        if (series == null)
             return;
-        }
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
             Object value = evt.getNewValue();
@@ -816,9 +818,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     private void drawPointer(Graphics2D g) {
-        if (pointerType < 1) {
+        if (pointerType < 1)
             return;
-        }
         if (pointerType == 1) {
             drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
         } else if (pointerType == 3) {
@@ -871,10 +872,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
     public void focusGained(FocusEvent e) {
 
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
     }
 
@@ -884,23 +887,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         public void mousePressed(MouseEvent mouseevent) {
             int buttonMask = getButtonMaskEx();
             if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
-                if (ds != null) {
-                    if (ds.completeDrag(mouseevent)) {
-                        ds = null;
-
-                        ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
-                        if (drawOnceAction instanceof ToggleButtonListener) {
-                            if (((ToggleButtonListener) drawOnceAction).isSelected()) {
-                                ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
-                                if (measure instanceof ComboItemListener) {
-                                    ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
-                                }
-                            }
-                        }
-                    }
-                    return;
-                }
-                ds = null;
+                /*
+                 * if (ds != null) { if (ds.completeDrag(mouseevent)) { ds = null;
+                 * 
+                 * ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE); if (drawOnceAction
+                 * instanceof ToggleButtonListener) { if (((ToggleButtonListener) drawOnceAction).isSelected()) {
+                 * ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE); if (measure instanceof
+                 * ComboItemListener) { ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
+                 * } } } } return; } ds = null;
+                 */
 
                 AbstractLayerModel showDraws = getLayerModel();
                 Point pView = mouseevent.getPoint();
@@ -931,9 +926,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     // avec la flèche
                     Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(mouseevent);
                     ArrayList selGraph = new ArrayList(showDraws.getSelectedGraphics());
-                    if (pointedGraphic == null && shiftDown) {
+                    if (pointedGraphic == null && shiftDown)
                         return;
-                    }
                     if (pointedGraphic instanceof AbstractDragGraphic) {
                         AbstractDragGraphic graphic1 = (AbstractDragGraphic) pointedGraphic;
                         // si la listes des graphics dragable est sup à 1 et
@@ -1012,7 +1006,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     SelectGraphic selectionGraphic = model.getSelectionGraphic();
                     // Select all graphs inside the selection
                     if (selectionGraphic != null) {
-                        List<Graphic> list = model.getSelectedAllGraphicsIntersecting(selectionGraphic.getBounds());
+                        Rectangle selectionRect = selectionGraphic.getBounds();
+                        AffineTransform transform = getAffineTransform(mouseevent);
+                        List<Graphic> list = model.getSelectedAllGraphicsIntersecting(selectionRect, transform);
                         list.remove(selectionGraphic);
                         model.setSelectedGraphics(list);
                     }
@@ -1100,9 +1096,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         @Override
         public void mousePressed(MouseEvent mouseevent) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
-            if (pane == null) {
+            if (pane == null)
                 return;
-            }
             if (pane.isContainingView(DefaultView2d.this)) {
                 // register all actions of the EventManager with this view waiting the focus gained in some cases is not
                 // enough, because others mouseListeners are triggered before the focus event (that means before
@@ -1147,5 +1142,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public abstract void enableMouseAndKeyListener(MouseActions mouseActions);
+
+    public static final AffineTransform getAffineTransform(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+            return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
+        return null;
+    }
 
 }

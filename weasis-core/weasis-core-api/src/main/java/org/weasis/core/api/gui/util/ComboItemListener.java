@@ -136,12 +136,6 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         }
     }
 
-    protected JMenu setUnregisteredRadioMenu(JMenu menu) {
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
-        radioMenu.setModel(model);
-        return radioMenu.fillMenu(menu);
-    }
-
     public JMenu createUnregisteredRadioMenu(String title) {
         GroupRadioMenu radioMenu = new GroupRadioMenu();
         radioMenu.setModel(model);

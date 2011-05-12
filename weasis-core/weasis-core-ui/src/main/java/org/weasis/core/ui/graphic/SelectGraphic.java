@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
@@ -28,6 +29,7 @@ import org.weasis.core.ui.Messages;
  * 
  * @author Nicolas Roduit
  */
+// public class SelectGraphic extends RectangleGraphic {
 public class SelectGraphic extends RectangleGraphic {
     public static final Icon ICON = new ImageIcon(SelectGraphic.class.getResource("/icon/22x22/draw-selection.png")); //$NON-NLS-1$
 
@@ -39,25 +41,19 @@ public class SelectGraphic extends RectangleGraphic {
     protected class SelectedDragSequence extends AbstractDragGraphic.DefaultDragSequence {
 
         @Override
-        public boolean completeDrag(MouseEvent mouseevent) {
-            // updateSelection();
+        public boolean completeDrag(MouseEvent mouseEvent) {
             fireRemoveAndRepaintAction();
-            // getLayer().removeGraphicAndRepaint(SelectGraphic.this);
             return true;
         }
-
-        public SelectedDragSequence(int i) {
-            super(true, i);
-        }
-    }
-
-    @Override
-    public void showProperties() {
     }
 
     public SelectGraphic() {
-        super(1f, Color.white, false);
-        showLabel = false;
+        this(1f, Color.WHITE);
+    }
+
+    public SelectGraphic(float lineThickness, Color paint) {
+        super(lineThickness, paint, false);
+        setLabelVisible(false);
     }
 
     @Override
@@ -86,16 +82,11 @@ public class SelectGraphic extends RectangleGraphic {
     public void paintHandles(Graphics2D graphics2d, AffineTransform transform) {
     }
 
-    @Override
-    protected int resizeOnDrawing(int i, int j, int k, MouseEvent mouseevent) {
-        int l = super.resizeOnDrawing(i, j, k, mouseevent);
-        return l;
-    }
-
     // rend une nouvelle instance au lieu d'une selection du rectangle
     @Override
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
-        return new SelectedDragSequence(i);
+        // return new SelectedDragSequence(i);
+        return new SelectedDragSequence();
     }
 
     @Override
@@ -109,7 +100,16 @@ public class SelectGraphic extends RectangleGraphic {
     }
 
     @Override
-    public String getDescription() {
-        return null;
+    public SelectGraphic clone() {
+        SelectGraphic newGraphic = (SelectGraphic) super.clone();
+        return newGraphic;
+    }
+
+    @Override
+    public Graphic clone(int xPos, int yPos) {
+        SelectGraphic newGraphic = clone();
+        newGraphic.updateStroke();
+        newGraphic.setShape(new Rectangle(xPos, yPos, 0, 0), null);
+        return newGraphic;
     }
 }

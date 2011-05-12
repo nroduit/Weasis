@@ -106,7 +106,6 @@ public class Activator implements BundleActivator, ServiceListener {
                             }
 
                             if (explorer instanceof DockableTool) {
-                                System.err.println("Register explorer: " + explorer);
                                 final DockableTool dockable = (DockableTool) explorer;
                                 dockable.registerToolAsDockable();
                                 dockable.showDockable();

@@ -40,8 +40,9 @@ public class DragLayer extends AbstractLayer {
         if (graphics != null) {
             for (int i = 0; i < graphics.size(); i++) {
                 Graphic graphic = graphics.get(i);
+                Rectangle repaintBounds = graphic.getRepaintBounds();
                 // only repaints graphics that intersects or are contained in the clip bound
-                if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
+                if (bound == null || repaintBounds != null && bound.intersects(repaintBounds)) {
                     graphic.paint(g2, transform);
                 } else {
                     if (graphic.getGraphicLabel() != null) {
@@ -73,16 +74,15 @@ public class DragLayer extends AbstractLayer {
      * @return List
      */
     @Override
-    public java.util.List getGraphicsSurfaceInArea(Rectangle rect) {
+    public java.util.List getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform) {
         ArrayList arraylist = new ArrayList();
         if (graphics != null) {
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 Graphic graphic = graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-                // checker
-                // sur shape directement)
+                // checker sur shape directement)
                 if (graphic.getBounds().intersects(rect)) {
-                    if (graphic.intersects(rect)) {
+                    if (graphic.intersects(rect, transform)) {
                         arraylist.add(graphic);
                     }
                 }
@@ -114,34 +114,51 @@ public class DragLayer extends AbstractLayer {
      */
     @Override
     public Graphic getGraphicContainPoint(MouseEvent mouseevent) {
+        AbstractDragGraphic selectedGraphic = null;
         if (graphics != null) {
             final Point pos = mouseevent.getPoint();
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-                // checker
-                // sur shape directement)
+                // checker sur shape directement)
                 if (graphic.getRepaintBounds().contains(pos)) {
-                    if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
-                        return graphic;
+                    if (graphic.getArea(mouseevent).contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
+                        if (selectedGraphic == null || !graphic.isSelected()) {
+                            selectedGraphic = graphic;
+                        } else if (graphic.isSelected()) {
+                            break;
+                        }
                     }
                 }
             }
         }
-        return null;
+        return selectedGraphic;
     }
+    // previous version
+    // public Graphic getGraphicContainPoint(MouseEvent mouseevent) {
+    // if (graphics != null) {
+    // final Point pos = mouseevent.getPoint();
+    // for (int j = graphics.size() - 1; j >= 0; j--) {
+    // AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
+    // // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
+    // // checker
+    // // sur shape directement)
+    // if (graphic.getRepaintBounds().contains(pos)) {
+    // if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
+    // return graphic;
+    // }
+    // }
+    // }
+    // }
+    // return null;
+    // }
 
-    public static String getDrawinType(AbstractDragGraphic graphic) {
-        if (graphic instanceof LineGraphic) {
-            return "Segment"; //$NON-NLS-1$
-        } else if (graphic instanceof CircleGraphic) {
-            return "Ellipse"; //$NON-NLS-1$
-        } else if (graphic instanceof RectangleGraphic) {
-            return "Rectangle"; //$NON-NLS-1$
-        } else if (graphic instanceof PolygonGraphic) {
-            return "Polygon"; //$NON-NLS-1$
-        } else {
-            return "FreeHand"; //$NON-NLS-1$
-        }
-    }
+    // REMOVED by btja
+    // seems never to be used instead use AbstractDragGraphic.getUIName or AbstractDragGraphic.getDescription
+    /*
+     * public static String getDrawinType(AbstractDragGraphic graphic) { if (graphic instanceof LineGraphic) { return
+     * "Segment"; //$NON-NLS-1$ } else if (graphic instanceof CircleGraphic) { return "Ellipse"; //$NON-NLS-1$ } else if
+     * (graphic instanceof RectangleGraphic) { return "Rectangle"; //$NON-NLS-1$ } else if (graphic instanceof
+     * PolygonGraphic) { return "Polygon"; //$NON-NLS-1$ } else { return "FreeHand"; //$NON-NLS-1$ } }
+     */
 }

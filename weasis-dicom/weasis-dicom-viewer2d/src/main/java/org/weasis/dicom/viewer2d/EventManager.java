@@ -87,7 +87,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ToggleButtonListener inverseStackAction;
     private final ToggleButtonListener showLensAction;
     private final ToggleButtonListener imageOverlayAction;
-    // private final ToggleButtonListener drawOnceAction;
+    private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener presetAction;
     private final ComboItemListener lutAction;
@@ -134,7 +134,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(showLensAction = newLensAction());
         iniAction(lensZoomAction = newLensZoomAction());
         iniAction(imageOverlayAction = newImageOverlayAction());
-        // iniAction(drawOnceAction = newDrawOnlyOnceAction());
+        iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(presetAction = newPresetAction());
         iniAction(lutAction = newLutAction());

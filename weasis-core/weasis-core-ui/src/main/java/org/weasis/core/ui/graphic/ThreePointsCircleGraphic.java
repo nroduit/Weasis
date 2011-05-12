@@ -10,18 +10,17 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.media.jai.PlanarImage;
 import javax.media.jai.iterator.RectIter;
@@ -30,24 +29,22 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.Messages;
 
 /**
- * The Class RectangleGraphic.
- * 
- * @author Nicolas Roduit, Benoit Jacquemoud
+ * @author Benoit Jacquemoud
  */
-public class RectangleGraphic extends AbstractDragGraphic {
+public class ThreePointsCircleGraphic extends AbstractDragGraphic {
 
-    public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(
+        ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    // protected Rectangle rectangle = new Rectangle();
-
-    public RectangleGraphic(float lineThickness, Color paint, boolean fill) {
-        super(8);
+    public ThreePointsCircleGraphic(float lineThickness, Color paint, boolean fill) {
+        super(3);
         setLineThickness(lineThickness);
         setPaint(paint);
         setFilled(fill);
@@ -62,116 +59,57 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.rect"); //$NON-NLS-1$
+        return Messages.getString("Cercle en trois points");
     }
 
     @Override
-    protected void updateStroke() {
-        stroke = new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-    }
+    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
 
-    @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseevent) {
-        Rectangle2D rectangle = new Rectangle2D.Double();
+        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
         if (handlePointList.size() > 1) {
-            rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                handlePointList.get(eHandlePoint.SE.index));
+            Point2D centerPt = GeomUtil.getCircleCenter(handlePointList);
+            if (centerPt != null) {
+                double radius = centerPt.distance(handlePointList.get(0));
+                Rectangle2D rectangle = new Rectangle2D.Double();
+                rectangle.setFrameFromCenter(centerPt.getX(), centerPt.getY(), centerPt.getX() - radius,
+                    centerPt.getY() - radius);
+
+                generalpath.append(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(),
+                    rectangle.getHeight()), false);
+            }
         }
 
-        setShape(rectangle, mouseevent);
-        updateLabel(mouseevent, getGraphics2D(mouseevent));
+        setShape(generalpath, mouseEvent);
+        updateLabel(mouseEvent, getGraphics2D(mouseEvent));
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
-        if (handlePointIndex == -1) {
-            for (Point2D point : handlePointList) {
-                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-            }
-        } else {
-            Rectangle2D rectangle = new Rectangle2D.Double();
-
-            // if (!isGraphicComplete) {
-            // handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
-            // rectangle.setFrameFromDiagonal(handlePointList.get(0), handlePointList.get(1));
-            // } else {
-
-            rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                handlePointList.get(eHandlePoint.SE.index));
-
-            double x = rectangle.getX(), y = rectangle.getY();
-            double w = rectangle.getWidth(), h = rectangle.getHeight();
-
-            eHandlePoint pt = eHandlePoint.valueFromIndex(handlePointIndex);
-
-            if (pt.equals(eHandlePoint.W) || pt.equals(eHandlePoint.NW) || pt.equals(eHandlePoint.SW)) {
-                x += deltaX;
-                w -= deltaX;
-            }
-
-            if (pt.equals(eHandlePoint.N) || pt.equals(eHandlePoint.NW) || pt.equals(eHandlePoint.NE)) {
-                y += deltaY;
-                h -= deltaY;
-            }
-
-            if (pt.equals(eHandlePoint.E) || pt.equals(eHandlePoint.NE) || pt.equals(eHandlePoint.SE)) {
-                w += deltaX;
-            }
-
-            if (pt.equals(eHandlePoint.S) || pt.equals(eHandlePoint.SW) || pt.equals(eHandlePoint.SE)) {
-                h += deltaY;
-            }
-
-            if (w < 0) {
-                w = -w;
-                x -= w;
-                pt = pt.getVerticalMirror();
-            }
-
-            if (h < 0) {
-                h = -h;
-                y -= h;
-                pt = pt.getHorizontalMirror();
-            }
-
-            handlePointIndex = pt.index;
-            rectangle.setFrame(x, y, w, h);
-            // }
-
-            setHandlePointList(rectangle);
-        }
-
-        return handlePointIndex;
+    public ThreePointsCircleGraphic clone() {
+        return (ThreePointsCircleGraphic) super.clone();
     }
 
-    protected void setHandlePointList(Rectangle2D rectangle) {
-
-        double x = rectangle.getX(), y = rectangle.getY();
-        double w = rectangle.getWidth(), h = rectangle.getHeight();
-
-        while (handlePointList.size() < handlePointTotalNumber) {
-            handlePointList.add(new Point.Double());
-        }
-
-        handlePointList.get(eHandlePoint.NW.index).setLocation(new Point2D.Double(x, y));
-        handlePointList.get(eHandlePoint.N.index).setLocation(new Point2D.Double(x + w / 2, y));
-        handlePointList.get(eHandlePoint.NE.index).setLocation(new Point2D.Double(x + w, y));
-        handlePointList.get(eHandlePoint.E.index).setLocation(new Point2D.Double(x + w, y + h / 2));
-        handlePointList.get(eHandlePoint.SE.index).setLocation(new Point2D.Double(x + w, y + h));
-        handlePointList.get(eHandlePoint.S.index).setLocation(new Point2D.Double(x + w / 2, y + h));
-        handlePointList.get(eHandlePoint.SW.index).setLocation(new Point2D.Double(x, y + h));
-        handlePointList.get(eHandlePoint.W.index).setLocation(new Point2D.Double(x, y + h / 2));
+    @Override
+    public Graphic clone(int xPos, int yPos) {
+        ThreePointsCircleGraphic newGraphic = clone();
+        newGraphic.updateStroke();
+        newGraphic.updateShapeOnDrawing(null);
+        return newGraphic;
     }
 
     protected double getGraphicArea(double scaleX, double scaleY) {
-        Rectangle2D rectangle = new Rectangle2D.Double();
-        rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-            handlePointList.get(eHandlePoint.SE.index));
+        if (handlePointList.size() > 1) {
+            Point2D centerPt = GeomUtil.getCircleCenter(handlePointList);
+            if (centerPt != null) {
+                double radius = centerPt.distance(handlePointList.get(0));
+                return Math.PI * radius * radius * scaleX * scaleY;
+            }
+        }
 
-        return rectangle.getWidth() * scaleX * rectangle.getHeight() * scaleY;
+        return 0;
     }
 
+    // TODO - group same computation with all Area 2D closed shape
     @Override
     public void updateLabel(Object source, Graphics2D g2d) {
         if (isLabelVisible) {
@@ -292,89 +230,5 @@ public class RectangleGraphic extends AbstractDragGraphic {
             }
         }
         return list;
-    }
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public RectangleGraphic clone() {
-        RectangleGraphic newGraphic = (RectangleGraphic) super.clone();
-        return newGraphic;
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        RectangleGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        // newGraphic.updateShapeOnDrawing(null);
-        // newGraphic.setShape(new Rectangle(xPos, yPos, 0, 0), null);
-        return newGraphic;
-    }
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    static protected enum eHandlePoint {
-        NONE(-1), NW(0), SE(1), NE(2), SW(3), N(4), S(5), E(6), W(7);
-        // 0 and 1 must be diagonal point of rectangle
-
-        final int index;
-
-        eHandlePoint(int index) {
-            this.index = index;
-        }
-
-        final static Map<Integer, eHandlePoint> map = new HashMap<Integer, eHandlePoint>(eHandlePoint.values().length);
-
-        static {
-            for (eHandlePoint corner : eHandlePoint.values()) {
-                map.put(corner.index, corner);
-            }
-        }
-
-        static eHandlePoint valueFromIndex(int index) {
-            eHandlePoint point = map.get(index);
-            if (point == null)
-                throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index);
-            return point;
-        }
-
-        eHandlePoint getVerticalMirror() {
-            switch (this) {
-                case NW:
-                    return eHandlePoint.NE;
-                case NE:
-                    return eHandlePoint.NW;
-                case W:
-                    return eHandlePoint.E;
-                case E:
-                    return eHandlePoint.W;
-                case SW:
-                    return eHandlePoint.SE;
-                case SE:
-                    return eHandlePoint.SW;
-                default:
-                    return this;
-            }
-        }
-
-        eHandlePoint getHorizontalMirror() {
-            switch (this) {
-                case NW:
-                    return eHandlePoint.SW;
-                case SW:
-                    return eHandlePoint.NW;
-                case N:
-                    return eHandlePoint.S;
-                case S:
-                    return eHandlePoint.N;
-                case NE:
-                    return eHandlePoint.SE;
-                case SE:
-                    return eHandlePoint.NE;
-                default:
-                    return this;
-            }
-        }
-
     }
 }

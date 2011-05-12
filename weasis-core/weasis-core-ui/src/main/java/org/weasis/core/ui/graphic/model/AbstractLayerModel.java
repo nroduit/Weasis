@@ -102,7 +102,7 @@ public class AbstractLayerModel implements LayerModel {
                 }
                 int direction = graph.getResizeCorner(mouseevent);
                 if (direction < 0) {
-                    if (graph.getArea().contains(p)) {
+                    if (graph.getArea(mouseevent).contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         shapeAction = true;
                     }
@@ -139,7 +139,7 @@ public class AbstractLayerModel implements LayerModel {
             for (int i = 0; i < dragGaphs.size(); i++) {
                 AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(i);
                 if (graph.getResizeCorner(mouseevent) < 0) {
-                    if (graph.getArea().contains(p)) {
+                    if (graph.getArea(mouseevent).contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         // setCreateGraphic(null);
                         shapeAction = true;
@@ -173,18 +173,20 @@ public class AbstractLayerModel implements LayerModel {
             }
             layer.addGraphic(obj);
         }
-        return ((AbstractDragGraphic) (obj));
+        return (AbstractDragGraphic) obj;
     }
 
     public boolean isShapeAction() {
         return shapeAction;
     }
 
+    @Override
     public void repaint() {
         // repaint du composant ImageDisplay
         canvas.repaint();
     }
 
+    @Override
     public void repaint(Rectangle rectangle) {
         if (rectangle != null) {
             // Add the offset of the canvas
@@ -218,6 +220,7 @@ public class AbstractLayerModel implements LayerModel {
         repaint();
     }
 
+    @Override
     public void setSelectedGraphics(List<Graphic> list) {
         for (int i = selectedGraphics.size() - 1; i >= 0; i--) {
             Graphic graphic = selectedGraphics.get(i);
@@ -229,16 +232,18 @@ public class AbstractLayerModel implements LayerModel {
         if (list != null) {
             selectedGraphics.addAll(list);
             for (int j = selectedGraphics.size() - 1; j >= 0; j--) {
-                (selectedGraphics.get(j)).setSelected(true);
+                selectedGraphics.get(j).setSelected(true);
             }
         }
 
     }
 
+    @Override
     public ArrayList<Graphic> getSelectedGraphics() {
         return selectedGraphics;
     }
 
+    @Override
     public Rectangle getBounds() {
         return canvas.getBounds();
     }
@@ -252,11 +257,13 @@ public class AbstractLayerModel implements LayerModel {
         canvas.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
     }
 
+    @Override
     public void addLayer(AbstractLayer layer) {
         layers.add(layer);
         layer.setShowDrawing(this);
     }
 
+    @Override
     public void removeLayer(AbstractLayer layer) {
         layers.remove(layer);
         repaint();
@@ -280,9 +287,8 @@ public class AbstractLayerModel implements LayerModel {
 
     public SelectGraphic getSelectionGraphic() {
         for (Graphic gr : selectedGraphics) {
-            if (gr instanceof SelectGraphic) {
+            if (gr instanceof SelectGraphic)
                 return (SelectGraphic) gr;
-            }
         }
         return null;
     }
@@ -309,12 +315,12 @@ public class AbstractLayerModel implements LayerModel {
         return arraylist;
     }
 
-    public java.util.List<Graphic> getSelectedAllGraphicsIntersecting(Rectangle rectangle) {
+    public java.util.List<Graphic> getSelectedAllGraphicsIntersecting(Rectangle rectangle, AffineTransform transform) {
         ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {
-                arraylist.addAll(layer.getGraphicsSurfaceInArea(rectangle));
+                arraylist.addAll(layer.getGraphicsSurfaceInArea(rectangle, transform));
             }
         }
         return arraylist;
@@ -336,9 +342,8 @@ public class AbstractLayerModel implements LayerModel {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {
                 Graphic graph = layer.getGraphicContainPoint(mouseevent);
-                if (graph != null) {
+                if (graph != null)
                     return graph;
-                }
             }
         }
         return null;
@@ -379,16 +384,16 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
-    public void moveSelectedGraphics(int x, int y) {
-        java.util.List dragGaphs = getSelectedDragableGraphics();
-        if (dragGaphs != null && dragGaphs.size() > 0) {
-            for (int i = dragGaphs.size() - 1; i >= 0; i--) {
-                AbstractDragGraphic graphic = (AbstractDragGraphic) dragGaphs.get(i);
-                graphic.move(0, x, y, null);
-            }
-
-        }
-    }
+    // public void moveSelectedGraphics(int x, int y) {
+    // java.util.List dragGaphs = getSelectedDragableGraphics();
+    // if (dragGaphs != null && dragGaphs.size() > 0) {
+    // for (int i = dragGaphs.size() - 1; i >= 0; i--) {
+    // AbstractDragGraphic graphic = (AbstractDragGraphic) dragGaphs.get(i);
+    // graphic.move(0, x, y, null);
+    // }
+    //
+    // }
+    // }
 
     public static PlanarImage getGraphicAsImage(Shape shape) {
         Rectangle bound = shape.getBounds();
@@ -404,6 +409,7 @@ public class AbstractLayerModel implements LayerModel {
         return image;
     }
 
+    @Override
     public int getLayerCount() {
         return layers.size();
     }
@@ -412,6 +418,7 @@ public class AbstractLayerModel implements LayerModel {
     // return naewin.getSource().getBounds();
     // }
 
+    @Override
     public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         Rectangle2D bound = null;
         // Get the visible view in real coordinates
@@ -431,6 +438,7 @@ public class AbstractLayerModel implements LayerModel {
         g2d.translate(-0.5, -0.5);
     }
 
+    @Override
     public void dispose() {
         final AbstractLayer[] layerList = getLayers();
         layers.clear();
@@ -442,10 +450,12 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
+    @Override
     public boolean isLayerModelChangeFireingSuspended() {
         return layerModelChangeFireingSuspended;
     }
 
+    @Override
     public void setLayerModelChangeFireingSuspended(boolean layerModelChangeFireingSuspended) {
         this.layerModelChangeFireingSuspended = layerModelChangeFireingSuspended;
     }
@@ -461,6 +471,7 @@ public class AbstractLayerModel implements LayerModel {
     /**
      * Gets all layer manager listeners of this layer.
      */
+    @Override
     public LayerModelChangeListener[] getLayerModelChangeListeners() {
         return (LayerModelChangeListener[]) listenerList.toArray(new LayerModelChangeListener[listenerList.size()]);
     }
@@ -468,6 +479,7 @@ public class AbstractLayerModel implements LayerModel {
     /**
      * Adds a layer manager listener to this layer.
      */
+    @Override
     public void addLayerModelChangeListener(LayerModelChangeListener listener) {
         if (listener != null && !listenerList.contains(listener)) {
             listenerList.add(listener);
@@ -477,12 +489,14 @@ public class AbstractLayerModel implements LayerModel {
     /**
      * Removes a layer manager listener from this layer.
      */
+    @Override
     public void removeLayerModelChangeListener(LayerModelChangeListener listener) {
         if (listener != null) {
             listenerList.remove(listener);
         }
     }
 
+    @Override
     public void fireLayerModelChanged() {
         if (!isLayerModelChangeFireingSuspended()) {
             for (int i = 0; i < listenerList.size(); i++) {
@@ -543,18 +557,17 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public AbstractLayer getLayer(Tools tool) {
-        if (tool.isLayer()) {
+        if (tool.isLayer())
             return getLayer(tool.getId());
-        }
         return getLayer(Tools.TEMPDRAGLAYER);
     }
 
+    @Override
     public AbstractLayer getLayer(int drawType) {
         for (int j = layers.size() - 1; j >= 0; j--) {
             AbstractLayer layerTemp = layers.get(j);
-            if (layerTemp.getDrawType() == drawType) {
+            if (layerTemp.getDrawType() == drawType)
                 return layerTemp;
-            }
         }
         return getLayer(Tools.TEMPDRAGLAYER);
     }

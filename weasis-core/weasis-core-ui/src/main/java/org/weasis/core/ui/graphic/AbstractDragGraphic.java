@@ -8,6 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.core.ui.graphic;
 
 import java.awt.BasicStroke;
@@ -21,18 +22,19 @@ import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-
-import javax.media.jai.PlanarImage;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import java.util.List;
+import java.util.ListIterator;
 
 import org.weasis.core.api.gui.Image2DViewer;
-import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 
@@ -41,399 +43,388 @@ import org.weasis.core.ui.graphic.model.GraphicsPane;
  * 
  * @author Nicolas Roduit
  */
+
 public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
-    protected float lineThickness;
-    protected Paint paint;
-    protected boolean filled;
-    // private transient AbstractLayer layer;
-    protected transient PropertyChangeSupport pcs;
-    protected transient boolean selected;
-    protected transient boolean showLabel;
-    protected transient boolean createPoints;
-    protected transient Stroke stroke;
-    // protected transient AffineTransform affineTransform;
-    // protected transient Shape transformedShape;
-    protected transient Shape shape;
-    private transient String[] labels;
+    protected PropertyChangeSupport pcs;
 
-    protected transient Double labelHeight = null;
+    // protected Shape shape = new Rectangle();
+    protected Shape shape;
+    protected Shape unTransformedShape;
+    protected Stroke stroke;
+    protected Paint paint = Color.YELLOW;
+    protected float lineThickness = 1.0f;
+    protected int handleSize = 6; // ????
 
-    protected transient GraphicLabel graphicLabel = null;
+    protected boolean isFilled = false;
+    protected boolean isSelected = false;
+    protected boolean isLabelVisible = false;
+    protected boolean isGraphicComplete = false;
 
-    /**
-     * The Class DefaultDragSequence.
-     * 
-     * @author Nicolas Roduit
-     */
-    protected class DefaultDragSequence implements DragSequence {
+    protected GraphicLabel graphicLabel = null;
 
-        public void startDrag(MouseEvent mouseevent) {
-            update(mouseevent);
-        }
+    protected int handlePointTotalNumber;
+    protected List<Point2D> handlePointList;
 
-        public void drag(MouseEvent mouseevent) {
-            int i = mouseevent.getX();
-            int j = mouseevent.getY();
-            if (i - getLastX() != 0 || j - getLastY() != 0) {
-                switch (getType()) {
-                    case -1:
-                        move(getType(), i - getLastX(), j - getLastY(), mouseevent);
-                        break;
-                    default:
-                        int k;
-                        // For a better synchronization, use the difference between the previous position
-                        k = resizeOnDrawing(getType(), i - getLastX(), j - getLastY(), mouseevent);
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                        type = invertCorner(getType(), k);
-                        break;
-                }
-                update(mouseevent);
-            }
-        }
-
-        public boolean completeDrag(MouseEvent mouseevent) {
-            if (createPoints) {
-                // closed = true;
-                updateShape();
-                createPoints = false;
-            }
-            update(mouseevent);
-            return true;
-        }
-
-        protected int getType() {
-            return type;
-        }
-
-        protected int getLastX() {
-            return lastX;
-        }
-
-        protected int getLastY() {
-            return lastY;
-        }
-
-        protected void update(int x, int y) {
-            lastX = x;
-            lastY = y;
-        }
-
-        protected void update(MouseEvent mouseevent) {
-            lastX = mouseevent.getX();
-            lastY = mouseevent.getY();
-        }
-
-        private int invertCorner(int i, int j) {
-            /*
-             * 1 2 3 8 4 7 6 5
-             */
-            if ((j & 1) == 1) {
-                switch (i) {
-                    case 1: // '\001'
-                        i = 3;
-                        break;
-                    case 3: // '\003'
-                        i = 1;
-                        break;
-                    case 0: // '\004'
-                        i = 4;
-                        break;
-                    case 4: // '\006'
-                        i = 0;
-                        break;
-                    case 7: // '\007'
-                        i = 5;
-                        break;
-                    case 5: // '\t'
-                        i = 7;
-                        break;
-                }
-            }
-            if ((j & 2) == 2) {
-                switch (i) {
-                    case 1: // '\001'
-                        i = 7;
-                        break;
-                    case 2: // '\002'
-                        i = 6;
-                        break;
-                    case 3: // '\003'
-                        i = 5;
-                        break;
-                    case 7: // '\007'
-                        i = 1;
-                        break;
-                    case 6: // '\b'
-                        i = 2;
-                        break;
-                    case 5: // '\t'
-                        i = 3;
-                        break;
-                }
-            }
-            return i;
-        }
-
-        private int lastX;
-        private int lastY;
-        private int type;
-
-        protected DefaultDragSequence() {
-            this(false, -1);
-        }
-
-        protected DefaultDragSequence(boolean flag, int i) {
-            createPoints = flag;
-            // handle point type
-            type = i;
-        }
+    public AbstractDragGraphic(int handlePointTotalNumber) {
+        this.handlePointTotalNumber = handlePointTotalNumber;
+        this.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber);
     }
 
-    public AbstractDragGraphic() {
-        this.showLabel = true;
+    public AbstractDragGraphic(float lineThickness, Color paint, boolean fill) {
+        this(1);
+        setLineThickness(lineThickness);
+        setPaint(paint);
+        setFilled(fill);
+        updateStroke();
     }
 
-    protected Graphics2D getGraphics2D(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof GraphicsPane) {
-            return (Graphics2D) ((GraphicsPane) mouseevent.getSource()).getGraphics();
-        }
-        return null;
-    }
-
-    protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-            return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
-        }
-        return null;
-    }
-
-    protected ImageElement getImageElement(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-            return ((Image2DViewer) mouseevent.getSource()).getImage();
-        }
-        return null;
-    }
-
-    protected ImageLayer getImageLayer(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-            return ((Image2DViewer) mouseevent.getSource()).getImageLayer();
-        }
-        return null;
-    }
-
-    public void setSelected(boolean flag) {
-        if (selected != flag) {
-            selected = flag;
-            // firePropertyChange("selected", !flag, flag);
-            firePropertyChange("bounds", null, shape); //$NON-NLS-1$
-        }
-    }
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public String toString() {
-        return getUIName();
-    }
-
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setShape(Shape shape, MouseEvent mouseevent) {
-        if (shape != null) {
-            Shape oldShape = this.shape;
-            this.shape = shape;
-            // Fire event to repaint the old shape and the new shape of the graphic
-            firePropertyChange("bounds", oldShape, shape); //$NON-NLS-1$
-        }
-    }
-
-    protected void buildLabelBound(Graphics2D g2d) {
-        if (showLabel && labels != null && g2d != null) {
-
-            Rectangle2D longestBound = null;
-            for (String l : labels) {
-                Rectangle2D bound = g2d.getFont().getStringBounds(l, g2d.getFontRenderContext());
-                // Find out the longest labels
-                if (longestBound == null || bound.getWidth() > longestBound.getWidth()) {
-                    longestBound = bound;
-                }
-            }
-            if (longestBound == null) {
-                graphicLabel = null;
-                labelHeight = null;
-            } else {
-                labelHeight = longestBound.getHeight();
-                Rectangle rect = shape.getBounds();
-                if (graphicLabel == null) {
-                    graphicLabel = new GraphicLabel();
-
-                }
-                Rectangle oldBound = graphicLabel.getBound();
-                graphicLabel.setLabelBound(rect.x + rect.width, rect.y + rect.height * 0.5,
-                    longestBound.getWidth() + 6, labelHeight * labels.length + 6);
-                firePropertyChange("graphicLabel", oldBound, graphicLabel); //$NON-NLS-1$
-            }
-        }
-    }
-
-    public GraphicLabel getGraphicLabel() {
-        return graphicLabel;
-    }
-
     public Shape getShape() {
         return shape;
     }
 
-    public int getHandleSize() {
-        // if (layer.getSettingsData() == null) {
-        return 6;
-        // }
-        // else {
-        // return layer.getSettingsData().getDis_handleDisplaySize();
-        // }
-
-    }
-
-    public void setPaint(Paint paint1) {
-        paint = paint1;
-        // firePropertyChange("paint", paint2, paint1);
-        firePropertyChange("bounds", null, shape); //$NON-NLS-1$
+    public Stroke getStroke() {
+        return stroke;
     }
 
     public Paint getPaint() {
         return paint;
     }
 
-    public void setFilled(boolean flag) {
-        if (filled != flag) {
-            filled = flag;
-            firePropertyChange("bounds", null, shape); //$NON-NLS-1$
-            // firePropertyChange("selected", !flag, flag);
-        }
-    }
-
-    public boolean isFilled() {
-        return filled;
-    }
-
-    protected void updateShape() {
-        firePropertyChange("bounds", null, shape); //$NON-NLS-1$
-        // firePropertyChange("shape", null, shape);
-    }
-
-    // public void repaint() {
-    // AbstractLayer layer1 = getLayer();
-    // if (layer1 != null) {
-    // layer1.repaint(getAllShapeRepaintBounds());
-    // }
-    // }
-
-    protected void updateStroke() {
-        stroke = new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.CAP_ROUND);
-    }
-
     public float getLineThickness() {
         return lineThickness;
     }
 
-    public Point getLabelPosition(Shape shape) {
-        if (labelHeight != null) {
-            Rectangle rect = shape.getBounds();
-            return new Point(rect.x + 3 + rect.width, (int) (rect.y + 6 + rect.height / 2 - labelHeight * labels.length
-                * 0.5));
+    public int getHandleSize() {
+        return handleSize;
+    }
+
+    public boolean isFilled() {
+        return isFilled;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public boolean isLabelVisible() {
+        return isLabelVisible;
+    }
+
+    @Override
+    public GraphicLabel getGraphicLabel() {
+        return graphicLabel;
+    }
+
+    @Override
+    public String[] getLabel() {
+        return graphicLabel != null ? graphicLabel.getLabel() : null;
+    }
+
+    public boolean isGraphicComplete() {
+        // return isGraphicComplete = (handlePointList.size() == handlePointTotalNumber);
+        return isGraphicComplete = handlePointList.size() == handlePointTotalNumber;
+    }
+
+    @Override
+    public String getDescription() {
+        return "AbstractDragGraphic";
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected Area getBoundingRectAreaOfSegment(Point2D A, Point2D B) {
+
+        double size = 2 * getHandleSize();
+
+        Path2D path = new Path2D.Double();
+
+        Point2D tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -size, size);
+        path.moveTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -size, -size);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -size, size);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -size, -size);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        path.closePath();
+
+        return new Area(path);
+    }
+
+    // protected Area getBoundingRectSegment2(Point2D A, Point2D B) {
+    //
+    // double halfHandleSize = getHandleSize() / 2;
+    // Path2D path = new Path2D.Double();
+    //
+    // double dAB = A.distance(B);
+    // double dxu = B.getX() - A.getX() / dAB;
+    // double dyu = B.getY() - A.getY() / dAB;
+    //
+    // AffineTransform t1, t2, t3, t4;
+    // Point2D tPoint;
+    //
+    // t1 = AffineTransform.getTranslateInstance(-dyu * halfHandleSize, dxu * halfHandleSize);// rot +90° CW
+    // t2 = AffineTransform.getTranslateInstance(dyu * halfHandleSize, -dxu * halfHandleSize); // rot -90° CCW
+    // t3 = AffineTransform.getTranslateInstance(-dxu * halfHandleSize, 0);
+    // t4 = AffineTransform.getTranslateInstance(dxu * halfHandleSize, 0);
+    //
+    // tPoint = t1.transform(A, null);
+    // tPoint = t3.transform(tPoint, tPoint);
+    // path.moveTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t2.transform(A, null);
+    // tPoint = t3.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t2.transform(B, null);
+    // tPoint = t4.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t1.transform(B, null);
+    // tPoint = t4.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // path.closePath();
+    //
+    // return new Area(path);
+    // }
+
+    @Override
+    public Area getArea() {
+        AffineTransform transform = null;
+        return getArea(transform);
+    }
+
+    public Area getArea(AffineTransform transform) {
+        if (getShape() == null)
+            return null;
+
+        double flatness = 5;
+
+        // Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
+        Area pathBoundingArea = new Area();
+
+        AffineTransform inverseTransform = null;
+        try {
+            inverseTransform = transform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
         }
+
+        // Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
+        // PathIterator pit = transformedShape.getPathIterator(null, flatness);
+        PathIterator pit = shape.getPathIterator(transform, flatness);
+
+        double coords[] = new double[6];
+        Point2D startPoint = null, prevPoint = null, lastPoint = null;
+
+        while (!pit.isDone()) {
+
+            if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO) {
+                lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
+            } else {
+                switch (pit.currentSegment(coords)) {
+                    case PathIterator.SEG_LINETO:
+                        lastPoint = new Point2D.Double(coords[0], coords[1]);
+                        break;
+                    case PathIterator.SEG_QUADTO:
+                        lastPoint = new Point2D.Double(coords[2], coords[3]);
+                        break;
+                    case PathIterator.SEG_CUBICTO:
+                        lastPoint = new Point2D.Double(coords[4], coords[5]);
+                        break;
+                    case PathIterator.SEG_CLOSE:
+                        prevPoint = startPoint;
+                        break;
+                }
+
+                Area boundingRectArea = getBoundingRectAreaOfSegment(prevPoint, lastPoint);
+                pathBoundingArea.add(boundingRectArea);
+                // pathBoundingShape.append(boundingRectArea, false);
+            }
+            prevPoint = (Point2D) lastPoint.clone();
+            pit.next();
+        }
+
+        // add handles Area, necesssary ?????
+        // double size = getHandleSize();
+        // double halfSize = size / 2;
+        //
+        // Point2D.Double[] handlePtArray = new Point2D.Double[handlePointList.size()];
+        // for (int i = 0; i < handlePointList.size(); i++) {
+        // handlePtArray[i] = new Point2D.Double(handlePointList.get(i).getX(), handlePointList.get(i).getY());
+        // }
+        //
+        // transform.transform(handlePtArray, 0, handlePtArray, 0, handlePtArray.length);
+        // for (Point2D point : handlePtArray) {
+        // Rectangle rectHandle =
+        // new Rectangle((int) Math.ceil(point.getX() - halfSize), (int) Math.ceil(point.getY() - halfSize),
+        // (int) Math.ceil(size), (int) Math.ceil(size));
+        // // growHandles(rectHandle);
+        // pathBoundingArea.add(new Area(rectHandle));
+        // }
+
+        // add label Area
+        // if (isLabelVisible && graphicLabel != null) {
+        // pathBoundingArea.add(new Area(transform.createTransformedShape(graphicLabel.getBound())));
+        // }
+        pathBoundingArea.transform(inverseTransform);
+
+        // updateUnTransformedDrawingShape(transform);
+        // if (unTransformedShape != null) {
+        // pathBoundingArea.add(new Area(unTransformedShape));
+        // }
+
+        return pathBoundingArea;
+    }
+
+    public Area getArea(MouseEvent mouseEvent) {
+        AffineTransform transform = getAffineTransform(mouseEvent);
+        return getArea(transform);
+    }
+
+    @Override
+    public Rectangle getBounds() {
+        if (shape == null)
+            return null;
+        // return shape.getBounds2D().getBounds();
+        // return getRepaintBounds();
+
+        Rectangle bound = shape.getBounds();
+        bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0);
+
+        // if (bound.width < 1) {
+        // bound.width = 1;
+        // }
+        // if (bound.height < 1) {
+        // bound.height = 1;
+        // }
+
+        return bound;
+    }
+
+    @Override
+    public Rectangle getRepaintBounds() {
+        return getRepaintBounds(shape);
+    }
+
+    public Rectangle getRepaintBounds(Shape shape) {
+        if (shape == null)
+            return null;
+
+        Rectangle rectangle = shape.getBounds();
+        // Rectangle rectangle = shape.getBounds2D().getBounds();
+        // if (unTransformedShape != null) {
+        // rectangle.union(unTransformedShape.getBounds());
+        // }
+        growHandles(rectangle);
+        return rectangle;
+    }
+
+    @Override
+    public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform) {
+        if (affineTransform == null)
+            return getRepaintBounds(shape);
+
+        Rectangle rectangle = affineTransform.createTransformedShape(shape).getBounds();
+
+        // updateUnTransformedDrawingShape(affineTransform);
+        // Shape shapeTemp = affineTransform.createTransformedShape(unTransformedShape);
+        // if (shapeTemp != null) {
+        // rectangle = rectangle.union(shapeTemp.getBounds());
+        // }
+        growHandles(rectangle);
+
+        return rectangle;
+
+    }
+
+    /**
+     * Add 2 pixels tolerance to ensure that the graphic is correctly repainted
+     */
+
+    public void growHandles(Rectangle rectangle) {
+        // int growingValue = (int) Math.floor(Math.max(handleSize, (int) Math.ceil(lineThickness)) / 2.0) + 2;
+        int growingValue = 2 + (Math.max((int) Math.ceil(handleSize * 1.5), (int) Math.ceil(lineThickness)) >> 1);
+
+        // int growingValue = 50 + Math.max(handleSize, (int) Math.ceil(lineThickness)) >> 1; // faster
+        // !!!!! 50 is a workaround for unTransformedShape not correctly computed with getRepaintBound
+        rectangle.grow(growingValue, growingValue);
+    }
+
+    /**
+     * @return : selected handle point index if exist, otherwise -1
+     */
+    @Deprecated
+    public int getResizeCorner(MouseEvent mouseEvent) {
+        return getHandlePointIndex(mouseEvent);
+    }
+
+    public int getHandlePointIndex(MouseEvent mouseevent) {
+        final Point mousePoint = mouseevent.getPoint();
+        int handleSize = getHandleSize() + 2;
+
+        // Enable to get a better selection of the handle with a low or high magnification zoom
+        AffineTransform affineTransform = getAffineTransform(mouseevent);
+        if (affineTransform != null) {
+            handleSize = (int) Math.ceil(handleSize / affineTransform.getScaleX());
+        }
+
+        for (int index = 0; index < handlePointList.size(); index++) {
+            Point2D point = handlePointList.get(index);
+            if (mousePoint.distance(point) <= handleSize)
+                return index;
+        }
+        return -1;
+
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected Graphics2D getGraphics2D(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof GraphicsPane)
+            return (Graphics2D) ((GraphicsPane) mouseevent.getSource()).getGraphics();
         return null;
     }
 
-    public void paint(Graphics2D g2d, AffineTransform transform) {
-        Shape shape = getShape();
-        if (shape != null) {
-            g2d.setPaint(getPaint());
-            g2d.setStroke(stroke);
-            Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
-            if (isFilled()) {
-                // draw filled shape
-                g2d.fill(transformedShape);
-            }
-            // draw outline shape
-            g2d.draw(transformedShape);
-            if (selected && !createPoints) {
-                paintHandles(g2d, transform);
-            }
-            paintLabel(g2d, transform);
-        }
+    protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+            return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
+        return null;
     }
 
-    public void paintLabel(Graphics2D g2d, AffineTransform transform) {
-        if (showLabel && labels != null) {
-            if (graphicLabel != null && labelHeight != null) {
-                Rectangle2D labelBound = graphicLabel.getLabelBound();
-                Point2D.Double p = new Point2D.Double(labelBound.getX(), labelBound.getY());
-                transform.transform(p, p);
-                p.x += graphicLabel.getOffsetX();
-                p.y += graphicLabel.getOffsetY();
-                for (int i = 0; i < labels.length; i++) {
-                    paintFontOutline(g2d, labels[i], (float) (p.x + 3), (float) (p.y + labelHeight * (i + 1)));
-                }
-                // Test, show bound to repaint
-                // g2d.drawRect((int) p.x, (int) p.y, (int) labelBound.getWidth(), (int) labelBound.getHeight());
-            }
-        }
+    protected ImageElement getImageElement(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+            return ((Image2DViewer) mouseevent.getSource()).getImage();
+        return null;
     }
 
-    public void paintFontOutline(Graphics2D g2, String str, float x, float y) {
-        g2.setPaint(Color.BLACK);
-        g2.drawString(str, x - 1f, y - 1f);
-        g2.drawString(str, x - 1f, y);
-        g2.drawString(str, x - 1f, y + 1f);
-        g2.drawString(str, x, y - 1f);
-        g2.drawString(str, x, y + 1f);
-        g2.drawString(str, x + 1f, y - 1f);
-        g2.drawString(str, x + 1f, y);
-        g2.drawString(str, x + 1f, y + 1f);
-        g2.setPaint(Color.WHITE);
-        g2.drawString(str, x, y);
+    @Override
+    public boolean intersects(Rectangle rectangle) {
+        return getArea().intersects(rectangle);
     }
 
-    protected Stroke getStroke() {
-        return stroke;
+    @Override
+    public boolean intersects(Rectangle rectangle, AffineTransform transform) {
+        return getArea(transform).intersects(rectangle);
     }
 
-    /*
-     * (non-Javadoc) draw the handles, when the graphic is selected
-     * 
-     * @see org.weasis.core.ui.graphic.Graphic#paintHandles(java.awt.Graphics2D, java.awt.geom.AffineTransform)
-     */
-    public void paintHandles(Graphics2D graphics2d, AffineTransform transform) {
-        Rectangle rect = getBounds();
-        graphics2d.setPaint(Color.black);
-        int numPoints = 8;
-        int i = getHandleSize();
-        int j = i / 2;
-        float x = rect.x;
-        float y = rect.y;
-        float w = x + rect.width;
-        float h = y + rect.height;
-        float mw = x + rect.width / 2.0f;
-        float mh = y + rect.height / 2.0f;
-
-        float[] dstPts = new float[] { x, y, mw, y, w, y, x, mh, w, mh, x, h, mw, h, w, h };
-        if (transform != null) {
-            transform.transform(dstPts, 0, dstPts, 0, numPoints);
-        }
-        int k = 0;
-        for (int l = numPoints * 2; k < l; k++) {
-            graphics2d.fill(new Rectangle2D.Float(dstPts[k] - j, dstPts[++k] - j, i, i));
-        }
-
-        k = 0;
-        graphics2d.setPaint(Color.white);
-        graphics2d.setStroke(new BasicStroke(1.0f));
-        for (int l = numPoints * 2; k < l; k++) {
-            graphics2d.draw(new Rectangle2D.Float(dstPts[k] - j, dstPts[++k] - j, i, i));
-        }
+    @Override
+    public void showProperties() {
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void setLineThickness(float f) {
         lineThickness = f;
@@ -441,240 +432,265 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         updateShape();
     }
 
-    /**
-     * showProperties
-     * 
-     * @param p
-     *            Point
-     */
-    public void showProperties() {
-        /*
-         * JDialog dialog = new MeasureDialog(this); ImageDisplay canvas =
-         * getLayer().getShowDrawing().getImageFrame().getImageCanvas(); Point p = canvas.getLocationOnScreen(); Point
-         * p2 = canvas.updateMouseToRelativeCoord(new Point(getBounds().x, getBounds().y)); p2.x += p.x; p2.y += p.y;
-         * WinUtil.adjustLocationToFitScreen(dialog, p2); dialog.setVisible(true);
-         */
+    @Override
+    public void setSelected(boolean flag) {
+        if (isSelected != flag) {
+            isSelected = flag;
+            firePropertyChange("bounds", null, shape);
+        }
     }
 
-    public boolean intersects(Rectangle rectangle) {
-        return getArea().intersects(rectangle);
+    public void setShape(Shape shape, MouseEvent mouseevent) {
+        if (shape != null) {
+            Shape oldShape = this.shape;
+            this.shape = shape;
+            firePropertyChange("bounds", oldShape, shape);
+        }
     }
 
-    /*
-     * return the rectangle that corresponds to the bounding box of the graphic (when is selected it is the bounding box
-     * of handles)
-     */
-    public Rectangle getRepaintBounds() {
-        return getRepaintBounds(shape);
+    public void setPaint(Paint paint1) {
+        paint = paint1;
+        firePropertyChange("bounds", null, shape);
     }
 
-    public Rectangle getRepaintBounds(Shape shape) {
-        if (shape == null) {
-            return null;
+    public void setFilled(boolean flag) {
+        if (isFilled != flag) {
+            isFilled = flag;
+            firePropertyChange("bounds", null, shape);
         }
-        Rectangle rectangle = shape.getBounds();
-        growHandles(rectangle);
-        return rectangle;
     }
 
-    public void growHandles(Rectangle rectangle) {
-        int i = getHandleSize();
-        int thick = (int) Math.ceil(lineThickness);
-        if (thick > i) {
-            i = thick;
-        }
-        // Add 2 pixels tolerance to ensure that the graphic is correctly repainted
-        i += 4;
-        rectangle.width += i;
-        rectangle.height += i;
-        i /= 2;
-        rectangle.x -= i;
-        rectangle.y -= i;
+    public void setLabelVisible(boolean isLabelVisible) {
+        this.isLabelVisible = isLabelVisible;
     }
 
-    public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform) {
-        // Get the bounds of the transformed shape + the handles.
-        if (affineTransform == null) {
-            return getRepaintBounds(shape);
+    @Override
+    public void setLabel(String[] labels, Graphics2D g2d) {
+        if (isLabelVisible && g2d != null) {
+
+            if (labels == null || labels.length == 0) {
+                graphicLabel = null;
+            } else {
+                if (graphicLabel == null) {
+                    graphicLabel = new GraphicLabel();
+                }
+
+                Rectangle oldBound = graphicLabel.getBound();
+                graphicLabel.setLabel(labels, g2d);
+
+                Rectangle rect = shape.getBounds();
+                graphicLabel.setLabelPosition(rect.x + rect.width, (int) Math.ceil(rect.y + rect.height * 0.5));
+
+                firePropertyChange("graphicLabel", oldBound, graphicLabel);
+            }
         }
-        Rectangle rectangle = affineTransform.createTransformedShape(shape).getBounds();
-        growHandles(rectangle);
-        return rectangle;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.core.ui.graphic.Graphic#getBounds()
-     */
-    public Rectangle getBounds() {
-        Shape shape1 = getShape();
-        if (shape1 == null) {
-            return null;
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void updateShape() {
+        firePropertyChange("bounds", null, shape);
+    }
+
+    protected void updateUnTransformedDrawingShape(AffineTransform transform) {
+
+    }
+
+    protected void updateStroke() {
+        stroke = new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.CAP_ROUND);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public void paint(Graphics2D g2d, AffineTransform transform) {
+        Shape shape = getShape();
+
+        if (shape != null) {
+            g2d.setPaint(getPaint());
+            g2d.setStroke(stroke);
+            Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
+            if (isFilled()) {
+                g2d.fill(transformedShape);
+            }
+
+            g2d.draw(transformedShape);
+
+            updateUnTransformedDrawingShape(transform);
+            Shape shapeTest = transform.createTransformedShape(unTransformedShape);
+            if (shapeTest != null) {
+                g2d.draw(shapeTest);
+            }
+
+            // if (isSelected && !isGraphicComplete)
+            if (isSelected) {
+                paintHandles(g2d, transform);
+            }
+
+            paintLabel(g2d, transform);
+
+            // paint transformedBounds
+            // g2d.setPaint(Color.CYAN);
+            // Rectangle rectangle = transform.createTransformedShape(shape).getBounds();
+            // if (shapeTest != null) {
+            // rectangle = rectangle.union(shapeTest.getBounds());
+            // }
+            // growHandles(rectangle);
+            // g2d.draw(rectangle);
+
+            // Area boundingArea = getArea(transform);
+            // g2d.setPaint(Color.red);
+            // g2d.draw(transform.createTransformedShape(boundingArea));
+
+            // g2d.setPaint(Color.blue);
+            // g2d.draw(transform == null ? pathBoundingShape : transform.createTransformedShape(pathBoundingShape));
+            // g2d.draw(pathBoundingShape);
+
+            // g2d.setPaint(Color.green);
+            // g2d.draw(transform == null ? testEnclosingArea : transform.createTransformedShape(testEnclosingArea));
         }
-        // bound is not accurate with complex shape (it is true for rectangle or ellipse with rotation)
-        Rectangle bound = shape1.getBounds();
-        if (bound.width < 1) {
-            bound.width = 1;
+    }
+
+    protected Area testEnclosingArea = new Area();
+
+    @Override
+    public void paintLabel(Graphics2D g2d, AffineTransform transform) {
+        if (isLabelVisible && graphicLabel != null) {
+            graphicLabel.paint(g2d, transform);
         }
-        if (bound.height < 1) {
-            bound.height = 1;
+    }
+
+    public void paintHandles(Graphics2D graphics2d, AffineTransform transform) {
+
+        double size = getHandleSize();
+        double halfSize = size / 2;
+
+        Point2D.Double[] handlePtArray = new Point2D.Double[handlePointList.size()];
+        for (int i = 0; i < handlePointList.size(); i++) {
+            handlePtArray[i] = new Point2D.Double(handlePointList.get(i).getX(), handlePointList.get(i).getY());
         }
-        return bound;
+
+        transform.transform(handlePtArray, 0, handlePtArray, 0, handlePtArray.length);
+
+        graphics2d.setPaint(Color.black);
+        for (Point2D point : handlePtArray) {
+            graphics2d.fill(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
+        }
+
+        graphics2d.setPaint(Color.white);
+        graphics2d.setStroke(new BasicStroke(1.0f));
+        for (Point2D point : handlePtArray) {
+            graphics2d.draw(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
+        }
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    protected class DefaultDragSequence implements DragSequence {
+
+        protected int lastX;
+        protected int lastY;
+        protected int handlePointIndex; // -1 stands for moving current graphic
+
+        protected DefaultDragSequence() {
+            this(-1);
+        }
+
+        protected DefaultDragSequence(int handlePointIndex) {
+            this.handlePointIndex = handlePointIndex;
+        }
+
+        @Override
+        public void startDrag(MouseEvent mouseEvent) {
+            lastX = mouseEvent.getX();
+            lastY = mouseEvent.getY();
+
+            if (!isGraphicComplete) {
+                if (handlePointList.isEmpty()) {
+                    handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
+                }
+                if (handlePointList.size() < handlePointTotalNumber) {
+                    handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
+                }
+
+                handlePointIndex = handlePointList.size() - 1; // forces index to match actual dragging point
+            }
+        }
+
+        @Override
+        public void drag(MouseEvent mouseEvent) {
+            int deltaX = mouseEvent.getX() - lastX;
+            int deltaY = mouseEvent.getY() - lastY;
+
+            if (deltaX != 0 || deltaY != 0) {
+                lastX = mouseEvent.getX();
+                lastY = mouseEvent.getY();
+
+                handlePointIndex = moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
+                updateShapeOnDrawing(mouseEvent);
+            }
+        }
+
+        @Override
+        public boolean completeDrag(MouseEvent mouseEvent) {
+
+            if (!isGraphicComplete) {
+                isGraphicComplete = handlePointList.size() == handlePointTotalNumber;
+            }
+
+            int lastPointIndex = handlePointList.size() - 1;
+            Point2D lastPoint = handlePointList.get(lastPointIndex);
+            ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex);
+
+            while (listIt.hasPrevious())
+                if (lastPoint.equals(listIt.previous()))
+                    return false;
+
+            if (!isGraphicComplete) {
+                handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
+                handlePointIndex = handlePointList.size() - 1;
+            }
+
+            return isGraphicComplete;
+        }
     }
 
     public DragSequence createDragSequence(DragSequence dragsequence, MouseEvent mouseevent) {
         int i = 1;
-        if (mouseevent != null && (dragsequence != null || (i = getResizeCorner(mouseevent)) == -1)) {
+
+        if (mouseevent != null && (dragsequence != null || (i = getHandlePointIndex(mouseevent)) == -1))
             return createMoveDrag(dragsequence, mouseevent);
-        } else {
-            // let drag the handle i to resize the graphic
+        else
             return createResizeDrag(mouseevent, i);
-        }
+
     }
 
-    // Start a drag sequence to move the graphic
     protected DragSequence createMoveDrag(DragSequence dragsequence, MouseEvent mouseevent) {
         return new DefaultDragSequence();
     }
 
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
-        // let drag the handle i to resize the graphic
-        return new DefaultDragSequence((mouseevent == null), i);
+        return new DefaultDragSequence(i);
     }
 
-    public Area getArea() {
-        return new Area(getShape());
-    }
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public int getResizeCorner(MouseEvent mouseevent) {
-        // return the selected handle point position
-        /*
-         * 1 2 3 8 4 7 6 5
-         */
-        final Point pos = mouseevent.getPoint();
-        Rectangle rect = getBounds();
-        int k = getHandleSize() + 2;
-        AffineTransform affineTransform = getAffineTransform(mouseevent);
-        if (affineTransform != null) {
-            // Enable to get a better selection of the handle with a low or high magnification zoom
-            double scale = affineTransform.getScaleX();
-            k = (int) Math.ceil(k / scale + 1);
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
+        if (pcs == null) {
+            pcs = new PropertyChangeSupport(this);
         }
 
-        int l = k / 2;
-        int i = pos.x - rect.x + l;
-        int j = pos.y - rect.y + l;
-        int i1 = -1;
-        if (i >= 0) {
-            if (i < k) {
-                i1 = 1;
-            } else if (i >= rect.width / 2 && i < rect.width / 2 + k) {
-                i1 = 2;
-            } else if (i >= rect.width && i < rect.width + k) {
-                i1 = 3;
-            }
-        }
-        if (i1 != -1 && j >= 0) {
-            if (j >= rect.height / 2 && j < rect.height / 2 + k) {
-                if (i1 == 2) { // 5 is the center of the graphic
-                    return -1;
-                }
-                i1 = i1 == 1 ? 0 : 4;
-            } else if (j >= rect.height && j < rect.height + k) {
-                i1 = i1 == 1 ? 7 : i1 == 2 ? 6 : 5;
-            } else if (j >= k) {
-                i1 = -1;
-            }
-        } else {
-            i1 = -1;
-        }
-        return i1;
+        for (PropertyChangeListener listener : pcs.getPropertyChangeListeners())
+            if (listener == propertychangelistener)
+                return;
+
+        pcs.addPropertyChangeListener(propertychangelistener);
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
-        AbstractDragGraphic abstractgraphic = (AbstractDragGraphic) super.clone();
-        abstractgraphic.pcs = null;
-        abstractgraphic.selected = false;
-        abstractgraphic.filled = filled;
-        return abstractgraphic;
-    }
-
-    protected abstract int resizeOnDrawing(int i, int j, int k, MouseEvent mouseevent);
-
-    public abstract Graphic clone(int i, int j);
-
-    protected abstract void updateShapeOnDrawing(MouseEvent mouseevent);
-
-    public void move(int i, int j, int k, MouseEvent mouseevent) {
-        // WeasisWin.getInstance().getImageCanvas().moveOrigin(j, k);
-    }
-
-    public Point needToMoveCanvas(int x, int y) {
-        // WeasisWin imageFrame = WeasisWin.getInstance();
-        // if (imageFrame.getProjectSettingsData().isDis_autoMove()) {
-        // return null;
-        // // return imageFrame.getImageCanvas().stepToMoveCanvas(getRepaintBounds(), x, y);
-        // }
-        // else {
-        return null;
-        // }
-    }
-
-    protected int adjustBoundsForResize(Rectangle rectangle, int i, int j, int k) {
-        switch (i) {
-            // handle points
-            /*
-             * 1 2 3 0 4 7 6 5
-             */
-            case 0:
-                rectangle.x += j;
-                rectangle.width -= j;
-                break;
-            case 1:
-                rectangle.x += j;
-                rectangle.y += k;
-                rectangle.width -= j;
-                rectangle.height -= k;
-                break;
-            case 2:
-                rectangle.y += k;
-                rectangle.height -= k;
-                break;
-            case 3:
-                rectangle.width += j;
-                rectangle.y += k;
-                rectangle.height -= k;
-                break;
-            case 4:
-                rectangle.width += j;
-                break;
-            case 5:
-                rectangle.width += j;
-                rectangle.height += k;
-                break;
-            case 6:
-                rectangle.height += k;
-                break;
-            case 7:
-                rectangle.x += j;
-                rectangle.height += k;
-                rectangle.width -= j;
-                break;
+    public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
+        if (pcs != null) {
+            pcs.removePropertyChangeListener(propertychangelistener);
         }
-        int l = 0;
-        if (rectangle.width < 0) {
-            rectangle.x += rectangle.width;
-            rectangle.width = -rectangle.width;
-            l |= 1;
-        }
-        if (rectangle.height < 0) {
-            rectangle.y += rectangle.height;
-            rectangle.height = -rectangle.height;
-            l |= 2;
-        }
-        return l;
     }
 
     protected void firePropertyChange(String s, Object obj, Object obj1) {
@@ -697,96 +713,67 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     protected void fireMoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("move", null, this); //$NON-NLS-1$
+            pcs.firePropertyChange("move", null, this);
         }
     }
 
+    @Override
     public void fireRemoveAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove", null, this); //$NON-NLS-1$
+            pcs.firePropertyChange("remove", null, this);
         }
     }
 
     public void fireRemoveAndRepaintAction() {
         if (pcs != null) {
-            pcs.firePropertyChange("remove.repaint", null, this); //$NON-NLS-1$
+            pcs.firePropertyChange("remove.repaint", null, this);
         }
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-        // Do not add if already exists
-        for (PropertyChangeListener listener : pcs.getPropertyChangeListeners()) {
-            if (listener == propertychangelistener) {
-                return;
-            }
-        }
-        pcs.addPropertyChangeListener(propertychangelistener);
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public String toString() {
+        return getUIName();
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
-        if (pcs != null) {
-            pcs.removePropertyChangeListener(propertychangelistener);
-        }
-    }
+    @Override
+    public Object clone() {
+        AbstractDragGraphic newGraphic = null;
 
-    public boolean isCreatePoints() {
-        return createPoints;
-    }
-
-    public String[] getLabel() {
-        return labels;
-    }
-
-    public void setLabel(String[] label, Graphics2D g2d) {
-        this.labels = label;
-        buildLabelBound(g2d);
-    }
-
-    protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {
-        if (imageData == null || shape == null) {
-            return null;
-        }
-        Area area = new Area(shape);
-        Rectangle bound = area.getBounds();
-        bound = imageData.getBounds().intersection(bound);
-        if (bound.width == 0 || bound.height == 0) {
-            return null;
-        }
-        RectIter it;
         try {
-            it = RectIterFactory.create(imageData, bound);
-        } catch (Exception ex) {
-            it = null;
+            newGraphic = (AbstractDragGraphic) super.clone();
+        } catch (CloneNotSupportedException clonenotsupportedexception) {
+            return null;
         }
-        ArrayList<Integer> list = null;
+        newGraphic.pcs = null;
+        newGraphic.graphicLabel = null;
+        newGraphic.isSelected = false;
+        newGraphic.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber);
 
-        if (it != null) {
-            int band = imageData.getSampleModel().getNumBands();
-            list = new ArrayList<Integer>();
-            int[] c = { 0, 0, 0 };
-            it.startBands();
-            it.startLines();
-            int y = bound.y;
-            while (!it.finishedLines()) {
-                it.startPixels();
-                int x = bound.x;
-                while (!it.finishedPixels()) {
-                    if (shape.contains(x, y)) {
-                        it.getPixel(c);
-                        for (int i = 0; i < band; i++) {
-                            list.add(c[i]);
-                        }
-                    }
-                    it.nextPixel();
-                    x++;
-                }
-                it.nextLine();
-                y++;
-            }
-        }
-        return list;
+        return newGraphic;
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Deprecated
+    protected int resizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
+        return moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
+    };
+
+    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
+        if (handlePointIndex == -1) {
+            for (Point2D point : handlePointList) {
+                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+            }
+        } else {
+            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
+        }
+        return handlePointIndex;
+    }
+
+    protected abstract void updateShapeOnDrawing(MouseEvent mouseevent);
+
+    public abstract Graphic clone(int xPos, int yPos);
+
 }

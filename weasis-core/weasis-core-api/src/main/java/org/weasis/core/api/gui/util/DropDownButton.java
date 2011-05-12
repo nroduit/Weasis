@@ -66,10 +66,10 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
     }
 
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        // TODO unregister listener
         getModel().setRollover(false);
         getModel().setSelected(false);
         ((JPopupMenu) e.getSource()).removePopupMenuListener(this);
+        // remove parent of the radiobutton in actionPeformed() item.getParent()
         // ((JPopupMenu) e.getSource()).removeAll();
     }
 

@@ -46,7 +46,7 @@ import org.weasis.core.ui.Messages;
  * @author Nicolas Roduit
  * @version 1.0
  */
-public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
+public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable {
 
     private static final long serialVersionUID = 5814470994233416436L;
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
@@ -61,7 +61,7 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
      * 
      * @author Nicolas Roduit
      */
-    protected class FreeDragSequence extends AbstractDragGraphic.DefaultDragSequence {
+    protected class FreeDragSequence extends AbstractDragGraphicOld.DefaultDragSequence {
 
         @Override
         public void startDrag(MouseEvent mouseevent) {
@@ -229,17 +229,25 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
     }
 
     @Override
+    public Object clone() throws CloneNotSupportedException {
+        FreeHandGraphic freeGraphic = (FreeHandGraphic) super.clone();
+        return freeGraphic;
+    }
+
+    @Override
     public Graphic clone(int i, int j) {
         FreeHandGraphic freeGraphic;
         try {
-            freeGraphic = (FreeHandGraphic) super.clone();
-        } catch (CloneNotSupportedException clonenotsupportedexception) {
+            freeGraphic = (FreeHandGraphic) clone();
+        } catch (CloneNotSupportedException e) {
             return null;
         }
+
         freeGraphic.points = new float[4];
         freeGraphic.numPoints = 2;
         freeGraphic.points[0] = freeGraphic.points[2] = i;
         freeGraphic.points[1] = freeGraphic.points[3] = j;
+
         freeGraphic.updateStroke();
         freeGraphic.updateShapeOnDrawing(null);
         return freeGraphic;
@@ -257,7 +265,7 @@ public class FreeHandGraphic extends AbstractDragGraphic implements Cloneable {
             points[m] += j;
             points[m + 1] += k;
         }
-        updateShapeOnDrawing(mouseevent);
+        // updateShapeOnDrawing(mouseevent);
     }
 
     @Override

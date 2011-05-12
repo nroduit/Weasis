@@ -34,29 +34,58 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
-import org.weasis.core.ui.graphic.CircleGraphic;
+import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
+import org.weasis.core.ui.graphic.EllipseGraphic;
+import org.weasis.core.ui.graphic.FourPointsAngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.OpenAngleToolGraphic;
+import org.weasis.core.ui.graphic.ParallelLineGraphic;
+import org.weasis.core.ui.graphic.PerpendicularLineGraphic;
 import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.SelectGraphic;
+import org.weasis.core.ui.graphic.ThreePointsCircleGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
-    public static final SelectGraphic selectionGraphic = new SelectGraphic();
-    public static final LineGraphic lineGraphic = new LineGraphic(2.0f, Color.YELLOW);
-    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(2.0f, Color.YELLOW);
-    public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, false);
+    public static final SelectGraphic selectionGraphic = new SelectGraphic(1.0f, Color.WHITE);
+    public static final LineGraphic lineGraphic = new LineGraphic(1.0f, Color.YELLOW, false);
+    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, false);
+
     public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, false);
+    // public static final SquareGraphic squareGraphic = new SquareGraphic(1.0f, Color.YELLOW, false);
+    public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, false);
+    // public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, false);
+    public static final ThreePointsCircleGraphic threePtCircleGraphic = new ThreePointsCircleGraphic(1.0f,
+        Color.YELLOW, false);
+    public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
+        Color.YELLOW, false);
+    public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, false);
+    // public static final MedianLineGraphic medianLineGraphic= new MedianLineGraphic(1.0f, Color.YELLOW, false);
+    public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, false);
+    public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
+        Color.YELLOW, false);
+    public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, false);
+
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
     static {
         graphicList.add(selectionGraphic);
-        graphicList.add(lineGraphic);
-        graphicList.add(angleToolGraphic);
-        graphicList.add(circleGraphic);
         graphicList.add(rectangleGraphic);
+        // graphicList.add(squareGraphic);
+        graphicList.add(ellipseGraphic);
+        // graphicList.add(circleGraphic);
+        graphicList.add(threePtCircleGraphic);
+        graphicList.add(lineGraphic);
+        graphicList.add(perpendicularToolGraphic);
+        graphicList.add(parallelLineGraphic);
+        // graphicList.add(medianLineGraphic);
+        graphicList.add(angleToolGraphic);
+        graphicList.add(openAngleToolGraphic);
+        graphicList.add(fourPointsAngleToolGraphic);
+        graphicList.add(cobbAngleToolGraphic);
     }
     protected final JButton jButtondelete = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
@@ -74,7 +103,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         if (measure instanceof ComboItemListener) {
             ComboItemListener m = (ComboItemListener) measure;
-            menu = new MeasureGroupMenu(m.getModel());
+            menu = new MeasureGroupMenu();
             m.registerComponent(menu);
         }
         measureButton = new MeasureButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu);
@@ -167,7 +196,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     class MeasureGroupMenu extends GroupRadioMenu {
 
-        public MeasureGroupMenu(DefaultComboBoxModel dataModel) {
+        public MeasureGroupMenu() {
             super();
         }
 

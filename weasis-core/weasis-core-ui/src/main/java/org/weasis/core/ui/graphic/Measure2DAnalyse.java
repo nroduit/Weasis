@@ -1,5 +1,6 @@
 package org.weasis.core.ui.graphic;
 
+import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
@@ -7,6 +8,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Statistics;
 
@@ -16,7 +18,7 @@ import org.weasis.core.api.image.util.Statistics;
 
 public class Measure2DAnalyse {
     public final static String[] measurList = { "Box X min", "Box Y min", "Box X width", "Box Y height", "Area",
-        "Perimeter", "Barycenter x", "Barycenter y", "Orientation", "Length", "width", "Eccentricity" };
+        "Perimeter", "Barycenter x", "Barycenter y", "Orientation", "Length", "width", "Eccentricity", "Color (RGB)" };
     public final static int[] positionParameters = { 0, 1, 2, 3, 6, 7 };
     public final static int[] basicParameters = { 4, 5, 8, 9, 10, 11 };
 
@@ -24,11 +26,13 @@ public class Measure2DAnalyse {
     private Shape shape;
     private MeasurementsAdapter adapter;
     private BlobAnalyse2D blob = null;
+    private Color color = null;
 
-    public Measure2DAnalyse(Shape shape, MeasurementsAdapter adapter) {
+    public Measure2DAnalyse(Shape shape, MeasurementsAdapter adapter, Color color) {
         // TODO transform the shape according the x y calibration
         this.shape = shape;
         this.adapter = adapter;
+        this.color = color;
     }
 
     public java.util.List getAnalyse(boolean[] selected, int nbMeasures) {
@@ -51,6 +55,7 @@ public class Measure2DAnalyse {
             measVal.add(adapter.getCalibRatioX() * adapter.getCalibRatioY() * getArea());
         }
         if (selected[5]) {
+            // TODO handle non square pixel
             // Mesure 8 : Perimeter, retourne le périmètre du blob calibré ou non calibré
             measVal.add(adapter.getCalibRatioX() * getPerimeter());
         }
@@ -77,6 +82,7 @@ public class Measure2DAnalyse {
             }
 
             if (selected[9] || selected[10]) {
+                // TODO handle non square pixel
                 // Mesure 12 : Feret width
                 // Mesure 13 : 90 degree height
                 double[] minorAndMajorAxis = getLengthAndWidth(shape, getOrientation());
@@ -91,9 +97,9 @@ public class Measure2DAnalyse {
                 // Mesure 14 : Eccentricity
                 measVal.add(getEccentricity());
             }
-            // if (selected[12]) {
-            // measVal.add(JMVUtils.getValueRGBasText2(color));
-            // }
+            if (selected[12]) {
+                measVal.add(JMVUtils.getValueRGBasText2(color));
+            }
 
         }
         return measVal;
@@ -134,16 +140,14 @@ public class Measure2DAnalyse {
     }
 
     private double getBaryCenterX() {
-        if (shape instanceof Rectangle2D || shape instanceof Ellipse2D) {
+        if (shape instanceof Rectangle2D || shape instanceof Ellipse2D)
             return shape.getBounds2D().getWidth() / 2.0;
-        }
         return getStatistics().getBarycenterX();
     }
 
     private double getBaryCenterY() {
-        if (shape instanceof Rectangle2D || shape instanceof Ellipse2D) {
+        if (shape instanceof Rectangle2D || shape instanceof Ellipse2D)
             return shape.getBounds2D().getHeight() / 2.0;
-        }
         return getStatistics().getBarycentery();
     }
 
@@ -168,9 +172,8 @@ public class Measure2DAnalyse {
 
     public static double[] getLengthAndWidth(Shape shape, double teta) {
         double sum[] = new double[2];
-        if (shape == null) {
+        if (shape == null)
             return sum;
-        }
         if (shape.getBounds().width == 1 && shape.getBounds().width == 1) {
             sum[0] = 1.0;
             sum[1] = 1.0;
@@ -200,8 +203,8 @@ public class Measure2DAnalyse {
         return angle;
     }
 
-    public static ArrayList getObjectMeasureList(boolean[] select) {
-        ArrayList list = new ArrayList(select.length);
+    public static ArrayList<String> getObjectMeasureList(boolean[] select) {
+        ArrayList<String> list = new ArrayList<String>(select.length);
         for (int i = 0; i < select.length; i++) {
             if (select[i]) {
                 list.add(measurList[i]);

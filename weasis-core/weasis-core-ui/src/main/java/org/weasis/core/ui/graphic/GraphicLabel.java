@@ -10,48 +10,57 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 public class GraphicLabel {
 
-    protected String[] label;
-    protected Rectangle2D labelBound;
+    protected String[] labels;
+    protected Rectangle labelBound;
+    protected int labelHeight;
 
     public GraphicLabel() {
-
-    }
-
-    public void paint(Graphics2D g2d, Font font) {
-        if (!label.equals(this.label)) {
-            FontRenderContext frc = g2d.getFontRenderContext();
-            // TextLayout tl = new TextLayout(graphicLabel, font, frc);
-            // labelBound = tl.getBounds();
-        }
     }
 
     public String[] getLabel() {
-        return label;
+        return labels;
     }
 
-    public void setLabel(String label) {
-        if (label == null || label.equals("")) { //$NON-NLS-1$
+    public void setLabel(String[] labels, Graphics2D g2d) {
+
+        if (labels == null || labels.length == 0 || g2d == null) {
+            labelHeight = 0;
             labelBound = null;
-            this.label = null;
-        } else if (!label.equals(this.label)) {
-            // FontRenderContext frc = g2d.getFontRenderContext();
-            // TextLayout tl = new TextLayout(graphicLabel, font, frc);
-            // labelBound = tl.getBounds();
-            // this.label = graphicLabel;
+            this.labels = null;
+        } else {
+            this.labels = labels;
+            Rectangle longestBound = null;
+            for (String label : labels) {
+                Rectangle bound = g2d.getFont().getStringBounds(label, g2d.getFontRenderContext()).getBounds();
+                if (longestBound == null || bound.getWidth() > longestBound.getWidth())
+                    longestBound = bound;
+            }
+            labelHeight = longestBound.height;
+            setLabelBound(0, 0, longestBound.getWidth() + 6, labelHeight * labels.length + 6);
         }
     }
 
+    public void setLabelPosition(int posX, int posY) {
+        if (labelBound != null)
+            labelBound.setLocation(posX, posY);
+    }
+
+    @Deprecated
     public void setLabelBound(double x, double y, double width, double height) {
         if (labelBound == null) {
-            labelBound = new Rectangle2D.Double(x, y, width, height);
+            labelBound = new Rectangle.Double(x, y, width, height).getBounds();
         } else {
             labelBound.setRect(x, y, width, height);
         }
@@ -75,4 +84,30 @@ public class GraphicLabel {
     public Rectangle getBound() {
         return labelBound == null ? null : labelBound.getBounds2D().getBounds();
     }
+
+    public void paint(Graphics2D g2d, AffineTransform transform) {
+        if (labelBound != null && labels != null) {
+            Point pt = new Point(labelBound.x, labelBound.y);
+            transform.transform(pt, pt);
+            pt.x += getOffsetX();
+            pt.y += getOffsetY();
+            for (int i = 0; i < labels.length; i++)
+                paintFontOutline(g2d, labels[i], (float) (pt.x + 3), (float) (pt.y + labelHeight * (i + 1)));
+        }
+    }
+
+    protected void paintFontOutline(Graphics2D g2, String str, float x, float y) {
+        g2.setPaint(Color.BLACK);
+        g2.drawString(str, x - 1f, y - 1f);
+        g2.drawString(str, x - 1f, y);
+        g2.drawString(str, x - 1f, y + 1f);
+        g2.drawString(str, x, y - 1f);
+        g2.drawString(str, x, y + 1f);
+        g2.drawString(str, x + 1f, y - 1f);
+        g2.drawString(str, x + 1f, y);
+        g2.drawString(str, x + 1f, y + 1f);
+        g2.setPaint(Color.WHITE);
+        g2.drawString(str, x, y);
+    }
+
 }

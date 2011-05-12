@@ -58,6 +58,8 @@ public interface Graphic extends GUIEntry {
 
     public boolean intersects(Rectangle rectangle);
 
+    public boolean intersects(Rectangle rectangle, AffineTransform transform);
+
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener);

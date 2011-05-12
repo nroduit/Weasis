@@ -31,7 +31,7 @@ import org.weasis.core.ui.Messages;
  * 
  * @author Nicolas Roduit
  */
-public class PolygonGraphic extends AbstractDragGraphic {
+public class PolygonGraphic extends AbstractDragGraphicOld {
 
     public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
     protected float points[];
@@ -44,7 +44,7 @@ public class PolygonGraphic extends AbstractDragGraphic {
      * 
      * @author Nicolas Roduit
      */
-    protected class PolygonDragSequence extends AbstractDragGraphic.DefaultDragSequence {
+    protected class PolygonDragSequence extends AbstractDragGraphicOld.DefaultDragSequence {
 
         private int point;
 
@@ -98,9 +98,8 @@ public class PolygonGraphic extends AbstractDragGraphic {
                     updateShapeOnDrawing(mouseevent);
                     update(mouseevent);
                     return false;
-                } else {
+                } else
                     return true;
-                }
             }
             if (mouseevent.getID() == 501) {
                 if (mouseevent.getClickCount() == 2) {
@@ -127,9 +126,8 @@ public class PolygonGraphic extends AbstractDragGraphic {
                     update(mouseevent);
                     return false;
                 }
-            } else {
+            } else
                 return true;
-            }
         }
     }
 
@@ -256,7 +254,7 @@ public class PolygonGraphic extends AbstractDragGraphic {
             points[m] += j;
             points[m + 1] += k;
         }
-        updateShapeOnDrawing(mouseevent);
+        // updateShapeOnDrawing(mouseevent);
     }
 
     @Override
@@ -286,9 +284,8 @@ public class PolygonGraphic extends AbstractDragGraphic {
             int j1 = (int) points[l];
             int k1 = (int) points[++l];
             int l1 = (i - j1) * (i - j1) + (j - k1) * (j - k1);
-            if (l1 <= k) {
+            if (l1 <= k)
                 return l / 2;
-            }
         }
         return -1;
     }
@@ -319,17 +316,25 @@ public class PolygonGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public Graphic clone(int i, int j) {
+    public Object clone() throws CloneNotSupportedException {
+        PolygonGraphic polygongraphic = (PolygonGraphic) super.clone();
+        return super.clone();
+    }
+
+    @Override
+    public Graphic clone(int xPos, int yPos) {
         PolygonGraphic polygongraphic;
         try {
-            polygongraphic = (PolygonGraphic) super.clone();
-        } catch (CloneNotSupportedException clonenotsupportedexception) {
+            polygongraphic = (PolygonGraphic) clone();
+        } catch (CloneNotSupportedException e) {
             return null;
         }
+
         polygongraphic.points = new float[4];
         polygongraphic.numPoints = 2;
-        polygongraphic.points[0] = polygongraphic.points[2] = i;
-        polygongraphic.points[1] = polygongraphic.points[3] = j;
+        polygongraphic.points[0] = polygongraphic.points[2] = xPos;
+        polygongraphic.points[1] = polygongraphic.points[3] = yPos;
+
         polygongraphic.updateStroke();
         polygongraphic.updateShapeOnDrawing(null);
         return polygongraphic;

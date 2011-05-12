@@ -7,7 +7,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.media.jai.PlanarImage;
@@ -16,11 +18,13 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.TableModel;
@@ -32,14 +36,24 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHaederRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.EllipseGraphic;
+import org.weasis.core.ui.graphic.FreeHandGraphic;
+import org.weasis.core.ui.graphic.FreeHandLineGraphic;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.Measure1DAnalyse;
 import org.weasis.core.ui.graphic.Measure2DAnalyse;
+import org.weasis.core.ui.graphic.MeasureDialog;
+import org.weasis.core.ui.graphic.PolygonGraphic;
+import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableNumberRenderer;
@@ -51,12 +65,16 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
     public static final boolean[] MEAS2D_SELECTMEASURES = { true, true, true, true, true, true, true, true, true, true,
-        true, true };
+        true, true, false };
+    public static final boolean[] MEAS1D_SELECTMEASURES = { true, true, true, true, true, true, false, false, false,
+        true, true, false };
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
     protected final ImageViewerEventManager eventManager;
     private JPanel tableContainer;
     private JTable jtable;
+
+    private Graphic selectedGraphic;
 
     public MeasureTool(String pluginName, Icon icon, ImageViewerEventManager eventManager) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
@@ -108,8 +126,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             transform.add(p_icons);
         }
         transform.add(Box.createVerticalStrut(7));
-        JButton btnGerenralOptions = new JButton("General Options");
-        transform.add(btnGerenralOptions);
+        // JButton btnGerenralOptions = new JButton("General Options");
+        // transform.add(btnGerenralOptions);
         return transform;
     }
 
@@ -121,7 +139,21 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Selected Measurement",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
-        JButton btnGerenralOptions = new JButton("Change Properties");
+        final JButton btnGerenralOptions = new JButton("Change Properties");
+        btnGerenralOptions.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (selectedGraphic instanceof AbstractDragGraphic) {
+                    AbstractDragGraphic graph = (AbstractDragGraphic) selectedGraphic;
+                    JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(MeasureTool.this), graph);
+                    Point location = btnGerenralOptions.getLocation();
+                    SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
+                    WinUtil.adjustLocationToFitScreen(dialog, location);
+                    dialog.setVisible(true);
+                    graph.showProperties();
+                }
+            }
+        });
         transform.add(btnGerenralOptions);
         transform.add(Box.createVerticalStrut(5));
 
@@ -133,9 +165,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         tableContainer.setLayout(new BorderLayout());
         transform.add(tableContainer);
 
-        transform.add(Box.createVerticalStrut(7));
-        JButton btnStats = new JButton("Show Statistics");
-        transform.add(btnStats);
+        // transform.add(Box.createVerticalStrut(7));
+        // JButton btnStats = new JButton("Show Statistics");
+        // transform.add(btnStats);
         transform.add(Box.createVerticalStrut(7));
         return transform;
     }
@@ -163,8 +195,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHaederRenderer());
     }
 
-    public Object[][] createRows(java.util.List tableResult) {
-        java.util.List measures = Measure2DAnalyse.getObjectMeasureList(MEAS2D_SELECTMEASURES);
+    public Object[][] createRows(java.util.List tableResult, java.util.List<String> measures) {
+
         Object[][] data = new Object[measures.size()][];
         for (int j = 0; j < data.length; j++) {
             Object[] row = new Object[2];
@@ -175,8 +207,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         return data;
     }
 
-    public void updateHistogramFrame(Graphic graph, ImageElement imageElement) {
+    public void setSelectedGraphic(Graphic graph, ImageElement imageElement) {
         tableContainer.removeAll();
+        this.selectedGraphic = graph;
         if (graph != null && imageElement != null) {
             Unit unit = imageElement.getPixelSpacingUnit();
             PlanarImage image = imageElement.getImage();
@@ -187,24 +220,48 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             MeasurementsAdapter measurementsAdapter =
                 new MeasurementsAdapter(imageElement.getPixelSizeX(), imageElement.getPixelSizeY(), 0, 0, false,
                     height, unit.getAbbreviation());
-            Measure2DAnalyse blob = new Measure2DAnalyse(graph.getShape(), measurementsAdapter);
-            // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
-            // if (selected == null) {
-            // return;
-            // }
-            int nbMeasures = getNumberOfMeasures(MEAS2D_SELECTMEASURES);
 
-            String[] headers = { "Parameter", "Value [" + unit.getAbbreviation() + "]" };
-            jtable.setModel(new SimpleTableModel(headers,
-                createRows(blob.getAnalyse(MEAS2D_SELECTMEASURES, nbMeasures))));
-            jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-            createTableHeaders(jtable);
-            tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-            tableContainer.add(jtable, BorderLayout.CENTER);
+            if (graph instanceof RectangleGraphic || graph instanceof EllipseGraphic || graph instanceof PolygonGraphic
+                || graph instanceof FreeHandGraphic) {
 
-            // if (histo != null) {
-            // histo.updateHistogram(new ROIShape(graph.getShape()));
-            // }
+                Measure2DAnalyse blob =
+                    new Measure2DAnalyse(graph.getShape(), measurementsAdapter,
+                        (Color) ((AbstractDragGraphic) graph).getPaint());
+                // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
+                // if (selected == null) {
+                // return;
+                // }
+                int nbMeasures = getNumberOfMeasures(MEAS2D_SELECTMEASURES);
+
+                String[] headers = { "Parameter", "Value [" + unit.getAbbreviation() + "]" };
+                java.util.List<String> measures = Measure2DAnalyse.getObjectMeasureList(MEAS2D_SELECTMEASURES);
+                jtable.setModel(new SimpleTableModel(headers, createRows(
+                    blob.getAnalyse(MEAS2D_SELECTMEASURES, nbMeasures), measures)));
+                jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+                createTableHeaders(jtable);
+                tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+                tableContainer.add(jtable, BorderLayout.CENTER);
+
+                // if (histo != null) {
+                // histo.updateHistogram(new ROIShape(graph.getShape()));
+                // }
+            } else if (graph instanceof LineGraphic || graph instanceof FreeHandLineGraphic) {
+                Measure1DAnalyse blob = new Measure1DAnalyse((AbstractDragGraphic) graph, measurementsAdapter);
+                // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
+                // if (selected == null) {
+                // return;
+                // }
+                int nbMeasures = getNumberOfMeasures(MEAS1D_SELECTMEASURES);
+
+                String[] headers = { "Parameter", "Value [" + unit.getAbbreviation() + "]" };
+                java.util.List<String> measures = Measure1DAnalyse.getObjectMeasureList(MEAS1D_SELECTMEASURES);
+                jtable.setModel(new SimpleTableModel(headers, createRows(
+                    blob.getMeasure1DAnalyse(MEAS1D_SELECTMEASURES, nbMeasures), measures)));
+                jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+                createTableHeaders(jtable);
+                tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+                tableContainer.add(jtable, BorderLayout.CENTER);
+            }
         }
         tableContainer.revalidate();
         tableContainer.repaint();
@@ -233,7 +290,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         if (selectedGraphics != null && selectedGraphics.size() == 1) {
             g = selectedGraphics.get(0);
         }
-        updateHistogramFrame(g, img);
+        setSelectedGraphic(g, img);
     }
 
 }

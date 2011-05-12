@@ -210,7 +210,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return graphics;
     }
 
-    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect);
+    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform);
 
     public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
