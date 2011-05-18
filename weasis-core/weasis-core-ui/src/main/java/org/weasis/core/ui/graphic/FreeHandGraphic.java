@@ -310,4 +310,5 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
     public String getDescription() {
         return null;
     }
+
 }

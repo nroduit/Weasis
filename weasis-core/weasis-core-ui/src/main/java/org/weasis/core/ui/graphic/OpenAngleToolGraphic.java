@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
@@ -20,17 +19,12 @@ import org.weasis.core.api.media.data.ImageElement;
 
 public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
+    public OpenAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(4, paintColor, lineThickness, labelVisible);
+    }
+
     public static final Icon ICON = new ImageIcon(
         OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
-
-    public OpenAngleToolGraphic(float lineThickness, Color paint, boolean fill) {
-        super(4);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
-    }
 
     @Override
     public Icon getIcon() {
@@ -43,28 +37,6 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
-    }
-
-    @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
-        if (handlePointIndex == -1) {
-            for (Point2D point : handlePointList) {
-                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-            }
-        } else {
-            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
-        }
-
-        return handlePointIndex;
-    }
-
-    @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
@@ -72,18 +44,20 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
 
             if (handlePointList.size() >= 2) {
                 Point2D B = handlePointList.get(1);
+
+                generalpath.moveTo(A.getX(), A.getY());
                 generalpath.lineTo(B.getX(), B.getY());
 
                 if (handlePointList.size() >= 3) {
                     Point2D C = handlePointList.get(2);
-                    generalpath.moveTo(C.getX(), C.getY());
 
                     if (handlePointList.size() == 4) {
                         Point2D D = handlePointList.get(3);
+
+                        generalpath.moveTo(C.getX(), C.getY());
                         generalpath.lineTo(D.getX(), D.getY());
 
                         double Ax = A.getX(), Ay = A.getY();
@@ -184,18 +158,4 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         }
         return label;
     }
-
-    @Override
-    public OpenAngleToolGraphic clone() {
-        return (OpenAngleToolGraphic) super.clone();
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        OpenAngleToolGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
-    }
-
 }

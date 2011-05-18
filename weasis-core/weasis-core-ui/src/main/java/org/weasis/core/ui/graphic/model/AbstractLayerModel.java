@@ -100,8 +100,10 @@ public class AbstractLayerModel implements LayerModel {
                     canvas.setCursor(cursor);
                     return;
                 }
-                int direction = graph.getResizeCorner(mouseevent);
+                // int direction = graph.getResizeCorner(mouseevent);
+                int direction = graph.getHandlePointIndex(mouseevent);
                 if (direction < 0) {
+                    // if (graph.getArea().contains(p)) {
                     if (graph.getArea(mouseevent).contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         shapeAction = true;
@@ -138,7 +140,9 @@ public class AbstractLayerModel implements LayerModel {
         } else if (dragGaphs.size() > 1 && !shift) {
             for (int i = 0; i < dragGaphs.size(); i++) {
                 AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(i);
-                if (graph.getResizeCorner(mouseevent) < 0) {
+                // if (graph.getResizeCorner(mouseevent) < 0) {
+                if (graph.getHandlePointIndex(mouseevent) < 0) {
+                    // if (graph.getArea().contains(p)) {
                     if (graph.getArea(mouseevent).contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         // setCreateGraphic(null);

@@ -26,7 +26,10 @@ import org.weasis.core.api.gui.util.GUIEntry;
  */
 public interface Graphic extends GUIEntry {
 
+    @Deprecated
     public Area getArea();
+
+    public Area getArea(AffineTransform transform); // New
 
     public String[] getLabel();
 
@@ -42,23 +45,24 @@ public interface Graphic extends GUIEntry {
 
     public void updateLabel(Object source, Graphics2D g2d);
 
-    /**
-     * The bound of the shape. Attention, this function does not return accurate bound for complex shape, use instead
-     * getArea().
-     * 
-     * @return the bounding box of the shape
-     */
+    @Deprecated
     public Rectangle getBounds();
 
+    public Rectangle getBounds(AffineTransform transform); // New
+
+    @Deprecated
     public Rectangle getRepaintBounds();
+
+    public Rectangle getRepaintBounds(AffineTransform transform); // New
 
     public GraphicLabel getGraphicLabel();
 
     public void showProperties();
 
+    @Deprecated
     public boolean intersects(Rectangle rectangle);
 
-    public boolean intersects(Rectangle rectangle, AffineTransform transform);
+    public boolean intersects(Rectangle rectangle, AffineTransform transform); // New
 
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 
@@ -68,6 +72,5 @@ public interface Graphic extends GUIEntry {
 
     public Shape getShape();
 
-    public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform);
-
+    public Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
 }

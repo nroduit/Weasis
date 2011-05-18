@@ -17,7 +17,7 @@ public class MeasureDialog extends PropertiesDialog {
     protected boolean hasChanged() {
         boolean hasChanged = false;
         if (jCheckBoxFilled.isSelected() != graphic.isFilled()
-            || !graphic.getPaint().equals(jPVButtonColor.getBackground())
+            || !graphic.getColorPaint().equals(jPVButtonColor.getBackground())
             || ((Integer) jPVSpinLineWidth.getValue()).floatValue() != graphic.getLineThickness()) {
             hasChanged = true;
         }
@@ -35,7 +35,7 @@ public class MeasureDialog extends PropertiesDialog {
         } else {
             jCheckBoxFilled.setSelected(graphic.isFilled());
         }
-        jPVButtonColor.setBackground((Color) graphic.getPaint());
+        jPVButtonColor.setBackground((Color) graphic.getColorPaint());
         jPVSpinLineWidth.setValue((int) graphic.getLineThickness());
     }
 

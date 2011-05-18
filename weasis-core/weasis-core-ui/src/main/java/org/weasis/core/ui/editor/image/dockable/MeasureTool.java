@@ -43,6 +43,9 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.EllipseGraphic;
 import org.weasis.core.ui.graphic.FreeHandGraphic;
@@ -121,6 +124,28 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             JToggleButton[] items = measures.getJToggleButtonList();
             p_icons.setLayout(new GridLayout(items.length / 5 + 1, 5));
             for (int i = 0; i < items.length; i++) {
+                items[i].addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ImageViewerPlugin<ImageElement> view = eventManager.getSelectedView2dContainer();
+                        if (view != null) {
+                            final ViewerToolBar toolBar = view.getViewerToolBar();
+                            if (toolBar != null) {
+                                String cmd = ActionW.MEASURE.cmd();
+                                if (!toolBar.isCommandActive(cmd)) {
+                                    MouseActions mouseActions = eventManager.getMouseActions();
+                                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                                    if (view != null) {
+                                        view.setMouseActions(mouseActions);
+                                    }
+                                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                }
+                            }
+                        }
+
+                    }
+                });
                 p_icons.add(items[i]);
             }
             transform.add(p_icons);
@@ -226,7 +251,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
                 Measure2DAnalyse blob =
                     new Measure2DAnalyse(graph.getShape(), measurementsAdapter,
-                        (Color) ((AbstractDragGraphic) graph).getPaint());
+                        (Color) ((AbstractDragGraphic) graph).getColorPaint());
                 // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
                 // if (selected == null) {
                 // return;

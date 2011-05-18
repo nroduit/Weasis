@@ -33,14 +33,8 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public LineGraphic(float lineThickness, Color paint, boolean fill) {
-        super(2);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
-        updateShapeOnDrawing(null);
+    public LineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(2, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -55,7 +49,7 @@ public class LineGraphic extends AbstractDragGraphic {
 
     @Override
     public void updateLabel(Object source, Graphics2D g2d) {
-        if (isLabelVisible) {
+        if (labelVisible) {
             ImageElement image = null;
 
             if (source instanceof MouseEvent) {

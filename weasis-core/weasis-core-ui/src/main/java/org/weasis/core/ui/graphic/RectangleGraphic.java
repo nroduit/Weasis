@@ -44,15 +44,8 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
-    // protected Rectangle rectangle = new Rectangle();
-
-    public RectangleGraphic(float lineThickness, Color paint, boolean fill) {
-        super(8);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(8, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -174,7 +167,7 @@ public class RectangleGraphic extends AbstractDragGraphic {
 
     @Override
     public void updateLabel(Object source, Graphics2D g2d) {
-        if (isLabelVisible) {
+        if (labelVisible) {
             ImageElement imageElement = null;
             if (source instanceof MouseEvent) {
                 imageElement = getImageElement((MouseEvent) source);
@@ -292,23 +285,6 @@ public class RectangleGraphic extends AbstractDragGraphic {
             }
         }
         return list;
-    }
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public RectangleGraphic clone() {
-        RectangleGraphic newGraphic = (RectangleGraphic) super.clone();
-        return newGraphic;
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        RectangleGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        // newGraphic.updateShapeOnDrawing(null);
-        // newGraphic.setShape(new Rectangle(xPos, yPos, 0, 0), null);
-        return newGraphic;
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////

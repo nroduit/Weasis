@@ -49,6 +49,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     class PropertyChangeHandler implements PropertyChangeListener, Serializable {
 
         // This method gets called when a bound property is changed, inherite by PropertyChangeListener
+        @Override
         public void propertyChange(PropertyChangeEvent propertychangeevent) {
             Object obj = propertychangeevent.getSource();
             String s = propertychangeevent.getPropertyName();
@@ -101,7 +102,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if (layers != null) {
                 for (AbstractLayer layer : layers) {
                     graphic.addPropertyChangeListener(layer.pcl);
-                    layer.repaint(graphic.getRepaintBounds());
+                    // layer.repaint(graphic.getRepaintBounds());
+                    layer.repaint(graphic.getRepaintBounds(getAffineTransform()));
                 }
             }
             // repaint(graphic.getRepaintBounds());
@@ -157,29 +159,33 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return canvas.get(0);
     }
 
+    @Override
     public void setVisible(boolean flag) {
         this.masked = !flag;
     }
 
+    @Override
     public boolean isVisible() {
         return !masked;
     }
 
+    @Override
     public void setLevel(int i) {
         level = i;
     }
 
+    @Override
     public int getLevel() {
         return level;
     }
 
-    private AffineTransform getAffineTransform() {
+    // private AffineTransform getAffineTransform() {
+    protected AffineTransform getAffineTransform() {
         LayerModel layerModel = getShowDrawing();
         if (layerModel != null) {
             GraphicsPane graphicsPane = layerModel.getGraphicsPane();
-            if (graphicsPane != null) {
+            if (graphicsPane != null)
                 return graphicsPane.getAffineTransform();
-            }
         }
         return null;
     }
@@ -222,6 +228,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     // public abstract void paintSVG(SVGGraphics2D g2);
 
     // interface comparable, permet de trier par ordre croissant les layers
+    @Override
     public int compareTo(Object obj) {
         int thisVal = this.getLevel();
         int anotherVal = ((AbstractLayer) obj).getLevel();
@@ -241,9 +248,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
-        if (rectangle == null) {
+        if (rectangle == null)
             return rectangle1;
-        }
         return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
     }
 
@@ -284,7 +290,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 repaint(bound);
 
             } else if (bound != null) {
-                // Get new instance to avoid changing the oldShape for other for other layers
+                // Get new instance to avoid changing the oldShape for other layers
                 oldShape = oldShape.getBounds();
                 transformLabelBound(oldShape, affineTransform, label);
                 transformLabelBound(bound, affineTransform, label);

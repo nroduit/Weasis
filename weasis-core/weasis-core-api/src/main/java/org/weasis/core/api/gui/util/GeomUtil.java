@@ -1,6 +1,9 @@
 package org.weasis.core.api.gui.util;
 
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
@@ -272,6 +275,93 @@ public final class GeomUtil {
         double py = (A * F - C * E) / G;
 
         return new Point2D.Double(px, py);
+    }
+
+    /**
+     * Extract scaling from AffineTransform<br>
+     * Lets assume that the AffineTransform is a composite of scales, translates, and rotates. <br>
+     * No independent shear has to be applied and scaling must be uniform along the two axes.
+     * 
+     * @param transform
+     *            current AffineTransform
+     */
+    public static double extractScalingFactor(AffineTransform transform) {
+        double scalingFactor = 1;
+
+        if ((transform != null)) {
+            double sx = transform.getScaleX();
+            double shx = transform.getShearX();
+            if (sx != 0 || shx != 0) {
+                scalingFactor = Math.sqrt(sx * sx + shx * shx);
+                // scalingFactor = Math.sqrt(Math.pow(sx, 2) + Math.pow(shx, 2));
+            }
+        }
+
+        return scalingFactor;
+    }
+
+    /**
+     * 
+     * @param A
+     * @param B
+     * @param growingSize
+     * @return
+     */
+    public static Shape getBoundingShapeOfSegment(Point2D A, Point2D B, double growingSize) {
+
+        Path2D path = new Path2D.Double();
+
+        Point2D tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -growingSize, growingSize);
+        path.moveTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -growingSize, -growingSize);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -growingSize, growingSize);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -growingSize, -growingSize);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        path.closePath();
+        return path;
+    }
+
+    public static Shape getBoundingShapeOfSegment2(Point2D A, Point2D B, double growingSize) {
+
+        Path2D path = new Path2D.Double();
+
+        double dAB = A.distance(B);
+        double dxu = B.getX() - A.getX() / dAB;
+        double dyu = B.getY() - A.getY() / dAB;
+
+        AffineTransform t1, t2, t3, t4;
+        Point2D tPoint;
+
+        t1 = AffineTransform.getTranslateInstance(-dyu * growingSize, dxu * growingSize);// rot +90° CW
+        t2 = AffineTransform.getTranslateInstance(dyu * growingSize, -dxu * growingSize); // rot -90° CCW
+        t3 = AffineTransform.getTranslateInstance(-dxu * growingSize, 0);
+        t4 = AffineTransform.getTranslateInstance(dxu * growingSize, 0);
+
+        tPoint = t1.transform(A, null);
+        tPoint = t3.transform(tPoint, tPoint);
+        path.moveTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = t2.transform(A, null);
+        tPoint = t3.transform(tPoint, tPoint);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = t2.transform(B, null);
+        tPoint = t4.transform(tPoint, tPoint);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        tPoint = t1.transform(B, null);
+        tPoint = t4.transform(tPoint, tPoint);
+        path.lineTo(tPoint.getX(), tPoint.getY());
+
+        path.closePath();
+
+        return path;
     }
 
 }

@@ -40,7 +40,8 @@ public class DragLayer extends AbstractLayer {
         if (graphics != null) {
             for (int i = 0; i < graphics.size(); i++) {
                 Graphic graphic = graphics.get(i);
-                Rectangle repaintBounds = graphic.getRepaintBounds();
+                // Rectangle repaintBounds = graphic.getRepaintBounds();
+                Rectangle repaintBounds = graphic.getRepaintBounds(transform);
                 // only repaints graphics that intersects or are contained in the clip bound
                 if (bound == null || repaintBounds != null && bound.intersects(repaintBounds)) {
                     graphic.paint(g2, transform);
@@ -81,7 +82,9 @@ public class DragLayer extends AbstractLayer {
                 Graphic graphic = graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
                 // checker sur shape directement)
-                if (graphic.getBounds().intersects(rect)) {
+                // if (graphic.getBounds().intersects(rect)) {
+                if (graphic.getBounds(transform).intersects(rect)) {
+                    // if (graphic.intersects(rect)) {
                     if (graphic.intersects(rect, transform)) {
                         arraylist.add(graphic);
                     }
@@ -97,7 +100,8 @@ public class DragLayer extends AbstractLayer {
         if (graphics != null) {
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 Graphic graphic = graphics.get(j);
-                if (graphic.getRepaintBounds().intersects(rect)) {
+                // if (graphic.getRepaintBounds().intersects(rect)) {
+                if (graphic.getRepaintBounds(getAffineTransform()).intersects(rect)) {
                     arraylist.add(graphic);
                 }
             }
@@ -121,8 +125,10 @@ public class DragLayer extends AbstractLayer {
                 AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
                 // checker sur shape directement)
-                if (graphic.getRepaintBounds().contains(pos)) {
-                    if (graphic.getArea(mouseevent).contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
+                // if (graphic.getRepaintBounds().contains(pos)) {
+                if (graphic.getRepaintBounds(getAffineTransform()).contains(pos)) {
+                    // if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
+                    if (graphic.getArea(mouseevent).contains(pos) || graphic.getHandlePointIndex(mouseevent) != -1) {
                         if (selectedGraphic == null || !graphic.isSelected()) {
                             selectedGraphic = graphic;
                         } else if (graphic.isSelected()) {

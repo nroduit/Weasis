@@ -18,7 +18,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import javax.swing.Box;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -51,23 +50,23 @@ import org.weasis.core.ui.util.WtoolBar;
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public static final SelectGraphic selectionGraphic = new SelectGraphic(1.0f, Color.WHITE);
-    public static final LineGraphic lineGraphic = new LineGraphic(1.0f, Color.YELLOW, false);
-    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, false);
+    public static final LineGraphic lineGraphic = new LineGraphic(1.0f, Color.YELLOW, true);
+    public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, true);
 
-    public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, false);
-    // public static final SquareGraphic squareGraphic = new SquareGraphic(1.0f, Color.YELLOW, false);
-    public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, false);
-    // public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, false);
+    public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, true);
+    // public static final SquareGraphic squareGraphic = new SquareGraphic(1.0f, Color.YELLOW, true);
+    public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, true);
+    // public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, true);
     public static final ThreePointsCircleGraphic threePtCircleGraphic = new ThreePointsCircleGraphic(1.0f,
-        Color.YELLOW, false);
+        Color.YELLOW, true);
     public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
-        Color.YELLOW, false);
-    public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, false);
-    // public static final MedianLineGraphic medianLineGraphic= new MedianLineGraphic(1.0f, Color.YELLOW, false);
-    public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, false);
+        Color.YELLOW, true);
+    public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
+    // public static final MedianLineGraphic medianLineGraphic= new MedianLineGraphic(1.0f, Color.YELLOW, true);
+    public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, true);
     public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
-        Color.YELLOW, false);
-    public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, false);
+        Color.YELLOW, true);
+    public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
@@ -94,9 +93,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager) {
         super("measure2dBar", TYPE.tool); //$NON-NLS-1$
-        if (eventManager == null) {
+        if (eventManager == null)
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
-        }
         this.eventManager = eventManager;
 
         GroupRadioMenu menu = null;
@@ -116,6 +114,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png"))); //$NON-NLS-1$
         jButtondelete.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 AbstractLayerModel model = getCurrentLayerModel();
                 if (model != null) {
@@ -131,9 +130,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
     protected AbstractLayerModel getCurrentLayerModel() {
         DefaultView2d view = eventManager.getSelectedViewPane();
-        if (view != null) {
+        if (view != null)
             return view.getLayerModel();
-        }
         return null;
     }
 
@@ -169,9 +167,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static Graphic getGraphic(String action) {
         if (action != null) {
             for (Graphic g : graphicList) {
-                if (action.equals(g.toString())) {
+                if (action.equals(g.toString()))
                     return g;
-                }
             }
         }
         return null;

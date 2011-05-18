@@ -19,15 +19,11 @@ import org.weasis.core.api.media.data.ImageElement;
 
 public class ParallelLineGraphic extends AbstractDragGraphic {
 
-    public static final Icon ICON = new ImageIcon(ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(
+        ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
-    public ParallelLineGraphic(float lineThickness, Color paint, boolean fill) {
-        super(6);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public ParallelLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(6, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -37,7 +33,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Parallèle"; //$NON-NLS-1$
+        return "Parallel"; //$NON-NLS-1$
     }
 
     @Override
@@ -51,11 +47,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
-        if (handlePointIndex == -1)
-            for (Point2D point : handlePointList)
+        if (handlePointIndex == -1) {
+            for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-        else {
-            if (!isGraphicComplete) {
+            }
+        } else {
+            if (!graphicComplete) {
                 handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
 
                 if (handlePointList.size() >= 4) {
@@ -67,8 +64,9 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                     Point2D I = GeomUtil.getPerpendicularPointToLine(A, B, D);
                     D.setLocation(GeomUtil.getPerpendicularPointToLine(D, I, C));
 
-                    while (handlePointList.size() < handlePointTotalNumber)
+                    while (handlePointList.size() < handlePointTotalNumber) {
                         handlePointList.add(new Point.Double());
+                    }
 
                     Point2D E = handlePointList.get(4);
                     Point2D F = handlePointList.get(5);
@@ -131,7 +129,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
         String label = "";
-        
+
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
             generalpath.moveTo(A.getX(), A.getY());

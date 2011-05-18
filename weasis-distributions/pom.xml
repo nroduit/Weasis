@@ -35,7 +35,7 @@
 		<substance.version>6.1.0-b02</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version>
+<!-- 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>

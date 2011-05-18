@@ -1014,8 +1014,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     SelectGraphic selectionGraphic = model.getSelectionGraphic();
                     // Select all graphs inside the selection
                     if (selectionGraphic != null) {
-                        Rectangle selectionRect = selectionGraphic.getBounds();
-                        AffineTransform transform = getAffineTransform(mouseevent);
+                        AffineTransform transform = getAffineTransform(mouseevent); // why not use getAffineTransform
+                        // Rectangle selectionRect = selectionGraphic.getBounds();
+                        Rectangle selectionRect = selectionGraphic.getBounds(transform);
                         List<Graphic> list = model.getSelectedAllGraphicsIntersecting(selectionRect, transform);
                         list.remove(selectionGraphic);
                         model.setSelectedGraphics(list);

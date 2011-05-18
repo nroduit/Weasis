@@ -56,7 +56,8 @@ public class TempLayer extends DragLayer {
                 // si le rectangle intersecte (si le bounding box du graphic est contenu ou intesecte avec le rectangle)
                 // revoie
                 // true
-                if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
+                // if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
+                if (bound == null || bound.intersects(graphic.getRepaintBounds(transform))) {
                     graphic.paint(g2, transform);
                 }
             }

@@ -43,13 +43,8 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public ThreePointsCircleGraphic(float lineThickness, Color paint, boolean fill) {
-        super(3);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public ThreePointsCircleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(3, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -59,7 +54,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("Cercle en trois points");
+        return "Three Points Circle";
     }
 
     @Override
@@ -112,7 +107,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphic {
     // TODO - group same computation with all Area 2D closed shape
     @Override
     public void updateLabel(Object source, Graphics2D g2d) {
-        if (isLabelVisible) {
+        if (labelVisible) {
             ImageElement imageElement = null;
             if (source instanceof MouseEvent) {
                 imageElement = getImageElement((MouseEvent) source);
@@ -190,13 +185,15 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphic {
     }
 
     protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {
-        if (imageData == null || shape == null)
+        if (imageData == null || shape == null) {
             return null;
+        }
         Area area = new Area(shape);
         Rectangle bound = area.getBounds();
         bound = imageData.getBounds().intersection(bound);
-        if (bound.width == 0 || bound.height == 0)
+        if (bound.width == 0 || bound.height == 0) {
             return null;
+        }
         RectIter it;
         try {
             it = RectIterFactory.create(imageData, bound);

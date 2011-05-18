@@ -39,13 +39,8 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
     public final static int ARC_RADIUS = 24;
 
-    public AngleToolGraphic(float lineThickness, Color paint, boolean fill) {
-        super(3);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public AngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(3, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -55,7 +50,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Open Angle";
+        return "Angle";
     }
 
     @Override
@@ -64,6 +59,9 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+
+        DragShape dragShape = new DragShape();
+
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
         String label = "";
@@ -94,14 +92,28 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     double startingAngle = GeomUtil.getAngleDeg(P, A);
                     label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
 
-                    unTransformedShape =
-                        computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle, angularExtent,
-                            getAffineTransform(mouseEvent));
+                    // unTransformedShape =
+                    // computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle, angularExtent,
+                    // getAffineTransform(mouseEvent));
+
+                    // dragShape.anchorPoint = (Point2D) P.clone();
+                    //
+                    // Rectangle2D ellipseBounds =
+                    // new Rectangle2D.Double(P.getX() - ARC_RADIUS, P.getY() - ARC_RADIUS, 2 * ARC_RADIUS,
+                    // 2 * ARC_RADIUS);
+                    //
+                    // dragShape.invariantSizedShape =
+                    // new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+
                 }
             }
         }
 
-        setShape(generalpath, mouseEvent);
+        dragShape.stroke = stroke;
+        dragShape.shape = generalpath;
+
+        // setShape(generalpath, mouseEvent);
+        setShape(dragShape, mouseEvent);
         setLabel(new String[] { label }, getGraphics2D(mouseEvent));
     }
 

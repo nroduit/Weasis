@@ -453,6 +453,10 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         rectangle.y -= i;
     }
 
+    public Rectangle getTransformedBounds(AffineTransform affineTransform) {
+        return getTransformedBounds(shape, affineTransform);
+    }
+
     @Override
     public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform) {
         // Get the bounds of the transformed shape + the handles.
@@ -470,6 +474,11 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
      */
     @Override
     public Rectangle getBounds() {
+        return getBounds(null);
+    }
+
+    @Override
+    public Rectangle getBounds(AffineTransform affineTransform) {
         Shape shape1 = getShape();
         if (shape1 == null)
             return null;
@@ -513,6 +522,7 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         return getArea();
     }
 
+    @Override
     public Area getArea(AffineTransform transform) {
         return getArea();
     }
@@ -767,5 +777,11 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
             }
         }
         return list;
+    }
+
+    @Override
+    public Rectangle getRepaintBounds(AffineTransform transform) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

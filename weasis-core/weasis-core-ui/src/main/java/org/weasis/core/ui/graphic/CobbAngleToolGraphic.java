@@ -17,7 +17,6 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 
@@ -25,13 +24,8 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
-    public CobbAngleToolGraphic(float lineThickness, Color paint, boolean fill) {
-        super(5);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public CobbAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(5, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -50,13 +44,14 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
-        if (handlePointIndex == -1)
-            for (Point2D point : handlePointList)
+        if (handlePointIndex == -1) {
+            for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-        else {
+            }
+        } else {
             handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
 
-            if (!isGraphicComplete && handlePointList.size() >= 4) {
+            if (!graphicComplete && handlePointList.size() >= 4) {
 
                 Point2D A = handlePointList.get(0);
                 Point2D B = handlePointList.get(1);
@@ -117,10 +112,11 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                     double d2 = P.distance(ptArray2[0]);
 
                     Point2D M;
-                    if (Math.max(d1, d2) == d1)
+                    if (Math.max(d1, d2) == d1) {
                         M = GeomUtil.getMidPoint(ptArray1[0], GeomUtil.getColinearPointWithLength(P, ptArray2[0], d1));
-                    else
+                    } else {
                         M = GeomUtil.getMidPoint(ptArray2[0], GeomUtil.getColinearPointWithLength(P, ptArray1[0], d2));
+                    }
 
                     // M = getIntersectPoint(ptArray1[0], ptArray2[0], M, P);
                     Line2D lineMP = new Line2D.Double(M, P);
@@ -135,10 +131,11 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                     // generalpath.append(new Line2D.Double(O1, H1), false); // drawing for debug
                     // generalpath.append(new Line2D.Double(O2, H2), false); // drawing for debug
 
-                    if (handlePointList.size() < handlePointTotalNumber)
+                    if (handlePointList.size() < handlePointTotalNumber) {
                         handlePointList.add(new Point.Double(O.getX(), O.getY()));
-                    else
+                    } else {
                         handlePointList.get(4).setLocation(O.getX(), O.getY());
+                    }
                 }
             }
         }
@@ -185,10 +182,12 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                         Point2D I = new Point2D.Double(Ax + r1 * (Bx - Ax), Ay + r1 * (By - Ay));
                         Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
 
-                        if (r1 < 0 || r1 > 1)
+                        if (r1 < 0 || r1 > 1) {
                             generalpath.append(new Line2D.Double(r1 > 1 ? B : A, I), false);
-                        if (r2 < 0 || r2 > 1)
+                        }
+                        if (r2 < 0 || r2 > 1) {
                             generalpath.append(new Line2D.Double(r1 > 1 ? D : C, J), false);
+                        }
 
                         // Let K be the point on extension of IO segment
                         // Let L be the point on extension of JO segment
@@ -212,10 +211,11 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                             K.getY() > L.getY() ? GeomUtil.getAngleDeg(J, O, K) : GeomUtil.getAngleDeg(I, O, L);
                         angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
 
-                        if (K.getY() > L.getY())
+                        if (K.getY() > L.getY()) {
                             label = getRealAngleLabel(getImageElement(mouseEvent), J, O, K);
-                        else
+                        } else {
                             label = getRealAngleLabel(getImageElement(mouseEvent), I, O, L);
+                        }
 
                         Rectangle2D ellipseBounds =
                             new Rectangle2D.Double(O.getX() - radius, O.getY() - radius, 2 * radius, 2 * radius);
@@ -258,12 +258,12 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
         String label = "";
         if (image != null) {
             AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSizeX(), image.getPixelSizeY());
-            
+
             Point2D At = rescale.transform(A, null);
             Point2D Ot = rescale.transform(O, null);
             Point2D Bt = rescale.transform(B, null);
-            
-            double realAngle = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt) );
+
+            double realAngle = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt));
             label = "Angle : " + DecFormater.twoDecimal(Math.abs(realAngle)) + "°";
             label += " / " + DecFormater.twoDecimal(180 - Math.abs(realAngle)) + "°";
         }

@@ -23,13 +23,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public PerpendicularLineGraphic(float lineThickness, Color paint, boolean fill) {
-        super(4);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(4, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -58,7 +53,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
         } else {
-            if (!isGraphicComplete) {
+            if (!graphicComplete) {
                 handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
 
                 if (handlePointList.size() >= 3) {

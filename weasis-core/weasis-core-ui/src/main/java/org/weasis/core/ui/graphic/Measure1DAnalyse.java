@@ -88,7 +88,7 @@ public class Measure1DAnalyse {
             measVal.add(adapter.getYCalibratedValue(getBarycenterY()));
         }
         if (selected[11]) {
-            measVal.add(JMVUtils.getValueRGBasText2((Color) line.getPaint()));
+            measVal.add(JMVUtils.getValueRGBasText2((Color) line.getColorPaint()));
         }
 
         return measVal;

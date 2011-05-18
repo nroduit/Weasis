@@ -13,7 +13,6 @@ package org.weasis.core.ui.graphic;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
@@ -53,7 +52,6 @@ public class SelectGraphic extends RectangleGraphic {
 
     public SelectGraphic(float lineThickness, Color paint) {
         super(lineThickness, paint, false);
-        setLabelVisible(false);
     }
 
     @Override
@@ -78,10 +76,6 @@ public class SelectGraphic extends RectangleGraphic {
         g2d.setStroke(oldStroke);
     }
 
-    @Override
-    public void paintHandles(Graphics2D graphics2d, AffineTransform transform) {
-    }
-
     // rend une nouvelle instance au lieu d'une selection du rectangle
     @Override
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
@@ -99,17 +93,4 @@ public class SelectGraphic extends RectangleGraphic {
         return Messages.getString("MeasureToolBar.sel"); //$NON-NLS-1$
     }
 
-    @Override
-    public SelectGraphic clone() {
-        SelectGraphic newGraphic = (SelectGraphic) super.clone();
-        return newGraphic;
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        SelectGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        newGraphic.setShape(new Rectangle(xPos, yPos, 0, 0), null);
-        return newGraphic;
-    }
 }
