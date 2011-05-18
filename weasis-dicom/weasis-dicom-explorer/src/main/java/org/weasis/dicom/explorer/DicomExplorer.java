@@ -228,6 +228,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     protected final PatientContainerPane patientContainer = new PatientContainerPane();
     private transient final ItemListener patientChangeListener = new ItemListener() {
 
+        @Override
         public void itemStateChanged(final ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 Object item = modelPatient.getSelectedItem();
@@ -1027,6 +1028,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             btnMoreOptions.setFont(FontTools.getFont10());
             btnMoreOptions.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (btnMoreOptions.isSelected()) {
                         panel_1.add(panel_2, BorderLayout.SOUTH);
@@ -1053,6 +1055,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             panel_2.add(panel_3, gbc_panel_3);
             btnImport.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     DicomImport dialog = new DicomImport(model);
                     JMVUtils.showCenterScreen(dialog);
@@ -1072,6 +1075,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             slider.setMajorTickSpacing(16);
             slider.addChangeListener(new ChangeListener() {
 
+                @Override
                 public void stateChanged(ChangeEvent e) {
                     JSlider source = (JSlider) e.getSource();
                     if (!source.getValueIsAdjusting()) {
@@ -1549,6 +1553,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                 Messages.getString("DicomExplorer.open_series") + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
                         item4.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 final Series[] seriesList =
                                     selList.size() == 0 ? new Series[] { series } : selList.toArray(new Series[selList
@@ -1562,6 +1567,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
                             item5.addActionListener(new ActionListener() {
 
+                                @Override
                                 public void actionPerformed(ActionEvent e) {
                                     JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                                     frame.setSize(500, 630);
@@ -1584,6 +1590,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series")); //$NON-NLS-1$
                         item2.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
 
                                 String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
@@ -1609,6 +1616,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis")); //$NON-NLS-1$
                         item2.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                                 if (fruid != null) {
@@ -1639,6 +1647,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                 JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume")); //$NON-NLS-1$
                                 item3.addActionListener(new ActionListener() {
 
+                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         loadSeries.resume();
                                     }
@@ -1649,6 +1658,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                 JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop")); //$NON-NLS-1$
                                 item3.addActionListener(new ActionListener() {
 
+                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         loadSeries.stop();
                                     }
@@ -1675,6 +1685,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                 item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
                                 item2.addActionListener(new ActionListener() {
 
+                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         selList.clear();
                                         dicomModel.mergeSeries(seriesList);
@@ -1688,6 +1699,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series")); //$NON-NLS-1$
                     item2.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             dicomModel.removeSeries(series);
                         }
@@ -1696,6 +1708,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study")); //$NON-NLS-1$
                     item2.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
                             dicomModel.removeStudy(studyGroup);
@@ -1705,6 +1718,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat")); //$NON-NLS-1$
                     item2.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             MediaSeriesGroup patientGroup =
                                 dicomModel.getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
@@ -1719,6 +1733,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             item2 = new JMenuItem("From first image");
                             item2.addActionListener(new ActionListener() {
 
+                                @Override
                                 public void actionPerformed(ActionEvent e) {
                                     Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
                                     if (t != null) {
@@ -1730,6 +1745,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             item2 = new JMenuItem("From middle image");
                             item2.addActionListener(new ActionListener() {
 
+                                @Override
                                 public void actionPerformed(ActionEvent e) {
                                     Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
                                     if (t != null) {
@@ -1741,6 +1757,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             item2 = new JMenuItem("From last image");
                             item2.addActionListener(new ActionListener() {
 
+                                @Override
                                 public void actionPerformed(ActionEvent e) {
                                     Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
                                     if (t != null) {

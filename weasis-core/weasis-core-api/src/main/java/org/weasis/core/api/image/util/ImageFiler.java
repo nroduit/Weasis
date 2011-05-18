@@ -37,7 +37,6 @@ import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AbstractBufferHandler;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.util.FileUtil;
@@ -313,8 +312,8 @@ public class ImageFiler extends AbstractBufferHandler {
                     icm.getReds(table_data);
                     if (table_data[0] != (byte) 0x00) {
                         ImageLayout layout = new ImageLayout();
-                        layout.setSampleModel(LayoutUtil.createBinarySampelModel(src.getTileWidth(), src
-                            .getTileHeight()));
+                        layout.setSampleModel(LayoutUtil.createBinarySampelModel(src.getTileWidth(),
+                            src.getTileHeight()));
                         layout.setColorModel(LayoutUtil.createBinaryIndexColorModel());
                         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
                         hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
@@ -324,7 +323,7 @@ public class ImageFiler extends AbstractBufferHandler {
                     }
                 }
             } else if (src.getColorModel() instanceof IndexColorModel) {
-                dst = ImageToolkit.convertIndexColorToRGBColor(src);
+                dst = PlanarImage.wrapRenderedImage(ImageToolkit.convertIndexColorToRGBColor(src));
             } else {
                 dst = src;
             }

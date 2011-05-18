@@ -16,6 +16,7 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +44,10 @@ public class ImageElement extends MediaElement<PlanarImage> {
     public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(1);
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
+
+        public Reference<? extends PlanarImage> getReference(ImageElement key) {
+            return hash.get(key);
+        }
 
         @Override
         public void removeElement(Reference<? extends PlanarImage> soft) {
@@ -168,8 +173,15 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return pixelSizeCalibrationDescription;
     }
 
-    public boolean isImageInMemory() {
+    public boolean isImageInCache() {
         return mCache.get(this) != null;
+    }
+
+    public void removeImageFromCache() {
+        SoftReference<PlanarImage> img = mCache.hash.get(this);
+        if (img != null) {
+            mCache.removeElement(img);
+        }
     }
 
     public boolean hasSameSizeAndSpatialCalibration(ImageElement image) {
@@ -296,6 +308,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     class Load implements Callable<PlanarImage> {
 
+        @Override
         public PlanarImage call() throws Exception {
             PlanarImage img = loadImage();
             findMinMaxValues(img);

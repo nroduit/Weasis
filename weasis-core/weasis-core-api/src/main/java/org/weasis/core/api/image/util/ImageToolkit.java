@@ -141,8 +141,8 @@ public class ImageToolkit {
      *            the source image to convert.
      * @return a full RGB color image as RenderedOp.
      */
-    public static PlanarImage convertIndexColorToRGBColor(PlanarImage image) {
-        PlanarImage result = image;
+    public static RenderedImage convertIndexColorToRGBColor(RenderedImage image) {
+        RenderedImage result = image;
 
         // If the source image is color mapped, convert it to 3-band RGB.
         // Note that GIF and PNG files fall into this category.

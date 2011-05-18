@@ -318,13 +318,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         series.setSelected(false, 0);
     }
 
+    private int getImageSize(E img, TagW tag1, TagW tag2) {
+        Integer size = (Integer) img.getTagValue(tag1);
+        if (size == null) {
+            size = (Integer) img.getTagValue(tag2);
+        }
+        return (size == null) ? ImageFiler.TILESIZE : size;
+    }
+
     protected void setImage(E img, boolean bestFit) {
         E oldImage = imageLayer.getSourceImage();
         if (img != null && !img.equals(oldImage)) {
 
             RenderedImage source = img.getImage();
-            int width = source == null ? ImageFiler.TILESIZE : source.getWidth();
-            int height = source == null ? ImageFiler.TILESIZE : source.getHeight();
+            int width = source == null ? getImageSize(img, TagW.ImageWidth, TagW.Columns) : source.getWidth();
+            int height = source == null ? getImageSize(img, TagW.ImageHeight, TagW.Rows) : source.getHeight();
             final Rectangle modelArea = new Rectangle(0, 0, width, height);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {

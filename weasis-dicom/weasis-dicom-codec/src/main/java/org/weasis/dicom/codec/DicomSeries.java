@@ -49,7 +49,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         synchronized (medias) {
             list = new boolean[medias.size()];
             for (int i = 0; i < medias.size(); i++) {
-                if (medias.get(i).isImageInMemory()) {
+                if (medias.get(i).isImageInCache()) {
                     list[i] = true;
                 }
             }

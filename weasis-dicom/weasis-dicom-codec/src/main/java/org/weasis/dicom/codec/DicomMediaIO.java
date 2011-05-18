@@ -86,6 +86,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private ImageInputStream imageStream = null;
     private volatile String mimeType;
 
+    private ImageReader jpipReader;
+
     public DicomMediaIO(URI uri) {
         super(readerSpi);
         this.uri = uri;
@@ -148,6 +150,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return true;
     }
 
+    @Override
+    protected void initImageReader(int imageIndex) throws IOException {
+        super.initImageReader(imageIndex);
+        if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+            setTagNoNull(TagW.PixelDataProviderURL, dicomObject.getString(Tag.PixelDataProviderURL));
+            MediaElement[] elements = getMediaElement();
+            // TODO handle frame
+            if (elements != null && elements.length > 0) {
+                reader.setInput(elements[0]);
+            }
+        }
+    }
+
     private boolean setDicomSpecialType(DicomObject dicom) {
         String modality = dicom.getString(Tag.Modality);
         if (modality != null) {
@@ -199,6 +214,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
+    @Override
     public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
@@ -300,6 +316,16 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // Information for series ToolTips
             group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+
+            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+                MediaElement[] elements = getMediaElement();
+                if (elements != null) {
+                    for (MediaElement mediaElement : elements) {
+                        mediaElement.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
+                    }
+                }
+
+            }
         }
     }
 
@@ -629,6 +655,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return dicomObject;
     }
 
+    @Override
     public URI getUri() {
         return uri;
     }
@@ -643,7 +670,21 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             if (frame >= 0 && frame < numberOfFrame && stored > 0) {
                 // read as tiled rendered image
                 logger.debug("read dicom image frame: {} sopUID: {}", frame, dicomObject.getString(Tag.SOPInstanceUID)); //$NON-NLS-1$
-                RenderedImage buffer = readAsRenderedImage(frame, null);
+                RenderedImage buffer = null;
+                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+                    if (jpipReader == null) {
+                        ImageReaderFactory f = ImageReaderFactory.getInstance();
+                        jpipReader = f.getReaderForTransferSyntax(tsuid);
+                    }
+                    setTagNoNull(TagW.PixelDataProviderURL, dicomObject.getString(Tag.PixelDataProviderURL));
+                    MediaElement[] elements = getMediaElement();
+                    if (elements != null && elements.length > frame) {
+                        jpipReader.setInput(elements[frame]);
+                        buffer = jpipReader.readAsRenderedImage(frame, null);
+                    }
+                } else {
+                    buffer = readAsRenderedImage(frame, null);
+                }
                 PlanarImage img = null;
                 if (buffer != null) {
                     img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
@@ -692,18 +733,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
                     image = new MediaElement[] { new DicomEncapDocElement(this, null) };
                 } else {
-                    image = new MediaElement[numberOfFrame];
-                    for (int i = 0; i < image.length; i++) {
-                        if (numberOfFrame > 0) {
+                    if (numberOfFrame > 0) {
+                        image = new MediaElement[numberOfFrame];
+                        for (int i = 0; i < image.length; i++) {
                             image[i] = new DicomImageElement(this, i);
-                        } else {
-                            String modality = (String) getTagValue(TagW.Modality);
-                            boolean ps =
-                                modality != null
-                                    && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            if (ps) {
-                                image[i] = new DicomSpecialElement(this, null);
-                            }
+                        }
+                    } else {
+                        image = new MediaElement[1];
+                        String modality = (String) getTagValue(TagW.Modality);
+                        boolean ps =
+                            modality != null
+                                && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        if (ps) {
+                            image[0] = new DicomSpecialElement(this, null);
                         }
                     }
                 }

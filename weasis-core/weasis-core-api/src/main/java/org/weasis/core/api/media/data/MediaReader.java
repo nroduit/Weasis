@@ -44,4 +44,6 @@ public interface MediaReader<E> {
     public Codec getCodec();
 
     public String[] getReaderDescription();
+
+    public Object getTagValue(TagW tag);
 }

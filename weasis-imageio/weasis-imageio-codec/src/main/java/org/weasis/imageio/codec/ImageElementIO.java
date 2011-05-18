@@ -199,4 +199,10 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         }
         return null;
     }
+
+    @Override
+    public Object getTagValue(TagW tag) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

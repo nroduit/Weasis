@@ -153,6 +153,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue(0);
                     }
@@ -161,6 +162,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() - 90 + 360) % 360);
                     }
@@ -169,6 +171,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() + 90) % 360);
                     }
@@ -177,6 +180,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() + 180) % 360);
                     }
@@ -283,12 +287,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 SeriesEvent event2 = (SeriesEvent) newVal;
                 if (ObservableEvent.BasicAction.Add.equals(action)) {
                     SeriesEvent.Action action2 = event2.getActionCommand();
-                    Object dcmSeries = event2.getSource();
+                    Object source = event2.getSource();
                     Object param = event2.getParam();
 
                     if (SeriesEvent.Action.AddImage.equals(action2)) {
-                        if (dcmSeries instanceof DicomSeries) {
-                            DicomSeries series = (DicomSeries) dcmSeries;
+                        if (source instanceof DicomSeries) {
+                            DicomSeries series = (DicomSeries) source;
                             DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
                             DicomImageElement img = view2DPane.getImage();
                             if (img != null && view2DPane.getSeries() == series) {
@@ -312,9 +316,23 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         }
+                    } else if (SeriesEvent.Action.UpdateImage.equals(action2)) {
+                        if (source instanceof DicomImageElement) {
+                            DicomImageElement dcm = (DicomImageElement) source;
+                            for (DefaultView2d<DicomImageElement> v : view2ds) {
+                                if (dcm == v.getImage()) {
+                                    // Force to repaint the same image
+                                    if (v.getImageLayer().getDisplayImage() == null) {
+                                        v.setSeries(v.getSeries());
+                                    } else {
+                                        v.getImageLayer().updateAllImageOperations();
+                                    }
+                                }
+                            }
+                        }
                     } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
-                        if (dcmSeries instanceof DicomSeries) {
-                            DicomSeries dcm = (DicomSeries) dcmSeries;
+                        if (source instanceof DicomSeries) {
+                            DicomSeries dcm = (DicomSeries) source;
                             for (DefaultView2d<DicomImageElement> v : view2ds) {
                                 if (dcm == v.getSeries()) {
                                     v.repaint(v.getInfoLayer().getPreloadingProgressBound());

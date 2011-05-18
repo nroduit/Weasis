@@ -21,12 +21,13 @@ import javax.media.jai.RenderedOp;
 
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
 public class DicomImageElement extends ImageElement {
 
-    public DicomImageElement(DicomMediaIO mediaIO, Object key) {
+    public DicomImageElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
         String modality = (String) mediaIO.getTagValue(TagW.Modality);
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$

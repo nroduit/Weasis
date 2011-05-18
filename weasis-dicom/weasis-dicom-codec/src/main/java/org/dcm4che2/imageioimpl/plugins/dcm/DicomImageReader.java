@@ -56,8 +56,6 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedOp;
 
 import org.dcm4che2.data.DicomObject;
@@ -77,7 +75,6 @@ import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
-import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.dicom.codec.ColorModelFactory;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
@@ -304,6 +301,11 @@ public class DicomImageReader extends ImageReader {
                 log.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
                 f.adjustDatasetForTransferSyntax(ds, tsuid);
             }
+        } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
+            if (frames == 0) {
+                frames = 1;
+                compressed = true;
+            }
         }
     }
 
@@ -323,21 +325,20 @@ public class DicomImageReader extends ImageReader {
                 initRawImageReader();
             }
         }
-        // Reset the input stream location if required, and reset the reader if
-        // required
-        if (compressed) {
+        // Reset the input stream location if required, and reset the reader if required
+        if (compressed && itemParser != null) {
             itemParser.seekFrame(siis, imageIndex);
-            if (!"it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader".equals(reader.getClass().getName())) {
-                reader.setInput(siis, false);
-            }
+            reader.setInput(siis, false);
         }
     }
 
     private void initCompressedImageReader(int imageIndex) throws IOException {
         ImageReaderFactory f = ImageReaderFactory.getInstance();
         this.reader = f.getReaderForTransferSyntax(tsuid);
-        this.itemParser = new ItemParser(dis, iis, frames, tsuid);
-        this.siis = new SegmentedImageInputStream(iis, itemParser);
+        if (!"1.2.840.10008.1.2.4.94".equals(tsuid)) {
+            this.itemParser = new ItemParser(dis, iis, frames, tsuid);
+            this.siis = new SegmentedImageInputStream(iis, itemParser);
+        }
     }
 
     private void initRawImageReader() {
@@ -610,21 +611,8 @@ public class DicomImageReader extends ImageReader {
         if (compressed) {
             ImageReadParam param1 = reader.getDefaultReadParam();
             copyReadParam(param, param1);
-            if ("it.geosolutions.imageio.plugins.jp2k.JP2KKakaduImageReader".equals(reader.getClass().getName())) {
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageReadMT");
-                pb.setParameter("Input", siis);
-                pb.setParameter("ImageChoice", 0);
-                pb.setParameter("ReadMetadata", true);
-                pb.setParameter("ReadThumbnails", false);
-                pb.setParameter("VerifyInput", true);
-                pb.setParameter("Listeners", null); // java.util.EventListener[]
-                pb.setParameter("Locale", null); // java.util.Locale
-                pb.setParameter("ReadParam", param1); // javax.imageio.ImageReadParam
-                pb.setParameter("Reader", reader); // javax.imageio.ImageReader
-                bi = JAI.create("ImageReadMT", pb, LayoutUtil.createTiledLayoutHints());
-            } else {
-                bi = reader.readAsRenderedImage(0, param1);
-            }
+            bi = reader.readAsRenderedImage(0, param1);
+
             postDecompress();
         } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
             bi = readYbr400(imageIndex, param);
@@ -670,7 +658,8 @@ public class DicomImageReader extends ImageReader {
         // 15 12 11 8 7 4 3 0
         int highBit;
         // TODO test with all decoders (works with raw decoder)
-        if (dataType == DataBuffer.TYPE_SHORT && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT
+        if (source != null && dataType == DataBuffer.TYPE_SHORT
+            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT
             && (highBit = ds.getInt(Tag.HighBit, allocated) + 1) < allocated) {
             source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit }, null);
         }
@@ -737,6 +726,7 @@ public class DicomImageReader extends ImageReader {
         if (ImageReaderFactory.getInstance().needsImageTypeSpecifier(tsuid)) {
             dst.setDestinationType(createImageTypeSpecifier());
         }
+
     }
 
     private Raster decompressRaster(int imageIndex, ImageReadParam param) throws IOException {

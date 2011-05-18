@@ -173,6 +173,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW RescaleSlope = new TagW(0x00281053, "Rescale Slope", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleIntercept = new TagW(0x00281052, "Rescale Intercept", TagType.Float); //$NON-NLS-1$
     public final static TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
+    public final static TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
 
     public static final TagW SmallestImagePixelValue = new TagW(0x00280106, "Smallest ImagePixel Value", TagType.Float); //$NON-NLS-1$
     public static final TagW LargestImagePixelValue = new TagW(0x00280107, "Largest Image PixelValue", TagType.Float); //$NON-NLS-1$
@@ -489,10 +490,12 @@ public class TagW implements Transferable, Serializable {
         return ""; //$NON-NLS-1$
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors.clone();
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         for (int i = 0; i < flavors.length; i++) {
             if (flavor.equals(flavors[i])) {
@@ -502,6 +505,7 @@ public class TagW implements Transferable, Serializable {
         return false;
     }
 
+    @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
         if (flavor.equals(flavors[0])) {
             return this;
