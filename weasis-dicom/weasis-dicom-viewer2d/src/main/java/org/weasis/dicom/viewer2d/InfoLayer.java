@@ -84,6 +84,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
     }
 
+    @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
         if (!visible || image == null) {
@@ -189,8 +190,15 @@ public class InfoLayer implements AnnotationsLayer {
                 Messages.getString("InfoLayer.frame") + instance + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$ //$NON-NLS-2$
                     + view2DPane.getSeries().size(), BORDER, drawY);
             drawY -= fontHeight;
-            drawSeriesInMemoryState(g2, view2DPane.getSeries(), BORDER, (int) (drawY - 5));
-            drawY -= 8;
+
+            Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
+            if (imgProgression != null) {
+                drawY -= 13;
+                int pColor = (int) (510 * imgProgression);
+                g2.setPaint(new Color(510 - pColor > 255 ? 255 : 510 - pColor, pColor > 255 ? 255 : pColor, 0));
+                g2.fillOval(BORDER, (int) drawY, 13, 13);
+                drawY -= 2;
+            }
         }
 
         if (getDisplayPreferences(ANNOTATIONS) && dcm != null) {
@@ -235,6 +243,9 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
             }
+            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - BORDER, (int) (drawY - 5));
+            drawY -= 8;
+
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
             //            String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
             // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
@@ -290,6 +301,7 @@ public class InfoLayer implements AnnotationsLayer {
             DicomSeries s = (DicomSeries) series;
             boolean[] list = s.getImageInMemoryList();
             int length = list.length > 120 ? 120 : list.length;
+            x -= list.length;
             preloadingProgressBound.setBounds(x - 1, y - 1, length + 1, 5 + 1);
             g2d.fillRect(x, y, length, 5);
             g2d.setPaint(Color.BLACK);
@@ -716,15 +728,18 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getDisplayPreferences(java.lang.String)
      */
+    @Override
     public boolean getDisplayPreferences(String item) {
         Boolean val = displayPreferences.get(item);
         return val == null ? false : val;
     }
 
+    @Override
     public boolean isVisible() {
         return visible;
     }
 
+    @Override
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
@@ -746,6 +761,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setDisplayPreferencesValue(java.lang.String, boolean)
      */
+    @Override
     public boolean setDisplayPreferencesValue(String displayItem, boolean selected) {
         boolean selected2 = getDisplayPreferences(displayItem);
         displayPreferences.put(displayItem, selected);
@@ -757,6 +773,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPreloadingProgressBound()
      */
+    @Override
     public Rectangle getPreloadingProgressBound() {
         return preloadingProgressBound;
     }
@@ -766,6 +783,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPixelInfoBound()
      */
+    @Override
     public Rectangle getPixelInfoBound() {
         return pixelInfoBound;
     }
@@ -775,6 +793,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setPixelInfo(java.lang.String)
      */
+    @Override
     public void setPixelInfo(String pixelInfo) {
         this.pixelInfo = pixelInfo;
     }

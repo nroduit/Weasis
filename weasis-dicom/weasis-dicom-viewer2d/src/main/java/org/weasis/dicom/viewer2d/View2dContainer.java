@@ -321,6 +321,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             DicomImageElement dcm = (DicomImageElement) source;
                             for (DefaultView2d<DicomImageElement> v : view2ds) {
                                 if (dcm == v.getImage()) {
+                                    v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
                                     // Force to repaint the same image
                                     if (v.getImageLayer().getDisplayImage() == null) {
                                         v.setSeries(v.getSeries());

@@ -616,11 +616,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         super.reset();
     }
 
-    // public boolean isVolumeImage() {
-    // // Exclude DicomDir and DicomSR if (getStored() == 0)
-    // return dicomObject.contains(Tag.ImageOrientationPatient) && stored != 0;
-    // }
-
     public boolean writeDICOM(File destination) throws Exception {
         DicomOutputStream out = null;
         DicomInputStream dis = null;

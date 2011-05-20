@@ -81,6 +81,7 @@ public class ActionW {
     public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DRAW_ONLY_ONCE = new ActionW("Draw only once", "drawOnce", 0, 0, null); //$NON-NLS-2$
+    public static final ActionW PROGRESSION = new ActionW("", "img_progress", 0, 0, null); //$NON-NLS-2$
 
     // keep TempLayer in last position
 
