@@ -11,13 +11,11 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -37,6 +35,7 @@ import org.weasis.core.api.media.data.ImageElement;
 public class AngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
+
     public final static int ARC_RADIUS = 24;
 
     public AngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -50,19 +49,16 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Angle";
-    }
-
-    @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+        return "Angle measure";
     }
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
 
-        DragShape dragShape = new DragShape();
-
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
+
+        AdvancedShape newShape = new AdvancedShape(2);
+        newShape.addShape(generalpath);
 
         String label = "";
 
@@ -92,91 +88,22 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     double startingAngle = GeomUtil.getAngleDeg(P, A);
                     label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
 
-                    // unTransformedShape =
-                    // computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle, angularExtent,
-                    // getAffineTransform(mouseEvent));
+                    double rMax = Math.min(P.distance(A), P.distance(B)) * 2 / 3;
+                    double radius = ARC_RADIUS;
+                    double scalingMax = rMax / ARC_RADIUS;
 
-                    // dragShape.anchorPoint = (Point2D) P.clone();
-                    //
-                    // Rectangle2D ellipseBounds =
-                    // new Rectangle2D.Double(P.getX() - ARC_RADIUS, P.getY() - ARC_RADIUS, 2 * ARC_RADIUS,
-                    // 2 * ARC_RADIUS);
-                    //
-                    // dragShape.invariantSizedShape =
-                    // new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+                    Rectangle2D ellipseBounds =
+                        new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius, 2 * radius);
 
+                    Shape unTransformedShape =
+                        new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+
+                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone(), scalingMax);
                 }
             }
         }
-
-        dragShape.stroke = stroke;
-        dragShape.shape = generalpath;
-
-        // setShape(generalpath, mouseEvent);
-        setShape(dragShape, mouseEvent);
+        setShape(newShape, mouseEvent);
         setLabel(new String[] { label }, getGraphics2D(mouseEvent));
-    }
-
-    @Override
-    protected void updateUnTransformedDrawingShape(AffineTransform transform) {
-        unTransformedShape = computeUnTransformedDrawingShape(ARC_RADIUS, transform);
-    }
-
-    protected static Shape computeUnTransformedDrawingShape(Point2D P, double radius, double startingAngle,
-        double angularExtent, AffineTransform transform) {
-
-        Point2D newP = transform == null ? P : transform.transform(P, null);
-
-        Rectangle2D ellipseBounds =
-            new Rectangle2D.Double(newP.getX() - radius, newP.getY() - radius, 2 * radius, 2 * radius);
-        // can be simplified !!! by just rescale radius
-
-        if (transform != null) {
-            try {
-                AffineTransform inverseT = transform.createInverse();
-                Point2D upLeftCornerPt = new Point2D.Double(ellipseBounds.getX(), ellipseBounds.getY());
-                Point2D newUpLeftCornerPt = inverseT.transform(upLeftCornerPt, null);
-                double newWidthHeight = ellipseBounds.getWidth() * inverseT.getScaleX();
-
-                ellipseBounds =
-                    new Rectangle2D.Double(newUpLeftCornerPt.getX(), newUpLeftCornerPt.getY(), newWidthHeight,
-                        newWidthHeight);
-
-            } catch (NoninvertibleTransformException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
-    }
-
-    protected Shape computeUnTransformedDrawingShape(double radius, AffineTransform transform) {
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
-
-            if (handlePointList.size() >= 2) {
-                Point2D P = handlePointList.get(1);
-
-                if (handlePointList.size() >= 3) {
-                    Point2D B = handlePointList.get(2);
-
-                    double angularExtent = GeomUtil.getAngleDeg(A, P, B);
-                    angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
-
-                    if (Math.signum(angularExtent) < 0) {
-                        Point2D pt = (Point2D) B.clone();
-                        B = (Point2D) A.clone();
-                        A = pt;
-                    }
-
-                    angularExtent = Math.abs(angularExtent);
-
-                    double startingAngle = GeomUtil.getAngleDeg(P, A);
-                    return computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle, angularExtent, transform);
-                }
-            }
-        }
-        return null;
     }
 
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
@@ -193,18 +120,5 @@ public class AngleToolGraphic extends AbstractDragGraphic {
             label += " / " + DecFormater.twoDecimal(180 - Math.abs(realAngle)) + "°";
         }
         return label;
-    }
-
-    @Override
-    public AngleToolGraphic clone() {
-        return (AngleToolGraphic) super.clone();
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        AngleToolGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
     }
 }

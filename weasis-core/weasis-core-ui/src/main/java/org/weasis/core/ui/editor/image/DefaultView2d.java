@@ -715,6 +715,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.FILTER.cmd())) {
             actionsInView.put(ActionW.FILTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
+        } else if (command.equals(ActionW.PROGRESSION.cmd())) {
+            actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
+            imageLayer.updateAllImageOperations();
         }
         if (lens != null) {
             // Transmit to the lens the command in case the source image has been freeze (for updating rotation and flip

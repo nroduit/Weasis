@@ -19,7 +19,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.graphic.RectangleGraphic.eHandlePoint;
 
 /**
  * @author Nicolas Roduit
@@ -28,8 +27,8 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public EllipseGraphic(float lineThickness, Color paint, boolean fill) {
-        super(lineThickness, paint, fill);
+    public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
+        super(lineThickness, paint, labelVisible);
     }
 
     @Override
@@ -43,16 +42,6 @@ public class EllipseGraphic extends RectangleGraphic {
     }
 
     @Override
-    protected double getGraphicArea(double scaleX, double scaleY) {
-
-        Rectangle2D rectangle = new Rectangle2D.Double();
-        rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-            handlePointList.get(eHandlePoint.SE.index));
-
-        return Math.PI * rectangle.getWidth() * scaleX * rectangle.getHeight() * scaleY / 4.0;
-    }
-
-    @Override
     protected void updateShapeOnDrawing(MouseEvent mouseevent) {
 
         Rectangle2D rectangle = new Rectangle2D.Double();
@@ -63,4 +52,15 @@ public class EllipseGraphic extends RectangleGraphic {
 
         updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
+
+    @Override
+    protected double getGraphicArea(double scaleX, double scaleY) {
+
+        Rectangle2D rectangle = new Rectangle2D.Double();
+        rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
+            handlePointList.get(eHandlePoint.SE.index));
+
+        return Math.PI * rectangle.getWidth() * scaleX * rectangle.getHeight() * scaleY / 4.0;
+    }
+
 }

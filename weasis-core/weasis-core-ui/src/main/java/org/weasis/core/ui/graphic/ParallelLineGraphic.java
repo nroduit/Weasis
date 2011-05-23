@@ -33,7 +33,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Parallel"; //$NON-NLS-1$
+        return "Parallel"; 
     }
 
     @Override

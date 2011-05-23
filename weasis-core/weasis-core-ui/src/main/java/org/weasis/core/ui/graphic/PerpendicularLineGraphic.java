@@ -1,11 +1,13 @@
 package org.weasis.core.ui.graphic;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 
@@ -23,6 +25,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
+    private Stroke strokeDecorator;
+
     public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(4, paintColor, lineThickness, labelVisible);
     }
@@ -38,20 +42,17 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    protected void updateStroke() {
+        super.updateStroke();
+        strokeDecorator =
+            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 25.0f,
+                25.0f }, 0f);
     }
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
         if (handlePointIndex == -1) {
-            for (Point2D point : handlePointList) {
-                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-            }
+            super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
         } else {
             if (!graphicComplete) {
                 handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
@@ -61,9 +62,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                     Point2D B = handlePointList.get(1);
                     Point2D C = handlePointList.get(2);
 
-                    while (handlePointList.size() < handlePointTotalNumber) {
+                    while (handlePointList.size() < handlePointTotalNumber)
                         handlePointList.add(new Point.Double());
-                    }
 
                     Point2D D = handlePointList.get(3);
                     D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
@@ -79,7 +79,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                     handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
                     theta -= GeomUtil.getAngleRad(A, B);
 
-                    Point2D anchor = handlePointIndex == 0 ? B : A;
+                    Point2D anchor = (handlePointIndex == 0) ? B : A;
                     AffineTransform transform = AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
 
                     transform.transform(C, C);
@@ -103,7 +103,12 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_EVEN_ODD, handlePointList.size());
+
+        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
+
+        AdvancedShape newShape = new AdvancedShape(2);
+        newShape.addShape(generalpath);
+
         String label = "";
 
         if (handlePointList.size() >= 1) {
@@ -123,6 +128,20 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                         generalpath.lineTo(D.getX(), D.getY());
 
                         label = getRealDistanceLabel(getImageElement(mouseEvent), C, D);
+
+                        double angleDA = GeomUtil.getAngleDeg(D, A);
+                        double angleDB = GeomUtil.getAngleDeg(D, B);
+                        double distDA = D.distance(A);
+                        double distDB = D.distance(B);
+
+                        Point2D E = distDA < distDB ? A : B;
+
+                        if (Math.signum(angleDA) == Math.signum(angleDB)) { // means E is outside of first segment Ab
+                            newShape.addShape(new Line2D.Double(D, E), strokeDecorator);
+                        } else {
+
+                            E = D.distance(A) < D.distance(B) ? A : B;
+                        }
                     }
                 }
             }

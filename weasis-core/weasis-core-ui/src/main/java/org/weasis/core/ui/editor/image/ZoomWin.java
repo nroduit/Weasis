@@ -316,12 +316,12 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         return imageLayer.getSourceImage();
     }
 
+    @Override
     public RenderedImage getSourceImage() {
         RenderedImage img = (RenderedImage) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (img == null) {
+        if (img == null)
             // return the image before the zoom operation from the parent view
             return view2d.getImageLayer().getOperationsManager().getSourceImage(ZoomOperation.name);
-        }
         return img;
     }
 
@@ -347,9 +347,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             @Override
             public RenderedImage getSourceImage() {
                 ImageElement image = getImage();
-                if (image == null) {
+                if (image == null)
                     return null;
-                }
                 return image.getImage();
             }
 
@@ -360,9 +359,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             @Override
             public Object getActionValue(String action) {
-                if (action == null) {
+                if (action == null)
                     return null;
-                }
                 return freezeActionsInView.get(action);
             }
         });
@@ -389,9 +387,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             @Override
             public RenderedImage getSourceImage() {
                 ImageElement image = view2d.getImage();
-                if (image == null) {
+                if (image == null)
                     return null;
-                }
                 return image.getImage();
             }
 
@@ -402,9 +399,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             @Override
             public Object getActionValue(String action) {
-                if (action == null) {
+                if (action == null)
                     return null;
-                }
                 return freezeActionsInView.get(action);
             }
         });
@@ -430,9 +426,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         @Override
         public void mousePressed(MouseEvent e) {
             ImageViewerPlugin<E> pane = view2d.getEventManager().getSelectedView2dContainer();
-            if (pane == null) {
+            if (pane == null)
                 return;
-            }
             if (pane.isContainingView(view2d)) {
                 pane.setSelectedImagePane(view2d);
             }
@@ -506,9 +501,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             int h = c.getHeight();
 
             Rectangle rect = new Rectangle(w - 12 - borderOffset, h - 12 - borderOffset, 12, 12);
-            if (rect.contains(me.getPoint())) {
+            if (rect.contains(me.getPoint()))
                 return Cursor.SE_RESIZE_CURSOR;
-            }
 
             return Cursor.MOVE_CURSOR;
         }
@@ -549,6 +543,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             && (ActionW.ROTATION.cmd().equals(command) || ActionW.FLIP.cmd().equals(command))) {
             freezeActionsInView.put(command, value);
             setFreezeImage(freezeOperations.updateAllOperations(), type);
+        } else if (command.equals(ActionW.PROGRESSION.cmd())) {
+            refreshZoomWin();
         }
     }
 

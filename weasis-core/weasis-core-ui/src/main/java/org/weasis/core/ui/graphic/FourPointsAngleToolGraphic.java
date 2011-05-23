@@ -42,7 +42,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Angle en quatre points";
+        return "Four Points Angle Tool";
     }
 
     @Override
@@ -52,6 +52,9 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
+
+        AdvancedShape newShape = new AdvancedShape(2);
+        newShape.addShape(generalpath);
 
         String label = "";
 
@@ -116,10 +119,14 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
                                     label = getRealAngleLabel(getImageElement(mouseEvent), J, P, K);
 
-                                    // TODO - be aware about redrawing shape when update is set
-                                    unTransformedShape =
-                                        computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle, angularExtent,
-                                            getAffineTransform(mouseEvent));
+                                    Rectangle2D ellipseBounds =
+                                        new Rectangle2D.Double(P.getX() - ARC_RADIUS, P.getY() - ARC_RADIUS,
+                                            2 * ARC_RADIUS, 2 * ARC_RADIUS);
+
+                                    Shape unTransformedShape =
+                                        new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+
+                                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone());
                                 }
 
                                 // generalpath.append(unTransformedShape, false);
@@ -133,14 +140,10 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                 }
             }
         }
-        setShape(generalpath, mouseEvent);
+        // setShape(generalpath, mouseEvent);
+        setShape(newShape, mouseEvent);
         setLabel(new String[] { label }, getGraphics2D(mouseEvent));
         // updateLabel(mouseevent, getGraphics2D(mouseevent));
-    }
-
-    @Override
-    protected void updateUnTransformedDrawingShape(AffineTransform transform) {
-        unTransformedShape = computeUnTransformedDrawingShape(ARC_RADIUS, transform);
     }
 
     protected Shape computeUnTransformedDrawingShape(double radius, AffineTransform transform) {

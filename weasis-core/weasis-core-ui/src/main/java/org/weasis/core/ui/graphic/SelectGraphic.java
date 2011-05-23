@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
@@ -30,28 +31,35 @@ import org.weasis.core.ui.Messages;
  */
 // public class SelectGraphic extends RectangleGraphic {
 public class SelectGraphic extends RectangleGraphic {
+
     public static final Icon ICON = new ImageIcon(SelectGraphic.class.getResource("/icon/22x22/draw-selection.png")); //$NON-NLS-1$
 
-    /**
-     * The Class SelectedDragSequence.
-     * 
-     * @author Nicolas Roduit
-     */
-    protected class SelectedDragSequence extends AbstractDragGraphic.DefaultDragSequence {
-
-        @Override
-        public boolean completeDrag(MouseEvent mouseEvent) {
-            fireRemoveAndRepaintAction();
-            return true;
-        }
-    }
-
     public SelectGraphic() {
-        this(1f, Color.WHITE);
+        this(1.0f, Color.WHITE); // called in AbstractLayerModel, usefull ?????
     }
 
     public SelectGraphic(float lineThickness, Color paint) {
         super(lineThickness, paint, false);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return ICON;
+    }
+
+    @Override
+    public String getUIName() {
+        return Messages.getString("MeasureToolBar.sel"); //$NON-NLS-1$
+    }
+
+    @Override
+    public Rectangle getBounds(AffineTransform transform) {
+        Rectangle bound = super.getBounds(transform);
+        if (bound != null)
+            bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0); // trick
+            // bound.grow(bound.width < 1 ? getHandleSize() * 2 : 0, bound.height < 1 ? getHandleSize() * 2 : 0); //
+            // trick
+        return bound;
     }
 
     @Override
@@ -76,21 +84,18 @@ public class SelectGraphic extends RectangleGraphic {
         g2d.setStroke(oldStroke);
     }
 
-    // rend une nouvelle instance au lieu d'une selection du rectangle
     @Override
     protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
-        // return new SelectedDragSequence(i);
         return new SelectedDragSequence();
     }
 
-    @Override
-    public Icon getIcon() {
-        return ICON;
-    }
+    protected class SelectedDragSequence extends AbstractDragGraphic.DefaultDragSequence {
 
-    @Override
-    public String getUIName() {
-        return Messages.getString("MeasureToolBar.sel"); //$NON-NLS-1$
+        @Override
+        public boolean completeDrag(MouseEvent mouseEvent) {
+            fireRemoveAndRepaintAction();
+            return true;
+        }
     }
 
 }

@@ -48,7 +48,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected PropertyChangeSupport pcs;
 
     protected Shape shape;
-    protected Shape unTransformedShape;
 
     protected int handlePointTotalNumber;
     protected List<Point2D> handlePointList;
@@ -164,6 +163,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Area getArea() {
         return new Area(getShape());
+
         // NOTE : called trough DefaultView2d.MouseHandler.mouseReleased ->
         // AbstractLayerModel.getSelectedAllGraphicsIntersecting -> AbstractLayerModel.getGraphicsSurfaceInArea by
         // AbstractGraphic.intersects
@@ -177,59 +177,52 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Area getArea(AffineTransform transform) {
         if (shape == null)
-            return null;
+            return new Area();
 
-        double flatness = 1;
-        double scalingFactor = 1 / transform.getScaleX(); // assume ScaleX is equal to ScaleY()
-        double growingSize = 12 * scalingFactor;
+        if (shape instanceof AdvancedShape)
+            return ((AdvancedShape) shape).getArea(transform); // better implementation
+        else {
 
-        // Area pathBoundingArea = new Area();
-        Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
+            double growingSize = 12 / transform.getScaleX(); // assume ScaleX is equal to ScaleY()
 
-        // PathIterator pit = shape.getPathIterator(null, flatness);
-        // PathIterator pit =
-        // (shape instanceof DragShape) ? ((DragShape) shape).getPathIterator(null, flatness) : shape.getPathIterator(
-        // null, flatness);
-        PathIterator pit =
-            (shape instanceof DragShape) ? ((DragShape) shape).getPathIterator(null) : shape.getPathIterator(null,
-                flatness);
+            Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
+            PathIterator pit = shape.getPathIterator(null, 2);
 
-        double coords[] = new double[6];
-        Point2D startPoint = null, prevPoint = null, lastPoint = null;
+            double coords[] = new double[6];
+            Point2D startPoint = null, prevPoint = null, lastPoint = null;
 
-        while (!pit.isDone()) {
-            if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO) {
-                lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
-            } else {
-                switch (pit.currentSegment(coords)) {
-                    case PathIterator.SEG_LINETO:
-                        lastPoint = new Point2D.Double(coords[0], coords[1]);
-                        break;
-                    case PathIterator.SEG_QUADTO:
-                        lastPoint = new Point2D.Double(coords[2], coords[3]);
-                        break;
-                    case PathIterator.SEG_CUBICTO:
-                        lastPoint = new Point2D.Double(coords[4], coords[5]);
-                        break;
-                    case PathIterator.SEG_CLOSE:
-                        prevPoint = startPoint;
-                        break;
+            while (!pit.isDone()) {
+                if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO) {
+                    lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
+                } else {
+                    switch (pit.currentSegment(coords)) {
+                        case PathIterator.SEG_LINETO:
+                            lastPoint = new Point2D.Double(coords[0], coords[1]);
+                            break;
+                        case PathIterator.SEG_QUADTO:
+                            lastPoint = new Point2D.Double(coords[2], coords[3]);
+                            break;
+                        case PathIterator.SEG_CUBICTO:
+                            lastPoint = new Point2D.Double(coords[4], coords[5]);
+                            break;
+                        case PathIterator.SEG_CLOSE:
+                            prevPoint = startPoint;
+                            break;
+                    }
+
+                    Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
+                    pathBoundingShape.append(boundingShape, false);
                 }
-
-                // Area boundingRectArea = getBoundingRectAreaOfSegment(prevPoint, lastPoint, growingSize);
-                // pathBoundingArea.add(boundingShape);
-                Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
-                pathBoundingShape.append(boundingShape, false);
+                prevPoint = (Point2D) lastPoint.clone();
+                pit.next();
             }
-            prevPoint = (Point2D) lastPoint.clone();
-            pit.next();
+
+            // TODO add handles Area if necessary
+            // TODO add label Area
+
+            Area pathBoundingArea = new Area(pathBoundingShape);
+            return pathBoundingArea;
         }
-
-        // TODO add handles Area if necessary
-        // TODO add label Area
-
-        Area pathBoundingArea = new Area(pathBoundingShape);
-        return pathBoundingArea;
     }
 
     public Area getArea(MouseEvent mouseEvent) {
@@ -253,12 +246,17 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         // NOTE : bound is not accurate with complex shape (it is true for rectangle or ellipse with rotation)
         Rectangle bound = shape.getBounds();
-        bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0); // TODO - usefull in selected graphics only
+        bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0);
         return bound;
 
         // NOTE : called trough AbstractLayerModel.getSelectedAllGraphicsIntersecting by
         // DragLayer.getGraphicsSurfaceInArea
         // NOTE : called trough MouseListener.mouseRelease by DefaultView2d.MouseHandler.mouseReleased
+
+        // NOTE : called in Measure2DAnalyse trough DefaultView2d.MouseHandler ->
+        // AbstractLayermodel.fireGraphicSelectionChanged -> MesureTool.handle -> MesureTool.setSeletedGraphic ->
+        // AbstractGraphic.getShape by Measure2DAnalyse.....()
+
     }
 
     /**
@@ -276,7 +274,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        return (shape instanceof DragShape) ? ((DragShape) shape).getBounds(transform) : shape.getBounds();
+        if (shape instanceof AdvancedShape)
+            ((AdvancedShape) shape).updateScalingFactor(transform);
+
+        return shape.getBounds();
     }
 
     /**
@@ -329,9 +330,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        Rectangle rectangle =
-            (shape instanceof DragShape) ? ((DragShape) shape).getBounds(transform) : shape.getBounds();
+        if (shape instanceof AdvancedShape)
+            ((AdvancedShape) shape).updateScalingFactor(transform);
+
+        Rectangle rectangle = shape.getBounds();
         growHandles(rectangle, transform);
+
         return rectangle;
     }
 
@@ -346,9 +350,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform) {
 
         Rectangle rectangle = getRepaintBounds(shape, transform);
-        if (transform != null && rectangle != null) {
+        if (transform != null && rectangle != null)
             rectangle = transform.createTransformedShape(rectangle).getBounds();
-        }
 
         return rectangle;
     }
@@ -505,8 +508,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public void setLabel(String[] labels, Graphics2D g2d) {
-        if (labelVisible && g2d != null) {
-
+        if (labelVisible && g2d != null && shape != null)
             if (labels == null || labels.length == 0) {
                 graphicLabel = null;
             } else {
@@ -522,16 +524,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
                 firePropertyChange("graphicLabel", oldBound, graphicLabel);
             }
-        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void updateStroke() {
-        stroke = new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.CAP_ROUND);
-    }
-
-    protected void updateUnTransformedDrawingShape(AffineTransform transform) {
+        stroke = new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
     }
 
     @Override
@@ -541,53 +539,39 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public void paint(Graphics2D g2d, AffineTransform transform) {
-        Shape shape = getShape();
 
-        if (shape != null) {
+        // if (shape != null) {
 
-            if (shape instanceof DragShape) {
-                ((DragShape) shape).paint(g2d, transform);
-            } else {
-                g2d.setPaint(colorPaint);
-                g2d.setStroke(stroke);
-
-                Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
-                if (isFilled()) {
-                    g2d.fill(transformedShape);
-                }
-                g2d.draw(transformedShape);
-
-                // updateUnTransformedDrawingShape(transform);
-                // Shape shapeTest = transform.createTransformedShape(unTransformedShape);
-                // if (shapeTest != null) {
-                // g2d.draw(shapeTest);
-                // }
-            }
-            // if (isSelected && !isGraphicComplete)
-            if (isSelected()) {
-                paintHandles(g2d, transform);
-            }
-
-            paintLabel(g2d, transform);
-
-            // paint transformedBounds
-//            if (transform != null) {
-//                g2d.setPaint(Color.CYAN);
-//                g2d.draw(transform.createTransformedShape(getBounds(transform)));
-//            }
-
-            // // Area boundingArea = getArea(transform);
-            // if (transform != null) {
-            // g2d.setPaint(Color.RED);
-            // g2d.draw(transform.createTransformedShape(getArea(transform)));
-            // }
-            //
-            // if (transform != null) {
-            // g2d.setPaint(Color.BLUE);
-            // g2d.draw(transform.createTransformedShape(getRepaintBounds(transform)));
-            // }
-
+        if (shape instanceof AdvancedShape) {
+            ((AdvancedShape) shape).paint(g2d, transform);
+        } else if (shape != null) {
+            g2d.setPaint(colorPaint);
+            g2d.setStroke(stroke);
+            Shape drawingShape = transform == null ? shape : transform.createTransformedShape(shape);
+            if (isFilled())
+                g2d.fill(drawingShape);
+            g2d.draw(drawingShape);
         }
+        // if (isSelected && !isGraphicComplete)
+        if (isSelected())
+            paintHandles(g2d, transform);
+
+        paintLabel(g2d, transform);
+
+        // if (transform != null) {
+        // g2d.setPaint(Color.CYAN);
+        // g2d.draw(transform.createTransformedShape(getBounds(transform)));
+        // }
+        // if (transform != null) {
+        // g2d.setPaint(Color.RED);
+        // g2d.draw(transform.createTransformedShape(getArea(transform)));
+        // }
+        // if (transform != null) {
+        // g2d.setPaint(Color.BLUE);
+        // g2d.draw(transform.createTransformedShape(getRepaintBounds(transform)));
+        // }
+
+        // }
     }
 
     @Override
@@ -688,7 +672,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 handlePointIndex = handlePointList.size() - 1;
             }
 
-            return graphicComplete;
+            return graphicComplete && shape != null;
         }
     }
 
@@ -792,7 +776,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         newGraphic.pcs = null;
         newGraphic.shape = null;
-        newGraphic.unTransformedShape = null;
         newGraphic.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber);
 
         // newGraphic.paintColor = paintColor; // useless
@@ -833,65 +816,70 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected abstract void updateShapeOnDrawing(MouseEvent mouseevent);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public class DragShape implements Shape {
+    public class AdvancedShape implements Shape {
 
-        Shape shape;
-        Stroke stroke;
+        /**
+         * First element should be considered as the main shape used for drawing of the main features of graphic.<br>
+         * For instance, this first shape defines measurement areas or path lines. Other shape are usually dedicated to
+         * decorative drawings, with or without invariant size according to the view.
+         */
+        protected List<BasicShape> shapeList;
 
-        double scalingFactor;
+        protected double scalingFactor = 1;
 
-        List<InvShapeStruct> invariantSizedShapeList = new ArrayList<InvShapeStruct>();
+        class BasicShape {
+            Shape shape;
+            Stroke stroke;
 
-        class InvShapeStruct {
-            final Shape shape;
-            final Stroke stroke;
-            final Point2D anchorPoint;
-
-            Shape scaledShape;
-
-            public InvShapeStruct(Shape shape, Point2D anchorPoint, Stroke stroke) {
+            public BasicShape(Shape shape, Stroke stroke) {
+                if (shape == null || stroke == null)
+                    throw new IllegalArgumentException();
                 this.shape = shape;
-                this.anchorPoint = anchorPoint;
                 this.stroke = stroke;
-                // TODO assert parameters are not null
             }
 
-            /**
-             * Do an inverse scaling transformation around the anchor point
-             */
-
-            Shape getScaledShape() {
-                if (scaledShape == null) {
-                    if (scalingFactor == 1d) {
-                        scaledShape = shape;
-                    } else {
-                        AffineTransform scaleTransform = new AffineTransform();
-                        double invScalingFactor = 1 / scalingFactor;
-                        scaleTransform.translate(anchorPoint.getX(), anchorPoint.getY());
-                        scaleTransform.scale(invScalingFactor, invScalingFactor);
-                        scaleTransform.translate(anchorPoint.getX(), anchorPoint.getY());
-                        scaledShape = scaleTransform.createTransformedShape(shape);
-                    }
-                }
-                return scaledShape;
-            }
-
-            void updateScalingDependency() {
-                scaledShape = null;
+            public Shape getRealShape() {
+                return shape;
             }
         }
 
-        public DragShape() {
-            this(1D);
+        /**
+         * Dedicated to drawings with invariant size around anchorPoint according to the view
+         */
+        class InvariantShape extends BasicShape {
+            Point2D anchorPoint;
+            double scalingMax = Double.MAX_VALUE;
+
+            public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint) {
+                super(shape, stroke);
+                if (anchorPoint == null)
+                    throw new IllegalArgumentException();
+                this.anchorPoint = anchorPoint;
+            }
+
+            public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint, double scalingMax) {
+                this(shape, stroke, anchorPoint);
+                if (scalingMax < 0)
+                    throw new IllegalArgumentException();
+                this.scalingMax = scalingMax;
+            }
+
+            @Override
+            public Shape getRealShape() {
+                // double realScale = scalingFactor < scalingMax ? scalingFactor : scalingFactor / scalingMax;
+                double realScale = scalingFactor;
+
+                // System.out.println("scalingFactor : " + scalingFactor);
+                // System.out.println("scalingMax : " + scalingMax);
+                // System.out.println("realScale : " + realScale);
+                return GeomUtil.getScaledShape(shape, 1 / realScale, anchorPoint);
+            }
         }
 
-        public DragShape(double scalingFactor) {
-            this.scalingFactor = scalingFactor;
-        }
-
-        public DragShape(AffineTransform transform) {
-            this(GeomUtil.extractScalingFactor(transform));
+        public AdvancedShape(int initialShapeNumber) {
+            shapeList = new ArrayList<BasicShape>(initialShapeNumber);
         }
 
         void addShape(Shape shape) {
@@ -899,29 +887,30 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         }
 
         void addShape(Shape shape, Stroke stroke) {
-            this.shape = shape;
-            this.stroke = stroke;
+            shapeList.add(new BasicShape(shape, stroke));
         }
 
-        void addInvariantShape(Shape shape, Point2D anchorPoint) {
+        void addInvShape(Shape shape, Point2D anchorPoint) {
             addInvShape(shape, anchorPoint, getStroke());
         }
 
+        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMax) {
+            addInvShape(shape, anchorPoint, scalingMax, getStroke());
+        }
+
+        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMax, Stroke stroke) {
+            shapeList.add(new InvariantShape(shape, stroke, anchorPoint, scalingMax));
+        }
+
         void addInvShape(Shape shape, Point2D anchorPoint, Stroke stroke) {
-            invariantSizedShapeList.add(new InvShapeStruct(shape, anchorPoint, stroke));
+            shapeList.add(new InvariantShape(shape, stroke, anchorPoint));
         }
 
         void updateScalingFactor(double scalingFactor) {
-            if (this.scalingFactor != scalingFactor) {
-                this.scalingFactor = scalingFactor;
-                for (InvShapeStruct invShape : invariantSizedShapeList) {
-                    invShape.updateScalingDependency();
-                }
-            }
+            this.scalingFactor = scalingFactor;
         }
 
         public void updateScalingFactor(AffineTransform transform) {
-            // if (transform != null)
             updateScalingFactor(GeomUtil.extractScalingFactor(transform));
         }
 
@@ -929,80 +918,50 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             updateScalingFactor(transform);
 
             g2d.setPaint(getColorPaint());
-            Shape drawingShape;
 
-            if (shape != null) {
-                drawingShape = (transform == null) ? shape : transform.createTransformedShape(shape);
-                g2d.setStroke(this.stroke);
+            for (BasicShape item : shapeList) {
+                Shape drawingShape =
+                    (transform == null) ? item.getRealShape() : transform.createTransformedShape(item.getRealShape());
+
+                g2d.setStroke(item.stroke);
                 g2d.draw(drawingShape);
-                if (isFilled()) {
+
+                if (isFilled())
                     g2d.fill(drawingShape);
-                }
             }
-
-            for (InvShapeStruct invShape : invariantSizedShapeList) {
-                Shape scaledShape = invShape.getScaledShape();
-                drawingShape = (transform == null) ? scaledShape : transform.createTransformedShape(scaledShape);
-
-                g2d.setStroke(invShape.stroke);
-                g2d.draw(drawingShape);
-                if (isFilled()) {
-                    g2d.fill(drawingShape);
-                }
-            }
-        }
-
-        public Rectangle getBounds(AffineTransform transform) {
-            updateScalingFactor(transform);
-            return getBounds();
         }
 
         @Override
         public Rectangle getBounds() {
             Rectangle rectangle = null;
 
-            if (shape != null) {
-                rectangle = shape.getBounds();
-            } else if (invariantSizedShapeList.size() > 0) {
-                rectangle = new Rectangle();
-            }
-
-            for (InvShapeStruct invShape : invariantSizedShapeList) {
-                rectangle.add(invShape.getScaledShape().getBounds());
+            for (BasicShape item : shapeList) {
+                if (rectangle == null)
+                    rectangle = item.getRealShape().getBounds();
+                else
+                    rectangle.add(item.getRealShape().getBounds());
             }
 
             return rectangle;
-
-            // NOTE : called in Measure2DAnalyse trough DefaultView2d.MouseHandler ->
-            // AbstractLayermodel.fireGraphicSelectionChanged -> MesureTool.handle -> MesureTool.setSeletedGraphic ->
-            // AbstractGraphic.getShape by Measure2DAnalyse.....()
         }
 
         @Override
         public Rectangle2D getBounds2D() {
             Rectangle2D rectangle = null;
 
-            if (shape != null) {
-                rectangle = shape.getBounds2D();
-            } else if (invariantSizedShapeList.size() > 0) {
-                rectangle = new Rectangle2D.Double();
+            for (BasicShape item : shapeList) {
+                if (rectangle == null)
+                    rectangle = item.getRealShape().getBounds2D();
+                else
+                    rectangle.add(item.getRealShape().getBounds2D());
             }
-
-            for (InvShapeStruct invShape : invariantSizedShapeList) {
-                rectangle.add(invShape.getScaledShape().getBounds2D());
-            }
-
             return rectangle;
         }
 
         @Override
         public boolean contains(double x, double y) {
-            if (shape != null)
-                if (shape.contains(x, y))
-                    return true;
-
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().contains(x, y))
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().contains(x, y))
                     return true;
 
             return false;
@@ -1010,49 +969,17 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public boolean contains(Point2D p) {
-            if (shape != null)
-                if (shape.contains(p))
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().contains(p))
                     return true;
 
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().contains(p))
-                    return true;
-
-            return false;
-        }
-
-        @Override
-        public boolean intersects(double x, double y, double w, double h) {
-            if (shape != null)
-                if (shape.intersects(x, y, w, h))
-                    return true;
-
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().intersects(x, y, w, h))
-                    return true;
-            return false;
-        }
-
-        @Override
-        public boolean intersects(Rectangle2D r) {
-            if (shape != null)
-                if (shape.intersects(r))
-                    return true;
-
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().intersects(r))
-                    return true;
             return false;
         }
 
         @Override
         public boolean contains(double x, double y, double w, double h) {
-            if (shape != null)
-                if (shape.contains(x, y, w, h))
-                    return true;
-
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().contains(x, y, w, h))
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().contains(x, y, w, h))
                     return true;
 
             return false;
@@ -1060,12 +987,26 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public boolean contains(Rectangle2D r) {
-            if (shape != null)
-                if (shape.contains(r))
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().contains(r))
                     return true;
 
-            for (InvShapeStruct invShape : invariantSizedShapeList)
-                if (invShape.getScaledShape().contains(r))
+            return false;
+        }
+
+        @Override
+        public boolean intersects(double x, double y, double w, double h) {
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().intersects(x, y, w, h))
+                    return true;
+
+            return false;
+        }
+
+        @Override
+        public boolean intersects(Rectangle2D r) {
+            for (BasicShape item : shapeList)
+                if (item.getRealShape().intersects(r))
                     return true;
 
             return false;
@@ -1073,91 +1014,106 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public PathIterator getPathIterator(AffineTransform at) {
+            if (at != null)
+                updateScalingFactor(at);
             return getFullPathShape().getPathIterator(at);
         }
 
         @Override
         public PathIterator getPathIterator(AffineTransform at, double flatness) {
+            if (at != null)
+                updateScalingFactor(at);
             return getFullPathShape().getPathIterator(at, flatness);
         }
 
-        protected Path2D getFullPathShape() {
+        private Path2D getFullPathShape() {
             Path2D pathShape = new Path2D.Double(Path2D.WIND_NON_ZERO);
-            pathShape.append(shape, false);
 
-            for (InvShapeStruct invShape : invariantSizedShapeList) {
-                pathShape.append(invShape.getScaledShape(), false);
-            }
+            for (BasicShape item : shapeList)
+                pathShape.append(item.getRealShape(), false);
+
             return pathShape;
         }
 
         public Area getArea(AffineTransform transform) {
             updateScalingFactor(transform);
 
-            double invScalingFactor = 1 / scalingFactor;
             double growingSize = 12;
 
-            Area pathBoundingArea = null;
+            Area pathBoundingArea = new Area();
 
-            if (shape != null) {
-                pathBoundingArea = new Area(getBoundingShape(shape, growingSize * invScalingFactor));
-            } else if (invariantSizedShapeList.size() > 0) {
-                pathBoundingArea = new Area();
-            }
+            Stroke boundingStroke =
+                new BasicStroke((float) (growingSize / scalingFactor), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
-            AffineTransform scaleTransform = new AffineTransform();
-
-            for (InvShapeStruct invShape : invariantSizedShapeList) {
-                scaleTransform.setToTranslation(invShape.anchorPoint.getX(), invShape.anchorPoint.getY());
-                scaleTransform.scale(invScalingFactor, invScalingFactor);
-                scaleTransform.translate(invShape.anchorPoint.getX(), invShape.anchorPoint.getY());
-
-                Area invPathBoundingArea = new Area(getBoundingShape(invShape.shape, growingSize));
-                invPathBoundingArea.transform(scaleTransform);
-                pathBoundingArea.add(invPathBoundingArea);
-            }
+            for (BasicShape item : shapeList)
+                pathBoundingArea.add(new Area(boundingStroke.createStrokedShape(item.getRealShape())));
 
             return pathBoundingArea;
         }
 
-        Shape getBoundingShape(Shape shape, double growingSize) {
-            if (shape == null)
-                return null;
+        // public Area getArea(AffineTransform transform) {
+        // updateScalingFactor(transform);
+        //
+        // double growingSize = 12;
+        //
+        // Area pathBoundingArea = new Area();
+        //
+        // // for (BasicShape item : shapeList)
+        // // pathBoundingArea.add(new Area(getBoundingShape(item.getRealShape(), growingSize / scalingFactor)));
+        //
+        // // method below is more accurate when zoom is high
+        // for (BasicShape item : shapeList) {
+        // if (item instanceof InvariantShape) {
+        // Area invPathBoundingArea = new Area(getBoundingShape(item.shape, growingSize));
+        // double tx = ((InvariantShape) item).anchorPoint.getX();
+        // double ty = ((InvariantShape) item).anchorPoint.getY();
+        //
+        // AffineTransform scaleTransform = AffineTransform.getTranslateInstance(tx, ty);
+        // scaleTransform.scale(1 / scalingFactor, 1 / scalingFactor);
+        // scaleTransform.translate(-tx, -ty);
+        //
+        // invPathBoundingArea.transform(scaleTransform);
+        // pathBoundingArea.add(invPathBoundingArea);
+        // } else
+        // pathBoundingArea.add(new Area(getBoundingShape(item.shape, growingSize / scalingFactor)));
+        // }
+        //
+        // return pathBoundingArea;
+        // }
 
-            double flatness = 2;
-
-            Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
-            PathIterator pit = shape.getPathIterator(null, flatness);
-
-            double coords[] = new double[6];
-            Point2D startPoint = null, prevPoint = null, lastPoint = null;
-
-            while (!pit.isDone()) {
-                if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO) {
-                    lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
-                } else {
-                    switch (pit.currentSegment(coords)) {
-                        case PathIterator.SEG_LINETO:
-                            lastPoint = new Point2D.Double(coords[0], coords[1]);
-                            break;
-                        case PathIterator.SEG_QUADTO:
-                            lastPoint = new Point2D.Double(coords[2], coords[3]);
-                            break;
-                        case PathIterator.SEG_CUBICTO:
-                            lastPoint = new Point2D.Double(coords[4], coords[5]);
-                            break;
-                        case PathIterator.SEG_CLOSE:
-                            prevPoint = startPoint;
-                            break;
-                    }
-
-                    Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
-                    pathBoundingShape.append(boundingShape, false);
-                }
-                prevPoint = (Point2D) lastPoint.clone();
-                pit.next();
-            }
-            return pathBoundingShape;
-        }
+        // Shape getBoundingShape(Shape shape, double growingSize) {
+        // Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
+        // PathIterator pit = shape.getPathIterator(null, 2);
+        //
+        // double coords[] = new double[6];
+        // Point2D startPoint = null, prevPoint = null, lastPoint = null;
+        //
+        // while (!pit.isDone()) {
+        // if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO)
+        // lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
+        // else {
+        // switch (pit.currentSegment(coords)) {
+        // case PathIterator.SEG_LINETO:
+        // lastPoint = new Point2D.Double(coords[0], coords[1]);
+        // break;
+        // case PathIterator.SEG_QUADTO:
+        // lastPoint = new Point2D.Double(coords[2], coords[3]);
+        // break;
+        // case PathIterator.SEG_CUBICTO:
+        // lastPoint = new Point2D.Double(coords[4], coords[5]);
+        // break;
+        // case PathIterator.SEG_CLOSE:
+        // prevPoint = startPoint;
+        // break;
+        // }
+        //
+        // Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
+        // pathBoundingShape.append(boundingShape, false);
+        // }
+        // prevPoint = (Point2D) lastPoint.clone();
+        // pit.next();
+        // }
+        // return pathBoundingShape;
+        // }
     }
 }

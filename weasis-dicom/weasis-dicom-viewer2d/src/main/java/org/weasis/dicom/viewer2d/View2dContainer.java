@@ -248,9 +248,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             MediaSeries<DicomImageElement> series = selectedImagePane.getSeries();
             if (series != null) {
                 DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel)) {
+                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel))
                     return;
-                }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, series));
             }
@@ -321,12 +320,13 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             DicomImageElement dcm = (DicomImageElement) source;
                             for (DefaultView2d<DicomImageElement> v : view2ds) {
                                 if (dcm == v.getImage()) {
-                                    v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
                                     // Force to repaint the same image
                                     if (v.getImageLayer().getDisplayImage() == null) {
+                                        v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
                                         v.setSeries(v.getSeries());
                                     } else {
-                                        v.getImageLayer().updateAllImageOperations();
+                                        v.propertyChange(new PropertyChangeEvent(dcm, ActionW.PROGRESSION.cmd(), null,
+                                            param));
                                     }
                                 }
                             }
@@ -405,9 +405,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (View2d.class.getName().equals(clazz)) {
+        if (View2d.class.getName().equals(clazz))
             return createDefaultView();
-        }
         try {
             // FIXME use classloader.loadClass or injection
             Class cl = Class.forName(clazz);

@@ -109,9 +109,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     public Thumbnail(final MediaSeries<E> sequence, File thumbnailPath, int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
-        if (sequence == null) {
+        if (sequence == null)
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
-        }
         this.thumbnailSize = thumbnailSize;
         this.series = sequence;
         this.thumbnailPath = thumbnailPath;
@@ -155,6 +154,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         mediaPosition = position;
         File old = thumbnailPath;
         thumbnailPath = null;
+        readable = true;
         buildThumbnail();
         if (old != null) {
             old.delete();
@@ -164,6 +164,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     public synchronized void reBuildThumbnail() {
         File old = thumbnailPath;
         thumbnailPath = null;
+        readable = true;
         buildThumbnail();
         if (old != null) {
             old.delete();
@@ -353,9 +354,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 imageSoftRef = new SoftReference<BufferedImage>(thumb);
             }
         }
-        if (imageSoftRef == null) {
+        if (imageSoftRef == null)
             return null;
-        }
         return imageSoftRef.get();
     }
 
@@ -372,6 +372,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     // --- DragGestureListener methods -----------------------------------
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         Component comp = dge.getComponent();
         try {
@@ -389,22 +390,27 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     }
 
+    @Override
     public void dragMouseMoved(DragSourceDragEvent dsde) {
         drawGlassPane(dsde.getLocation());
     }
 
     // --- DragSourceListener methods -----------------------------------
 
+    @Override
     public void dragEnter(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dragOver(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dragExit(DragSourceEvent dsde) {
 
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
         GhostGlassPane glassPane = AbstractProperties.glassPane;
         dragPressed = null;
@@ -413,6 +419,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         glassPane.setVisible(false);
     }
 
+    @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
     }
 
@@ -429,6 +436,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         return series;
     }
 
+    @Override
     public void focusGained(FocusEvent e) {
         if (!e.isTemporary()) {
             setBorder(onMouseOverBorder);
@@ -447,6 +455,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         }
     }
 
+    @Override
     public void focusLost(FocusEvent e) {
         if (!e.isTemporary()) {
             setBorder(outMouseOverBorder);
@@ -456,9 +465,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     private JPanel getScrollPane() {
         Container container = getParent();
         while (container != null) {
-            if (container.getParent() instanceof JViewport) {
+            if (container.getParent() instanceof JViewport)
                 return (JPanel) container;
-            }
             container = container.getParent();
         }
         return null;
@@ -527,6 +535,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             this.path = path;
         }
 
+        @Override
         public BufferedImage call() throws Exception {
             return ImageIO.read(path);
             // return loadImage(path);

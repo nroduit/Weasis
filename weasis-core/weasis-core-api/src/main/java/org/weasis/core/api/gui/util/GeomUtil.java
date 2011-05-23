@@ -57,9 +57,8 @@ public final class GeomUtil {
      */
     public static double getSmallestRotationAngleRad(double angle) {
         angle = angle % Math.PI;
-        if (Math.abs(angle) > Math.PI) {
+        if (Math.abs(angle) > Math.PI)
             angle -= Math.signum(angle) * 2.0 * Math.PI;
-        }
         return angle;
     }
 
@@ -70,9 +69,8 @@ public final class GeomUtil {
      */
     public static double getSmallestRotationAngleDeg(double angle) {
         angle = angle % 360.0;
-        if (Math.abs(angle) > 180.0) {
+        if (Math.abs(angle) > 180.0)
             angle -= Math.signum(angle) * 360.0;
-        }
         return angle;
     }
 
@@ -291,13 +289,40 @@ public final class GeomUtil {
         if ((transform != null)) {
             double sx = transform.getScaleX();
             double shx = transform.getShearX();
-            if (sx != 0 || shx != 0) {
+            if (sx != 0 || shx != 0)
                 scalingFactor = Math.sqrt(sx * sx + shx * shx);
-                // scalingFactor = Math.sqrt(Math.pow(sx, 2) + Math.pow(shx, 2));
-            }
+            // scalingFactor = Math.sqrt(Math.pow(sx, 2) + Math.pow(shx, 2));
         }
 
         return scalingFactor;
+    }
+
+    /**
+     * 
+     * Do a scaling transformation around the anchor point
+     * 
+     * @param shape
+     * @param scalingFactor
+     * @param anchorPoint
+     * @return
+     */
+    public static Shape getScaledShape(Shape shape, double scalingFactor, Point2D anchorPoint) {
+        if (shape == null)
+            return null;
+
+        AffineTransform scaleTransform = new AffineTransform(); // Identity transformation.
+
+        if (scalingFactor != 1) {
+            if (anchorPoint != null)
+                scaleTransform.translate(anchorPoint.getX(), anchorPoint.getY());
+
+            scaleTransform.scale(scalingFactor, scalingFactor);
+
+            if (anchorPoint != null)
+                scaleTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
+        }
+
+        return scaleTransform.createTransformedShape(shape);
     }
 
     /**
@@ -327,41 +352,42 @@ public final class GeomUtil {
         return path;
     }
 
-    public static Shape getBoundingShapeOfSegment2(Point2D A, Point2D B, double growingSize) {
-
-        Path2D path = new Path2D.Double();
-
-        double dAB = A.distance(B);
-        double dxu = B.getX() - A.getX() / dAB;
-        double dyu = B.getY() - A.getY() / dAB;
-
-        AffineTransform t1, t2, t3, t4;
-        Point2D tPoint;
-
-        t1 = AffineTransform.getTranslateInstance(-dyu * growingSize, dxu * growingSize);// rot +90° CW
-        t2 = AffineTransform.getTranslateInstance(dyu * growingSize, -dxu * growingSize); // rot -90° CCW
-        t3 = AffineTransform.getTranslateInstance(-dxu * growingSize, 0);
-        t4 = AffineTransform.getTranslateInstance(dxu * growingSize, 0);
-
-        tPoint = t1.transform(A, null);
-        tPoint = t3.transform(tPoint, tPoint);
-        path.moveTo(tPoint.getX(), tPoint.getY());
-
-        tPoint = t2.transform(A, null);
-        tPoint = t3.transform(tPoint, tPoint);
-        path.lineTo(tPoint.getX(), tPoint.getY());
-
-        tPoint = t2.transform(B, null);
-        tPoint = t4.transform(tPoint, tPoint);
-        path.lineTo(tPoint.getX(), tPoint.getY());
-
-        tPoint = t1.transform(B, null);
-        tPoint = t4.transform(tPoint, tPoint);
-        path.lineTo(tPoint.getX(), tPoint.getY());
-
-        path.closePath();
-
-        return path;
-    }
+    // Not Tested
+    // public static Shape getBoundingShapeOfSegment2(Point2D A, Point2D B, double growingSize) {
+    //
+    // Path2D path = new Path2D.Double();
+    //
+    // double dAB = A.distance(B);
+    // double dxu = B.getX() - A.getX() / dAB;
+    // double dyu = B.getY() - A.getY() / dAB;
+    //
+    // AffineTransform t1, t2, t3, t4;
+    // Point2D tPoint;
+    //
+    // t1 = AffineTransform.getTranslateInstance(-dyu * growingSize, dxu * growingSize);// rot +90° CW
+    // t2 = AffineTransform.getTranslateInstance(dyu * growingSize, -dxu * growingSize); // rot -90° CCW
+    // t3 = AffineTransform.getTranslateInstance(-dxu * growingSize, 0);
+    // t4 = AffineTransform.getTranslateInstance(dxu * growingSize, 0);
+    //
+    // tPoint = t1.transform(A, null);
+    // tPoint = t3.transform(tPoint, tPoint);
+    // path.moveTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t2.transform(A, null);
+    // tPoint = t3.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t2.transform(B, null);
+    // tPoint = t4.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // tPoint = t1.transform(B, null);
+    // tPoint = t4.transform(tPoint, tPoint);
+    // path.lineTo(tPoint.getX(), tPoint.getY());
+    //
+    // path.closePath();
+    //
+    // return path;
+    // }
 
 }
