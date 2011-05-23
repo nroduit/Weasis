@@ -323,6 +323,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     // Force to repaint the same image
                                     if (v.getImageLayer().getDisplayImage() == null) {
                                         v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
+                                        // Set image to null for getting correct W/L values
+                                        v.getImageLayer().setImage(null);
                                         v.setSeries(v.getSeries());
                                     } else {
                                         v.propertyChange(new PropertyChangeEvent(dcm, ActionW.PROGRESSION.cmd(), null,

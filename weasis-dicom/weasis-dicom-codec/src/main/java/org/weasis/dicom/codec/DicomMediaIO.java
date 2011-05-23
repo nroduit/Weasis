@@ -670,10 +670,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     if (elements != null && elements.length > frame) {
                         jpipReader.setInput(elements[frame]);
                         buffer = jpipReader.readAsRenderedImage(frame, null);
-                        if (buffer != null) {
-                            // Set the min and max for W/L
-                            validateDicomImageValues(tags);
-                        }
                     }
                 } else {
                     buffer = readAsRenderedImage(frame, null);
