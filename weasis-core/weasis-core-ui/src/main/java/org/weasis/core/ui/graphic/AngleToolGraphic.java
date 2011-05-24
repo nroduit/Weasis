@@ -89,8 +89,9 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
 
                     double rMax = Math.min(P.distance(A), P.distance(B)) * 2 / 3;
+                    // double radius = ARC_RADIUS < rMax ? ARC_RADIUS : rMax;
                     double radius = ARC_RADIUS;
-                    double scalingMax = rMax / ARC_RADIUS;
+                    double scalingMin = ARC_RADIUS / rMax;
 
                     Rectangle2D ellipseBounds =
                         new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius, 2 * radius);
@@ -98,7 +99,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     Shape unTransformedShape =
                         new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
-                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone(), scalingMax);
+                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone(), scalingMin);
                 }
             }
         }

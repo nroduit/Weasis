@@ -49,9 +49,11 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     @Override
     public void updateLabel(Object source, Graphics2D g2d) {
         if (labelVisible) {
+            boolean releasedEvent = true;
             ImageElement imageElement = null;
             if (source instanceof MouseEvent) {
                 imageElement = getImageElement((MouseEvent) source);
+                releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
             } else if (source instanceof ImageElement) {
                 imageElement = (ImageElement) source;
             }
@@ -62,64 +64,66 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     + DecFormater.oneDecimalUngroup(getGraphicArea(imageElement.getPixelSizeX(),
                         imageElement.getPixelSizeY())) + " " + unit.getAbbreviation() + "2"); //$NON-NLS-1$ //$NON-NLS-2$
 
-                PlanarImage image = imageElement.getImage();
-                try {
-                    ArrayList<Integer> pList = getValueFromArea(image);
-                    if (pList != null && pList.size() > 0) {
-                        int band = image.getSampleModel().getNumBands();
-                        if (band == 1) {
-                            // Hounsfield = pixelValue * rescale slope + intercept value
-                            Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
-                            Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
-                            double min = Double.MAX_VALUE;
-                            double max = -Double.MAX_VALUE;
-                            double sum = 0;
-                            for (Integer val : pList) {
-                                if (val < min) {
-                                    min = val;
+                if (releasedEvent) {
+                    PlanarImage image = imageElement.getImage();
+                    try {
+                        ArrayList<Integer> pList = getValueFromArea(image);
+                        if (pList != null && pList.size() > 0) {
+                            int band = image.getSampleModel().getNumBands();
+                            if (band == 1) {
+                                // Hounsfield = pixelValue * rescale slope + intercept value
+                                Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
+                                Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
+                                double min = Double.MAX_VALUE;
+                                double max = -Double.MAX_VALUE;
+                                double sum = 0;
+                                for (Integer val : pList) {
+                                    if (val < min) {
+                                        min = val;
+                                    }
+                                    if (val > max) {
+                                        max = val;
+                                    }
+                                    sum += val;
                                 }
-                                if (val > max) {
-                                    max = val;
+
+                                double mean = sum / pList.size();
+
+                                double stdv = 0.0D;
+                                for (Integer val : pList) {
+                                    if (val < min) {
+                                        min = val;
+                                    }
+                                    if (val > max) {
+                                        max = val;
+                                    }
+                                    stdv += (val - mean) * (val - mean);
                                 }
-                                sum += val;
+
+                                stdv = Math.sqrt(stdv / (pList.size() - 1.0));
+
+                                if (slope != null || intercept != null) {
+                                    slope = slope == null ? 1.0f : slope;
+                                    intercept = intercept == null ? 0.0f : intercept;
+                                    mean = mean * slope + intercept;
+                                    stdv = stdv * slope + intercept;
+                                    min = min * slope + intercept;
+                                    max = max * slope + intercept;
+                                }
+                                String hu =
+                                    imageElement.getPixelValueUnit() == null
+                                        ? "" : " " + imageElement.getPixelValueUnit(); //$NON-NLS-1$ //$NON-NLS-2$
+                                list.add(Messages.getString("RectangleGraphic.max") + DecFormater.oneDecimalUngroup(max) + hu); //$NON-NLS-1$
+                                list.add(Messages.getString("RectangleGraphic.min") + DecFormater.oneDecimalUngroup(min) + hu); //$NON-NLS-1$
+                                list.add(Messages.getString("RectangleGraphic.std") + DecFormater.oneDecimalUngroup(stdv) + hu); //$NON-NLS-1$
+                                list.add(Messages.getString("RectangleGraphic.mean") + DecFormater.oneDecimalUngroup(mean) + hu); //$NON-NLS-1$
+                            } else {
+                                // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
                             }
-
-                            double mean = sum / pList.size();
-
-                            double stdv = 0.0D;
-                            for (Integer val : pList) {
-                                if (val < min) {
-                                    min = val;
-                                }
-                                if (val > max) {
-                                    max = val;
-                                }
-                                stdv += (val - mean) * (val - mean);
-                            }
-
-                            stdv = Math.sqrt(stdv / (pList.size() - 1.0));
-
-                            if (slope != null || intercept != null) {
-                                slope = slope == null ? 1.0f : slope;
-                                intercept = intercept == null ? 0.0f : intercept;
-                                mean = mean * slope + intercept;
-                                stdv = stdv * slope + intercept;
-                                min = min * slope + intercept;
-                                max = max * slope + intercept;
-                            }
-                            String hu =
-                                imageElement.getPixelValueUnit() == null ? "" : " " + imageElement.getPixelValueUnit(); //$NON-NLS-1$ //$NON-NLS-2$
-                            list.add(Messages.getString("RectangleGraphic.max") + DecFormater.oneDecimalUngroup(max) + hu); //$NON-NLS-1$
-                            list.add(Messages.getString("RectangleGraphic.min") + DecFormater.oneDecimalUngroup(min) + hu); //$NON-NLS-1$
-                            list.add(Messages.getString("RectangleGraphic.std") + DecFormater.oneDecimalUngroup(stdv) + hu); //$NON-NLS-1$
-                            list.add(Messages.getString("RectangleGraphic.mean") + DecFormater.oneDecimalUngroup(mean) + hu); //$NON-NLS-1$
-                        } else {
-                            // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
                         }
+                    } catch (ArrayIndexOutOfBoundsException ex) {
                     }
-                } catch (ArrayIndexOutOfBoundsException ex) {
                 }
-
                 setLabel(list.toArray(new String[list.size()]), g2d);
             }
         }

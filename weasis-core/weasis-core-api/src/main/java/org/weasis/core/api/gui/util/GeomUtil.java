@@ -2,6 +2,7 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -325,69 +326,20 @@ public final class GeomUtil {
         return scaleTransform.createTransformedShape(shape);
     }
 
-    /**
-     * 
-     * @param A
-     * @param B
-     * @param growingSize
-     * @return
-     */
-    public static Shape getBoundingShapeOfSegment(Point2D A, Point2D B, double growingSize) {
+    public static Shape getCornerShape(Point2D A, Point2D O, Point2D B, double cornerSize) {
+        GeneralPath path = new GeneralPath(Path2D.WIND_NON_ZERO, 2);
 
-        Path2D path = new Path2D.Double();
+        Point2D I1 = GeomUtil.getColinearPointWithLength(O, A, cornerSize);
+        Point2D I2 = GeomUtil.getColinearPointWithLength(O, B, cornerSize);
 
-        Point2D tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -growingSize, growingSize);
-        path.moveTo(tPoint.getX(), tPoint.getY());
+        double rotSignum = Math.signum(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(B, O, A)));
+        Point2D I3 = GeomUtil.getPerpendicularPointFromLine(O, A, I1, rotSignum * cornerSize);
 
-        tPoint = GeomUtil.getPerpendicularPointFromLine(A, B, -growingSize, -growingSize);
-        path.lineTo(tPoint.getX(), tPoint.getY());
+        path.append(new Line2D.Double(I1, I3), false);
+        path.append(new Line2D.Double(I2, I3), false);
 
-        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -growingSize, growingSize);
-        path.lineTo(tPoint.getX(), tPoint.getY());
-
-        tPoint = GeomUtil.getPerpendicularPointFromLine(B, A, -growingSize, -growingSize);
-        path.lineTo(tPoint.getX(), tPoint.getY());
-
-        path.closePath();
         return path;
-    }
 
-    // Not Tested
-    // public static Shape getBoundingShapeOfSegment2(Point2D A, Point2D B, double growingSize) {
-    //
-    // Path2D path = new Path2D.Double();
-    //
-    // double dAB = A.distance(B);
-    // double dxu = B.getX() - A.getX() / dAB;
-    // double dyu = B.getY() - A.getY() / dAB;
-    //
-    // AffineTransform t1, t2, t3, t4;
-    // Point2D tPoint;
-    //
-    // t1 = AffineTransform.getTranslateInstance(-dyu * growingSize, dxu * growingSize);// rot +90° CW
-    // t2 = AffineTransform.getTranslateInstance(dyu * growingSize, -dxu * growingSize); // rot -90° CCW
-    // t3 = AffineTransform.getTranslateInstance(-dxu * growingSize, 0);
-    // t4 = AffineTransform.getTranslateInstance(dxu * growingSize, 0);
-    //
-    // tPoint = t1.transform(A, null);
-    // tPoint = t3.transform(tPoint, tPoint);
-    // path.moveTo(tPoint.getX(), tPoint.getY());
-    //
-    // tPoint = t2.transform(A, null);
-    // tPoint = t3.transform(tPoint, tPoint);
-    // path.lineTo(tPoint.getX(), tPoint.getY());
-    //
-    // tPoint = t2.transform(B, null);
-    // tPoint = t4.transform(tPoint, tPoint);
-    // path.lineTo(tPoint.getX(), tPoint.getY());
-    //
-    // tPoint = t1.transform(B, null);
-    // tPoint = t4.transform(tPoint, tPoint);
-    // path.lineTo(tPoint.getX(), tPoint.getY());
-    //
-    // path.closePath();
-    //
-    // return path;
-    // }
+    }
 
 }

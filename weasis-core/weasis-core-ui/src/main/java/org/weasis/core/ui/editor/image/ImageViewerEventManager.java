@@ -31,7 +31,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.util.ZoomSetting;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -42,6 +41,8 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.util.ViewSetting;
+import org.weasis.core.ui.util.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> {
     public static final int ZOOM_SLIDER_MIN = -100;
@@ -56,6 +57,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
+    protected final ViewSetting viewSetting = new ViewSetting();
     protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
@@ -559,6 +561,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
     public ZoomSetting getZoomSetting() {
         return zoomSetting;
+    }
+
+    public ViewSetting getViewSetting() {
+        return viewSetting;
     }
 
     public int viewScaleToSliderValue(double viewScale) {

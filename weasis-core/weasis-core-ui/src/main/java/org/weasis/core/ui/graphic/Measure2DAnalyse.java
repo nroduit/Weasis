@@ -108,11 +108,11 @@ public class Measure2DAnalyse {
     public double getArea() {
         if (shape instanceof Rectangle2D) {
             Rectangle2D rectangle = shape.getBounds2D();
-            return (rectangle.getWidth() + 1.0) * (rectangle.getHeight() + 1.0);
+            return rectangle.getWidth() * rectangle.getHeight();
         }
         if (shape instanceof Ellipse2D) {
             Rectangle2D rectangle = shape.getBounds2D();
-            return Math.PI * (rectangle.getWidth() + 0.5) * (rectangle.getHeight() + 0.5) / 4.0;
+            return (Math.PI * rectangle.getWidth() * rectangle.getHeight()) / 4.0;
         }
         return getBlob().getArea();
     }

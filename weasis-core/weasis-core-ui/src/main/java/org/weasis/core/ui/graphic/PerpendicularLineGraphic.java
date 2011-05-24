@@ -45,8 +45,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     protected void updateStroke() {
         super.updateStroke();
         strokeDecorator =
-            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 25.0f,
-                25.0f }, 0f);
+            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
+                new float[] { 5.0f, 5.0f }, 0f);
     }
 
     @Override
@@ -129,25 +129,21 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
                         label = getRealDistanceLabel(getImageElement(mouseEvent), C, D);
 
-                        double angleDA = GeomUtil.getAngleDeg(D, A);
-                        double angleDB = GeomUtil.getAngleDeg(D, B);
-                        double distDA = D.distance(A);
-                        double distDB = D.distance(B);
+                        // Point2D E = D.distance(A) < D.distance(B) ? A : B;
+                        Point2D E = GeomUtil.getMidPoint(A, B);
+                        newShape.addInvShape(GeomUtil.getCornerShape(E, D, C, 10), (Point2D) D.clone());
 
-                        Point2D E = distDA < distDB ? A : B;
-
-                        if (Math.signum(angleDA) == Math.signum(angleDB)) { // means E is outside of first segment Ab
-                            newShape.addShape(new Line2D.Double(D, E), strokeDecorator);
-                        } else {
-
-                            E = D.distance(A) < D.distance(B) ? A : B;
+                        // Check if D is outside of segment AB
+                        if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
+                            Point2D F = D.distance(A) < D.distance(B) ? A : B;
+                            newShape.addShape(new Line2D.Double(D, F), strokeDecorator);
                         }
                     }
                 }
             }
         }
 
-        setShape(generalpath, mouseEvent);
+        setShape(newShape, mouseEvent);
         setLabel(new String[] { label }, getGraphics2D(mouseEvent));
         // updateLabel(mouseevent, getGraphics2D(mouseevent));
     }

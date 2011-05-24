@@ -43,12 +43,12 @@ import org.weasis.core.api.image.ImageOperationAction;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
-import org.weasis.core.api.image.util.ZoomSetting;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.core.ui.graphic.model.MainLayerModel;
+import org.weasis.core.ui.util.ZoomSetting;
 
 // TODO: Auto-generated Javadoc
 /**

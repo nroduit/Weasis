@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.api.image.util;
+package org.weasis.core.ui.util;
 
 import java.awt.Color;
 

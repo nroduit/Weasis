@@ -31,7 +31,6 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.KernelData;
-import org.weasis.core.api.image.util.ZoomSetting;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -149,6 +148,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
+        viewSetting.applyPreferences(prefs);
 
         mouseActions.applyPreferences(prefs);
 
@@ -257,9 +257,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
                                 if (val != null) {
                                     location = val[0] + val[1] + val[2];
-                                } else {
+                                } else
                                     return; // Do not throw event because
-                                }
                                 break;
                             }
                         }
@@ -307,6 +306,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     while (cining) {
                         GuiExecutor.instance().execute(new Runnable() {
 
+                            @Override
                             public void run() {
                                 if (cining) {
                                     int frameIndex = getValue() + 1;
@@ -391,9 +391,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             @Override
             public int getCurrentCineRate() {
-                if (currentCine != null) {
+                if (currentCine != null)
                     return currentCine.getCurrentCineRate();
-                }
                 return 0;
             }
 
@@ -412,9 +411,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (selectedView2dContainer != null) {
                         img = selectedView2dContainer.getSelectedImagePane().getImage();
                     }
-                    if (img == null) {
+                    if (img == null)
                         return;
-                    }
                     PresetWindowLevel preset = (PresetWindowLevel) object;
 
                     if (preset.equals(PresetWindowLevel.DEFAULT)) {
@@ -524,13 +522,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    @Override
-    public ZoomSetting getZoomSetting() {
-        return zoomSetting;
-    }
-
     /** process the action events. */
 
+    @Override
     public void actionPerformed(ActionEvent evt) {
         String command = evt.getActionCommand();
 
@@ -583,16 +577,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public synchronized boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
-        if (defaultView2d == null) {
+        if (defaultView2d == null)
             return false;
-        }
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
+        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer)
             return false;
-        }
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
+        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane())
             return false;
-        }
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
@@ -661,9 +652,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (viewerPlugin != null) {
             DefaultView2d<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
             // if (viewPane == null || viewPane.getSeries() == null) {
-            if (viewPane == null) {
+            if (viewPane == null)
                 return;
-            }
             MediaSeries<DicomImageElement> series = viewPane.getSeries();
             if (series != null) {
                 addPropertyChangeListeners(viewPane);
@@ -752,17 +742,20 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (series1 != null && series2 != null) {
             DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE);
             DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE);
-            if (image1 != null && image2 != null) {
+            if (image1 != null && image2 != null)
                 return image1.hasSameSizeAndSpatialCalibration(image2);
-            }
         }
         return false;
     }
 
     public void savePreferences() {
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+        // Default view
+        viewSetting.savePreferences(prefs);
+        // Mouse buttons preferences
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
+            // Mouse sensitivity
             Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$
             BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().cmd(),
                 windowAction.getMouseSensivity());
@@ -774,6 +767,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 rotateAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
+
         }
     }
 }

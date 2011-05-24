@@ -81,7 +81,6 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                 return Math.PI * radius * radius * scaleX * scaleY;
             }
         }
-
         return 0;
     }
 }

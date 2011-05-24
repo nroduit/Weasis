@@ -180,48 +180,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             return new Area();
 
         if (shape instanceof AdvancedShape)
-            return ((AdvancedShape) shape).getArea(transform); // better implementation
+            return ((AdvancedShape) shape).getArea(transform);
         else {
+            double growingSize = getHandleSize() * 2 / GeomUtil.extractScalingFactor(transform);
+            Stroke boundingStroke = new BasicStroke((float) growingSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
-            double growingSize = 12 / transform.getScaleX(); // assume ScaleX is equal to ScaleY()
-
-            Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
-            PathIterator pit = shape.getPathIterator(null, 2);
-
-            double coords[] = new double[6];
-            Point2D startPoint = null, prevPoint = null, lastPoint = null;
-
-            while (!pit.isDone()) {
-                if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO) {
-                    lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
-                } else {
-                    switch (pit.currentSegment(coords)) {
-                        case PathIterator.SEG_LINETO:
-                            lastPoint = new Point2D.Double(coords[0], coords[1]);
-                            break;
-                        case PathIterator.SEG_QUADTO:
-                            lastPoint = new Point2D.Double(coords[2], coords[3]);
-                            break;
-                        case PathIterator.SEG_CUBICTO:
-                            lastPoint = new Point2D.Double(coords[4], coords[5]);
-                            break;
-                        case PathIterator.SEG_CLOSE:
-                            prevPoint = startPoint;
-                            break;
-                    }
-
-                    Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
-                    pathBoundingShape.append(boundingShape, false);
-                }
-                prevPoint = (Point2D) lastPoint.clone();
-                pit.next();
-            }
-
-            // TODO add handles Area if necessary
-            // TODO add label Area
-
-            Area pathBoundingArea = new Area(pathBoundingShape);
-            return pathBoundingArea;
+            return new Area(boundingStroke.createStrokedShape(shape));
         }
     }
 
@@ -274,8 +238,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        if (shape instanceof AdvancedShape)
+        if (shape instanceof AdvancedShape) {
             ((AdvancedShape) shape).updateScalingFactor(transform);
+        }
 
         return shape.getBounds();
     }
@@ -330,8 +295,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        if (shape instanceof AdvancedShape)
+        if (shape instanceof AdvancedShape) {
             ((AdvancedShape) shape).updateScalingFactor(transform);
+        }
 
         Rectangle rectangle = shape.getBounds();
         growHandles(rectangle, transform);
@@ -350,8 +316,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform) {
 
         Rectangle rectangle = getRepaintBounds(shape, transform);
-        if (transform != null && rectangle != null)
+        if (transform != null && rectangle != null) {
             rectangle = transform.createTransformedShape(rectangle).getBounds();
+        }
 
         return rectangle;
     }
@@ -548,13 +515,15 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             g2d.setPaint(colorPaint);
             g2d.setStroke(stroke);
             Shape drawingShape = transform == null ? shape : transform.createTransformedShape(shape);
-            if (isFilled())
+            if (isFilled()) {
                 g2d.fill(drawingShape);
+            }
             g2d.draw(drawingShape);
         }
         // if (isSelected && !isGraphicComplete)
-        if (isSelected())
+        if (isSelected()) {
             paintHandles(g2d, transform);
+        }
 
         paintLabel(g2d, transform);
 
@@ -671,8 +640,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
                 handlePointIndex = handlePointList.size() - 1;
             }
-
-            return graphicComplete && shape != null;
+            boolean validShape = graphicComplete && shape != null;
+            if (validShape) {
+                updateShapeOnDrawing(mouseEvent);
+            }
+            return validShape;
         }
     }
 
@@ -850,7 +822,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
          */
         class InvariantShape extends BasicShape {
             Point2D anchorPoint;
-            double scalingMax = Double.MAX_VALUE;
+            double scalingMin = 0;
 
             public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint) {
                 super(shape, stroke);
@@ -859,22 +831,22 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 this.anchorPoint = anchorPoint;
             }
 
-            public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint, double scalingMax) {
+            public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint, double scalingMin) {
                 this(shape, stroke, anchorPoint);
-                if (scalingMax < 0)
+                if (scalingMin < 0)
                     throw new IllegalArgumentException();
-                this.scalingMax = scalingMax;
+                this.scalingMin = scalingMin;
             }
 
             @Override
             public Shape getRealShape() {
-                // double realScale = scalingFactor < scalingMax ? scalingFactor : scalingFactor / scalingMax;
-                double realScale = scalingFactor;
+                double scale = scalingFactor < scalingMin ? scalingMin : scalingFactor;
 
                 // System.out.println("scalingFactor : " + scalingFactor);
-                // System.out.println("scalingMax : " + scalingMax);
-                // System.out.println("realScale : " + realScale);
-                return GeomUtil.getScaledShape(shape, 1 / realScale, anchorPoint);
+                // System.out.println("scalingMin : " + scalingMin);
+                // System.out.println("transformedScale : " + scale);
+                // System.out.println("final scale : " + scalingFactor / scale);
+                return GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint);
             }
         }
 
@@ -926,8 +898,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 g2d.setStroke(item.stroke);
                 g2d.draw(drawingShape);
 
-                if (isFilled())
+                if (isFilled()) {
                     g2d.fill(drawingShape);
+                }
             }
         }
 
@@ -936,10 +909,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle rectangle = null;
 
             for (BasicShape item : shapeList) {
-                if (rectangle == null)
+                if (rectangle == null) {
                     rectangle = item.getRealShape().getBounds();
-                else
+                } else {
                     rectangle.add(item.getRealShape().getBounds());
+                }
             }
 
             return rectangle;
@@ -950,10 +924,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle2D rectangle = null;
 
             for (BasicShape item : shapeList) {
-                if (rectangle == null)
+                if (rectangle == null) {
                     rectangle = item.getRealShape().getBounds2D();
-                else
+                } else {
                     rectangle.add(item.getRealShape().getBounds2D());
+                }
             }
             return rectangle;
         }
@@ -1014,23 +989,26 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public PathIterator getPathIterator(AffineTransform at) {
-            if (at != null)
+            if (at != null) {
                 updateScalingFactor(at);
+            }
             return getFullPathShape().getPathIterator(at);
         }
 
         @Override
         public PathIterator getPathIterator(AffineTransform at, double flatness) {
-            if (at != null)
+            if (at != null) {
                 updateScalingFactor(at);
+            }
             return getFullPathShape().getPathIterator(at, flatness);
         }
 
         private Path2D getFullPathShape() {
             Path2D pathShape = new Path2D.Double(Path2D.WIND_NON_ZERO);
 
-            for (BasicShape item : shapeList)
+            for (BasicShape item : shapeList) {
                 pathShape.append(item.getRealShape(), false);
+            }
 
             return pathShape;
         }
@@ -1038,82 +1016,16 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         public Area getArea(AffineTransform transform) {
             updateScalingFactor(transform);
 
-            double growingSize = 12;
+            double growingSize = getHandleSize() * 2 / scalingFactor;
+            Stroke boundingStroke = new BasicStroke((float) growingSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
             Area pathBoundingArea = new Area();
 
-            Stroke boundingStroke =
-                new BasicStroke((float) (growingSize / scalingFactor), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-
-            for (BasicShape item : shapeList)
+            for (BasicShape item : shapeList) {
                 pathBoundingArea.add(new Area(boundingStroke.createStrokedShape(item.getRealShape())));
+            }
 
             return pathBoundingArea;
         }
-
-        // public Area getArea(AffineTransform transform) {
-        // updateScalingFactor(transform);
-        //
-        // double growingSize = 12;
-        //
-        // Area pathBoundingArea = new Area();
-        //
-        // // for (BasicShape item : shapeList)
-        // // pathBoundingArea.add(new Area(getBoundingShape(item.getRealShape(), growingSize / scalingFactor)));
-        //
-        // // method below is more accurate when zoom is high
-        // for (BasicShape item : shapeList) {
-        // if (item instanceof InvariantShape) {
-        // Area invPathBoundingArea = new Area(getBoundingShape(item.shape, growingSize));
-        // double tx = ((InvariantShape) item).anchorPoint.getX();
-        // double ty = ((InvariantShape) item).anchorPoint.getY();
-        //
-        // AffineTransform scaleTransform = AffineTransform.getTranslateInstance(tx, ty);
-        // scaleTransform.scale(1 / scalingFactor, 1 / scalingFactor);
-        // scaleTransform.translate(-tx, -ty);
-        //
-        // invPathBoundingArea.transform(scaleTransform);
-        // pathBoundingArea.add(invPathBoundingArea);
-        // } else
-        // pathBoundingArea.add(new Area(getBoundingShape(item.shape, growingSize / scalingFactor)));
-        // }
-        //
-        // return pathBoundingArea;
-        // }
-
-        // Shape getBoundingShape(Shape shape, double growingSize) {
-        // Path2D pathBoundingShape = new Path2D.Double(Path2D.WIND_NON_ZERO); // only for debug drawing view
-        // PathIterator pit = shape.getPathIterator(null, 2);
-        //
-        // double coords[] = new double[6];
-        // Point2D startPoint = null, prevPoint = null, lastPoint = null;
-        //
-        // while (!pit.isDone()) {
-        // if (pit.currentSegment(coords) == PathIterator.SEG_MOVETO)
-        // lastPoint = startPoint = new Point2D.Double(coords[0], coords[1]);
-        // else {
-        // switch (pit.currentSegment(coords)) {
-        // case PathIterator.SEG_LINETO:
-        // lastPoint = new Point2D.Double(coords[0], coords[1]);
-        // break;
-        // case PathIterator.SEG_QUADTO:
-        // lastPoint = new Point2D.Double(coords[2], coords[3]);
-        // break;
-        // case PathIterator.SEG_CUBICTO:
-        // lastPoint = new Point2D.Double(coords[4], coords[5]);
-        // break;
-        // case PathIterator.SEG_CLOSE:
-        // prevPoint = startPoint;
-        // break;
-        // }
-        //
-        // Shape boundingShape = GeomUtil.getBoundingShapeOfSegment(prevPoint, lastPoint, growingSize);
-        // pathBoundingShape.append(boundingShape, false);
-        // }
-        // prevPoint = (Point2D) lastPoint.clone();
-        // pit.next();
-        // }
-        // return pathBoundingShape;
-        // }
     }
 }

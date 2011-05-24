@@ -33,6 +33,7 @@ import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHaederRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -58,6 +59,7 @@ import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.util.PaintLabel;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableNumberRenderer;
 
@@ -76,6 +78,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     protected final ImageViewerEventManager eventManager;
     private JPanel tableContainer;
     private JTable jtable;
+    private Font labelFont;
 
     private Graphic selectedGraphic;
 
@@ -113,6 +116,16 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             transform.add(((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle()));
             // transform.add(pane);
         }
+        JButton jButtonLabel = new JButton("Font");
+        jButtonLabel.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JDialog lab = new PaintLabel(eventManager);
+                JMVUtils.showCenterScreen(lab);
+            }
+        });
+        transform.add(jButtonLabel);
         transform.add(Box.createVerticalStrut(7));
 
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
