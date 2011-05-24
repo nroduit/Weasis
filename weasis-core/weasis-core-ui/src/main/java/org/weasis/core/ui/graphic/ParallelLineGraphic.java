@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -16,6 +15,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class ParallelLineGraphic extends AbstractDragGraphic {
 
@@ -42,7 +42,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
     }
 
     @Override

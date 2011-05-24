@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
@@ -16,6 +15,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
@@ -47,7 +47,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
         if (labelVisible) {
             boolean releasedEvent = true;
             ImageElement imageElement = null;
@@ -124,7 +124,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     } catch (ArrayIndexOutOfBoundsException ex) {
                     }
                 }
-                setLabel(list.toArray(new String[list.size()]), g2d);
+                setLabel(list.toArray(new String[list.size()]), view2d);
             }
         }
     }

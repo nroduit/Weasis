@@ -15,10 +15,10 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class GraphicLabel {
 
@@ -33,19 +33,23 @@ public class GraphicLabel {
         return labels;
     }
 
-    public void setLabel(String[] labels, Graphics2D g2d) {
+    public void setLabel(String[] labels, DefaultView2d view2d) {
 
-        if (labels == null || labels.length == 0 || g2d == null) {
+        if (labels == null || labels.length == 0 || view2d == null) {
             labelHeight = 0;
             labelBound = null;
             this.labels = null;
         } else {
             this.labels = labels;
+            Font defaultFont = view2d.getEventManager().getViewSetting().getFont();
             Rectangle longestBound = null;
             for (String label : labels) {
-                Rectangle bound = g2d.getFont().getStringBounds(label, g2d.getFontRenderContext()).getBounds();
-                if (longestBound == null || bound.getWidth() > longestBound.getWidth())
+                Rectangle bound =
+                    defaultFont.getStringBounds(label, ((Graphics2D) view2d.getGraphics()).getFontRenderContext())
+                        .getBounds();
+                if (longestBound == null || bound.getWidth() > longestBound.getWidth()) {
                     longestBound = bound;
+                }
             }
             labelHeight = longestBound.height;
             setLabelBound(0, 0, longestBound.getWidth() + 6, labelHeight * labels.length + 6);
@@ -53,8 +57,9 @@ public class GraphicLabel {
     }
 
     public void setLabelPosition(int posX, int posY) {
-        if (labelBound != null)
+        if (labelBound != null) {
             labelBound.setLocation(posX, posY);
+        }
     }
 
     @Deprecated
@@ -71,9 +76,8 @@ public class GraphicLabel {
     }
 
     public double getOffsetY() {
-        if (labelBound == null) {
+        if (labelBound == null)
             return 0;
-        }
         return -10;
     }
 
@@ -91,8 +95,9 @@ public class GraphicLabel {
             transform.transform(pt, pt);
             pt.x += getOffsetX();
             pt.y += getOffsetY();
-            for (int i = 0; i < labels.length; i++)
-                paintFontOutline(g2d, labels[i], (float) (pt.x + 3), (float) (pt.y + labelHeight * (i + 1)));
+            for (int i = 0; i < labels.length; i++) {
+                paintFontOutline(g2d, labels[i], (pt.x + 3), (pt.y + labelHeight * (i + 1)));
+            }
         }
     }
 

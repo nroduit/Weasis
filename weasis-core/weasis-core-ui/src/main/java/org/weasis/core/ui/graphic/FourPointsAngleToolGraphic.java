@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -19,6 +18,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
@@ -46,7 +46,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
     }
 
     @Override

@@ -167,6 +167,11 @@ public class PaintLabel extends JDialog {
         setting.setFontName(name);
         setting.setFontSize(size);
         setting.setFontType(style);
+
         eventManager.getSelectedView2dContainer().repaint();
+        // TODO repaint all graphics with labels
+        for (Object v : eventManager.getSelectedView2dContainer().getImagePanels()) {
+
+        }
     }
 }

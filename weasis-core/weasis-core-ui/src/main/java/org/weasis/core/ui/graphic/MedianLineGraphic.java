@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
@@ -13,6 +12,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 @Deprecated
 public class MedianLineGraphic extends AbstractDragGraphic {
@@ -44,7 +44,7 @@ public class MedianLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
     }
 
     @Override

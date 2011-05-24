@@ -12,6 +12,7 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Point;
@@ -33,6 +34,7 @@ import javax.media.jai.iterator.RectIterFactory;
 
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 
 /**
@@ -198,12 +200,14 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         }
     }
 
-    protected void buildLabelBound(Graphics2D g2d) {
-        if (showLabel && labels != null && g2d != null) {
+    protected void buildLabelBound(DefaultView2d view2d) {
+        if (showLabel && labels != null && view2d != null) {
 
             Rectangle2D longestBound = null;
             for (String l : labels) {
-                Rectangle2D bound = g2d.getFont().getStringBounds(l, g2d.getFontRenderContext());
+                Font defaultFont = view2d.getEventManager().getViewSetting().getFont();
+                Rectangle2D bound =
+                    defaultFont.getStringBounds(l, ((Graphics2D) view2d.getGraphics()).getFontRenderContext());
                 // Find out the longest labels
                 if (longestBound == null || bound.getWidth() > longestBound.getWidth()) {
                     longestBound = bound;
@@ -731,9 +735,9 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
     }
 
     @Override
-    public void setLabel(String[] label, Graphics2D g2d) {
+    public void setLabel(String[] label, DefaultView2d view2d) {
         this.labels = label;
-        buildLabelBound(g2d);
+        buildLabelBound(view2d);
     }
 
     protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {

@@ -35,7 +35,7 @@ import java.util.ListIterator;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.graphic.model.GraphicsPane;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 /**
  * The Class AbstractDragGraphic.
@@ -390,9 +390,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    protected Graphics2D getGraphics2D(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof GraphicsPane)
-            return (Graphics2D) ((GraphicsPane) mouseevent.getSource()).getGraphics();
+    protected DefaultView2d getGraphics2D(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof DefaultView2d)
+            return (DefaultView2d) mouseevent.getSource();
         return null;
     }
 
@@ -474,8 +474,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     @Override
-    public void setLabel(String[] labels, Graphics2D g2d) {
-        if (labelVisible && g2d != null && shape != null)
+    public void setLabel(String[] labels, DefaultView2d view2d) {
+        if (labelVisible && view2d != null && shape != null)
             if (labels == null || labels.length == 0) {
                 graphicLabel = null;
             } else {
@@ -484,7 +484,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 }
 
                 Rectangle oldBound = graphicLabel.getBound();
-                graphicLabel.setLabel(labels, g2d);
+                graphicLabel.setLabel(labels, view2d);
 
                 Rectangle rect = shape.getBounds();
                 graphicLabel.setLabelPosition(rect.x + rect.width, (int) Math.ceil(rect.y + rect.height * 0.5));
@@ -500,7 +500,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////

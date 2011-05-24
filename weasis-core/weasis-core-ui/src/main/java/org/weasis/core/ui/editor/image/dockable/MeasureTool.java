@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -18,6 +19,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -62,6 +64,7 @@ import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.PaintLabel;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableNumberRenderer;
+import org.weasis.core.ui.util.ViewSetting;
 
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
@@ -78,7 +81,6 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     protected final ImageViewerEventManager eventManager;
     private JPanel tableContainer;
     private JTable jtable;
-    private Font labelFont;
 
     private Graphic selectedGraphic;
 
@@ -110,11 +112,16 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Measurements",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
+        ViewSetting setting = eventManager.getViewSetting();
         ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
+        JPanel pane = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 7));
+        pane.setAlignmentY(Component.TOP_ALIGNMENT);
+        pane.setAlignmentX(Component.LEFT_ALIGNMENT);
         if (drawOnceAction instanceof ToggleButtonListener) {
-            // JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 3));
-            transform.add(((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle()));
-            // transform.add(pane);
+            JCheckBox checkDraw =
+                ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
+            checkDraw.setSelected(setting.isDrawOnlyOnce());
+            pane.add(checkDraw);
         }
         JButton jButtonLabel = new JButton("Font");
         jButtonLabel.addActionListener(new java.awt.event.ActionListener() {
@@ -125,8 +132,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 JMVUtils.showCenterScreen(lab);
             }
         });
-        transform.add(jButtonLabel);
-        transform.add(Box.createVerticalStrut(7));
+        pane.add(jButtonLabel);
+        transform.add(pane);
+        // transform.add(Box.createVerticalStrut(7));
 
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
         if (measure instanceof ComboItemListener) {

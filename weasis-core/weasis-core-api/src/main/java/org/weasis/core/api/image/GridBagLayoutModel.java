@@ -13,7 +13,6 @@ package org.weasis.core.api.image;
 import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import javax.swing.Icon;
@@ -55,6 +54,15 @@ public class GridBagLayoutModel implements GUIEntry {
         }
     }
 
+    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String title, Icon icon) {
+        if (constraints == null) {
+            throw new IllegalArgumentException("constraints cannot be null");
+        }
+        this.title = title;
+        this.icon = icon;
+        this.constraints = constraints;
+    }
+
     public GridBagLayoutModel(InputStream stream, String title, Icon icon) {
         this.title = title;
         this.icon = icon;
@@ -71,19 +79,6 @@ public class GridBagLayoutModel implements GUIEntry {
     @Override
     public String toString() {
         return title;
-    }
-
-    public int getViewerNumber(String defaultClass) {
-        int val = 0;
-        if (defaultClass != null) {
-            Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
-            while (enumVal.hasNext()) {
-                if (defaultClass.equals(enumVal.next().getType())) {
-                    val++;
-                }
-            }
-        }
-        return val;
     }
 
     public LinkedHashMap<LayoutConstraints, JComponent> getConstraints() {

@@ -11,6 +11,7 @@
 package org.weasis.dicom.viewer2d;
 
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -21,6 +22,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -68,7 +70,7 @@ public class View2dFactory implements SeriesViewerFactory {
                         Object[] list = ((ComboItemListener) layout).getAllItem();
                         for (Object m : list) {
                             if (m instanceof GridBagLayoutModel) {
-                                if (((GridBagLayoutModel) m).getViewerNumber(DefaultView2d.class.getName()) >= (Integer) obj) {
+                                if (getViewTypeNumber((GridBagLayoutModel) m, DefaultView2d.class) >= (Integer) obj) {
                                     model = (GridBagLayoutModel) m;
                                     break;
                                 }
@@ -90,6 +92,24 @@ public class View2dFactory implements SeriesViewerFactory {
 
         return instance;
 
+    }
+
+    public static int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+        int val = 0;
+        if (layout != null && defaultClass != null) {
+            Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
+            while (enumVal.hasNext()) {
+                try {
+                    Class clazz = Class.forName(enumVal.next().getType());
+                    if (defaultClass.isAssignableFrom(clazz)) {
+                        val++;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return val;
     }
 
     public static void closeSeriesViewer(View2dContainer view2dContainer) {

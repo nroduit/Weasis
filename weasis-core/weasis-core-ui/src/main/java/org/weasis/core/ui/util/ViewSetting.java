@@ -10,6 +10,7 @@ public class ViewSetting {
     private int fontType;
     private int fontSize;
     private String fontName;
+    private boolean drawOnlyOnce;
 
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
@@ -17,6 +18,7 @@ public class ViewSetting {
             fontName = p.get("font.name", "Default"); //$NON-NLS-1$
             fontType = p.getInt("font.type", 0); //$NON-NLS-1$
             fontSize = p.getInt("font.size", 10); //$NON-NLS-1$
+            drawOnlyOnce = p.getBoolean("draw.once", true);
         }
     }
 
@@ -26,6 +28,7 @@ public class ViewSetting {
             BundlePreferences.putStringPreferences(p, "font.name", fontName); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(p, "font.type", fontType); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(p, "font.size", fontSize); //$NON-NLS-1$
+            BundlePreferences.putBooleanPreferences(p, "draw.once", drawOnlyOnce); //$NON-NLS-1$
         }
     }
 
@@ -56,5 +59,13 @@ public class ViewSetting {
     public Font getFont() {
         return new Font(fontName, fontType, fontSize);
 
+    }
+
+    public void setDrawOnlyOnce(boolean drawOnlyOnce) {
+        this.drawOnlyOnce = drawOnlyOnce;
+    }
+
+    public boolean isDrawOnlyOnce() {
+        return drawOnlyOnce;
     }
 }

@@ -13,7 +13,6 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -119,11 +118,8 @@ public class CalibrationView extends JPanel {
                 gbc_textPane.gridy = 0;
                 gbc_textPane.weightx = 1.0;
                 gbc_textPane.weighty = 1.0;
-                JScrollPane scroll =
-                    new JScrollPane(
-                        createArea(
-                            Messages.getString("CalibrationView.warn"), //$NON-NLS-1$
-                            true, 0));
+                JScrollPane scroll = new JScrollPane(createArea(Messages.getString("CalibrationView.warn"), //$NON-NLS-1$
+                    true, 0));
                 scroll.setPreferredSize(new Dimension(300, 75));
                 jPanelMode.add(scroll, gbc_textPane);
                 unit = Unit.MILLIMETER;
@@ -165,22 +161,22 @@ public class CalibrationView extends JPanel {
                     if (lineLength < 1.0) {
                         lineLength = 1.0;
                     }
-                    if (ratioX != ratioY) {
+                    if (ratioX != ratioY)
                         return;
-                        // Point2D p1 = line.getStartPoint();
-                        // Point2D p2 = line.getEndPoint();
-                        // double dx = Math.abs(p1.getX() - p2.getX());
-                        // double dy = Math.abs(p1.getY() - p2.getY());
-                        // double newRatioX;
-                        // double newRatioY;
-                        // if (dx > dy) {
-                        // newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
-                        // newRatioY = ratioY * newRatioX / ratioX;
-                        // } else {
-                        // newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
-                        // newRatioX = ratioX * newRatioY / ratioY;
-                        // }
-                    } else {
+                    // Point2D p1 = line.getStartPoint();
+                    // Point2D p2 = line.getEndPoint();
+                    // double dx = Math.abs(p1.getX() - p2.getX());
+                    // double dy = Math.abs(p1.getY() - p2.getY());
+                    // double newRatioX;
+                    // double newRatioY;
+                    // if (dx > dy) {
+                    // newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
+                    // newRatioY = ratioY * newRatioX / ratioX;
+                    // } else {
+                    // newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
+                    // newRatioX = ratioX * newRatioY / ratioY;
+                    // }
+                    else {
                         double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
                         if (ratioX != newRatio) {
                             if (radioButtonSeries.isSelected()) {
@@ -191,14 +187,14 @@ public class CalibrationView extends JPanel {
                                             ImageElement img = (ImageElement) media;
                                             img.setPixelSizeX(newRatio);
                                             img.setPixelSizeY(newRatio);
-                                            updateLabel(img, (Graphics2D) view2d.getGraphics());
+                                            updateLabel(img, view2d);
                                         }
                                     }
                                 }
                             } else {
                                 image.setPixelSizeX(newRatio);
                                 image.setPixelSizeY(newRatio);
-                                updateLabel(image, (Graphics2D) view2d.getGraphics());
+                                updateLabel(image, view2d);
                             }
                             view2d.repaint();
                         }
@@ -208,11 +204,11 @@ public class CalibrationView extends JPanel {
         }
     }
 
-    private void updateLabel(ImageElement image, Graphics2D g2d) {
+    private void updateLabel(ImageElement image, DefaultView2d view2d) {
         List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
         if (list != null) {
             for (Graphic graphic : list) {
-                graphic.updateLabel(image, g2d);
+                graphic.updateLabel(image, view2d);
             }
         }
     }

@@ -26,7 +26,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.Version;
 import org.osgi.service.startlevel.StartLevel;
 
 public class AutoProcessor {
@@ -290,14 +289,15 @@ public class AutoProcessor {
                     sl.setBundleStartLevel(b, startLevel);
 
                     if (WeasisLauncher.modulesi18n != null) {
-                        Version v = b.getVersion();
+                        // Version v = b.getVersion();
                         StringBuffer p = new StringBuffer(b.getSymbolicName());
                         p.append("-i18n-"); //$NON-NLS-1$
-                        p.append(v.getMajor());
-                        p.append("."); //$NON-NLS-1$
-                        p.append(v.getMinor());
-                        p.append("."); //$NON-NLS-1$
-                        p.append(v.getMicro());
+                        p.append("1.1.0"); //$NON-NLS-1$
+                        // p.append(v.getMajor());
+                        // p.append("."); //$NON-NLS-1$
+                        // p.append(v.getMinor());
+                        // p.append("."); //$NON-NLS-1$
+                        // p.append(v.getMicro());
                         p.append(".jar"); //$NON-NLS-1$
                         String prop = p.toString();
                         String value = WeasisLauncher.modulesi18n.getProperty(prop);

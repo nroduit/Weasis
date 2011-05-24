@@ -18,6 +18,7 @@ import java.awt.geom.Area;
 import java.beans.PropertyChangeListener;
 
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 /**
  * The Interface Graphic.
@@ -33,7 +34,7 @@ public interface Graphic extends GUIEntry {
 
     public String[] getLabel();
 
-    public void setLabel(String[] label, Graphics2D g2d);
+    public void setLabel(String[] label, DefaultView2d view2d);
 
     public void setSelected(boolean flag);
 
@@ -43,7 +44,7 @@ public interface Graphic extends GUIEntry {
 
     public void paintLabel(Graphics2D g2, AffineTransform transform);
 
-    public void updateLabel(Object source, Graphics2D g2d);
+    public void updateLabel(Object source, DefaultView2d view2d);
 
     @Deprecated
     public Rectangle getBounds();

@@ -290,14 +290,14 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public DefaultView2d<ImageElement> createDefaultView() {
+    public DefaultView2d<ImageElement> createDefaultView(String classType) {
         return new View2d(eventManager);
     }
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (View2d.class.getName().equals(clazz)) {
-            return createDefaultView();
+        if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz)) {
+            return createDefaultView(clazz);
         }
         try {
             // FIXME use classloader.loadClass or injection
@@ -345,5 +345,23 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             return new Action[] { selectedImagePane.getExportToClipboardAction() };
         }
         return null;
+    }
+
+    @Override
+    public int getViewTypeNumber(Class defaultClass) {
+        return ViewerFactory.getViewTypeNumber(layoutModel, defaultClass);
+    }
+
+    @Override
+    public boolean isViewType(Class defaultClass, String type) {
+        if (defaultClass != null) {
+            try {
+                Class clazz = Class.forName(type);
+                return defaultClass.isAssignableFrom(clazz);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 }

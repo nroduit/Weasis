@@ -25,6 +25,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 /**
  * The Class PolygonGraphic.
@@ -263,7 +264,7 @@ public class PolygonGraphic extends AbstractDragGraphicOld {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
 
     }
 

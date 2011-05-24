@@ -12,7 +12,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
@@ -28,6 +27,7 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class LineGraphic extends AbstractDragGraphic {
 
@@ -48,7 +48,7 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, Graphics2D g2d) {
+    public void updateLabel(Object source, DefaultView2d view2d) {
         if (labelVisible) {
             ImageElement image = null;
 
@@ -66,7 +66,7 @@ public class LineGraphic extends AbstractDragGraphic {
 
                 Unit unit = image.getPixelSpacingUnit();
                 String label = "Dist : " + DecFormater.twoDecimal(At.distance(Bt)) + " " + unit.getAbbreviation();
-                setLabel(new String[] { label }, g2d);
+                setLabel(new String[] { label }, view2d);
             }
         }
     }

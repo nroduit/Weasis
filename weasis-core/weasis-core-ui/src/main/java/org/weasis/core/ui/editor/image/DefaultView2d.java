@@ -502,8 +502,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
-
-        g2d.setFont(eventManager.getViewSetting().getFont());
+        Font defaultFont = eventManager.getViewSetting().getFont();
+        g2d.setFont(defaultFont);
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
@@ -515,9 +515,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // Set font size according to the view size
             g2d.setFont(getFont());
             infoLayer.paint(g2d);
-            g2d.setFont(FontTools.getFont10());
         }
-
+        g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
     }

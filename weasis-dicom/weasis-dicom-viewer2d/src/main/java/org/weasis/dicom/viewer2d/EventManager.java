@@ -240,7 +240,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 Number location = index;
                 GridBagLayoutModel layout = (GridBagLayoutModel) layoutAction.getSelectedItem();
                 ActionState synch = getAction(ActionW.SYNCH);
-                if (image != null && layout.getViewerNumber(DefaultView2d.class.getName()) > 1
+                if (image != null && View2dFactory.getViewTypeNumber(layout, DefaultView2d.class) > 1
                     && synch instanceof ComboItemListener) {
                     SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
                     if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
