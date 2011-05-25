@@ -15,7 +15,6 @@ import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -28,15 +27,14 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
- * The Class AngleToolGraphic.
  * 
- * @author Nicolas Roduit
+ * @author Nicolas Roduit,Benoit Jacquemoud
  */
 public class AngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
-    public final static int ARC_RADIUS = 24;
+    public final static int ARC_RADIUS = 32;
 
     public AngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(3, paintColor, lineThickness, labelVisible);
@@ -55,19 +53,17 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
 
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
-
-        AdvancedShape newShape = new AdvancedShape(2);
-        newShape.addShape(generalpath);
-
-        String label = "";
-
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
 
             if (handlePointList.size() >= 2) {
+                AdvancedShape newShape = new AdvancedShape(2);
+                Path2D generalpath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
+                newShape.addShape(generalpath);
+
                 Point2D P = handlePointList.get(1);
+
+                generalpath.moveTo(A.getX(), A.getY());
                 generalpath.lineTo(P.getX(), P.getY());
 
                 if (handlePointList.size() >= 3) {
@@ -76,35 +72,26 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
                     double angularExtent = GeomUtil.getAngleDeg(A, P, B);
                     angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
-
-                    if (Math.signum(angularExtent) < 0) {
-                        Point2D switchPoint = (Point2D) B.clone();
-                        B = (Point2D) A.clone();
-                        A = switchPoint;
-                    }
-
-                    angularExtent = Math.abs(angularExtent);
-
                     double startingAngle = GeomUtil.getAngleDeg(P, A);
-                    label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
 
-                    double rMax = Math.min(P.distance(A), P.distance(B)) * 2 / 3;
-                    // double radius = ARC_RADIUS < rMax ? ARC_RADIUS : rMax;
+                    // double radius = (ARC_RADIUS < rMax) ? ARC_RADIUS : rMax;
                     double radius = ARC_RADIUS;
-                    double scalingMin = ARC_RADIUS / rMax;
+                    Rectangle2D arcAngleBounds =
+                        new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2.0 * radius, 2.0 * radius);
 
-                    Rectangle2D ellipseBounds =
-                        new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius, 2 * radius);
+                    Shape arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
-                    Shape unTransformedShape =
-                        new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+                    double rMax = (2.0 / 3.0) * Math.min(P.distance(A), P.distance(B));
+                    double scalingMin = radius / rMax;
 
-                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone(), scalingMin);
+                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
+
+                    String label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
+                    setLabel(new String[] { label }, getGraphics2D(mouseEvent));
                 }
+                setShape(newShape, mouseEvent);
             }
         }
-        setShape(newShape, mouseEvent);
-        setLabel(new String[] { label }, getGraphics2D(mouseEvent));
     }
 
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {

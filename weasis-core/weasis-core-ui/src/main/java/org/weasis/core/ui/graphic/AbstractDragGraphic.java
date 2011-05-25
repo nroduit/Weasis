@@ -67,10 +67,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public AbstractDragGraphic(int handlePointTotalNumber) {
-        this(handlePointTotalNumber, Color.YELLOW);
-    }
-
     public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor) {
         this(handlePointTotalNumber, paintColor, 1f);
     }
@@ -178,7 +174,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public Area getArea(AffineTransform transform) {
         if (shape == null)
             return new Area();
-
         if (shape instanceof AdvancedShape)
             return ((AdvancedShape) shape).getArea(transform);
         else {
@@ -475,6 +470,15 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public void setLabel(String[] labels, DefaultView2d view2d) {
+        Rectangle rect = shape.getBounds();
+
+        int xPos = rect.x + rect.width;
+        int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
+
+        this.setLabel(labels, view2d, xPos, yPos);
+    }
+
+    public void setLabel(String[] labels, DefaultView2d view2d, int xPos, int yPos) {
         if (labelVisible && view2d != null && shape != null)
             if (labels == null || labels.length == 0) {
                 graphicLabel = null;
@@ -485,7 +489,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
                 Rectangle oldBound = graphicLabel.getBound();
                 graphicLabel.setLabel(labels, view2d);
-
+                graphicLabel.setLabelPosition(xPos, yPos);
                 Rectangle rect = shape.getBounds();
                 graphicLabel.setLabelPosition(rect.x + rect.width, (int) Math.ceil(rect.y + rect.height * 0.5));
 
@@ -507,19 +511,25 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public void paint(Graphics2D g2d, AffineTransform transform) {
 
-        // if (shape != null) {
+        Paint oldPaint = g2d.getPaint();
+        Stroke oldStroke = g2d.getStroke();
 
         if (shape instanceof AdvancedShape) {
             ((AdvancedShape) shape).paint(g2d, transform);
         } else if (shape != null) {
+            Shape drawingShape = transform == null ? shape : transform.createTransformedShape(shape);
+
             g2d.setPaint(colorPaint);
             g2d.setStroke(stroke);
-            Shape drawingShape = transform == null ? shape : transform.createTransformedShape(shape);
+            g2d.draw(drawingShape);
             if (isFilled()) {
                 g2d.fill(drawingShape);
             }
-            g2d.draw(drawingShape);
         }
+
+        g2d.setPaint(oldPaint);
+        g2d.setStroke(oldStroke);
+
         // if (isSelected && !isGraphicComplete)
         if (isSelected()) {
             paintHandles(g2d, transform);
@@ -841,11 +851,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             @Override
             public Shape getRealShape() {
                 double scale = scalingFactor < scalingMin ? scalingMin : scalingFactor;
-
-                // System.out.println("scalingFactor : " + scalingFactor);
-                // System.out.println("scalingMin : " + scalingMin);
-                // System.out.println("transformedScale : " + scale);
-                // System.out.println("final scale : " + scalingFactor / scale);
                 return GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint);
             }
         }
@@ -889,6 +894,9 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         public void paint(Graphics2D g2d, AffineTransform transform) {
             updateScalingFactor(transform);
 
+            Paint oldPaint = g2d.getPaint();
+            Stroke oldStroke = g2d.getStroke();
+
             g2d.setPaint(getColorPaint());
 
             for (BasicShape item : shapeList) {
@@ -902,6 +910,18 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                     g2d.fill(drawingShape);
                 }
             }
+            g2d.setPaint(oldPaint);
+            g2d.setStroke(oldStroke);
+        }
+
+        /**
+         * 
+         * @return generalShape which is by convention the first shape of the list and is dedicated to the measure
+         */
+        public Shape getGeneralShape() {
+            if (shapeList.size() > 0)
+                return shapeList.get(0).getRealShape();
+            return null;
         }
 
         @Override

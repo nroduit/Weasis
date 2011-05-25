@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
 import org.weasis.core.ui.graphic.EllipseGraphic;
@@ -45,6 +46,7 @@ import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.ThreePointsCircleGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.util.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
@@ -54,9 +56,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final AngleToolGraphic angleToolGraphic = new AngleToolGraphic(1.0f, Color.YELLOW, true);
 
     public static final RectangleGraphic rectangleGraphic = new RectangleGraphic(1.0f, Color.YELLOW, true);
-    // public static final SquareGraphic squareGraphic = new SquareGraphic(1.0f, Color.YELLOW, true);
     public static final EllipseGraphic ellipseGraphic = new EllipseGraphic(1.0f, Color.YELLOW, true);
-    // public static final CircleGraphic circleGraphic = new CircleGraphic(1.0f, Color.YELLOW, true);
     public static final ThreePointsCircleGraphic threePtCircleGraphic = new ThreePointsCircleGraphic(1.0f,
         Color.YELLOW, true);
     public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
@@ -73,9 +73,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     static {
         graphicList.add(selectionGraphic);
         graphicList.add(rectangleGraphic);
-        // graphicList.add(squareGraphic);
         graphicList.add(ellipseGraphic);
-        // graphicList.add(circleGraphic);
         graphicList.add(threePtCircleGraphic);
         graphicList.add(lineGraphic);
         graphicList.add(perpendicularToolGraphic);
@@ -96,6 +94,11 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (eventManager == null)
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         this.eventManager = eventManager;
+
+        ViewSetting setting = eventManager.getViewSetting();
+        for (int i = 1; i < graphicList.size(); i++) {
+            applyDefaultSetting(setting, graphicList.get(i));
+        }
 
         GroupRadioMenu menu = null;
         ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE);
@@ -126,6 +129,14 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             }
         });
         add(jButtondelete);
+    }
+
+    public static void applyDefaultSetting(ViewSetting setting, Graphic graphic) {
+        if (graphic instanceof AbstractDragGraphic) {
+            AbstractDragGraphic g = (AbstractDragGraphic) graphic;
+            g.setLineThickness(setting.getLineWidth());
+            g.setPaint(setting.getLineColor());
+        }
     }
 
     protected AbstractLayerModel getCurrentLayerModel() {

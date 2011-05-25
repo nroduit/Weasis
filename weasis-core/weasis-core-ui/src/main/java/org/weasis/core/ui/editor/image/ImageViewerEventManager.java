@@ -437,8 +437,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             @Override
             public void actionPerformed(boolean selected) {
                 firePropertyChange(action.cmd(), null, selected);
+                viewSetting.setDrawOnlyOnce(selected);
             }
-
         };
     }
 

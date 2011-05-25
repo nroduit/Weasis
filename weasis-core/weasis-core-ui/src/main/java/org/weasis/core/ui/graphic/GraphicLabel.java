@@ -95,9 +95,8 @@ public class GraphicLabel {
             transform.transform(pt, pt);
             pt.x += getOffsetX();
             pt.y += getOffsetY();
-            for (int i = 0; i < labels.length; i++) {
-                paintFontOutline(g2d, labels[i], (pt.x + 3), (pt.y + labelHeight * (i + 1)));
-            }
+            for (int i = 0; i < labels.length; i++)
+                paintFontOutline(g2d, labels[i], (float) (pt.x + 3), (float) (pt.y + labelHeight * (i + 1)));
         }
     }
 

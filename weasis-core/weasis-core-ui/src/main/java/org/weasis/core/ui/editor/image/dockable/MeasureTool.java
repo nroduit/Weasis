@@ -112,7 +112,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Measurements",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
-        ViewSetting setting = eventManager.getViewSetting();
+        final ViewSetting setting = eventManager.getViewSetting();
         ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
         JPanel pane = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 7));
         pane.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -123,7 +123,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             checkDraw.setSelected(setting.isDrawOnlyOnce());
             pane.add(checkDraw);
         }
-        JButton jButtonLabel = new JButton("Font");
+        JButton jButtonLabel = new JButton("Options");
         jButtonLabel.addActionListener(new java.awt.event.ActionListener() {
 
             @Override

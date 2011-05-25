@@ -25,6 +25,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
+    public final static int CORNER_LENGTH = 10;
+
     private Stroke strokeDecorator;
 
     public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -129,15 +131,18 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
                         label = getRealDistanceLabel(getImageElement(mouseEvent), C, D);
 
-                        // Point2D E = D.distance(A) < D.distance(B) ? A : B;
-                        Point2D E = GeomUtil.getMidPoint(A, B);
-                        newShape.addInvShape(GeomUtil.getCornerShape(E, D, C, 10), (Point2D) D.clone());
-
-                        // Check if D is outside of segment AB
+                        // Check if D is outside of AB segment
                         if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
-                            Point2D F = D.distance(A) < D.distance(B) ? A : B;
-                            newShape.addShape(new Line2D.Double(D, F), strokeDecorator);
+                            Point2D E = D.distance(A) < D.distance(B) ? A : B;
+                            newShape.addShape(new Line2D.Double(D, E), strokeDecorator);
                         }
+
+                        double corner = CORNER_LENGTH;
+                        double dMin = (2.0 / 3.0) * Math.min(D.distance(C), Math.max(D.distance(A), D.distance(B)));
+                        double scalingMin = corner / dMin;
+
+                        Point2D F = GeomUtil.getMidPoint(A, B);
+                        newShape.addInvShape(GeomUtil.getCornerShape(F, D, C, corner), (Point2D) D.clone(), scalingMin);
                     }
                 }
             }

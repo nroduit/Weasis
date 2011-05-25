@@ -3,6 +3,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.util.ArrayList;
 
@@ -45,6 +46,13 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public Area getArea(AffineTransform transform) {
+        if (shape == null)
+            return new Area();
+        else
+            return new Area(shape);
+    }
 
     @Override
     public void updateLabel(Object source, DefaultView2d view2d) {

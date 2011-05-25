@@ -1,13 +1,24 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -18,21 +29,21 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 
+/**
+ * @author Benoit Jacquemoud
+ */
 public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(
         FourPointsAngleToolGraphic.class.getResource("/icon/22x22/draw-4p-angle.png")); //$NON-NLS-1$
+
     public final static double ARC_RADIUS = 24.0;
 
-    public FourPointsAngleToolGraphic(float lineThickness, Color paint, boolean fill) {
-        super(8);
-        setLineThickness(lineThickness);
-        setPaint(paint);
-        setFilled(fill);
-        setLabelVisible(true);
-        updateStroke();
+    protected Stroke strokeDecorator;
+
+    public FourPointsAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+        super(8, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -46,191 +57,117 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
+    protected void updateStroke() {
+        super.updateStroke();
+        strokeDecorator =
+            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
+                new float[] { 5.0f, 5.0f }, 0f);
     }
 
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
-
-        AdvancedShape newShape = new AdvancedShape(2);
-        newShape.addShape(generalpath);
-
-        String label = "";
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
 
             if (handlePointList.size() >= 2) {
+                AdvancedShape newShape = new AdvancedShape(4);
+                Path2D generalpath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
+                newShape.addShape(generalpath);
+
                 Point2D B = handlePointList.get(1);
+
+                generalpath.moveTo(A.getX(), A.getY());
                 generalpath.lineTo(B.getX(), B.getY());
 
                 Point2D I = GeomUtil.getMidPoint(A, B);
 
                 if (handlePointList.size() >= 3) {
                     Point2D C = handlePointList.get(2);
-                    generalpath.moveTo(C.getX(), C.getY());
-
                     Point2D J;
 
-                    if (handlePointList.size() >= 4) {
+                    if (handlePointList.size() < 4) {
+                        J = C;
+                    } else {
                         Point2D D = handlePointList.get(3);
+
+                        generalpath.moveTo(C.getX(), C.getY());
                         generalpath.lineTo(D.getX(), D.getY());
 
                         J = GeomUtil.getMidPoint(C, D);
 
                         if (handlePointList.size() >= 5) {
                             Point2D E = handlePointList.get(4);
-                            generalpath.moveTo(E.getX(), E.getY());
 
                             if (handlePointList.size() >= 6) {
                                 Point2D F = handlePointList.get(5);
+
+                                generalpath.moveTo(E.getX(), E.getY());
                                 generalpath.lineTo(F.getX(), F.getY());
 
                                 Point2D K = GeomUtil.getMidPoint(E, F);
                                 Point2D L;
 
-                                if (handlePointList.size() >= 7) {
+                                if (handlePointList.size() < 7) {
+                                    L = GeomUtil.getPerpendicularPointFromLine(E, F, K, 1.0);
+                                } else {
                                     Point2D G = handlePointList.get(6);
-                                    generalpath.moveTo(G.getX(), G.getY());
 
-                                    if (handlePointList.size() == 8) {
-                                        Point2D H = handlePointList.get(7);
-                                        generalpath.lineTo(H.getX(), H.getY());
-                                        L = GeomUtil.getMidPoint(G, H);
-                                    } else {
+                                    if (handlePointList.size() < 8) {
                                         L = G;
+                                    } else {
+                                        Point2D H = handlePointList.get(7);
+
+                                        generalpath.moveTo(G.getX(), G.getY());
+                                        generalpath.lineTo(H.getX(), H.getY());
+
+                                        L = GeomUtil.getMidPoint(G, H);
                                     }
 
                                     generalpath.append(new Line2D.Double(K, L), false);
-                                } else {
-                                    L = GeomUtil.getPerpendicularPointFromLine(E, F, K, 1.0);
                                 }
 
                                 Point2D P = GeomUtil.getIntersectPoint(I, J, K, L);
 
                                 if (P != null) {
-                                    generalpath.append(new Line2D.Double(J, P), false);
-                                    generalpath.append(new Line2D.Double(K, P), false);
+                                    newShape.addShape(new Line2D.Double(J, P), strokeDecorator);
+                                    newShape.addShape(new Line2D.Double(K, P), strokeDecorator);
+
                                     double startingAngle = GeomUtil.getAngleDeg(P, J);
                                     double angularExtent = GeomUtil.getAngleDeg(J, P, K);
                                     angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
 
-                                    label = getRealAngleLabel(getImageElement(mouseEvent), J, P, K);
+                                    double radius = ARC_RADIUS;
+                                    Rectangle2D arcAngleBounds =
+                                        new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius,
+                                            2 * radius);
 
-                                    Rectangle2D ellipseBounds =
-                                        new Rectangle2D.Double(P.getX() - ARC_RADIUS, P.getY() - ARC_RADIUS,
-                                            2 * ARC_RADIUS, 2 * ARC_RADIUS);
+                                    Shape arcAngle =
+                                        new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
-                                    Shape unTransformedShape =
-                                        new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
+                                    double rMax = Math.min(P.distance(I), P.distance(J));
+                                    rMax = Math.min(rMax, Math.min(P.distance(K), P.distance(L)));
+                                    rMax *= (2.0 / 3.0);
+                                    double scalingMin = radius / rMax;
 
-                                    newShape.addInvShape(unTransformedShape, (Point2D) P.clone());
+                                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
+
+                                    Rectangle rect = generalpath.getBounds();
+                                    int xPos = rect.x + rect.width;
+                                    int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
+
+                                    String label = getRealAngleLabel(getImageElement(mouseEvent), J, P, K);
+                                    setLabel(new String[] { label }, getGraphics2D(mouseEvent), xPos, yPos);
                                 }
-
-                                // generalpath.append(unTransformedShape, false);
                             }
                         }
-                    } else {
-                        J = C;
                     }
 
                     generalpath.append(new Line2D.Double(I, J), false);
                 }
+                setShape(newShape, mouseEvent);
             }
         }
-        // setShape(generalpath, mouseEvent);
-        setShape(newShape, mouseEvent);
-        setLabel(new String[] { label }, getGraphics2D(mouseEvent));
-        // updateLabel(mouseevent, getGraphics2D(mouseevent));
-    }
-
-    protected Shape computeUnTransformedDrawingShape(double radius, AffineTransform transform) {
-
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
-
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
-
-                Point2D I = GeomUtil.getMidPoint(A, B);
-
-                if (handlePointList.size() >= 3) {
-                    Point2D C = handlePointList.get(2);
-                    Point2D J;
-
-                    if (handlePointList.size() >= 4) {
-                        Point2D D = handlePointList.get(3);
-                        J = GeomUtil.getMidPoint(C, D);
-
-                        if (handlePointList.size() >= 5) {
-                            Point2D E = handlePointList.get(4);
-
-                            if (handlePointList.size() >= 6) {
-                                Point2D F = handlePointList.get(5);
-
-                                Point2D K = GeomUtil.getMidPoint(E, F);
-                                Point2D L;
-
-                                if (handlePointList.size() >= 7) {
-                                    Point2D G = handlePointList.get(6);
-
-                                    if (handlePointList.size() == 8) {
-                                        Point2D H = handlePointList.get(7);
-                                        L = GeomUtil.getMidPoint(G, H);
-                                    } else {
-                                        L = G;
-                                    }
-                                } else {
-                                    L = GeomUtil.getPerpendicularPointFromLine(E, F, K, 1.0);
-                                }
-
-                                Point2D P = GeomUtil.getIntersectPoint(I, J, K, L);
-                                if (P != null) {
-                                    double startingAngle = GeomUtil.getAngleDeg(P, J);
-                                    double angularExtent = GeomUtil.getAngleDeg(J, P, K);
-                                    angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
-
-                                    return computeUnTransformedDrawingShape(P, ARC_RADIUS, startingAngle,
-                                        angularExtent, transform);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    protected Shape computeUnTransformedDrawingShape(Point2D P, double radius, double startingAngle,
-        double angularExtent, AffineTransform transform) {
-
-        Point2D newP = transform == null ? P : transform.transform(P, null);
-
-        Rectangle2D ellipseBounds =
-            new Rectangle2D.Double(newP.getX() - radius, newP.getY() - radius, 2 * radius, 2 * radius);
-        // can be simplified !!! by just rescale radius
-
-        if (transform != null) {
-            try {
-                AffineTransform inverseT = transform.createInverse();
-                Point2D upLeftCornerPt = new Point2D.Double(ellipseBounds.getX(), ellipseBounds.getY());
-                Point2D newUpLeftCornerPt = inverseT.transform(upLeftCornerPt, null);
-                double newWidthHeight = ellipseBounds.getWidth() * inverseT.getScaleX();
-
-                ellipseBounds =
-                    new Rectangle2D.Double(newUpLeftCornerPt.getX(), newUpLeftCornerPt.getY(), newWidthHeight,
-                        newWidthHeight);
-
-            } catch (NoninvertibleTransformException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
     }
 
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
@@ -248,18 +185,4 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         }
         return label;
     }
-
-    @Override
-    public FourPointsAngleToolGraphic clone() {
-        return (FourPointsAngleToolGraphic) super.clone();
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        FourPointsAngleToolGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
-    }
-
 }

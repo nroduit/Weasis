@@ -2,7 +2,6 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -20,7 +19,7 @@ public class MedianLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(MedianLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
     public MedianLineGraphic(float lineThickness, Color paint, boolean fill) {
-        super(4);
+        super(4, paint);
         setLineThickness(lineThickness);
         setPaint(paint);
         setFilled(fill);
@@ -49,11 +48,13 @@ public class MedianLineGraphic extends AbstractDragGraphic {
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
-        if (handlePointIndex == -1)
-            for (Point2D point : handlePointList)
+        if (handlePointIndex == -1) {
+            for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-        else
+            }
+        } else {
             handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
+        }
 
         return handlePointIndex;
     }
