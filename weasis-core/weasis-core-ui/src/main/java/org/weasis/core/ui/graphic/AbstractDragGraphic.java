@@ -385,7 +385,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    protected DefaultView2d getGraphics2D(MouseEvent mouseevent) {
+    protected DefaultView2d getDefaultView2d(MouseEvent mouseevent) {
         if (mouseevent != null && mouseevent.getSource() instanceof DefaultView2d)
             return (DefaultView2d) mouseevent.getSource();
         return null;

@@ -86,7 +86,7 @@ public class LineGraphic extends AbstractDragGraphic {
         }
 
         setShape(generalpath, mouseEvent);
-        updateLabel(mouseEvent, getGraphics2D(mouseEvent));
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override

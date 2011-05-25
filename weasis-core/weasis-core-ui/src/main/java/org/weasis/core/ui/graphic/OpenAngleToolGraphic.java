@@ -192,7 +192,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                             int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
 
                             String label = getRealAngleLabel(getImageElement(mouseEvent), pts1[0], P, pts2[0]);
-                            setLabel(new String[] { label }, getGraphics2D(mouseEvent), xPos, yPos);
+                            setLabel(new String[] { label }, getDefaultView2d(mouseEvent), xPos, yPos);
                         }
 
                     }

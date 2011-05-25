@@ -113,27 +113,32 @@ public class AbstractLayerModel implements LayerModel {
                     if (dragGaphs.get(0) instanceof PolygonGraphic) {
                         canvas.setCursor(HAND_CURSOR);
                     } else {
-                        switch (direction) {
-                            case 2:
-                            case 6:
-                                canvas.setCursor(N_CURSOR);
-                                break;
-                            case 0:
-                            case 4:
-                                canvas.setCursor(E_CURSOR);
-                                break;
-                            case 3:
-                            case 7:
-                                canvas.setCursor(NE_CURSOR);
-                                break;
-                            case 1:
-                            case 5:
-                                canvas.setCursor(NW_CURSOR);
-                                break;
-                            default:
-                                shapeAction = false;
-                                break;
+                        if (direction >= 0 && direction < 8) {
+                            canvas.setCursor(CROSS_CURSOR);
+                        } else {
+                            shapeAction = false;
                         }
+                        // switch (direction) {
+                        // case 2:
+                        // case 6:
+                        // canvas.setCursor(N_CURSOR);
+                        // break;
+                        // case 0:
+                        // case 4:
+                        // canvas.setCursor(E_CURSOR);
+                        // break;
+                        // case 3:
+                        // case 7:
+                        // canvas.setCursor(NE_CURSOR);
+                        // break;
+                        // case 1:
+                        // case 5:
+                        // canvas.setCursor(NW_CURSOR);
+                        // break;
+                        // default:
+                        // shapeAction = false;
+                        // break;
+                        // }
                     }
                 }
             }

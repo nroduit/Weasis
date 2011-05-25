@@ -137,7 +137,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         }
 
         setShape(rectangle, mouseevent);
-        updateLabel(mouseevent, getGraphics2D(mouseevent));
+        updateLabel(mouseevent, getDefaultView2d(mouseevent));
     }
 
     @Override

@@ -50,7 +50,7 @@ public class EllipseGraphic extends RectangleGraphic {
         setShape(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(), rectangle.getHeight()),
             mouseevent);
 
-        updateLabel(mouseevent, getGraphics2D(mouseevent));
+        updateLabel(mouseevent, getDefaultView2d(mouseevent));
     }
 
     @Override

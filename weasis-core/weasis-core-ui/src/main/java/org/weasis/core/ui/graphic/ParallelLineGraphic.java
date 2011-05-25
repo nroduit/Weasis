@@ -154,7 +154,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
             }
         }
         setShape(generalpath, mouseEvent);
-        setLabel(new String[] { label }, getGraphics2D(mouseEvent));
+        setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
         // updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 

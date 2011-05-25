@@ -69,7 +69,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
         }
 
         setShape(newShape, mouseEvent);
-        updateLabel(mouseEvent, getGraphics2D(mouseEvent));
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override

@@ -87,7 +87,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
 
                     String label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
-                    setLabel(new String[] { label }, getGraphics2D(mouseEvent));
+                    setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
                 }
                 setShape(newShape, mouseEvent);
             }

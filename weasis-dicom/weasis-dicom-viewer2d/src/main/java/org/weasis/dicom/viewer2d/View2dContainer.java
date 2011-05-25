@@ -91,7 +91,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     public static final GridBagLayoutModel[] MODELS = { VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2,
-        VIEWS_2x1_r1xc2_dump, VIEWS_2x2_mpr, VIEWS_2x2, VIEWS_3x2, VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
+        VIEWS_2x1_r1xc2_dump, VIEWS_2x2, VIEWS_3x2, VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
