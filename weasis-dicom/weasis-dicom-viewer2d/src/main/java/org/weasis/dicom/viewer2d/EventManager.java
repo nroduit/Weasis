@@ -69,7 +69,8 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-
+    private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
+        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
     /** The single instance of this singleton class. */
 
     private static EventManager instance;
@@ -497,6 +498,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 firePropertyChange(action.cmd(), null, selected);
             }
         };
+    }
+
+    @Override
+    public ActionW getActionFromkeyEvent(int keyEvent) {
+        if (keyEvent != 0) {
+            for (ActionW a : keyEventActions) {
+                if (a.getKeyCode() == keyEvent)
+                    return a;
+            }
+        }
+        return null;
     }
 
     @Override
