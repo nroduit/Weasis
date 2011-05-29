@@ -77,7 +77,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final Codec CODEC = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
     private final static DicomImageReaderSpi readerSpi = new DicomImageReaderSpi();
-    private final URI uri;
+    private URI uri;
     private DicomObject dicomObject = null;
     private int numberOfFrame;
     private int stored;
@@ -104,8 +104,17 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         this(url.toURI());
     }
 
+    public synchronized void replaceURI(URI uri) {
+        if (uri != null && !uri.equals(this.uri)) {
+            this.uri = uri;
+            reset();
+        }
+
+    }
+
     public boolean readMediaTags() {
         if (dicomObject == null && uri != null) {
+
             try {
                 if (uri.toString().startsWith("file:/")) { //$NON-NLS-1$
                     imageStream = ImageIO.createImageInputStream(new File(uri));
@@ -330,6 +339,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private void writeInstanceTags() {
         if (dicomObject != null) {
+            tags.clear();
             // -------- Mandatory Tags --------
             // Tags for identifying group (Patient, Study, Series)
             setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
@@ -668,7 +678,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     setTagNoNull(TagW.PixelDataProviderURL, dicomObject.getString(Tag.PixelDataProviderURL));
                     MediaElement[] elements = getMediaElement();
                     if (elements != null && elements.length > frame) {
-                        jpipReader.setInput(elements[frame]);
+                        jpipReader.setInput(elements);
                         buffer = jpipReader.readAsRenderedImage(frame, null);
                     }
                 } else {
@@ -938,4 +948,5 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             return new DicomEncapDocSeries(seriesUID);
         return new DicomSeries(seriesUID);
     }
+
 }
