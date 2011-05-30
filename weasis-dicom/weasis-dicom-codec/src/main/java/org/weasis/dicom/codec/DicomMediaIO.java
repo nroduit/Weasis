@@ -104,6 +104,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         this(url.toURI());
     }
 
+    @Override
     public synchronized void replaceURI(URI uri) {
         if (uri != null && !uri.equals(this.uri)) {
             this.uri = uri;
@@ -328,8 +329,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
                 MediaElement[] elements = getMediaElement();
                 if (elements != null) {
-                    for (MediaElement mediaElement : elements) {
-                        mediaElement.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
+                    for (MediaElement m : elements) {
+                        m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
                     }
                 }
 
@@ -338,8 +339,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     private void writeInstanceTags() {
-        if (dicomObject != null) {
-            tags.clear();
+        if (dicomObject != null && tags.size() == 0) {
             // -------- Mandatory Tags --------
             // Tags for identifying group (Patient, Study, Series)
             setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$

@@ -46,4 +46,6 @@ public interface MediaReader<E> {
     public String[] getReaderDescription();
 
     public Object getTagValue(TagW tag);
+
+    public void replaceURI(URI uri);
 }

@@ -50,9 +50,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     private final Codec codec;
 
     public ImageElementIO(URI media, String mimeType, Codec codec) {
-        if (media == null) {
+        if (media == null)
             throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
-        }
         this.uri = media;
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
         this.codec = codec;
@@ -120,9 +119,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     @Override
     public MediaElement[] getMediaElement() {
         MediaElement element = getSingleImage();
-        if (element != null) {
+        if (element != null)
             return new MediaElement[] { element };
-        }
         return null;
     }
 
@@ -193,9 +191,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     public ImageReader getDefaultReader(String mimeType) {
         if (mimeType != null) {
             Iterator readers = ImageIO.getImageReadersByMIMEType(mimeType);
-            if (readers.hasNext()) {
+            if (readers.hasNext())
                 return (ImageReader) readers.next();
-            }
         }
         return null;
     }
@@ -204,5 +201,11 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     public Object getTagValue(TagW tag) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void replaceURI(URI uri) {
+        // TODO Auto-generated method stub
+
     }
 }
