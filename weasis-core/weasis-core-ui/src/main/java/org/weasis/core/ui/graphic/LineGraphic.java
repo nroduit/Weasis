@@ -58,8 +58,7 @@ public class LineGraphic extends AbstractDragGraphic {
                 image = (ImageElement) source;
             }
             if (image != null) {
-                AffineTransform rescale =
-                    AffineTransform.getScaleInstance(image.getPixelSizeX(), image.getPixelSizeY());
+                AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
 
                 Point2D At = rescale.transform(handlePointList.get(0), null);
                 Point2D Bt = rescale.transform(handlePointList.get(1), null);

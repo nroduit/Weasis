@@ -108,7 +108,7 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Unit unit = image.getPixelSpacingUnit();
             if (!Unit.PIXEL.equals(unit)) {
-                jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSizeX(), image.getPixelSizeY()));
+                jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSize(), image.getPixelSize()));
             } else {
                 GridBagConstraints gbc_textPane = new GridBagConstraints();
                 gbc_textPane.gridwidth = 4;
@@ -144,9 +144,7 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Number inputCalibVal = JMVUtils.getFormattedValue(jTextFieldLineWidth);
             if (inputCalibVal != null) {
-                double ratioX = image.getPixelSizeX();
-                double ratioY = image.getPixelSizeY();
-
+                double factor = image.getPixelSize();
                 Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
                 Unit originalUnit = image.getPixelSpacingUnit();
                 if (!Unit.PIXEL.equals(unit)) {
@@ -161,43 +159,24 @@ public class CalibrationView extends JPanel {
                     if (lineLength < 1.0) {
                         lineLength = 1.0;
                     }
-                    if (ratioX != ratioY)
-                        return;
-                    // Point2D p1 = line.getStartPoint();
-                    // Point2D p2 = line.getEndPoint();
-                    // double dx = Math.abs(p1.getX() - p2.getX());
-                    // double dy = Math.abs(p1.getY() - p2.getY());
-                    // double newRatioX;
-                    // double newRatioY;
-                    // if (dx > dy) {
-                    // newRatioX = (inputCalibVal.doubleValue() * unitRatio) / dx;
-                    // newRatioY = ratioY * newRatioX / ratioX;
-                    // } else {
-                    // newRatioY = (inputCalibVal.doubleValue() * unitRatio) / dy;
-                    // newRatioX = ratioX * newRatioY / ratioY;
-                    // }
-                    else {
-                        double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
-                        if (ratioX != newRatio) {
-                            if (radioButtonSeries.isSelected()) {
-                                MediaSeries seriesList = view2d.getSeries();
-                                if (seriesList != null) {
-                                    for (Object media : seriesList.getMedias()) {
-                                        if (media instanceof ImageElement) {
-                                            ImageElement img = (ImageElement) media;
-                                            img.setPixelSizeX(newRatio);
-                                            img.setPixelSizeY(newRatio);
-                                            updateLabel(img, view2d);
-                                        }
+                    double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
+                    if (factor != newRatio) {
+                        if (radioButtonSeries.isSelected()) {
+                            MediaSeries seriesList = view2d.getSeries();
+                            if (seriesList != null) {
+                                for (Object media : seriesList.getMedias()) {
+                                    if (media instanceof ImageElement) {
+                                        ImageElement img = (ImageElement) media;
+                                        img.setPixelSize(newRatio);
+                                        updateLabel(img, view2d);
                                     }
                                 }
-                            } else {
-                                image.setPixelSizeX(newRatio);
-                                image.setPixelSizeY(newRatio);
-                                updateLabel(image, view2d);
                             }
-                            view2d.repaint();
+                        } else {
+                            image.setPixelSize(newRatio);
+                            updateLabel(image, view2d);
                         }
+                        view2d.repaint();
                     }
                 }
             }

@@ -33,7 +33,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Parallel"; 
+        return "Parallel";
     }
 
     @Override
@@ -161,7 +161,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     protected String getRealDistanceLabel(ImageElement image, Point2D A, Point2D B) {
         String label = "";
         if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSizeX(), image.getPixelSizeY());
+            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
 
             Point2D At = rescale.transform(A, null);
             Point2D Bt = rescale.transform(B, null);

@@ -64,8 +64,9 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                     Point2D B = handlePointList.get(1);
                     Point2D C = handlePointList.get(2);
 
-                    while (handlePointList.size() < handlePointTotalNumber)
+                    while (handlePointList.size() < handlePointTotalNumber) {
                         handlePointList.add(new Point.Double());
+                    }
 
                     Point2D D = handlePointList.get(3);
                     D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
@@ -156,7 +157,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     protected String getRealDistanceLabel(ImageElement image, Point2D A, Point2D B) {
         String label = "";
         if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSizeX(), image.getPixelSizeY());
+            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
 
             Point2D At = rescale.transform(A, null);
             Point2D Bt = rescale.transform(B, null);

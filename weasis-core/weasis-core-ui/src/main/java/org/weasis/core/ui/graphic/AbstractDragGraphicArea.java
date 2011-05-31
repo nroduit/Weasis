@@ -69,8 +69,8 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                 ArrayList<String> list = new ArrayList<String>(5);
                 Unit unit = imageElement.getPixelSpacingUnit();
                 list.add(Messages.getString("RectangleGraphic.area") //$NON-NLS-1$
-                    + DecFormater.oneDecimalUngroup(getGraphicArea(imageElement.getPixelSizeX(),
-                        imageElement.getPixelSizeY())) + " " + unit.getAbbreviation() + "2"); //$NON-NLS-1$ //$NON-NLS-2$
+                    + DecFormater.oneDecimalUngroup(getGraphicArea(imageElement.getPixelSize(),
+                        imageElement.getPixelSize())) + " " + unit.getAbbreviation() + "2"); //$NON-NLS-1$ //$NON-NLS-2$
 
                 if (releasedEvent) {
                     PlanarImage image = imageElement.getImage();

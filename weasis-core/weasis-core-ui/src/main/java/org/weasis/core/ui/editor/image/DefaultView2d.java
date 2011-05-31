@@ -194,13 +194,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (imageElement != null && imageLayer.getReadIterator() != null) {
 
             PlanarImage image = imageElement.getImage();
-            if (image != null && p.x >= 0 && p.y >= 0 && p.x < image.getWidth() && p.y < image.getHeight()) {
+            Point realPoint =
+                new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
+                    / imageElement.getRescaleY() - 0.5));
+            if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
+                && realPoint.y < image.getHeight()) {
                 try {
                     int[] c = { 0, 0, 0 };
-                    imageLayer.getReadIterator().getPixel(p.x, p.y, c); // read the pixel
+                    imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
-
                         message.append(c[0]);
                     } else {
                         message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -331,8 +334,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (img != null && !img.equals(oldImage)) {
 
             RenderedImage source = img.getImage();
-            int width = source == null ? getImageSize(img, TagW.ImageWidth, TagW.Columns) : source.getWidth();
-            int height = source == null ? getImageSize(img, TagW.ImageHeight, TagW.Rows) : source.getHeight();
+            int width =
+                source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
+                    TagW.ImageWidth, TagW.Columns)) : source.getWidth();
+            int height =
+                source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(img,
+                    TagW.ImageHeight, TagW.Rows)) : source.getHeight();
             final Rectangle modelArea = new Rectangle(0, 0, width, height);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {

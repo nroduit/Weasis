@@ -261,11 +261,10 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             PlanarImage image = imageElement.getImage();
             int height = 0;
             if (image != null) {
-                height = image.getHeight();
+                height = imageElement.getRescaleHeight(image.getHeight());
             }
             MeasurementsAdapter measurementsAdapter =
-                new MeasurementsAdapter(imageElement.getPixelSizeX(), imageElement.getPixelSizeY(), 0, 0, false,
-                    height, unit.getAbbreviation());
+                new MeasurementsAdapter(imageElement.getPixelSize(), 0, 0, false, height, unit.getAbbreviation());
 
             if (graph instanceof RectangleGraphic || graph instanceof EllipseGraphic || graph instanceof PolygonGraphic
                 || graph instanceof FreeHandGraphic) {

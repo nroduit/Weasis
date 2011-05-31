@@ -4,31 +4,25 @@ package org.weasis.core.api.image.measure;
  * @author Nicolas Roduit
  */
 public class MeasurementsAdapter {
-    private final double calibRatioX;
-    private final double calibRatioY;
+    private final double calibRatio;
     private final boolean upYAxis;
     private final int offsetX;
     private final int offsetY;
     private final int imageHeight;
     private final String unit;
 
-    public MeasurementsAdapter(double calibRatioX, double calibRatioY, int offsetX, int offsetY, boolean upYAxis,
-        int imageHeight, String unit) {
+    public MeasurementsAdapter(double calibRatio, int offsetX, int offsetY, boolean upYAxis, int imageHeight,
+        String unit) {
         this.offsetY = offsetY;
         this.offsetX = offsetX;
         this.upYAxis = upYAxis;
-        this.calibRatioX = calibRatioX;
-        this.calibRatioY = calibRatioY;
+        this.calibRatio = calibRatio;
         this.imageHeight = imageHeight - 1;
         this.unit = unit;
     }
 
-    public double getCalibRatioX() {
-        return calibRatioX;
-    }
-
-    public double getCalibRatioY() {
-        return calibRatioY;
+    public double getCalibRatio() {
+        return calibRatio;
     }
 
     public int getOffsetX() {
@@ -59,14 +53,14 @@ public class MeasurementsAdapter {
     }
 
     public double getXCalibratedValue(double xVal) {
-        return calibRatioX * (xVal + offsetX);
+        return calibRatio * (xVal + offsetX);
     }
 
     public double getYCalibratedValue(double yVal) {
         if (upYAxis) {
             yVal = imageHeight - yVal;
         }
-        return calibRatioY * (yVal + offsetY);
+        return calibRatio * (yVal + offsetY);
     }
 
 }

@@ -257,7 +257,7 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
         String label = "";
         if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSizeX(), image.getPixelSizeY());
+            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
 
             Point2D At = rescale.transform(A, null);
             Point2D Ot = rescale.transform(O, null);

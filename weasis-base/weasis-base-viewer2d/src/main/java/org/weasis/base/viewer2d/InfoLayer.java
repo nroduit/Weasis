@@ -62,11 +62,11 @@ public class InfoLayer implements AnnotationsLayer {
         this.preloadingProgressBound = new Rectangle();
     }
 
+    @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
-        if (!visible || image == null) {
+        if (!visible || image == null)
             return;
-        }
 
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
@@ -269,17 +269,18 @@ public class InfoLayer implements AnnotationsLayer {
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
         PlanarImage source = image.getImage();
-        if (source == null) {
+        if (source == null)
             return;
-        }
 
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
-        double scalex = image.getPixelSizeX() / zoomFactor;
-        double scaleSizex = ajustShowScale(scalex, (int) Math.min(zoomFactor * source.getWidth(), bound.width / 2.0));
+        double scale = image.getPixelSize() / zoomFactor;
+        double scaleSizex =
+            ajustShowScale(scale,
+                (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
         if (scaleSizex > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizex * scalex, unit);
+            String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setPaint(color);
             g2d.setStroke(new BasicStroke(1.0F));
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -340,12 +341,13 @@ public class InfoLayer implements AnnotationsLayer {
             paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
-        double scaley = image.getPixelSizeY() / zoomFactor;
-        double scaleSizeY = ajustShowScale(scaley, (int) Math.min(zoomFactor * source.getHeight(), bound.height / 2.0));
+        double scaleSizeY =
+            ajustShowScale(scale,
+                (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizeY * scaley, unit);
+            String str = ajustLengthDisplay(scaleSizeY * scale, unit);
 
             g2d.setPaint(color);
             g2d.setStroke(new BasicStroke(1.0F));
@@ -416,9 +418,8 @@ public class InfoLayer implements AnnotationsLayer {
             scaleLength /= findGeometricSuite(scaleLength);
             scaleSize = scaleLength / ratio;
             loop++;
-            if (loop > 50) {
+            if (loop > 50)
                 return 0.0;
-            }
         }
         return scaleSize;
     }
@@ -426,9 +427,8 @@ public class InfoLayer implements AnnotationsLayer {
     public double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
-        if (firstDigit == 5) {
+        if (firstDigit == 5)
             return 2.5;
-        }
         return 2.0;
 
     }
@@ -461,10 +461,9 @@ public class InfoLayer implements AnnotationsLayer {
         }
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
-        if (ajustScaleLength < 1.0) {
+        if (ajustScaleLength < 1.0)
             return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
                 .fourDecimal(ajustScaleLength);
-        }
         return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
             .twoDecimal(ajustScaleLength);
     }
@@ -474,15 +473,18 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getDisplayPreferences(java.lang.String)
      */
+    @Override
     public boolean getDisplayPreferences(String item) {
         Boolean val = displayPreferences.get(item);
         return val == null ? false : val;
     }
 
+    @Override
     public boolean isVisible() {
         return visible;
     }
 
+    @Override
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
@@ -504,6 +506,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setDisplayPreferencesValue(java.lang.String, boolean)
      */
+    @Override
     public boolean setDisplayPreferencesValue(String displayItem, boolean selected) {
         boolean selected2 = getDisplayPreferences(displayItem);
         displayPreferences.put(displayItem, selected);
@@ -515,6 +518,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPreloadingProgressBound()
      */
+    @Override
     public Rectangle getPreloadingProgressBound() {
         return preloadingProgressBound;
     }
@@ -524,6 +528,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPixelInfoBound()
      */
+    @Override
     public Rectangle getPixelInfoBound() {
         return pixelInfoBound;
     }
@@ -533,6 +538,7 @@ public class InfoLayer implements AnnotationsLayer {
      * 
      * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setPixelInfo(java.lang.String)
      */
+    @Override
     public void setPixelInfo(String pixelInfo) {
         this.pixelInfo = pixelInfo;
     }

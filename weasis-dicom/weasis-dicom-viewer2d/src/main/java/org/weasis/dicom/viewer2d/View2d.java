@@ -58,7 +58,6 @@ import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -113,11 +112,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new OverlayOperation());
         manager.addImageOperationAction(new FlipOperation());
-        manager.addImageOperationAction(new RotationOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
-        // Zoom must be the last operation to send to the lens the image state before zooming
+        // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
+        manager.addImageOperationAction(new RotationOperation());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
@@ -178,9 +177,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         super.propertyChange(evt);
-        if (series == null) {
+        if (series == null)
             return;
-        }
         if (evt.getPropertyName().equals(ActionW.PRESET.cmd())) {
             actionsInView.put(ActionW.PRESET.cmd(), evt.getNewValue());
         } else if (evt.getPropertyName().equals(ActionW.IMAGE_OVERLAY.cmd())) {
@@ -363,9 +361,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private void addMouseAdapter(String actionName, int buttonMask) {
         MouseActionAdapter adapter = getMouseAdapter(actionName);
-        if (adapter == null) {
+        if (adapter == null)
             return;
-        }
         adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
         if (adapter == mouseClickHandler) {
             this.addKeyListener(drawingsKeyListeners);
@@ -395,27 +392,24 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     private MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd())) {
+        if (action.equals(ActionW.MEASURE.cmd()))
             return mouseClickHandler;
-        } else if (action.equals(ActionW.PAN.cmd())) {
+        else if (action.equals(ActionW.PAN.cmd()))
             return getAction(ActionW.PAN);
-        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
+        else if (action.equals(ActionW.CONTEXTMENU.cmd()))
             return contextMenuHandler;
-        } else if (action.equals(ActionW.WINDOW.cmd())) {
+        else if (action.equals(ActionW.WINDOW.cmd()))
             return getAction(ActionW.WINDOW);
-        } else if (action.equals(ActionW.LEVEL.cmd())) {
+        else if (action.equals(ActionW.LEVEL.cmd()))
             return getAction(ActionW.LEVEL);
-        }
-        // Tricky action, see in addMouseAdapter()
-        else if (action.equals(ActionW.WINLEVEL.cmd())) {
+        else if (action.equals(ActionW.WINLEVEL.cmd()))
             return getAction(ActionW.LEVEL);
-        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
+        else if (action.equals(ActionW.SCROLL_SERIES.cmd()))
             return getAction(ActionW.SCROLL_SERIES);
-        } else if (action.equals(ActionW.ZOOM.cmd())) {
+        else if (action.equals(ActionW.ZOOM.cmd()))
             return getAction(ActionW.ZOOM);
-        } else if (action.equals(ActionW.ROTATION.cmd())) {
+        else if (action.equals(ActionW.ROTATION.cmd()))
             return getAction(ActionW.ROTATION);
-        }
         return null;
     }
 
@@ -432,9 +426,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private MouseActionAdapter getAction(ActionW action) {
         ActionState a = eventManager.getAction(action);
-        if (a instanceof MouseActionAdapter) {
+        if (a instanceof MouseActionAdapter)
             return (MouseActionAdapter) a;
-        }
         return null;
     }
 
@@ -444,10 +437,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         StringBuffer message = new StringBuffer();
         if (dicom != null && imageLayer.getReadIterator() != null) {
             PlanarImage image = dicom.getImage();
-            if (image != null && p.x >= 0 && p.y >= 0 && p.x < image.getWidth() && p.y < image.getHeight()) {
+            Point realPoint =
+                new Point((int) Math.ceil(p.x / dicom.getRescaleX() - 0.5), (int) Math.ceil(p.y / dicom.getRescaleY()
+                    - 0.5));
+            if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
+                && realPoint.y < image.getHeight()) {
                 try {
                     int[] c = { 0, 0, 0 };
-                    imageLayer.getReadIterator().getPixel(p.x, p.y, c); // read the pixel
+                    imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
                         float val = (dicom).pixel2rescale(c[0]);
@@ -511,35 +508,30 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         public Transferable createTransferable(JComponent comp) {
             if (comp instanceof Thumbnail) {
                 MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series) {
+                if (t instanceof Series)
                     return t;
-                }
             }
             return null;
         }
 
         @Override
         public boolean canImport(TransferSupport support) {
-            if (!support.isDrop()) {
+            if (!support.isDrop())
                 return false;
-            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor))
                 return true;
-            }
             return false;
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (!canImport(support)) {
+            if (!canImport(support))
                 return false;
-            }
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-            if (dicomView == null) {
+            if (dicomView == null)
                 return false;
-            }
             DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
             Transferable transferable = support.getTransferable();
 
@@ -733,6 +725,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue(0);
                             }
@@ -741,6 +734,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() - 90 + 360) % 360);
                             }
@@ -749,6 +743,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() + 90) % 360);
                             }
@@ -757,6 +752,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() + 180) % 360);
                             }
@@ -780,17 +776,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
                                 calibMenu.addActionListener(new ActionListener() {
 
+                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
-                                        ImageElement image = View2d.this.getImage();
-                                        if (image != null) {
-                                            if (image.getPixelSizeX() != image.getPixelSizeY()) {
-                                                JOptionPane.showMessageDialog(calibMenu,
-                                                    Messages.getString("View2d.calibWarn"), title, //$NON-NLS-1$
-                                                    JOptionPane.ERROR_MESSAGE);
-                                                return;
-                                            }
-                                        }
                                         CalibrationView calibrationDialog =
                                             new CalibrationView((LineGraphic) graph, View2d.this);
                                         int res =
@@ -811,6 +799,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
                     close.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             event.getSelectedView2dContainer();
                             View2d.this.setSeries(null, -1);

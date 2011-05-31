@@ -1,8 +1,5 @@
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.Iterator;
 
 import javax.media.jai.operator.TransposeDescriptor;
@@ -11,14 +8,10 @@ import javax.swing.JComponent;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.graphic.DragLayer;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -38,9 +31,8 @@ public class MprView extends View2d {
         Iterator<JComponent> enumVal = mprModel.getConstraints().values().iterator();
         int index = 0;
         while (enumVal.hasNext()) {
-            if (enumVal.next() == this) {
+            if (enumVal.next() == this)
                 return index;
-            }
             index++;
         }
         return -1;
@@ -100,33 +92,6 @@ public class MprView extends View2d {
             DicomImageElement oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
 
-                RenderedImage source = img.getImage();
-                int width = source == null ? ImageFiler.TILESIZE : source.getWidth();
-                int height = source == null ? ImageFiler.TILESIZE : source.getHeight();
-                final Rectangle modelArea = new Rectangle(0, 0, width, height);
-                DragLayer layer = getLayerModel().getMeasureLayer();
-                synchronized (this) {
-                    GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                    if (list != null) {
-                        layer.setGraphics(list);
-                    } else {
-                        GraphicList graphics = new GraphicList();
-                        img.setTag(TagW.MeasurementGraphics, graphics);
-                        layer.setGraphics(graphics);
-                    }
-                }
-                setWindowLevel(img);
-                Rectangle2D area = getViewModel().getModelArea();
-                if (!modelArea.equals(area)) {
-                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                    getViewModel().setModelArea(modelArea);
-                    setPreferredSize(modelArea.getSize());
-                    center();
-                }
-                if (bestFit) {
-                    actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
-                }
-                imageLayer.setImage(img);
             }
         }
     }

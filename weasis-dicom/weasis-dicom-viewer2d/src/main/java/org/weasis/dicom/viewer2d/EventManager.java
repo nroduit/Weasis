@@ -714,7 +714,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         hasLink = true;
                                         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
-                                        if (hasSameSizeAndSpatialCalibration(series, s)) {
+                                        if (hasSameSize(series, s)) {
                                             // If the image has the same reference and the same spatial calibration, all
                                             // the actions are synchronized
                                             addPropertyChangeListeners(pane, synchView);
@@ -748,14 +748,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    public static boolean hasSameSizeAndSpatialCalibration(MediaSeries<DicomImageElement> series1,
+    public static boolean hasSameSize(MediaSeries<DicomImageElement> series1,
         MediaSeries<DicomImageElement> series2) {
         // Test if the two series has the same orientation
         if (series1 != null && series2 != null) {
             DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE);
             DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE);
             if (image1 != null && image2 != null)
-                return image1.hasSameSizeAndSpatialCalibration(image2);
+                return image1.hasSameSize(image2);
         }
         return false;
     }

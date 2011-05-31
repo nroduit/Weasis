@@ -67,7 +67,7 @@ public class Measure1DAnalyse {
             measVal.add(adapter.getYCalibratedValue(getEndPointY()));
         }
         if (selected[4]) {
-            measVal.add(getSegmentLength() * adapter.getCalibRatioX());
+            measVal.add(getSegmentLength());
         }
         if (selected[5]) {
             measVal.add(getSegmentOrientation());
@@ -181,7 +181,7 @@ public class Measure1DAnalyse {
 
     public double getSegmentLength() {
         if (line instanceof LineGraphic)
-            return ((LineGraphic) line).getSegmentLength();
+            return ((LineGraphic) line).getSegmentLength(adapter.getCalibRatio(), adapter.getCalibRatio());
         // else if (line instanceof FreeHandLineGraphic) {
         // if (length < 0) {
         // FreeHandLineGraphic graph = (FreeHandLineGraphic) line;

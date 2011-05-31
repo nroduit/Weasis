@@ -42,8 +42,11 @@ public class DicomImageElement extends ImageElement {
                 pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
             if (val != null) {
-                pixelSizeX = val[0];
-                pixelSizeY = val[1];
+                // Pixel Spacing = Row Spacing \ Column Spacing
+                // The first value is the row spacing in mm, that is the spacing between the centers of adjacent rows,
+                // or vertical spacing.
+                pixelSizeX = val[1];
+                pixelSizeY = val[0];
                 pixelSpacingUnit = Unit.MILLIMETER;
             }
             pixelValueUnit = (String) getTagValue(TagW.RescaleType);
@@ -60,9 +63,8 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getPixelWindow(float window) {
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        if (slope != null) {
+        if (slope != null)
             return window /= slope;
-        }
         return window;
     }
 
@@ -147,18 +149,16 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getDefaultWindow() {
         Float val = (Float) getTagValue(TagW.WindowWidth);
-        if (val == null) {
+        if (val == null)
             return super.getDefaultWindow();
-        }
         return val;
     }
 
     @Override
     public float getDefaultLevel() {
         Float val = (Float) getTagValue(TagW.WindowCenter);
-        if (val == null) {
+        if (val == null)
             return super.getDefaultLevel();
-        }
         return val;
     }
 
@@ -167,9 +167,8 @@ public class DicomImageElement extends ImageElement {
         // hu = pixelValue * rescale slope + intercept value
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null) {
+        if (slope != null || intercept != null)
             return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
-        }
         return pixelValue;
 
     }
@@ -179,9 +178,8 @@ public class DicomImageElement extends ImageElement {
         // pixelValue = (hu - intercept value) / rescale slope
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null) {
+        if (slope != null || intercept != null)
             return (hounsfieldValue - (intercept == null ? 0.0f : intercept)) / (slope == null ? 1.0f : slope);
-        }
         return hounsfieldValue;
 
     }
@@ -191,16 +189,16 @@ public class DicomImageElement extends ImageElement {
         if (imgOr != null && imgOr.length == 6) {
             double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
             if (pos != null && pos.length == 3) {
-                double[] spacing = { getPixelSizeX(), getPixelSizeY(), 0.0 };
+                double[] spacing = { getPixelSize(), getPixelSize(), 0.0 };
                 Float sliceTickness = (Float) getTagValue(TagW.SliceThickness);
                 Integer rows = (Integer) getTagValue(TagW.Rows);
                 Integer columns = (Integer) getTagValue(TagW.Columns);
-                if (rows != null && columns != null && rows > 0 && columns > 0) {
+                if (rows != null && columns != null && rows > 0 && columns > 0)
                     // If no sliceTickness: set 0, sliceTickness is only use in IntersectVolume
+                    // Multiply rows and columns by getZoomScale() to have square pixel image size
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
                         imgOr[4], imgOr[5] }, pos, spacing, sliceTickness == null ? 0.0 : sliceTickness.doubleValue(),
-                        new double[] { rows, columns, 1 });
-                }
+                        new double[] { rows * getRescaleY(), columns * getRescaleX(), 1 });
             }
         }
         return null;

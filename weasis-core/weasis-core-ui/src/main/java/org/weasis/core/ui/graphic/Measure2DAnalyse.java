@@ -52,12 +52,12 @@ public class Measure2DAnalyse {
         }
         if (selected[4]) {
             // Mesure 7 : Area, retourne l'aire du blob calibré ou non calibré
-            measVal.add(adapter.getCalibRatioX() * adapter.getCalibRatioY() * getArea());
+            measVal.add(adapter.getCalibRatio() * adapter.getCalibRatio() * getArea());
         }
         if (selected[5]) {
             // TODO handle non square pixel
             // Mesure 8 : Perimeter, retourne le périmètre du blob calibré ou non calibré
-            measVal.add(adapter.getCalibRatioX() * getPerimeter());
+            measVal.add(adapter.getCalibRatio() * getPerimeter());
         }
         if (selected[6] || selected[7] || selected[8] || selected[9] || selected[10] || selected[11]) {
             // cas ou une polyline forme un trait et une aire de 0
@@ -87,10 +87,10 @@ public class Measure2DAnalyse {
                 // Mesure 13 : 90 degree height
                 double[] minorAndMajorAxis = getLengthAndWidth(shape, getOrientation());
                 if (selected[9]) {
-                    measVal.add(adapter.getCalibRatioX() * minorAndMajorAxis[0]);
+                    measVal.add(adapter.getCalibRatio() * minorAndMajorAxis[0]);
                 }
                 if (selected[10]) {
-                    measVal.add(adapter.getCalibRatioX() * minorAndMajorAxis[1]);
+                    measVal.add(adapter.getCalibRatio() * minorAndMajorAxis[1]);
                 }
             }
             if (selected[11]) {

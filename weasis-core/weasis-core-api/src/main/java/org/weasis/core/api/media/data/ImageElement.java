@@ -107,9 +107,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     protected boolean isGrayImage(RenderedImage source) {
         // Binary images have indexColorModel
-        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel) {
+        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel)
             return false;
-        }
         return true;
     }
 
@@ -137,20 +136,37 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return minValue;
     }
 
-    public double getPixelSizeX() {
-        return pixelSizeX;
+    public int getRescaleWidth(int width) {
+        return (int) Math.ceil(width * getRescaleX() - 0.5);
     }
 
-    public double getPixelSizeY() {
-        return pixelSizeY;
+    public int getRescaleHeight(int height) {
+        return (int) Math.ceil(height * getRescaleY() - 0.5);
     }
 
-    public void setPixelSizeX(double pixelSizeX) {
-        this.pixelSizeX = pixelSizeX;
+    public double getRescaleX() {
+        return pixelSizeX <= pixelSizeY ? 1.0 : pixelSizeX / pixelSizeY;
     }
 
-    public void setPixelSizeY(double pixelSizeY) {
-        this.pixelSizeY = pixelSizeY;
+    public double getRescaleY() {
+        return pixelSizeY <= pixelSizeX ? 1.0 : pixelSizeY / pixelSizeX;
+    }
+
+    public double getPixelSize() {
+        return pixelSizeX <= pixelSizeY ? pixelSizeX : pixelSizeY;
+    }
+
+    public void setPixelSize(double pixelSize) {
+        if (pixelSizeX == pixelSizeY) {
+            this.pixelSizeX = pixelSize;
+            this.pixelSizeY = pixelSize;
+        } else if (pixelSizeX < pixelSizeY) {
+            pixelSizeX = pixelSize;
+            pixelSizeY = (pixelSizeY / pixelSizeX) * pixelSize;
+        } else {
+            pixelSizeX = (pixelSizeX / pixelSizeY) * pixelSize;
+            pixelSizeY = pixelSize;
+        }
     }
 
     public void setPixelValueUnit(String pixelValueUnit) {
@@ -184,16 +200,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
         }
     }
 
-    public boolean hasSameSizeAndSpatialCalibration(ImageElement image) {
+    public boolean hasSameSize(ImageElement image) {
         if (image != null) {
-            if (pixelSizeX == image.getPixelSizeX() && pixelSizeY == image.getPixelSizeY()) {
-                PlanarImage img = getImage();
-                PlanarImage img2 = image.getImage();
-                if (img != null && img2 != null) {
-                    if (img.getWidth() == img2.getWidth() && img.getHeight() == img2.getHeight()) {
-                        return true;
-                    }
-                }
+            PlanarImage img = getImage();
+            PlanarImage img2 = image.getImage();
+            if (img != null && img2 != null) {
+                if (getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
+                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight()))
+                    return true;
             }
         }
         return false;

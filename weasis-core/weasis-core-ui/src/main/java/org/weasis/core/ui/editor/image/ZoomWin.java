@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.ImageOperationAction;
 import org.weasis.core.api.image.OperationsManager;
+import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -86,6 +87,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         this.imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), false);
         OperationsManager operations = imageLayer.getOperationsManager();
         operations.addImageOperationAction(new ZoomOperation());
+        operations.addImageOperationAction(new RotationOperation());
 
         ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
         if (zoomAction instanceof SliderChangeListener) {
@@ -98,6 +100,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         this.setCursor(MainLayerModel.MOVE_CURSOR);
 
         ZoomSetting z = manager.getZoomSetting();
+        actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
         actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
         actionsInView.put(FREEZE_CMD, null);
@@ -543,6 +546,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             && (ActionW.ROTATION.cmd().equals(command) || ActionW.FLIP.cmd().equals(command))) {
             freezeActionsInView.put(command, value);
             setFreezeImage(freezeOperations.updateAllOperations(), type);
+        } else if (command.equals(ActionW.ROTATION.cmd())) {
+            actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
+            refreshZoomWin();
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             refreshZoomWin();
         }

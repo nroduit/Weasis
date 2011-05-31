@@ -87,9 +87,8 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
-        if (!visible || image == null) {
+        if (!visible || image == null)
             return;
-        }
         ModalityInfoData modality;
         Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
         modality = ModalityPrefView.getModlatityInfos(mod);
@@ -318,36 +317,28 @@ public class InfoLayer implements AnnotationsLayer {
 
     private String getLossyTransferSyntaxUID(String tsuid) {
         if (tsuid != null) {
-            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) { //$NON-NLS-1$
+            if ("1.2.840.10008.1.2.4.50".equals(tsuid))
                 return "JPEG Baseline"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) { //$NON-NLS-1$
+            if ("1.2.840.10008.1.2.4.51".equals(tsuid))
                 return "JPEG Extended"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) { //$NON-NLS-1$
+            if ("1.2.840.10008.1.2.4.81".equals(tsuid))
                 return "JPEG-LS (Near-Lossless)"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) { //$NON-NLS-1$
+            if ("1.2.840.10008.1.2.4.91".equals(tsuid))
                 return "JPEG 2000"; //$NON-NLS-1$
-            }
         }
         return null;
     }
 
     private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, Series series,
         ImageElement image) {
-        if (image.containTagKey(tag)) {
+        if (image.containTagKey(tag))
             return image.getTagValue(tag);
-        }
-        if (series.containTagKey(tag)) {
+        if (series.containTagKey(tag))
             return series.getTagValue(tag);
-        }
-        if (study.containTagKey(tag)) {
+        if (study.containTagKey(tag))
             return study.getTagValue(tag);
-        }
-        if (patient.containTagKey(tag)) {
+        if (patient.containTagKey(tag))
             return patient.getTagValue(tag);
-        }
         return null;
     }
 
@@ -479,17 +470,18 @@ public class InfoLayer implements AnnotationsLayer {
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
         PlanarImage source = image.getImage();
-        if (source == null) {
+        if (source == null)
             return;
-        }
 
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
-        double scalex = image.getPixelSizeX() / zoomFactor;
-        double scaleSizex = ajustShowScale(scalex, (int) Math.min(zoomFactor * source.getWidth(), bound.width / 2.0));
+        double scale = image.getPixelSize() / zoomFactor;
+        double scaleSizex =
+            ajustShowScale(scale,
+                (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
         if (scaleSizex > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizex * scalex, unit);
+            String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setPaint(color);
             g2d.setStroke(new BasicStroke(1.0F));
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -550,12 +542,13 @@ public class InfoLayer implements AnnotationsLayer {
             paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
-        double scaley = image.getPixelSizeY() / zoomFactor;
-        double scaleSizeY = ajustShowScale(scaley, (int) Math.min(zoomFactor * source.getHeight(), bound.height / 2.0));
+        double scaleSizeY =
+            ajustShowScale(scale,
+                (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizeY * scaley, unit);
+            String str = ajustLengthDisplay(scaleSizeY * scale, unit);
 
             g2d.setPaint(color);
             g2d.setStroke(new BasicStroke(1.0F));
@@ -626,9 +619,8 @@ public class InfoLayer implements AnnotationsLayer {
             scaleLength /= findGeometricSuite(scaleLength);
             scaleSize = scaleLength / ratio;
             loop++;
-            if (loop > 50) {
+            if (loop > 50)
                 return 0.0;
-            }
         }
         return scaleSize;
     }
@@ -636,9 +628,8 @@ public class InfoLayer implements AnnotationsLayer {
     public double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
-        if (firstDigit == 5) {
+        if (firstDigit == 5)
             return 2.5;
-        }
         return 2.0;
 
     }
@@ -671,10 +662,9 @@ public class InfoLayer implements AnnotationsLayer {
         }
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
-        if (ajustScaleLength < 1.0) {
+        if (ajustScaleLength < 1.0)
             return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
                 .fourDecimal(ajustScaleLength);
-        }
         return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
             .twoDecimal(ajustScaleLength);
     }
