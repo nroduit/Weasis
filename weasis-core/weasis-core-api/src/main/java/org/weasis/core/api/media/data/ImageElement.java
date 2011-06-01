@@ -29,6 +29,7 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 
@@ -189,6 +190,10 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return pixelSizeCalibrationDescription;
     }
 
+    public MeasurementsAdapter getMeasurementAdapter() {
+        return new MeasurementsAdapter(getPixelSize(), 0, 0, false, 0, pixelSpacingUnit.getAbbreviation());
+    }
+
     public boolean isImageInCache() {
         return mCache.get(this) != null;
     }
@@ -330,4 +335,5 @@ public class ImageElement extends MediaElement<PlanarImage> {
         }
 
     }
+
 }

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.weasis.core.api.gui.Image2DViewer;
+import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -505,6 +506,36 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public void updateLabel(Object source, DefaultView2d view2d) {
+        if (labelVisible) {
+            boolean releasedEvent = true;
+            ImageElement imageElement = null;
+            if (source instanceof MouseEvent) {
+                imageElement = getImageElement((MouseEvent) source);
+                releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
+            } else if (source instanceof ImageElement) {
+                imageElement = (ImageElement) source;
+            }
+            if (imageElement != null) {
+                List<MeasureItem> list = getMeasurements(imageElement, releasedEvent);
+                if (list != null) {
+                    String[] labels = new String[list.size()];
+                    for (int i = 0; i < labels.length; i++) {
+                        MeasureItem m = list.get(i);
+                        StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
+                        buffer.append(": ");
+                        if (m.getValue() != null) {
+                            buffer.append(DecFormater.oneDecimalUngroup(m.getValue()));
+                        }
+                        if (m.getUnit() != null) {
+                            buffer.append(" ");
+                            buffer.append(m.getUnit());
+                        }
+                        labels[i] = buffer.toString();
+                    }
+                    setLabel(labels, view2d);
+                }
+            }
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////

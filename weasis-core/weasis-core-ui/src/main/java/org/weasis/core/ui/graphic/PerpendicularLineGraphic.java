@@ -10,6 +10,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -152,6 +153,12 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         setShape(newShape, mouseEvent);
         setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
         // updateLabel(mouseevent, getGraphics2D(mouseevent));
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+
+        return null;
     }
 
     protected String getRealDistanceLabel(ImageElement image, Point2D A, Point2D B) {

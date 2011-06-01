@@ -1,30 +1,49 @@
 package org.weasis.core.ui.graphic;
 
-import org.weasis.core.api.image.util.Unit;
-
 public class Measurement {
+    // private final int id;
     private final String name;
-    private final Unit unit;
-    private final boolean quickComputed;
+    private final boolean quickComputing;
+    private boolean computed;
+    private boolean graphicLabel;
 
-    public Measurement(String name, Unit unit, boolean quickComputed) {
-        if (name == null || unit == null)
+    public Measurement(String name, boolean quickComputing) {
+        if (name == null)
             throw new IllegalArgumentException("Agruments cannot be null!");
         this.name = name;
-        this.unit = unit;
-        this.quickComputed = quickComputed;
+        this.quickComputing = quickComputing;
+        this.computed = true;
+        this.graphicLabel = true;
     }
 
-    public synchronized String getName() {
+    public String getName() {
         return name;
     }
 
-    public synchronized Unit getUnit() {
-        return unit;
+    public boolean isComputed() {
+        return computed;
     }
 
-    public synchronized boolean isQuickComputed() {
-        return quickComputed;
+    public void setComputed(boolean computed) {
+        this.computed = computed;
+        if (!computed && graphicLabel) {
+            graphicLabel = false;
+        }
+    }
+
+    public boolean isGraphicLabel() {
+        return graphicLabel;
+    }
+
+    public void setGraphicLabel(boolean graphicLabel) {
+        this.graphicLabel = graphicLabel;
+        if (graphicLabel && !computed) {
+            computed = true;
+        }
+    }
+
+    public boolean isQuickComputing() {
+        return quickComputing;
     }
 
 }

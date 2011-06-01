@@ -160,7 +160,7 @@ public enum Unit {
         return null;
     }
 
-    public static ArrayList<Unit> getUniExceptPixel() {
+    public static ArrayList<Unit> getUnitExceptPixel() {
         ArrayList<Unit> list = new ArrayList<Unit>();
         for (Unit u : Unit.values()) {
             if (u.getId() != Unit.PIXEL.getId()) {

@@ -16,8 +16,10 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 /**
@@ -74,4 +76,6 @@ public interface Graphic extends GUIEntry {
     public Shape getShape();
 
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
+
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean b);
 }

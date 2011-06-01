@@ -3,19 +3,20 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -23,6 +24,9 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 public class CobbAngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
+
+    public final static Measurement Angle = new Measurement("Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Complementary Angle", true);
 
     public CobbAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(5, paintColor, lineThickness, labelVisible);
@@ -146,8 +150,6 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
-        String label = "";
-
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
             generalpath.moveTo(A.getX(), A.getY());
@@ -160,7 +162,7 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                     Point2D C = handlePointList.get(2);
                     generalpath.moveTo(C.getX(), C.getY());
 
-                    if (handlePointList.size() >= 4) {
+                    if (handlePointList.size() >= 5) {
                         Point2D D = handlePointList.get(3);
                         generalpath.lineTo(D.getX(), D.getY());
 
@@ -211,12 +213,6 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                             K.getY() > L.getY() ? GeomUtil.getAngleDeg(J, O, K) : GeomUtil.getAngleDeg(I, O, L);
                         angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
 
-                        if (K.getY() > L.getY()) {
-                            label = getRealAngleLabel(getImageElement(mouseEvent), J, O, K);
-                        } else {
-                            label = getRealAngleLabel(getImageElement(mouseEvent), I, O, L);
-                        }
-
                         Rectangle2D ellipseBounds =
                             new Rectangle2D.Double(O.getX() - radius, O.getY() - radius, 2 * radius, 2 * radius);
                         Arc2D arcAngle = new Arc2D.Double(ellipseBounds, startingAngle, angularExtent, Arc2D.OPEN);
@@ -250,24 +246,59 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
             }
         }
         setShape(generalpath, mouseEvent);
-        setLabel(new String[] { label }, getDefaultView2d(mouseEvent)); //
-        // updateLabel(mouseevent, getGraphics2D(mouseevent));
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
-    protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
-        String label = "";
-        if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+        if (imageElement != null && handlePointList.size() >= 5) {
+            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+            if (adapter != null) {
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                if (Angle.isComputed()) {
+                    Point2D A = handlePointList.get(0);
+                    Point2D B = handlePointList.get(1);
+                    Point2D C = handlePointList.get(2);
+                    Point2D D = handlePointList.get(3);
+                    Point2D O = handlePointList.get(4);
 
-            Point2D At = rescale.transform(A, null);
-            Point2D Ot = rescale.transform(O, null);
-            Point2D Bt = rescale.transform(B, null);
+                    double Ax = A.getX(), Ay = A.getY();
+                    double Bx = B.getX(), By = B.getY();
+                    double Cx = C.getX(), Cy = C.getY();
+                    double Dx = D.getX(), Dy = D.getY();
+                    double distAB2 = Point2D.distanceSq(Ax, Ay, Bx, By);
+                    double distCD2 = Point2D.distanceSq(Cx, Cy, Dx, Dy);
+                    double r1 = ((Ay - O.getY()) * (Ay - By) + (Ax - O.getX()) * (Ax - Bx)) / distAB2;
+                    double r2 = ((Cy - O.getY()) * (Cy - Dy) + (Cx - O.getX()) * (Cx - Dx)) / distCD2;
+                    Point2D I = new Point2D.Double(Ax + r1 * (Bx - Ax), Ay + r1 * (By - Ay));
+                    Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
+                    double distOI = O.distance(I);
+                    double distOJ = O.distance(J);
+                    Point2D K =
+                        distOI < 64 ? GeomUtil.getColinearPointWithRatio(I, O, 1.5) : GeomUtil
+                            .getColinearPointWithLength(I, O, distOI + 32);
+                    Point2D L =
+                        distOJ < 64 ? GeomUtil.getColinearPointWithRatio(J, O, 1.5) : GeomUtil
+                            .getColinearPointWithLength(J, O, distOJ + 32);
 
-            double realAngle = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt));
-            label = "Angle : " + DecFormater.twoDecimal(Math.abs(realAngle)) + "°";
-            label += " / " + DecFormater.twoDecimal(180 - Math.abs(realAngle)) + "°";
+                    double realAngle;
+                    if (K.getY() > L.getY()) {
+                        realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(J, O, K)));
+                    } else {
+                        realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(I, O, L)));
+                    }
+
+                    if (Angle.isComputed() && (releaseEvent || Angle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(Angle, realAngle, "deg"));
+                    }
+                    if (ComplementaryAngle.isComputed() && (releaseEvent || ComplementaryAngle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
+                    }
+                }
+                return measVal;
+            }
         }
-        return label;
+        return null;
     }
 
     @Override

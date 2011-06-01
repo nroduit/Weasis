@@ -22,13 +22,14 @@ import javax.swing.text.NumberFormatter;
  */
 public class DecFormater {
 
-    private static DecimalFormat df1 = new DecimalFormat("#,##0.##"); // format avec 2 chiffres après la virgule //$NON-NLS-1$
-    private static DecimalFormat df2 = new DecimalFormat("#,##0.####"); // format avec 4 chiffres après la virgule //$NON-NLS-1$
-    private static DecimalFormat df3 = new DecimalFormat("#,###"); // format avec 0 chiffres après la virgule //$NON-NLS-1$
-    private static DecimalFormat df4 = new DecimalFormat("0.####E0"); // format scientifique avec 4 chiffres après la //$NON-NLS-1$
-    // virgule
-    private static DecimalFormat df5 = new DecimalFormat("###0.#"); // format avec 1 chiffres après la virgule //$NON-NLS-1$
-    private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); // format avec 8 chiffres après la virgule //$NON-NLS-1$
+    private static DecimalFormat df1 = new DecimalFormat("#,##0.##"); // 2 decimals //$NON-NLS-1$
+    private static DecimalFormat df2 = new DecimalFormat("#,##0.####"); // 4 decimals //$NON-NLS-1$
+    private static DecimalFormat df3 = new DecimalFormat("#,###"); // non decimal //$NON-NLS-1$
+    private static DecimalFormat df4 = new DecimalFormat("0.####E0"); // Sientific format with 4 decimals //$NON-NLS-1$
+
+    private static DecimalFormat df5 = new DecimalFormat("###0.#"); //$NON-NLS-1$
+    private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); //$NON-NLS-1$
+    private static DecimalFormat df7 = new DecimalFormat("###0.#"); //$NON-NLS-1$
 
     public static String twoDecimal(double val) {
         return df1.format(val);
@@ -36,6 +37,10 @@ public class DecFormater {
 
     public static String oneDecimalUngroup(double val) {
         return df5.format(val);
+    }
+
+    public static String twoDecimalUngroup(double val) {
+        return df7.format(val);
     }
 
     public static String zeroDecimal(double val) {

@@ -30,11 +30,10 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
  */
 
 public class Measure1DAnalyse {
+
     public final static String[] measurList = { "First point X", "First point Y", "Last point X", "Last point Y",
         "Line length", "Orientation", "Orientation significance", "Azimuth", "Azimuth significance", "Barycenter x",
         "Barycenter y", "Color (RGB)" };
-    public final static int[] positionParameters = { 0, 1, 2, 3, 9, 10 };
-    public final static int[] basicParameters = { 4, 5, 6, 7, 8, 11 };
     private MeasurementsAdapter adapter;
     private AbstractDragGraphic line;
     private double[] regression;
@@ -51,15 +50,12 @@ public class Measure1DAnalyse {
 
     public ArrayList getMeasure1DAnalyse(boolean[] selected, int nbMeasures) {
         ArrayList measVal = new ArrayList(nbMeasures);
-        // i et j sont les coordonn�es du blob en cours
-        // Mesure 1 et 2 : point le plus en haut � gauche du blob (1er point) selon x et y
         if (selected[0]) {
             measVal.add(adapter.getXCalibratedValue(getStartPointX()));
         }
         if (selected[1]) {
             measVal.add(adapter.getYCalibratedValue(getStartPointY()));
         }
-        // Mesure 3 et 4 : 2�me point selon x et y
         if (selected[2]) {
             measVal.add(adapter.getXCalibratedValue(getEndPointX()));
         }

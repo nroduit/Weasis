@@ -11,9 +11,9 @@ import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -35,13 +35,12 @@ import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHaederRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
@@ -50,16 +49,9 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.EllipseGraphic;
-import org.weasis.core.ui.graphic.FreeHandGraphic;
-import org.weasis.core.ui.graphic.FreeHandLineGraphic;
 import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.LineGraphic;
-import org.weasis.core.ui.graphic.Measure1DAnalyse;
-import org.weasis.core.ui.graphic.Measure2DAnalyse;
 import org.weasis.core.ui.graphic.MeasureDialog;
-import org.weasis.core.ui.graphic.PolygonGraphic;
-import org.weasis.core.ui.graphic.RectangleGraphic;
+import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.util.PaintLabel;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -82,7 +74,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     private JPanel tableContainer;
     private JTable jtable;
 
-    private Graphic selectedGraphic;
+    private List<AbstractDragGraphic> selectedGraphic;
 
     public MeasureTool(String pluginName, Icon icon, ImageViewerEventManager eventManager) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
@@ -241,72 +233,34 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHaederRenderer());
     }
 
-    public Object[][] createRows(java.util.List tableResult, java.util.List<String> measures) {
-
-        Object[][] data = new Object[measures.size()][];
-        for (int j = 0; j < data.length; j++) {
-            Object[] row = new Object[2];
-            row[0] = measures.get(j);
-            row[1] = tableResult.get(j);
-            data[j] = row;
-        }
-        return data;
-    }
-
     public void setSelectedGraphic(Graphic graph, ImageElement imageElement) {
         tableContainer.removeAll();
-        this.selectedGraphic = graph;
+
         if (graph != null && imageElement != null) {
-            Unit unit = imageElement.getPixelSpacingUnit();
-            PlanarImage image = imageElement.getImage();
-            int height = 0;
-            if (image != null) {
-                height = imageElement.getRescaleHeight(image.getHeight());
-            }
-            MeasurementsAdapter measurementsAdapter =
-                new MeasurementsAdapter(imageElement.getPixelSize(), 0, 0, false, height, unit.getAbbreviation());
-
-            if (graph instanceof RectangleGraphic || graph instanceof EllipseGraphic || graph instanceof PolygonGraphic
-                || graph instanceof FreeHandGraphic) {
-
-                Measure2DAnalyse blob =
-                    new Measure2DAnalyse(graph.getShape(), measurementsAdapter,
-                        (Color) ((AbstractDragGraphic) graph).getColorPaint());
-                // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
-                // if (selected == null) {
-                // return;
-                // }
-                int nbMeasures = getNumberOfMeasures(MEAS2D_SELECTMEASURES);
-
-                String[] headers = { "Parameter", "Value [" + unit.getAbbreviation() + "]" };
-                java.util.List<String> measures = Measure2DAnalyse.getObjectMeasureList(MEAS2D_SELECTMEASURES);
-                jtable.setModel(new SimpleTableModel(headers, createRows(
-                    blob.getAnalyse(MEAS2D_SELECTMEASURES, nbMeasures), measures)));
-                jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-                createTableHeaders(jtable);
-                tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-                tableContainer.add(jtable, BorderLayout.CENTER);
-
-                // if (histo != null) {
-                // histo.updateHistogram(new ROIShape(graph.getShape()));
-                // }
-            } else if (graph instanceof LineGraphic || graph instanceof FreeHandLineGraphic) {
-                Measure1DAnalyse blob = new Measure1DAnalyse((AbstractDragGraphic) graph, measurementsAdapter);
-                // boolean[] selected = imageFrame.getSettingsData().getMeas2D_SelectMeasures();
-                // if (selected == null) {
-                // return;
-                // }
-                int nbMeasures = getNumberOfMeasures(MEAS1D_SELECTMEASURES);
-
-                String[] headers = { "Parameter", "Value [" + unit.getAbbreviation() + "]" };
-                java.util.List<String> measures = Measure1DAnalyse.getObjectMeasureList(MEAS1D_SELECTMEASURES);
-                jtable.setModel(new SimpleTableModel(headers, createRows(
-                    blob.getMeasure1DAnalyse(MEAS1D_SELECTMEASURES, nbMeasures), measures)));
+            List<MeasureItem> list = graph.getMeasurements(imageElement, true);
+            if (list != null) {
+                String[][] labels = new String[list.size()][];
+                for (int i = 0; i < labels.length; i++) {
+                    MeasureItem m = list.get(i);
+                    String[] row = new String[2];
+                    StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
+                    if (m.getUnit() != null) {
+                        buffer.append(" [");
+                        buffer.append(m.getUnit());
+                        buffer.append("]");
+                    }
+                    row[0] = buffer.toString();
+                    row[1] = m.getValue() == null ? "" : DecFormater.twoDecimalUngroup(m.getValue());
+                    labels[i] = row;
+                }
+                String[] headers = { "Parameter", "Value" };
+                jtable.setModel(new SimpleTableModel(headers, labels));
                 jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
                 createTableHeaders(jtable);
                 tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
                 tableContainer.add(jtable, BorderLayout.CENTER);
             }
+
         }
         tableContainer.revalidate();
         tableContainer.repaint();
@@ -332,9 +286,19 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     @Override
     public void handle(List<Graphic> selectedGraphics, ImageElement img) {
         Graphic g = null;
-        if (selectedGraphics != null && selectedGraphics.size() == 1) {
-            g = selectedGraphics.get(0);
+        List<AbstractDragGraphic> list = null;
+        if (selectedGraphics != null) {
+            if (selectedGraphics.size() == 1) {
+                g = selectedGraphics.get(0);
+            }
+            list = new ArrayList<AbstractDragGraphic>();
+            for (Graphic graphic : selectedGraphics) {
+                if (graphic instanceof AbstractDragGraphic) {
+                    list.add((AbstractDragGraphic) graphic);
+                }
+            }
         }
+        this.selectedGraphic = list;
         setSelectedGraphic(g, img);
     }
 

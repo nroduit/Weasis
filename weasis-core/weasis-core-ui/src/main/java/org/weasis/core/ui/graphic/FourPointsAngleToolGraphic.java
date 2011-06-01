@@ -22,6 +22,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -168,6 +169,12 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                 setShape(newShape, mouseEvent);
             }
         }
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+
+        return null;
     }
 
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {

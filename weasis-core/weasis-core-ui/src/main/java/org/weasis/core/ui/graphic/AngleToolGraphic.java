@@ -13,17 +13,18 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
@@ -33,6 +34,9 @@ import org.weasis.core.api.media.data.ImageElement;
 public class AngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
+
+    public final static Measurement Angle = new Measurement("Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Complementary Angle", true);
 
     public final static int ARC_RADIUS = 32;
 
@@ -86,27 +90,35 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
                     newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
 
-                    String label = getRealAngleLabel(getImageElement(mouseEvent), A, P, B);
-                    setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
                 }
                 setShape(newShape, mouseEvent);
+                updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
             }
         }
     }
 
-    protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
-        String label = "";
-        if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
-
-            Point2D At = rescale.transform(A, null);
-            Point2D Ot = rescale.transform(O, null);
-            Point2D Bt = rescale.transform(B, null);
-
-            double realAngle = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt));
-            label = "Angle : " + DecFormater.twoDecimal(Math.abs(realAngle)) + "°";
-            label += " / " + DecFormater.twoDecimal(180 - Math.abs(realAngle)) + "°";
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+        if (imageElement != null && handlePointList.size() >= 3) {
+            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+            if (adapter != null) {
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                if (Angle.isComputed() || ComplementaryAngle.isComputed()) {
+                    Point2D At = handlePointList.get(0);
+                    Point2D Ot = handlePointList.get(1);
+                    Point2D Bt = handlePointList.get(2);
+                    double realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt)));
+                    if (Angle.isComputed() && (releaseEvent || Angle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(Angle, realAngle, "deg"));
+                    }
+                    if (ComplementaryAngle.isComputed() && (releaseEvent || ComplementaryAngle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
+                    }
+                }
+                return measVal;
+            }
         }
-        return label;
+        return null;
     }
+
 }

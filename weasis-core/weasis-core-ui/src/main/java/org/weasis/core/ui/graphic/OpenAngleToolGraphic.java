@@ -21,6 +21,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -36,6 +37,9 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(
         OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
+
+    public final static Measurement Angle = new Measurement("Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Complementary Angle", true);
 
     protected Stroke strokeDecorator;
     protected Stroke strokeDecorator2;
@@ -202,6 +206,12 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                 setShape(newShape, mouseEvent);
             }
         }
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+
+        return null;
     }
 
     protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {

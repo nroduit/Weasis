@@ -17,10 +17,12 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
@@ -309,6 +311,12 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
 
     @Override
     public String getDescription() {
+        return null;
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean b) {
+        // TODO Auto-generated method stub
         return null;
     }
 

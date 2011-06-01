@@ -45,7 +45,7 @@ public class CalibrationView extends JPanel {
     private final DefaultView2d view2d;
     private final LineGraphic line;
 
-    private final JComboBox jComboBoxUnit = new JComboBox(Unit.getUniExceptPixel().toArray());
+    private final JComboBox jComboBoxUnit = new JComboBox(Unit.getUnitExceptPixel().toArray());
     private final JPanel jPanelMode = new JPanel();
     private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField();
 

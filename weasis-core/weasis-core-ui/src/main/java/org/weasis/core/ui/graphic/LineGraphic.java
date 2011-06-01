@@ -13,25 +13,37 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
+
+    public final static Measurement FirstPointX = new Measurement("First point X", true);
+    public final static Measurement FirstPointY = new Measurement("First point Y", true);
+    public final static Measurement LastPointX = new Measurement("Last point X", true);
+    public final static Measurement LastPointY = new Measurement("Last point Y", true);
+    public final static Measurement LineLength = new Measurement("Line length", true);
+    public final static Measurement Orientation = new Measurement("Orientation", true);
+    public final static Measurement OrientationSignificance = new Measurement("Orientation significance", true);
+    public final static Measurement Azimuth = new Measurement("Azimuth", true);
+    public final static Measurement AzimuthSignificance = new Measurement("Azimuth significance", true);
+    public final static Measurement BarycenterX = new Measurement("Barycenter X", true);
+    public final static Measurement BarycenterY = new Measurement("Barycenter Y", true);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
 
     public LineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(2, paintColor, lineThickness, labelVisible);
@@ -45,29 +57,6 @@ public class LineGraphic extends AbstractDragGraphic {
     @Override
     public String getUIName() {
         return Messages.getString("MeasureToolBar.line"); //$NON-NLS-1$
-    }
-
-    @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
-        if (labelVisible) {
-            ImageElement image = null;
-
-            if (source instanceof MouseEvent) {
-                image = getImageElement((MouseEvent) source);
-            } else if (source instanceof ImageElement) {
-                image = (ImageElement) source;
-            }
-            if (image != null) {
-                AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
-
-                Point2D At = rescale.transform(handlePointList.get(0), null);
-                Point2D Bt = rescale.transform(handlePointList.get(1), null);
-
-                Unit unit = image.getPixelSpacingUnit();
-                String label = "Dist : " + DecFormater.twoDecimal(At.distance(Bt)) + " " + unit.getAbbreviation();
-                setLabel(new String[] { label }, view2d);
-            }
-        }
     }
 
     @Override
@@ -151,6 +140,56 @@ public class LineGraphic extends AbstractDragGraphic {
     public Point2D getEndPoint() {
         if (handlePointList.size() > 1)
             return (Point2D) handlePointList.get(1).clone();
+        return null;
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+        if (imageElement != null) {
+            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+            if (adapter != null) {
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                if (FirstPointX.isComputed() || FirstPointY.isComputed()) {
+                    Point2D p = getStartPoint();
+                    if (FirstPointX.isComputed() && (releaseEvent || FirstPointX.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || FirstPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
+                                : null;
+                        measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
+                    }
+                    if (FirstPointY.isComputed() && (releaseEvent || FirstPointY.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || FirstPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
+                                : null;
+                        measVal.add(new MeasureItem(FirstPointY, val, adapter.getUnit()));
+                    }
+                }
+                if (LastPointX.isComputed() || LastPointY.isComputed()) {
+                    Point2D p = getEndPoint();
+                    if (LastPointX.isComputed() && (releaseEvent || LastPointX.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || LastPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
+                                : null;
+                        measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
+                    }
+                    if (LastPointY.isComputed() && (releaseEvent || LastPointY.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || LastPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
+                                : null;
+                        measVal.add(new MeasureItem(LastPointY, val, adapter.getUnit()));
+                    }
+                }
+
+                if (LineLength.isComputed() && (releaseEvent || LineLength.isGraphicLabel())) {
+                    Double val =
+                        releaseEvent || LineLength.isQuickComputing() ? getSegmentLength(adapter.getCalibRatio(),
+                            adapter.getCalibRatio()) : null;
+                    measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
+                }
+
+                return measVal;
+            }
+        }
         return null;
     }
 }
