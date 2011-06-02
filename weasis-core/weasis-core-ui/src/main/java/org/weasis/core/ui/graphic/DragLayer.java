@@ -47,15 +47,16 @@ public class DragLayer extends AbstractLayer {
             if (bounds != null) {
                 Rectangle repaintBounds = graphic.getRepaintBounds(transform);
 
-                if (repaintBounds != null && repaintBounds.intersects(bounds))
+                if (repaintBounds != null && repaintBounds.intersects(bounds)) {
                     graphic.paint(g2d, transform);
-                else {
+                } else {
                     GraphicLabel graphicLabel = graphic.getGraphicLabel();
                     Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
 
-                    if (labelBounds != null && labelBounds.intersects(bounds))
+                    if (labelBounds != null && labelBounds.intersects(bounds)) {
                         graphic.paintLabel(g2d, transform);
-                    // TODO would be simpler to integrate intersect check inside graphic instance
+                        // TODO would be simpler to integrate intersect check inside graphic instance
+                    }
                 }
 
             } else {
@@ -86,18 +87,19 @@ public class DragLayer extends AbstractLayer {
                     Area selectionArea = graphic.getArea(transform);
                     if (selectionArea != null && selectionArea.intersects(rect)) {
                         graphicList.add(graphic);
-                        break;
+                        continue;
                     }
                 }
 
                 GraphicLabel graphicLabel = graphic.getGraphicLabel();
                 if (graphicLabel != null) {
                     Area selectionArea = graphicLabel.getArea(transform);
-                    if (selectionArea != null && selectionArea.intersects(rect))
+                    if (selectionArea != null && selectionArea.intersects(rect)) {
                         graphicList.add(graphic);
-                    // Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
-                    // if (labelBounds != null && labelBounds.intersects(rect))
-                    // graphicList.add(graphic);
+                        // Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
+                        // if (labelBounds != null && labelBounds.intersects(rect))
+                        // graphicList.add(graphic);
+                    }
                 }
             }
         }

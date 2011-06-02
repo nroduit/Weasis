@@ -17,13 +17,11 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.Messages;
 
 /**
@@ -40,11 +38,6 @@ public class EllipseGraphic extends RectangleGraphic {
     public final static Measurement Area = new Measurement("Area", true);
     public final static Measurement Perimeter = new Measurement("Perimeter", true);
     public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
-
-    public final static Measurement ImageMin = new Measurement("Min", false);
-    public final static Measurement ImageMax = new Measurement("Max", false);
-    public final static Measurement ImageSTD = new Measurement("StDev", false);
-    public final static Measurement ImageMean = new Measurement("Mean", false);
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);
@@ -110,84 +103,9 @@ public class EllipseGraphic extends RectangleGraphic {
                     measVal.add(new MeasureItem(Area, val, unit));
                 }
 
-                if (ImageMin.isComputed() || ImageMax.isComputed() || ImageMean.isComputed() || ImageSTD.isComputed()) {
-                    Double min = null;
-                    Double max = null;
-                    Double stdv = null;
-                    Double mean = null;
-                    if (releaseEvent) {
-                        PlanarImage image = imageElement.getImage();
-                        try {
-                            ArrayList<Integer> pList = getValueFromArea(image);
-                            if (pList != null && pList.size() > 0) {
-                                int band = image.getSampleModel().getNumBands();
-                                if (band == 1) {
-                                    // Hounsfield = pixelValue * rescale slope + intercept value
-                                    Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
-                                    Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
-                                    min = Double.MAX_VALUE;
-                                    max = -Double.MAX_VALUE;
-                                    double sum = 0.0;
-                                    for (Integer val : pList) {
-                                        double v = val.doubleValue();
-                                        if (v < min) {
-                                            min = v;
-                                        }
-                                        if (v > max) {
-                                            max = v;
-                                        }
-                                        sum += v;
-                                    }
-
-                                    mean = sum / pList.size();
-
-                                    stdv = 0.0D;
-                                    for (Integer val : pList) {
-                                        double v = val.doubleValue();
-                                        if (v < min) {
-                                            min = v;
-                                        }
-                                        if (v > max) {
-                                            max = v;
-                                        }
-                                        stdv += (v - mean) * (v - mean);
-                                    }
-
-                                    stdv = Math.sqrt(stdv / (pList.size() - 1.0));
-
-                                    if (slope != null || intercept != null) {
-                                        slope = slope == null ? 1.0f : slope;
-                                        intercept = intercept == null ? 0.0f : intercept;
-                                        mean = mean * slope + intercept;
-                                        stdv = stdv * slope + intercept;
-                                        min = min * slope + intercept;
-                                        max = max * slope + intercept;
-                                    }
-
-                                } else {
-                                    // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
-                                }
-                            }
-                        } catch (ArrayIndexOutOfBoundsException ex) {
-                        }
-                    }
-                    String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
-                    if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
-                        Double val = releaseEvent || ImageMin.isQuickComputing() ? min : null;
-                        measVal.add(new MeasureItem(ImageMin, val, unit));
-                    }
-                    if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
-                        Double val = releaseEvent || ImageMax.isQuickComputing() ? max : null;
-                        measVal.add(new MeasureItem(ImageMax, val, unit));
-                    }
-                    if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
-                        Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
-                        measVal.add(new MeasureItem(ImageMean, val, unit));
-                    }
-                    if (ImageSTD.isComputed() && (releaseEvent || ImageSTD.isGraphicLabel())) {
-                        Double val = releaseEvent || ImageSTD.isQuickComputing() ? stdv : null;
-                        measVal.add(new MeasureItem(ImageSTD, val, unit));
-                    }
+                List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
+                if (stats != null) {
+                    measVal.addAll(stats);
                 }
                 return measVal;
             }

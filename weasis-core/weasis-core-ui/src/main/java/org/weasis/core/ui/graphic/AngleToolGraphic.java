@@ -36,7 +36,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
     public final static Measurement Angle = new Measurement("Angle", true);
-    public final static Measurement ComplementaryAngle = new Measurement("Complementary Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
 
     public final static int ARC_RADIUS = 32;
 

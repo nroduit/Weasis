@@ -40,7 +40,8 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
     public final static Measurement Angle = new Measurement("Angle", true);
-    public final static Measurement ComplementaryAngle = new Measurement("Complementary Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
+
     protected Stroke strokeDecorator;
 
     public CobbAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {

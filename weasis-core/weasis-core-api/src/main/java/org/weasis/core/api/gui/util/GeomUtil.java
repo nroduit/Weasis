@@ -59,8 +59,9 @@ public final class GeomUtil {
      */
     public static double getSmallestRotationAngleRad(double angle) {
         angle = angle % Math.PI;
-        if (Math.abs(angle) > Math.PI)
+        if (Math.abs(angle) > Math.PI) {
             angle -= Math.signum(angle) * 2.0 * Math.PI;
+        }
         return angle;
     }
 
@@ -71,8 +72,9 @@ public final class GeomUtil {
      */
     public static double getSmallestRotationAngleDeg(double angle) {
         angle = angle % 360.0;
-        if (Math.abs(angle) > 180.0)
+        if (Math.abs(angle) > 180.0) {
             angle -= Math.signum(angle) * 360.0;
+        }
         return angle;
     }
 
@@ -291,9 +293,9 @@ public final class GeomUtil {
         if ((transform != null)) {
             double sx = transform.getScaleX();
             double shx = transform.getShearX();
-            if (sx != 0 || shx != 0)
+            if (sx != 0 || shx != 0) {
                 scalingFactor = Math.sqrt(sx * sx + shx * shx);
-            // scalingFactor = Math.sqrt(Math.pow(sx, 2) + Math.pow(shx, 2));
+            }
         }
 
         return scalingFactor;
@@ -315,13 +317,15 @@ public final class GeomUtil {
         AffineTransform scaleTransform = new AffineTransform(); // Identity transformation.
 
         if (scalingFactor != 1) {
-            if (anchorPoint != null)
+            if (anchorPoint != null) {
                 scaleTransform.translate(anchorPoint.getX(), anchorPoint.getY());
+            }
 
             scaleTransform.scale(scalingFactor, scalingFactor);
 
-            if (anchorPoint != null)
+            if (anchorPoint != null) {
                 scaleTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
+            }
         }
 
         return scaleTransform.createTransformedShape(shape);

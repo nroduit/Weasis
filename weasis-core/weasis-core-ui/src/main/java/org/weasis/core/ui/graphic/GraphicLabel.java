@@ -26,7 +26,11 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class GraphicLabel {
-
+    /**
+     * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
+     * paintFontOutline grows of 1 pixel all string painting
+     */
+    protected static final int GROWING_BOUND = 3;
     protected String[] labelStringArray;
 
     // protected List<TextLayout> labelTextList;
@@ -46,24 +50,9 @@ public class GraphicLabel {
     // TOP, CENTER, BOTTOM
     // }
 
-    /**
-     * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
-     * paintFontOutline grows of 1 pixel all string painting
-     */
-    protected static final int GROWING_BOUND = 3;
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-    protected void init() {
+    protected void reset() {
         labelStringArray = null;
-
-        // if (labelTextList != null)
-        // labelTextList.clear();
-        // labelTextList = null;
-        //
-        // fontRenderContext = null;
-        // defaultFont = null;
         labelBounds = null;
-        // labelPosition = null;
         labelHeight = labelWidth = 0;
     }
 
@@ -117,13 +106,13 @@ public class GraphicLabel {
         if (labelBounds == null)
             return new Area();
 
+        // FIXME Does handle correctly flip in affine transform (=> -scalex)
         Rectangle2D scaledBounds = (Rectangle2D) labelBounds.clone();
-        double scalingFactor = GeomUtil.extractScalingFactor(transform);
+        double scale = GeomUtil.extractScalingFactor(transform);
 
-        if (scalingFactor != 1.0) {
-            double invScaledWidth = labelBounds.getWidth() / scalingFactor;
-            double invScaledHeight = labelBounds.getHeight() / scalingFactor;
-            scaledBounds.setRect(scaledBounds.getX(), scaledBounds.getY(), invScaledWidth, invScaledHeight);
+        if (scale != 1.0) {
+            scaledBounds.setRect(scaledBounds.getX(), scaledBounds.getY(), labelBounds.getWidth() / scale,
+                labelBounds.getHeight() / scale);
         }
         Point2D pt1 = new Point2D.Double(1, 0);
         Point2D pt2 = transform.deltaTransform(pt1, null);
@@ -144,74 +133,55 @@ public class GraphicLabel {
      */
     public Rectangle2D getTransformedBounds(Rectangle2D realBounds, AffineTransform transform) {
         if (realBounds == null)
-            return null;
+            throw new IllegalArgumentException("realBounds cannot be null!");
 
-        Rectangle2D transformedBounds = (Rectangle2D) realBounds.clone();
+        if (transform == null)
+            return (Rectangle2D) realBounds.clone();
 
-        if (transform != null) {
-            // Only translates origin because no rotation or scaling is applied
-            Point2D.Double p = new Point2D.Double(transformedBounds.getX(), transformedBounds.getY());
-            transform.transform(p, p);
-            transformedBounds.setRect(p.getX(), p.getY(), transformedBounds.getWidth(), transformedBounds.getHeight());
-        }
-
-        return transformedBounds.getBounds();
+        // Only translates origin because no rotation or scaling is applied
+        Point2D.Double p = new Point2D.Double(realBounds.getX(), realBounds.getY());
+        transform.transform(p, p);
+        return new Rectangle2D.Double(p.getX(), p.getY(), realBounds.getWidth(), realBounds.getHeight());
     }
 
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      * Sets label strings and compute bounding rectangle size and position in pixel world according to the DefaultView
      * which defines current "Font"<br>
      */
     public void setLabel(DefaultView2d view2d, double xPos, double yPos, String... labels) {
-        if (view2d == null)
-            throw new RuntimeException("DefaultView2d should not be null !");
-
-        if (labels == null || labels.length == 0) {
-            init();
+        if (view2d == null || labels == null || labels.length == 0) {
+            reset();
         } else {
             labelStringArray = labels;
-
             Font defaultFont = view2d.getEventManager().getViewSetting().getFont();
             FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
-
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds =
                 new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth, labelHeight
                     * labels.length);
-
             GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
         }
     }
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
         if (defaultFont == null)
-            throw new RuntimeException("Font shouldn't ne null");
+            throw new RuntimeException("Font should not be null");
         if (fontRenderContext == null)
-            throw new RuntimeException("FontRenderContext shouldn't ne null");
+            throw new RuntimeException("FontRenderContext should not be null");
 
         if (labelStringArray == null || labelStringArray.length == 0) {
-            labelBounds = null;
-            labelHeight = labelWidth = 0;
+            reset();
         } else {
-            double maxWidth = 0, maxHeight = 0;
-
+            double maxWidth = 0;
             for (String label : labelStringArray) {
-                // Rectangle2D stringBounds = defaultFont.getStringBounds(label, fontRenderContext);
-                // => approach above does not guaranty to get the more accurate visual bounding
-
                 if (label.length() > 0) {
                     TextLayout layout = new TextLayout(label, defaultFont, fontRenderContext);
-                    Rectangle2D stringBounds = layout.getBounds();
-
-                    maxWidth = Math.max(stringBounds.getWidth(), maxWidth);
-                    maxHeight = Math.max(stringBounds.getHeight(), maxHeight);
+                    maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
             }
-
-            labelHeight = maxHeight;
-            labelWidth = maxWidth;
+            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 1.5;
+            labelWidth = maxWidth + 3;
         }
     }
 
@@ -245,12 +215,6 @@ public class GraphicLabel {
             }
 
             // if (transform != null) {
-            // g2d.setPaint(Color.RED);
-            // Rectangle realBounds = getBound(transform);
-            // Rectangle2D transformedBounds = getTransformedBounds(realBounds, transform);
-            // g2d.draw(transformedBounds);
-            // }
-            // if (transform != null) {
             // g2d.setPaint(Color.GREEN);
             // g2d.draw(transform.createTransformedShape(getBounds(transform)));
             // }
@@ -267,37 +231,20 @@ public class GraphicLabel {
 
         Rectangle2D boundingRect = getTransformedBounds(labelBounds, transform);
 
-        // Point2D.Double p = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
-        // transform.transform(p, p);
-        //
-        // Rectangle2D boundingRect =
-        // new Rectangle2D.Double(p.getX(), p.getY(), labelBounds.getWidth(), labelBounds.getHeight());
-
         g2d.setPaint(Color.BLACK);
         g2d.draw(boundingRect);
 
         GeomUtil.growRectangle(boundingRect, -1);
+
         g2d.setPaint(Color.WHITE);
         g2d.draw(boundingRect);
-
-        // GeomUtil.growRectangle(boundingRect, -1);
-        // g2d.setPaint(Color.RED);
-        // g2d.draw(boundingRect);
-
     }
 
     protected void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
 
-        Font defaultFont = g2d.getFont();
-        FontRenderContext fontRenderContext = g2d.getFontRenderContext();
-
-        assert (defaultFont != null) : "Font shouldn't be null";
-        assert (fontRenderContext != null) : "FontRenderContext shouldn't be null";
-
-        TextLayout layout = new TextLayout(str, defaultFont, fontRenderContext);
+        TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
 
         g2d.setPaint(Color.BLACK);
-
         layout.draw(g2d, x - 1f, y - 1f);
         layout.draw(g2d, x - 1f, y);
         layout.draw(g2d, x - 1f, y + 1f);
@@ -307,18 +254,8 @@ public class GraphicLabel {
         layout.draw(g2d, x + 1f, y);
         layout.draw(g2d, x + 1f, y + 1f);
 
-        // g2d.drawString(str, x - 1f, y - 1f);
-        // g2d.drawString(str, x - 1f, y);
-        // g2d.drawString(str, x - 1f, y + 1f);
-        // g2d.drawString(str, x, y - 1f);
-        // g2d.drawString(str, x, y + 1f);
-        // g2d.drawString(str, x + 1f, y - 1f);
-        // g2d.drawString(str, x + 1f, y);
-        // g2d.drawString(str, x + 1f, y + 1f);
         g2d.setPaint(Color.WHITE);
         layout.draw(g2d, x, y);
-
-        // g2d.drawString(str, x, y);
     }
 
     @Deprecated
