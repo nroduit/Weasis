@@ -326,7 +326,7 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
     public void paintLabel(Graphics2D g2d, AffineTransform transform) {
         if (showLabel && labels != null) {
             if (graphicLabel != null && labelHeight != null) {
-                Rectangle2D labelBound = graphicLabel.getLabelBound();
+                Rectangle2D labelBound = graphicLabel.getLabelBounds();
                 Point2D.Double p = new Point2D.Double(labelBound.getX(), labelBound.getY());
                 transform.transform(p, p);
                 p.x += graphicLabel.getOffsetX();

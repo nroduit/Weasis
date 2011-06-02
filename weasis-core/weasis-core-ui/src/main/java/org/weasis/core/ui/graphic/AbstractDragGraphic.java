@@ -66,7 +66,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected boolean selected = false;
     protected boolean graphicComplete = false;
 
+    // TODO none are transient and should be if serialized
+
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public AbstractDragGraphic(int handlePointTotalNumber) {
+        this(handlePointTotalNumber, Color.YELLOW);
+    }
 
     public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor) {
         this(handlePointTotalNumber, paintColor, 1f);
@@ -138,12 +144,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public String[] getLabel() {
-        return graphicLabel != null ? graphicLabel.getLabel() : null;
+        return graphicLabel != null ? graphicLabel.getLabels() : null;
     }
 
     public boolean isGraphicComplete() {
-        // return isGraphicComplete = (handlePointList.size() == handlePointTotalNumber);
-        return graphicComplete;
+        return graphicComplete = (handlePointList.size() == handlePointTotalNumber);
+        // return graphicComplete;
     }
 
     @Override
@@ -204,7 +210,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        // NOTE : bound is not accurate with complex shape (it is true for rectangle or ellipse with rotation)
+        // NOTE : bound is not accurate with complex shape (true for rectangle or ellipse with rotation)
         Rectangle bound = shape.getBounds();
         bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0);
         return bound;
@@ -234,11 +240,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        if (shape instanceof AdvancedShape) {
+        if (shape instanceof AdvancedShape)
             ((AdvancedShape) shape).updateScalingFactor(transform);
-        }
 
-        return shape.getBounds();
+        Rectangle2D bounds = shape.getBounds2D();
+        growSelection(bounds, transform);
+
+        return bounds.getBounds();
     }
 
     /**
@@ -291,14 +299,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (shape == null)
             return null;
 
-        if (shape instanceof AdvancedShape) {
+        if (shape instanceof AdvancedShape)
             ((AdvancedShape) shape).updateScalingFactor(transform);
-        }
 
-        Rectangle rectangle = shape.getBounds();
-        growHandles(rectangle, transform);
+        Rectangle2D bounds = shape.getBounds2D();
+        growHandles(bounds, transform);
 
-        return rectangle;
+        return bounds != null ? bounds.getBounds() : null;
     }
 
     /**
@@ -312,9 +319,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform) {
 
         Rectangle rectangle = getRepaintBounds(shape, transform);
-        if (transform != null && rectangle != null) {
+        if (transform != null && rectangle != null)
             rectangle = transform.createTransformedShape(rectangle).getBounds();
-        }
 
         return rectangle;
     }
@@ -343,18 +349,31 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     /**
      * @param rectangle
-     *            Bounding rectangle which size has to be modified according to the given transform for the view when
-     *            taking handle drawings in consideration<br>
+     *            Bounding rectangle which size has to be modified according to the given transform with handle drawings
+     *            and lineThikness taken in consideration<br>
      *            This assumes that handle drawing size do not change with different scaling of views. Hence, real
-     *            coordinates of bounding rectangle have modified consequently<br>
+     *            coordinates of bounding rectangle are modified consequently<br>
      * @param transform
      */
-    public void growHandles(Rectangle rectangle, AffineTransform transform) {
-        int growingValue = (Math.max((int) Math.ceil(handleSize * 1.5), (int) Math.ceil(lineThickness)) + 1) >> 1;
+    public void growHandles(Rectangle2D rectangle, AffineTransform transform) {
+        // int growingValue = (Math.max((int) Math.ceil(handleSize * 1.5), (int) Math.ceil(lineThickness)) + 1) >> 1;
+        double growingSize = Math.max(handleSize * 1.5, lineThickness) / 2;// >> 1;
         if (transform != null) {
-            growingValue = (int) Math.ceil(growingValue / transform.getScaleX());
+            // growingValue = (int) Math.ceil(growingValue / transform.getScaleX()); // doesn't work with rotation
+            double scalingFactor = GeomUtil.extractScalingFactor(transform);
+            // growingValue = (int) Math.ceil(growingValue / scalingFactor);
+            growingSize = growingSize / scalingFactor;
+
         }
-        rectangle.grow(growingValue, growingValue);
+        GeomUtil.growRectangle(rectangle, growingSize);
+        // rectangle.grow(growingSize, growingSize);
+    }
+
+    public void growSelection(Rectangle2D rectangle, AffineTransform transform) {
+        double growingSize = handleSize;
+        if (transform != null)
+            growingSize = growingSize / GeomUtil.extractScalingFactor(transform);
+        GeomUtil.growRectangle(rectangle, growingSize);
     }
 
     /**
@@ -367,21 +386,38 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     public int getHandlePointIndex(MouseEvent mouseevent) {
         final Point mousePoint = mouseevent.getPoint();
-        int handleSize = getHandleSize() + 2;
+        // System.out.println("mousePoint : " + mousePoint);
 
-        // Enable to get a better selection of the handle with a low or high magnification zoom
-        AffineTransform affineTransform = getAffineTransform(mouseevent);
-        if (affineTransform != null) {
-            handleSize = (int) Math.ceil(handleSize / affineTransform.getScaleX());
+        double maxHandleDistance = (handleSize * 1.5) / 2;
+
+        AffineTransform transform = getAffineTransform(mouseevent);
+        if (transform != null) {
+            double scalingFactor = GeomUtil.extractScalingFactor(transform);
+            maxHandleDistance = maxHandleDistance / scalingFactor;
         }
 
         for (int index = 0; index < handlePointList.size(); index++) {
             Point2D point = handlePointList.get(index);
-            if (mousePoint.distance(point) <= handleSize)
+            // System.out.println("point : " + mousePoint.distance(point));
+            // System.out.println("distance : " + mousePoint.distance(point) + " - maxHandleDistance : "
+            // + maxHandleDistance);
+            if (mousePoint.distance(point) <= maxHandleDistance)
                 return index;
         }
-        return -1;
 
+        return -1;
+    }
+
+    public boolean isOnGraphicLabel(MouseEvent mouseevent) {
+        final Point mousePoint = mouseevent.getPoint();
+
+        AffineTransform transform = getAffineTransform(mouseevent);
+        if (transform != null && graphicLabel != null) {
+            Area selectionArea = graphicLabel.getArea(transform);
+            if (selectionArea != null && selectionArea.contains(mousePoint))
+                return true;
+        }
+        return false;
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -412,10 +448,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         // Draglayer.getGraphicsSurfaceInArea
     }
 
+    @Deprecated
     @Override
     public boolean intersects(Rectangle rectangle, AffineTransform transform) {
         return getArea(transform).intersects(rectangle);
-
     }
 
     @Override
@@ -471,31 +507,35 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public void setLabel(String[] labels, DefaultView2d view2d) {
-        Rectangle rect = shape.getBounds();
-
-        int xPos = rect.x + rect.width;
-        int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
-
-        this.setLabel(labels, view2d, xPos, yPos);
+        if (shape != null) {
+            Rectangle rect = shape.getBounds();
+            int xPos = rect.x + rect.width;
+            int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
+            this.setLabel(labels, view2d, xPos, yPos);
+        }
     }
 
     public void setLabel(String[] labels, DefaultView2d view2d, int xPos, int yPos) {
-        if (labelVisible && view2d != null && shape != null)
-            if (labels == null || labels.length == 0) {
+        if (view2d == null)
+            return;
+        // throw new RuntimeException();
+
+        if (labelVisible) {
+            Rectangle2D oldBounds = (graphicLabel != null) ? graphicLabel.getLabelBounds() : null;
+            Rectangle2D newBounds = null;
+
+            if (labels == null || labels.length == 0)
                 graphicLabel = null;
-            } else {
-                if (graphicLabel == null) {
+            else {
+                if (graphicLabel == null)
                     graphicLabel = new GraphicLabel();
-                }
 
-                Rectangle oldBound = graphicLabel.getBound();
-                graphicLabel.setLabel(labels, view2d);
-                graphicLabel.setLabelPosition(xPos, yPos);
-                Rectangle rect = shape.getBounds();
-                graphicLabel.setLabelPosition(rect.x + rect.width, (int) Math.ceil(rect.y + rect.height * 0.5));
-
-                firePropertyChange("graphicLabel", oldBound, graphicLabel);
+                graphicLabel.setLabel(view2d, xPos, yPos, labels);
+                newBounds = graphicLabel.getLabelBounds();
             }
+            if (oldBounds == null || newBounds == null || !oldBounds.equals(newBounds))
+                firePropertyChange("graphicLabel", oldBounds, newBounds);
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,18 +593,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             g2d.setPaint(colorPaint);
             g2d.setStroke(stroke);
             g2d.draw(drawingShape);
-            if (isFilled()) {
+            if (isFilled())
                 g2d.fill(drawingShape);
-            }
         }
-
-        g2d.setPaint(oldPaint);
-        g2d.setStroke(oldStroke);
 
         // if (isSelected && !isGraphicComplete)
-        if (isSelected()) {
+        if (isSelected())
             paintHandles(g2d, transform);
-        }
 
         paintLabel(g2d, transform);
 
@@ -582,37 +617,36 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         // }
 
         // }
+
+        g2d.setPaint(oldPaint);
+        g2d.setStroke(oldStroke);
     }
 
     @Override
     public void paintLabel(Graphics2D g2d, AffineTransform transform) {
-        if (labelVisible && graphicLabel != null) {
-            graphicLabel.paint(g2d, transform);
-        }
+        if (labelVisible && graphicLabel != null)
+            graphicLabel.paint(g2d, transform, selected);
     }
 
-    public void paintHandles(Graphics2D graphics2d, AffineTransform transform) {
+    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
 
-        double size = getHandleSize();
+        double size = handleSize;
         double halfSize = size / 2;
 
         Point2D.Double[] handlePtArray = new Point2D.Double[handlePointList.size()];
-        for (int i = 0; i < handlePointList.size(); i++) {
+        for (int i = 0; i < handlePointList.size(); i++)
             handlePtArray[i] = new Point2D.Double(handlePointList.get(i).getX(), handlePointList.get(i).getY());
-        }
 
         transform.transform(handlePtArray, 0, handlePtArray, 0, handlePtArray.length);
 
-        graphics2d.setPaint(Color.black);
-        for (Point2D point : handlePtArray) {
-            graphics2d.fill(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
-        }
+        g2d.setPaint(Color.black);
+        for (Point2D point : handlePtArray)
+            g2d.fill(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
 
-        graphics2d.setPaint(Color.white);
-        graphics2d.setStroke(new BasicStroke(1.0f));
-        for (Point2D point : handlePtArray) {
-            graphics2d.draw(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
-        }
+        g2d.setPaint(Color.white);
+        g2d.setStroke(new BasicStroke(1.0f));
+        for (Point2D point : handlePtArray)
+            g2d.draw(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -621,10 +655,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         protected int lastX;
         protected int lastY;
-        protected int handlePointIndex; // -1 stands for moving current graphic
+        protected int handlePointIndex;
 
         protected DefaultDragSequence() {
-            this(-1);
+            this(-1); // -1 stands for moving current graphic
         }
 
         protected DefaultDragSequence(int handlePointIndex) {
@@ -636,15 +670,14 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             lastX = mouseEvent.getX();
             lastY = mouseEvent.getY();
 
-            if (!graphicComplete) {
-                if (handlePointList.isEmpty()) {
+            if (!isGraphicComplete()) {
+                if (handlePointList.isEmpty())
                     handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
-                }
-                if (handlePointList.size() < handlePointTotalNumber) {
-                    handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
-                }
 
-                handlePointIndex = handlePointList.size() - 1; // forces index to match actual dragging point
+                if (!isGraphicComplete())
+                    handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
+
+                handlePointIndex = handlePointList.size() - 1; // override index to match actual dragging point
             }
         }
 
@@ -665,28 +698,50 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         @Override
         public boolean completeDrag(MouseEvent mouseEvent) {
 
-            if (!graphicComplete) {
-                graphicComplete = handlePointList.size() == handlePointTotalNumber;
-            }
+            if (!isGraphicComplete()) {
 
-            int lastPointIndex = handlePointList.size() - 1;
-            Point2D lastPoint = handlePointList.get(lastPointIndex);
-            ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex);
+                // check if last dragging point is valid
+                int lastPointIndex = handlePointList.size() - 1;
+                Point2D lastPoint = handlePointList.get(lastPointIndex);
+                if (lastPointIndex > 0) {
+                    Point2D previousPoint = handlePointList.get(lastPointIndex - 1);
+                    if (lastPoint.equals(previousPoint))
+                        return false;
+                }
 
-            while (listIt.hasPrevious())
-                if (lastPoint.equals(listIt.previous()))
-                    return false;
-
-            if (!graphicComplete) {
+                // if last dragging point do not equals previous one means DragSequence can keep continue on next point
                 handlePointList.add(new Point.Double(mouseEvent.getPoint().getX(), mouseEvent.getPoint().getY()));
-                handlePointIndex = handlePointList.size() - 1;
+                handlePointIndex = handlePointList.size() - 1; // forces index to match actual dragging point
+
+                return false;
             }
-            boolean validShape = graphicComplete && shape != null;
-            if (validShape) {
+
+            boolean shapeValid = (shape != null && isShapeValid());
+
+            if (shapeValid)
                 updateShapeOnDrawing(mouseEvent);
-            }
-            return validShape;
+            // repaint measurement labels which are entirely computed on mouse click release
+
+            return shapeValid;
         }
+    }
+
+    /**
+     * Check that not handle points equals with another. <br>
+     * Can be overridden to assert what is a valid shape that can be fully computed
+     * 
+     * @return
+     */
+    protected boolean isShapeValid() {
+        int lastPointIndex = handlePointList.size() - 1;
+        while (lastPointIndex > 0) {
+            Point2D checkPoint = handlePointList.get(lastPointIndex);
+            ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
+            while (listIt.hasPrevious())
+                if (checkPoint.equals(listIt.previous()))
+                    return false;
+        }
+        return true;
     }
 
     public DragSequence createDragSequence(DragSequence dragsequence, MouseEvent mouseevent) {
@@ -755,6 +810,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     protected void fireDrawingChanged(Shape oldShape) {
         firePropertyChange("bounds", oldShape, shape);
+
+        Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getLabelBounds() : null;
+        firePropertyChange("graphicLabel", null, labelBounds);
+
+        // firePropertyChange("graphicLabel", null, graphicLabel.getLabelBounds());
     }
 
     protected void fireMoveAction() {
@@ -817,9 +877,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
         if (handlePointIndex == -1) {
-            for (Point2D point : handlePointList) {
+            for (Point2D point : handlePointList)
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
-            }
         } else {
             handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
         }
@@ -902,12 +961,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             addInvShape(shape, anchorPoint, getStroke());
         }
 
-        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMax) {
-            addInvShape(shape, anchorPoint, scalingMax, getStroke());
+        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMin) {
+            addInvShape(shape, anchorPoint, scalingMin, getStroke());
         }
 
-        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMax, Stroke stroke) {
-            shapeList.add(new InvariantShape(shape, stroke, anchorPoint, scalingMax));
+        void addInvShape(Shape shape, Point2D anchorPoint, double scalingMin, Stroke stroke) {
+            shapeList.add(new InvariantShape(shape, stroke, anchorPoint, scalingMin));
         }
 
         void addInvShape(Shape shape, Point2D anchorPoint, Stroke stroke) {
@@ -937,9 +996,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 g2d.setStroke(item.stroke);
                 g2d.draw(drawingShape);
 
-                if (isFilled()) {
+                if (isFilled())
                     g2d.fill(drawingShape);
-                }
             }
             g2d.setPaint(oldPaint);
             g2d.setStroke(oldStroke);
@@ -960,11 +1018,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle rectangle = null;
 
             for (BasicShape item : shapeList) {
-                if (rectangle == null) {
+                if (rectangle == null)
                     rectangle = item.getRealShape().getBounds();
-                } else {
+                else
                     rectangle.add(item.getRealShape().getBounds());
-                }
             }
 
             return rectangle;
@@ -975,11 +1032,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle2D rectangle = null;
 
             for (BasicShape item : shapeList) {
-                if (rectangle == null) {
+                if (rectangle == null)
                     rectangle = item.getRealShape().getBounds2D();
-                } else {
+                else
                     rectangle.add(item.getRealShape().getBounds2D());
-                }
             }
             return rectangle;
         }
@@ -1040,26 +1096,23 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public PathIterator getPathIterator(AffineTransform at) {
-            if (at != null) {
+            if (at != null)
                 updateScalingFactor(at);
-            }
             return getFullPathShape().getPathIterator(at);
         }
 
         @Override
         public PathIterator getPathIterator(AffineTransform at, double flatness) {
-            if (at != null) {
+            if (at != null)
                 updateScalingFactor(at);
-            }
             return getFullPathShape().getPathIterator(at, flatness);
         }
 
         private Path2D getFullPathShape() {
             Path2D pathShape = new Path2D.Double(Path2D.WIND_NON_ZERO);
 
-            for (BasicShape item : shapeList) {
+            for (BasicShape item : shapeList)
                 pathShape.append(item.getRealShape(), false);
-            }
 
             return pathShape;
         }
@@ -1067,15 +1120,30 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         public Area getArea(AffineTransform transform) {
             updateScalingFactor(transform);
 
-            double growingSize = getHandleSize() * 2 / scalingFactor;
+            double growingSize = getHandleSize() * 2.0 / scalingFactor;
             Stroke boundingStroke = new BasicStroke((float) growingSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
             Area pathBoundingArea = new Area();
 
             for (BasicShape item : shapeList) {
-                pathBoundingArea.add(new Area(boundingStroke.createStrokedShape(item.getRealShape())));
-            }
 
+                // Shape strokedShape = boundingStroke.createStrokedShape(item.getRealShape());
+
+                // Note : if shape is invalid, like a path with an odd number of curves, creating a new Area involves a
+                // "java.lang.InternalError". Because trapping the exception is too much time consuming it's the user
+                // responsibility of this not to happen
+                // Area strokedArea = new Area(strokedShape);
+                Shape strokedArea = null;
+                try {
+                    Shape strokedShape = boundingStroke.createStrokedShape(item.getRealShape());
+                    strokedArea = new Area(strokedShape);
+                } catch (Throwable e) {
+                    System.err.println(e);
+                }
+                if (strokedArea != null)
+                    pathBoundingArea.add(new Area(strokedArea));
+
+            }
             return pathBoundingArea;
         }
     }

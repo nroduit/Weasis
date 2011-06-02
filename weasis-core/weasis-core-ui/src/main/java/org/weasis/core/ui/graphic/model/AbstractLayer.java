@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicLabel;
 
@@ -59,8 +60,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     graphicBoundsChanged(graph, (Shape) propertychangeevent.getOldValue(),
                         (Shape) propertychangeevent.getNewValue(), getAffineTransform());
                 } else if ("graphicLabel".equals(s)) { //$NON-NLS-1$
-                    labelBoundsChanged(graph, (Rectangle) propertychangeevent.getOldValue(),
-                        (GraphicLabel) propertychangeevent.getNewValue(), getAffineTransform());
+                    labelBoundsChanged(graph, (Rectangle2D) propertychangeevent.getOldValue(),
+                        (Rectangle2D) propertychangeevent.getNewValue(), getAffineTransform());
                 } else if ("remove".equals(s)) { //$NON-NLS-1$
                     removeGraphic(graph);
                 } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
@@ -253,24 +254,31 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
     }
 
-    protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape, AffineTransform affineTransform) {
-        if (oldShape == null) {
-            if (shape != null) {
-                Rectangle rect = graphic.getTransformedBounds(shape, affineTransform);
-                if (rect != null) {
-                    repaint(rect);
+    protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape, AffineTransform transform) {
+        if (graphic != null) {
+            if (oldShape == null) {
+                if (shape != null) {
+                    Rectangle rect = graphic.getTransformedBounds(shape, transform);
+                    if (rect != null)
+                        repaint(rect);
                 }
-            }
-        } else if (shape != null) {
-            Rectangle rect =
-                rectangleUnion(graphic.getTransformedBounds(oldShape, affineTransform),
-                    graphic.getTransformedBounds(shape, affineTransform));
-            if (rect != null) {
-                repaint(rect);
+            } else {
+                if (shape == null) {
+                    Rectangle rect = graphic.getTransformedBounds(oldShape, transform);
+                    if (rect != null)
+                        repaint(rect);
+                } else {
+                    Rectangle rect =
+                        rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
+                            graphic.getTransformedBounds(shape, transform));
+                    if (rect != null)
+                        repaint(rect);
+                }
             }
         }
     }
 
+    @Deprecated
     private void transformLabelBound(Rectangle shape, AffineTransform affineTransform, GraphicLabel label) {
         if (affineTransform != null) {
             Point2D.Double p = new Point2D.Double(shape.getX(), shape.getY());
@@ -280,27 +288,36 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    protected void labelBoundsChanged(Graphic graphic, Rectangle oldShape, GraphicLabel label,
-        AffineTransform affineTransform) {
-        if (label != null) {
-            Rectangle bound = label.getBound();
-            if (oldShape == null && bound != null) {
-                transformLabelBound(bound, affineTransform, label);
-                bound.grow(2, 2);
-                repaint(bound);
+    protected void labelBoundsChanged(Graphic graphic, Rectangle2D oldBounds, Rectangle2D newBounds,
+        AffineTransform transform) {
+        GraphicLabel label = graphic != null ? graphic.getGraphicLabel() : null;
 
-            } else if (bound != null) {
-                // Get new instance to avoid changing the oldShape for other layers
-                oldShape = oldShape.getBounds();
-                transformLabelBound(oldShape, affineTransform, label);
-                transformLabelBound(bound, affineTransform, label);
-                Rectangle rect = rectangleUnion(oldShape, bound);
-                if (rect != null) {
-                    rect.grow(2, 2);
-                    repaint(rect);
+        if (label != null) {
+            if (oldBounds == null) {
+                if (newBounds != null) {
+                    Rectangle2D rect = label.getTransformedBounds(newBounds, transform);
+                    GeomUtil.growRectangle(rect, 2);
+                    if (rect != null)
+                        repaint(rect.getBounds());
+                }
+            } else {
+                if (newBounds == null) {
+                    Rectangle2D rect = label.getTransformedBounds(oldBounds, transform);
+                    GeomUtil.growRectangle(rect, 2);
+                    if (rect != null)
+                        repaint(rect.getBounds());
+                } else {
+                    Rectangle2D newRect = label.getTransformedBounds(newBounds, transform);
+                    GeomUtil.growRectangle(newRect, 2);
+
+                    Rectangle2D oldRect = label.getTransformedBounds(oldBounds, transform);
+                    GeomUtil.growRectangle(oldRect, 2);
+
+                    Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());
+                    if (rect != null)
+                        repaint(rect);
                 }
             }
-
         }
     }
 

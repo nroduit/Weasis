@@ -15,7 +15,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
+import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
@@ -35,34 +35,33 @@ public class DragLayer extends AbstractLayer {
         super(canvas1, drawMode);
     }
 
+    /**
+     * Only repaints graphics that intersects or are contained in the clip bound
+     */
     @Override
-    public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bound) {
-        if (graphics != null) {
-            for (int i = 0; i < graphics.size(); i++) {
-                Graphic graphic = graphics.get(i);
-                // Rectangle repaintBounds = graphic.getRepaintBounds();
+    public void paint(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bounds) {
+        if (graphics == null)
+            return;
+
+        for (Graphic graphic : graphics) {
+            if (bounds != null) {
                 Rectangle repaintBounds = graphic.getRepaintBounds(transform);
-                // only repaints graphics that intersects or are contained in the clip bound
-                if (bound == null || repaintBounds != null && bound.intersects(repaintBounds)) {
-                    graphic.paint(g2, transform);
-                } else {
-                    if (graphic.getGraphicLabel() != null) {
-                        Rectangle2D labelBound = graphic.getGraphicLabel().getLabelBound();
-                        if (labelBound != null) {
-                            // As the size of the graphicLabel does not change with the zoom, it requires an inverse
-                            // transform for
-                            // comparing in real coordinates
-                            Point2D.Double p = new Point2D.Double(labelBound.getWidth(), labelBound.getHeight());
-                            inverseTransform.transform(p, p);
-                            Rectangle rect =
-                                new Rectangle((int) labelBound.getX(), (int) labelBound.getY(), (int) Math.ceil(p.x),
-                                    (int) Math.ceil(p.y));
-                            if (bound.intersects(rect)) {
-                                graphic.paintLabel(g2, transform);
-                            }
-                        }
-                    }
+
+                if (repaintBounds != null && repaintBounds.intersects(bounds))
+                    graphic.paint(g2d, transform);
+                else {
+                    GraphicLabel graphicLabel = graphic.getGraphicLabel();
+                    Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
+
+                    if (labelBounds != null && labelBounds.intersects(bounds))
+                        graphic.paintLabel(g2d, transform);
+                    // TODO would be simpler to integrate intersect check inside graphic instance
                 }
+
+            } else {
+                // convention is when bounds equals null graphic is repaint
+                graphic.paint(g2d, transform);
+                graphic.paintLabel(g2d, transform);
             }
         }
     }
@@ -76,22 +75,33 @@ public class DragLayer extends AbstractLayer {
      */
     @Override
     public java.util.List getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform) {
-        ArrayList arraylist = new ArrayList();
-        if (graphics != null) {
-            for (int j = graphics.size() - 1; j >= 0; j--) {
-                Graphic graphic = graphics.get(j);
-                // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-                // checker sur shape directement)
-                // if (graphic.getBounds().intersects(rect)) {
-                if (graphic.getBounds(transform).intersects(rect)) {
-                    // if (graphic.intersects(rect)) {
-                    if (graphic.intersects(rect, transform)) {
-                        arraylist.add(graphic);
+        ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
+
+        if (graphics != null && rect != null) {
+
+            for (Graphic graphic : graphics) {
+                Rectangle selectionBounds = graphic.getBounds(transform);
+
+                if (selectionBounds != null && selectionBounds.intersects(rect)) {
+                    Area selectionArea = graphic.getArea(transform);
+                    if (selectionArea != null && selectionArea.intersects(rect)) {
+                        graphicList.add(graphic);
+                        break;
                     }
+                }
+
+                GraphicLabel graphicLabel = graphic.getGraphicLabel();
+                if (graphicLabel != null) {
+                    Area selectionArea = graphicLabel.getArea(transform);
+                    if (selectionArea != null && selectionArea.intersects(rect))
+                        graphicList.add(graphic);
+                    // Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
+                    // if (labelBounds != null && labelBounds.intersects(rect))
+                    // graphicList.add(graphic);
                 }
             }
         }
-        return arraylist;
+        return graphicList;
     }
 
     @Override

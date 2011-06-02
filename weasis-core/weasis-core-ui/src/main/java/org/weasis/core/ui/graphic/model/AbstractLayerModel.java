@@ -100,11 +100,11 @@ public class AbstractLayerModel implements LayerModel {
                     canvas.setCursor(cursor);
                     return;
                 }
-                // int direction = graph.getResizeCorner(mouseevent);
-                int direction = graph.getHandlePointIndex(mouseevent);
-                if (direction < 0) {
+
+                int handlePointIndex = graph.getHandlePointIndex(mouseevent);
+                if (handlePointIndex < 0) {
                     // if (graph.getArea().contains(p)) {
-                    if (graph.getArea(mouseevent).contains(p)) {
+                    if (graph.getArea(mouseevent).contains(p) || graph.isOnGraphicLabel(mouseevent)) {
                         canvas.setCursor(MOVE_CURSOR);
                         shapeAction = true;
                     }
@@ -113,32 +113,10 @@ public class AbstractLayerModel implements LayerModel {
                     if (dragGaphs.get(0) instanceof PolygonGraphic) {
                         canvas.setCursor(HAND_CURSOR);
                     } else {
-                        if (direction >= 0 && direction < 8) {
+                        if (handlePointIndex >= 0)
                             canvas.setCursor(CROSS_CURSOR);
-                        } else {
+                        else
                             shapeAction = false;
-                        }
-                        // switch (direction) {
-                        // case 2:
-                        // case 6:
-                        // canvas.setCursor(N_CURSOR);
-                        // break;
-                        // case 0:
-                        // case 4:
-                        // canvas.setCursor(E_CURSOR);
-                        // break;
-                        // case 3:
-                        // case 7:
-                        // canvas.setCursor(NE_CURSOR);
-                        // break;
-                        // case 1:
-                        // case 5:
-                        // canvas.setCursor(NW_CURSOR);
-                        // break;
-                        // default:
-                        // shapeAction = false;
-                        // break;
-                        // }
                     }
                 }
             }

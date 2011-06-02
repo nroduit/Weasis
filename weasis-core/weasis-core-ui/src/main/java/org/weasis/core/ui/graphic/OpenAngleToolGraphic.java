@@ -165,13 +165,11 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                             Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
                             newShape.addShape(arcAngle);
 
-                            if (pts1[2].equals(P)) {
+                            if (pts1[2].equals(P))
                                 newShape.addShape(new Line2D.Double(pts1[2], pts1[1]), strokeDecorator);
-                            }
 
-                            if (pts2[2].equals(P)) {
+                            if (pts2[2].equals(P))
                                 newShape.addShape(new Line2D.Double(pts2[2], pts2[1]), strokeDecorator);
-                            }
 
                             // Let K,L,M,N points dedicated to the drawing of the intersection point
                             int size = 8;

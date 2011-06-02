@@ -147,11 +147,9 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                                         new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
                                     double rMax = Math.min(P.distance(I), P.distance(J));
-                                    rMax = Math.min(rMax, Math.min(P.distance(K), P.distance(L)));
-                                    rMax *= (2.0 / 3.0);
-                                    double scalingMin = radius / rMax;
+                                    rMax = (2.0 / 3.0) * Math.min(rMax, Math.min(P.distance(K), P.distance(L)));
 
-                                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
+                                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), radius / rMax);
 
                                     Rectangle rect = generalpath.getBounds();
                                     int xPos = rect.x + rect.width;

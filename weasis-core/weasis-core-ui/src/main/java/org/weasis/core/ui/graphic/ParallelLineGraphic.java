@@ -53,7 +53,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
         } else {
-            if (!graphicComplete) {
+            if (!isGraphicComplete()) {
                 handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
 
                 if (handlePointList.size() >= 4) {
@@ -129,33 +129,33 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
-        String label = "";
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
 
             if (handlePointList.size() >= 2) {
                 Point2D B = handlePointList.get(1);
+                generalpath.moveTo(A.getX(), A.getY());
                 generalpath.lineTo(B.getX(), B.getY());
 
                 if (handlePointList.size() >= 3) {
                     Point2D C = handlePointList.get(2);
-                    generalpath.moveTo(C.getX(), C.getY());
-
-                    label =
-                        getRealDistanceLabel(getImageElement(mouseEvent), C,
-                            GeomUtil.getPerpendicularPointToLine(A, B, C));
 
                     if (handlePointList.size() >= 4) {
                         Point2D D = handlePointList.get(3);
+                        generalpath.moveTo(C.getX(), C.getY());
                         generalpath.lineTo(D.getX(), D.getY());
+
+                        String label =
+                            getRealDistanceLabel(getImageElement(mouseEvent), C,
+                                GeomUtil.getPerpendicularPointToLine(A, B, C));
+
+                        setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
                     }
                 }
             }
         }
         setShape(generalpath, mouseEvent);
-        setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
         // updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 

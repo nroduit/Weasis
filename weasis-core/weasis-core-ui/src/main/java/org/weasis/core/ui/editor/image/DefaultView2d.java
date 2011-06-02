@@ -916,12 +916,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                  */
 
                 AbstractLayerModel showDraws = getLayerModel();
+
                 Point pView = mouseevent.getPoint();
                 Point pModel = getRealCoordinates(pView);
+
                 int offsetx = pModel.x - pView.x;
                 int offsety = pModel.y - pView.y;
                 // convert mouseevent point to real image coordinate point (without geometric transformation)
                 mouseevent.translatePoint(offsetx, offsety);
+
+                if (ds != null) {
+                    if (!ds.completeDrag(mouseevent)) {
+                        mouseevent.translatePoint(-offsetx, -offsety);
+                        return;
+                    }
+                }
 
                 showDraws.changeCursorDesign(mouseevent);
 
@@ -1024,8 +1033,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     SelectGraphic selectionGraphic = model.getSelectionGraphic();
                     // Select all graphs inside the selection
                     if (selectionGraphic != null) {
-                        AffineTransform transform = getAffineTransform(mouseevent); // why not use getAffineTransform
-                        // Rectangle selectionRect = selectionGraphic.getBounds();
+                        AffineTransform transform = getAffineTransform(mouseevent); // why not use getAffineTransform   
                         Rectangle selectionRect = selectionGraphic.getBounds(transform);
                         List<Graphic> list = model.getSelectedAllGraphicsIntersecting(selectionRect, transform);
                         list.remove(selectionGraphic);

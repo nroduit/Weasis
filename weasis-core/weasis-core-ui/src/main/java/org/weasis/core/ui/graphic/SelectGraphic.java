@@ -56,9 +56,7 @@ public class SelectGraphic extends RectangleGraphic {
     public Rectangle getBounds(AffineTransform transform) {
         Rectangle bound = super.getBounds(transform);
         if (bound != null)
-            bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0); // trick
-            // bound.grow(bound.width < 1 ? getHandleSize() * 2 : 0, bound.height < 1 ? getHandleSize() * 2 : 0); //
-            // trick
+            bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0); // tricks for single click when no draging
         return bound;
     }
 

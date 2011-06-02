@@ -6,6 +6,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 public final class GeomUtil {
@@ -285,7 +286,7 @@ public final class GeomUtil {
      *            current AffineTransform
      */
     public static double extractScalingFactor(AffineTransform transform) {
-        double scalingFactor = 1;
+        double scalingFactor = 1.0;
 
         if ((transform != null)) {
             double sx = transform.getScaleX();
@@ -326,6 +327,19 @@ public final class GeomUtil {
         return scaleTransform.createTransformedShape(shape);
     }
 
+    public static Rectangle2D getScaledRectangle(Rectangle2D rect, double scalingFactor) {
+        if (rect == null)
+            return null;
+
+        if (scalingFactor != 1) {
+            double resizedWidth = rect.getWidth() * scalingFactor;
+            double resizedHeight = rect.getHeight() * scalingFactor;
+            rect.setRect(rect.getX(), rect.getY(), resizedWidth, resizedHeight);
+        }
+
+        return rect;
+    }
+
     public static Shape getCornerShape(Point2D A, Point2D O, Point2D B, double cornerSize) {
         GeneralPath path = new GeneralPath(Path2D.WIND_NON_ZERO, 2);
 
@@ -342,4 +356,22 @@ public final class GeomUtil {
 
     }
 
+    public static Rectangle2D getGrowingRectangle(Rectangle2D rect, double growingSize) {
+        Rectangle2D growingRect = rect != null ? (Rectangle2D) rect.clone() : null;
+        growRectangle(growingRect, growingSize);
+        return growingRect;
+    }
+
+    public static void growRectangle(Rectangle2D rect, double growingSize) {
+        if (rect == null)
+            return;
+
+        if (growingSize != 0) {
+            double newX = rect.getX() - growingSize;
+            double newY = rect.getY() - growingSize;
+            double newWidth = rect.getWidth() + (2.0 * growingSize);
+            double newHeight = rect.getHeight() + (2.0 * growingSize);
+            rect.setRect(newX, newY, newWidth, newHeight);
+        }
+    }
 }

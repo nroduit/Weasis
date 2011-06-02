@@ -26,8 +26,6 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public final static int CORNER_LENGTH = 10;
-
     private Stroke strokeDecorator;
 
     public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -55,9 +53,9 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
         if (handlePointIndex == -1) {
-            super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
+            handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
         } else {
-            if (!graphicComplete) {
+            if (!isGraphicComplete()) {
                 handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
 
                 if (handlePointList.size() >= 3) {
@@ -65,9 +63,8 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                     Point2D B = handlePointList.get(1);
                     Point2D C = handlePointList.get(2);
 
-                    while (handlePointList.size() < handlePointTotalNumber) {
+                    while (handlePointList.size() < handlePointTotalNumber)
                         handlePointList.add(new Point.Double());
-                    }
 
                     Point2D D = handlePointList.get(3);
                     D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
@@ -108,51 +105,57 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
 
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
-
-        AdvancedShape newShape = new AdvancedShape(2);
-        newShape.addShape(generalpath);
-
-        String label = "";
-
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
 
             if (handlePointList.size() >= 2) {
                 Point2D B = handlePointList.get(1);
-                generalpath.lineTo(B.getX(), B.getY());
 
-                if (handlePointList.size() >= 3) {
-                    Point2D C = handlePointList.get(2);
-                    generalpath.moveTo(C.getX(), C.getY());
+                AdvancedShape newShape = new AdvancedShape(3);
 
-                    if (handlePointList.size() == 4) {
-                        Point2D D = handlePointList.get(3);
-                        generalpath.lineTo(D.getX(), D.getY());
+                if (!A.equals(B)) {
+                    GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size() / 2);
+                    newShape.addShape(generalpath);
+                    generalpath.moveTo(A.getX(), A.getY());
+                    generalpath.lineTo(B.getX(), B.getY());
 
-                        label = getRealDistanceLabel(getImageElement(mouseEvent), C, D);
+                    if (handlePointList.size() >= 3) {
+                        Point2D C = handlePointList.get(2);
 
-                        // Check if D is outside of AB segment
-                        if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
-                            Point2D E = D.distance(A) < D.distance(B) ? A : B;
-                            newShape.addShape(new Line2D.Double(D, E), strokeDecorator);
+                        if (handlePointList.size() == 4) {
+                            Point2D D = handlePointList.get(3);
+
+                            if (!C.equals(D)) {
+                                generalpath.moveTo(C.getX(), C.getY());
+                                generalpath.lineTo(D.getX(), D.getY());
+
+                                String label = "";
+                                label = getRealDistanceLabel(getImageElement(mouseEvent), C, D);
+                                setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
+
+                                // Check if D is outside of AB segment
+                                if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
+                                    Point2D E = D.distance(A) < D.distance(B) ? A : B;
+                                    if (!D.equals(E))
+                                        newShape.addShape(new Line2D.Double(D, E), strokeDecorator);
+                                }
+
+                                double cornerLength = 10;
+                                double dMin =
+                                    (2.0 / 3.0) * Math.min(D.distance(C), Math.max(D.distance(A), D.distance(B)));
+                                double scalingMin = cornerLength / dMin;
+
+                                Point2D F = GeomUtil.getMidPoint(A, B);
+                                if (!D.equals(C) && !F.equals(D))
+                                    newShape.addInvShape(GeomUtil.getCornerShape(F, D, C, cornerLength),
+                                        (Point2D) D.clone(), scalingMin);
+                            }
                         }
-
-                        double corner = CORNER_LENGTH;
-                        double dMin = (2.0 / 3.0) * Math.min(D.distance(C), Math.max(D.distance(A), D.distance(B)));
-                        double scalingMin = corner / dMin;
-
-                        Point2D F = GeomUtil.getMidPoint(A, B);
-                        newShape.addInvShape(GeomUtil.getCornerShape(F, D, C, corner), (Point2D) D.clone(), scalingMin);
                     }
                 }
+                setShape(newShape, mouseEvent);
             }
         }
-
-        setShape(newShape, mouseEvent);
-        setLabel(new String[] { label }, getDefaultView2d(mouseEvent));
-        // updateLabel(mouseevent, getGraphics2D(mouseevent));
     }
 
     @Override
@@ -174,18 +177,4 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         }
         return label;
     }
-
-    @Override
-    public PerpendicularLineGraphic clone() {
-        return (PerpendicularLineGraphic) super.clone();
-    }
-
-    @Override
-    public Graphic clone(int xPos, int yPos) {
-        PerpendicularLineGraphic newGraphic = clone();
-        newGraphic.updateStroke();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
-    }
-
 }
