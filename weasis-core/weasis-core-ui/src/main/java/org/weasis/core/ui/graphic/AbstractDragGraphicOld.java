@@ -399,22 +399,6 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         updateShape();
     }
 
-    /**
-     * showProperties
-     * 
-     * @param p
-     *            Point
-     */
-    @Override
-    public void showProperties() {
-        /*
-         * JDialog dialog = new MeasureDialog(this); ImageDisplay canvas =
-         * getLayer().getShowDrawing().getImageFrame().getImageCanvas(); Point p = canvas.getLocationOnScreen(); Point
-         * p2 = canvas.updateMouseToRelativeCoord(new Point(getBounds().x, getBounds().y)); p2.x += p.x; p2.y += p.y;
-         * WinUtil.adjustLocationToFitScreen(dialog, p2); dialog.setVisible(true);
-         */
-    }
-
     @Override
     public boolean intersects(Rectangle rectangle) {
         return getArea().intersects(rectangle);

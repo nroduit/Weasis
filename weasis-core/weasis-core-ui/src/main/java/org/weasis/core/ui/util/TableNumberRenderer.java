@@ -12,7 +12,7 @@ public class TableNumberRenderer extends DefaultTableCellRenderer {
     private final NumberFormat formatter;
 
     public TableNumberRenderer() {
-        this.formatter = NumberFormat.getNumberInstance();
+        this(2);
     }
 
     public TableNumberRenderer(int maxDecimal) {

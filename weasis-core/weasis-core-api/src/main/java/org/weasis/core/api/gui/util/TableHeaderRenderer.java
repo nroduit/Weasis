@@ -28,9 +28,9 @@ import org.weasis.core.api.Messages;
  * 
  * @author Nicolas Roduit
  */
-public class TableHaederRenderer extends JLabel implements TableCellRenderer {
+public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
 
-    public TableHaederRenderer() {
+    public TableHeaderRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
         setHorizontalTextPosition(SwingConstants.LEADING);
     }

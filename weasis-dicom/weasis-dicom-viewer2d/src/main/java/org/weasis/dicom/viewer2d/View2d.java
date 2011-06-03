@@ -34,6 +34,7 @@ import java.util.List;
 import javax.media.jai.PlanarImage;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -50,6 +51,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -75,9 +77,11 @@ import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
@@ -648,7 +652,66 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             int buttonMask = getButtonMaskEx();
             // Context menu
             if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
-                if (View2d.this.getSourceImage() != null) {
+                final ArrayList<Graphic> selected;
+                if ((selected = View2d.this.getLayerModel().getSelectedGraphics()).size() > 0) {
+
+                    JPopupMenu popupMenu = new JPopupMenu();
+
+                    JMenuItem delete = new JMenuItem("Delete Selected");
+                    delete.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            View2d.this.getLayerModel().deleteSelectedGraphics();
+                        }
+                    });
+                    popupMenu.add(delete);
+                    // TODO separate AbstractDragGraphic and ClassGraphic for properties
+                    final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+                    for (Graphic graphic : selected) {
+                        if (graphic instanceof AbstractDragGraphic) {
+                            list.add((AbstractDragGraphic) graphic);
+                        }
+                    }
+                    if (list.size() > 0) {
+                        JMenuItem properties = new JMenuItem("Drawing Properties");
+                        properties.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
+                                WinUtil.adjustLocationToFitScreen(dialog, mouseevent.getLocationOnScreen());
+                                dialog.setVisible(true);
+                            }
+                        });
+                        popupMenu.add(properties);
+                    }
+                    if (selected.size() == 1) {
+                        final Graphic graph = selected.get(0);
+                        if (graph instanceof LineGraphic) {
+                            popupMenu.add(new JSeparator());
+
+                            final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
+                            calibMenu.addActionListener(new ActionListener() {
+
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
+                                    CalibrationView calibrationDialog =
+                                        new CalibrationView((LineGraphic) graph, View2d.this);
+                                    int res =
+                                        JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
+                                            JOptionPane.OK_CANCEL_OPTION);
+                                    if (res == JOptionPane.OK_OPTION) {
+                                        calibrationDialog.applyNewCalibration();
+                                    }
+                                }
+                            });
+                            popupMenu.add(calibMenu);
+                        }
+                    }
+                    popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
+                } else if (View2d.this.getSourceImage() != null) {
                     JPopupMenu popupMenu = new JPopupMenu();
                     final EventManager event = EventManager.getInstance();
                     JMenuItem item = new JMenuItem(Messages.getString("View2d.left_mouse")); //$NON-NLS-1$
@@ -765,34 +828,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
                         }
                         popupMenu.add(menu);
-                    }
-                    AbstractLayer layer = getLayerModel().getLayer(Tools.MEASURE.getId());
-                    if (layer != null) {
-                        ArrayList<Graphic> sel = layer.getShowDrawing().getSelectedGraphics();
-                        if (sel.size() == 1) {
-                            final Graphic graph = sel.get(0);
-                            if (graph instanceof LineGraphic) {
-                                popupMenu.add(new JSeparator());
-                                final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
-                                calibMenu.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
-                                        CalibrationView calibrationDialog =
-                                            new CalibrationView((LineGraphic) graph, View2d.this);
-                                        int res =
-                                            JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
-                                                JOptionPane.OK_CANCEL_OPTION);
-                                        if (res == JOptionPane.OK_OPTION) {
-                                            calibrationDialog.applyNewCalibration();
-                                        }
-                                    }
-                                });
-                                popupMenu.add(calibMenu);
-
-                            }
-                        }
                     }
                     popupMenu.add(new JSeparator());
                     popupMenu.add(ResetTools.createUnregisteredJMenu());

@@ -60,8 +60,6 @@ public interface Graphic extends GUIEntry {
 
     public GraphicLabel getGraphicLabel();
 
-    public void showProperties();
-
     @Deprecated
     public boolean intersects(Rectangle rectangle);
 

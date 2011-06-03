@@ -167,7 +167,7 @@ public class JMVUtils {
     }
 
     public static void formatTableHeaders(JTable table, int alignement) {
-        TableHaederRenderer renderer = new TableHaederRenderer();
+        TableHeaderRenderer renderer = new TableHeaderRenderer();
         renderer.setHorizontalAlignment(alignement);
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn col = table.getColumnModel().getColumn(i);
@@ -176,7 +176,7 @@ public class JMVUtils {
     }
 
     public static void formatTableHeaders(JTable table, int alignement, int columnSize) {
-        TableHaederRenderer renderer = new TableHaederRenderer();
+        TableHeaderRenderer renderer = new TableHeaderRenderer();
 
         renderer.setHorizontalAlignment(alignement);
         for (int i = 0; i < table.getColumnCount(); i++) {

@@ -458,10 +458,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         return getArea(transform).intersects(rectangle);
     }
 
-    @Override
-    public void showProperties() {
-    }
-
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void setShape(Shape newShape, MouseEvent mouseevent) {
@@ -513,7 +509,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public void setLabel(String[] labels, DefaultView2d view2d) {
         if (shape != null) {
             Rectangle rect = shape.getBounds();
-            int xPos = rect.x + rect.width + 5;
+            int xPos = rect.x + rect.width;
             int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
             this.setLabel(labels, view2d, xPos, yPos);
         }
@@ -605,7 +601,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             }
         }
 
-        // if (isSelected && !isGraphicComplete)
         if (isSelected()) {
             paintHandles(g2d, transform);
         }

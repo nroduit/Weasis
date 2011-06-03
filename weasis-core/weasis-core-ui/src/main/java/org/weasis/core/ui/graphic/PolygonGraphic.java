@@ -311,14 +311,6 @@ public class PolygonGraphic extends AbstractDragGraphicOld {
     }
 
     @Override
-    public void showProperties() {
-        if (!closeShape) {
-            super.showProperties();
-        }
-        closeShape = false;
-    }
-
-    @Override
     public Object clone() throws CloneNotSupportedException {
         PolygonGraphic polygongraphic = (PolygonGraphic) super.clone();
         return super.clone();

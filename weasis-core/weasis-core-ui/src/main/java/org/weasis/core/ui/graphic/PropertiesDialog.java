@@ -49,12 +49,14 @@ public abstract class PropertiesDialog extends JDialog {
         panel1.setLayout(borderLayout1);
         jButtonOk.setText("OK");
         jButtonOk.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 jButtonOk_actionPerformed(e);
             }
         });
         jButtonCancel.setText("Cancel");
         jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 jButtonCancel_actionPerformed(e);
             }
@@ -64,12 +66,11 @@ public abstract class PropertiesDialog extends JDialog {
         jPanel1.setLayout(gridBagLayout1);
         JMVUtils.setNumberModel(jPVSpinLineWidth, 1, 1, 8, 1);
         jLabelLineWidth1.setText("Line Width :");
-        jLabelLineColor1.setText("Color :");
-        // jPVButtonColor.setUI(new BasicButtonUI());
+        jLabelLineColor1.setText("Line Color :");
         jPVButtonColor.setText("Pick");
 
-        // jPVButtonColor.setForeground(fg);
         jPVButtonColor.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
                 Color newColor =
