@@ -11,8 +11,9 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Shape;
-import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -25,6 +26,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * @author Benoit Jacquemoud
@@ -57,7 +59,19 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
+        if (resizingOrMoving) {
+            // Force to display handles even on resizing or moving
+            resizingOrMoving = false;
+            super.paintHandles(g2d, transform);
+            resizingOrMoving = true;
+        } else {
+            super.paintHandles(g2d, transform);
+        }
+    }
+
+    @Override
+    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
         Shape newShape = null;
 
         if (handlePointList.size() > 1) {
@@ -68,11 +82,6 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                     Rectangle2D rectangle = new Rectangle2D.Double();
                     rectangle.setFrameFromCenter(centerPt.getX(), centerPt.getY(), centerPt.getX() - radius,
                         centerPt.getY() - radius);
-
-                    // GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
-                    // generalpath.append(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(),
-                    // rectangle.getHeight()), false);
-
                     newShape =
                         new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(),
                             rectangle.getHeight());
@@ -92,6 +101,8 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
                 Point2D centerPt = GeomUtil.getCircleCenter(handlePointList);
+                if (centerPt == null)
+                    return null;
                 double radius = centerPt.distance(handlePointList.get(0));
                 double ratio = adapter.getCalibRatio();
 

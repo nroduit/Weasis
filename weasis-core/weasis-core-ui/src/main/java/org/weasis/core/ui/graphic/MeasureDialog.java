@@ -6,7 +6,6 @@ import java.util.List;
 
 public class MeasureDialog extends PropertiesDialog {
     private List<AbstractDragGraphic> graphics;
-    private boolean hasChanged = false;
 
     public MeasureDialog(Window parent, List<AbstractDragGraphic> selectedGraphic) {
         super(parent, "Drawing Properties");
@@ -17,27 +16,49 @@ public class MeasureDialog extends PropertiesDialog {
         pack();
     }
 
-    @Override
-    protected boolean hasChanged() {
-        return hasChanged;
-    }
-
     public void iniGraphicDialog() {
-        boolean areaGraphics = false;
-        for (AbstractDragGraphic graphic : graphics) {
-            if (graphic instanceof AbstractDragGraphicArea) {
-                areaGraphics = true;
-                break;
-            }
-        }
-        jCheckBoxFilled.setEnabled(areaGraphics);
         if (graphics.size() > 0) {
             AbstractDragGraphic graphic = graphics.get(0);
-            jPVButtonColor.setBackground((Color) graphic.getColorPaint());
-            jPVSpinLineWidth.setValue((int) graphic.getLineThickness());
-        } else {
-            jPVButtonColor.setEnabled(false);
-            jPVSpinLineWidth.setEnabled(false);
+            Color color = (Color) graphic.getColorPaint();
+            int width = (int) graphic.getLineThickness();
+            boolean fill = graphic.isFilled();
+
+            jButtonColor.setBackground(color);
+            spinnerLineWidth.setValue(width);
+            jCheckBoxFilled.setSelected(fill);
+
+            boolean areaGraphics = false;
+            boolean mfill = false;
+            boolean mcolor = false;
+            boolean mwidth = false;
+            for (AbstractDragGraphic g : graphics) {
+                if (g instanceof AbstractDragGraphicArea) {
+                    areaGraphics = true;
+                    if (g.isFilled() != fill) {
+                        mfill = true;
+                    }
+                }
+                if (((int) g.getLineThickness()) != width) {
+                    mwidth = true;
+                }
+                if (!color.equals(g.getColorPaint())) {
+                    mcolor = true;
+                }
+            }
+
+            checkBox_color.setVisible(mcolor);
+            jLabelLineColor.setEnabled(!mcolor);
+            jButtonColor.setEnabled(!mcolor);
+            checkBox_width.setVisible(mwidth);
+            spinnerLineWidth.setEnabled(!mwidth);
+            jLabelLineWidth.setEnabled(!mwidth);
+
+            checkBox_fill.setVisible(mfill);
+            jCheckBoxFilled.setEnabled(areaGraphics && !mfill);
+
+            if (graphics.size() == 1 || (!mcolor && !mfill && !mwidth)) {
+                lbloverridesmultipleValues.setVisible(false);
+            }
         }
     }
 
@@ -47,8 +68,12 @@ public class MeasureDialog extends PropertiesDialog {
     @Override
     protected void okAction() {
         for (AbstractDragGraphic graphic : graphics) {
-            graphic.setLineThickness(((Integer) jPVSpinLineWidth.getValue()).floatValue());
-            graphic.setPaint(jPVButtonColor.getBackground());
+            if (spinnerLineWidth.isEnabled()) {
+                graphic.setLineThickness(((Integer) spinnerLineWidth.getValue()).floatValue());
+            }
+            if (jButtonColor.isEnabled()) {
+                graphic.setPaint(jButtonColor.getBackground());
+            }
             if (jCheckBoxFilled.isEnabled()) {
                 graphic.setFilled(jCheckBoxFilled.isSelected());
             }

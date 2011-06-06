@@ -25,9 +25,11 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class PolygonGraphic.
@@ -65,12 +67,12 @@ public class PolygonGraphic extends AbstractDragGraphicOld {
         }
 
         @Override
-        public void startDrag(MouseEvent mouseevent) {
+        public void startDrag(MouseEventDouble mouseevent) {
             update(mouseevent);
         }
 
         @Override
-        public void drag(MouseEvent mouseevent) {
+        public void drag(MouseEventDouble mouseevent) {
             int tx = mouseevent.getX() - getLastX();
             int ty = mouseevent.getY() - getLastY();
             if (tx != 0 || ty != 0) {
@@ -88,7 +90,7 @@ public class PolygonGraphic extends AbstractDragGraphicOld {
         }
 
         @Override
-        public boolean completeDrag(MouseEvent mouseevent) {
+        public boolean completeDrag(MouseEventDouble mouseevent) {
             if (mouseevent.getID() == 502) {
                 if (createPoints) {
                     int i = numPoints + numPoints;
@@ -215,9 +217,27 @@ public class PolygonGraphic extends AbstractDragGraphicOld {
                     y2 = points[m + 1];
                 }
             }
-            area = LineGraphic.createAreaForLine(x1, y1, x2, y2, getHandleSize());
+            area = createAreaForLine(x1, y1, x2, y2, getHandleSize());
         }
         return area;
+    }
+
+    public static Area createAreaForLine(float x1, float y1, float x2, float y2, int width) {
+        int i = width;
+        int j = 0;
+        int or = (int) MathUtil.getOrientation(x1, y1, x2, y2);
+        if (or < 45 || or > 135) {
+            j = i;
+            i = 0;
+        }
+        GeneralPath generalpath = new GeneralPath();
+        generalpath.moveTo(x1 - i, y1 - j);
+        generalpath.lineTo(x1 + i, y1 + j);
+        generalpath.lineTo(x2 + i, y2 + j);
+        generalpath.lineTo(x2 - i, y2 - j);
+        generalpath.lineTo(x1 - i, y1 - j);
+        generalpath.closePath();
+        return new Area(generalpath);
     }
 
     @Override

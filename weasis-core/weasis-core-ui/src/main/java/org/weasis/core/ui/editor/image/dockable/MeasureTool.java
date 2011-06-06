@@ -236,7 +236,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (selectedGraphic != null && selectedGraphic.size() > 1) {
+                if (selectedGraphic != null && selectedGraphic.size() > 0) {
                     JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(MeasureTool.this), selectedGraphic);
                     Point location = btnGerenralOptions.getLocation();
                     SwingUtilities.convertPointToScreen(location, btnGerenralOptions);

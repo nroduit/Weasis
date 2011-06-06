@@ -13,7 +13,6 @@ package org.weasis.core.ui.graphic.model;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -25,6 +24,7 @@ import java.util.ArrayList;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicLabel;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class AbstractLayer.
@@ -221,7 +221,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
-    public abstract Graphic getGraphicContainPoint(MouseEvent mouseevent);
+    public abstract Graphic getGraphicContainPoint(MouseEventDouble mouseevent);
 
     public abstract void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform,
         Rectangle2D bound);
@@ -259,20 +259,23 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if (oldShape == null) {
                 if (shape != null) {
                     Rectangle rect = graphic.getTransformedBounds(shape, transform);
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect);
+                    }
                 }
             } else {
                 if (shape == null) {
                     Rectangle rect = graphic.getTransformedBounds(oldShape, transform);
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect);
+                    }
                 } else {
                     Rectangle rect =
                         rectangleUnion(graphic.getTransformedBounds(oldShape, transform),
                             graphic.getTransformedBounds(shape, transform));
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect);
+                    }
                 }
             }
         }
@@ -297,15 +300,17 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 if (newBounds != null) {
                     Rectangle2D rect = label.getTransformedBounds(newBounds, transform);
                     GeomUtil.growRectangle(rect, 2);
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect.getBounds());
+                    }
                 }
             } else {
                 if (newBounds == null) {
                     Rectangle2D rect = label.getTransformedBounds(oldBounds, transform);
                     GeomUtil.growRectangle(rect, 2);
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect.getBounds());
+                    }
                 } else {
                     Rectangle2D newRect = label.getTransformedBounds(newBounds, transform);
                     GeomUtil.growRectangle(newRect, 2);
@@ -314,8 +319,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     GeomUtil.growRectangle(oldRect, 2);
 
                     Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());
-                    if (rect != null)
+                    if (rect != null) {
                         repaint(rect);
+                    }
                 }
             }
         }

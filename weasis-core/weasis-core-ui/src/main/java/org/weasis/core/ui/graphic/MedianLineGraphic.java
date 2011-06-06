@@ -1,7 +1,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -14,6 +13,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 @Deprecated
 public class MedianLineGraphic extends AbstractDragGraphic {
@@ -26,7 +26,6 @@ public class MedianLineGraphic extends AbstractDragGraphic {
         setPaint(paint);
         setFilled(fill);
         setLabelVisible(false);
-        updateStroke();
     }
 
     @Override
@@ -49,20 +48,20 @@ public class MedianLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
         if (handlePointIndex == -1) {
             for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
         } else {
-            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
+            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
         }
 
         return handlePointIndex;
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseevent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
         if (handlePointList.size() >= 1) {
@@ -111,9 +110,8 @@ public class MedianLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public Graphic clone(int xPos, int yPos) {
+    public Graphic clone(double xPos, double yPos) {
         MedianLineGraphic newGraphic = clone();
-        newGraphic.updateStroke();
         newGraphic.updateShapeOnDrawing(null);
         return newGraphic;
     }

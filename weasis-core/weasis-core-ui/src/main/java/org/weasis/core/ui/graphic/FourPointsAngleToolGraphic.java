@@ -10,26 +10,23 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.Stroke;
-import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * @author Benoit Jacquemoud
@@ -43,8 +40,6 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
 
     public final static double ARC_RADIUS = 24.0;
-
-    protected Stroke strokeDecorator;
 
     public FourPointsAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(8, paintColor, lineThickness, labelVisible);
@@ -61,15 +56,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateStroke() {
-        super.updateStroke();
-        strokeDecorator =
-            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
-                new float[] { 5.0f, 5.0f }, 0f);
-    }
-
-    @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
@@ -134,8 +121,8 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                                 Point2D P = GeomUtil.getIntersectPoint(I, J, K, L);
 
                                 if (P != null) {
-                                    newShape.addShape(new Line2D.Double(J, P), strokeDecorator);
-                                    newShape.addShape(new Line2D.Double(K, P), strokeDecorator);
+                                    newShape.addShape(new Line2D.Double(J, P), getDashStroke(1.0f), true);
+                                    newShape.addShape(new Line2D.Double(K, P), getDashStroke(1.0f), true);
 
                                     double startingAngle = GeomUtil.getAngleDeg(P, J);
                                     double angularExtent = GeomUtil.getAngleDeg(J, P, K);
@@ -152,14 +139,8 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                                     double rMax = Math.min(P.distance(I), P.distance(J));
                                     rMax = (2.0 / 3.0) * Math.min(rMax, Math.min(P.distance(K), P.distance(L)));
 
-                                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), radius / rMax);
-
-                                    Rectangle rect = generalpath.getBounds();
-                                    int xPos = rect.x + rect.width;
-                                    int yPos = (int) Math.ceil(rect.y + rect.height * 0.5);
-
-                                    String label = getRealAngleLabel(getImageElement(mouseEvent), J, P, K);
-                                    setLabel(new String[] { label }, getDefaultView2d(mouseEvent), xPos, yPos);
+                                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), radius / rMax,
+                                        getDashStroke(1.0f), true);
                                 }
                             }
                         }
@@ -168,29 +149,46 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                     generalpath.append(new Line2D.Double(I, J), false);
                 }
                 setShape(newShape, mouseEvent);
+                updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
             }
         }
     }
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+        if (imageElement != null && handlePointList.size() >= 8) {
+            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+            if (adapter != null) {
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                if (Angle.isComputed()) {
+                    Point2D A = handlePointList.get(0);
+                    Point2D B = handlePointList.get(1);
+                    Point2D C = handlePointList.get(2);
+                    Point2D D = handlePointList.get(3);
+                    Point2D E = handlePointList.get(4);
+                    Point2D F = handlePointList.get(5);
+                    Point2D G = handlePointList.get(6);
+                    Point2D H = handlePointList.get(7);
 
-        return null;
-    }
+                    Point2D I = GeomUtil.getMidPoint(A, B);
+                    Point2D J = GeomUtil.getMidPoint(C, D);
+                    Point2D K = GeomUtil.getMidPoint(E, F);
+                    Point2D L = GeomUtil.getMidPoint(G, H);
 
-    protected String getRealAngleLabel(ImageElement image, Point2D A, Point2D O, Point2D B) {
-        String label = "";
-        if (image != null) {
-            AffineTransform rescale = AffineTransform.getScaleInstance(image.getPixelSize(), image.getPixelSize());
+                    Point2D P = GeomUtil.getIntersectPoint(I, J, K, L);
 
-            Point2D At = rescale.transform(A, null);
-            Point2D Ot = rescale.transform(O, null);
-            Point2D Bt = rescale.transform(B, null);
+                    double realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(J, P, K)));
 
-            double realAngle = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt));
-            label = "Angle : " + DecFormater.twoDecimal(Math.abs(realAngle)) + "°";
-            label += " / " + DecFormater.twoDecimal(180 - Math.abs(realAngle)) + "°";
+                    if (Angle.isComputed() && (releaseEvent || Angle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(Angle, realAngle, "deg"));
+                    }
+                    if (ComplementaryAngle.isComputed() && (releaseEvent || ComplementaryAngle.isGraphicLabel())) {
+                        measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
+                    }
+                }
+                return measVal;
+            }
         }
-        return label;
+        return null;
     }
 }

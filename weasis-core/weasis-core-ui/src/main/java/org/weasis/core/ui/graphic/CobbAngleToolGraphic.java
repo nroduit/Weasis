@@ -10,11 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Point;
-import java.awt.Stroke;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -30,7 +27,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * @author Benoit Jacquemoud
@@ -41,8 +38,6 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
 
     public final static Measurement Angle = new Measurement("Angle", true);
     public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
-
-    protected Stroke strokeDecorator;
 
     public CobbAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(5, paintColor, lineThickness, labelVisible);
@@ -59,25 +54,13 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateStroke() {
-        super.updateStroke();
-        strokeDecorator =
-            new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
-                new float[] { 5.0f, 5.0f }, 0f);
-    }
-
-    @Override
-    public void updateLabel(Object source, DefaultView2d view2d) {
-    }
-
-    @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
         if (handlePointIndex == -1) {
             for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
         } else {
-            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
+            handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
 
             // if (!isGraphicComplete() && handlePointList.size() >= 4) {
             if (handlePointIndex != 4 && handlePointList.size() >= 4) {
@@ -189,7 +172,7 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
@@ -233,11 +216,11 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                             Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
 
                             if (r1 < 0 || r1 > 1) {
-                                newShape.addShape(new Line2D.Double(r1 > 1 ? B : A, I), strokeDecorator);
+                                newShape.addShape(new Line2D.Double(r1 > 1 ? B : A, I), getDashStroke(1.0f), true);
                             }
 
                             if (r2 < 0 || r2 > 1) {
-                                newShape.addShape(new Line2D.Double(r1 > 1 ? D : C, J), strokeDecorator);
+                                newShape.addShape(new Line2D.Double(r1 > 1 ? D : C, J), getDashStroke(1.0f), true);
                             }
 
                             newShape.addShape(new Line2D.Double(O, I));
@@ -254,10 +237,12 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                             Point2D L = GeomUtil.getColinearPointWithLength(J, O, distOJ + extSegLength);
 
                             double dOKmax = (1.0 / 2.0) * distOI;
-                            newShape.addInvShape(new Line2D.Double(O, K), (Point2D) O.clone(), extSegLength / dOKmax);
+                            newShape.addInvShape(new Line2D.Double(O, K), (Point2D) O.clone(), extSegLength / dOKmax,
+                                false);
 
                             double dOLmax = (1.0 / 2.0) * distOJ;
-                            newShape.addInvShape(new Line2D.Double(O, L), (Point2D) O.clone(), extSegLength / dOKmax);
+                            newShape.addInvShape(new Line2D.Double(O, L), (Point2D) O.clone(), extSegLength / dOKmax,
+                                false);
 
                             // Let arcAngle be the partial section of the ellipse that represents the measured angle
 
@@ -274,19 +259,19 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                             Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
                             double rMax = (2.0 / 3.0) * (K.getY() > L.getY() ? dOKmax : dOLmax);
-                            newShape.addInvShape(arcAngle, (Point2D) O.clone(), radius / rMax);
+                            newShape.addInvShape(arcAngle, (Point2D) O.clone(), radius / rMax, false);
 
                             double cornerLength = 10;
 
                             double cImax = (2.0 / 3.0) * Math.min(distOI, Math.max(I.distance(A), I.distance(B)));
                             newShape.addInvShape(
                                 GeomUtil.getCornerShape(GeomUtil.getMidPoint(A, B), I, O, cornerLength),
-                                (Point2D) I.clone(), cornerLength / cImax);
+                                (Point2D) I.clone(), cornerLength / cImax, getStroke(1.0f), true);
 
                             double cJmax = (2.0 / 3.0) * Math.min(distOJ, Math.max(J.distance(C), J.distance(D)));
                             newShape.addInvShape(
                                 GeomUtil.getCornerShape(GeomUtil.getMidPoint(C, D), J, O, cornerLength),
-                                (Point2D) J.clone(), cornerLength / cJmax);
+                                (Point2D) J.clone(), cornerLength / cJmax, getStroke(1.0f), true);
                         }
                     }
                 }
@@ -321,12 +306,8 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                     Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
                     double distOI = O.distance(I);
                     double distOJ = O.distance(J);
-                    Point2D K =
-                        distOI < 64 ? GeomUtil.getColinearPointWithRatio(I, O, 1.5) : GeomUtil
-                            .getColinearPointWithLength(I, O, distOI + 32);
-                    Point2D L =
-                        distOJ < 64 ? GeomUtil.getColinearPointWithRatio(J, O, 1.5) : GeomUtil
-                            .getColinearPointWithLength(J, O, distOJ + 32);
+                    Point2D K = GeomUtil.getColinearPointWithLength(I, O, distOI + 32);
+                    Point2D L = GeomUtil.getColinearPointWithLength(J, O, distOJ + 32);
 
                     double realAngle;
                     if (K.getY() > L.getY()) {

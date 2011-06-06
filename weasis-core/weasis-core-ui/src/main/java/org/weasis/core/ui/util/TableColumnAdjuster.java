@@ -37,10 +37,8 @@ public class TableColumnAdjuster {
     }
 
     public static void pack(JTable table) {
-        if (!table.isShowing())
-            throw new IllegalStateException("table must be showing to pack");
 
-        if (table.getColumnCount() == 0)
+        if (!table.isShowing() || table.getColumnCount() == 0)
             return;
 
         int width[] = new int[table.getColumnCount()];

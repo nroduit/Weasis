@@ -12,7 +12,6 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
 import java.awt.Shape;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -26,6 +25,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * 
@@ -55,7 +55,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
@@ -88,7 +88,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                     double rMax = (2.0 / 3.0) * Math.min(P.distance(A), P.distance(B));
                     double scalingMin = radius / rMax;
 
-                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin);
+                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin, false);
 
                 }
                 setShape(newShape, mouseEvent);

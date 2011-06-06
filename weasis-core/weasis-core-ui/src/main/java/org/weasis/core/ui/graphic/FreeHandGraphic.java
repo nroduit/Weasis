@@ -25,6 +25,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -67,7 +68,7 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
     protected class FreeDragSequence extends AbstractDragGraphicOld.DefaultDragSequence {
 
         @Override
-        public void startDrag(MouseEvent mouseevent) {
+        public void startDrag(MouseEventDouble mouseevent) {
             super.startDrag(mouseevent);
             if (createPoints) {
                 closed = false;
@@ -75,7 +76,7 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
         }
 
         @Override
-        public void drag(MouseEvent mouseevent) {
+        public void drag(MouseEventDouble mouseevent) {
             int tx = mouseevent.getX() - getLastX();
             int ty = mouseevent.getY() - getLastY();
             if (tx != 0 || ty != 0) {
@@ -105,7 +106,7 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
         }
 
         @Override
-        public boolean completeDrag(MouseEvent mouseevent) {
+        public boolean completeDrag(MouseEventDouble mouseevent) {
             if (createPoints) {
                 if (numPoints > 2) {
                     int pointToRemove = points[0] == points[2] && points[1] == points[3] ? 2 : 0;
@@ -189,7 +190,7 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
                     y2 = points[m + 1];
                 }
             }
-            area = LineGraphic.createAreaForLine(x1, y1, x2, y2, (int) lineThickness);
+            area = PolygonGraphic.createAreaForLine(x1, y1, x2, y2, (int) lineThickness);
         }
         return area;
     }

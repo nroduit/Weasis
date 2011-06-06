@@ -688,7 +688,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
-                        if (graph instanceof LineGraphic) {
+                        if (graph instanceof LineGraphic && ((LineGraphic) graph).isGraphicComplete()) {
                             popupMenu.add(new JSeparator());
 
                             final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$

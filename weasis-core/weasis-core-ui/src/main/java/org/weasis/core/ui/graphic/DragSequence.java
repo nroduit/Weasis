@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.event.MouseEvent;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Interface DragSequence.
@@ -19,9 +19,9 @@ import java.awt.event.MouseEvent;
  */
 public interface DragSequence {
 
-    public abstract void startDrag(MouseEvent mouseevent);
+    public abstract void startDrag(MouseEventDouble mouseevent);
 
-    public abstract void drag(MouseEvent mouseevent);
+    public abstract void drag(MouseEventDouble mouseevent);
 
-    public abstract boolean completeDrag(MouseEvent mouseevent);
+    public abstract boolean completeDrag(MouseEventDouble mouseevent);
 }

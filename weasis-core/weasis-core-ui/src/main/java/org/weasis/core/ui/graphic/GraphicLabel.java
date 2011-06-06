@@ -99,7 +99,7 @@ public class GraphicLabel {
         // AffineTransform invRot = AffineTransform.getRotateInstance(-rot, scaledBounds.getX(), scaledBounds.getY());
         //
         // return scaledBounds;
-        return getArea(transform).getBounds();
+        return getArea(transform).getBounds2D();
     }
 
     public Area getArea(AffineTransform transform) {

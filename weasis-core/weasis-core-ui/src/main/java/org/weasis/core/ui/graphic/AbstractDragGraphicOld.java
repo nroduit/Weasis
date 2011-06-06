@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class AbstractDragGraphic.
@@ -70,12 +71,12 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
     protected class DefaultDragSequence implements DragSequence {
 
         @Override
-        public void startDrag(MouseEvent mouseevent) {
+        public void startDrag(MouseEventDouble mouseevent) {
             update(mouseevent);
         }
 
         @Override
-        public void drag(MouseEvent mouseevent) {
+        public void drag(MouseEventDouble mouseevent) {
             int deltaX = mouseevent.getX() - getLastX();
             int deltaY = mouseevent.getY() - getLastY();
 
@@ -87,7 +88,7 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         }
 
         @Override
-        public boolean completeDrag(MouseEvent mouseevent) {
+        public boolean completeDrag(MouseEventDouble mouseevent) {
             if (createPoints) {
                 // closed = true;
                 updateShape(); // should not be necessary till it's called in updateshape on drawing

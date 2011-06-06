@@ -12,8 +12,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -27,6 +25,7 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 public class LineGraphic extends AbstractDragGraphic {
 
@@ -38,11 +37,7 @@ public class LineGraphic extends AbstractDragGraphic {
     public final static Measurement LastPointY = new Measurement("Last point Y", true);
     public final static Measurement LineLength = new Measurement("Line length", true);
     public final static Measurement Orientation = new Measurement("Orientation", true);
-    public final static Measurement OrientationSignificance = new Measurement("Orientation significance", true);
     public final static Measurement Azimuth = new Measurement("Azimuth", true);
-    public final static Measurement AzimuthSignificance = new Measurement("Azimuth significance", true);
-    public final static Measurement BarycenterX = new Measurement("Barycenter X", true);
-    public final static Measurement BarycenterY = new Measurement("Barycenter Y", true);
     public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
 
     public LineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -60,7 +55,7 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseEvent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
         GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
         if (handlePointList.size() >= 1) {
@@ -83,44 +78,13 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public Graphic clone(int xPos, int yPos) {
+    public Graphic clone(double xPos, double yPos) {
         LineGraphic newGraphic = clone();
-        newGraphic.updateStroke();
         newGraphic.updateShapeOnDrawing(null);
         return newGraphic;
     }
 
-    // temporary here for inherited classes
-    public static Area createAreaForLine(float x1, float y1, float x2, float y2, int width) {
-        int i = width;
-        int j = 0;
-        int or = (int) MathUtil.getOrientation(x1, y1, x2, y2);
-        if (or < 45 || or > 135) {
-            j = i;
-            i = 0;
-        }
-        GeneralPath generalpath = new GeneralPath();
-        generalpath.moveTo(x1 - i, y1 - j);
-        generalpath.lineTo(x1 + i, y1 + j);
-        generalpath.lineTo(x2 + i, y2 + j);
-        generalpath.lineTo(x2 - i, y2 - j);
-        generalpath.lineTo(x1 - i, y1 - j);
-        generalpath.closePath();
-        return new Area(generalpath);
-    }
-
-    public double getSegmentLength() {
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
-                return A.distance(B);
-            }
-        }
-        return -1;
-    }
-
-    public double getSegmentLength(double scalex, double scaley) {
+    public Double getSegmentLength(double scalex, double scaley) {
         if (handlePointList.size() >= 1) {
             Point2D A = handlePointList.get(0);
             if (handlePointList.size() >= 2) {
@@ -128,7 +92,24 @@ public class LineGraphic extends AbstractDragGraphic {
                 return Point2D.distance(scalex * A.getX(), scaley * A.getY(), scalex * B.getX(), scaley * B.getY());
             }
         }
-        return -1;
+        return null;
+    }
+
+    public Double getSegmentOrientation() {
+        Point2D p1 = getStartPoint();
+        Point2D p2 = getEndPoint();
+        if (p1 == null || p2 == null)
+            return null;
+        return MathUtil.getOrientation(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+
+    }
+
+    public Double getSegmentAzimuth() {
+        Point2D p1 = getStartPoint();
+        Point2D p2 = getEndPoint();
+        if (p1 == null || p2 == null)
+            return null;
+        return MathUtil.getAzimuth(p1.getX(), p1.getY(), p2.getX(), p2.getY());
     }
 
     public Point2D getStartPoint() {
@@ -145,7 +126,7 @@ public class LineGraphic extends AbstractDragGraphic {
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
-        if (imageElement != null) {
+        if (imageElement != null && handlePointList.size() >= 2) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
@@ -186,7 +167,14 @@ public class LineGraphic extends AbstractDragGraphic {
                             adapter.getCalibRatio()) : null;
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
-
+                if (Orientation.isComputed() && (releaseEvent || Orientation.isGraphicLabel())) {
+                    Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
+                    measVal.add(new MeasureItem(Orientation, val, "deg"));
+                }
+                if (Azimuth.isComputed() && (releaseEvent || Azimuth.isGraphicLabel())) {
+                    Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
+                    measVal.add(new MeasureItem(Azimuth, val, "deg"));
+                }
                 return measVal;
             }
         }

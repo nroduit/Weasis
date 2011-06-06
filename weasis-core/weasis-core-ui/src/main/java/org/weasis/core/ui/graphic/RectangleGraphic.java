@@ -12,7 +12,6 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
 import java.awt.Point;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class RectangleGraphic.
@@ -61,7 +61,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected int moveAndResizeOnDrawing(int handlePointIndex, int deltaX, int deltaY, MouseEvent mouseEvent) {
+    protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
         if (handlePointIndex == -1) {
             for (Point2D point : handlePointList) {
                 point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
@@ -142,7 +142,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseevent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = new Rectangle2D.Double();
 
         if (handlePointList.size() > 1) {

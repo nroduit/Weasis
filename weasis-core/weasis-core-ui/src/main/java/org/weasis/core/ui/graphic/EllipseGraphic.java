@@ -11,7 +11,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * @author Nicolas Roduit
@@ -54,7 +54,7 @@ public class EllipseGraphic extends RectangleGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEvent mouseevent) {
+    protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = new Rectangle2D.Double();
         rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
             handlePointList.get(eHandlePoint.SE.index));

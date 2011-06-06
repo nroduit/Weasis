@@ -65,6 +65,7 @@ public class GraphicsPane extends JComponent {
         return inverseTransform;
     }
 
+    @Deprecated
     public Point getRealCoordinates(Point p) {
         double viewScale = getViewModel().getViewScale();
         Point2D p2 =
@@ -72,6 +73,15 @@ public class GraphicsPane extends JComponent {
                 + getViewModel().getModelOffsetY() * viewScale);
         inverseTransform.transform(p2, p2);
         return new Point((int) Math.floor(p2.getX()), (int) Math.floor(p2.getY()));
+    }
+
+    public Point2D getImageCoordinates(int x, int y) {
+        double viewScale = getViewModel().getViewScale();
+        Point2D p2 =
+            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale, y + getViewModel().getModelOffsetY()
+                * viewScale);
+        inverseTransform.transform(p2, p2);
+        return p2;
     }
 
     public void dispose() {
@@ -149,9 +159,8 @@ public class GraphicsPane extends JComponent {
     }
 
     public Object getActionValue(String action) {
-        if (action == null) {
+        if (action == null)
             return null;
-        }
         return actionsInView.get(action);
     }
 
@@ -297,6 +306,7 @@ public class GraphicsPane extends JComponent {
      */
     private class ViewModelHandler implements ViewModelChangeListener {
 
+        @Override
         public void handleViewModelChanged(ViewModel viewModel) {
             repaint();
         }
@@ -309,11 +319,12 @@ public class GraphicsPane extends JComponent {
      */
     private class DrawingsKeyListeners implements KeyListener {
 
+        @Override
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_DELETE) {
                 layerModel.deleteSelectedGraphics();
             }
-            // FIXME arrows is arlready used with pan!
+            // FIXME arrows is already used with pan!
             // else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             // layerModel.moveSelectedGraphics(-1, 0);
             // }
@@ -334,13 +345,11 @@ public class GraphicsPane extends JComponent {
             }
         }
 
+        @Override
         public void keyReleased(KeyEvent e) {
-
-            if (e.getKeyCode() == KeyEvent.VK_H) {
-                // WeasisWin.getInstance().getToolsBar().setSelectionButton();
-            }
         }
 
+        @Override
         public void keyTyped(KeyEvent e) {
         }
     }

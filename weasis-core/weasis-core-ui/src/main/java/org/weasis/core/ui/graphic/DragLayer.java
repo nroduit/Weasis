@@ -11,16 +11,16 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.LayerModel;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class DragLayer.
@@ -129,10 +129,10 @@ public class DragLayer extends AbstractLayer {
      * @return List
      */
     @Override
-    public Graphic getGraphicContainPoint(MouseEvent mouseevent) {
+    public Graphic getGraphicContainPoint(MouseEventDouble mouseevent) {
         AbstractDragGraphic selectedGraphic = null;
         if (graphics != null) {
-            final Point pos = mouseevent.getPoint();
+            final Point2D pos = mouseevent.getImageCoordinates();
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
                 // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de

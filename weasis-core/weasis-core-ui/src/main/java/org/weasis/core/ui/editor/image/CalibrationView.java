@@ -155,8 +155,8 @@ public class CalibrationView extends JPanel {
                     } else {
                         unitRatio = originalUnit.getConversionRatio(unit.getConvFactor());
                     }
-                    double lineLength = line.getSegmentLength();
-                    if (lineLength < 1.0) {
+                    Double lineLength = line.getSegmentLength(1.0, 1.0);
+                    if (lineLength == null || lineLength < 1.0) {
                         lineLength = 1.0;
                     }
                     double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;

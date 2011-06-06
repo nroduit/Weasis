@@ -20,8 +20,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Toolkit;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,29 +39,23 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.TempLayer;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 public class AbstractLayerModel implements LayerModel {
 
     private static final SelectGraphic selectGraphic = new SelectGraphic();
     public static final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Cursor EDIT_CURSOR = getCustomCursor("editpoint.png", "Edit Point", 10, 10); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Cursor MOVE_CURSOR = new Cursor(Cursor.MOVE_CURSOR);
-    public static final Cursor N_CURSOR = new Cursor(Cursor.N_RESIZE_CURSOR);
-    public static final Cursor S_CURSOR = new Cursor(Cursor.S_RESIZE_CURSOR);
-    public static final Cursor E_CURSOR = new Cursor(Cursor.E_RESIZE_CURSOR);
-    public static final Cursor W_CURSOR = new Cursor(Cursor.W_RESIZE_CURSOR);
-    public static final Cursor NE_CURSOR = new Cursor(Cursor.NE_RESIZE_CURSOR);
-    public static final Cursor NW_CURSOR = new Cursor(Cursor.NW_RESIZE_CURSOR);
-    public static final Cursor SE_CURSOR = new Cursor(Cursor.SE_RESIZE_CURSOR);
-    public static final Cursor SW_CURSOR = new Cursor(Cursor.SW_RESIZE_CURSOR);
+
     public static final Cursor CROSS_CURSOR = new Cursor(Cursor.CROSSHAIR_CURSOR);
     public static final Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
     protected Cursor cursor = DEFAULT_CURSOR;
     protected final GraphicsPane canvas;
-    protected boolean shapeAction = false;
+    protected boolean draggingPosition = false;
     private final ArrayList<AbstractLayer> layers;
     private final ArrayList<Graphic> singleList;
 
@@ -88,9 +82,9 @@ public class AbstractLayerModel implements LayerModel {
         setAntialiasing(false);
     }
 
-    public void changeCursorDesign(MouseEvent mouseevent) {
-        Point p = mouseevent.getPoint();
-        shapeAction = false;
+    public void changeCursorDesign(MouseEventDouble mouseevent) {
+        Point2D p = mouseevent.getImageCoordinates();
+        draggingPosition = false;
         boolean shift = mouseevent.isShiftDown();
         java.util.List dragGaphs = getSelectedDragableGraphics();
         if (dragGaphs.size() == 1 && !shift) {
@@ -100,46 +94,37 @@ public class AbstractLayerModel implements LayerModel {
                     canvas.setCursor(cursor);
                     return;
                 }
-
                 int handlePointIndex = graph.getHandlePointIndex(mouseevent);
+
+                // System.out.println("mousePoint: " + mouseevent + " " + handlePointIndex);
                 if (handlePointIndex < 0) {
-                    // if (graph.getArea().contains(p)) {
                     if (graph.getArea(mouseevent).contains(p) || graph.isOnGraphicLabel(mouseevent)) {
                         canvas.setCursor(MOVE_CURSOR);
-                        shapeAction = true;
+                        draggingPosition = true;
                     }
                 } else {
-                    shapeAction = true;
-                    if (dragGaphs.get(0) instanceof PolygonGraphic) {
-                        canvas.setCursor(HAND_CURSOR);
-                    } else {
-                        if (handlePointIndex >= 0)
-                            canvas.setCursor(CROSS_CURSOR);
-                        else
-                            shapeAction = false;
-                    }
+                    canvas.setCursor(EDIT_CURSOR);
+                    draggingPosition = true;
                 }
             }
         } else if (dragGaphs.size() > 1 && !shift) {
             for (int i = 0; i < dragGaphs.size(); i++) {
                 AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(i);
-                // if (graph.getResizeCorner(mouseevent) < 0) {
                 if (graph.getHandlePointIndex(mouseevent) < 0) {
-                    // if (graph.getArea().contains(p)) {
                     if (graph.getArea(mouseevent).contains(p)) {
                         canvas.setCursor(MOVE_CURSOR);
                         // setCreateGraphic(null);
-                        shapeAction = true;
+                        draggingPosition = true;
                     }
                 }
             }
         }
-        if (!shapeAction) {
+        if (!draggingPosition) {
             canvas.setCursor(cursor);
         }
     }
 
-    public AbstractDragGraphic createGraphic(MouseEvent mouseevent) {
+    public AbstractDragGraphic createGraphic(MouseEventDouble mouseevent) {
         Graphic obj = getCreateGraphic();
         // TODO should be according to the selected Tool
         Tools tool = Tools.MEASURE;
@@ -147,7 +132,7 @@ public class AbstractLayerModel implements LayerModel {
             tool = Tools.TEMPDRAGLAYER;
             obj = selectGraphic;
         }
-        obj = ((AbstractDragGraphic) (obj)).clone(mouseevent.getX(), mouseevent.getY());
+        obj = ((AbstractDragGraphic) (obj)).clone(mouseevent.getImageX(), mouseevent.getImageY());
         if (obj != null) {
             AbstractLayer layer = getLayer(tool);
             if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
@@ -163,8 +148,8 @@ public class AbstractLayerModel implements LayerModel {
         return (AbstractDragGraphic) obj;
     }
 
-    public boolean isShapeAction() {
-        return shapeAction;
+    public boolean isOnDraggingPosition() {
+        return draggingPosition;
     }
 
     @Override
@@ -324,7 +309,7 @@ public class AbstractLayerModel implements LayerModel {
         return arraylist;
     }
 
-    public Graphic getFirstGraphicIntersecting(MouseEvent mouseevent) {
+    public Graphic getFirstGraphicIntersecting(MouseEventDouble mouseevent) {
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {

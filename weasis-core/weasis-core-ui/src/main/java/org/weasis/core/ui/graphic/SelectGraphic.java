@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * The Class SelectGraphic.
@@ -55,8 +56,9 @@ public class SelectGraphic extends RectangleGraphic {
     @Override
     public Rectangle getBounds(AffineTransform transform) {
         Rectangle bound = super.getBounds(transform);
-        if (bound != null)
+        if (bound != null) {
             bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0); // tricks for single click when no draging
+        }
         return bound;
     }
 
@@ -90,7 +92,7 @@ public class SelectGraphic extends RectangleGraphic {
     protected class SelectedDragSequence extends AbstractDragGraphic.DefaultDragSequence {
 
         @Override
-        public boolean completeDrag(MouseEvent mouseEvent) {
+        public boolean completeDrag(MouseEventDouble mouseEvent) {
             fireRemoveAndRepaintAction();
             return true;
         }

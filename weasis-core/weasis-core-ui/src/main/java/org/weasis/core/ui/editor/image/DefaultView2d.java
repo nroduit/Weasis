@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -37,6 +38,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
@@ -94,6 +96,7 @@ import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
@@ -221,7 +224,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected static class BulkDragSequence implements DragSequence {
 
         @Override
-        public void startDrag(MouseEvent mouseevent) {
+        public void startDrag(MouseEventDouble mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
                 ((DragSequence) childDS.get(i)).startDrag(mouseevent);
@@ -229,7 +232,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         @Override
-        public void drag(MouseEvent mouseevent) {
+        public void drag(MouseEventDouble mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
                 ((DragSequence) childDS.get(i)).drag(mouseevent);
@@ -237,7 +240,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         @Override
-        public boolean completeDrag(MouseEvent mouseevent) {
+        public boolean completeDrag(MouseEventDouble mouseevent) {
             int i = 0;
             for (int j = childDS.size(); i < j; i++) {
                 ((DragSequence) childDS.get(i)).completeDrag(mouseevent);
@@ -247,7 +250,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         private final java.util.List childDS;
 
-        BulkDragSequence(java.util.List list, MouseEvent mouseevent) {
+        BulkDragSequence(java.util.List list, MouseEventDouble mouseevent) {
             int i = list.size();
             childDS = new ArrayList(i);
             for (int j = 0; j < i; j++) {
@@ -876,10 +879,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null) {
-            Point pView = mouseevent.getPoint();
-            Point pModel = getRealCoordinates(pView);
+            Point2D pModel = getImageCoordinates(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
-            String str = getPixelInfo(pModel, imageLayer);
+            String str =
+                getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
             oldBound.width =
                 Math.max(
                     oldBound.width,
@@ -902,9 +905,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected class MouseHandler extends MouseActionAdapter {
 
         @Override
-        public void mousePressed(MouseEvent mouseevent) {
+        public void mousePressed(MouseEvent e) {
             int buttonMask = getButtonMaskEx();
-            if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
+            if ((e.getModifiersEx() & buttonMask) != 0) {
                 /*
                  * if (ds != null) { if (ds.completeDrag(mouseevent)) { ds = null;
                  * 
@@ -917,62 +920,52 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 AbstractLayerModel showDraws = getLayerModel();
 
-                Point pView = mouseevent.getPoint();
-                Point pModel = getRealCoordinates(pView);
-
-                int offsetx = pModel.x - pView.x;
-                int offsety = pModel.y - pView.y;
-                // convert mouseevent point to real image coordinate point (without geometric transformation)
-                mouseevent.translatePoint(offsetx, offsety);
+                MouseEventDouble event =
+                    new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(),
+                        e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(), e.isPopupTrigger(),
+                        e.getButton());
+                event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
 
                 if (ds != null) {
-                    if (!ds.completeDrag(mouseevent)) {
-                        mouseevent.translatePoint(-offsetx, -offsety);
+                    if (!ds.completeDrag(event))
                         return;
-                    }
                 }
 
-                showDraws.changeCursorDesign(mouseevent);
+                showDraws.changeCursorDesign(event);
 
                 java.util.List dragList = showDraws.getSelectedDragableGraphics();
-                int j = dragList != null ? dragList.size() : 0;
+                int dragListSize = dragList != null ? dragList.size() : 0;
                 // si le curseur change pour le redimensionnement du graphic
                 // permet de redimensionner un graphic qui se trouve sous un
                 // autre graphic
-                boolean shiftDown = mouseevent.isShiftDown();
-                boolean ctrlDown = mouseevent.isControlDown();
-                if (showDraws.isShapeAction() && !shiftDown) {
-                    if (j == 1) {
+                boolean shiftDown = event.isShiftDown();
+                if (showDraws.isOnDraggingPosition() && !shiftDown) {
+                    if (dragListSize == 1) {
                         AbstractDragGraphic graph = (AbstractDragGraphic) dragList.get(0);
-                        ds = graph.createDragSequence(null, mouseevent);
-                    } else if (j > 1) {
-                        ds = new BulkDragSequence(dragList, mouseevent);
+                        ds = graph.createDragSequence(null, event);
+                    } else if (dragListSize > 1) {
+                        ds = new BulkDragSequence(dragList, event);
                     }
                 }
-                if (ctrlDown || showDraws.getCreateGraphic() == null) { // mode de sélection
-                    // avec la flèche
-                    Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(mouseevent);
+                if (shiftDown || showDraws.getCreateGraphic() == null) {
+                    Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(event);
                     ArrayList selGraph = new ArrayList(showDraws.getSelectedGraphics());
                     if (pointedGraphic == null && shiftDown)
                         return;
                     if (pointedGraphic instanceof AbstractDragGraphic) {
                         AbstractDragGraphic graphic1 = (AbstractDragGraphic) pointedGraphic;
-                        // si la listes des graphics dragable est sup à 1 et
-                        // quelle contient le graphic
-                        // alors on crée une séquence de drag de la liste
-                        // des graphics
                         if (selGraph.size() > 1 && selGraph.contains(graphic1)) {
                             if (shiftDown) {
                                 selGraph.remove(graphic1);
                                 showDraws.setSelectedGraphics(selGraph);
                             }
                             // else {
-                            ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), mouseevent);
+                            ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), event);
                             // }
                         } else {
                             if (!shiftDown) {
                                 showDraws.setSelectedGraphics(null);
-                                ds = graphic1.createDragSequence(null, mouseevent);
+                                ds = graphic1.createDragSequence(null, event);
                                 showDraws.setSelectedGraphic(graphic1);
                             } else {
                                 showDraws.setSelectedGraphics(null);
@@ -980,7 +973,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                                     selGraph.add(graphic1);
                                     showDraws.setSelectedGraphics(selGraph);
                                     if (selGraph.size() > 1) {
-                                        ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), mouseevent);
+                                        ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), event);
                                     }
                                 }
                             }
@@ -988,7 +981,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
                 if (ds == null) {
-                    AbstractDragGraphic graphic = showDraws.createGraphic(mouseevent);
+                    AbstractDragGraphic graphic = showDraws.createGraphic(event);
                     if (graphic != null) {
                         ds = graphic.createDragSequence(null, null);
                         if (ds != null) {
@@ -999,48 +992,37 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
                 if (ds != null) {
-                    ds.startDrag(mouseevent);
+                    ds.startDrag(event);
                 } else {
                     showDraws.setSelectedGraphic(null);
                 }
-                mouseevent.translatePoint(-offsetx, -offsety);
             }
         }
 
         @Override
-        public void mouseReleased(MouseEvent mouseevent) {
+        public void mouseReleased(MouseEvent e) {
             // Using standard modifiers, ex modifiers are not triggered in mouse released
             int buttonMask = getButtonMask();
-            if ((mouseevent.getModifiers() & buttonMask) != 0) {
-                // if (colorPicker != null) {
-                // colorPicker.setArea(pickView(updateMouseToRealCoord(mouseevent,
-                // false).getPoint()), true);
-                // imageFrame.getToolsBar().setDrawWithOtherTools(false);
-                // colorPicker = null;
-                // }
-                // if (!imageFrame.getThumbOption().isDrawingsVisible()) {
-                // return;
-                // }
+            if ((e.getModifiers() & buttonMask) != 0) {
                 if (ds != null) {
-                    Point pView = mouseevent.getPoint();
-                    Point pModel = getRealCoordinates(pView);
-                    int offsetx = pModel.x - pView.x;
-                    int offsety = pModel.y - pView.y;
-                    // convert mouseevent point to real image coordinate point (without geometric transformation)
-                    mouseevent.translatePoint(offsetx, offsety);
+                    MouseEventDouble event =
+                        new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
+                            e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
+                            e.isPopupTrigger(), e.getButton());
+                    event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
 
                     AbstractLayerModel model = getLayerModel();
                     SelectGraphic selectionGraphic = model.getSelectionGraphic();
                     // Select all graphs inside the selection
                     if (selectionGraphic != null) {
-                        AffineTransform transform = getAffineTransform(mouseevent); // why not use getAffineTransform   
+                        AffineTransform transform = getAffineTransform(event);
                         Rectangle selectionRect = selectionGraphic.getBounds(transform);
                         List<Graphic> list = model.getSelectedAllGraphicsIntersecting(selectionRect, transform);
                         list.remove(selectionGraphic);
                         model.setSelectedGraphics(list);
                     }
 
-                    if (ds.completeDrag(mouseevent)) {
+                    if (ds.completeDrag(event)) {
                         // Throws to the tool listener the current graphic selection.
                         model.fireGraphicsSelectionChanged(getImage());
 
@@ -1055,55 +1037,47 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         }
                         ds = null;
                     }
-                    model.changeCursorDesign(mouseevent);
-                    mouseevent.translatePoint(-offsetx, -offsety);
+                    model.changeCursorDesign(event);
+
                 }
-                // if (mouseevent.getClickCount() == 2) {
-                // int j = showDraws.getSelectedGraphics() != null ? showDraws.getSelectedGraphics().size() : 0;
-                // if (j == 1) {
-                // ((Graphic) showDraws.getSelectedGraphics().get(0)).showProperties();
-                // }
-                // }
             }
         }
 
         @Override
-        public void mouseDragged(MouseEvent mouseevent) {
+        public void mouseDragged(MouseEvent e) {
             int buttonMask = getButtonMaskEx();
-            if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
+            if ((e.getModifiersEx() & buttonMask) != 0) {
                 if (ds != null) {
-                    Point pView = mouseevent.getPoint();
-                    Point pModel = getRealCoordinates(pView);
-                    int offsetx = pModel.x - pView.x;
-                    int offsety = pModel.y - pView.y;
-                    // convert mouseevent point to a 100% zoom position
-                    mouseevent.translatePoint(offsetx, offsety);
-                    ds.drag(mouseevent);
-                    mouseevent.translatePoint(-offsetx, -offsety);
+                    MouseEventDouble event =
+                        new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
+                            e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
+                            e.isPopupTrigger(), e.getButton());
+                    event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+                    ds.drag(event);
                 }
             }
         }
 
         @Override
-        public void mouseMoved(MouseEvent mouseevent) {
+        public void mouseMoved(MouseEvent e) {
             // int buttonMask = getButtonMaskEx();
             // if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
-            Point pView = mouseevent.getPoint();
-            Point pModel = getRealCoordinates(pView);
-            int offsetx = pModel.x - pView.x;
-            int offsety = pModel.y - pView.y;
-            // convert mouseevent point to real image coordinate point (without geometric transformation)
-            mouseevent.translatePoint(offsetx, offsety);
-            getLayerModel().changeCursorDesign(mouseevent);
+
+            MouseEventDouble event =
+                new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(),
+                    e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
+            event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+
+            getLayerModel().changeCursorDesign(event);
             if (ds != null) {
-                switch (mouseevent.getID()) {
+                switch (e.getID()) {
                     case MouseEvent.MOUSE_DRAGGED:
                     case MouseEvent.MOUSE_MOVED:
-                        ds.drag(mouseevent);
+                        ds.drag(event);
                         break;
                 }
             }
-            mouseevent.translatePoint(-offsetx, -offsety);
+            // e.translatePoint(-offsetx, -offsety);
         }
         // }
     }
