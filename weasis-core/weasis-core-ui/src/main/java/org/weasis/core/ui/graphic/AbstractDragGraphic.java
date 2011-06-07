@@ -560,7 +560,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 imageElement = (ImageElement) source;
             }
             if (imageElement != null) {
-                List<MeasureItem> list = getMeasurements(imageElement, releasedEvent);
+                List<MeasureItem> list = getMeasurements(imageElement, releasedEvent, true);
                 if (list != null) {
                     String[] labels = new String[list.size()];
                     for (int i = 0; i < labels.length; i++) {
@@ -835,6 +835,20 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected void fireMoveAction() {
         if (isGraphicComplete()) {
             firePropertyChange("move", null, this);
+        }
+    }
+
+    @Override
+    public void toFront() {
+        if (isGraphicComplete()) {
+            firePropertyChange("toFront", null, this);
+        }
+    }
+
+    @Override
+    public void toBack() {
+        if (isGraphicComplete()) {
+            firePropertyChange("toBack", null, this);
         }
     }
 

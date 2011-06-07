@@ -25,10 +25,10 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public final static Measurement LineLength = new Measurement("Line length", true);
-    public final static Measurement Orientation = new Measurement("Orientation", true);
-    public final static Measurement Azimuth = new Measurement("Azimuth", true);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
+    public final static Measurement LineLength = new Measurement("Line length", true, true, true);
+    public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
+    public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(4, paintColor, lineThickness, labelVisible);
@@ -186,23 +186,23 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() >= 4) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
-                if (LineLength.isComputed() && (releaseEvent || LineLength.isGraphicLabel())) {
+                if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
                     Double val =
                         releaseEvent || LineLength.isQuickComputing() ? getSegmentLength(adapter.getCalibRatio(),
                             adapter.getCalibRatio()) : null;
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
-                if (Orientation.isComputed() && (releaseEvent || Orientation.isGraphicLabel())) {
+                if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
                     Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
-                if (Azimuth.isComputed() && (releaseEvent || Azimuth.isGraphicLabel())) {
+                if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
                     Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }

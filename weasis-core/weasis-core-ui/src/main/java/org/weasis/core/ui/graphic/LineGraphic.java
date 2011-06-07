@@ -31,14 +31,14 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public final static Measurement FirstPointX = new Measurement("First point X", true);
-    public final static Measurement FirstPointY = new Measurement("First point Y", true);
-    public final static Measurement LastPointX = new Measurement("Last point X", true);
-    public final static Measurement LastPointY = new Measurement("Last point Y", true);
-    public final static Measurement LineLength = new Measurement("Line length", true);
-    public final static Measurement Orientation = new Measurement("Orientation", true);
-    public final static Measurement Azimuth = new Measurement("Azimuth", true);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
+    public final static Measurement FirstPointX = new Measurement("First point X", true, true, false);
+    public final static Measurement FirstPointY = new Measurement("First point Y", true, true, false);
+    public final static Measurement LastPointX = new Measurement("Last point X", true, true, false);
+    public final static Measurement LastPointY = new Measurement("Last point Y", true, true, false);
+    public final static Measurement LineLength = new Measurement("Line length", true, true, true);
+    public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
+    public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public LineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(2, paintColor, lineThickness, labelVisible);
@@ -125,20 +125,20 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() >= 2) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 if (FirstPointX.isComputed() || FirstPointY.isComputed()) {
                     Point2D p = getStartPoint();
-                    if (FirstPointX.isComputed() && (releaseEvent || FirstPointX.isGraphicLabel())) {
+                    if (FirstPointX.isComputed() && (!drawOnLabel || FirstPointX.isGraphicLabel())) {
                         Double val =
                             releaseEvent || FirstPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
                                 : null;
                         measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
                     }
-                    if (FirstPointY.isComputed() && (releaseEvent || FirstPointY.isGraphicLabel())) {
+                    if (FirstPointY.isComputed() && (!drawOnLabel || FirstPointY.isGraphicLabel())) {
                         Double val =
                             releaseEvent || FirstPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
                                 : null;
@@ -147,13 +147,13 @@ public class LineGraphic extends AbstractDragGraphic {
                 }
                 if (LastPointX.isComputed() || LastPointY.isComputed()) {
                     Point2D p = getEndPoint();
-                    if (LastPointX.isComputed() && (releaseEvent || LastPointX.isGraphicLabel())) {
+                    if (LastPointX.isComputed() && (!drawOnLabel || LastPointX.isGraphicLabel())) {
                         Double val =
                             releaseEvent || LastPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
                                 : null;
                         measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
                     }
-                    if (LastPointY.isComputed() && (releaseEvent || LastPointY.isGraphicLabel())) {
+                    if (LastPointY.isComputed() && (!drawOnLabel || LastPointY.isGraphicLabel())) {
                         Double val =
                             releaseEvent || LastPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
                                 : null;
@@ -161,17 +161,17 @@ public class LineGraphic extends AbstractDragGraphic {
                     }
                 }
 
-                if (LineLength.isComputed() && (releaseEvent || LineLength.isGraphicLabel())) {
+                if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
                     Double val =
                         releaseEvent || LineLength.isQuickComputing() ? getSegmentLength(adapter.getCalibRatio(),
                             adapter.getCalibRatio()) : null;
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
-                if (Orientation.isComputed() && (releaseEvent || Orientation.isGraphicLabel())) {
+                if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
                     Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
-                if (Azimuth.isComputed() && (releaseEvent || Azimuth.isGraphicLabel())) {
+                if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
                     Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }

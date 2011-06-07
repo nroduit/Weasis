@@ -36,13 +36,13 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public final static Measurement CenterX = new Measurement("Center X", true);
-    public final static Measurement CenterY = new Measurement("Center Y", true);
-    public final static Measurement Radius = new Measurement("Radius", true);
-    public final static Measurement Diameter = new Measurement("Diameter", true);
-    public final static Measurement Area = new Measurement("Area", true);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
+    public final static Measurement CenterX = new Measurement("Center X", true, true, false);
+    public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
+    public final static Measurement Radius = new Measurement("Radius", true, true, false);
+    public final static Measurement Diameter = new Measurement("Diameter", true, true, true);
+    public final static Measurement Area = new Measurement("Area", true, true, true);
+    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public ThreePointsCircleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(3, paintColor, lineThickness, labelVisible);
@@ -94,7 +94,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() > 1) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
@@ -106,29 +106,29 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                 double radius = centerPt.distance(handlePointList.get(0));
                 double ratio = adapter.getCalibRatio();
 
-                if (CenterX.isComputed() && (releaseEvent || CenterX.isGraphicLabel())) {
+                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
                     Double val =
                         releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(centerPt.getX())
                             : null;
                     measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
                 }
-                if (CenterY.isComputed() && (releaseEvent || CenterY.isGraphicLabel())) {
+                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
                     Double val =
                         releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(centerPt.getY())
                             : null;
                     measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
                 }
 
-                if (Radius.isComputed() && (releaseEvent || Radius.isGraphicLabel())) {
+                if (Radius.isComputed() && (!drawOnLabel || Radius.isGraphicLabel())) {
                     Double val = releaseEvent || Radius.isQuickComputing() ? ratio * radius : null;
                     measVal.add(new MeasureItem(Radius, val, adapter.getUnit()));
                 }
-                if (Diameter.isComputed() && (releaseEvent || Diameter.isGraphicLabel())) {
+                if (Diameter.isComputed() && (!drawOnLabel || Diameter.isGraphicLabel())) {
                     Double val = releaseEvent || Diameter.isQuickComputing() ? ratio * radius * 2.0 : null;
                     measVal.add(new MeasureItem(Diameter, val, adapter.getUnit()));
                 }
 
-                if (Area.isComputed() && (releaseEvent || Area.isGraphicLabel())) {
+                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
                     Double val =
                         releaseEvent || Area.isQuickComputing() ? Math.PI * radius * radius * ratio * ratio : null;
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";

@@ -172,6 +172,16 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
     // }
     // return null;
     // }
+    @Override
+    public void toFront() {
+        firePropertyChange("toFront", null, this);
+    }
+
+    @Override
+    public void toBack() {
+        firePropertyChange("toBack", null, this);
+
+    }
 
     @Override
     public void setSelected(boolean flag) {

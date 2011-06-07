@@ -66,6 +66,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     removeGraphic(graph);
                 } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
                     removeGraphicAndRepaint(graph);
+                } else if ("toFront".equals(s)) { //$NON-NLS-1$
+                    toFront(graph);
+                } else if ("toBack".equals(s)) { //$NON-NLS-1$
+                    toBack(graph);
                 }
                 // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
                 else {
@@ -115,8 +119,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         if (graphics != null) {
             graphics.remove(graphic);
             graphics.add(graphic);
+            repaint(graphic.getRepaintBounds(getAffineTransform()));
         }
-        // repaint(graphic.getv);
     }
 
     public synchronized void setGraphics(GraphicList graphics) {
@@ -144,8 +148,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         if (graphics != null) {
             graphics.remove(graphic);
             graphics.add(0, graphic);
+            repaint(graphic.getRepaintBounds(getAffineTransform()));
         }
-        // repaint(graphic.getRepaintBounds());
     }
 
     public void setShowDrawing(LayerModel canvas1) {

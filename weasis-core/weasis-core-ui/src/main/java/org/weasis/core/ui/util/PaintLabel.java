@@ -2,7 +2,6 @@ package org.weasis.core.ui.util;
 
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -14,15 +13,12 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -43,7 +39,6 @@ public class PaintLabel extends JDialog {
     private JPanel jPanelChangeCanal = new JPanel();
     private GridBagLayout gridBagLayout2 = new GridBagLayout();
     private JButton jButtonApply = new JButton();
-    private JPanel jPanel1 = new JPanel();
     private JPanel jPanel2 = new JPanel();
     private GridBagLayout gridBagLayout1 = new GridBagLayout();
     private JLabel jLabelFont = new JLabel();
@@ -54,11 +49,6 @@ public class PaintLabel extends JDialog {
     private JCheckBox jCheckBoxBold = new JCheckBox();
     private JCheckBox jCheckBoxItalic = new JCheckBox();
     private ImageViewerEventManager eventManager;
-    private final JPanel panel = new JPanel();
-    private final JLabel lblColor = new JLabel("Color:");
-    private final JButton jPVButtonColor = new JButton("Pick");
-    private final JLabel lblLineWidth = new JLabel("Line width:");
-    private final JSpinner spinner = new JSpinner();
 
     public PaintLabel(ImageViewerEventManager eventManager) {
         super(WinUtil.getParentDialogOrFrame(eventManager.getSelectedView2dContainer()), "Default Graphic Properties",
@@ -86,11 +76,6 @@ public class PaintLabel extends JDialog {
                 apply();
             }
         });
-        jPanel2.setLayout(gridBagLayout1);
-        jLabelFont.setText("Name:");
-        jLabelSize.setText("Size:");
-        jPanel2.setBorder(new TitledBorder("Font (Global)"));
-        panel.setBorder(new TitledBorder("Line Property (For new graphics)"));
 
         jButtonClose.setText("Close");
         jButtonClose.addActionListener(new java.awt.event.ActionListener() {
@@ -99,26 +84,17 @@ public class PaintLabel extends JDialog {
                 closeWin();
             }
         });
-
-        jPVButtonColor.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JButton button = (JButton) e.getSource();
-                Color newColor = JColorChooser.showDialog(PaintLabel.this, "Pick a color", button.getBackground());
-                if (newColor != null) {
-                    button.setBackground(newColor);
-                }
-            }
-        });
-        jCheckBoxBold.setText("Bold");
-        jCheckBoxItalic.setText("Italic");
         getContentPane().add(panel1);
         panel1.add(jPanelChangeCanal, BorderLayout.SOUTH);
         jPanelChangeCanal.add(jButtonApply, new GridBagConstraints(0, 0, 1, 1, 0.5, 0.0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, new Insets(25, 25, 10, 15), 0, 0));
-        panel1.add(jPanel1, BorderLayout.NORTH);
-        jPanel1.setLayout(new BoxLayout(jPanel1, BoxLayout.Y_AXIS));
-        jPanel1.add(jPanel2);
+        panel1.add(jPanel2, BorderLayout.WEST);
+        jPanel2.setLayout(gridBagLayout1);
+        jLabelFont.setText("Name:");
+        jLabelSize.setText("Size:");
+        jPanel2.setBorder(new TitledBorder("Font (Global)"));
+        jCheckBoxBold.setText("Bold");
+        jCheckBoxItalic.setText("Italic");
         jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(5, 2, 5, 0), 0, 0));
         jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
@@ -131,43 +107,6 @@ public class PaintLabel extends JDialog {
             GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
         jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanel1.add(panel);
-        GridBagLayout gbl_panel = new GridBagLayout();
-        gbl_panel.columnWidths = new int[] { 0, 0, 0, 0 };
-        gbl_panel.rowHeights = new int[] { 0, 0, 0 };
-        gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
-        gbl_panel.rowWeights = new double[] { 0.0, 0.0, Double.MIN_VALUE };
-        panel.setLayout(gbl_panel);
-
-        GridBagConstraints gbc_lblColor = new GridBagConstraints();
-        gbc_lblColor.anchor = GridBagConstraints.WEST;
-        gbc_lblColor.insets = new Insets(0, 0, 0, 5);
-        gbc_lblColor.gridx = 0;
-        gbc_lblColor.gridy = 0;
-        panel.add(lblColor, gbc_lblColor);
-
-        GridBagConstraints gbc_button = new GridBagConstraints();
-        gbc_button.anchor = GridBagConstraints.WEST;
-        gbc_button.gridwidth = 2;
-        gbc_button.insets = new Insets(0, 2, 0, 5);
-        gbc_button.gridx = 1;
-        gbc_button.gridy = 0;
-        panel.add(jPVButtonColor, gbc_button);
-
-        GridBagConstraints gbc_lblLineWidth = new GridBagConstraints();
-        gbc_lblLineWidth.anchor = GridBagConstraints.WEST;
-        gbc_lblLineWidth.gridwidth = 2;
-        gbc_lblLineWidth.insets = new Insets(5, 0, 0, 5);
-        gbc_lblLineWidth.gridx = 0;
-        gbc_lblLineWidth.gridy = 1;
-        panel.add(lblLineWidth, gbc_lblLineWidth);
-
-        GridBagConstraints gbc_spinner = new GridBagConstraints();
-        gbc_spinner.insets = new Insets(5, 2, 0, 5);
-        gbc_spinner.anchor = GridBagConstraints.WEST;
-        gbc_spinner.gridx = 2;
-        gbc_spinner.gridy = 1;
-        panel.add(spinner, gbc_spinner);
         jPanelChangeCanal.add(jButtonClose, new GridBagConstraints(1, 0, 1, 1, 0.5, 0.0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, new Insets(25, 15, 10, 20), 0, 0));
 
@@ -210,9 +149,6 @@ public class PaintLabel extends JDialog {
         jComboSize.setSelectedIndex(index);
         jComboName.setSelectedItem(setting.getFontName());
 
-        JMVUtils.setNumberModel(spinner, 1, 1, 8, setting.getLineWidth());
-        jPVButtonColor.setBackground(setting.getLineColor());
-
     }
 
     public void apply() {
@@ -230,9 +166,6 @@ public class PaintLabel extends JDialog {
         setting.setFontName(name);
         setting.setFontSize(size);
         setting.setFontType(style);
-
-        setting.setLineColor(jPVButtonColor.getBackground());
-        setting.setLineWidth((Integer) spinner.getValue());
 
         ArrayList<Graphic> graphicList = MeasureToolBar.graphicList;
         for (int i = 1; i < graphicList.size(); i++) {

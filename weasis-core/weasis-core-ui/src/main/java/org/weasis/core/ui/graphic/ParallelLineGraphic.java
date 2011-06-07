@@ -23,10 +23,10 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
-    public final static Measurement Distance = new Measurement("Distance", true);
-    public final static Measurement Orientation = new Measurement("Orientation", true);
-    public final static Measurement Azimuth = new Measurement("Azimuth", true);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
+    public final static Measurement Distance = new Measurement("Distance", true, true, true);
+    public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
+    public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public ParallelLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(6, paintColor, lineThickness, labelVisible);
@@ -155,7 +155,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() >= 4) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
@@ -164,17 +164,17 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                 Point2D B = handlePointList.get(1);
                 Point2D C = handlePointList.get(2);
 
-                if (Distance.isComputed() && (releaseEvent || Distance.isGraphicLabel())) {
+                if (Distance.isComputed() && (!drawOnLabel || Distance.isGraphicLabel())) {
                     Double val =
-                        releaseEvent || Distance.isQuickComputing() ? C.distance(GeomUtil
-                            .getPerpendicularPointToLine(A, B, C)) * adapter.getCalibRatio() : null;
+                        releaseEvent || Distance.isQuickComputing() ? C.distance(GeomUtil.getPerpendicularPointToLine(
+                            A, B, C)) * adapter.getCalibRatio() : null;
                     measVal.add(new MeasureItem(Distance, val, adapter.getUnit()));
                 }
-                if (Orientation.isComputed() && (releaseEvent || Orientation.isGraphicLabel())) {
+                if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
                     Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
-                if (Azimuth.isComputed() && (releaseEvent || Azimuth.isGraphicLabel())) {
+                if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
                     Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }

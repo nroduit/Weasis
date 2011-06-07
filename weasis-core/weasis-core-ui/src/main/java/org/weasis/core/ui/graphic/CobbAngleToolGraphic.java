@@ -282,7 +282,7 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() >= 5) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
@@ -316,10 +316,10 @@ public class CobbAngleToolGraphic extends AbstractDragGraphic {
                         realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(I, O, L)));
                     }
 
-                    if (Angle.isComputed() && (releaseEvent || Angle.isGraphicLabel())) {
+                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(Angle, realAngle, "deg"));
                     }
-                    if (ComplementaryAngle.isComputed() && (releaseEvent || ComplementaryAngle.isGraphicLabel())) {
+                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
                     }
                 }

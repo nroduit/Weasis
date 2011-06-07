@@ -92,6 +92,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     private void jbInit() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+        add(getGeneralOptions());
         add(getIconsPanel());
         add(getSelectedMeasurePanel());
         final JPanel panel_1 = new JPanel();
@@ -265,6 +267,32 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         return transform;
     }
 
+    public JPanel getGeneralOptions() {
+        final JPanel transform = new JPanel();
+        transform.setAlignmentY(Component.TOP_ALIGNMENT);
+        transform.setAlignmentX(Component.LEFT_ALIGNMENT);
+        transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Display Options",
+            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+
+        final JButton btnGerenralOptions = new JButton("Label Font");
+        btnGerenralOptions.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (selectedGraphic != null && selectedGraphic.size() > 0) {
+                    JDialog dialog = new PaintLabel(eventManager);
+                    Point location = btnGerenralOptions.getLocation();
+                    SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
+                    WinUtil.adjustLocationToFitScreen(dialog, location);
+                    dialog.setVisible(true);
+                }
+            }
+        });
+        transform.add(btnGerenralOptions);
+        transform.add(Box.createVerticalStrut(5));
+        return transform;
+    }
+
     @Override
     public Component getToolComponent() {
         return new JScrollPane(this);
@@ -292,7 +320,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         tableContainer.removeAll();
 
         if (graph != null && imageElement != null) {
-            List<MeasureItem> list = graph.getMeasurements(imageElement, true);
+            List<MeasureItem> list = graph.getMeasurements(imageElement, true, false);
             if (list != null) {
                 Object[][] labels = new Object[list.size()][];
                 for (int i = 0; i < labels.length; i++) {

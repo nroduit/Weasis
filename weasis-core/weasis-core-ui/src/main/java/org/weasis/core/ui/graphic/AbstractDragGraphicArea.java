@@ -129,13 +129,13 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     Double val = releaseEvent || ImageMax.isQuickComputing() ? max : null;
                     measVal.add(new MeasureItem(ImageMax, val, unit));
                 }
-                if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
-                    Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
-                    measVal.add(new MeasureItem(ImageMean, val, unit));
-                }
                 if (ImageSTD.isComputed() && (releaseEvent || ImageSTD.isGraphicLabel())) {
                     Double val = releaseEvent || ImageSTD.isQuickComputing() ? stdv : null;
                     measVal.add(new MeasureItem(ImageSTD, val, unit));
+                }
+                if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
+                    Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
+                    measVal.add(new MeasureItem(ImageMean, val, unit));
                 }
             }
             return measVal;

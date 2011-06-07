@@ -673,21 +673,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             list.add((AbstractDragGraphic) graphic);
                         }
                     }
-                    if (list.size() > 0) {
-                        JMenuItem properties = new JMenuItem("Drawing Properties");
-                        properties.addActionListener(new ActionListener() {
+
+                    if (selected.size() == 1) {
+                        final Graphic graph = selected.get(0);
+                        popupMenu.add(new JSeparator());
+                        JMenuItem item = new JMenuItem("To Front");
+                        item.addActionListener(new ActionListener() {
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
-                                WinUtil.adjustLocationToFitScreen(dialog, mouseevent.getLocationOnScreen());
-                                dialog.setVisible(true);
+                                graph.toFront();
                             }
                         });
-                        popupMenu.add(properties);
-                    }
-                    if (selected.size() == 1) {
-                        final Graphic graph = selected.get(0);
+                        popupMenu.add(item);
+                        item = new JMenuItem("To Back");
+                        item.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                graph.toBack();
+                            }
+                        });
+                        popupMenu.add(item);
+
                         if (graph instanceof LineGraphic && ((LineGraphic) graph).isGraphicComplete()) {
                             popupMenu.add(new JSeparator());
 
@@ -709,6 +717,20 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             });
                             popupMenu.add(calibMenu);
                         }
+                    }
+                    if (list.size() > 0) {
+                        popupMenu.add(new JSeparator());
+                        JMenuItem properties = new JMenuItem("Drawing Properties");
+                        properties.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
+                                WinUtil.adjustLocationToFitScreen(dialog, mouseevent.getLocationOnScreen());
+                                dialog.setVisible(true);
+                            }
+                        });
+                        popupMenu.add(properties);
                     }
                     popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
                 } else if (View2d.this.getSourceImage() != null) {

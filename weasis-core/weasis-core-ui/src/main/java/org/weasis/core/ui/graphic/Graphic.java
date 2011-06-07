@@ -71,9 +71,13 @@ public interface Graphic extends GUIEntry {
 
     public void fireRemoveAction();
 
+    public void toFront();
+
+    public void toBack();
+
     public Shape getShape();
 
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
 
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean b);
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel);
 }

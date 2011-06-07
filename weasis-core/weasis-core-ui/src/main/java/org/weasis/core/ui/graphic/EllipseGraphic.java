@@ -31,13 +31,13 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public final static Measurement CenterX = new Measurement("Center X", true);
-    public final static Measurement CenterY = new Measurement("Center Y", true);
-    public final static Measurement Width = new Measurement("Width", true);
-    public final static Measurement Height = new Measurement("Height", true);
-    public final static Measurement Area = new Measurement("Area", true);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true);
+    public final static Measurement CenterX = new Measurement("Center X", true, true, false);
+    public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
+    public final static Measurement Width = new Measurement("Width", true, true, false);
+    public final static Measurement Height = new Measurement("Height", true, true, false);
+    public final static Measurement Area = new Measurement("Area", true, true, true);
+    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
+    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);
@@ -64,7 +64,7 @@ public class EllipseGraphic extends RectangleGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
         if (imageElement != null && handlePointList.size() > 1) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
             if (adapter != null) {
@@ -73,29 +73,29 @@ public class EllipseGraphic extends RectangleGraphic {
                 rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
                     handlePointList.get(eHandlePoint.SE.index));
                 double ratio = adapter.getCalibRatio();
-                if (CenterX.isComputed() && (releaseEvent || CenterX.isGraphicLabel())) {
+                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
                     Double val =
                         releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
                             : null;
                     measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
                 }
-                if (CenterY.isComputed() && (releaseEvent || CenterY.isGraphicLabel())) {
+                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
                     Double val =
                         releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
                             : null;
                     measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
                 }
 
-                if (Width.isComputed() && (releaseEvent || Width.isGraphicLabel())) {
+                if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
                     Double val = releaseEvent || Width.isQuickComputing() ? ratio * rect.getWidth() : null;
                     measVal.add(new MeasureItem(Width, val, adapter.getUnit()));
                 }
-                if (Height.isComputed() && (releaseEvent || Height.isGraphicLabel())) {
+                if (Height.isComputed() && (!drawOnLabel || Height.isGraphicLabel())) {
                     Double val = releaseEvent || Height.isQuickComputing() ? ratio * rect.getHeight() : null;
                     measVal.add(new MeasureItem(Height, val, adapter.getUnit()));
                 }
 
-                if (Area.isComputed() && (releaseEvent || Area.isGraphicLabel())) {
+                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
                     Double val =
                         releaseEvent || Area.isQuickComputing() ? Math.PI * rect.getWidth() * ratio * rect.getHeight()
                             * ratio / 4.0 : null;

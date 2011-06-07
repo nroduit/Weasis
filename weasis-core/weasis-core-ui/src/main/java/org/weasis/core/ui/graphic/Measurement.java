@@ -8,12 +8,16 @@ public class Measurement {
     private boolean graphicLabel;
 
     public Measurement(String name, boolean quickComputing) {
+        this(name, quickComputing, true, true);
+    }
+
+    public Measurement(String name, boolean quickComputing, boolean computed, boolean graphicLabel) {
         if (name == null)
-            throw new IllegalArgumentException("Agruments cannot be null!");
+            throw new IllegalArgumentException("Name cannot be null!");
         this.name = name;
         this.quickComputing = quickComputing;
-        this.computed = true;
-        this.graphicLabel = true;
+        this.computed = computed;
+        this.graphicLabel = graphicLabel;
     }
 
     public String getName() {
