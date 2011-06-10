@@ -330,9 +330,8 @@ public class WeasisLauncher {
                 }
             }
             // TODO Handle Weasis version without ui
-            if (!uiStarted) {
+            if (!uiStarted)
                 throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
-            }
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -380,9 +379,8 @@ public class WeasisLauncher {
     }
 
     public static Object getCommandSession(Object commandProcessor) {
-        if (commandProcessor == null) {
+        if (commandProcessor == null)
             return null;
-        }
         Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
@@ -402,9 +400,8 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_close(Object commandSession) {
-        if (commandSession == null) {
+        if (commandSession == null)
             return false;
-        }
         try {
             Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
             nameMethod.invoke(commandSession, null);
@@ -420,9 +417,8 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
-        if (commandSession == null) {
+        if (commandSession == null)
             return false;
-        }
         Class[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
@@ -716,21 +712,17 @@ public class WeasisLauncher {
         } else {
             forceLook = true;
         }
-        String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
-        int index = sys_spec.indexOf("-"); //$NON-NLS-1$
-        if (index > 0) {
-            String sys = sys_spec.substring(0, index);
-            String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
-            if (weasisNativeLaf != null) {
-                forceLook = true;
-            }
-            if (look == null) {
-                look = weasisNativeLaf;
-            }
-
-        }
         if (look == null) {
-            look = UIManager.getSystemLookAndFeelClassName();
+            String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
+            int index = sys_spec.indexOf("-"); //$NON-NLS-1$
+            if (index > 0) {
+                String sys = sys_spec.substring(0, index);
+                String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
+                if (weasisNativeLaf != null) {
+                    forceLook = true;
+                    look = weasisNativeLaf;
+                }
+            }
         }
 
         Properties common_prop;
@@ -745,22 +737,27 @@ public class WeasisLauncher {
         String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // changing Look and Feel when upgrade version
-        if (LookAndFeels.installSubstanceLookAndFeels() && !forceLook && versionNew != null
-            && !versionNew.equals(versionOld)) {
+        if (LookAndFeels.installSubstanceLookAndFeels()
+            && (look == null || (!forceLook && versionNew != null && !versionNew.equals(versionOld)))) {
             look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
         }
 
-        // Set look and feels after downloading plug-ins (allows installing Substance and other lafs)
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                if (look.startsWith("org.pushingpixels")) { //$NON-NLS-1$
-                    JFrame.setDefaultLookAndFeelDecorated(true);
-                    JDialog.setDefaultLookAndFeelDecorated(true);
+        // Set look and feels
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    if (look.startsWith("org.pushingpixels")) { //$NON-NLS-1$
+                        JFrame.setDefaultLookAndFeelDecorated(true);
+                        JDialog.setDefaultLookAndFeelDecorated(true);
+                    }
+                    look = setLookAndFeel(look);
                 }
-                look = setLookAndFeel(look);
-            }
-
-        });
+            });
+        } catch (Exception e) {
+            System.err.println("WARNING : Unable to set the Look&Feel " + look); //$NON-NLS-1$
+            e.printStackTrace();
+        }
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();
@@ -803,6 +800,7 @@ public class WeasisLauncher {
         if (versionOld == null) {
             EventQueue.invokeLater(new Runnable() {
 
+                @Override
                 public void run() {
                     Object[] options =
                         { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
@@ -823,11 +821,13 @@ public class WeasisLauncher {
             });
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     JTextPane jTextPane1 = new JTextPane();
                     jTextPane1.setContentType("text/html"); //$NON-NLS-1$
                     jTextPane1.setEditable(false);
                     jTextPane1.addHyperlinkListener(new HyperlinkListener() {
+                        @Override
                         public void hyperlinkUpdate(HyperlinkEvent e) {
                             JTextPane pane = (JTextPane) e.getSource();
                             if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
