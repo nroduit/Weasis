@@ -234,10 +234,10 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
                     graphicLabel = new GraphicLabel();
 
                 }
-                Rectangle oldBound = graphicLabel.getBound();
-                graphicLabel.setLabelBound(rect.x + rect.width, rect.y + rect.height * 0.5,
-                    longestBound.getWidth() + 6, labelHeight * labels.length + 6);
-                firePropertyChange("graphicLabel", oldBound, graphicLabel); //$NON-NLS-1$
+                // Rectangle oldBound = graphicLabel.getBound();
+                // graphicLabel.setLabelBound(rect.x + rect.width, rect.y + rect.height * 0.5,
+                // longestBound.getWidth() + 6, labelHeight * labels.length + 6);
+                //                firePropertyChange("graphicLabel", oldBound, graphicLabel); //$NON-NLS-1$
             }
         }
     }
@@ -337,11 +337,12 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
     public void paintLabel(Graphics2D g2d, AffineTransform transform) {
         if (showLabel && labels != null) {
             if (graphicLabel != null && labelHeight != null) {
-                Rectangle2D labelBound = graphicLabel.getLabelBounds();
+                // Rectangle2D labelBound = graphicLabel.getLabelBounds();
+                Rectangle2D labelBound = graphicLabel.getBounds(transform);
                 Point2D.Double p = new Point2D.Double(labelBound.getX(), labelBound.getY());
                 transform.transform(p, p);
-                p.x += graphicLabel.getOffsetX();
-                p.y += graphicLabel.getOffsetY();
+                // p.x += graphicLabel.getOffsetX();
+                // p.y += graphicLabel.getOffsetY();
                 for (int i = 0; i < labels.length; i++) {
                     paintFontOutline(g2d, labels[i], (float) (p.x + 3), (float) (p.y + labelHeight * (i + 1)));
                 }
@@ -464,6 +465,11 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
         Rectangle rectangle = affineTransform.createTransformedShape(shape).getBounds();
         growHandles(rectangle);
         return rectangle;
+    }
+
+    @Override
+    public Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform) {
+        return (label != null) ? label.getTransformedBounds(transform).getBounds() : null;
     }
 
     /*

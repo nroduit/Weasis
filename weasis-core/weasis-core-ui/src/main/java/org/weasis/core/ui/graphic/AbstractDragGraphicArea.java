@@ -51,8 +51,11 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     public Area getArea(AffineTransform transform) {
         if (shape == null)
             return new Area();
-        else
-            return new Area(shape);
+        else {
+            Area area = super.getArea(transform);
+            area.add(new Area(shape)); // Add inside area for closed shape
+            return area;
+        }
     }
 
     public List<MeasureItem> getImageStatistics(ImageElement imageElement, boolean releaseEvent) {

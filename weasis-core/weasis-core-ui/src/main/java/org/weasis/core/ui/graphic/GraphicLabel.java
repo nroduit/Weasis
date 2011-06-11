@@ -25,7 +25,7 @@ import java.awt.geom.Rectangle2D;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
-public class GraphicLabel {
+public class GraphicLabel implements Cloneable {
     /**
      * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
      * paintFontOutline grows of 1 pixel all string painting
@@ -33,22 +33,12 @@ public class GraphicLabel {
     protected static final int GROWING_BOUND = 3;
     protected String[] labelStringArray;
 
-    // protected List<TextLayout> labelTextList;
-    // protected Font defaultFont;
-    // protected FontRenderContext fontRenderContext;
-
-    // protected Point2D labelPosition;
     protected Rectangle2D labelBounds;
     protected double labelWidth;
     protected double labelHeight;
 
-    // public enum HPos {
-    // LEFT, CENTER, RIGHT
-    // }
-    //
-    // public enum VPos {
-    // TOP, CENTER, BOTTOM
-    // }
+    protected double offsetX = 0;
+    protected double offsetY = 0;
 
     protected void reset() {
         labelStringArray = null;
@@ -64,14 +54,6 @@ public class GraphicLabel {
     }
 
     /**
-     * @return Real pixel bounding rectangle with respect to a given Font and Size and independently to any
-     *         transformation
-     */
-    public Rectangle2D getLabelBounds() {
-        return labelBounds;
-    }
-
-    /**
      * Should be used to check if mouse coordinates are inside/outside label bounding rectangle. Also useful to check
      * intersection with clipping rectangle.
      * 
@@ -80,25 +62,6 @@ public class GraphicLabel {
      *         scaling factor so labels painting have invariant size according to the given transformation.
      */
     public Rectangle2D getBounds(AffineTransform transform) {
-        // if (labelBounds == null)
-        // return null;
-        //
-        // Rectangle2D scaledBounds = (Rectangle2D) labelBounds.clone();
-        // double scalingFactor = GeomUtil.extractScalingFactor(transform);
-        //
-        // if (scalingFactor != 1.0) {
-        // double invScaledWidth = labelBounds.getWidth() / scalingFactor;
-        // double invScaledHeight = labelBounds.getHeight() / scalingFactor;
-        // scaledBounds.setRect(scaledBounds.getX(), scaledBounds.getY(), invScaledWidth, invScaledHeight);
-        // }
-        //
-        // Point2D pt1 = new Point2D.Double(1, 0);
-        // Point2D pt2 = transform.deltaTransform(pt1, null);
-        // double rot = GeomUtil.getAngleDeg(pt1, new Point2D.Double(0, 0), pt2);
-        //
-        // AffineTransform invRot = AffineTransform.getRotateInstance(-rot, scaledBounds.getX(), scaledBounds.getY());
-        //
-        // return scaledBounds;
         return getArea(transform).getBounds2D();
     }
 
@@ -106,42 +69,49 @@ public class GraphicLabel {
         if (labelBounds == null)
             return new Area();
 
-        // FIXME Does handle correctly flip in affine transform (=> -scalex)
-        Rectangle2D scaledBounds = (Rectangle2D) labelBounds.clone();
+        if (transform == null)
+            return new Area(labelBounds);
+
+        AffineTransform invTransform = new AffineTransform(); // Identity transformation.
+        Point2D anchorPt = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
+
         double scale = GeomUtil.extractScalingFactor(transform);
+        double angleRad = GeomUtil.extractAngleRad(transform);
 
-        if (scale != 1.0) {
-            scaledBounds.setRect(scaledBounds.getX(), scaledBounds.getY(), labelBounds.getWidth() / scale,
-                labelBounds.getHeight() / scale);
-        }
-        Point2D pt1 = new Point2D.Double(1, 0);
-        Point2D pt2 = transform.deltaTransform(pt1, null);
-        double rot = GeomUtil.getAngleRad(pt2, new Point2D.Double(0, 0), pt1);
+        invTransform.translate(anchorPt.getX(), anchorPt.getY());
 
-        AffineTransform invRot = AffineTransform.getRotateInstance(-rot, scaledBounds.getX(), scaledBounds.getY());
+        if (scale != 1.0)
+            invTransform.scale(1 / scale, 1 / scale);
+        if (angleRad != 0)
+            invTransform.rotate(-angleRad);
 
-        Area boundingArea = new Area(scaledBounds);
-        boundingArea.transform(invRot);
+        invTransform.translate(-anchorPt.getX(), -anchorPt.getY());
 
-        return boundingArea;
+        if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0)
+            invTransform.translate(0, -labelBounds.getHeight());
+        // invTransform.translate(-labelBounds.getWidth(), -labelBounds.getHeight());
+
+        // invTransform.translate(offsetX, offsetY);
+        Area areaBounds = new Area(invTransform.createTransformedShape(labelBounds));
+        areaBounds.transform(AffineTransform.getTranslateInstance(offsetX, offsetY));
+
+        return areaBounds;
+
     }
 
     /**
-     * @param realBounds
      * @param transform
      * @return Real label bounding rectangle translated according to given transformation. <br>
      */
-    public Rectangle2D getTransformedBounds(Rectangle2D realBounds, AffineTransform transform) {
-        if (realBounds == null)
-            throw new IllegalArgumentException("realBounds cannot be null!");
-
-        if (transform == null)
-            return (Rectangle2D) realBounds.clone();
+    public Rectangle2D getTransformedBounds(AffineTransform transform) {
 
         // Only translates origin because no rotation or scaling is applied
-        Point2D.Double p = new Point2D.Double(realBounds.getX(), realBounds.getY());
-        transform.transform(p, p);
-        return new Rectangle2D.Double(p.getX(), p.getY(), realBounds.getWidth(), realBounds.getHeight());
+        Point2D.Double anchorPoint = new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
+        if (transform != null)
+            transform.transform(anchorPoint, anchorPoint);
+
+        return new Rectangle2D.Double(anchorPoint.getX(), anchorPoint.getY(), labelBounds.getWidth(),
+            labelBounds.getHeight());
     }
 
     /**
@@ -158,8 +128,8 @@ public class GraphicLabel {
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds =
-                new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth, labelHeight
-                    * labels.length);
+                new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth + GROWING_BOUND,
+                    (labelHeight * labels.length) + GROWING_BOUND);
             GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
         }
     }
@@ -180,25 +150,25 @@ public class GraphicLabel {
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
             }
-            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 1.5;
-            labelWidth = maxWidth + 3;
+            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2;
+            labelWidth = maxWidth;
         }
     }
 
-    // public void setLabelPosition(double xPos, double yPos) {
-    // if (labelBounds != null)
-    // labelBounds.setRect(xPos, yPos, labelBounds.getWidth(), labelBounds.getHeight());
-    // }
+    protected void move(double deltaX, double deltaY) {
+        offsetX += deltaX;
+        offsetY += deltaY;
+    }
 
     public void paint(Graphics2D g2d, AffineTransform transform, boolean selected) {
         if (labelStringArray != null && labelBounds != null) {
 
             Paint oldPaint = g2d.getPaint();
 
-            Point2D pt = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
-            if (transform != null) {
+            Point2D pt = new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
+
+            if (transform != null)
                 transform.transform(pt, pt);
-            }
 
             float px = (float) pt.getX() + GROWING_BOUND;
             float py = (float) pt.getY() + GROWING_BOUND;
@@ -210,10 +180,14 @@ public class GraphicLabel {
                 }
             }
 
-            if (selected) {
-                paintBoundOutline(g2d, transform);
-            }
-
+            // Graphics DEBUG
+            // Point2D pt2 = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
+            // if (transform != null)
+            // transform.transform(pt2, pt2);
+            //
+            // g2d.draw(new Line2D.Double(pt2.getX() - 5, pt2.getY(), pt2.getX() + 5, pt2.getY()));
+            // g2d.draw(new Line2D.Double(pt2.getX(), pt2.getY() - 5, pt2.getX(), pt2.getY() + 5));
+            //
             // if (transform != null) {
             // g2d.setPaint(Color.GREEN);
             // g2d.draw(transform.createTransformedShape(getBounds(transform)));
@@ -222,6 +196,10 @@ public class GraphicLabel {
             // g2d.setPaint(Color.RED);
             // g2d.draw(transform.createTransformedShape(getArea(transform)));
             // }
+            // Graphics DEBUG
+
+            if (selected)
+                paintBoundOutline(g2d, transform);
 
             g2d.setPaint(oldPaint);
         }
@@ -229,7 +207,9 @@ public class GraphicLabel {
 
     protected void paintBoundOutline(Graphics2D g2d, AffineTransform transform) {
 
-        Rectangle2D boundingRect = getTransformedBounds(labelBounds, transform);
+        Rectangle2D boundingRect = getTransformedBounds(transform);
+
+        Paint oldPaint = g2d.getPaint();
 
         g2d.setPaint(Color.BLACK);
         g2d.draw(boundingRect);
@@ -238,9 +218,13 @@ public class GraphicLabel {
 
         g2d.setPaint(Color.WHITE);
         g2d.draw(boundingRect);
+
+        g2d.setPaint(oldPaint);
     }
 
     protected void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
+
+        Paint oldPaint = g2d.getPaint();
 
         TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
 
@@ -256,31 +240,18 @@ public class GraphicLabel {
 
         g2d.setPaint(Color.WHITE);
         layout.draw(g2d, x, y);
+
+        g2d.setPaint(oldPaint);
     }
 
-    @Deprecated
-    public double getOffsetX() {
-        return 3.0;
-    }
-
-    @Deprecated
-    public double getOffsetY() {
-        if (labelBounds == null)
-            return 0;
-        return -10;
-    }
-
-    @Deprecated
-    public Rectangle getBound() {
-        return labelBounds == null ? null : labelBounds.getBounds2D().getBounds();
-    }
-
-    @Deprecated
-    public void setLabelBound(double x, double y, double width, double height) {
-        if (labelBounds == null) {
-            labelBounds = new Rectangle.Double(x, y, width, height).getBounds();
-        } else {
-            labelBounds.setRect(x, y, width, height);
+    @Override
+    protected GraphicLabel clone() {
+        GraphicLabel cloneLabel = null;
+        try {
+            cloneLabel = (GraphicLabel) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
         }
+        return cloneLabel;
     }
 }

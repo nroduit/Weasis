@@ -321,18 +321,23 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
      * @return Shape bounding rectangle relative to affineTransform<br>
      *         Handle points bounding rectangles are also included, knowing they have invariant size according to
      *         current view.<br>
-     *         Any other invariant sized shape bounding rectangles are included if shape is instanceof DragShape
+     *         Any other invariant sized shape bounding rectangles are included if shape is instanceof AdvancedShape
      */
 
     @Override
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform) {
-
+        // TODO - should be static
         Rectangle rectangle = getRepaintBounds(shape, transform);
-        if (transform != null && rectangle != null) {
+
+        if (transform != null && rectangle != null)
             rectangle = transform.createTransformedShape(rectangle).getBounds();
-        }
 
         return rectangle;
+    }
+
+    @Override
+    public Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform) {
+        return (label != null) ? label.getTransformedBounds(transform).getBounds() : null;
     }
 
     // @Override
@@ -416,12 +421,15 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     public boolean isOnGraphicLabel(MouseEventDouble mouseevent) {
+        if (mouseevent == null)
+            return false;
+
         final Point2D mousePoint = mouseevent.getImageCoordinates();
 
         AffineTransform transform = getAffineTransform(mouseevent);
         if (transform != null && graphicLabel != null) {
-            Area selectionArea = graphicLabel.getArea(transform);
-            if (selectionArea != null && selectionArea.contains(mousePoint))
+            Area labelArea = graphicLabel.getArea(transform);
+            if (labelArea != null && labelArea.contains(mousePoint))
                 return true;
         }
         return false;
@@ -502,13 +510,14 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         if (this.selected != newSelected) {
             this.selected = newSelected;
             fireDrawingChanged();
+            fireLabelChanged();
         }
     }
 
     public void setLabelVisible(boolean newLabelVisible) {
         if (this.labelVisible != newLabelVisible) {
             this.labelVisible = newLabelVisible;
-            fireDrawingChanged();
+            fireLabelChanged();
         }
     }
 
@@ -516,7 +525,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public void setLabel(String[] labels, DefaultView2d view2d) {
         if (shape != null) {
             Rectangle2D rect = shape.getBounds2D();
-            this.setLabel(labels, view2d, rect.getX() + rect.getWidth(), rect.getY() + rect.getHeight() * 0.5);
+            double xPos = rect.getX() + rect.getWidth() + 3;
+            double yPos = rect.getY() + rect.getHeight() * 0.5;
+
+            this.setLabel(labels, view2d, xPos, yPos);
         }
     }
 
@@ -525,24 +537,25 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             return;
 
         if (labelVisible) {
-            Rectangle2D oldBounds = (graphicLabel != null) ? graphicLabel.getLabelBounds() : null;
-            Rectangle2D newBounds = null;
+            GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
 
             if (labels == null || labels.length == 0) {
                 graphicLabel = null;
             } else {
-                if (graphicLabel == null) {
+                if (graphicLabel == null)
                     graphicLabel = new GraphicLabel();
-                }
 
                 graphicLabel.setLabel(view2d, xPos, yPos, labels);
-                newBounds = graphicLabel.getLabelBounds();
-                // If bounds are identical, force to repaint
-                if (newBounds.equals(oldBounds)) {
-                    oldBounds = null;
-                }
             }
-            firePropertyChange("graphicLabel", oldBounds, newBounds);
+            fireLabelChanged(oldLabel);
+        }
+    }
+
+    public void moveLabel(double deltaX, double deltaY) {
+        if (graphicLabel != null && (deltaX != 0 || deltaY != 0)) {
+            GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
+            graphicLabel.move(deltaX, deltaY);
+            fireLabelChanged(oldLabel);
         }
     }
 
@@ -602,12 +615,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             }
         }
 
-        if (isSelected()) {
-            paintHandles(g2d, transform);
-        }
-
-        paintLabel(g2d, transform);
-
+        // Graphics DEBUG
         // if (transform != null) {
         // g2d.setPaint(Color.CYAN);
         // g2d.draw(transform.createTransformedShape(getBounds(transform)));
@@ -620,9 +628,15 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         // g2d.setPaint(Color.BLUE);
         // g2d.draw(transform.createTransformedShape(getRepaintBounds(transform)));
         // }
+        // Graphics DEBUG
 
         g2d.setPaint(oldPaint);
         g2d.setStroke(oldStroke);
+
+        if (isSelected())
+            paintHandles(g2d, transform);
+
+        paintLabel(g2d, transform);
     }
 
     public boolean isResizingOrMoving() {
@@ -631,9 +645,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     @Override
     public void paintLabel(Graphics2D g2d, AffineTransform transform) {
-        if (labelVisible && graphicLabel != null) {
+        if (labelVisible && graphicLabel != null)
             graphicLabel.paint(g2d, transform, selected);
-        }
     }
 
     public void paintHandles(Graphics2D g2d, AffineTransform transform) {
@@ -658,6 +671,38 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             for (Point2D point : handlePtArray) {
                 g2d.draw(new Rectangle2D.Double(point.getX() - halfSize, point.getY() - halfSize, size, size));
             }
+        }
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected class DragLabelSequence implements DragSequence {
+
+        protected final Point2D lastPoint;
+
+        protected DragLabelSequence() {
+            this.lastPoint = new Point2D.Double();
+        }
+
+        @Override
+        public void startDrag(MouseEventDouble mouseEvent) {
+            lastPoint.setLocation(mouseEvent.getImageX(), mouseEvent.getImageY());
+        }
+
+        @Override
+        public void drag(MouseEventDouble mouseEvent) {
+            double deltaX = mouseEvent.getImageX() - lastPoint.getX();
+            double deltaY = mouseEvent.getImageY() - lastPoint.getY();
+
+            if (deltaX != 0.0 || deltaY != 0.0) {
+                lastPoint.setLocation(mouseEvent.getImageX(), mouseEvent.getImageY());
+                moveLabel(deltaX, deltaY);
+            }
+        }
+
+        @Override
+        public boolean completeDrag(MouseEventDouble mouseEvent) {
+            return true;
         }
     }
 
@@ -762,11 +807,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public DragSequence createDragSequence(DragSequence dragsequence, MouseEventDouble mouseevent) {
         int i = 1;
 
+        if (mouseevent != null && dragsequence == null && isOnGraphicLabel(mouseevent))
+            return new DragLabelSequence();
+
         if (mouseevent != null && (dragsequence != null || (i = getHandlePointIndex(mouseevent)) == -1))
             return createMoveDrag(dragsequence, mouseevent);
-        else
-            return createResizeDrag(mouseevent, i);
 
+        return createResizeDrag(mouseevent, i);
     }
 
     protected DragSequence createMoveDrag(DragSequence dragsequence, MouseEvent mouseevent) {
@@ -825,11 +872,14 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     protected void fireDrawingChanged(Shape oldShape) {
         firePropertyChange("bounds", oldShape, shape);
+    }
 
-        Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getLabelBounds() : null;
-        firePropertyChange("graphicLabel", null, labelBounds);
+    protected void fireLabelChanged() {
+        fireLabelChanged(null);
+    }
 
-        // firePropertyChange("graphicLabel", null, graphicLabel.getLabelBounds());
+    protected void fireLabelChanged(GraphicLabel oldLabel) {
+        firePropertyChange("graphicLabel", oldLabel, graphicLabel);
     }
 
     protected void fireMoveAction() {

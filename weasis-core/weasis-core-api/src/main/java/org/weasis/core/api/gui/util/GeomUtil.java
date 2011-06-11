@@ -281,7 +281,7 @@ public final class GeomUtil {
 
     /**
      * Extract scaling from AffineTransform<br>
-     * Lets assume that the AffineTransform is a composite of scales, translates, and rotates. <br>
+     * Let assume that the AffineTransform is a composite of scales, translates, and rotates. <br>
      * No independent shear has to be applied and scaling must be uniform along the two axes.
      * 
      * @param transform
@@ -300,6 +300,42 @@ public final class GeomUtil {
 
         return scalingFactor;
     }
+
+    /**
+     * Extract rotation Angle from a given AffineTransform Matrix.<br>
+     * This function handle cases of mirror image flip about some axis. This changes right handed coordinate system into
+     * a left handed system. Hence, returned angle has an opposite value.
+     * 
+     * @param transform
+     * @return angle in the range of [ -PI ; PI ]
+     */
+    public static double extractAngleRad(AffineTransform transform) {
+        double angleRad = 0.0;
+
+        if ((transform != null)) {
+            double sinTheta = transform.getShearY();
+            double cosTheta = transform.getScaleX();
+
+            angleRad = Math.atan2(sinTheta, cosTheta);
+
+            if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0)
+                angleRad *= -1.0;
+        }
+
+        return angleRad;
+    }
+
+    // public static double extractRotationAngleLegacy(AffineTransform transform) {
+    // double rotationAngle = 0.0;
+    //
+    // if ((transform != null)) {
+    // Point2D pt1 = new Point2D.Double(1, 0);
+    // Point2D pt2 = transform.deltaTransform(pt1, null);
+    // rotationAngle = GeomUtil.getAngleRad(pt2, new Point2D.Double(0, 0), pt1);
+    // }
+    //
+    // return rotationAngle;
+    // }
 
     /**
      * 

@@ -14,7 +14,6 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -60,8 +59,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     graphicBoundsChanged(graph, (Shape) propertychangeevent.getOldValue(),
                         (Shape) propertychangeevent.getNewValue(), getAffineTransform());
                 } else if ("graphicLabel".equals(s)) { //$NON-NLS-1$
-                    labelBoundsChanged(graph, (Rectangle2D) propertychangeevent.getOldValue(),
-                        (Rectangle2D) propertychangeevent.getNewValue(), getAffineTransform());
+                    labelBoundsChanged(graph, (GraphicLabel) propertychangeevent.getOldValue(),
+                        (GraphicLabel) propertychangeevent.getNewValue(), getAffineTransform());
                 } else if ("remove".equals(s)) { //$NON-NLS-1$
                     removeGraphic(graph);
                 } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
@@ -285,41 +284,40 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    @Deprecated
-    private void transformLabelBound(Rectangle shape, AffineTransform affineTransform, GraphicLabel label) {
-        if (affineTransform != null) {
-            Point2D.Double p = new Point2D.Double(shape.getX(), shape.getY());
-            affineTransform.transform(p, p);
-            shape.x = (int) (p.x + label.getOffsetX());
-            shape.y = (int) (p.y + label.getOffsetY());
-        }
-    }
+    // @Deprecated
+    // private void transformLabelBound(Rectangle shape, AffineTransform affineTransform, GraphicLabel label) {
+    // if (affineTransform != null) {
+    // Point2D.Double p = new Point2D.Double(shape.getX(), shape.getY());
+    // affineTransform.transform(p, p);
+    // shape.x = (int) (p.x + label.getOffsetX());
+    // shape.y = (int) (p.y + label.getOffsetY());
+    // }
+    // }
 
-    protected void labelBoundsChanged(Graphic graphic, Rectangle2D oldBounds, Rectangle2D newBounds,
+    protected void labelBoundsChanged(Graphic graphic, GraphicLabel oldLabel, GraphicLabel newLabel,
         AffineTransform transform) {
-        GraphicLabel label = graphic != null ? graphic.getGraphicLabel() : null;
 
-        if (label != null) {
-            if (oldBounds == null) {
-                if (newBounds != null) {
-                    Rectangle2D rect = label.getTransformedBounds(newBounds, transform);
+        if (graphic != null) {
+            if (oldLabel == null) {
+                if (newLabel != null) {
+                    Rectangle2D rect = graphic.getTransformedBounds(newLabel, transform);
                     GeomUtil.growRectangle(rect, 2);
                     if (rect != null) {
                         repaint(rect.getBounds());
                     }
                 }
             } else {
-                if (newBounds == null) {
-                    Rectangle2D rect = label.getTransformedBounds(oldBounds, transform);
+                if (newLabel == null) {
+                    Rectangle2D rect = graphic.getTransformedBounds(oldLabel, transform);
                     GeomUtil.growRectangle(rect, 2);
                     if (rect != null) {
                         repaint(rect.getBounds());
                     }
                 } else {
-                    Rectangle2D newRect = label.getTransformedBounds(newBounds, transform);
+                    Rectangle2D newRect = graphic.getTransformedBounds(newLabel, transform);
                     GeomUtil.growRectangle(newRect, 2);
 
-                    Rectangle2D oldRect = label.getTransformedBounds(oldBounds, transform);
+                    Rectangle2D oldRect = graphic.getTransformedBounds(oldLabel, transform);
                     GeomUtil.growRectangle(oldRect, 2);
 
                     Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());

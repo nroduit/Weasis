@@ -48,7 +48,7 @@ public class AbstractLayerModel implements LayerModel {
     private static final SelectGraphic selectGraphic = new SelectGraphic();
     public static final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final Cursor EDIT_CURSOR = getCustomCursor("editpoint.png", "Edit Point", 10, 10); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Cursor EDIT_CURSOR = getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Cursor MOVE_CURSOR = new Cursor(Cursor.MOVE_CURSOR);
 
     public static final Cursor CROSS_CURSOR = new Cursor(Cursor.CROSSHAIR_CURSOR);
@@ -83,45 +83,46 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void changeCursorDesign(MouseEventDouble mouseevent) {
-        Point2D p = mouseevent.getImageCoordinates();
         draggingPosition = false;
-        boolean shift = mouseevent.isShiftDown();
-        java.util.List dragGaphs = getSelectedDragableGraphics();
-        if (dragGaphs.size() == 1 && !shift) {
-            if (dragGaphs.get(0) instanceof AbstractDragGraphic) {
-                AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(0);
-                if (graph instanceof SelectGraphic) {
-                    canvas.setCursor(cursor);
-                    return;
-                }
-                int handlePointIndex = graph.getHandlePointIndex(mouseevent);
 
-                // System.out.println("mousePoint: " + mouseevent + " " + handlePointIndex);
-                if (handlePointIndex < 0) {
-                    if (graph.getArea(mouseevent).contains(p) || graph.isOnGraphicLabel(mouseevent)) {
-                        canvas.setCursor(MOVE_CURSOR);
-                        draggingPosition = true;
-                    }
-                } else {
+        Point2D p = mouseevent.getImageCoordinates();
+        boolean shift = mouseevent.isShiftDown();
+
+        List<Graphic> dragGraphList = getSelectedDragableGraphics();
+
+        if (dragGraphList.size() == 1 && !shift) {
+            Graphic dragGraph = dragGraphList.get(0);
+
+            if (dragGraph instanceof AbstractDragGraphic && !(dragGraph instanceof SelectGraphic)) {
+                AbstractDragGraphic graph = (AbstractDragGraphic) dragGraph;
+
+                if (graph.isOnGraphicLabel(mouseevent)) {
+                    canvas.setCursor(HAND_CURSOR);
+                    draggingPosition = true;
+                } else if (graph.getHandlePointIndex(mouseevent) >= 0) {
                     canvas.setCursor(EDIT_CURSOR);
+                    draggingPosition = true;
+                } else if (graph.getArea(mouseevent).contains(p)) {
+                    canvas.setCursor(MOVE_CURSOR);
                     draggingPosition = true;
                 }
             }
-        } else if (dragGaphs.size() > 1 && !shift) {
-            for (int i = 0; i < dragGaphs.size(); i++) {
-                AbstractDragGraphic graph = (AbstractDragGraphic) dragGaphs.get(i);
-                if (graph.getHandlePointIndex(mouseevent) < 0) {
-                    if (graph.getArea(mouseevent).contains(p)) {
+        } else if (dragGraphList.size() > 1 && !shift) {
+
+            for (Graphic dragGraph : dragGraphList) {
+                if (dragGraph instanceof AbstractDragGraphic) {
+                    AbstractDragGraphic graph = (AbstractDragGraphic) dragGraph;
+                    if (graph.getArea(mouseevent).contains(p) || graph.isOnGraphicLabel(mouseevent)) {
                         canvas.setCursor(MOVE_CURSOR);
-                        // setCreateGraphic(null);
                         draggingPosition = true;
+                        break;
                     }
                 }
             }
         }
-        if (!draggingPosition) {
+
+        if (!draggingPosition)
             canvas.setCursor(cursor);
-        }
     }
 
     public AbstractDragGraphic createGraphic(MouseEventDouble mouseevent) {
