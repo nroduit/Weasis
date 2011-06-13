@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,15 +25,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public AbstractDragGraphicArea(int handlePointTotalNumber) {
-        this(handlePointTotalNumber, Color.YELLOW);
-    }
-
-    public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor) {
-        this(handlePointTotalNumber, paintColor, 1f);
-    }
-
-    public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor, float lineThickness) {
-        this(handlePointTotalNumber, paintColor, lineThickness, true);
+        this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
     public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor, float lineThickness,
@@ -42,8 +35,13 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
     public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor, float lineThickness,
         boolean labelVisible, boolean filled) {
-        super(handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
+        this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
 
+    }
+
+    public AbstractDragGraphicArea(List<Point2D> handlePointList, int handlePointTotalNumber, Color paintColor,
+        float lineThickness, boolean labelVisible, boolean filled) {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////

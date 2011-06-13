@@ -24,6 +24,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -319,10 +321,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     private void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
         GeometryOfSlice sliceGeometry = selImage.getSliceGeometry();
         if (sliceGeometry != null) {
-            float[] xyCoord = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
-            if (xyCoord != null) {
+            List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
+            if (pts != null && pts.size() > 0) {
                 Color color = fill ? Color.blue : Color.cyan;
-                PolygonGraphic graphic = new PolygonGraphic(xyCoord, 1.0f, color, fill, true);
+                PolygonGraphic graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
                 AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
                 if (layer != null) {
                     layer.addGraphic(graphic);
@@ -677,6 +679,24 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
                         popupMenu.add(new JSeparator());
+                        if (ds != null && graph instanceof AbstractDragGraphic) {
+                            AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
+                            if (absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED
+                                && !absgraph.isGraphicComplete()) {
+                                final JMenuItem item2 = new JMenuItem("Stop drawing");
+                                item2.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        MouseEventDouble event =
+                                            new MouseEventDouble(item2, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
+                                        ds.completeDrag(event);
+                                        mouseClickHandler.mouseReleased(event);
+                                    }
+                                });
+                                popupMenu.add(item2);
+                            }
+                        }
                         JMenuItem item = new JMenuItem("To Front");
                         item.addActionListener(new ActionListener() {
 

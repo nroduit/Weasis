@@ -19,9 +19,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
  */
 public interface DragSequence {
 
-    public abstract void startDrag(MouseEventDouble mouseevent);
+    public void startDrag(MouseEventDouble mouseevent);
 
-    public abstract void drag(MouseEventDouble mouseevent);
+    public void drag(MouseEventDouble mouseevent);
 
-    public abstract boolean completeDrag(MouseEventDouble mouseevent);
+    public boolean completeDrag(MouseEventDouble mouseevent);
+
 }

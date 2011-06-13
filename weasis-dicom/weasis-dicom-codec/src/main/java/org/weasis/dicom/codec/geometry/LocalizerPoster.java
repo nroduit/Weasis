@@ -5,14 +5,13 @@ package org.weasis.dicom.codec.geometry;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Vector;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
-
-import org.weasis.dicom.codec.Messages;
 
 /**
  * <p>
@@ -86,15 +85,12 @@ public abstract class LocalizerPoster {
      *                thrown if not
      */
     public static void validateDirectionCosines(Vector3d row, Vector3d column) throws IllegalArgumentException {
-        if (Math.abs(row.lengthSquared() - 1) > 0.001) {
+        if (Math.abs(row.lengthSquared() - 1) > 0.001)
             throw new IllegalArgumentException("Row not a unit vector"); //$NON-NLS-1$
-        }
-        if (Math.abs(column.lengthSquared() - 1) > 0.001) {
+        if (Math.abs(column.lengthSquared() - 1) > 0.001)
             throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
-        }
-        if (row.dot(column) > 0.001) { // dot product should be cos(90)=0 if orthogonal
+        if (row.dot(column) > 0.001)
             throw new IllegalArgumentException("Row and column vectors are not orthogonal"); //$NON-NLS-1$
-        }
     }
 
     /**
@@ -113,24 +109,18 @@ public abstract class LocalizerPoster {
      */
     public static void validateDirectionCosines(Vector3d row, Vector3d column, Vector3d normal)
         throws IllegalArgumentException {
-        if (Math.abs(row.lengthSquared() - 1) > 0.001) {
+        if (Math.abs(row.lengthSquared() - 1) > 0.001)
             throw new IllegalArgumentException("Row not a unit vector"); //$NON-NLS-1$
-        }
-        if (Math.abs(column.lengthSquared() - 1) > 0.001) {
+        if (Math.abs(column.lengthSquared() - 1) > 0.001)
             throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
-        }
-        if (Math.abs(normal.lengthSquared() - 1) > 0.001) {
+        if (Math.abs(normal.lengthSquared() - 1) > 0.001)
             throw new IllegalArgumentException("Normal not a unit vector"); //$NON-NLS-1$
-        }
-        if (row.dot(column) > 0.001) { // dot product should be cos(90)=0 if orthogonal
+        if (row.dot(column) > 0.001)
             throw new IllegalArgumentException("Row and column vectors are not orthogonal = " + row.dot(column)); //$NON-NLS-1$
-        }
-        if (row.dot(normal) > 0.001) { // dot product should be cos(90)=0 if orthogonal
+        if (row.dot(normal) > 0.001)
             throw new IllegalArgumentException("Row and normal vectors are not orthogonal = " + row.dot(normal)); //$NON-NLS-1$
-        }
-        if (column.dot(normal) > 0.001) { // dot product should be cos(90)=0 if orthogonal
+        if (column.dot(normal) > 0.001)
             throw new IllegalArgumentException("Column and normal vectors are not orthogonal = " + column.dot(normal)); //$NON-NLS-1$
-        }
     }
 
     /**
@@ -143,8 +133,8 @@ public abstract class LocalizerPoster {
      * @return an array of four points that are the tlhc,trhc, brhc, blhc of the slice
      */
     public static Point3d[] getCornersOfSourceRectangleInSourceSpace(GeometryOfSlice g) {
-        return getCornersOfSourceRectangleInSourceSpace(g.getRow(), g.getColumn(), g.getTLHC(), g.getVoxelSpacing(), g
-            .getDimensions());
+        return getCornersOfSourceRectangleInSourceSpace(g.getRow(), g.getColumn(), g.getTLHC(), g.getVoxelSpacing(),
+            g.getDimensions());
     }
 
     /**
@@ -740,7 +730,7 @@ public abstract class LocalizerPoster {
      * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
      *         coordinates
      */
-    public abstract float[] getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
+    public abstract List<Point2D> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
         Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions);
 
     /**
@@ -752,7 +742,7 @@ public abstract class LocalizerPoster {
      * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
      *         coordinates
      */
-    public final float[] getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
+    public final List<Point2D> getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
         return getOutlineOnLocalizerForThisGeometry(geometry.getRow(), geometry.getColumn(), geometry.getTLHC(),
             geometry.getVoxelSpacing(), geometry.getSliceThickness(), geometry.getDimensions());
     }

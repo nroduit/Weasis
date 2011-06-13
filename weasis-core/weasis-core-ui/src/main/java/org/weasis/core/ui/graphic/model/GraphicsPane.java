@@ -13,7 +13,6 @@ package org.weasis.core.ui.graphic.model;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
@@ -65,25 +64,6 @@ public class GraphicsPane extends JComponent {
         return inverseTransform;
     }
 
-    @Deprecated
-    public Point getRealCoordinates(Point p) {
-        double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(p.x + getViewModel().getModelOffsetX() * viewScale, p.y
-                + getViewModel().getModelOffsetY() * viewScale);
-        inverseTransform.transform(p2, p2);
-        return new Point((int) Math.floor(p2.getX()), (int) Math.floor(p2.getY()));
-    }
-
-    public Point2D getImageCoordinates(int x, int y) {
-        double viewScale = getViewModel().getViewScale();
-        Point2D p2 =
-            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale, y + getViewModel().getModelOffsetY()
-                * viewScale);
-        inverseTransform.transform(p2, p2);
-        return p2;
-    }
-
     public void dispose() {
         if (viewModel != null) {
             viewModel.removeViewModelChangeListener(viewModelHandler);
@@ -94,21 +74,6 @@ public class GraphicsPane extends JComponent {
             layerModel.dispose();
             layerModel = null;
         }
-    }
-
-    public Point updateMouseToRelativeCoord(Point p) {
-        p.x = (int) Math.floor(modelToViewX(p.x));
-        p.y = (int) Math.floor(modelToViewY(p.y));
-        return p;
-    }
-
-    public Rectangle updateRectToRelativeCoord(Rectangle rec) {
-        Rectangle relRect = new Rectangle();
-        relRect.x = (int) Math.floor(modelToViewX(rec.x)) - 1;
-        relRect.y = (int) Math.floor(modelToViewY(rec.y)) - 1;
-        relRect.width = (int) Math.floor(modelToViewLength(rec.width)) + 2;
-        relRect.height = (int) Math.floor(modelToViewLength(rec.height)) + 2;
-        return relRect;
     }
 
     /**
@@ -227,6 +192,23 @@ public class GraphicsPane extends JComponent {
 
     public double modelToViewLength(double modelLength) {
         return modelLength * viewModel.getViewScale();
+    }
+
+    public Point2D getImageCoordinatesFromMouse(int x, int y) {
+        double viewScale = getViewModel().getViewScale();
+        Point2D p2 =
+            new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale, y + getViewModel().getModelOffsetY()
+                * viewScale);
+        inverseTransform.transform(p2, p2);
+        return p2;
+    }
+
+    public Point getMouseCoordinatesFromImage(double x, double y) {
+        Point2D p2 = new Point2D.Double(x, y);
+        affineTransform.transform(p2, p2);
+        double viewScale = getViewModel().getViewScale();
+        return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
+            (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
     }
 
     // JComponent Overrides

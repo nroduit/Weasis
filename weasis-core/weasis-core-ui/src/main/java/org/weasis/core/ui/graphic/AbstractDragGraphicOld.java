@@ -141,6 +141,7 @@ public abstract class AbstractDragGraphicOld implements Graphic, Cloneable {
             // handle point type
             boundingPointIndex = i;
         }
+
     }
 
     public AbstractDragGraphicOld() {

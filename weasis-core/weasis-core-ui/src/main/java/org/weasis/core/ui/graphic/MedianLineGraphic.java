@@ -21,7 +21,7 @@ public class MedianLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(MedianLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
     public MedianLineGraphic(float lineThickness, Color paint, boolean fill) {
-        super(4, paint);
+        super(4, paint, lineThickness, fill);
         setLineThickness(lineThickness);
         setPaint(paint);
         setFilled(fill);

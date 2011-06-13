@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -190,9 +191,27 @@ public class FreeHandGraphic extends AbstractDragGraphicOld implements Cloneable
                     y2 = points[m + 1];
                 }
             }
-            area = PolygonGraphic.createAreaForLine(x1, y1, x2, y2, (int) lineThickness);
+            area = createAreaForLine(x1, y1, x2, y2, (int) lineThickness);
         }
         return area;
+    }
+
+    public static Area createAreaForLine(float x1, float y1, float x2, float y2, int width) {
+        int i = width;
+        int j = 0;
+        int or = (int) MathUtil.getOrientation(x1, y1, x2, y2);
+        if (or < 45 || or > 135) {
+            j = i;
+            i = 0;
+        }
+        GeneralPath generalpath = new GeneralPath();
+        generalpath.moveTo(x1 - i, y1 - j);
+        generalpath.lineTo(x1 + i, y1 + j);
+        generalpath.lineTo(x2 + i, y2 + j);
+        generalpath.lineTo(x2 - i, y2 - j);
+        generalpath.lineTo(x1 - i, y1 - j);
+        generalpath.closePath();
+        return new Area(generalpath);
     }
 
     @Override

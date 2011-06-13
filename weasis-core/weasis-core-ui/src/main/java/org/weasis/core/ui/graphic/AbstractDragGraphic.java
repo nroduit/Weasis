@@ -47,6 +47,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
+    public final static int UNDEFINED = -1;
+
     protected PropertyChangeSupport pcs;
 
     protected Shape shape;
@@ -60,12 +62,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected float lineThickness;
     protected boolean filled;
     protected boolean labelVisible;
-
     protected GraphicLabel graphicLabel;
-
     protected boolean selected = false;
-    protected boolean graphicComplete = false;
-
     protected boolean resizingOrMoving = false;
 
     // TODO none are transient and should be if serialized
@@ -73,15 +71,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public AbstractDragGraphic(int handlePointTotalNumber) {
-        this(handlePointTotalNumber, Color.YELLOW);
-    }
-
-    public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor) {
-        this(handlePointTotalNumber, paintColor, 1f);
-    }
-
-    public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness) {
-        this(handlePointTotalNumber, paintColor, lineThickness, true);
+        this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
     public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible) {
@@ -90,17 +80,26 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible,
         boolean filled) {
+        this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
+    }
+
+    public AbstractDragGraphic(List<Point2D> handlePointList, int handlePointTotalNumber, Color paintColor,
+        float lineThickness, boolean labelVisible, boolean filled) {
         if (paintColor == null) {
             paintColor = Color.YELLOW;
         }
 
         this.handlePointTotalNumber = handlePointTotalNumber;
-        this.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber);
-
+        this.handlePointList =
+            handlePointList == null ? new ArrayList<Point2D>(handlePointTotalNumber > 0 ? handlePointTotalNumber : 10)
+                : handlePointList;
         this.colorPaint = paintColor;
         this.lineThickness = lineThickness;
         this.labelVisible = labelVisible;
         this.filled = filled;
+        if (handlePointList != null) {
+            updateShapeOnDrawing(null);
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,6 +107,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Shape getShape() {
         return shape;
+    }
+
+    public int getHandlePointTotalNumber() {
+        return handlePointTotalNumber;
     }
 
     public Stroke getStroke(float lineThickness) {
@@ -155,8 +158,13 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     }
 
     public boolean isGraphicComplete() {
-        return graphicComplete = (handlePointList.size() == handlePointTotalNumber);
-        // return graphicComplete;
+        return handlePointList.size() == handlePointTotalNumber;
+    }
+
+    public Point2D getHandlePoint(int index) {
+        if (index < 0 || index >= handlePointList.size())
+            return null;
+        return (Point2D) handlePointList.get(index).clone();
     }
 
     @Override
@@ -754,18 +762,22 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         public boolean completeDrag(MouseEventDouble mouseEvent) {
 
             if (!isGraphicComplete()) {
-
-                // check if last dragging point is valid
-                int lastPointIndex = handlePointList.size() - 1;
-                Point2D lastPoint = handlePointList.get(lastPointIndex);
-                if (lastPointIndex > 0) {
-                    Point2D previousPoint = handlePointList.get(lastPointIndex - 1);
-                    if (lastPoint.equals(previousPoint))
-                        return false;
+                // Stop adding points when handlePointTotalNumber is undefined (-1)
+                if (handlePointTotalNumber == -1 && mouseEvent.getClickCount() == 2) {
+                    if (!isLastPointValid()) {
+                        handlePointList.remove(handlePointList.size() - 1);
+                    }
+                    handlePointTotalNumber = handlePointList.size();
+                    return false;
                 }
+                if (!isLastPointValid())
+                    return false;
 
-                // if last dragging point do not equals previous one means DragSequence can keep continue on next point
-                handlePointList.add(mouseEvent.getImageCoordinates());
+                // if last dragging point do not equals previous one means DragSequence can keep continue on next
+                // point
+                Point2D newPoint = mouseEvent.getImageCoordinates();
+
+                handlePointList.add(newPoint);
                 handlePointIndex = handlePointList.size() - 1; // forces index to match actual dragging point
 
                 return false;
@@ -804,24 +816,26 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         return true;
     }
 
-    public DragSequence createDragSequence(DragSequence dragsequence, MouseEventDouble mouseevent) {
-        int i = 1;
-
-        if (mouseevent != null && dragsequence == null && isOnGraphicLabel(mouseevent))
-            return new DragLabelSequence();
-
-        if (mouseevent != null && (dragsequence != null || (i = getHandlePointIndex(mouseevent)) == -1))
-            return createMoveDrag(dragsequence, mouseevent);
-
-        return createResizeDrag(mouseevent, i);
+    protected boolean isLastPointValid() {
+        // check if last dragging point is valid
+        Point2D lastP = getHandlePoint(handlePointList.size() - 1);
+        if (lastP != null) {
+            if (lastP.equals(getHandlePoint(handlePointList.size() - 2)))
+                return false;
+        }
+        return true;
     }
 
-    protected DragSequence createMoveDrag(DragSequence dragsequence, MouseEvent mouseevent) {
+    public DragSequence createMoveDrag() {
         return new DefaultDragSequence();
     }
 
-    protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
+    public DragSequence createResizeDrag(int i) {
         return new DefaultDragSequence(i);
+    }
+
+    public DragSequence createDragLabelSequence() {
+        return new DragLabelSequence();
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -926,22 +940,17 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     @Override
     public Object clone() {
         AbstractDragGraphic newGraphic = null;
-
         try {
             newGraphic = (AbstractDragGraphic) super.clone();
         } catch (CloneNotSupportedException clonenotsupportedexception) {
             return null;
         }
-
         newGraphic.pcs = null;
         newGraphic.shape = null;
-        newGraphic.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber);
-
+        newGraphic.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber > 0 ? handlePointTotalNumber : 10);
         // newGraphic.paintColor = paintColor; // useless
-
         newGraphic.graphicLabel = null;
         newGraphic.selected = false;
-        newGraphic.graphicComplete = false;
 
         return newGraphic;
     }

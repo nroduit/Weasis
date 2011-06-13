@@ -16,7 +16,6 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 
 import javax.swing.Icon;
@@ -85,7 +84,7 @@ public class SelectGraphic extends RectangleGraphic {
     }
 
     @Override
-    protected DragSequence createResizeDrag(MouseEvent mouseevent, int i) {
+    public DragSequence createResizeDrag(int i) {
         return new SelectedDragSequence();
     }
 

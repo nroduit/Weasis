@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
+import java.awt.AWTException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -21,6 +22,7 @@ import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Robot;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
@@ -50,6 +52,7 @@ import java.util.List;
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
@@ -222,6 +225,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected static class BulkDragSequence implements DragSequence {
+        private final java.util.List childDS;
+
+        BulkDragSequence(java.util.List list, MouseEventDouble mouseevent) {
+            int i = list.size();
+            childDS = new ArrayList(i);
+            for (int j = 0; j < i; j++) {
+                DragSequence dragsequence = ((AbstractDragGraphic) list.get(j)).createMoveDrag();
+                if (dragsequence != null) {
+                    childDS.add(dragsequence);
+                }
+            }
+        }
 
         @Override
         public void startDrag(MouseEventDouble mouseevent) {
@@ -248,18 +263,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return true;
         }
 
-        private final java.util.List childDS;
-
-        BulkDragSequence(java.util.List list, MouseEventDouble mouseevent) {
-            int i = list.size();
-            childDS = new ArrayList(i);
-            for (int j = 0; j < i; j++) {
-                DragSequence dragsequence = ((AbstractDragGraphic) list.get(j)).createDragSequence(this, mouseevent);
-                if (dragsequence != null) {
-                    childDS.add(dragsequence);
-                }
-            }
-        }
     }
 
     protected void closeLens() {
@@ -879,7 +882,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void showPixelInfos(MouseEvent mouseevent) {
         if (infoLayer != null) {
-            Point2D pModel = getImageCoordinates(mouseevent.getX(), mouseevent.getY());
+            Point2D pModel = getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
             String str =
                 getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
@@ -908,73 +911,75 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         public void mousePressed(MouseEvent e) {
             int buttonMask = getButtonMaskEx();
             if ((e.getModifiersEx() & buttonMask) != 0) {
-                /*
-                 * if (ds != null) { if (ds.completeDrag(mouseevent)) { ds = null;
-                 * 
-                 * ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE); if (drawOnceAction
-                 * instanceof ToggleButtonListener) { if (((ToggleButtonListener) drawOnceAction).isSelected()) {
-                 * ActionState measure = eventManager.getAction(ActionW.DRAW_MEASURE); if (measure instanceof
-                 * ComboItemListener) { ((ComboItemListener) measure).setSelectedItem(MeasureToolBar.selectionGraphic);
-                 * } } } } return; } ds = null;
-                 */
-
                 AbstractLayerModel showDraws = getLayerModel();
 
                 MouseEventDouble event =
                     new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(),
                         e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(), e.isPopupTrigger(),
                         e.getButton());
-                event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+                event.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
-                if (ds != null) {
-                    if (!ds.completeDrag(event))
-                        return;
-                }
+                if (ds != null && !ds.completeDrag(event))
+                    return;
 
                 showDraws.changeCursorDesign(event);
 
                 java.util.List dragList = showDraws.getSelectedDragableGraphics();
                 int dragListSize = dragList != null ? dragList.size() : 0;
-                // si le curseur change pour le redimensionnement du graphic
-                // permet de redimensionner un graphic qui se trouve sous un
-                // autre graphic
+                // Shift for selecting several drawings
                 boolean shiftDown = event.isShiftDown();
                 if (showDraws.isOnDraggingPosition() && !shiftDown) {
                     if (dragListSize == 1) {
                         AbstractDragGraphic graph = (AbstractDragGraphic) dragList.get(0);
-                        ds = graph.createDragSequence(null, event);
+                        if (graph.isOnGraphicLabel(event)) {
+                            ds = graph.createDragLabelSequence();
+                        } else {
+                            int handleIndex = graph.getHandlePointIndex(event);
+                            Point2D p = graph.getHandlePoint(handleIndex);
+                            if (p != null) {
+                                // When resizing adjust the cursor at the center of the handle point
+                                Point mp = getMouseCoordinatesFromImage(p.getX(), p.getY());
+                                if (event.getX() != mp.x || event.getY() != mp.y) {
+                                    try {
+                                        Robot robot = new Robot();
+                                        event =
+                                            new MouseEventDouble((Component) event.getSource(), event.getID(),
+                                                event.getWhen(), event.getModifiers(), mp.x, mp.y,
+                                                event.getXOnScreen(), event.getYOnScreen(), event.getClickCount(),
+                                                event.isPopupTrigger(), event.getButton());
+                                        event.setImageCoordinates(p);
+                                        SwingUtilities.convertPointToScreen(mp, DefaultView2d.this);
+                                        robot.mouseMove(mp.x, mp.y);
+                                    } catch (AWTException e1) {
+                                        // DO nothing
+                                    }
+                                }
+                            }
+
+                            ds = handleIndex == -1 ? graph.createMoveDrag() : graph.createResizeDrag(handleIndex);
+                        }
                     } else if (dragListSize > 1) {
                         ds = new BulkDragSequence(dragList, event);
                     }
                 }
-                if (shiftDown || showDraws.getCreateGraphic() == null) {
+                if (shiftDown) {
                     Graphic pointedGraphic = showDraws.getFirstGraphicIntersecting(event);
                     ArrayList selGraph = new ArrayList(showDraws.getSelectedGraphics());
-                    if (pointedGraphic == null && shiftDown)
+                    if (pointedGraphic == null)
                         return;
                     if (pointedGraphic instanceof AbstractDragGraphic) {
                         AbstractDragGraphic graphic1 = (AbstractDragGraphic) pointedGraphic;
                         if (selGraph.size() > 1 && selGraph.contains(graphic1)) {
-                            if (shiftDown) {
-                                selGraph.remove(graphic1);
-                                showDraws.setSelectedGraphics(selGraph);
-                            }
-                            // else {
+                            selGraph.remove(graphic1);
+                            showDraws.setSelectedGraphics(selGraph);
                             ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), event);
-                            // }
                         } else {
-                            if (!shiftDown) {
-                                showDraws.setSelectedGraphics(null);
-                                ds = graphic1.createDragSequence(null, event);
-                                showDraws.setSelectedGraphic(graphic1);
-                            } else {
-                                showDraws.setSelectedGraphics(null);
-                                if (!selGraph.contains(graphic1)) {
-                                    selGraph.add(graphic1);
-                                    showDraws.setSelectedGraphics(selGraph);
-                                    if (selGraph.size() > 1) {
-                                        ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), event);
-                                    }
+                            showDraws.setSelectedGraphics(null);
+                            if (!selGraph.contains(graphic1)) {
+                                selGraph.add(graphic1);
+                                showDraws.setSelectedGraphics(selGraph);
+                                if (selGraph.size() > 1) {
+                                    ds = new BulkDragSequence(showDraws.getSelectedDragableGraphics(), event);
                                 }
                             }
                         }
@@ -983,7 +988,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (ds == null) {
                     AbstractDragGraphic graphic = showDraws.createGraphic(event);
                     if (graphic != null) {
-                        ds = graphic.createDragSequence(null, null);
+                        ds = graphic.createResizeDrag(0);
                         if (ds != null) {
                             if (!shiftDown) {
                                 showDraws.setSelectedGraphic(graphic);
@@ -1009,7 +1014,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
                             e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
                             e.isPopupTrigger(), e.getButton());
-                    event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+                    event.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
                     AbstractLayerModel model = getLayerModel();
                     SelectGraphic selectionGraphic = model.getSelectionGraphic();
@@ -1052,7 +1057,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(),
                             e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(),
                             e.isPopupTrigger(), e.getButton());
-                    event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+                    event.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
                     ds.drag(event);
                 }
             }
@@ -1066,7 +1071,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             MouseEventDouble event =
                 new MouseEventDouble((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(),
                     e.getY(), e.getXOnScreen(), e.getYOnScreen(), e.getClickCount(), e.isPopupTrigger(), e.getButton());
-            event.setImageCoordinates(getImageCoordinates(e.getX(), e.getY()));
+            event.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
             getLayerModel().changeCursorDesign(event);
             if (ds != null) {

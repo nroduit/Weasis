@@ -317,23 +317,6 @@ public class Measure1DAnalyse {
         return MathUtil.getAzimuth(x1, regression[0] * x1 + regression[1], x2, regression[0] * x2 + regression[1]);
     }
 
-    public static double getPolygonPerimeter(PolygonGraphic graph) {
-        float[] coord = graph.getPoints();
-        double perimeter = 0.0;
-        if (coord != null && coord.length > 2) {
-            float x1 = coord[0];
-            float y1 = coord[1];
-            for (int m = 2; m < coord.length; m = m + 2) {
-                float x2 = coord[m];
-                float y2 = coord[m + 1];
-                perimeter += (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-                x1 = x2;
-                y1 = y2;
-            }
-        }
-        return perimeter;
-    }
-
     public static ArrayList<String> getObjectMeasureList(boolean[] select) {
         ArrayList<String> list = new ArrayList<String>(select.length);
         for (int i = 0; i < select.length; i++) {
