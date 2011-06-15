@@ -39,12 +39,13 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.GraphicClipboard;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class AbstractLayerModel implements LayerModel {
-
+    public static final GraphicClipboard GraphicClipboard = new GraphicClipboard();
     private static final SelectGraphic selectGraphic = new SelectGraphic();
     public static final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
@@ -121,8 +122,9 @@ public class AbstractLayerModel implements LayerModel {
             }
         }
 
-        if (!draggingPosition)
+        if (!draggingPosition) {
             canvas.setCursor(cursor);
+        }
     }
 
     public AbstractDragGraphic createGraphic(MouseEventDouble mouseevent) {

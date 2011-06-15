@@ -28,7 +28,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
@@ -131,7 +130,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             final JPanel p_icons = new JPanel();
             JToogleButtonGroup measures = ((ComboItemListener) measure).createButtonGroup();
             JToggleButton[] items = measures.getJToggleButtonList();
-            p_icons.setLayout(new GridLayout(items.length / 3 + 1, 3));
+            p_icons.setLayout(new GridLayout((int) (items.length / 3 + 0.5), 3));
             for (int i = 0; i < items.length; i++) {
                 items[i].addActionListener(new ActionListener() {
 
@@ -205,9 +204,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
         if (drawOnceAction instanceof ToggleButtonListener) {
             transform.add(Box.createVerticalStrut(5));
-            JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-            FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
-            flowLayout.setAlignment(FlowLayout.LEFT);
+            JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             transform.add(panel_1);
             JCheckBox checkDraw =
                 ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
@@ -234,6 +231,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Selected Measurement",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
+        JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         final JButton btnGerenralOptions = new JButton("Change Properties");
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
@@ -247,7 +245,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 }
             }
         });
-        transform.add(btnGerenralOptions);
+        panel_1.add(btnGerenralOptions);
+        transform.add(panel_1);
         transform.add(Box.createVerticalStrut(5));
 
         jtable = createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
@@ -256,6 +255,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         jtable.getTableHeader().setReorderingAllowed(false);
 
         tableContainer = new JPanel();
+        tableContainer.setBorder(BorderFactory.createEtchedBorder());
         tableContainer.setPreferredSize(new Dimension(50, 80));
         tableContainer.setLayout(new BorderLayout());
         transform.add(tableContainer);
@@ -305,14 +305,12 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     public static JTable createMultipleRenderingTable(TableModel model) {
         JTable table = new JTable(model);
-        table.getColumnModel().setColumnMargin(5);
+        table.getColumnModel().setColumnMargin(3);
         return table;
     }
 
     public static void createTableHeaders(JTable table) {
-        TableHeaderRenderer renderer = new TableHeaderRenderer();
-        renderer.setHorizontalAlignment(SwingConstants.LEFT);
-        table.getColumnModel().getColumn(0).setHeaderRenderer(renderer);
+        table.getColumnModel().getColumn(0).setHeaderRenderer(new TableHeaderRenderer());
         table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
     }
 

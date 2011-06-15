@@ -44,6 +44,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
+import javax.swing.TransferHandler.TransferSupport;
 
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionState;
@@ -655,19 +656,39 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // Context menu
             if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
                 final ArrayList<Graphic> selected;
-                if ((selected = View2d.this.getLayerModel().getSelectedGraphics()).size() > 0) {
+                if ((selected = new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics())).size() > 0) {
 
                     JPopupMenu popupMenu = new JPopupMenu();
 
-                    JMenuItem delete = new JMenuItem("Delete Selected");
-                    delete.addActionListener(new ActionListener() {
+                    JMenuItem menuItem = new JMenuItem("Delete Selected");
+                    menuItem.addActionListener(new ActionListener() {
 
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             View2d.this.getLayerModel().deleteSelectedGraphics();
                         }
                     });
-                    popupMenu.add(delete);
+                    popupMenu.add(menuItem);
+                    menuItem = new JMenuItem("Cut");
+                    menuItem.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                            View2d.this.getLayerModel().deleteSelectedGraphics();
+                        }
+                    });
+                    popupMenu.add(menuItem);
+                    menuItem = new JMenuItem("Copy");
+                    menuItem.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                        }
+                    });
+                    popupMenu.add(menuItem);
+
                     // TODO separate AbstractDragGraphic and ClassGraphic for properties
                     final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
                     for (Graphic graphic : selected) {
@@ -870,6 +891,26 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
                         }
                         popupMenu.add(menu);
+                    }
+                    if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+                        popupMenu.add(new JSeparator());
+                        JMenuItem menuItem = new JMenuItem("Paste Drawings");
+                        menuItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                AbstractLayer layer = View2d.this.getLayerModel().getLayer(Tools.MEASURE.getId());
+                                if (layer != null) {
+                                    List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
+                                    if (graphs != null) {
+                                        for (Graphic g : graphs) {
+                                            layer.addGraphic(g);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        popupMenu.add(menuItem);
                     }
                     popupMenu.add(new JSeparator());
                     popupMenu.add(ResetTools.createUnregisteredJMenu());

@@ -314,8 +314,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (openSeries != null) {
                     for (MediaSeries s : openSeries) {
                         if (series == s) {
-                            // The sequence is still open in another view or
-                            // plugin
+                            // The sequence is still open in another view or plugin
                             open = true;
                             break pluginList;
                         }
@@ -351,6 +350,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             synchronized (this) {
                 GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
                 if (list != null) {
+                    // TODO handle graphics without shape, ecxlude them!
                     layer.setGraphics(list);
                 } else {
                     GraphicList graphics = new GraphicList();
