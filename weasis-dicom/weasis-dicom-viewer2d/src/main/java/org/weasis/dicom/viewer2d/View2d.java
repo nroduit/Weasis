@@ -44,7 +44,6 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
-import javax.swing.TransferHandler.TransferSupport;
 
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionState;
@@ -669,25 +668,25 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     });
                     popupMenu.add(menuItem);
-                    menuItem = new JMenuItem("Cut");
-                    menuItem.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                            View2d.this.getLayerModel().deleteSelectedGraphics();
-                        }
-                    });
-                    popupMenu.add(menuItem);
-                    menuItem = new JMenuItem("Copy");
-                    menuItem.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                        }
-                    });
-                    popupMenu.add(menuItem);
+                    // menuItem = new JMenuItem("Cut");
+                    // menuItem.addActionListener(new ActionListener() {
+                    //
+                    // @Override
+                    // public void actionPerformed(ActionEvent e) {
+                    // AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                    // View2d.this.getLayerModel().deleteSelectedGraphics();
+                    // }
+                    // });
+                    // popupMenu.add(menuItem);
+                    // menuItem = new JMenuItem("Copy");
+                    // menuItem.addActionListener(new ActionListener() {
+                    //
+                    // @Override
+                    // public void actionPerformed(ActionEvent e) {
+                    // AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                    // }
+                    // });
+                    // popupMenu.add(menuItem);
 
                     // TODO separate AbstractDragGraphic and ClassGraphic for properties
                     final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
@@ -892,26 +891,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                         popupMenu.add(menu);
                     }
-                    if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
-                        popupMenu.add(new JSeparator());
-                        JMenuItem menuItem = new JMenuItem("Paste Drawings");
-                        menuItem.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                AbstractLayer layer = View2d.this.getLayerModel().getLayer(Tools.MEASURE.getId());
-                                if (layer != null) {
-                                    List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
-                                    if (graphs != null) {
-                                        for (Graphic g : graphs) {
-                                            layer.addGraphic(g);
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        popupMenu.add(menuItem);
-                    }
+                    // if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+                    // popupMenu.add(new JSeparator());
+                    // JMenuItem menuItem = new JMenuItem("Paste Drawings");
+                    // menuItem.addActionListener(new ActionListener() {
+                    //
+                    // @Override
+                    // public void actionPerformed(ActionEvent e) {
+                    // AbstractLayer layer = View2d.this.getLayerModel().getLayer(Tools.MEASURE.getId());
+                    // if (layer != null) {
+                    // List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
+                    // if (graphs != null) {
+                    // Rectangle2D area = View2d.this.getViewModel().getModelArea();
+                    // for (Graphic g : graphs) {
+                    // if (g.getBounds(null).intersects(area)) {
+                    // layer.addGraphic(g);
+                    // }
+                    // }
+                    // }
+                    // }
+                    // }
+                    // });
+                    // popupMenu.add(menuItem);
+                    // }
                     popupMenu.add(new JSeparator());
                     popupMenu.add(ResetTools.createUnregisteredJMenu());
                     JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$

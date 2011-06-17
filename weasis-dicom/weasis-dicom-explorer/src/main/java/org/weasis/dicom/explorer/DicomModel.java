@@ -100,6 +100,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     }
 
+    @Override
     public synchronized List<Codec> getCodecPlugins() {
         ArrayList<Codec> codecPlugins = new ArrayList<Codec>(1);
         synchronized (BundleTools.CODEC_PLUGINS) {
@@ -112,29 +113,32 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return codecPlugins;
     }
 
+    @Override
     public Collection<MediaSeriesGroup> getChildren(MediaSeriesGroup node) {
         return model.getSuccessors(node);
     }
 
+    @Override
     public MediaSeriesGroup getHierarchyNode(MediaSeriesGroup parent, Object value) {
         if (parent != null || value != null) {
             synchronized (model) {
                 for (MediaSeriesGroup node : model.getSuccessors(parent)) {
-                    if (node.equals(value)) {
+                    if (node.equals(value))
                         return node;
-                    }
                 }
             }
         }
         return null;
     }
 
+    @Override
     public void addHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf) {
         synchronized (model) {
             model.addLeaf(root, leaf);
         }
     }
 
+    @Override
     public void removeHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf) {
         synchronized (model) {
             Tree<MediaSeriesGroup> tree = model.getTree(root);
@@ -144,6 +148,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
+    @Override
     public MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode) {
         if (null != node && modelNode != null) {
             synchronized (model) {
@@ -151,9 +156,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (tree != null) {
                     Tree<MediaSeriesGroup> parent = null;
                     while ((parent = tree.getParent()) != null) {
-                        if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
+                        if (parent.getHead().getTagID().equals(modelNode.getTagElement()))
                             return parent.getHead();
-                        }
                         tree = parent;
                     }
                 }
@@ -192,6 +196,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return modelStrucure;
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
         if (propertyChange == null) {
             propertyChange = new PropertyChangeSupport(this);
@@ -199,6 +204,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         propertyChange.addPropertyChangeListener(propertychangelistener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
         if (propertyChange != null) {
             propertyChange.removePropertyChangeListener(propertychangelistener);
@@ -206,16 +212,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     }
 
+    @Override
     public void firePropertyChange(final ObservableEvent event) {
         if (propertyChange != null) {
-            if (event == null) {
+            if (event == null)
                 throw new NullPointerException();
-            }
             if (SwingUtilities.isEventDispatchThread()) {
                 propertyChange.firePropertyChange(event);
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
+                    @Override
                     public void run() {
                         propertyChange.firePropertyChange(event);
                     }
@@ -377,6 +384,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
     }
 
+    @Override
     public boolean applySplittingRules(Series original, MediaElement media) {
         if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
             DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
@@ -436,10 +444,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
         final DicomImageElement firstMedia = series.getMedia(0);
-        if (firstMedia == null) {
+        if (firstMedia == null)
             // no image
             return true;
-        }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);
             Object tag2 = firstMedia.getTagValue(tagElement);
@@ -447,9 +454,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (tag == null && tag2 == null) {
                 continue;
             }
-            if (tag != null && !tag.equals(tag2)) {
+            if (tag != null && !tag.equals(tag2))
                 return false;
-            }
         }
         return true;
     }
@@ -471,6 +477,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
 
                 firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null,
@@ -537,6 +544,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
                 firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, DicomModel.this, null,
                     DicomModel.this));

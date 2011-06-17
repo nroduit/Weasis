@@ -13,13 +13,17 @@ package org.weasis.dicom.viewer2d;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.ChangeEvent;
 
 import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.command.Option;
+import org.weasis.core.api.command.Options;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -69,6 +73,8 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
+    public static final String[] functions = { "zoom" }; //$NON-NLS-1$ //$NON-NLS-2$
+
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
     /** The single instance of this singleton class. */
@@ -748,8 +754,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    public static boolean hasSameSize(MediaSeries<DicomImageElement> series1,
-        MediaSeries<DicomImageElement> series2) {
+    public static boolean hasSameSize(MediaSeries<DicomImageElement> series1, MediaSeries<DicomImageElement> series2) {
         // Test if the two series has the same orientation
         if (series1 != null && series2 != null) {
             DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE);
@@ -781,5 +786,89 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 zoomAction.getMouseSensivity());
 
         }
+    }
+
+    public void zoom(String[] argv) throws IOException {
+        final String[] usage =
+            {
+                "Change the zoom value to the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
+                "Usage: dicom:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+                "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 is the best fit in window value)", //$NON-NLS-1$
+                "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
+                "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
+                "  -? --help       show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    if (opt.isSet("increase")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        zoomAction.setValue(zoomAction.getValue() + val);
+                    } else if (opt.isSet("decrease")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        zoomAction.setValue(zoomAction.getValue() - val);
+                    } else if (opt.isSet("set")) { //$NON-NLS-1$
+                        double val = Double.parseDouble(args.get(0));
+                        if (val == 0.0) {
+                            firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+                        } else {
+                            zoomAction.setValue(viewScaleToSliderValue(val));
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public void pan(String[] argv) throws IOException {
+        final String[] usage =
+            { "Change the zoom value to the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
+                "Usage: dicom:zoom [set | modify] [VALUE]", //$NON-NLS-1$
+                "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
+                "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
+                "  -? --help       show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    if (opt.isSet("increase")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        zoomAction.setValue(zoomAction.getValue() + val);
+                    } else if (opt.isSet("decrease")) { //$NON-NLS-1$
+                        int val = Integer.parseInt(args.get(0));
+                        zoomAction.setValue(zoomAction.getValue() - val);
+                    } else if (opt.isSet("set")) { //$NON-NLS-1$
+                        double val = Double.parseDouble(args.get(0));
+                        if (val == 0.0) {
+                            firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+                        } else {
+                            zoomAction.setValue(viewScaleToSliderValue(val));
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

@@ -27,10 +27,23 @@ public class Activator implements BundleActivator {
 
     public final static BundlePreferences PREFERENCES = new BundlePreferences();
 
+    @Override
     public void start(final BundleContext context) throws Exception {
         PREFERENCES.init(context);
+
+        // GuiExecutor.instance().execute(new Runnable() {
+        //
+        // @Override
+        // public void run() {
+        // Dictionary<String, Object> dict = new Hashtable<String, Object>();
+        //                dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); //$NON-NLS-1$
+        // dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions);
+        // context.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
+        // }
+        // });
     }
 
+    @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences
         EventManager.getInstance().savePreferences();
