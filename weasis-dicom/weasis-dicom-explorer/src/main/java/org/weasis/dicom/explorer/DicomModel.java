@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -231,13 +232,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
-    public void mergeSeries(Series[] seriesList) {
-        if (seriesList != null && seriesList.length > 1) {
-            String uid = (String) seriesList[0].getTagValue(TagW.SeriesInstanceUID);
+    public void mergeSeries(List<MediaSeries> seriesList) {
+        if (seriesList != null && seriesList.size() > 1) {
+            String uid = (String) seriesList.get(0).getTagValue(TagW.SeriesInstanceUID);
             boolean sameOrigin = true;
             if (uid != null) {
-                for (int i = 1; i < seriesList.length; i++) {
-                    if (!uid.equals(seriesList[i].getTagValue(TagW.SeriesInstanceUID))) {
+                for (int i = 1; i < seriesList.size(); i++) {
+                    if (!uid.equals(seriesList.get(i).getTagValue(TagW.SeriesInstanceUID))) {
                         sameOrigin = false;
                         break;
                     }
@@ -245,15 +246,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             if (sameOrigin) {
                 int min = Integer.MAX_VALUE;
-                Series base = seriesList[0];
-                for (Series series : seriesList) {
+                MediaSeries base = seriesList.get(0);
+                for (MediaSeries series : seriesList) {
                     Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                     if (splitNb != null && min > splitNb) {
                         min = splitNb;
                         base = series;
                     }
                 }
-                for (Series series : seriesList) {
+                for (MediaSeries series : seriesList) {
                     if (series != base) {
                         base.addAll(series.getMedias());
                         removeSeries(series);

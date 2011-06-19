@@ -47,9 +47,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private JProgressBar progressBar = null;
 
     public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel, boolean flatSearch) {
-        if (files == null || !(explorerModel instanceof DicomModel)) {
+        if (files == null || !(explorerModel instanceof DicomModel))
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
-        }
         this.dicomModel = (DicomModel) explorerModel;
         this.files = files;
         this.recursive = recursive;
@@ -95,9 +94,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     public void addSelectionAndnotify(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1) {
+        if (file == null || file.length < 1)
             return;
-        }
         final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
@@ -138,9 +136,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     public void addSelection(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1) {
+        if (file == null || file.length < 1)
             return;
-        }
         final ArrayList<DicomMediaIO> files = new ArrayList<DicomMediaIO>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
@@ -229,7 +226,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
                     if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;
-                        LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries }, dicomModel);
+                        ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                        list.add(dicomSeries);
+                        LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
                     }
                 }
             } else {
@@ -339,15 +338,16 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(series.getMimeType());
             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                 openPlugin = false;
-                LoadSeries.openSequenceInPlugin(plugin, new Series[] { series }, dicomModel);
+                ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                list.add(series);
+                LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
             }
         }
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {
-        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID))
             return true;
-        }
         Object splitNb = dicomSeries.getTagValue(TagW.SplitSeriesNumber);
         if (splitNb != null && study != null) {
             String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
@@ -358,9 +358,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     if (dicomSeries != group && group instanceof Series) {
                         Series s = (Series) group;
                         if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                            if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+                            if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID))
                                 return true;
-                            }
                         }
                     }
                 }

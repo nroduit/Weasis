@@ -208,7 +208,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
-
         }
         if (series == null) {
             imageLayer.setImage(null);
@@ -592,7 +591,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         SeriesViewerFactory plugin =
                             UIManager.getViewerFactory(eventManager.getSelectedView2dContainer());
                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                            LoadSeries.openSequenceInPlugin(plugin, new Series[] { seq }, model);
+                            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                            list.add(seq);
+                            LoadSeries.openSequenceInPlugin(plugin, list, model, true);
 
                         }
                         return false;
@@ -603,7 +604,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         return false;
                     }
                 } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
-                    LoadSeries.openSequenceInDefaultPlugin(new Series[] { seq }, model);
+                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                    list.add(seq);
+                    LoadSeries.openSequenceInDefaultPlugin(list, model);
                     return true;
                 }
             } catch (Exception e) {
@@ -615,26 +618,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 return true;
             }
 
-            // ArrayList<DefaultView2d<DicomImageElement>> view2ds = pane.getImagePanels();
-            // for (DefaultView2d<DicomImageElement> v : view2ds) {
-            // if (v.getSeries() == null) {
-            // pane.setSelectedImagePane(v);
-            // pane.addSeries(seq);
-            // requestFocusInWindow();
-            // return true;
-            // }
-            // }
-            //
-            // pane.changeLayoutModel(pane.getBestDefaultViewLayout(view2ds.size() + 1));
-            // view2ds = pane.getImagePanels();
-            // pane.setSelectedImagePane(view2ds.get(view2ds.size() - 1));
-            // pane.addSeries(seq);
-            // requestFocusInWindow();
-
             setSeries(seq);
             requestFocusInWindow();
             return true;
-
         }
 
         private boolean dropDicomFiles(List<File> files, DicomModel model) {

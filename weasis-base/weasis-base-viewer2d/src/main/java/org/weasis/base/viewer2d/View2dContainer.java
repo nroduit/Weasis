@@ -106,6 +106,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue(0);
                     }
@@ -114,6 +115,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 menuItem = new JMenuItem("- 90");
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() - 90 + 360) % 360);
                     }
@@ -122,6 +124,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 menuItem = new JMenuItem("+90");
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() + 90) % 360);
                     }
@@ -130,6 +133,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 menuItem = new JMenuItem("+180");
                 menuItem.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         rotation.setValue((rotation.getValue() + 180) % 360);
                     }
@@ -296,9 +300,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz)) {
+        if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz))
             return createDefaultView(clazz);
-        }
         try {
             // FIXME use classloader.loadClass or injection
             Class cl = Class.forName(clazz);
@@ -341,15 +344,14 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public Action[] getExportActions() {
-        if (selectedImagePane != null) {
+        if (selectedImagePane != null)
             return new Action[] { selectedImagePane.getExportToClipboardAction() };
-        }
         return null;
     }
 
     @Override
-    public int getViewTypeNumber(Class defaultClass) {
-        return ViewerFactory.getViewTypeNumber(layoutModel, defaultClass);
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+        return ViewerFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override

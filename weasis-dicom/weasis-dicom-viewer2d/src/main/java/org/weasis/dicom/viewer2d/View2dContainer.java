@@ -417,8 +417,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public int getViewTypeNumber(Class defaultClass) {
-        return View2dFactory.getViewTypeNumber(layoutModel, defaultClass);
+    public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+        return View2dFactory.getViewTypeNumber(layout, defaultClass);
     }
 
     @Override

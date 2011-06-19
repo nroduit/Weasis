@@ -45,7 +45,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
 
     // A model must have at least one view that inherited of DefaultView2d
-    private static final Class view2dClass = DefaultView2d.class;
+    public static final Class view2dClass = DefaultView2d.class;
     public static final GridBagLayoutModel VIEWS_1x1 =
         new GridBagLayoutModel(
             String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$ //$NON-NLS-2$
@@ -139,7 +139,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      */
     public abstract boolean isViewType(Class defaultClass, String type);
 
-    public abstract int getViewTypeNumber(Class defaultClass);
+    public abstract int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass);
 
     public abstract DefaultView2d<E> createDefaultView(String classType);
 
@@ -226,7 +226,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         view2ds.clear();
 
-        int nbview = getViewTypeNumber(view2dClass);
+        int nbview = getViewTypeNumber(layoutModel, view2dClass);
         if (oldViews.size() > nbview) {
             for (int i = oldViews.size() - 1; i >= nbview; i--) {
                 oldViews.remove(i).dispose();
@@ -425,6 +425,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 for (int i = 0; i < view2ds.size(); i++) {
                     DefaultView2d<E> v = view2ds.get(i);
                     if (i < limit) {
+                        v.getLayerModel().deleteAllGraphics();
                         v.setTileOffset(i);
                         v.setSeries(series, -1);
                     } else {
@@ -461,12 +462,63 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             Object[] list = ((ComboItemListener) layout).getAllItem();
             for (Object m : list) {
                 if (m instanceof GridBagLayoutModel) {
-                    if (getViewTypeNumber(view2dClass) >= size)
+                    if (getViewTypeNumber((GridBagLayoutModel) m, view2dClass) >= size)
                         return (GridBagLayoutModel) m;
                 }
             }
         }
 
         return VIEWS_4x4;
+    }
+
+    public void addSeriesList(List<MediaSeries> seriesList, boolean removeOldSeries) {
+        if (seriesList != null && seriesList.size() > 0) {
+            if (SynchView.Mode.Tile.equals(synchView.getMode())) {
+                addSeries(seriesList.get(0));
+                return;
+            }
+            if (removeOldSeries) {
+                changeLayoutModel(getBestDefaultViewLayout(seriesList.size()));
+
+                // If the layout is larger than the list of series, clean other views.
+                if (view2ds.size() > seriesList.size()) {
+                    setSelectedImagePane(view2ds.get(seriesList.size()));
+                    for (int i = seriesList.size(); i < view2ds.size(); i++) {
+                        getSelectedImagePane().setSeries(null, -1);
+                        getNextSelectedImagePane();
+                    }
+                }
+
+                setSelectedAndGetFocus();
+                int pos = view2ds.size() - seriesList.size();
+                setSelectedImagePane(view2ds.get(0));
+                for (MediaSeries mediaSeries : seriesList) {
+                    addSeries(mediaSeries);
+                }
+                setSelected(true);
+                repaint();
+            } else {
+                int emptyView = 0;
+                for (DefaultView2d v : view2ds) {
+                    if (v.getSeries() == null) {
+                        emptyView++;
+                    }
+                }
+                if (emptyView < seriesList.size()) {
+                    changeLayoutModel(getBestDefaultViewLayout(view2ds.size() + seriesList.size()));
+                    setSelectedAndGetFocus();
+                }
+                int index = 0;
+                for (DefaultView2d v : view2ds) {
+                    if (v.getSeries() == null && index < seriesList.size()) {
+                        setSelectedImagePane(v);
+                        addSeries(seriesList.get(index));
+                        index++;
+                    }
+                }
+                setSelected(true);
+                repaint();
+            }
+        }
     }
 }

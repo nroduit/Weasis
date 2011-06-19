@@ -51,22 +51,16 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
-    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.PatientSex,
-        TagW.PatientBirthDate };
-    private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName,
-        TagW.StationName, };
-    private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID,
-        TagW.AccessionNumber, TagW.ReferringPhysicianName, TagW.StudyDescription };
-    private final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber,
-        TagW.Modality, TagW.ReferringPhysicianName, TagW.InstitutionName,
-        TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
-    private final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID,
-        TagW.InstanceNumber, TagW.PhotometricInterpretation, TagW.SamplesPerPixel,
-        TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageComments,
-        TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth, TagW.BitsAllocated,
-        TagW.BitsStored };
-    private final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation,
-        TagW.SliceThickness };
+    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.PatientSex, TagW.PatientBirthDate };
+    private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
+    private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
+        TagW.ReferringPhysicianName, TagW.StudyDescription };
+    private final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
+        TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
+    private final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID, TagW.InstanceNumber,
+        TagW.PhotometricInterpretation, TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows,
+        TagW.ImageComments, TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };
+    private final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
     private final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
     private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
@@ -103,6 +97,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         setPreferredSize(new Dimension(1024, 1024));
 
         ChangeListener changeListener = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent changeEvent) {
                 changeDicomInfo(currentSeries, currentMedia);
             }
@@ -145,7 +140,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         sb.append(" #"); //$NON-NLS-1$
         sb.append(element.length());
         sb.append(" ["); //$NON-NLS-1$
-        if (element.vr() == VR.SQ) {
+        // Other VR than sequence can have several items, but there are not displayed after.
+        if (element.vr() == VR.SQ || element.hasFragments()) {
             final int size = element.countItems();
             if (size != 0) {
                 if (size == 1) {
@@ -240,9 +236,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
                     MediaReader loader = media.getMediaReader();
                     if (loader instanceof DicomMediaIO) {
-                        writeItems(Messages.getString("DicomFieldsView.pat"), PATIENT, model.getParent(series, DicomModel.patient), doc); //$NON-NLS-1$
+                        writeItems(
+                            Messages.getString("DicomFieldsView.pat"), PATIENT, model.getParent(series, DicomModel.patient), doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.station"), STATION, series, doc); //$NON-NLS-1$
-                        writeItems(Messages.getString("DicomFieldsView.study"), STUDY, model.getParent(series, DicomModel.study), doc); //$NON-NLS-1$
+                        writeItems(
+                            Messages.getString("DicomFieldsView.study"), STUDY, model.getParent(series, DicomModel.study), doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.series"), SERIES, series, doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.object"), IMAGE, null, doc); //$NON-NLS-1$
                         writeItems(Messages.getString("DicomFieldsView.plane"), IMAGE_PLANE, null, doc); //$NON-NLS-1$

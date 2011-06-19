@@ -368,6 +368,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             }
             // image = null;
         }
+        removeMouseAndKeyListener();
     }
 
     // --- DragGestureListener methods -----------------------------------

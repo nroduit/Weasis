@@ -49,6 +49,7 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
@@ -95,9 +96,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private DownloadPriority priority = null;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel) {
-        if (dicomModel == null || dicomSeries == null) {
+        if (dicomModel == null || dicomSeries == null)
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
-        }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         final List<DicomInstance> sopList =
@@ -114,9 +114,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     }
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar) {
-        if (dicomModel == null || dicomSeries == null || progressBar == null) {
+        if (dicomModel == null || dicomSeries == null || progressBar == null)
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
-        }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         this.progressBar = progressBar;
@@ -128,6 +127,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         return startDownload();
     }
 
+    @Override
     public JProgressBar getProgressBar() {
         return progressBar;
     }
@@ -188,9 +188,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
-        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID))
             return true;
-        }
         // Search in split Series, cannot use "has this series a SplitNumber" because splitting can be executed later
         // for Dicom Video and other special Dicom
         String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
@@ -201,9 +200,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
+                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID))
                             return true;
-                        }
                     }
                 }
             }
@@ -231,9 +229,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-        if (wado == null) {
+        if (wado == null)
             return false;
-        }
         ExecutorService imageDownloader = Executors.newFixedThreadPool(CODOWNLOAD_NUMBER);
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
@@ -246,9 +243,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         });
         for (int k = 0; k < sopList.size(); k++) {
             DicomInstance instance = sopList.get(dindex[k]);
-            if (isCancelled()) {
+            if (isCancelled())
                 return true;
-            }
             // Test if SOPInstanceUID already exists
             if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
                 incrementProgressBarValue();
@@ -352,6 +348,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             // the Series
             Collections.sort(sopList, new Comparator<DicomInstance>() {
 
+                @Override
                 public int compare(DicomInstance dcm1, DicomInstance dcm2) {
                     int nubmer1 = dcm1.getInstanceNumber();
                     int nubmer2 = dcm2.getInstanceNumber();
@@ -376,9 +373,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             str2 = str2.substring(0, index) + new String(c) + str2.substring(index);
                         }
                         return str1.compareTo(str2);
-                    } else {
+                    } else
                         return (nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1));
-                    }
                 }
             });
             final DicomInstance instance = sopList.get(sopList.size() / 2);
@@ -471,18 +467,18 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(series, dicomModel));
     }
 
-    public static void openSequenceInPlugin(SeriesViewerFactory factory, Series[] series, DicomModel dicomModel) {
-        if (factory == null) {
+    public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
+        DicomModel dicomModel, boolean removeOldSeries) {
+        if (factory == null)
             return;
-        }
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, dicomModel, null,
-            new ViewerPluginBuilder(factory, series, dicomModel, true)));
+            new ViewerPluginBuilder(factory, series, dicomModel, true, removeOldSeries)));
 
     }
 
-    public static void openSequenceInDefaultPlugin(Series[] series, DicomModel dicomModel) {
+    public static void openSequenceInDefaultPlugin(List<MediaSeries> series, DicomModel dicomModel) {
         ArrayList<String> mimes = new ArrayList<String>();
-        for (Series s : series) {
+        for (MediaSeries s : series) {
             String mime = s.getMimeType();
             if (mime != null && !mimes.contains(mime)) {
                 mimes.add(mime);
@@ -491,13 +487,13 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         for (String mime : mimes) {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
-                ArrayList<Series> seriesList = new ArrayList<Series>();
-                for (Series s : series) {
+                ArrayList<MediaSeries> seriesList = new ArrayList<MediaSeries>();
+                for (MediaSeries s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
                     }
                 }
-                openSequenceInPlugin(plugin, series, dicomModel);
+                openSequenceInPlugin(plugin, seriesList, dicomModel, true);
             }
         }
     }
@@ -576,9 +572,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         httpCon.connect();
 
         // Make sure response code is in the 200 range.
-        if (httpCon.getResponseCode() / 100 != 2) {
+        if (httpCon.getResponseCode() / 100 != 2)
             return null;
-        }
 
         OutputStream out = null;
         InputStream in = null;
@@ -711,6 +706,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
 
         // Download file.
+        @Override
         public Boolean call() throws Exception {
             // Increment progress bar in EDT and repaint when downloaded
             incrementProgressBarValue();
@@ -770,9 +766,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             log.debug("Download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-                if (wado == null) {
+                if (wado == null)
                     return false;
-                }
                 int[] overrideList = wado.getOverrideDicomTagIDList();
                 if (overrideList == null) {
                     if (progressBar instanceof CircularProgressBar) {
@@ -795,6 +790,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         dicomReader.writeMetaData(patient);
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
+                            @Override
                             public void run() {
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumb != null) {
@@ -818,6 +814,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         // before reaching done() of SwingWorker
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
+                            @Override
                             public void run() {
                                 boolean firstImageToDisplay = false;
                                 MediaElement[] medias = dicomReader.getMediaElement();
@@ -854,8 +851,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         SeriesViewerFactory plugin =
                                             UIManager.getViewerFactory(dicomSeries.getMimeType());
                                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                                            LoadSeries.openSequenceInPlugin(plugin, new Series[] { dicomSeries },
-                                                dicomModel);
+                                            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                                            list.add(dicomSeries);
+                                            LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
                                         }
                                     }
                                 }
@@ -871,9 +869,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
 
         public boolean writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
-            if (inputStream == null && out == null) {
+            if (inputStream == null && out == null)
                 return false;
-            }
             DicomInputStream dis = null;
             DicomOutputStream dos = null;
             try {

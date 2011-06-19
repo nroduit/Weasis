@@ -125,18 +125,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            if (!closeWindow()) {
+            if (!closeWindow())
                 return;
-            }
         }
         super.processWindowEvent(e);
     }
 
     public boolean closeWindow() {
-        if (busy) {
+        if (busy)
             // TODO add a message, Please wait or kill
             return false;
-        }
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
             int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
@@ -170,6 +168,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         mainContainer.setTransferHandler(new SequenceHandler());
         contentManagerUI.addContentManagerUIListener(new ContentManagerUIListener() {
 
+            @Override
             public boolean contentUIRemoving(ContentManagerUIEvent event) {
                 Component c = event.getContentUI().getContent().getComponent();
                 if (c instanceof ViewerPlugin) {
@@ -179,6 +178,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 return true;
             }
 
+            @Override
             public void contentUIDetached(ContentManagerUIEvent event) {
             }
         });
@@ -257,15 +257,15 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
                         SeriesViewerFactory factory = builder.getFactory();
                         DataExplorerModel model = builder.getModel();
-                        MediaSeries[] series = builder.getSeries();
+                        List<MediaSeries> series = builder.getSeries();
 
                         if (builder.isCompareEntryToBuildNewViewer() && model.getTreeModelNodeForNewPlugin() != null) {
                             TreeModel treeModel = (TreeModel) model;
-                            if (series.length == 1) {
-                                MediaSeries s = series[0];
+                            if (series.size() == 1) {
+                                MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                openSeriesInViewerPlugin(factory, model, group, series);
-                            } else if (series.length > 1) {
+                                openSeriesInViewerPlugin(factory, model, group, series, builder.isRemoveOldSeries());
+                            } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
                                     getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
                                 for (Iterator<Entry<MediaSeriesGroup, List<MediaSeries>>> iterator =
@@ -273,13 +273,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
                                     List<MediaSeries> seriesList = entry.getValue();
-                                    openSeriesInViewerPlugin(factory, model, group,
-                                        seriesList.toArray(new MediaSeries[seriesList.size()]));
+                                    openSeriesInViewerPlugin(factory, model, group, seriesList,
+                                        builder.isRemoveOldSeries());
                                 }
                             }
 
                         } else {
-                            openSeriesInViewerPlugin(factory, model, null, series);
+                            openSeriesInViewerPlugin(factory, model, null, series, true);
 
                         }
 
@@ -318,26 +318,27 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
-    private HashMap<MediaSeriesGroup, List<MediaSeries>> getSeriesByEntry(TreeModel treeModel, MediaSeries[] series,
-        TreeModelNode entry) {
+    private HashMap<MediaSeriesGroup, List<MediaSeries>> getSeriesByEntry(TreeModel treeModel,
+        List<MediaSeries> series, TreeModelNode entry) {
         HashMap<MediaSeriesGroup, List<MediaSeries>> map = new HashMap<MediaSeriesGroup, List<MediaSeries>>();
-        for (MediaSeries s : series) {
-            MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-            List<MediaSeries> seriesList = map.get(entry1);
-            if (seriesList == null) {
-                seriesList = new ArrayList<MediaSeries>();
+        if (series != null && treeModel != null && entry != null) {
+            for (MediaSeries s : series) {
+                MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
+                List<MediaSeries> seriesList = map.get(entry1);
+                if (seriesList == null) {
+                    seriesList = new ArrayList<MediaSeries>();
+                }
+                seriesList.add(s);
+                map.put(entry1, seriesList);
             }
-            seriesList.add(s);
-            map.put(entry1, seriesList);
         }
         return map;
     }
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
-        MediaSeries[] seriesList) {
-        if (factory == null || seriesList == null || seriesList.length == 0) {
+        List<MediaSeries> seriesList, boolean removeOldSeries) {
+        if (factory == null || seriesList == null || seriesList.size() == 0)
             return;
-        }
         if (factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
@@ -345,15 +346,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         && group.equals(p.getGroupID())) {
 
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
-                        viewer.changeLayoutModel(viewer.getBestDefaultViewLayout(seriesList.length));
-
-                        p.setSelectedAndGetFocus();
-                        selectLayoutPositionForAddingSeries(viewer, seriesList.length);
-                        for (int i = 0; i < seriesList.length; i++) {
-                            viewer.addSeries(seriesList[i]);
-                        }
-                        p.setSelected(true);
-                        p.repaint();
+                        viewer.addSeriesList(seriesList, removeOldSeries);
                         return;
                     }
                 }
@@ -362,8 +355,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // Pass the DataExplorerModel to the viewer
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(DataExplorerModel.class.getName(), model);
-        if (seriesList.length > 1) {
-            properties.put(DefaultView2d.class.getName(), seriesList.length);
+        if (seriesList.size() > 1) {
+            properties.put(DefaultView2d.class.getName(), seriesList.size());
         }
         SeriesViewer seriesViewer = factory.createSeriesViewer(properties);
         if (seriesViewer instanceof MimeSystemAppViewer) {
@@ -379,7 +372,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             registerPlugin(viewer);
             viewer.setSelectedAndGetFocus();
             if (seriesViewer instanceof ImageViewerPlugin) {
-                selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.length);
+                selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.size());
             }
             for (MediaSeries m : seriesList) {
                 viewer.addSeries(m);
@@ -399,9 +392,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     public void registerPlugin(final ViewerPlugin plugin) {
         synchronized (UIManager.VIEWER_PLUGINS) {
-            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin)) {
+            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin))
                 return;
-            }
             UIManager.VIEWER_PLUGINS.add(plugin);
             ContentManager contentManager = UIManager.toolWindowManager.getContentManager();
             if (contentManager.getContentCount() > 0) {
@@ -435,9 +427,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
-        if (plugin == null) {
+        if (plugin == null)
             return;
-        }
         if (selectedPlugin == plugin) {
             plugin.requestFocusInWindow();
             return;
@@ -584,6 +575,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         final JMenuItem aboutMenuItem = new JMenuItem(Messages.getString("WeasisAboutBox.title")); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 WeasisAboutBox about = new WeasisAboutBox();
                 JMVUtils.showCenterScreen(about, instance);
@@ -732,31 +724,27 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         public Transferable createTransferable(JComponent comp) {
             if (comp instanceof Thumbnail) {
                 MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series) {
+                if (t instanceof Series)
                     return t;
-                }
             }
             return null;
         }
 
         @Override
         public boolean canImport(TransferSupport support) {
-            if (!support.isDrop()) {
+            if (!support.isDrop())
                 return false;
-            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor))
                 return true;
-            }
             return false;
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (!canImport(support)) {
+            if (!canImport(support))
                 return false;
-            }
 
             Transferable transferable = support.getTransferable();
 
@@ -796,7 +784,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     TreeModel treeModel = (TreeModel) model;
                                     MediaSeriesGroup group =
                                         treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
-                                    openSeriesInViewerPlugin(factory, model, group, new MediaSeries[] { seq });
+                                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                                    list.add(seq);
+                                    openSeriesInViewerPlugin(factory, model, group, list, true);
                                 }
                                 break;
                             }
@@ -814,12 +804,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         private boolean dropFiles(List<File> files, DataExplorerView explorer) {
             // TODO get the current explorer
-            if (files != null) {
-
+            if (files != null)
                 // LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
                 // DicomModel.loadingExecutor.execute(dicom);
                 return true;
-            }
             return false;
         }
     }
