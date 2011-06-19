@@ -41,10 +41,11 @@ public class DicomImageElement extends ImageElement {
             } else {
                 pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
-            if (val != null) {
+            if (val != null && val[0] > 0.0 && val[1] > 0.0) {
                 // Pixel Spacing = Row Spacing \ Column Spacing
                 // The first value is the row spacing in mm, that is the spacing between the centers of adjacent rows,
                 // or vertical spacing.
+                // Pixel Spacing must be always positive, but some DICOMs have negative values
                 pixelSizeX = val[1];
                 pixelSizeY = val[0];
                 pixelSpacingUnit = Unit.MILLIMETER;

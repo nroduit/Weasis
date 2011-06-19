@@ -1561,7 +1561,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             }
                         });
                         popupMenu.add(item4);
-//TODO add if viewerFactory supports add method
+                        // TODO add if viewerFactory supports add method
                         item4 =
                             new JMenuItem(
                                 "Add selected Series to " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
@@ -1680,11 +1680,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
 
                         Object splitNb = series.getTagValue(TagW.SplitSeriesNumber);
-                        if (splitNb != null && selList.size() > 1) {
+                        if (splitNb != null && seriesList.size() > 1) {
                             String uid = (String) series.getTagValue(TagW.SeriesInstanceUID);
                             boolean sameOrigin = true;
                             if (uid != null) {
-                                for (Series s : selList) {
+                                for (MediaSeries s : seriesList) {
                                     if (!uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
                                         sameOrigin = false;
                                         break;
@@ -1712,8 +1712,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            for (Series s : selList) {
-                                dicomModel.removeSeries(s);
+                            for (int i = selList.size() - 1; i >= 0; i--) {
+                                dicomModel.removeSeries(selList.get(0));
                             }
                             selList.clear();
                         }
@@ -1799,7 +1799,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             selList.add(series);
                         }
                     } else {
-                        if (mouseevent.isControlDown()) {
+                        if (mouseevent.isControlDown() || selList.size() < 1) {
                             selList.add(series);
                         } else if (mouseevent.isShiftDown()) {
                             if (explorer instanceof DicomExplorer) {
