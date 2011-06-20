@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
@@ -73,7 +74,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String[] functions = { "zoom", "wl", "move" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -791,12 +792,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void zoom(String[] argv) throws IOException {
         final String[] usage =
             {
-                "Change the zoom value to the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
+                "Change the zoom value of the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
                 "Usage: dicom:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
                 "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 is the best fit in window value)", //$NON-NLS-1$
                 "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
                 "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
-                "  -? --help       show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+                "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -831,17 +832,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         });
     }
 
-    public void pan(String[] argv) throws IOException {
+    public void wl(String[] argv) throws IOException {
         final String[] usage =
-            { "Change the zoom value to the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
-                "Usage: dicom:zoom [set | modify] [VALUE]", //$NON-NLS-1$
-                "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
-                "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
-                "  -? --help       show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+            {
+                "Change the window/level values of the selected image", //$NON-NLS-1$
+                "Usage: dicom:wl -- [window integer value] [level integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+                "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+        if (opt.isSet("help") || args.size() != 2) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -851,20 +851,39 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             @Override
             public void run() {
                 try {
-                    if (opt.isSet("increase")) { //$NON-NLS-1$
-                        int val = Integer.parseInt(args.get(0));
-                        zoomAction.setValue(zoomAction.getValue() + val);
-                    } else if (opt.isSet("decrease")) { //$NON-NLS-1$
-                        int val = Integer.parseInt(args.get(0));
-                        zoomAction.setValue(zoomAction.getValue() - val);
-                    } else if (opt.isSet("set")) { //$NON-NLS-1$
-                        double val = Double.parseDouble(args.get(0));
-                        if (val == 0.0) {
-                            firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
-                        } else {
-                            zoomAction.setValue(viewScaleToSliderValue(val));
-                        }
-                    }
+                    int win = windowAction.getValue() + Integer.parseInt(args.get(0));
+                    int level = levelAction.getValue() + Integer.parseInt(args.get(1));
+                    windowAction.setValue(win);
+                    levelAction.setValue(level);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public void move(String[] argv) throws IOException {
+        final String[] usage = { "Change the pan value of the selected image", //$NON-NLS-1$
+            "Usage: dicom:move -- [x integer value] [y integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.size() != 2) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    int valx = Integer.parseInt(args.get(0));
+                    int valy = Integer.parseInt(args.get(1));
+                    panAction.setPoint(new Point(valx, valy));
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
