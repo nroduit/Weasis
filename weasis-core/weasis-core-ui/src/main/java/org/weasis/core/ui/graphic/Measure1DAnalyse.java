@@ -176,8 +176,12 @@ public class Measure1DAnalyse {
     }
 
     public double getSegmentLength() {
-        if (line instanceof LineGraphic)
-            return ((LineGraphic) line).getSegmentLength(adapter.getCalibRatio(), adapter.getCalibRatio());
+        if (line instanceof LineGraphic) {
+            Point2D A = ((LineGraphic) line).getStartPoint();
+            Point2D B = ((LineGraphic) line).getEndPoint();
+            if (A != null && B != null)
+                return A.distance(B) * adapter.getCalibRatio();
+        }
         // else if (line instanceof FreeHandLineGraphic) {
         // if (length < 0) {
         // FreeHandLineGraphic graph = (FreeHandLineGraphic) line;

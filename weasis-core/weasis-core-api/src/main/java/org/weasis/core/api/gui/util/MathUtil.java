@@ -23,6 +23,10 @@ public class MathUtil {
         return Point2D.distance(x1, y1, x2, y2);
     }
 
+    public static double getOrientation(Point2D P1, Point2D P2) {
+        return (P1 != null && P2 != null) ? getOrientation(P1.getX(), P1.getY(), P2.getX(), P2.getY()) : null;
+    }
+
     public static double getOrientation(double x1, double y1, double x2, double y2) {
         // utilise arctan2 pour lever l'ambiguité 180 - degrés
         double teta = Math.atan2(y1 - y2, x1 - x2);
@@ -34,6 +38,10 @@ public class MathUtil {
             angle = 180 - angle;
         }
         return angle;
+    }
+
+    public static double getAzimuth(Point2D P1, Point2D P2) {
+        return (P1 != null && P2 != null) ? getAzimuth(P1.getX(), P1.getY(), P2.getX(), P2.getY()) : null;
     }
 
     public static double getAzimuth(double x1, double y1, double x2, double y2) {

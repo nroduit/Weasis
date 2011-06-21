@@ -58,6 +58,7 @@ public class EllipseGraphic extends RectangleGraphic {
         Rectangle2D rectangle = new Rectangle2D.Double();
         rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
             handlePointList.get(eHandlePoint.SE.index));
+
         setShape(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(), rectangle.getHeight()),
             mouseevent);
         updateLabel(mouseevent, getDefaultView2d(mouseevent));

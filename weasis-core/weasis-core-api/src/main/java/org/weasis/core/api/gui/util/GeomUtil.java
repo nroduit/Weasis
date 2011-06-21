@@ -121,11 +121,18 @@ public final class GeomUtil {
         double Bx = line1.getX2(), By = line1.getY2();
         double Cx = line2.getX1(), Cy = line2.getY1();
         double Dx = line2.getX2(), Dy = line2.getY2();
-        double Mx = (Ax + Cx) / 2;
-        double My = (Ay + Cy) / 2;
-        double Nx = (Bx + Dx) / 2;
-        double Ny = (By + Dy) / 2;
-        return new Line2D.Double(Mx, My, Nx, Ny);
+
+        Point2D M, N;
+
+        if (Line2D.linesIntersect(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)) {
+            M = new Point2D.Double((Ax + Dx) / 2, (Ay + Dy) / 2);
+            N = new Point2D.Double((Bx + Cx) / 2, (By + Cy) / 2);
+        } else {
+            M = new Point2D.Double((Ax + Cx) / 2, (Ay + Cy) / 2);
+            N = new Point2D.Double((Bx + Dx) / 2, (By + Dy) / 2);
+        }
+
+        return new Line2D.Double(M, N);
     }
 
     public static Line2D getMedianLine(Point2D A, Point2D B, Point2D C, Point2D D) {
@@ -134,26 +141,27 @@ public final class GeomUtil {
 
     /**
      * 
+     * Let A,B,C,D be 2-space position vectors. .......
+     * 
      * @param A
      * @param B
      * @param C
      * @param D
-     * @return
+     * @return null if segment lines are parallel
      */
     public static Point2D getIntersectPoint(Point2D A, Point2D B, Point2D C, Point2D D) {
         Point2D P = null;
 
-        double Ax = A.getX(), Ay = A.getY();
-        double Bx = B.getX(), By = B.getY();
-        double Cx = C.getX(), Cy = C.getY();
-        double Dx = D.getX(), Dy = D.getY();
-
-        double denominator = (Bx - Ax) * (Dy - Cy) - (By - Ay) * (Dx - Cx);
+        double denominator =
+            (B.getX() - A.getX()) * (D.getY() - C.getY()) - (B.getY() - A.getY()) * (D.getX() - C.getX());
 
         if (denominator != 0) {
-            double r = ((Ay - Cy) * (Dx - Cx) - (Ax - Cx) * (Dy - Cy)) / denominator; // equ1
-            double s = ((Ay - Cy) * (Bx - Ax) - (Ax - Cx) * (By - Ay)) / denominator; // equ2
-            P = new Point2D.Double(Ax + r * (Bx - Ax), Ay + r * (By - Ay));
+            double numerator =
+                (A.getY() - C.getY()) * (D.getX() - C.getX()) - (A.getX() - C.getX()) * (D.getY() - C.getY());
+
+            double r = numerator / denominator;
+
+            P = new Point2D.Double(A.getX() + r * (B.getX() - A.getX()), A.getY() + r * (B.getY() - A.getY()));
         }
 
         return P;
@@ -161,6 +169,21 @@ public final class GeomUtil {
 
     public static Point2D getIntersectPoint(Line2D line1, Line2D line2) {
         return getIntersectPoint(line1.getP1(), line1.getP2(), line2.getP1(), line2.getP2());
+    }
+
+    public static boolean lineParallel(Point2D A, Point2D B, Point2D C, Point2D D) {
+        if (((B.getX() - A.getX()) * (D.getY() - C.getY()) - (B.getY() - A.getY()) * (D.getX() - C.getX())) == 0)
+            return true;
+
+        return false;
+    }
+
+    public static boolean lineColinear(Point2D A, Point2D B, Point2D C, Point2D D) {
+        if (lineParallel(A, B, C, D))
+            if (((A.getY() - C.getY()) * (D.getX() - C.getX()) - (A.getX() - C.getX()) * (D.getY() - C.getY())) == 0)
+                return true;
+
+        return false;
     }
 
     /**
@@ -247,8 +270,6 @@ public final class GeomUtil {
             case 2:
                 return new Point2D.Double((ptList.get(0).getX() + ptList.get(1).getX()) / 2.0,
                     (ptList.get(0).getY() + ptList.get(1).getY()) / 2.0);
-                // case 1:
-                // return ptList.get(0);
             default:
                 return null;
         }

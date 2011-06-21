@@ -64,7 +64,6 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
         Color.YELLOW, true);
     public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
-    // public static final MedianLineGraphic medianLineGraphic= new MedianLineGraphic(1.0f, Color.YELLOW, true);
     public static final OpenAngleToolGraphic openAngleToolGraphic = new OpenAngleToolGraphic(1.0f, Color.YELLOW, true);
     public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
         Color.YELLOW, true);
@@ -81,7 +80,6 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         graphicList.add(polygonGraphic);
         graphicList.add(perpendicularToolGraphic);
         graphicList.add(parallelLineGraphic);
-        // graphicList.add(medianLineGraphic);
         graphicList.add(angleToolGraphic);
         graphicList.add(openAngleToolGraphic);
         graphicList.add(fourPointsAngleToolGraphic);

@@ -16,7 +16,6 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +35,19 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
+    public final static Measurement Area = new Measurement("Area", true, true, true);
+    public final static Measurement Diameter = new Measurement("Diameter", true, true, true);
     public final static Measurement CenterX = new Measurement("Center X", true, true, false);
     public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
     public final static Measurement Radius = new Measurement("Radius", true, true, false);
-    public final static Measurement Diameter = new Measurement("Diameter", true, true, true);
-    public final static Measurement Area = new Measurement("Area", true, true, true);
     public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected Point2D centerPt; // Let O be the center of the three point interpolated circle
+    protected double radius; // circle radius
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public ThreePointsCircleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(3, paintColor, lineThickness, labelVisible);
@@ -59,66 +64,51 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
-        if (resizingOrMoving) {
-            // Force to display handles even on resizing or moving
-            resizingOrMoving = false;
-            super.paintHandles(g2d, transform);
-            resizingOrMoving = true;
-        } else {
-            super.paintHandles(g2d, transform);
-        }
-    }
-
-    @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+        updateTool();
         Shape newShape = null;
 
-        if (handlePointList.size() > 1) {
-            Point2D centerPt = GeomUtil.getCircleCenter(handlePointList);
-            if (centerPt != null) {
-                double radius = centerPt.distance(handlePointList.get(0));
-                if (radius < 5000) {
-                    Rectangle2D rectangle = new Rectangle2D.Double();
-                    rectangle.setFrameFromCenter(centerPt.getX(), centerPt.getY(), centerPt.getX() - radius,
-                        centerPt.getY() - radius);
-                    newShape =
-                        new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(),
-                            rectangle.getHeight());
-                }
-            }
-        }
+        if (centerPt != null && radius != 0)
+            newShape = new Ellipse2D.Double(centerPt.getX() - radius, centerPt.getY() - radius, 2 * radius, 2 * radius);
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() > 1) {
-            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
-            if (adapter != null) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
+        if (resizingOrMoving) {
+            resizingOrMoving = false; // Force to display handles even on resizing or moving
+            super.paintHandles(g2d, transform);
+            resizingOrMoving = true;
+        } else
+            super.paintHandles(g2d, transform);
 
-                Point2D centerPt = GeomUtil.getCircleCenter(handlePointList);
-                if (centerPt == null)
-                    return null;
-                double radius = centerPt.distance(handlePointList.get(0));
+    }
+
+    @Override
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+
+        if (imageElement != null && isShapeValid()) {
+            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
+            if (adapter != null) {
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(10);
+
                 double ratio = adapter.getCalibRatio();
 
                 if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(centerPt.getX())
-                            : null;
+                    Double val = null;
+                    if (releaseEvent || CenterX.isQuickComputing())
+                        val = adapter.getXCalibratedValue(centerPt.getX());
                     measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
                 }
                 if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(centerPt.getY())
-                            : null;
+                    Double val = null;
+                    if (releaseEvent || CenterY.isQuickComputing())
+                        val = adapter.getYCalibratedValue(centerPt.getY());
                     measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
                 }
-
                 if (Radius.isComputed() && (!drawOnLabel || Radius.isGraphicLabel())) {
                     Double val = releaseEvent || Radius.isQuickComputing() ? ratio * radius : null;
                     measVal.add(new MeasureItem(Radius, val, adapter.getUnit()));
@@ -127,22 +117,37 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                     Double val = releaseEvent || Diameter.isQuickComputing() ? ratio * radius * 2.0 : null;
                     measVal.add(new MeasureItem(Diameter, val, adapter.getUnit()));
                 }
-
                 if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || Area.isQuickComputing() ? Math.PI * radius * radius * ratio * ratio : null;
+                    Double val = null;
+                    if (releaseEvent || Area.isQuickComputing())
+                        val = Math.PI * radius * radius * ratio * ratio;
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
                     measVal.add(new MeasureItem(Area, val, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
-                if (stats != null) {
+                if (stats != null)
                     measVal.addAll(stats);
-                }
+
                 return measVal;
             }
         }
         return null;
+    }
+
+    @Override
+    protected boolean isShapeValid() {
+        updateTool();
+        return (super.isShapeValid() && centerPt != null && radius < 50000);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void updateTool() {
+        Point2D C1 = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+
+        centerPt = GeomUtil.getCircleCenter(handlePointList);
+        radius = (centerPt != null && C1 != null) ? centerPt.distance(C1) : 0;
     }
 
 }

@@ -1,9 +1,9 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Point;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -26,8 +26,14 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     public final static Measurement Distance = new Measurement("Distance", true, true, true);
     public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
     public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected Point2D A, B, C, D; // Let AB & CD two parallel line segments
+    protected Point2D E, F; // Let E,F middle points of AB & CD
+
+    protected boolean ABvalid, CDvalid; // estimate if line segments are valid or not
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
     public ParallelLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(6, paintColor, lineThickness, labelVisible);
     }
@@ -43,139 +49,153 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
-        if (handlePointIndex == -1) {
+
+        if (handlePointIndex == -1) { // move shape
             for (Point2D point : handlePointList) {
-                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+                if (point != null)
+                    point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
-        } else {
+        } else { // move dragging point
+
             if (!isGraphicComplete()) {
-                handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
+                Point2D dragPoint = handlePointList.get(handlePointIndex);
+                if (dragPoint != null)
+                    dragPoint.setLocation(mouseEvent.getImageCoordinates());
 
-                if (handlePointList.size() >= 4) {
-                    Point2D A = handlePointList.get(0);
-                    Point2D B = handlePointList.get(1);
-                    Point2D C = handlePointList.get(2);
-                    Point2D D = handlePointList.get(3);
+                updateTool();
 
-                    Point2D I = GeomUtil.getPerpendicularPointToLine(A, B, D);
-                    D.setLocation(GeomUtil.getPerpendicularPointToLine(D, I, C));
-
-                    while (handlePointList.size() < handlePointTotalNumber) {
-                        handlePointList.add(new Point.Double());
-                    }
-
-                    Point2D E = handlePointList.get(4);
-                    Point2D F = handlePointList.get(5);
-
-                    E.setLocation(GeomUtil.getMidPoint(A, B));
-                    F.setLocation(GeomUtil.getMidPoint(C, D));
+                if (ABvalid && CDvalid) {
+                    if (handlePointList.size() < 5)
+                        handlePointList.add(null); // increment list index reference for point E to complete graphic
+                    if (handlePointList.size() < 6)
+                        handlePointList.add(null);// increment list index reference for point F to complete graphic
                 }
-            } else {
-                Point2D A = handlePointList.get(0);
-                Point2D B = handlePointList.get(1);
-                Point2D C = handlePointList.get(2);
-                Point2D D = handlePointList.get(3);
-                Point2D E = handlePointList.get(4);
-                Point2D F = handlePointList.get(5);
+            }
 
-                if (handlePointIndex == 0 || handlePointIndex == 1) {
-                    Point2D anchor = (handlePointIndex == 0) ? B : A;
+            updateTool();
 
-                    double theta = GeomUtil.getAngleRad(A, B);
-                    handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
-                    theta -= GeomUtil.getAngleRad(A, B);
+            if (ABvalid && CDvalid) {
+                Point2D dragPoint = handlePointList.get(handlePointIndex);
 
-                    AffineTransform transform = AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
+                if (dragPoint != null) {
+                    if (handlePointIndex == 0 || handlePointIndex == 1) { // drag point is A or B
 
-                    transform.transform(C, C);
-                    transform.transform(D, D);
-                } else {
-                    handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
+                        // need to compute start angle with old position before setting to the new one
+                        double theta = GeomUtil.getAngleRad(A, B);
+                        dragPoint.setLocation(mouseEvent.getImageCoordinates());
+                        theta -= GeomUtil.getAngleRad(A, B);
 
-                    if (handlePointIndex == 2) {
-                        Point2D J = GeomUtil.getPerpendicularPointToLine(A, B, D);
-                        D.setLocation(GeomUtil.getPerpendicularPointToLine(D, J, C));
-                    } else if (handlePointIndex == 3) {
-                        Point2D I = GeomUtil.getPerpendicularPointToLine(A, B, C);
-                        C.setLocation(GeomUtil.getPerpendicularPointToLine(C, I, D));
-                    } else if (handlePointIndex == 4) {
-                        Point2D I = GeomUtil.getPerpendicularPointToLine(C, D, A);
-                        Point2D J = GeomUtil.getPerpendicularPointToLine(C, D, B);
+                        Point2D anchor = (handlePointIndex == 0) ? B : A; // anchor is opposite point to A or B
+                        AffineTransform transform =
+                            AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
 
-                        A.setLocation(GeomUtil.getPerpendicularPointToLine(A, I, E));
-                        B.setLocation(GeomUtil.getPerpendicularPointToLine(B, J, E));
+                        transform.transform(C, C);
+                        transform.transform(D, D);
 
-                    } else if (handlePointIndex == 5) {
-                        Point2D I = GeomUtil.getPerpendicularPointToLine(A, B, C);
-                        Point2D J = GeomUtil.getPerpendicularPointToLine(A, B, D);
+                    } else {
 
-                        C.setLocation(GeomUtil.getPerpendicularPointToLine(C, I, F));
-                        D.setLocation(GeomUtil.getPerpendicularPointToLine(D, J, F));
+                        dragPoint.setLocation(mouseEvent.getImageCoordinates());
+
+                        if (handlePointIndex == 2) { // drag point is C
+                            Point2D J1 = GeomUtil.getPerpendicularPointToLine(A, B, D);
+                            Point2D J2 = GeomUtil.getPerpendicularPointFromLine(A, B, J1, 10);
+
+                            D.setLocation(GeomUtil.getPerpendicularPointToLine(J1, J2, C));
+
+                        } else if (handlePointIndex == 3) { // drag point is D
+                            Point2D I1 = GeomUtil.getPerpendicularPointToLine(A, B, C);
+                            Point2D I2 = GeomUtil.getPerpendicularPointFromLine(A, B, I1, 10);
+
+                            C.setLocation(GeomUtil.getPerpendicularPointToLine(I1, I2, D));
+
+                        } else if (handlePointIndex == 4) {// drag point is E middle of AB
+                            Point2D I1 = GeomUtil.getPerpendicularPointToLine(C, D, A);
+                            Point2D I2 = GeomUtil.getPerpendicularPointFromLine(C, D, I1, 10);
+
+                            A.setLocation(GeomUtil.getPerpendicularPointToLine(I1, I2, E));
+
+                            Point2D J1 = GeomUtil.getPerpendicularPointToLine(C, D, B);
+                            Point2D J2 = GeomUtil.getPerpendicularPointFromLine(C, D, J1, 10);
+
+                            B.setLocation(GeomUtil.getPerpendicularPointToLine(J1, J2, E));
+
+                        } else if (handlePointIndex == 5) {// drag point is F middle of CD
+                            Point2D I1 = GeomUtil.getPerpendicularPointToLine(A, B, C);
+                            Point2D I2 = GeomUtil.getPerpendicularPointFromLine(A, B, I1, 10);
+
+                            C.setLocation(GeomUtil.getPerpendicularPointToLine(I1, I2, F));
+
+                            Point2D J1 = GeomUtil.getPerpendicularPointToLine(A, B, D);
+                            Point2D J2 = GeomUtil.getPerpendicularPointFromLine(A, B, J1, 10);
+
+                            D.setLocation(GeomUtil.getPerpendicularPointToLine(J1, J2, F));
+                        }
                     }
+                    updateTool();
                 }
+            }
 
-                E.setLocation(GeomUtil.getMidPoint(A, B));
-                F.setLocation(GeomUtil.getMidPoint(C, D));
+            if (handlePointList.size() >= 5) {// reference to E point index exist in handlePointList
+                E = ABvalid ? GeomUtil.getMidPoint(A, B) : null;
+                handlePointList.set(4, E);
+            }
+
+            if (handlePointList.size() >= 6) { // reference to F point index exist in handlePointList
+                F = CDvalid ? GeomUtil.getMidPoint(C, D) : null;
+                handlePointList.set(5, F);
             }
         }
+
         return handlePointIndex;
     }
 
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
+        updateTool();
 
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
-                generalpath.moveTo(A.getX(), A.getY());
-                generalpath.lineTo(B.getX(), B.getY());
+        Shape newShape = null;
+        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
-                if (handlePointList.size() >= 3) {
-                    Point2D C = handlePointList.get(2);
+        if (ABvalid)
+            path.append(new Line2D.Double(A, B), false);
 
-                    if (handlePointList.size() >= 4) {
-                        Point2D D = handlePointList.get(3);
-                        generalpath.moveTo(C.getX(), C.getY());
-                        generalpath.lineTo(D.getX(), D.getY());
-                    }
-                }
-            }
-        }
-        setShape(generalpath, mouseEvent);
+        if (CDvalid)
+            path.append(new Line2D.Double(C, D), false);
+
+        if (path.getCurrentPoint() != null)
+            newShape = path;
+
+        setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() >= 4) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
-                Point2D A = handlePointList.get(0);
-                Point2D B = handlePointList.get(1);
-                Point2D C = handlePointList.get(2);
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(3);
 
                 if (Distance.isComputed() && (!drawOnLabel || Distance.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || Distance.isQuickComputing() ? C.distance(GeomUtil.getPerpendicularPointToLine(
-                            A, B, C)) * adapter.getCalibRatio() : null;
+                    Double val = null;
+                    if (releaseEvent || Distance.isQuickComputing())
+                        val = C.distance(GeomUtil.getPerpendicularPointToLine(A, B, C)) * adapter.getCalibRatio();
                     measVal.add(new MeasureItem(Distance, val, adapter.getUnit()));
                 }
                 if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
-                    Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
+                    Double val = null;
+                    if (releaseEvent || Orientation.isQuickComputing())
+                        val = MathUtil.getOrientation(A, B);
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
                 if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
-                    Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
+                    Double val = null;
+                    if (releaseEvent || Azimuth.isQuickComputing())
+                        val = MathUtil.getAzimuth(A, B);
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }
                 return measVal;
@@ -184,38 +204,23 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
         return null;
     }
 
-    public Double getSegmentOrientation() {
-        if (handlePointList.size() >= 1) {
-            Point2D p1 = handlePointList.get(0);
-            if (handlePointList.size() >= 2) {
-                Point2D p2 = handlePointList.get(1);
-                return MathUtil.getOrientation(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-            }
-        }
-        return null;
-    }
-
-    public Double getSegmentAzimuth() {
-        if (handlePointList.size() >= 1) {
-            Point2D p1 = handlePointList.get(0);
-            if (handlePointList.size() >= 2) {
-                Point2D p2 = handlePointList.get(1);
-                return MathUtil.getAzimuth(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-            }
-        }
-        return null;
-    }
-
     @Override
-    public ParallelLineGraphic clone() {
-        return (ParallelLineGraphic) super.clone();
+    protected boolean isShapeValid() {
+        updateTool();
+        return (ABvalid && CDvalid);
     }
 
-    @Override
-    public Graphic clone(double xPos, double yPos) {
-        ParallelLineGraphic newGraphic = clone();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
-    }
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    protected void updateTool() {
+        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+        C = handlePointList.size() >= 3 ? handlePointList.get(2) : null;
+        D = handlePointList.size() >= 4 ? handlePointList.get(3) : null;
+        E = handlePointList.size() >= 5 ? handlePointList.get(4) : null;
+        F = handlePointList.size() >= 6 ? handlePointList.get(5) : null;
+
+        ABvalid = A != null && B != null && !B.equals(A);
+        CDvalid = C != null && D != null && !C.equals(D);
+    }
 }

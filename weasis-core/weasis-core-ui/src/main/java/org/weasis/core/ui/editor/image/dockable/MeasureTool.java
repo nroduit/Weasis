@@ -279,13 +279,11 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (selectedGraphic != null && selectedGraphic.size() > 0) {
-                    JDialog dialog = new PaintLabel(eventManager);
-                    Point location = btnGerenralOptions.getLocation();
-                    SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
-                    WinUtil.adjustLocationToFitScreen(dialog, location);
-                    dialog.setVisible(true);
-                }
+                JDialog dialog = new PaintLabel(eventManager);
+                Point location = btnGerenralOptions.getLocation();
+                SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
+                WinUtil.adjustLocationToFitScreen(dialog, location);
+                dialog.setVisible(true);
             }
         });
         transform.add(btnGerenralOptions);

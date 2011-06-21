@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Arc2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -28,7 +29,6 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
- * 
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
 public class AngleToolGraphic extends AbstractDragGraphic {
@@ -38,10 +38,19 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public final static Measurement Angle = new Measurement("Angle", true);
     public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
 
-    public final static int ARC_RADIUS = 32;
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    Point2D A, O, B; // Let AOB be the triangle that represents the measured angle, O being the intersection point
+
+    boolean lineColinear; // estimate if OA & OB line segments are colinear not not
+    boolean OAvalid, OBvalid; // estimate if line segments are valid or not
+
+    double angleDeg; // smallest angle in Degrees in the range of [-180 ; 180] between OA & OB line segments
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public AngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(3, paintColor, lineThickness, labelVisible);
+        init();
     }
 
     @Override
@@ -56,64 +65,60 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+        updateTool();
 
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
+        Shape newShape = null;
+        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
-            if (handlePointList.size() >= 2) {
-                AdvancedShape newShape = new AdvancedShape(2);
-                Path2D generalpath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-                newShape.addShape(generalpath);
+        if (OAvalid)
+            path.append(new Line2D.Double(A, O), false);
 
-                Point2D P = handlePointList.get(1);
+        if (OBvalid)
+            path.append(new Line2D.Double(O, B), false);
 
-                generalpath.moveTo(A.getX(), A.getY());
-                generalpath.lineTo(P.getX(), P.getY());
+        if (OAvalid && OBvalid && !lineColinear) {
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(2));
+            aShape.addShape(path);
 
-                if (handlePointList.size() >= 3) {
-                    Point2D B = handlePointList.get(2);
-                    generalpath.lineTo(B.getX(), B.getY());
+            // Let arcAngle be the partial section of the ellipse that represents the measured angle
+            double startingAngle = GeomUtil.getAngleDeg(O, A);
 
-                    double angularExtent = GeomUtil.getAngleDeg(A, P, B);
-                    angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
-                    double startingAngle = GeomUtil.getAngleDeg(P, A);
+            double radius = 32;
+            Rectangle2D arcAngleBounds =
+                new Rectangle2D.Double(O.getX() - radius, O.getY() - radius, 2 * radius, 2 * radius);
 
-                    // double radius = (ARC_RADIUS < rMax) ? ARC_RADIUS : rMax;
-                    double radius = ARC_RADIUS;
-                    Rectangle2D arcAngleBounds =
-                        new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2.0 * radius, 2.0 * radius);
+            Shape arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angleDeg, Arc2D.OPEN);
 
-                    Shape arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
+            double rMax = Math.min(O.distance(A), O.distance(B)) * 2 / 3;
+            double scalingMin = radius / rMax;
 
-                    double rMax = (2.0 / 3.0) * Math.min(P.distance(A), P.distance(B));
-                    double scalingMin = radius / rMax;
+            aShape.addInvShape(arcAngle, O, scalingMin, true);
 
-                    newShape.addInvShape(arcAngle, (Point2D) P.clone(), scalingMin, false);
+        } else if (path.getCurrentPoint() != null)
+            newShape = path;
 
-                }
-                setShape(newShape, mouseEvent);
-                updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
-            }
-        }
+        setShape(newShape, mouseEvent);
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() >= 3) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+
                 if (Angle.isComputed() || ComplementaryAngle.isComputed()) {
-                    Point2D At = handlePointList.get(0);
-                    Point2D Ot = handlePointList.get(1);
-                    Point2D Bt = handlePointList.get(2);
-                    double realAngle = Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(At, Ot, Bt)));
-                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
-                        measVal.add(new MeasureItem(Angle, realAngle, "deg"));
-                    }
-                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
-                        measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
-                    }
+
+                    double positiveAngle = Math.abs(angleDeg);
+
+                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel()))
+                        measVal.add(new MeasureItem(Angle, positiveAngle, "deg"));
+
+                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel()))
+                        measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - positiveAngle, "deg"));
                 }
                 return measVal;
             }
@@ -121,4 +126,34 @@ public class AngleToolGraphic extends AbstractDragGraphic {
         return null;
     }
 
+    @Override
+    protected boolean isShapeValid() {
+        updateTool();
+        return OAvalid && OBvalid;
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void init() {
+        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        O = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+        B = handlePointList.size() >= 3 ? handlePointList.get(2) : null;
+
+        lineColinear = false;
+        OAvalid = OBvalid = false;
+
+        angleDeg = 0.0;
+    }
+
+    protected void updateTool() {
+        init();
+
+        OAvalid = (A != null && O != null && !O.equals(A));
+        OBvalid = (B != null && O != null && !O.equals(B));
+
+        if (OAvalid && OBvalid) {
+            angleDeg = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(A, O, B));
+            lineColinear = GeomUtil.lineColinear(O, A, O, B);
+        }
+    }
 }

@@ -36,7 +36,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public PolygonGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible);
-
     }
 
     public PolygonGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible,
@@ -55,11 +54,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public String getDescription() {
-        return null;
-    }
-
-    @Override
     public void paintHandles(Graphics2D g2d, AffineTransform transform) {
         if (resizingOrMoving) {
             // Force to display handles even on resizing or moving
@@ -74,6 +68,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
         Shape newShape = null;
+
         if (handlePointList.size() > 1) {
             GeneralPath generalpath = new GeneralPath();
             Point2D p = handlePointList.get(0);

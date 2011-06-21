@@ -12,8 +12,8 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Path2D;
+import java.awt.Shape;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +40,12 @@ public class LineGraphic extends AbstractDragGraphic {
     public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
     public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected Point2D A, B; // Let AB be a simple a line segment
+    protected boolean ABvalid; // estimate if line segment is valid or not
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     public LineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(2, paintColor, lineThickness, labelVisible);
     }
@@ -56,128 +62,94 @@ public class LineGraphic extends AbstractDragGraphic {
 
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
-        GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size());
 
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
-            generalpath.moveTo(A.getX(), A.getY());
+        updateTool();
+        Shape newShape = null;
 
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
-                generalpath.lineTo(B.getX(), B.getY());
-            }
-        }
+        if (ABvalid)
+            newShape = new Line2D.Double(A, B);
 
-        setShape(generalpath, mouseEvent);
+        setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override
-    public LineGraphic clone() {
-        return (LineGraphic) super.clone();
-    }
-
-    @Override
-    public Graphic clone(double xPos, double yPos) {
-        LineGraphic newGraphic = clone();
-        newGraphic.updateShapeOnDrawing(null);
-        return newGraphic;
-    }
-
-    public Double getSegmentLength(double scalex, double scaley) {
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
-                return Point2D.distance(scalex * A.getX(), scaley * A.getY(), scalex * B.getX(), scaley * B.getY());
-            }
-        }
-        return null;
-    }
-
-    public Double getSegmentOrientation() {
-        Point2D p1 = getStartPoint();
-        Point2D p2 = getEndPoint();
-        if (p1 == null || p2 == null)
-            return null;
-        return MathUtil.getOrientation(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-
-    }
-
-    public Double getSegmentAzimuth() {
-        Point2D p1 = getStartPoint();
-        Point2D p2 = getEndPoint();
-        if (p1 == null || p2 == null)
-            return null;
-        return MathUtil.getAzimuth(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-    }
-
-    public Point2D getStartPoint() {
-        if (handlePointList.size() >= 1)
-            return (Point2D) handlePointList.get(0).clone();
-        return null;
-    }
-
-    public Point2D getEndPoint() {
-        if (handlePointList.size() > 1)
-            return (Point2D) handlePointList.get(1).clone();
-        return null;
-    }
-
-    @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() >= 2) {
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
-                if (FirstPointX.isComputed() || FirstPointY.isComputed()) {
-                    Point2D p = getStartPoint();
-                    if (FirstPointX.isComputed() && (!drawOnLabel || FirstPointX.isGraphicLabel())) {
-                        Double val =
-                            releaseEvent || FirstPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
-                                : null;
-                        measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
-                    }
-                    if (FirstPointY.isComputed() && (!drawOnLabel || FirstPointY.isGraphicLabel())) {
-                        Double val =
-                            releaseEvent || FirstPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
-                                : null;
-                        measVal.add(new MeasureItem(FirstPointY, val, adapter.getUnit()));
-                    }
-                }
-                if (LastPointX.isComputed() || LastPointY.isComputed()) {
-                    Point2D p = getEndPoint();
-                    if (LastPointX.isComputed() && (!drawOnLabel || LastPointX.isGraphicLabel())) {
-                        Double val =
-                            releaseEvent || LastPointX.isQuickComputing() ? adapter.getXCalibratedValue(p.getX())
-                                : null;
-                        measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
-                    }
-                    if (LastPointY.isComputed() && (!drawOnLabel || LastPointY.isGraphicLabel())) {
-                        Double val =
-                            releaseEvent || LastPointY.isQuickComputing() ? adapter.getXCalibratedValue(p.getY())
-                                : null;
-                        measVal.add(new MeasureItem(LastPointY, val, adapter.getUnit()));
-                    }
-                }
 
+                if (FirstPointX.isComputed() && (!drawOnLabel || FirstPointX.isGraphicLabel())) {
+                    Double val = null;
+                    if (releaseEvent || FirstPointX.isQuickComputing())
+                        val = adapter.getXCalibratedValue(A.getX());
+                    measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
+                }
+                if (FirstPointY.isComputed() && (!drawOnLabel || FirstPointY.isGraphicLabel())) {
+                    Double val = null;
+                    if (releaseEvent || FirstPointY.isQuickComputing())
+                        val = adapter.getXCalibratedValue(A.getY());
+                    measVal.add(new MeasureItem(FirstPointY, val, adapter.getUnit()));
+                }
+                if (LastPointX.isComputed() && (!drawOnLabel || LastPointX.isGraphicLabel())) {
+                    Double val = null;
+                    if (releaseEvent || LastPointX.isQuickComputing())
+                        adapter.getXCalibratedValue(B.getX());
+                    measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
+                }
+                if (LastPointY.isComputed() && (!drawOnLabel || LastPointY.isGraphicLabel())) {
+                    Double val = null;
+                    if (releaseEvent || LastPointY.isQuickComputing())
+                        val = adapter.getXCalibratedValue(B.getY());
+                    measVal.add(new MeasureItem(LastPointY, val, adapter.getUnit()));
+                }
                 if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || LineLength.isQuickComputing() ? getSegmentLength(adapter.getCalibRatio(),
-                            adapter.getCalibRatio()) : null;
+                    Double val = null;
+                    if (releaseEvent || LineLength.isQuickComputing())
+                        val = A.distance(B) * adapter.getCalibRatio();
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
                 if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
-                    Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
+                    Double val = null;
+                    if (releaseEvent || Orientation.isQuickComputing())
+                        val = MathUtil.getOrientation(A, B);
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
+
                 }
                 if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
-                    Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
+                    Double val = null;
+                    if (releaseEvent || Azimuth.isQuickComputing())
+                        val = MathUtil.getAzimuth(A, B);
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
+
                 }
                 return measVal;
             }
         }
         return null;
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void updateTool() {
+        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+
+        ABvalid = A != null && B != null && !B.equals(A);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Point2D getStartPoint() {
+        updateTool();
+        return A;
+    }
+
+    public Point2D getEndPoint() {
+        updateTool();
+        return B;
+    }
+
 }

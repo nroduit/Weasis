@@ -62,17 +62,13 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
-        if (handlePointIndex == -1) {
+        if (handlePointIndex == -1) { // move shape
             for (Point2D point : handlePointList) {
-                point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+                if (point != null)
+                    point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
             }
         } else {
             Rectangle2D rectangle = new Rectangle2D.Double();
-
-            // if (!isGraphicComplete) {
-            // handlePointList.get(handlePointIndex).setLocation(mouseEvent.getPoint());
-            // rectangle.setFrameFromDiagonal(handlePointList.get(0), handlePointList.get(1));
-            // } else {
 
             rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
                 handlePointList.get(eHandlePoint.SE.index));
@@ -114,7 +110,6 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
             handlePointIndex = pt.index;
             rectangle.setFrame(x, y, w, h);
-            // }
 
             setHandlePointList(rectangle);
         }
@@ -127,9 +122,8 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         double x = rectangle.getX(), y = rectangle.getY();
         double w = rectangle.getWidth(), h = rectangle.getHeight();
 
-        while (handlePointList.size() < handlePointTotalNumber) {
+        while (handlePointList.size() < handlePointTotalNumber)
             handlePointList.add(new Point.Double());
-        }
 
         handlePointList.get(eHandlePoint.NW.index).setLocation(new Point2D.Double(x, y));
         handlePointList.get(eHandlePoint.N.index).setLocation(new Point2D.Double(x + w / 2, y));

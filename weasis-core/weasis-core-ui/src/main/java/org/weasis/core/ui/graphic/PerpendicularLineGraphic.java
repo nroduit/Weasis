@@ -1,9 +1,8 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Point;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -13,11 +12,11 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class PerpendicularLineGraphic extends AbstractDragGraphic {
@@ -28,7 +27,14 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public final static Measurement LineLength = new Measurement("Line length", true, true, true);
     public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
     public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // Let AB & CD two perpendicular line segments with D being the projected point C on AB
+    protected Point2D A, B, C, D;
+
+    protected boolean ABvalid, CDvalid; // estimate if line segments are valid or not
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PerpendicularLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(4, paintColor, lineThickness, labelVisible);
@@ -46,170 +52,156 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
     @Override
     protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
-        if (handlePointIndex == -1) {
-            handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
-        } else {
+
+        if (handlePointIndex == -1) { // move shape
+            for (Point2D point : handlePointList) {
+                if (point != null)
+                    point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+            }
+        } else { // move dragging point
+
             if (!isGraphicComplete()) {
-                handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
+                Point2D dragPoint = handlePointList.get(handlePointIndex);
+                if (dragPoint != null)
+                    dragPoint.setLocation(mouseEvent.getImageCoordinates());
 
-                if (handlePointList.size() >= 3) {
-                    Point2D A = handlePointList.get(0);
-                    Point2D B = handlePointList.get(1);
-                    Point2D C = handlePointList.get(2);
+                updateTool();
 
-                    while (handlePointList.size() < handlePointTotalNumber) {
-                        handlePointList.add(new Point.Double());
-                    }
-
-                    Point2D D = handlePointList.get(3);
-                    D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
-                }
-            } else {
-                Point2D A = handlePointList.get(0);
-                Point2D B = handlePointList.get(1);
-                Point2D C = handlePointList.get(2);
-                Point2D D = handlePointList.get(3);
-
-                if (handlePointIndex == 0 || handlePointIndex == 1) {
-                    double theta = GeomUtil.getAngleRad(A, B);
-                    handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
-                    theta -= GeomUtil.getAngleRad(A, B);
-
-                    Point2D anchor = (handlePointIndex == 0) ? B : A;
-                    AffineTransform transform = AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
-
-                    transform.transform(C, C);
-                    transform.transform(D, D);
-                } else if (handlePointIndex == 2) {
-                    handlePointList.get(handlePointIndex).setLocation(mouseEvent.getImageCoordinates());
-                    D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
-                } else if (handlePointIndex == 3) {
-                    double tx = D.getX();
-                    double ty = D.getY();
-                    D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, mouseEvent.getImageCoordinates()));
-                    tx -= D.getX();
-                    ty -= D.getY();
-                    AffineTransform.getTranslateInstance(-tx, -ty).transform(C, C);
+                if (ABvalid && C != null) {
+                    D = GeomUtil.getPerpendicularPointToLine(A, B, C);
+                    handlePointList.add(D); // increment list index reference for point D to complete graphics
                 }
             }
 
+            updateTool();
+
+            if (ABvalid && CDvalid) {
+                Point2D dragPoint = handlePointList.get(handlePointIndex);
+
+                if (dragPoint != null) {
+                    if (handlePointIndex == 0 || handlePointIndex == 1) { // drag point is A or B
+
+                        // need to compute start angle with old position before setting to the new one
+                        double theta = GeomUtil.getAngleRad(A, B);
+                        dragPoint.setLocation(mouseEvent.getImageCoordinates());
+                        theta -= GeomUtil.getAngleRad(A, B);
+
+                        Point2D anchor = (handlePointIndex == 0) ? B : A; // anchor is opposite point to A or B
+                        AffineTransform transform =
+                            AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
+
+                        transform.transform(C, C);
+                        transform.transform(D, D);
+
+                    } else if (handlePointIndex == 2) { // drag point is C
+                        C.setLocation(mouseEvent.getImageCoordinates());
+                        D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
+
+                    } else if (handlePointIndex == 3) { // drag point is D
+                        double x = D.getX(), y = D.getY();
+                        D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, mouseEvent.getImageCoordinates()));
+
+                        AffineTransform transform = AffineTransform.getTranslateInstance(D.getX() - x, D.getY() - y);
+                        transform.transform(C, C);
+                    }
+                }
+            }
         }
+
         return handlePointIndex;
     }
 
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
+        updateTool();
 
-            if (handlePointList.size() >= 2) {
-                Point2D B = handlePointList.get(1);
+        Shape newShape = null;
+        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
-                AdvancedShape newShape = new AdvancedShape(3);
+        if (ABvalid)
+            path.append(new Line2D.Double(A, B), false);
 
-                if (!A.equals(B)) {
-                    GeneralPath generalpath = new GeneralPath(Path2D.WIND_NON_ZERO, handlePointList.size() / 2);
-                    newShape.addShape(generalpath);
-                    generalpath.moveTo(A.getX(), A.getY());
-                    generalpath.lineTo(B.getX(), B.getY());
+        if (CDvalid)
+            path.append(new Line2D.Double(C, D), false);
 
-                    if (handlePointList.size() >= 3) {
-                        Point2D C = handlePointList.get(2);
+        if (ABvalid && CDvalid) {
 
-                        if (handlePointList.size() == 4) {
-                            Point2D D = handlePointList.get(3);
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(3));
+            aShape.addShape(path);
 
-                            if (!C.equals(D)) {
-                                generalpath.moveTo(C.getX(), C.getY());
-                                generalpath.lineTo(D.getX(), D.getY());
-
-                                // Check if D is outside of AB segment
-                                if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
-                                    Point2D E = D.distance(A) < D.distance(B) ? A : B;
-                                    if (!D.equals(E)) {
-                                        newShape.addShape(new Line2D.Double(D, E), getDashStroke(1.0f), true);
-                                    }
-                                }
-
-                                double cornerLength = 10;
-                                double dMin =
-                                    (2.0 / 3.0) * Math.min(D.distance(C), Math.max(D.distance(A), D.distance(B)));
-                                double scalingMin = cornerLength / dMin;
-
-                                Point2D F = GeomUtil.getMidPoint(A, B);
-                                if (!D.equals(C) && !F.equals(D)) {
-                                    newShape.addInvShape(GeomUtil.getCornerShape(F, D, C, cornerLength),
-                                        (Point2D) D.clone(), scalingMin, getStroke(1.0f), true);
-                                }
-                            }
-                        }
-                    }
+            if (!D.equals(A) && !D.equals(B)) {
+                // Check D is outside of AB segment
+                if (Math.signum(GeomUtil.getAngleDeg(D, A)) == Math.signum(GeomUtil.getAngleDeg(D, B))) {
+                    Point2D E = D.distance(A) < D.distance(B) ? A : B;
+                    aShape.addShape(new Line2D.Double(D, E), getDashStroke(1.0f), true);
                 }
-                setShape(newShape, mouseEvent);
-                updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
             }
-        }
-    }
 
-    public Double getSegmentLength(double scalex, double scaley) {
-        if (handlePointList.size() >= 3) {
-            Point2D A = handlePointList.get(2);
-            if (handlePointList.size() >= 4) {
-                Point2D B = handlePointList.get(3);
-                return Point2D.distance(scalex * A.getX(), scaley * A.getY(), scalex * B.getX(), scaley * B.getY());
-            }
-        }
-        return null;
-    }
+            double cornerLength = 10;
+            double dMin = Math.min(D.distance(C), Math.max(D.distance(A), D.distance(B))) * 2 / 3;
+            double scalingMin = cornerLength / dMin;
 
-    public Double getSegmentOrientation() {
-        if (handlePointList.size() >= 3) {
-            Point2D p1 = handlePointList.get(2);
-            if (handlePointList.size() >= 4) {
-                Point2D p2 = handlePointList.get(3);
-                return MathUtil.getOrientation(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-            }
-        }
-        return null;
-    }
+            Point2D F = GeomUtil.getMidPoint(A, B);
+            aShape.addInvShape(GeomUtil.getCornerShape(F, D, C, cornerLength), D, scalingMin, getStroke(1.0f), true);
 
-    public Double getSegmentAzimuth() {
-        if (handlePointList.size() >= 3) {
-            Point2D p1 = handlePointList.get(2);
-            if (handlePointList.size() >= 4) {
-                Point2D p2 = handlePointList.get(3);
-                return MathUtil.getAzimuth(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-            }
-        }
-        return null;
+        } else if (path.getCurrentPoint() != null)
+            newShape = path;
+
+        setShape(newShape, mouseEvent);
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
+
     }
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() >= 4) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(3);
 
                 if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || LineLength.isQuickComputing() ? getSegmentLength(adapter.getCalibRatio(),
-                            adapter.getCalibRatio()) : null;
+                    Double val = null;
+                    if (releaseEvent || LineLength.isQuickComputing())
+                        val = C.distance(D) * adapter.getCalibRatio();
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
                 if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
-                    Double val = releaseEvent || Orientation.isQuickComputing() ? getSegmentOrientation() : null;
+                    Double val = null;
+                    if (releaseEvent || Orientation.isQuickComputing())
+                        val = MathUtil.getOrientation(C, D);
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
                 if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
-                    Double val = releaseEvent || Azimuth.isQuickComputing() ? getSegmentAzimuth() : null;
+                    Double val = null;
+                    if (releaseEvent || Azimuth.isQuickComputing())
+                        val = MathUtil.getAzimuth(C, D);
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }
                 return measVal;
             }
         }
         return null;
+    }
+
+    @Override
+    protected boolean isShapeValid() {
+        updateTool();
+        return (ABvalid && CDvalid);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void updateTool() {
+        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+        C = handlePointList.size() >= 3 ? handlePointList.get(2) : null;
+        D = handlePointList.size() >= 4 ? handlePointList.get(3) : null;
+
+        ABvalid = A != null && B != null && !B.equals(A);
+        CDvalid = C != null && D != null && !C.equals(D);
     }
 
 }

@@ -11,7 +11,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Stroke;
+import java.awt.Shape;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -39,11 +39,31 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     public final static Measurement Angle = new Measurement("Angle", true);
     public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
 
-    protected Stroke strokeDecorator;
-    protected Stroke strokeDecorator2;
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected Point2D A, B, C, D; // Let AB & CD two line segments
+
+    protected Point2D P; // Let P be the intersection point, if exist, of the two line segments AB & CD
+
+    protected Point2D[] ABPline; // (ABP) or (BAP) or (APB) or (BPA) <= ordered array of points along AB segment.
+    protected Point2D[] CDPline; // (CDP) or (DCP) or (CPD) or (DPC) <= ordered array of points along CD segment.
+
+    protected boolean lineParallel; // estimate if AB & CD line segments are parallel not not
+    protected boolean intersectABsegment; // estimate if intersection point, if exist, is inside AB segment or not
+    protected boolean intersectCDsegment; // estimate if intersection point, if exist, is inside CD segment or not
+
+    protected boolean ABvalid, CDvalid; // estimate if line segments are valid or not
+
+    protected double angleDeg; // smallest angle in Degrees in the range of [-180 ; 180] between AB & CD line segments
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public OpenAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
-        super(4, paintColor, lineThickness, labelVisible);
+        this(4, lineThickness, paintColor, labelVisible);
+    }
+
+    protected OpenAngleToolGraphic(int handlePointTotalNumber, float lineThickness, Color paintColor,
+        boolean labelVisible) {
+        super(handlePointTotalNumber, paintColor, lineThickness, labelVisible);
     }
 
     @Override
@@ -59,207 +79,186 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
-        if (handlePointList.size() >= 1) {
-            Point2D A = handlePointList.get(0);
+        updateTool();
 
-            if (handlePointList.size() >= 2) {
-                AdvancedShape newShape = new AdvancedShape(5);
-                Path2D generalpath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-                newShape.addShape(generalpath);
+        Shape newShape = null;
+        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 6);
 
-                Point2D B = handlePointList.get(1);
+        if (ABvalid)
+            path.append(new Line2D.Double(A, B), false);
 
-                generalpath.moveTo(A.getX(), A.getY());
-                generalpath.lineTo(B.getX(), B.getY());
+        if (CDvalid)
+            path.append(new Line2D.Double(C, D), false);
 
-                if (handlePointList.size() >= 3) {
-                    Point2D C = handlePointList.get(2);
+        // Do not show decoration when lines are nearly parallel
+        // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
+        if (ABvalid && CDvalid && !lineParallel && Math.abs(angleDeg) > 0.1) {
 
-                    if (handlePointList.size() == 4) {
-                        Point2D D = handlePointList.get(3);
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(5));
+            aShape.addShape(path);
 
-                        generalpath.moveTo(C.getX(), C.getY());
-                        generalpath.lineTo(D.getX(), D.getY());
+            // Let arcAngle be the partial section of the ellipse that represents the measured angle
+            // Let Ix,Jx points of line segments AB & CD used to compute arcAngle radius
+            Point2D I1 = GeomUtil.getColinearPointWithRatio(ABPline[1], ABPline[0], 0.25);
+            Point2D J1 = GeomUtil.getColinearPointWithRatio(CDPline[1], CDPline[0], 0.25);
+            Point2D I2 = GeomUtil.getColinearPointWithRatio(ABPline[0], ABPline[1], 0.25);
+            Point2D J2 = GeomUtil.getColinearPointWithRatio(CDPline[0], CDPline[1], 0.25);
 
-                        double Ax = A.getX(), Ay = A.getY();
-                        double Bx = B.getX(), By = B.getY();
-                        double Cx = C.getX(), Cy = C.getY();
-                        double Dx = D.getX(), Dy = D.getY();
+            double maxRadius = Math.min(P.distance(I2), P.distance(J2));
+            double radius = Math.min(maxRadius, (P.distance(I1) + P.distance(J1)) / 2);
 
-                        double denominator = (Bx - Ax) * (Dy - Cy) - (By - Ay) * (Dx - Cx);
+            double startingAngle = GeomUtil.getAngleDeg(P, ABPline[0]);
 
-                        // If denominator is zero, AB & CD are parallel
-                        if (denominator != 0) {
+            Rectangle2D arcAngleBounds =
+                new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius, 2 * radius);
 
-                            double r = ((Ay - Cy) * (Dx - Cx) - (Ax - Cx) * (Dy - Cy)) / denominator; // equ1
-                            double s = ((Ay - Cy) * (Bx - Ax) - (Ax - Cx) * (By - Ay)) / denominator; // equ2
+            Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angleDeg, Arc2D.OPEN);
+            aShape.addShape(arcAngle);
 
-                            // Let P be the intersection point of the two line segments
-                            Point2D P = new Point2D.Double(Ax + r * (Bx - Ax), Ay + r * (By - Ay));
+            if (!intersectABsegment)
+                aShape.addShape(new Line2D.Double(P, ABPline[1]), getDashStroke(1.0f), true);
 
-                            // If 0<=r<=1 & 0<=s<=1, segment intersection exists
-                            // If r<0 or r>1 or s<0 or s>1, lines intersect but not segments
+            if (!intersectCDsegment)
+                aShape.addShape(new Line2D.Double(P, CDPline[1]), getDashStroke(1.0f), true);
 
-                            // If r>1, P is located on extension of AB
-                            // If r<0, P is located on extension of BA
-                            // If s>1, P is located on extension of CD
-                            // If s<0, P is located on extension of DC
+            // Let intersectPtShape be a cross lines inside a circle
+            int iPtSize = 8;
+            Path2D intersectPtShape = new Path2D.Double(Path2D.WIND_NON_ZERO, 5);
 
-                            // Let ptsX be an ordered array of points along line segments.
-                            Point2D[] pts1 = new Point2D[3]; // order can be ABP (r>1) or BAP (r<0) or APB (0<=r<=1)
-                            Point2D[] pts2 = new Point2D[3]; // order can be CDP (s>1) or DCP (s<0) or CPD (0<=s<=1)
+            Rectangle2D intersecPtBounds =
+                new Rectangle2D.Double(P.getX() - (iPtSize / 2.0), P.getY() - (iPtSize / 2.0), iPtSize, iPtSize);
 
-                            pts1[0] = r >= 0 ? A : B;
-                            pts1[1] = r < 0 ? A : r > 1 ? B : P;
-                            pts1[2] = r < 0 ? P : r > 1 ? P : B;
+            intersectPtShape.append(new Line2D.Double(P.getX() - iPtSize, P.getY(), P.getX() - 2, P.getY()), false);
+            intersectPtShape.append(new Line2D.Double(P.getX() + 2, P.getY(), P.getX() + iPtSize, P.getY()), false);
+            intersectPtShape.append(new Line2D.Double(P.getX(), P.getY() - iPtSize, P.getX(), P.getY() - 2), false);
+            intersectPtShape.append(new Line2D.Double(P.getX(), P.getY() + 2, P.getX(), P.getY() + iPtSize), false);
 
-                            if (pts1[1].equals(P)) {
-                                if (pts1[1].distance(pts1[0]) < pts1[1].distance(pts1[2])) {
-                                    Point2D switchPoint = (Point2D) pts1[2].clone();
-                                    pts1[2] = (Point2D) pts1[0].clone();
-                                    pts1[0] = switchPoint;
-                                }
-                            }
+            intersectPtShape.append(new Arc2D.Double(intersecPtBounds, 0, 360, Arc2D.OPEN), false);
 
-                            pts2[0] = s >= 0 ? C : D;
-                            pts2[1] = s < 0 ? C : s > 1 ? D : P;
-                            pts2[2] = s < 0 ? P : s > 1 ? P : D;
+            aShape.addInvShape(intersectPtShape, P, getStroke(0.5f), true);
 
-                            if (pts2[1].equals(P)) {
-                                if (pts2[1].distance(pts2[0]) < pts2[1].distance(pts2[2])) {
-                                    Point2D switchPoint = (Point2D) pts2[2].clone();
-                                    pts2[2] = (Point2D) pts2[0].clone();
-                                    pts2[0] = switchPoint;
-                                }
-                            }
+        } else if (path.getCurrentPoint() != null)
+            newShape = path;
 
-                            // Let arcAngle be the partial section of the ellipse that represents the measured angle
-                            // Let I,J points of segment lines AB & CD used to compute arcAngle radius
-                            Point2D I1 = GeomUtil.getColinearPointWithRatio(pts1[1], pts1[0], 0.25);
-                            Point2D J1 = GeomUtil.getColinearPointWithRatio(pts2[1], pts2[0], 0.25);
-                            Point2D I2 = GeomUtil.getColinearPointWithRatio(pts1[0], pts1[1], 0.25);
-                            Point2D J2 = GeomUtil.getColinearPointWithRatio(pts2[0], pts2[1], 0.25);
-
-                            double maxRadius = Math.min(P.distance(I2), P.distance(J2));
-                            double radius = Math.min(maxRadius, (P.distance(I1) + P.distance(J1)) / 2.0);
-
-                            double angularExtent = GeomUtil.getAngleDeg(pts1[0], P, pts2[0]);
-                            angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
-
-                            double startingAngle = GeomUtil.getAngleDeg(P, pts1[0]);
-
-                            Rectangle2D arcAngleBounds =
-                                new Rectangle2D.Double(P.getX() - radius, P.getY() - radius, 2 * radius, 2 * radius);
-
-                            Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
-                            newShape.addShape(arcAngle);
-
-                            if (pts1[2].equals(P)) {
-                                newShape.addShape(new Line2D.Double(pts1[2], pts1[1]), getDashStroke(1.0f), true);
-                            }
-
-                            if (pts2[2].equals(P)) {
-                                newShape.addShape(new Line2D.Double(pts2[2], pts2[1]), getDashStroke(1.0f), true);
-                            }
-
-                            // intersection point
-                            int size = 8;
-
-                            Path2D intersectPtShape = new Path2D.Double(Path2D.WIND_NON_ZERO, 3);
-
-                            intersectPtShape.append(
-                                new Line2D.Double(P.getX() - size, P.getY(), P.getX() - 2, P.getY()), false);
-                            intersectPtShape.append(
-                                new Line2D.Double(P.getX() + 2, P.getY(), P.getX() + size, P.getY()), false);
-                            intersectPtShape.append(
-                                new Line2D.Double(P.getX(), P.getY() - size, P.getX(), P.getY() - 2), false);
-                            intersectPtShape.append(
-                                new Line2D.Double(P.getX(), P.getY() + 2, P.getX(), P.getY() + size), false);
-
-                            Rectangle2D intersecPtBounds =
-                                new Rectangle2D.Double(P.getX() - size / 2.0, P.getY() - size / 2.0, size, size);
-                            intersectPtShape.append(new Arc2D.Double(intersecPtBounds, 0, 360, Arc2D.OPEN), false);
-
-                            newShape.addInvShape(intersectPtShape, (Point2D) P.clone(), getStroke(1.0f), true);
-                        }
-
-                    }
-                }
-                setShape(newShape, mouseEvent);
-                updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
-            }
-        }
+        setShape(newShape, mouseEvent);
+        updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() >= 4) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
-                if (Angle.isComputed()) {
-                    Point2D A = handlePointList.get(0);
-                    Point2D B = handlePointList.get(1);
-                    Point2D C = handlePointList.get(2);
-                    Point2D D = handlePointList.get(3);
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(2);
 
-                    double Ax = A.getX(), Ay = A.getY();
-                    double Bx = B.getX(), By = B.getY();
-                    double Cx = C.getX(), Cy = C.getY();
-                    double Dx = D.getX(), Dy = D.getY();
+                double positiveAngle = Math.abs(angleDeg);
 
-                    double denominator = (Bx - Ax) * (Dy - Cy) - (By - Ay) * (Dx - Cx);
+                if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel()))
+                    measVal.add(new MeasureItem(Angle, positiveAngle, "deg"));
 
-                    // If denominator is zero, AB & CD are parallel
-                    if (denominator != 0) {
+                if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel()))
+                    measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - positiveAngle, "deg"));
 
-                        double r = ((Ay - Cy) * (Dx - Cx) - (Ax - Cx) * (Dy - Cy)) / denominator; // equ1
-                        double s = ((Ay - Cy) * (Bx - Ax) - (Ax - Cx) * (By - Ay)) / denominator; // equ2
-
-                        // Let P be the intersection point of the two line segments
-                        Point2D P = new Point2D.Double(Ax + r * (Bx - Ax), Ay + r * (By - Ay));
-                        Point2D[] pts1 = new Point2D[3]; // order can be ABP (r>1) or BAP (r<0) or APB (0<=r<=1)
-                        Point2D[] pts2 = new Point2D[3]; // order can be CDP (s>1) or DCP (s<0) or CPD (0<=s<=1)
-
-                        pts1[0] = r >= 0 ? A : B;
-                        pts1[1] = r < 0 ? A : r > 1 ? B : P;
-                        pts1[2] = r < 0 ? P : r > 1 ? P : B;
-
-                        if (pts1[1].equals(P)) {
-                            if (pts1[1].distance(pts1[0]) < pts1[1].distance(pts1[2])) {
-                                Point2D switchPoint = (Point2D) pts1[2].clone();
-                                pts1[2] = (Point2D) pts1[0].clone();
-                                pts1[0] = switchPoint;
-                            }
-                        }
-
-                        pts2[0] = s >= 0 ? C : D;
-                        pts2[1] = s < 0 ? C : s > 1 ? D : P;
-                        pts2[2] = s < 0 ? P : s > 1 ? P : D;
-
-                        if (pts2[1].equals(P)) {
-                            if (pts2[1].distance(pts2[0]) < pts2[1].distance(pts2[2])) {
-                                Point2D switchPoint = (Point2D) pts2[2].clone();
-                                pts2[2] = (Point2D) pts2[0].clone();
-                                pts2[0] = switchPoint;
-                            }
-                        }
-
-                        double realAngle =
-                            Math.abs(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(pts1[0], P, pts2[0])));
-
-                        if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
-                            measVal.add(new MeasureItem(Angle, realAngle, "deg"));
-                        }
-                        if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
-                            measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - realAngle, "deg"));
-                        }
-                    }
-                }
                 return measVal;
             }
         }
         return null;
+    }
+
+    @Override
+    protected boolean isShapeValid() {
+        updateTool();
+        return (ABvalid && CDvalid);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected void updateTool() {
+
+        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+        C = handlePointList.size() >= 3 ? handlePointList.get(2) : null;
+        D = handlePointList.size() >= 4 ? handlePointList.get(3) : null;
+
+        ABPline = CDPline = null;
+
+        lineParallel = intersectABsegment = intersectCDsegment = false;
+
+        angleDeg = 0.0;
+
+        ABvalid = (A != null && B != null && !B.equals(A));
+        CDvalid = (C != null && D != null && !C.equals(D));
+
+        if (ABvalid && CDvalid) {
+
+            double denominator =
+                (B.getX() - A.getX()) * (D.getY() - C.getY()) - (B.getY() - A.getY()) * (D.getX() - C.getX());
+
+            lineParallel = (denominator == 0); // If denominator is zero, AB & CD are parallel
+
+            if (!lineParallel) {
+
+                double numerator1 =
+                    (A.getY() - C.getY()) * (D.getX() - C.getX()) - (A.getX() - C.getX()) * (D.getY() - C.getY());
+                double numerator2 =
+                    (A.getY() - C.getY()) * (B.getX() - A.getX()) - (A.getX() - C.getX()) * (B.getY() - A.getY());
+
+                double r = numerator1 / denominator; // equ1
+                double s = numerator2 / denominator; // equ2
+
+                P = new Point2D.Double(A.getX() + r * (B.getX() - A.getX()), A.getY() + r * (B.getY() - A.getY()));
+
+                // If 0<=r<=1 & 0<=s<=1, segment intersection exists
+                // If r<0 or r>1 or s<0 or s>1, line segments intersect but not segments
+
+                // If r>1, P is located on extension of AB
+                // If r<0, P is located on extension of BA
+                // If s>1, P is located on extension of CD
+                // If s<0, P is located on extension of DC
+
+                ABPline = new Point2D[3]; // order can be ABP (r>1) or BAP (r<0) or APB / BPA (0<=r<=1)
+                CDPline = new Point2D[3]; // order can be CDP (s>1) or DCP (s<0) or CPD / DPC (0<=s<=1)
+
+                intersectABsegment = (r >= 0 && r <= 1) ? true : false; // means ABPline[1].equals(P)
+                intersectCDsegment = (s >= 0 && s <= 1) ? true : false; // means CDPline[1].equals(P)
+
+                ABPline[0] = r >= 0 ? A : B;
+                ABPline[1] = r < 0 ? A : r > 1 ? B : P;
+                ABPline[2] = r < 0 ? P : r > 1 ? P : B;
+
+                if (intersectABsegment) {
+                    if (P.distance(ABPline[0]) < P.distance(ABPline[2])) {
+                        Point2D switchPt = (Point2D) ABPline[2].clone();
+                        ABPline[2] = (Point2D) ABPline[0].clone();
+                        ABPline[0] = switchPt;
+                    }
+                } else if (P.distance(ABPline[0]) < P.distance(ABPline[1])) {
+                    Point2D switchPt = (Point2D) ABPline[1].clone();
+                    ABPline[1] = (Point2D) ABPline[0].clone();
+                    ABPline[0] = switchPt;
+                }
+
+                CDPline[0] = s >= 0 ? C : D;
+                CDPline[1] = s < 0 ? C : s > 1 ? D : P;
+                CDPline[2] = s < 0 ? P : s > 1 ? P : D;
+
+                if (intersectCDsegment) {
+                    if (P.distance(CDPline[0]) < P.distance(CDPline[2])) {
+                        Point2D switchPt = (Point2D) CDPline[2].clone();
+                        CDPline[2] = (Point2D) CDPline[0].clone();
+                        CDPline[0] = switchPt;
+                    }
+                } else if (P.distance(CDPline[0]) < P.distance(CDPline[1])) {
+                    Point2D switchPt = (Point2D) CDPline[1].clone();
+                    CDPline[1] = (Point2D) CDPline[0].clone();
+                    CDPline[0] = switchPt;
+                }
+
+                angleDeg = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(ABPline[0], P, CDPline[0]));
+            }
+        }
     }
 
 }

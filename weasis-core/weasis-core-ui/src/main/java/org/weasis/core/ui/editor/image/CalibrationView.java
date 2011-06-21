@@ -16,6 +16,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.geom.Point2D;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -108,7 +109,13 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Unit unit = image.getPixelSpacingUnit();
             if (!Unit.PIXEL.equals(unit)) {
-                jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSize(), image.getPixelSize()));
+
+                Point2D A = line.getStartPoint();
+                Point2D B = line.getEndPoint();
+                if (A != null && B != null)
+                    jTextFieldLineWidth.setValue(A.distance(B) * image.getPixelSize());
+
+                // jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSize(), image.getPixelSize()));
             } else {
                 GridBagConstraints gbc_textPane = new GridBagConstraints();
                 gbc_textPane.gridwidth = 4;
@@ -155,7 +162,14 @@ public class CalibrationView extends JPanel {
                     } else {
                         unitRatio = originalUnit.getConversionRatio(unit.getConvFactor());
                     }
-                    Double lineLength = line.getSegmentLength(1.0, 1.0);
+                    // line.getSegmentLength(1.0, 1.0);
+                    Double lineLength = 0.0;
+
+                    Point2D A = line.getStartPoint();
+                    Point2D B = line.getEndPoint();
+                    if (A != null && B != null)
+                        lineLength = A.distance(B);
+
                     if (lineLength == null || lineLength < 1.0) {
                         lineLength = 1.0;
                     }
