@@ -75,12 +75,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
             updateTool();
 
-            if (ABvalid && CDvalid) {
-                Point2D dragPoint = handlePointList.get(handlePointIndex);
+            Point2D dragPoint = handlePointList.get(handlePointIndex);
 
-                if (dragPoint != null) {
+            if (dragPoint != null) {
+                if (ABvalid && CDvalid) {
+
                     if (handlePointIndex == 0 || handlePointIndex == 1) { // drag point is A or B
-
                         // need to compute start angle with old position before setting to the new one
                         double theta = GeomUtil.getAngleRad(A, B);
                         dragPoint.setLocation(mouseEvent.getImageCoordinates());
@@ -133,7 +133,8 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                         }
                     }
                     updateTool();
-                }
+                } else
+                    dragPoint.setLocation(mouseEvent.getImageCoordinates());
             }
 
             if (handlePointList.size() >= 5) {// reference to E point index exist in handlePointList
@@ -205,7 +206,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected boolean isShapeValid() {
+    public boolean isShapeValid() {
         updateTool();
         return (ABvalid && CDvalid);
     }

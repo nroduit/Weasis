@@ -97,14 +97,21 @@ public class AbstractLayerModel implements LayerModel {
             if (dragGraph instanceof AbstractDragGraphic && !(dragGraph instanceof SelectGraphic)) {
                 AbstractDragGraphic graph = (AbstractDragGraphic) dragGraph;
 
-                if (graph.isOnGraphicLabel(mouseevent)) {
-                    canvas.setCursor(HAND_CURSOR);
-                    draggingPosition = true;
-                } else if (graph.getHandlePointIndex(mouseevent) >= 0) {
-                    canvas.setCursor(EDIT_CURSOR);
-                    draggingPosition = true;
-                } else if (graph.getArea(mouseevent).contains(p)) {
-                    canvas.setCursor(MOVE_CURSOR);
+                Cursor changeCursor = null;
+
+                if (!graph.isShapeValid() || !graph.isGraphicComplete())
+                    changeCursor = EDIT_CURSOR;
+                else {
+                    if (graph.isOnGraphicLabel(mouseevent))
+                        changeCursor = HAND_CURSOR;
+                    else if (graph.getHandlePointIndex(mouseevent) >= 0)
+                        changeCursor = EDIT_CURSOR;
+                    else if (graph.getArea(mouseevent).contains(p))
+                        changeCursor = MOVE_CURSOR;
+                }
+
+                if (changeCursor != null) {
+                    canvas.setCursor(changeCursor);
                     draggingPosition = true;
                 }
             }

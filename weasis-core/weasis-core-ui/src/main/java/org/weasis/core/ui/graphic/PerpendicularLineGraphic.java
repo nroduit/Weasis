@@ -76,35 +76,36 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
             updateTool();
 
             if (ABvalid && CDvalid) {
-                Point2D dragPoint = handlePointList.get(handlePointIndex);
 
-                if (dragPoint != null) {
-                    if (handlePointIndex == 0 || handlePointIndex == 1) { // drag point is A or B
+                if (handlePointIndex == 0 || handlePointIndex == 1) { // drag point is A or B
+                    Point2D dragPoint = handlePointList.get(handlePointIndex);
 
-                        // need to compute start angle with old position before setting to the new one
-                        double theta = GeomUtil.getAngleRad(A, B);
-                        dragPoint.setLocation(mouseEvent.getImageCoordinates());
-                        theta -= GeomUtil.getAngleRad(A, B);
+                    // need to compute start angle with old position before setting to the new one
+                    double theta = GeomUtil.getAngleRad(A, B);
+                    dragPoint.setLocation(mouseEvent.getImageCoordinates());
+                    theta -= GeomUtil.getAngleRad(A, B);
 
-                        Point2D anchor = (handlePointIndex == 0) ? B : A; // anchor is opposite point to A or B
-                        AffineTransform transform =
-                            AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
+                    Point2D anchor = (handlePointIndex == 0) ? B : A; // anchor is opposite point to A or B
+                    AffineTransform transform = AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
 
-                        transform.transform(C, C);
-                        transform.transform(D, D);
+                    transform.transform(C, C);
+                    transform.transform(D, D);
 
-                    } else if (handlePointIndex == 2) { // drag point is C
-                        C.setLocation(mouseEvent.getImageCoordinates());
-                        D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
+                } else if (handlePointIndex == 2) { // drag point is C
+                    C.setLocation(mouseEvent.getImageCoordinates());
+                    D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, C));
 
-                    } else if (handlePointIndex == 3) { // drag point is D
-                        double x = D.getX(), y = D.getY();
-                        D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, mouseEvent.getImageCoordinates()));
+                } else if (handlePointIndex == 3) { // drag point is D
+                    double x = D.getX(), y = D.getY();
+                    D.setLocation(GeomUtil.getPerpendicularPointToLine(A, B, mouseEvent.getImageCoordinates()));
 
-                        AffineTransform transform = AffineTransform.getTranslateInstance(D.getX() - x, D.getY() - y);
-                        transform.transform(C, C);
-                    }
+                    AffineTransform transform = AffineTransform.getTranslateInstance(D.getX() - x, D.getY() - y);
+                    transform.transform(C, C);
                 }
+            } else {
+                Point2D dragPoint = handlePointList.get(handlePointIndex);
+                if (dragPoint != null)
+                    dragPoint.setLocation(mouseEvent.getImageCoordinates());
             }
         }
 
@@ -187,7 +188,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected boolean isShapeValid() {
+    public boolean isShapeValid() {
         updateTool();
         return (ABvalid && CDvalid);
     }

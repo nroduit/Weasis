@@ -37,10 +37,10 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
     public final static Measurement Area = new Measurement("Area", true, true, true);
     public final static Measurement Diameter = new Measurement("Diameter", true, true, true);
+    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
     public final static Measurement CenterX = new Measurement("Center X", true, true, false);
     public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
     public final static Measurement Radius = new Measurement("Radius", true, true, false);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -83,7 +83,6 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
             resizingOrMoving = true;
         } else
             super.paintHandles(g2d, transform);
-
     }
 
     @Override
@@ -136,7 +135,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected boolean isShapeValid() {
+    public boolean isShapeValid() {
         updateTool();
         return (super.isShapeValid() && centerPt != null && radius < 50000);
     }

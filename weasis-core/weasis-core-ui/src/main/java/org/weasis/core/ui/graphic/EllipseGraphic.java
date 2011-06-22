@@ -31,13 +31,12 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
+    public final static Measurement Area = new Measurement("Area", true, true, true);
+    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
     public final static Measurement CenterX = new Measurement("Center X", true, true, false);
     public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
     public final static Measurement Width = new Measurement("Width", true, true, false);
     public final static Measurement Height = new Measurement("Height", true, true, false);
-    public final static Measurement Area = new Measurement("Area", true, true, true);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);
@@ -66,14 +65,19 @@ public class EllipseGraphic extends RectangleGraphic {
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() > 1) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 Rectangle2D rect = new Rectangle2D.Double();
+
                 rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
                     handlePointList.get(eHandlePoint.SE.index));
+
                 double ratio = adapter.getCalibRatio();
+
                 if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
                     Double val =
                         releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())

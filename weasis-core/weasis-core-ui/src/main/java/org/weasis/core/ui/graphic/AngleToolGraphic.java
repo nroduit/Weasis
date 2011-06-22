@@ -127,7 +127,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected boolean isShapeValid() {
+    public boolean isShapeValid() {
         updateTool();
         return OAvalid && OBvalid;
     }

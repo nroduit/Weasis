@@ -163,7 +163,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected boolean isShapeValid() {
+    public boolean isShapeValid() {
         updateTool();
         return (ABvalid && CDvalid && EFvalid && GHvalid && IJvalid && KLvalid);
     }

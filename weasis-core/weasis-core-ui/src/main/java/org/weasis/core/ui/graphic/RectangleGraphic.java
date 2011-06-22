@@ -36,15 +36,16 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
+    public final static Measurement Area = new Measurement("Area", true, true, true);
+    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
     public final static Measurement TopLeftPointX = new Measurement("Top Left X", true, true, false);
     public final static Measurement TopLeftPointY = new Measurement("Top Left Y", true, true, false);
     public final static Measurement CenterX = new Measurement("Center X", true, true, false);
     public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
     public final static Measurement Width = new Measurement("Width", true, true, false);
     public final static Measurement Height = new Measurement("Height", true, true, false);
-    public final static Measurement Area = new Measurement("Area", true, true, true);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(8, paintColor, lineThickness, labelVisible);
@@ -150,14 +151,19 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     @Override
     public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
-        if (imageElement != null && handlePointList.size() > 1) {
+
+        if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 Rectangle2D rect = new Rectangle2D.Double();
+
                 rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
                     handlePointList.get(eHandlePoint.SE.index));
+
                 double ratio = adapter.getCalibRatio();
+
                 if (TopLeftPointX.isComputed() && (!drawOnLabel || TopLeftPointX.isGraphicLabel())) {
                     Double val =
                         releaseEvent || TopLeftPointX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getX())

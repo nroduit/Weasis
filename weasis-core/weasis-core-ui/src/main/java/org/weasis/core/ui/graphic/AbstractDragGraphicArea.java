@@ -17,9 +17,9 @@ import org.weasis.core.api.media.data.TagW;
 
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
+    public final static Measurement ImageMean = new Measurement("Mean", false, true, true);
     public final static Measurement ImageMin = new Measurement("Min", false, true, false);
     public final static Measurement ImageMax = new Measurement("Max", false, true, false);
-    public final static Measurement ImageMean = new Measurement("Mean", false, true, true);
     public final static Measurement ImageSTD = new Measurement("StDev", false, true, false);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,13 +80,11 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                                 double sum = 0.0;
                                 for (Integer val : pList) {
                                     double v = val.doubleValue();
-                                    if (v < min) {
+                                    if (v < min)
                                         min = v;
-                                    }
 
-                                    if (v > max) {
+                                    if (v > max)
                                         max = v;
-                                    }
 
                                     sum += v;
                                 }
@@ -96,13 +94,11 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                                 stdv = 0.0D;
                                 for (Integer val : pList) {
                                     double v = val.doubleValue();
-                                    if (v < min) {
+                                    if (v < min)
                                         min = v;
-                                    }
 
-                                    if (v > max) {
+                                    if (v > max)
                                         max = v;
-                                    }
 
                                     stdv += (v - mean) * (v - mean);
                                 }
