@@ -244,11 +244,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 };
             toolPanels[0].setHide(false);
             toolPanels[0].registerToolAsDockable();
-            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools"), null); //$NON-NLS-1$
+            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
             toolPanels[1].registerToolAsDockable();
-            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME, null);
+            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME);
             toolPanels[2].registerToolAsDockable();
-            toolPanels[3] = new MeasureTool(MeasureTool.BUTTON_NAME, null, eventManager);
+            toolPanels[3] = new MeasureTool(eventManager);
             toolPanels[3].registerToolAsDockable();
             eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
             // toolPanels[3] = new DrawToolsDockable();

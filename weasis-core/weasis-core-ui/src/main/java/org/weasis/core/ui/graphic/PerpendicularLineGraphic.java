@@ -55,15 +55,17 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
         if (handlePointIndex == -1) { // move shape
             for (Point2D point : handlePointList) {
-                if (point != null)
+                if (point != null) {
                     point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+                }
             }
         } else { // move dragging point
 
             if (!isGraphicComplete()) {
                 Point2D dragPoint = handlePointList.get(handlePointIndex);
-                if (dragPoint != null)
+                if (dragPoint != null) {
                     dragPoint.setLocation(mouseEvent.getImageCoordinates());
+                }
 
                 updateTool();
 
@@ -104,8 +106,9 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                 }
             } else {
                 Point2D dragPoint = handlePointList.get(handlePointIndex);
-                if (dragPoint != null)
+                if (dragPoint != null) {
                     dragPoint.setLocation(mouseEvent.getImageCoordinates());
+                }
             }
         }
 
@@ -120,11 +123,13 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
-        if (ABvalid)
+        if (ABvalid) {
             path.append(new Line2D.Double(A, B), false);
+        }
 
-        if (CDvalid)
+        if (CDvalid) {
             path.append(new Line2D.Double(C, D), false);
+        }
 
         if (ABvalid && CDvalid) {
 
@@ -144,10 +149,14 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
             double scalingMin = cornerLength / dMin;
 
             Point2D F = GeomUtil.getMidPoint(A, B);
-            aShape.addInvShape(GeomUtil.getCornerShape(F, D, C, cornerLength), D, scalingMin, getStroke(1.0f), true);
+            Shape cornerShape = GeomUtil.getCornerShape(F, D, C, cornerLength);
+            if (cornerShape != null) {
+                aShape.addInvShape(cornerShape, D, scalingMin, getStroke(1.0f), true);
+            }
 
-        } else if (path.getCurrentPoint() != null)
+        } else if (path.getCurrentPoint() != null) {
             newShape = path;
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
@@ -165,20 +174,23 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
                 if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LineLength.isQuickComputing())
+                    if (releaseEvent || LineLength.isQuickComputing()) {
                         val = C.distance(D) * adapter.getCalibRatio();
+                    }
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
                 if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Orientation.isQuickComputing())
+                    if (releaseEvent || Orientation.isQuickComputing()) {
                         val = MathUtil.getOrientation(C, D);
+                    }
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
                 }
                 if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Azimuth.isQuickComputing())
+                    if (releaseEvent || Azimuth.isQuickComputing()) {
                         val = MathUtil.getAzimuth(C, D);
+                    }
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
                 }
                 return measVal;
@@ -196,13 +208,26 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void updateTool() {
-        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
-        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
-        C = handlePointList.size() >= 3 ? handlePointList.get(2) : null;
-        D = handlePointList.size() >= 4 ? handlePointList.get(3) : null;
+        A = Pt.A.get(this);
+        B = Pt.B.get(this);
+        C = Pt.C.get(this);
+        D = Pt.D.get(this);
 
-        ABvalid = A != null && B != null && !B.equals(A);
-        CDvalid = C != null && D != null && !C.equals(D);
+        ABvalid = isLineValid(Pt.A, Pt.B, this);
+        CDvalid = isLineValid(Pt.C, Pt.D, this);
     }
 
+    protected enum Pt implements eHandlePoint {
+        A(0), B(1), C(2), D(3);
+        int index;
+
+        private Pt(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public Point2D get(AbstractDragGraphic g) {
+            return (g != null) ? (g.handlePointList.size() >= index + 1 ? g.handlePointList.get(index) : null) : null;
+        }
+    }
 }

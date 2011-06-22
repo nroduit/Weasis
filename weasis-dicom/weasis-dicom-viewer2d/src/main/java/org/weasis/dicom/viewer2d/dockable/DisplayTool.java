@@ -18,7 +18,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -62,8 +62,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private CheckNode dicomInfo;
     private CheckNode drawings;
 
-    public DisplayTool(String pluginName, Icon icon) {
+    public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png")));
         setDockableWidth(210);
         jbInit();
 

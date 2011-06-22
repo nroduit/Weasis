@@ -17,7 +17,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -81,9 +81,10 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     private List<AbstractDragGraphic> selectedGraphic;
 
-    public MeasureTool(String pluginName, Icon icon, ImageViewerEventManager eventManager) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+    public MeasureTool(ImageViewerEventManager eventManager) {
+        super(BUTTON_NAME, BUTTON_NAME, ToolWindowAnchor.RIGHT);
         this.eventManager = eventManager;
+        setIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
         setDockableWidth(DockableWidth);
         jbInit();
 
@@ -108,7 +109,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Measurements",
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Draw Measurement",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         final ViewSetting setting = eventManager.getViewSetting();
@@ -228,7 +229,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Selected Measurement",
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Selected",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));

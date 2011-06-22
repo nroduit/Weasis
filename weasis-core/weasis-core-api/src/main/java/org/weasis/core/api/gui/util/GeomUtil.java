@@ -2,7 +2,6 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -14,24 +13,19 @@ public final class GeomUtil {
     /**
      * @param A
      * @param B
-     * @return
-     */
-    public static Point2D getMidPoint(Point2D A, Point2D B) {
-        return new Point2D.Double((A.getX() + B.getX()) / 2.0, (A.getY() + B.getY()) / 2.0);
-    }
-
-    /**
-     * @param A
-     * @param B
      * @param C
      * @return
      */
     public static double getAngleRad(Point2D A, Point2D B, Point2D C) {
-        return getAngleRad(B, C) - getAngleRad(B, A);
+        if (A != null && B != null && C != null)
+            return getAngleRad(B, C) - getAngleRad(B, A);
+        return 0;
     }
 
     public static double getAngleDeg(Point2D A, Point2D B, Point2D C) {
-        return Math.toDegrees(getAngleRad(A, B, C));
+        if (A != null && B != null && C != null)
+            return Math.toDegrees(getAngleRad(A, B, C));
+        return 0;
     }
 
     /**
@@ -80,6 +74,17 @@ public final class GeomUtil {
 
     /**
      * @param A
+     * @param B
+     * @return
+     */
+    public static Point2D getMidPoint(Point2D A, Point2D B) {
+        if (A != null && B != null)
+            return new Point2D.Double((A.getX() + B.getX()) / 2.0, (A.getY() + B.getY()) / 2.0);
+        return null;
+    }
+
+    /**
+     * @param A
      *            the first point of line segment
      * @param B
      *            the last point of line segment
@@ -91,7 +96,9 @@ public final class GeomUtil {
      * @return New point C coordinates
      */
     public static Point2D getColinearPointWithLength(Point2D A, Point2D B, double newLength) {
-        return getColinearPointWithRatio(A, B, newLength / A.distance(B));
+        if (A != null && B != null)
+            return getColinearPointWithRatio(A, B, newLength / A.distance(B));
+        return null;
     }
 
     /**
@@ -107,7 +114,9 @@ public final class GeomUtil {
      * @return New point C coordinates
      */
     public static Point2D getColinearPointWithRatio(Point2D A, Point2D B, double k) {
-        return new Point2D.Double(B.getX() * k + A.getX() * (1 - k), B.getY() * k + A.getY() * (1 - k));
+        if (A != null && B != null)
+            return new Point2D.Double(B.getX() * k + A.getX() * (1 - k), B.getY() * k + A.getY() * (1 - k));
+        return null;
     }
 
     /**
@@ -117,19 +126,23 @@ public final class GeomUtil {
      * @return
      */
     public static Line2D getMedianLine(Line2D line1, Line2D line2) {
-        double Ax = line1.getX1(), Ay = line1.getY1();
-        double Bx = line1.getX2(), By = line1.getY2();
-        double Cx = line2.getX1(), Cy = line2.getY1();
-        double Dx = line2.getX2(), Dy = line2.getY2();
+        if (line1 == null || line2 == null)
+            return null;
+
+        Point2D A = line1.getP1(), B = line1.getP2();
+        Point2D C = line2.getP1(), D = line2.getP2();
+
+        Line2D line3 = new Line2D.Double(A, C);
+        Line2D line4 = new Line2D.Double(B, D);
 
         Point2D M, N;
 
-        if (Line2D.linesIntersect(Ax, Ay, Bx, By, Cx, Cy, Dx, Dy)) {
-            M = new Point2D.Double((Ax + Dx) / 2, (Ay + Dy) / 2);
-            N = new Point2D.Double((Bx + Cx) / 2, (By + Cy) / 2);
+        if (line3.intersectsLine(line4)) {
+            M = new Point2D.Double((A.getX() + D.getX()) / 2, (A.getY() + D.getY()) / 2);
+            N = new Point2D.Double((B.getX() + C.getX()) / 2, (B.getY() + C.getY()) / 2);
         } else {
-            M = new Point2D.Double((Ax + Cx) / 2, (Ay + Cy) / 2);
-            N = new Point2D.Double((Bx + Dx) / 2, (By + Dy) / 2);
+            M = new Point2D.Double((A.getX() + C.getX()) / 2, (A.getY() + C.getY()) / 2);
+            N = new Point2D.Double((B.getX() + D.getX()) / 2, (B.getY() + D.getY()) / 2);
         }
 
         return new Line2D.Double(M, N);
@@ -339,8 +352,9 @@ public final class GeomUtil {
 
             angleRad = Math.atan2(sinTheta, cosTheta);
 
-            if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0)
+            if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0) {
                 angleRad *= -1.0;
+            }
         }
 
         return angleRad;
@@ -365,10 +379,11 @@ public final class GeomUtil {
      * @param shape
      * @param scalingFactor
      * @param anchorPoint
-     * @return
+     *            can be null
+     * @return null if either shape is null or scaling factor is zero
      */
     public static Shape getScaledShape(Shape shape, double scalingFactor, Point2D anchorPoint) {
-        if (shape == null)
+        if (shape == null || scalingFactor == 0)
             return null;
 
         AffineTransform scaleTransform = new AffineTransform(); // Identity transformation.
@@ -402,7 +417,7 @@ public final class GeomUtil {
     }
 
     public static Shape getCornerShape(Point2D A, Point2D O, Point2D B, double cornerSize) {
-        GeneralPath path = new GeneralPath(Path2D.WIND_NON_ZERO, 2);
+        Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
         Point2D I1 = GeomUtil.getColinearPointWithLength(O, A, cornerSize);
         Point2D I2 = GeomUtil.getColinearPointWithLength(O, B, cornerSize);

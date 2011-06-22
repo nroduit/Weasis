@@ -924,10 +924,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 showDraws.changeCursorDesign(event);
 
-                java.util.List dragList = showDraws.getSelectedDragableGraphics();
+                List<Graphic> dragList = showDraws.getSelectedDragableGraphics();
                 int dragListSize = dragList != null ? dragList.size() : 0;
+
                 // Shift for selecting several drawings
                 boolean shiftDown = event.isShiftDown();
+
                 if (showDraws.isOnDraggingPosition() && !shiftDown) {
                     if (dragListSize == 1) {
                         AbstractDragGraphic graph = (AbstractDragGraphic) dragList.get(0);

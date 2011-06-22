@@ -20,7 +20,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -57,8 +56,9 @@ public class ImageTool extends PluginTool {
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
-    public ImageTool(String pluginName, Icon icon) {
+    public ImageTool(String pluginName) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png")));
         setDockableWidth(290);
         jbInit();
 
@@ -98,6 +98,7 @@ public class ImageTool extends PluginTool {
         resetButton.setText(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
         resetButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem());
             }

@@ -690,12 +690,12 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             double halfSize = size / 2;
 
             ArrayList<Point2D> handlePts = new ArrayList<Point2D>(handlePointList.size());
-            for (int i = 0; i < handlePointList.size(); i++) {
-                Point2D pt = handlePointList.get(i);
+            for (Point2D pt : handlePointList) {
                 if (pt != null) {
                     handlePts.add(new Point2D.Double(pt.getX(), pt.getY()));
                 }
             }
+
             Point2D.Double[] handlePtArray = handlePts.toArray(new Point2D.Double[handlePts.size()]);
             transform.transform(handlePtArray, 0, handlePtArray, 0, handlePtArray.length);
 
@@ -1031,6 +1031,21 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public interface eHandlePoint {
+        Point2D get(AbstractDragGraphic graphic);
+    }
+
+    static boolean isLineValid(eHandlePoint eP1, eHandlePoint eP2, AbstractDragGraphic g) {
+        if (eP1 == null || eP2 == null || g == null)
+            return false;
+
+        Point2D p1 = eP1.get(g), p2 = eP2.get(g);
+        return p1 != null && p2 != null && !p2.equals(p1);
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public class AdvancedShape implements Shape {
 
         /**
@@ -1085,18 +1100,21 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             public InvariantShape(Shape shape, Stroke stroke, Point2D anchorPoint, double scalingMin,
                 boolean fixedLineWidth) {
                 super(shape, stroke, fixedLineWidth);
+
                 if (anchorPoint == null)
                     throw new IllegalArgumentException();
-                this.anchorPoint = anchorPoint;
+
                 if (scalingMin < 0)
                     throw new IllegalArgumentException();
+
+                this.anchorPoint = anchorPoint;
                 this.scalingMin = scalingMin;
             }
 
             @Override
             public Shape getRealShape() {
-                double scale = scalingFactor < scalingMin ? scalingMin : scalingFactor;
-                return GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint);
+                double scale = (scalingFactor < scalingMin) ? scalingMin : scalingFactor;
+                return scale != 0 ? GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint) : null;
             }
         }
 
@@ -1133,6 +1151,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         }
 
         void updateScalingFactor(double scalingFactor) {
+            if (scalingFactor == 0)
+                throw new IllegalArgumentException("scalingFactor cannot be zero");
             this.scalingFactor = scalingFactor;
         }
 
@@ -1149,15 +1169,19 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             g2d.setPaint(getColorPaint());
 
             for (BasicShape item : shapeList) {
+                Shape drawingShape = item.getRealShape();
 
-                Shape drawingShape =
-                    (transform == null) ? item.getRealShape() : transform.createTransformedShape(item.getRealShape());
+                if (drawingShape != null) {
+                    if (transform != null) {
+                        drawingShape = transform.createTransformedShape(drawingShape);
+                    }
 
-                g2d.setStroke(item.stroke);
-                g2d.draw(drawingShape);
+                    g2d.setStroke(item.stroke);
+                    g2d.draw(drawingShape);
 
-                if (isFilled()) {
-                    g2d.fill(drawingShape);
+                    if (isFilled()) {
+                        g2d.fill(drawingShape);
+                    }
                 }
             }
 
@@ -1167,10 +1191,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         /**
          * 
-         * @return generalShape which is by convention the first shape of the list and is dedicated to the measure
+         * @return a shape which is by convention the first shape in the list which is dedicated to the user tool
+         *         drawing
          */
         public Shape getGeneralShape() {
-            if (shapeList.size() > 0)
+            if (shapeList.size() > 0 && shapeList.get(0) != null)
                 return shapeList.get(0).getRealShape();
             return null;
         }
@@ -1180,10 +1205,15 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle rectangle = null;
 
             for (BasicShape item : shapeList) {
-                if (rectangle == null) {
-                    rectangle = item.getRealShape().getBounds();
-                } else {
-                    rectangle.add(item.getRealShape().getBounds());
+                Shape realShape = item.getRealShape();
+                Rectangle bounds = realShape != null ? realShape.getBounds() : null;
+
+                if (bounds != null) {
+                    if (rectangle == null) {
+                        rectangle = bounds;
+                    } else {
+                        rectangle.add(bounds);
+                    }
                 }
             }
 
@@ -1195,13 +1225,14 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Rectangle2D rectangle = null;
 
             for (BasicShape item : shapeList) {
-                Rectangle2D realBounds = item.getRealShape().getBounds2D();
+                Shape realShape = item.getRealShape();
+                Rectangle2D bounds = realShape != null ? realShape.getBounds2D() : null;
 
-                if (realBounds != null) {
+                if (bounds != null) {
                     if (rectangle == null) {
-                        rectangle = realBounds;
+                        rectangle = bounds;
                     } else {
-                        rectangle.add(realBounds);
+                        rectangle.add(bounds);
                     }
                 }
             }
@@ -1210,55 +1241,63 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
         @Override
         public boolean contains(double x, double y) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().contains(x, y))
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
+                if (realShape != null && realShape.contains(x, y))
                     return true;
-
+            }
             return false;
         }
 
         @Override
         public boolean contains(Point2D p) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().contains(p))
-                    return true;
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
 
+                if (realShape != null && realShape.contains(p))
+                    return true;
+            }
             return false;
         }
 
         @Override
         public boolean contains(double x, double y, double w, double h) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().contains(x, y, w, h))
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
+                if (realShape != null && realShape.contains(x, y, w, h))
                     return true;
-
+            }
             return false;
         }
 
         @Override
         public boolean contains(Rectangle2D r) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().contains(r))
-                    return true;
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
 
+                if (realShape != null && realShape.contains(r))
+                    return true;
+            }
             return false;
         }
 
         @Override
         public boolean intersects(double x, double y, double w, double h) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().intersects(x, y, w, h))
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
+                if (realShape != null && realShape.intersects(x, y, w, h))
                     return true;
-
+            }
             return false;
         }
 
         @Override
         public boolean intersects(Rectangle2D r) {
-            for (BasicShape item : shapeList)
-                if (item.getRealShape().intersects(r))
+            for (BasicShape item : shapeList) {
+                Shape realShape = item.getRealShape();
+                if (realShape != null && realShape.intersects(r))
                     return true;
-
+            }
             return false;
         }
 
@@ -1282,7 +1321,10 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             Path2D pathShape = new Path2D.Double(Path2D.WIND_NON_ZERO);
 
             for (BasicShape item : shapeList) {
-                pathShape.append(item.getRealShape(), false);
+                Shape realShape = item.getRealShape();
+                if (realShape != null) {
+                    pathShape.append(realShape, false);
+                }
             }
 
             return pathShape;
@@ -1304,8 +1346,11 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
                 Shape strokedArea = null;
                 try {
-                    Shape strokedShape = boundingStroke.createStrokedShape(item.getRealShape());
-                    strokedArea = new Area(strokedShape);
+                    Shape realShape = item.getRealShape();
+                    if (realShape != null) {
+                        Shape strokedShape = boundingStroke.createStrokedShape(realShape);
+                        strokedArea = new Area(strokedShape);
+                    }
 
                 } catch (Throwable e) {
                     e.printStackTrace();
