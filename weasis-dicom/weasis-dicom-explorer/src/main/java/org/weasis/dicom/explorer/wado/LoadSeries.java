@@ -160,14 +160,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 dicomModel, taskResume));
             thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(), dicomModel));
         }
-        LoadRemoteDicom.loadingQueue.offer(taskResume);
+        LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
     }
 
     @Override
     protected void done() {
 
         if (progressBar.getValue() == progressBar.getMaximum()) {
-            LoadRemoteDicom.currentTasks.remove(this);
+            LoadRemoteDicomManifest.currentTasks.remove(this);
             Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
@@ -931,12 +931,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         DownloadPriority p = getPriority();
         if (p != null) {
             if (StateValue.PENDING.equals(getState())) {
-                boolean change = LoadRemoteDicom.loadingQueue.remove(this);
+                boolean change = LoadRemoteDicomManifest.loadingQueue.remove(this);
                 if (change) {
                     p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-                    LoadRemoteDicom.loadingQueue.offer(this);
+                    LoadRemoteDicomManifest.loadingQueue.offer(this);
 
-                    for (LoadSeries s : LoadRemoteDicom.currentTasks) {
+                    for (LoadSeries s : LoadRemoteDicomManifest.currentTasks) {
                         if (s != this && StateValue.STARTED.equals(s.getState())) {
                             LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar());
                             s.cancel(true);
@@ -946,7 +946,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                 addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                             }
-                            LoadRemoteDicom.loadingQueue.offer(taskResume);
+                            LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
                             break;
                         }
                     }

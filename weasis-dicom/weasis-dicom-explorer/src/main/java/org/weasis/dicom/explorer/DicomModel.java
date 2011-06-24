@@ -57,7 +57,8 @@ import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.internal.Activator;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicom;
+import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
+import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
@@ -270,9 +271,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeSeries(MediaSeriesGroup dicomSeries) {
         if (dicomSeries != null) {
-            if (LoadRemoteDicom.currentTasks.size() > 0) {
+            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
                 if (dicomSeries instanceof DicomSeries) {
-                    LoadRemoteDicom.stopDownloading((DicomSeries) dicomSeries);
+                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries);
                 }
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -288,12 +289,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeStudy(MediaSeriesGroup studyGroup) {
         if (studyGroup != null) {
-            if (LoadRemoteDicom.currentTasks.size() > 0) {
+            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
                 Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
                     if (group instanceof DicomSeries) {
-                        LoadRemoteDicom.stopDownloading((DicomSeries) group);
+                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
                     }
                 }
             }
@@ -307,7 +308,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removePatient(MediaSeriesGroup patientGroup) {
         if (patientGroup != null) {
-            if (LoadRemoteDicom.currentTasks.size() > 0) {
+            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
                 Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
                 for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                     MediaSeriesGroup studyGroup = it.next();
@@ -315,7 +316,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
                         MediaSeriesGroup group = it2.next();
                         if (group instanceof DicomSeries) {
-                            LoadRemoteDicom.stopDownloading((DicomSeries) group);
+                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
                         }
                     }
                 }
@@ -464,6 +465,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load DICOM files remotely or locally", "Usage: dicom:get [Options] SOURCE", //$NON-NLS-1$ //$NON-NLS-2$
             "  -l --local		Open DICOMs from local disk", //$NON-NLS-1$
+            "  -r --remote       Open DICOMs from an URL", //$NON-NLS-1$
             "  -p --portable       Open DICOMs from default directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado        Open DICOMs from an XML (GZIP, Base64) file containing UIDs", //$NON-NLS-1$
             "  -w --wado		Open DICOMs from an XML (URL) file containing UIDs", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
@@ -490,10 +492,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         files[i] = new File(args.get(i));
                     }
                     loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, false));
+                } else if (opt.isSet("remote")) { //$NON-NLS-1$
+                    loadingExecutor.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]),
+                        DicomModel.this));
                 }
                 // build WADO series list to download
                 else if (opt.isSet("wado")) { //$NON-NLS-1$
-                    loadingExecutor.execute(new LoadRemoteDicom(args.toArray(new String[args.size()]), DicomModel.this));
+                    loadingExecutor.execute(new LoadRemoteDicomManifest(args.toArray(new String[args.size()]),
+                        DicomModel.this));
                 } else if (opt.isSet("iwado")) { //$NON-NLS-1$
                     String[] xmlRef = args.toArray(new String[args.size()]);
                     File[] xmlFiles = new File[args.size()];
@@ -507,7 +513,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             e.printStackTrace();
                         }
                     }
-                    loadingExecutor.execute(new LoadRemoteDicom(xmlFiles, DicomModel.this));
+                    loadingExecutor.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
                 }
                 // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
                 // executable file

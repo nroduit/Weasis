@@ -31,7 +31,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
 
-public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
+public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     public final static String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
     public static final BlockingQueue<Runnable> loadingQueue = new PriorityBlockingQueue<Runnable>(10,
@@ -84,7 +84,7 @@ public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
         }
     }
 
-    public LoadRemoteDicom(String[] xmlFiles, DataExplorerModel explorerModel) {
+    public LoadRemoteDicomManifest(String[] xmlFiles, DataExplorerModel explorerModel) {
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -92,7 +92,7 @@ public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
         this.dicomModel = (DicomModel) explorerModel;
     }
 
-    public LoadRemoteDicom(File[] xmlFiles, DataExplorerModel explorerModel) {
+    public LoadRemoteDicomManifest(File[] xmlFiles, DataExplorerModel explorerModel) {
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -153,10 +153,10 @@ public class LoadRemoteDicom extends SwingWorker<Boolean, String> {
 
     public static void stopDownloading(DicomSeries series) {
         if (series != null) {
-            for (final LoadSeries loading : LoadRemoteDicom.currentTasks) {
+            for (final LoadSeries loading : LoadRemoteDicomManifest.currentTasks) {
                 if (loading.getDicomSeries() == series) {
-                    LoadRemoteDicom.currentTasks.remove(loading);
-                    LoadRemoteDicom.loadingQueue.remove(loading);
+                    LoadRemoteDicomManifest.currentTasks.remove(loading);
+                    LoadRemoteDicomManifest.loadingQueue.remove(loading);
                     if (StateValue.STARTED.equals(loading.getState())) {
                         loading.cancel(true);
                     }
