@@ -14,13 +14,13 @@ public class DicomInstance {
 
     private final String sopInstanceUID;
     private final String transferSyntaxUID;
+    private String directDownloadFile;
     private int instanceNumber;
 
     public DicomInstance(String sopInstanceUID, String transferSyntaxUID) {
         // sopInstanceUID is absolutely required
-        if (sopInstanceUID == null) {
+        if (sopInstanceUID == null)
             throw new IllegalArgumentException("sopInstanceUID tag cannot be null"); //$NON-NLS-1$
-        }
         this.sopInstanceUID = sopInstanceUID;
         // If we know the tsuid before downloading file, it can be useful (for instance dicom/mpeg)
         this.transferSyntaxUID = transferSyntaxUID;
@@ -43,11 +43,18 @@ public class DicomInstance {
         this.instanceNumber = instanceNumber;
     }
 
+    public String getDirectDownloadFile() {
+        return directDownloadFile;
+    }
+
+    public void setDirectDownloadFile(String directDownloadFile) {
+        this.directDownloadFile = directDownloadFile;
+    }
+
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof DicomInstance) {
+        if (obj instanceof DicomInstance)
             return sopInstanceUID.equals(((DicomInstance) obj).sopInstanceUID);
-        }
         return sopInstanceUID.equals(obj);
     }
 }

@@ -48,7 +48,8 @@ public class AbstractLayerModel implements LayerModel {
     public static final GraphicClipboard GraphicClipboard = new GraphicClipboard();
     private static final SelectGraphic selectGraphic = new SelectGraphic();
     public static final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
-    public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+        public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+//    public static final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
     public static final Cursor EDIT_CURSOR = getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Cursor MOVE_CURSOR = new Cursor(Cursor.MOVE_CURSOR);
 
@@ -67,8 +68,8 @@ public class AbstractLayerModel implements LayerModel {
     private boolean layerModelChangeFireingSuspended;
     private float alpha;
 
-    public Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
-    public Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
+    public final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
+    public final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
     private final boolean crossHairMode = false;
     private Object antialiasing;
 
@@ -99,15 +100,16 @@ public class AbstractLayerModel implements LayerModel {
 
                 Cursor changeCursor = null;
 
-                if (!graph.isShapeValid() || !graph.isGraphicComplete())
+                if (!graph.isShapeValid() || !graph.isGraphicComplete()) {
                     changeCursor = EDIT_CURSOR;
-                else {
-                    if (graph.isOnGraphicLabel(mouseevent))
+                } else {
+                    if (graph.isOnGraphicLabel(mouseevent)) {
                         changeCursor = HAND_CURSOR;
-                    else if (graph.getHandlePointIndex(mouseevent) >= 0)
+                    } else if (graph.getHandlePointIndex(mouseevent) >= 0) {
                         changeCursor = EDIT_CURSOR;
-                    else if (graph.getArea(mouseevent).contains(p))
+                    } else if (graph.getArea(mouseevent).contains(p)) {
                         changeCursor = MOVE_CURSOR;
+                    }
                 }
 
                 if (changeCursor != null) {

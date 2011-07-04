@@ -68,7 +68,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -554,9 +553,10 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (progressBar instanceof JProgressBar) {
-            CircularProgressBar cricleBar = (CircularProgressBar) progressBar;
-            Rectangle rect = cricleBar.getBounds();
+        if (progressBar != null) {
+            // To avoid concurrency issue
+            JProgressBar bar = progressBar;
+            Rectangle rect = bar.getBounds();
             rect.x = thumbnailSize - rect.width - 2;
             rect.y = thumbnailSize - rect.height - 2;
             if (rect.contains(e.getPoint())) {

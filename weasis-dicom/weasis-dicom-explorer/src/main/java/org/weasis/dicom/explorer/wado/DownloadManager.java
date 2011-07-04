@@ -36,6 +36,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.dcm4che2.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -155,6 +156,7 @@ public class DownloadManager {
                                 final MediaSeriesGroup uniquePatient = patient;
                                 GuiExecutor.instance().execute(new Runnable() {
 
+                                    @Override
                                     public void run() {
                                         synchronized (UIManager.VIEWER_PLUGINS) {
                                             for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
@@ -198,25 +200,26 @@ public class DownloadManager {
         // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
         // the tags located in DICOM object (because original DICOM can contain different values after merging
         // patient or study
-        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), ""); //$NON-NLS-1$
-        String patientBirthDate = getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), ""); //$NON-NLS-1$
-        String name =
-            getTagAttribute(xmler, TagW.PatientName.getTagName(), Messages.getString("DownloadManager.unknown")); //$NON-NLS-1$
+        String unknown = Messages.getString("DownloadManager.unknown");//$NON-NLS-1$
+        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), unknown); //$NON-NLS-1$
+        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
+        String name = getTagAttribute(xmler, TagW.PatientName.getTagName(), unknown); //$NON-NLS-1$
 
         // TODO set preferences of building patientPseudoUID
-        String patientPseudoUID = patientID + patientBirthDate;
+        String patientPseudoUID =
+            patientID + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString());
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             patient.setTag(TagW.PatientID, patientID);
             if (name.trim().equals("")) { //$NON-NLS-1$
-                name = Messages.getString("DownloadManager.unknown"); //$NON-NLS-1$
+                name = unknown; //$NON-NLS-1$
             }
             name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
             patient.setTag(TagW.PatientName, name);
 
             patient.setTag(TagW.PatientSex, getTagAttribute(xmler, TagW.PatientSex.getTagName(), "O")); //$NON-NLS-1$
-            patient.setTag(TagW.PatientBirthDate, TagW.getDicomDate(patientBirthDate));
+            patient.setTag(TagW.PatientBirthDate, birthdate);
             patient.setTagNoNull(TagW.PatientBirthTime,
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.PatientBirthTime.getTagName(), null)));
             model.addHierarchyNode(TreeModel.rootNode, patient);
@@ -349,6 +352,8 @@ public class DownloadManager {
                             } else {
                                 dcmInstance.setInstanceNumber(getIntegerTagAttribute(xmler,
                                     TagW.InstanceNumber.getTagName(), -1));
+                                dcmInstance.setDirectDownloadFile(getTagAttribute(xmler,
+                                    TagW.DirectDownloadFile.getTagName(), null));
                                 dicomInstances.add(dcmInstance);
                             }
                         }
@@ -390,9 +395,8 @@ public class DownloadManager {
     private static String getTagAttribute(XMLStreamReader xmler, String attribute, String defaultValue) {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
-            if (val != null) {
+            if (val != null)
                 return val;
-            }
         }
         return defaultValue;
     }
@@ -401,9 +405,8 @@ public class DownloadManager {
         if (attribute != null) {
             try {
                 String val = xmler.getAttributeValue(null, attribute);
-                if (val != null) {
+                if (val != null)
                     return Integer.valueOf(val);
-                }
             } catch (NumberFormatException e) {
             }
         }

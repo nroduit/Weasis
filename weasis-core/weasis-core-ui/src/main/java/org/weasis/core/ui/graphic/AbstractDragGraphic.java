@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
@@ -46,6 +48,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
  */
 
 public abstract class AbstractDragGraphic implements Graphic, Cloneable {
+
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractDragGraphic.class);
 
     public final static int UNDEFINED = -1;
 
@@ -164,8 +168,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     public Point2D getHandlePoint(int index) {
         if (index < 0 || index >= handlePointList.size())
             return null;
-        Point2D handlePoint = handlePointList.get(index);
-        return handlePoint != null ? (Point2D) handlePointList.get(index).clone() : null;
+        return handlePointList.get(index);
     }
 
     @Override
@@ -844,7 +847,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
             int lastPointIndex = handlePointList.size() - 1;
 
             while (lastPointIndex > 0) {
-                Point2D checkPoint = handlePointList.get(lastPointIndex);
+                Point2D checkPoint = getHandlePoint(lastPointIndex);
                 ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
                 while (listIt.hasPrevious()) {
                     if (checkPoint != null && checkPoint.equals(listIt.previous()))
@@ -1017,7 +1020,7 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
                 }
             }
         } else {
-            Point2D point = handlePointList.get(handlePointIndex);
+            Point2D point = getHandlePoint(handlePointIndex);
             if (point != null) {
                 point.setLocation(mouseEvent.getImageCoordinates());
                 // point.setLocation(point.getX() + deltaX, point.getY() + deltaY);

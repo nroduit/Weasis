@@ -20,10 +20,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
@@ -92,7 +95,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     private final DicomModel dicomModel;
     private final Series dicomSeries;
-    private volatile JProgressBar progressBar;
+    private final JProgressBar progressBar;
     private DownloadPriority priority = null;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel) {
@@ -102,14 +105,17 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.dicomSeries = dicomSeries;
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
+        // Trick to keep progressBar with a final modifier. The progressBar must be instantiated in EDT (required by
+        // substance)
+        final CircularProgressBar[] bar = new CircularProgressBar[1];
         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
             @Override
             public void run() {
-                progressBar = new CircularProgressBar(0, sopList.size());
-                progressBar.setSize(30, 30);
+                bar[0] = new CircularProgressBar(0, sopList.size());
             }
         });
+        this.progressBar = bar[0];
         this.dicomSeries.setSeriesLoader(this);
     }
 
@@ -183,8 +189,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, dicomModel, null,
                     dicomSeries));
             }
+            this.dicomSeries.setSeriesLoader(null);
         }
-        this.dicomSeries.setSeriesLoader(null);
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
@@ -254,12 +260,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
             URL url = null;
             try {
-
-                // transfer syntax lossy: 1.2.840.10008.1.2.4.50
-                // 1.2.840.10008.1.2.4.51 1.2.840.10008.1.2.4.81
-                // 1.2.840.10008.1.2.4.91
-                // TODO verify that 1.2.840.10008.1.2.4.81 can accept the ratio parameter
-
                 String studyUID = ""; //$NON-NLS-1$
                 String seriesUID = ""; //$NON-NLS-1$
                 if (!wado.isRequireOnlySOPInstanceUID()) {
@@ -267,42 +267,46 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
                 }
                 StringBuffer request = new StringBuffer(wado.getWadoURL());
-                request.append("?requestType=WADO&studyUID="); //$NON-NLS-1$
-                request.append(studyUID);
-                request.append("&seriesUID="); //$NON-NLS-1$
-                request.append(seriesUID);
-                request.append("&objectUID="); //$NON-NLS-1$
-                request.append(instance.getSopInstanceUID());
-                request.append("&contentType=application%2Fdicom"); //$NON-NLS-1$
-                TransferSyntax transcoding = DicomManager.getInstance().getWadoTSUID();
-                if (transcoding.getTransferSyntaxUID() != null) {
-                    dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
-                }
-                String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
-                if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
-                    // Mac does not have native jpeg2000 decoder (J2KImageReaderCodecLib), will use J2KImageReader
-                    // if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
-                    // && wado_tsuid.startsWith("1.2.840.10008.1.2.4.9")) {
-                    // wado_tsuid = TransferSyntax.RLE.getTransferSyntaxUID();
-                    // }
-                    request.append("&transferSyntax="); //$NON-NLS-1$
-                    request.append(wado_tsuid);
+                if (instance.getDirectDownloadFile() == null) {
+                    request.append("?requestType=WADO&studyUID="); //$NON-NLS-1$
+                    request.append(studyUID);
+                    request.append("&seriesUID="); //$NON-NLS-1$
+                    request.append(seriesUID);
+                    request.append("&objectUID="); //$NON-NLS-1$
+                    request.append(instance.getSopInstanceUID());
+                    request.append("&contentType=application%2Fdicom"); //$NON-NLS-1$
+                    TransferSyntax transcoding = DicomManager.getInstance().getWadoTSUID();
                     if (transcoding.getTransferSyntaxUID() != null) {
-                        dicomSeries.setTag(TagW.WadoCompressionRate, transcoding.getCompression());
+                        dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
                     }
-                    Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
-                    if (rate != null && rate > 0) {
-                        request.append("&imageQuality="); //$NON-NLS-1$
-                        request.append(rate);
+                    String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
+                    if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
+                        // Mac does not have native jpeg2000 decoder (J2KImageReaderCodecLib), will use J2KImageReader
+                        // if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
+                        // && wado_tsuid.startsWith("1.2.840.10008.1.2.4.9")) {
+                        // wado_tsuid = TransferSyntax.RLE.getTransferSyntaxUID();
+                        // }
+                        request.append("&transferSyntax="); //$NON-NLS-1$
+                        request.append(wado_tsuid);
+                        if (transcoding.getTransferSyntaxUID() != null) {
+                            dicomSeries.setTag(TagW.WadoCompressionRate, transcoding.getCompression());
+                        }
+                        Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
+                        if (rate != null && rate > 0) {
+                            request.append("&imageQuality="); //$NON-NLS-1$
+                            request.append(rate);
+                        }
+                        // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     }
-                    // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
+                    // else if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
+                    // && instance.getTransferSyntaxUID() != null
+                    // && instance.getTransferSyntaxUID().startsWith("1.2.840.10008.1.2.4.9")) {
+                    // request.append("&transferSyntax=1.2.840.10008.1.2.5");
+                    // request.append(wado_tsuid);
+                    // }
+                } else {
+                    request.append(instance.getDirectDownloadFile());
                 }
-                // else if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
-                // && instance.getTransferSyntaxUID() != null
-                // && instance.getTransferSyntaxUID().startsWith("1.2.840.10008.1.2.4.9")) {
-                // request.append("&transferSyntax=1.2.840.10008.1.2.5");
-                // request.append(wado_tsuid);
-                // }
                 request.append(wado.getAdditionnalParameters());
 
                 url = new URL(request.toString());
@@ -390,10 +394,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
                     }
                     File file = null;
-                    try {
-                        file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (instance.getDirectDownloadFile() == null) {
+                        try {
+                            file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                     if (file != null) {
                         final File finalfile = file;
@@ -708,8 +714,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         // Download file.
         @Override
         public Boolean call() throws Exception {
-            // Increment progress bar in EDT and repaint when downloaded
-            incrementProgressBarValue();
 
             // RandomAccessFile file = null;
             InputStream stream = null;
@@ -717,10 +721,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
             // If there is a proxy, it should be in the System class properties if Weasis is launch through Java Web
             // Start
-            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-            httpCon.setDoOutput(true);
-            httpCon.setDoInput(true);
-            httpCon.setRequestMethod("GET"); //$NON-NLS-1$
+            URLConnection httpCon = url.openConnection();
             if (wadoParameters.getWebLogin() != null) {
                 httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -729,11 +730,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             // Connect to server.
             httpCon.connect();
 
-            // Make sure response code is in the 200 range.
-            if (httpCon.getResponseCode() / 100 != 2) {
-                error();
-                log.error("Http Response error {} for {}", httpCon.getResponseCode(), url); //$NON-NLS-1$
-                return false;
+            if (httpCon instanceof HttpURLConnection) {
+                int responseCode = ((HttpURLConnection) httpCon).getResponseCode();
+                // Make sure response code is in the 200 range.
+                if (responseCode / 100 != 2) {
+                    error();
+                    log.error("Http Response error {} for {}", responseCode, url); //$NON-NLS-1$
+                    return false;
+                }
             }
 
             if (tempFile == null) {
@@ -741,20 +745,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
 
             stream = httpCon.getInputStream();
-            // TODO find workaround
-            // Does not work with WADO. (only without output filter on the wado server). In dcm4chee
+            // Does not work with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
             // http://www.dcm4che.org/jira/browse/DCMEE-421
             int contentLength = httpCon.getContentLength();
             contentLength = -1;
             if (contentLength == -1) {
-                // long skipped = stream.skip(stream.available());
-                // contentLength = 0;
-                // while (skipped > 0) {
-                // contentLength += skipped;
-                // skipped = stream.skip(stream.available());
-                // }
-                // stream.close();
-                // stream = httpCon.getInputStream();
+                progressBar.setIndeterminate(progressBar.getMaximum() < 3);
+            } else {
+                // TODO add external circle progression
             }
 
             // Set the size for this download if it hasn't been already set.
@@ -766,17 +764,25 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             log.debug("Download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-                if (wado == null)
-                    return false;
                 int[] overrideList = wado.getOverrideDicomTagIDList();
-                if (overrideList == null) {
-                    if (progressBar instanceof CircularProgressBar) {
-                        FileUtil.writeFile(stream, new FileOutputStream(tempFile), dicomSeries);
-                    } else {
-                        FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+                boolean downloaded = wado != null;
+                if (overrideList == null && downloaded) {
+                    downloaded =
+                        FileUtil.writeFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(
+                            tempFile));
+                } else if (downloaded) {
+                    downloaded =
+                        writFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(tempFile),
+                            overrideList);
+                }
+                if (!downloaded) {
+                    log.warn("Download interruption {} ", url); //$NON-NLS-1$
+                    try {
+                        tempFile.delete();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } else {
-                    writFile(stream, new FileOutputStream(tempFile), overrideList);
+                    return false;
                 }
 
                 if (dicomReader.readMediaTags()) {
@@ -864,7 +870,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     // stateChanged();
                 }
             }
-
+            // Increment progress bar in EDT and repaint when downloaded
+            incrementProgressBarValue();
             return true;
         }
 
@@ -907,12 +914,13 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
                 dos.writeDicomFile(dcm);
                 return true;
+            } catch (InterruptedIOException e) {
+                return false;
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
             } finally {
                 FileUtil.safeClose(dos);
-                // FileUtil.safeClose(stream);
                 FileUtil.safeClose(dis);
             }
         }

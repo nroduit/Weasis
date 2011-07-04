@@ -1475,6 +1475,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 thumb.addMouseListener(createThumbnailMouseAdapter(series, dicomModel, null));
                 thumb.addKeyListener(createThumbnailKeyListener(series, dicomModel));
                 thumb.registerListeners();
+                if (series.getSeriesLoader() instanceof LoadSeries) {
+                    // In case series is downloaded or canceled
+                    LoadSeries loader = (LoadSeries) series.getSeriesLoader();
+                    if (loader.isDone()) {
+                        thumb.setProgressBar(null);
+                        thumb.repaint();
+                    } else {
+                        thumb.setProgressBar(loader.getProgressBar());
+                    }
+                }
                 return thumb;
             }
         };
@@ -1713,7 +1723,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             for (int i = selList.size() - 1; i >= 0; i--) {
-                                dicomModel.removeSeries(selList.get(0));
+                                dicomModel.removeSeries(selList.get(i));
                             }
                             selList.clear();
                         }

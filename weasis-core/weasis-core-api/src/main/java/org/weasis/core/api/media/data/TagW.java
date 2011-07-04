@@ -69,9 +69,11 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ImageBitsPerPixel = new TagW(Messages.getString("TagElement.img_bpp"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageCache = new TagW("Image Cache", TagType.Boolean); //$NON-NLS-1$
 
-    // Do not internationalize WadoTransferSyntaxUID and WadoCompressionRate because they are defined in wado_query.xsd
+    // Do not internationalize WadoTransferSyntaxUID, WadoCompressionRate and DirectDownloadFile because they are
+    // defined in wado_query.xsd
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
     public final static TagW WadoTransferSyntaxUID = new TagW("Wado Transfer Syntax UID", TagType.String); //$NON-NLS-1$
+    public final static TagW DirectDownloadFile = new TagW("Direct Download File", TagType.String); //$NON-NLS-1$
 
     public final static TagW WadoParameters = new TagW("Wado Parameter", TagType.Object); //$NON-NLS-1$
     public final static TagW WadoInstanceReferenceList = new TagW("List of DICOM instance References", TagType.List); //$NON-NLS-1$
@@ -289,9 +291,8 @@ public class TagW implements Transferable, Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TagW) {
+        if (obj instanceof TagW)
             return ((TagW) obj).id == id;
-        }
         return false;
     }
 
@@ -301,9 +302,8 @@ public class TagW implements Transferable, Serializable {
     }
 
     public static String getFormattedText(Object value, TagType type, String format) {
-        if (value == null) {
+        if (value == null)
             return ""; //$NON-NLS-1$
-        }
 
         String str;
 
@@ -425,9 +425,8 @@ public class TagW implements Transferable, Serializable {
     private static String getPattern(int startIndex, String format) {
         int beginIndex = format.indexOf('$', startIndex);
         int endIndex = format.indexOf('$', startIndex + 2);
-        if (beginIndex == -1 || endIndex == -1) {
+        if (beginIndex == -1 || endIndex == -1)
             return null;
-        }
         return format.substring(beginIndex + 1, endIndex);
     }
 
@@ -484,9 +483,8 @@ public class TagW implements Transferable, Serializable {
     }
 
     public static String formatDate(Date date) {
-        if (date != null) {
+        if (date != null)
             return formatDate.format(date);
-        }
         return ""; //$NON-NLS-1$
     }
 
@@ -498,18 +496,16 @@ public class TagW implements Transferable, Serializable {
     @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         for (int i = 0; i < flavors.length; i++) {
-            if (flavor.equals(flavors[i])) {
+            if (flavor.equals(flavors[i]))
                 return true;
-            }
         }
         return false;
     }
 
     @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        if (flavor.equals(flavors[0])) {
+        if (flavor.equals(flavors[0]))
             return this;
-        }
         throw new UnsupportedFlavorException(flavor);
     }
 }

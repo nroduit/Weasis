@@ -10,22 +10,19 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-import javax.swing.JLabel;
+import java.awt.Graphics;
 
-import org.weasis.core.api.Messages;
+import javax.swing.JLabel;
 
 public class AnimatedLabel extends JLabel {
 
     private static final long serialVersionUID = 1L;
 
-    private AnimatedIconStatic ani;
-    private Animate an;
+    private volatile AnimatedIconStatic ani;
+    private volatile Animate an;
 
     public AnimatedLabel(AnimatedIconStatic icon, long refresh) {
         init(icon, refresh);
-    }
-
-    protected AnimatedLabel() {
     }
 
     protected void init(AnimatedIconStatic icon, long refresh) {
@@ -50,6 +47,12 @@ public class AnimatedLabel extends JLabel {
     }
 
     @Override
+    protected void paintComponent(Graphics g) {
+        ani.paintIcon(this, g, 0, 0);
+        super.paintComponent(g);
+    }
+
+    @Override
     protected void finalize() throws Throwable {
         this.an.interrupt();
     }
@@ -60,7 +63,7 @@ public class AnimatedLabel extends JLabel {
 
         public Animate(long refresh) {
             super.setDaemon(true);
-            super.setName("AnimatorThread_" + this.refresh + "_" + AnimatedLabel.this.ani.getName()); //$NON-NLS-1$ //$NON-NLS-2$
+            super.setName(AnimatedLabel.this.ani.getName()); //$NON-NLS-1$ //$NON-NLS-2$
             this.refresh = refresh;
         }
 

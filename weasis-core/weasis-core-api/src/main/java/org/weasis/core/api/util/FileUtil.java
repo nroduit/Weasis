@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -32,7 +33,6 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.media.data.Series;
 
 public class FileUtil {
     private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
@@ -60,9 +60,8 @@ public class FileUtil {
     }
 
     public final static void deleteDirectoryContents(final File dir) {
-        if ((dir == null) || !dir.isDirectory()) {
+        if ((dir == null) || !dir.isDirectory())
             return;
-        }
         final File[] files = dir.listFiles();
         if (files != null) {
             for (final File f : files) {
@@ -102,9 +101,8 @@ public class FileUtil {
     public static boolean isWriteable(File file) {
         if (file.exists()) {
             // Check the existing file.
-            if (!file.canWrite()) {
+            if (!file.canWrite())
                 return false;
-            }
         } else {
             // Check the file that doesn't exist yet.
             // Create a new file. The file is writeable if
@@ -134,13 +132,11 @@ public class FileUtil {
     }
 
     public static String nameWithoutExtension(String fn) {
-        if (fn == null) {
+        if (fn == null)
             return null;
-        }
         int i = fn.lastIndexOf('.');
-        if (i > 0) {
+        if (i > 0)
             return fn.substring(0, i);
-        }
         return fn;
     }
 
@@ -163,9 +159,8 @@ public class FileUtil {
     }
 
     public static boolean writeFile(InputStream inputStream, OutputStream out) {
-        if (inputStream == null && out == null) {
+        if (inputStream == null && out == null)
             return false;
-        }
         try {
             byte[] buf = new byte[4096];
             int offset;
@@ -173,55 +168,32 @@ public class FileUtil {
                 out.write(buf, 0, offset);
             }
             return true;
+        } catch (InterruptedIOException e) {
+            return false;
         } catch (IOException e) {
             e.printStackTrace();
             return false;
-        } finally {
-            FileUtil.safeClose(inputStream);
-            FileUtil.safeClose(out);
         }
-    }
 
-    public static boolean writeFile(InputStream inputStream, OutputStream out, Series series) {
-        if (inputStream == null && out == null) {
-            return false;
-        }
-        try {
-            double size = series.getFileSize();
-            byte[] buf = new byte[4096];
-            int offset;
-            while ((offset = inputStream.read(buf)) > 0) {
-                out.write(buf, 0, offset);
-                size += offset;
-                series.setFileSize(size);
-            }
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
+        finally {
             FileUtil.safeClose(inputStream);
             FileUtil.safeClose(out);
         }
     }
 
     public static String formatSize(double size) {
-        if (size >= GB) {
+        if (size >= GB)
             return df.format(size / GB) + Messages.getString("FileUtil.gb"); //$NON-NLS-1$
-        }
-        if (size >= MB) {
+        if (size >= MB)
             return df.format(size / MB) + Messages.getString("FileUtil.mb"); //$NON-NLS-1$
-        }
-        if (size >= KB) {
+        if (size >= KB)
             return df.format(size / KB) + Messages.getString("FileUtil.kb"); //$NON-NLS-1$
-        }
         return (int) size + Messages.getString("FileUtil.bytes"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {
-        if (inputStream == null && out == null) {
+        if (inputStream == null && out == null)
             return false;
-        }
         try {
             FileChannel fci = inputStream.getChannel();
             FileChannel fco = out.getChannel();
@@ -237,9 +209,8 @@ public class FileUtil {
     }
 
     public static boolean nioWriteFile(InputStream in, OutputStream out, final int bufferSize) {
-        if (in == null && out == null) {
+        if (in == null && out == null)
             return false;
-        }
         try {
             ReadableByteChannel readChannel = Channels.newChannel(in);
             WritableByteChannel writeChannel = Channels.newChannel(out);

@@ -15,16 +15,21 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
+import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
+import org.weasis.core.api.gui.util.AnimatedIconStatic;
+import org.weasis.core.api.gui.util.ImageSectionIcon;
 import org.weasis.core.api.util.FontTools;
 
 public class CircularProgressBar extends JProgressBar {
     private final static Color BACK_COLOR = new Color(82, 152, 219);
-    private String message;
+    public static final ImageIcon ICON = new ImageIcon(
+        CircularProgressBar.class.getResource("/icon/22x22/process-working.png")); //$NON-NLS-1$
+
+    private volatile Animate animateThread;
 
     public CircularProgressBar() {
-        super();
         init();
     }
 
@@ -35,12 +40,23 @@ public class CircularProgressBar extends JProgressBar {
 
     private void init() {
         this.setOpaque(false);
+        this.setSize(30, 30);
     }
 
     @Override
     public void paint(Graphics g) {
         if (g instanceof Graphics2D) {
-            draw((Graphics2D) g);
+            if (isIndeterminate()) {
+                drawInderminate((Graphics2D) g);
+            } else {
+                draw((Graphics2D) g);
+            }
+        }
+    }
+
+    private void drawInderminate(Graphics2D g) {
+        if (animateThread != null) {
+            animateThread.paintIcon(this, g);
         }
     }
 
@@ -74,16 +90,68 @@ public class CircularProgressBar extends JProgressBar {
     }
 
     @Override
-    public void setIndeterminate(boolean indeterminate) {
-        if (indeterminate) {
-
+    public synchronized void setIndeterminate(boolean newValue) {
+        if (newValue != this.isIndeterminate()) {
+            if (animateThread != null) {
+                stopIndeterminate();
+            }
+            if (newValue) {
+                if (animateThread == null) {
+                    animateThread = new Animate(50);
+                    animateThread.start();
+                }
+            }
+            super.setIndeterminate(newValue);
         }
-        super.setIndeterminate(indeterminate);
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public synchronized void stopIndeterminate() {
+        Thread moribund = animateThread;
+        animateThread = null;
+        if (moribund != null) {
+            moribund.interrupt();
+        }
+    }
 
+    @Override
+    protected void finalize() throws Throwable {
+        if (animateThread != null) {
+            animateThread.interrupt();
+        }
+    }
+
+    protected class Animate extends Thread {
+        private final AnimatedIconStatic indeterminateIcon;
+        private final long refresh;
+
+        public Animate(long refresh) {
+            super.setDaemon(true);
+            this.refresh = refresh;
+            indeterminateIcon = new ImageSectionIcon(ICON, 22, 22, 0, 32);
+        }
+
+        public void paintIcon(CircularProgressBar circularProgressBar, Graphics2D g) {
+            int h = circularProgressBar.getHeight();
+            int w = circularProgressBar.getWidth();
+            int x = (w - indeterminateIcon.getIconWidth()) / 2;
+            int y = (h - indeterminateIcon.getIconHeight()) / 2;
+            g.setPaint(Color.WHITE);
+            g.fillRect(x, y, indeterminateIcon.getIconWidth(), indeterminateIcon.getIconHeight());
+            indeterminateIcon.paintIcon(circularProgressBar, g, x, y);
+        }
+
+        @Override
+        public void run() {
+            while (!this.isInterrupted()) {
+                indeterminateIcon.animate();
+                CircularProgressBar.this.repaint();
+                try {
+                    Thread.sleep(this.refresh);
+                } catch (InterruptedException e) {
+                    this.interrupt();
+                }
+            }
+        }
     }
 
 }

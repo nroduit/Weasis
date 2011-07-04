@@ -695,7 +695,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
                                         MouseEventDouble event =
-                                            new MouseEventDouble(item2, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
+                                            new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
                                         ds.completeDrag(event);
                                         mouseClickHandler.mouseReleased(event);
                                     }

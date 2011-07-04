@@ -12,7 +12,6 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -47,7 +46,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.perpendicular"); //$NON-NLS-1$
+        return "Perpendicular";
     }
 
     @Override

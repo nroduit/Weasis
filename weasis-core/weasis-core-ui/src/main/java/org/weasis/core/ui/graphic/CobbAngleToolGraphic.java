@@ -23,7 +23,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -52,7 +51,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.cobb.angle"); //$NON-NLS-1$
+        return "Cobb's Angle";
     }
 
     @Override
@@ -66,9 +65,9 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                 // Let MN be the bisector of the two line segments AB & CD, if parallel MN is the median line
                 Line2D lineMN;
 
-                if (lineParallel)
+                if (lineParallel) {
                     lineMN = GeomUtil.getMedianLine(A, B, C, D);
-                else {
+                } else {
                     AffineTransform rotate =
                         AffineTransform.getRotateInstance(-Math.toRadians(angleDeg) / 2, P.getX(), P.getY());
 
@@ -80,9 +79,9 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                 if (handlePointIndex == 4 && O != null) {
                     O = GeomUtil.getPerpendicularPointToLine(lineMN, O);
                 } else {
-                    if (lineParallel)
+                    if (lineParallel) {
                         O = GeomUtil.getMidPoint(lineMN.getP1(), lineMN.getP1());
-                    else {
+                    } else {
                         // Point2D H1 = GeomUtil.getColinearPointWithRatio(ABPline[0], ABPline[1], 3 / 4);
                         // Point2D H2 = GeomUtil.getColinearPointWithRatio(CDPline[0], CDPline[1], 3 / 4);
 
@@ -95,13 +94,15 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                         O = GeomUtil.getMidPoint(O1, O2);
                     }
                 }
-            } else
+            } else {
                 O = null;
+            }
 
-            if (handlePointList.size() < 5)
+            if (handlePointList.size() < 5) {
                 handlePointList.add(O);
-            else
+            } else {
                 handlePointList.set(4, O);
+            }
         }
 
         return handlePointIndex;
@@ -114,11 +115,13 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 6);
 
-        if (ABvalid)
+        if (ABvalid) {
             path.append(new Line2D.Double(A, B), false);
+        }
 
-        if (CDvalid)
+        if (CDvalid) {
             path.append(new Line2D.Double(C, D), false);
+        }
 
         if (ABvalid && CDvalid && O != null) {
             AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(10));
@@ -140,11 +143,13 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
             final Point2D I = new Point2D.Double(Ax + r1 * (Bx - Ax), Ay + r1 * (By - Ay));
             final Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
 
-            if (r1 < 0 || r1 > 1) // I is outside of AB line segment
+            if (r1 < 0 || r1 > 1) {
                 aShape.addShape(new Line2D.Double(r1 > 1 ? B : A, I), getDashStroke(1.0f), true);
+            }
 
-            if (r2 < 0 || r2 > 1)// J is outside of AB line segment
+            if (r2 < 0 || r2 > 1) {
                 aShape.addShape(new Line2D.Double(r1 > 1 ? D : C, J), getDashStroke(1.0f), true);
+            }
 
             aShape.addShape(new Line2D.Double(O, I));
             aShape.addShape(new Line2D.Double(O, J));
@@ -191,8 +196,9 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                 aShape.addInvShape(arcAngle, O, radius / rMax, false);
             }
 
-        } else if (path.getCurrentPoint() != null)
+        } else if (path.getCurrentPoint() != null) {
             newShape = path;
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));

@@ -342,23 +342,23 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (dicomObject != null && tags.size() == 0) {
             // -------- Mandatory Tags --------
             // Tags for identifying group (Patient, Study, Series)
-            setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            String name = dicomObject.getString(Tag.PatientName, Messages.getString("DicomMediaIO.unknown")); //$NON-NLS-1$
+            String unknown = Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
+            setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, unknown));
+            String name = dicomObject.getString(Tag.PatientName, unknown);
             if (name.trim().equals("")) { //$NON-NLS-1$
-                name = Messages.getString("DicomMediaIO.unknown"); //$NON-NLS-1$
+                name = unknown;
             }
             name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
             setTag(TagW.PatientName, name);
-            setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null));
+            Date birthdate = getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null);
+            setTagNoNull(TagW.PatientBirthDate, birthdate);
             // Identifier for the patient. Tend to be unique.
             // TODO set preferences for what is PatientUID
-            setTag(TagW.PatientPseudoUID,
-                getTagValue(TagW.PatientID).toString() + TagW.formatDate((Date) getTagValue(TagW.PatientBirthDate)));
-            setTag(TagW.StudyInstanceUID,
-                dicomObject.getString(Tag.StudyInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            setTag(TagW.SeriesInstanceUID,
-                dicomObject.getString(Tag.SeriesInstanceUID, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
-            setTag(TagW.Modality, dicomObject.getString(Tag.Modality, Messages.getString("DicomMediaIO.unknown"))); //$NON-NLS-1$
+            setTag(TagW.PatientPseudoUID, getTagValue(TagW.PatientID).toString()
+                + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()));
+            setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, unknown));
+            setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, unknown));
+            setTag(TagW.Modality, dicomObject.getString(Tag.Modality, unknown));
             setTag(TagW.InstanceNumber, dicomObject.getInt(Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
             setTag(TagW.SOPInstanceUID,
                 dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));

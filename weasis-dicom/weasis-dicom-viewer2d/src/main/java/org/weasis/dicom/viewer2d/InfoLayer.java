@@ -300,7 +300,7 @@ public class InfoLayer implements AnnotationsLayer {
             DicomSeries s = (DicomSeries) series;
             boolean[] list = s.getImageInMemoryList();
             int length = list.length > 120 ? 120 : list.length;
-            x -= list.length;
+            x -= length;
             preloadingProgressBound.setBounds(x - 1, y - 1, length + 1, 5 + 1);
             g2d.fillRect(x, y, length, 5);
             g2d.setPaint(Color.BLACK);

@@ -59,6 +59,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -103,6 +105,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
     private static final ImageTransferHandler EXPORT_TO_CLIPBOARD = new ImageTransferHandler();
 
     protected final FocusHandler focusHandler = new FocusHandler();
@@ -949,7 +953,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                                                 event.getWhen(), event.getModifiers(), mp.x, mp.y,
                                                 event.getXOnScreen(), event.getYOnScreen(), event.getClickCount(),
                                                 event.isPopupTrigger(), event.getButton());
-                                        event.setImageCoordinates(p);
+                                        event.setImageCoordinates((Point2D) p.clone());
                                         SwingUtilities.convertPointToScreen(mp, DefaultView2d.this);
                                         robot.mouseMove(mp.x, mp.y);
                                     } catch (AWTException e1) {
