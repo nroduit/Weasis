@@ -570,7 +570,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         httpCon.setDoOutput(true);
         httpCon.setDoInput(true);
         httpCon.setRequestMethod("GET"); //$NON-NLS-1$
-        // Set http login (Bad!)
+        // Set http login (no protection, only convert in base64)
         if (wadoParameters.getWebLogin() != null) {
             httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
         }
@@ -655,7 +655,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     class Download implements Callable<Boolean> {
 
-        private static final int MAX_BUFFER_SIZE = 4096;
         private final URL url; // download URL
         private int size; // size of download in bytes
         private final int downloaded; // number of bytes downloaded
@@ -715,13 +714,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         @Override
         public Boolean call() throws Exception {
 
-            // RandomAccessFile file = null;
             InputStream stream = null;
-            // BufferedOutputStream out = null;
-
-            // If there is a proxy, it should be in the System class properties if Weasis is launch through Java Web
-            // Start
+            // If there is a proxy, it should be already configured
             URLConnection httpCon = url.openConnection();
+            // Set http login (no protection, only convert in base64)
             if (wadoParameters.getWebLogin() != null) {
                 httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
             }

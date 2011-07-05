@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
 
 import org.noos.xing.mydoggy.plaf.persistence.xml.Base64;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
@@ -56,7 +55,6 @@ import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 
@@ -87,18 +85,19 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public DicomModel() {
         model = new Tree<MediaSeriesGroup>(rootNode);
-        Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
-        if (prefs == null) {
-        } else {
-            Preferences p = prefs.node(PREFERENCE_NODE);
-        }
-        splittingRules.put(Modality.Default, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID });
-        splittingRules.put(Modality.CT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
-            TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
+        // Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+        // if (prefs == null) {
+        // } else {
+        // Preferences p = prefs.node(PREFERENCE_NODE);
+        // }
+        splittingRules.put(Modality.Default, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType,
+            TagW.ContrastBolusAgent, TagW.SOPClassUID });
+        splittingRules.put(Modality.CT, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType, TagW.ContrastBolusAgent,
+            TagW.SOPClassUID, TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
         splittingRules.put(Modality.PT, splittingRules.get(Modality.CT));
-        splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
-            TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
-            TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
+        splittingRules.put(Modality.MR, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType, TagW.ContrastBolusAgent,
+            TagW.SOPClassUID, TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant,
+            TagW.ScanOptions, TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
 
     }
 
