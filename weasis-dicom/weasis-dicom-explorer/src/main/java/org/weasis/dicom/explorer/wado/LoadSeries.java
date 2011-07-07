@@ -69,6 +69,7 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.wado.WadoParameters;
+import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
@@ -574,6 +575,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         if (wadoParameters.getWebLogin() != null) {
             httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
         }
+        if (wadoParameters.getHttpTaglist().size() > 0) {
+            for (HttpTag tag : wadoParameters.getHttpTaglist()) {
+                httpCon.setRequestProperty(tag.getKey(), tag.getValue());
+            }
+        }
         // Connect to server.
         httpCon.connect();
 
@@ -720,6 +726,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             // Set http login (no protection, only convert in base64)
             if (wadoParameters.getWebLogin() != null) {
                 httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            if (wadoParameters.getHttpTaglist().size() > 0) {
+                for (HttpTag tag : wadoParameters.getHttpTaglist()) {
+                    httpCon.setRequestProperty(tag.getKey(), tag.getValue());
+                }
             }
             // Specify what portion of file to download.
             httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
