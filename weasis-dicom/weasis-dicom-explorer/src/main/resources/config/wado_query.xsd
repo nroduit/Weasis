@@ -108,21 +108,18 @@
   	</xsd:restriction>
   </xsd:simpleType>
   
-  <xsd:group name="httpTagList">
-    <xsd:sequence>
-    <xsd:element name="Tag" minOccurs="0" maxOccurs="unbounded" >
-      <xsd:attribute name="key" type="xsd:string" use="required" />
-      <xsd:attribute name="value" type="xsd:string" use="required" />
-    </xsd:element>
-    </xsd:sequence>
-  </xsd:group>
 
 	<!--                           DESCRIPTION OF WADO_QUERY XML DOCUMENT                          -->
 	
 	<xsd:element name="wado_query" type="WADOQuery"/>
 	<xsd:complexType name="WADOQuery">
-	 	<xsd:group ref="httpTagList"/>
 		<xsd:sequence>
+			<xsd:element name="httpTag" minOccurs="0" maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="key" type="xsd:string" use="required" />
+					<xsd:attribute name="value" type="xsd:string" use="required" />
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="Patient" type="Patient" minOccurs="1" maxOccurs="unbounded"/>
 		</xsd:sequence>
 		<xsd:attribute name="wadoURL" type="xsd:anyURI" use="required"/>

@@ -23,7 +23,7 @@ public class WadoParameters {
     public static final String TAG_WADO_ADDITIONNAL_PARAMETERS = "additionnalParameters"; //$NON-NLS-1$
     public static final String TAG_WADO_OVERRIDE_TAGS = "overrideDicomTagsList"; //$NON-NLS-1$
     public static final String TAG_WADO_WEB_LOGIN = "webLogin"; //$NON-NLS-1$
-    public static final String TAG_HTTP_TAG_LIST = "httpTagList"; //$NON-NLS-1$
+    public static final String TAG_HTTP_TAG = "httpTag"; //$NON-NLS-1$
 
     private final String wadoURL;
     private final boolean requireOnlySOPInstanceUID;

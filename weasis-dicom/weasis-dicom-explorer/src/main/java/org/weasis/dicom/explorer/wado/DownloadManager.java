@@ -145,29 +145,10 @@ public class DownloadManager {
                                         if (TagW.DICOM_LEVEL.Patient.name().equals(xmler.getName().getLocalPart())) {
                                             patient = readPatient(model, seriesList, xmler, wadoParameters);
                                             pat++;
-                                        } else if (WadoParameters.TAG_HTTP_TAG_LIST.equals(xmler.getName()
-                                            .getLocalPart())) {
-                                            boolean state = true;
-                                            while (xmler.hasNext() && state) {
-                                                eventType = xmler.next();
-                                                switch (eventType) {
-                                                    case XMLStreamConstants.START_ELEMENT:
-                                                        if ("Tag".equals(xmler.getName().getLocalPart())) {
-                                                            String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
-                                                            String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
-                                                            wadoParameters.addHttpTag(httpkey, httpvalue);
-                                                        }
-                                                        break;
-                                                    case XMLStreamConstants.END_ELEMENT:
-                                                        if (WadoParameters.TAG_HTTP_TAG_LIST.equals(xmler.getName()
-                                                            .getLocalPart())) {
-                                                            state = false;
-                                                        }
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-                                            }
+                                        } else if (WadoParameters.TAG_HTTP_TAG.equals(xmler.getName().getLocalPart())) {
+                                            String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
+                                            String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
+                                            wadoParameters.addHttpTag(httpkey, httpvalue);
                                         }
                                         break;
                                     default:
