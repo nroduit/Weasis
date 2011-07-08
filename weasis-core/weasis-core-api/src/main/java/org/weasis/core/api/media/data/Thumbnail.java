@@ -108,8 +108,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     public Thumbnail(final MediaSeries<E> sequence, File thumbnailPath, int thumbnailSize) {
         super(null, null, SwingConstants.CENTER);
-        if (sequence == null)
+        if (sequence == null) {
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
+        }
         this.thumbnailSize = thumbnailSize;
         this.series = sequence;
         this.thumbnailPath = thumbnailPath;
@@ -323,17 +324,22 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 BufferedImage img = null;
                 try {
                     img = future.get();
-                    int width = img.getWidth();
-                    int height = img.getHeight();
-                    if (width > thumbnailSize || height > thumbnailSize) {
-                        final double scale = Math.min(thumbnailSize / (double) height, thumbnailSize / (double) width);
-                        PlanarImage t =
-                            scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale, DownScaleQualityHints)
-                                : PlanarImage.wrapRenderedImage(img);
-                        thumb = t.getAsBufferedImage();
-                        t.dispose();
+                    if (img == null) {
+                        thumb = null;
                     } else {
-                        thumb = img;
+                        int width = img.getWidth();
+                        int height = img.getHeight();
+                        if (width > thumbnailSize || height > thumbnailSize) {
+                            final double scale =
+                                Math.min(thumbnailSize / (double) height, thumbnailSize / (double) width);
+                            PlanarImage t =
+                                scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale,
+                                    DownScaleQualityHints) : PlanarImage.wrapRenderedImage(img);
+                            thumb = t.getAsBufferedImage();
+                            t.dispose();
+                        } else {
+                            thumb = img;
+                        }
                     }
 
                 } catch (InterruptedException e) {
@@ -353,8 +359,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 imageSoftRef = new SoftReference<BufferedImage>(thumb);
             }
         }
-        if (imageSoftRef == null)
+        if (imageSoftRef == null) {
             return null;
+        }
         return imageSoftRef.get();
     }
 
@@ -465,8 +472,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     private JPanel getScrollPane() {
         Container container = getParent();
         while (container != null) {
-            if (container.getParent() instanceof JViewport)
+            if (container.getParent() instanceof JViewport) {
                 return (JPanel) container;
+            }
             container = container.getParent();
         }
         return null;
