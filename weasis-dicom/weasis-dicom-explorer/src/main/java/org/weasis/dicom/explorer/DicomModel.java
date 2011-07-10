@@ -42,8 +42,10 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
@@ -90,14 +92,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // } else {
         // Preferences p = prefs.node(PREFERENCE_NODE);
         // }
-        splittingRules.put(Modality.Default, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType,
-            TagW.ContrastBolusAgent, TagW.SOPClassUID });
-        splittingRules.put(Modality.CT, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType, TagW.ContrastBolusAgent,
-            TagW.SOPClassUID, TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
+        splittingRules.put(Modality.Default, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID });
+        splittingRules.put(Modality.CT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
+            TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
         splittingRules.put(Modality.PT, splittingRules.get(Modality.CT));
-        splittingRules.put(Modality.MR, new TagW[] { TagW.SeriesInstanceUID, TagW.ImageType, TagW.ContrastBolusAgent,
-            TagW.SOPClassUID, TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant,
-            TagW.ScanOptions, TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
+        splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
+            TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
+            TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
 
     }
 
@@ -385,10 +386,53 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
     }
 
+    private void rebuildSeries(DicomMediaIO dicomReader, MediaElement media) {
+        String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
+        MediaSeriesGroup patient = getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
+        if (patient == null) {
+            patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
+            dicomReader.writeMetaData(patient);
+            addHierarchyNode(TreeModel.rootNode, patient);
+            LOGGER.info(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
+        }
+
+        String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
+        MediaSeriesGroup study = getHierarchyNode(patient, studyUID);
+        if (study == null) {
+            study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
+            dicomReader.writeMetaData(study);
+            addHierarchyNode(patient, study);
+        }
+        String seriesUID = (String) dicomReader.getTagValue(TagW.SeriesInstanceUID);
+        Series dicomSeries = (Series) getHierarchyNode(study, seriesUID);
+
+        if (dicomSeries == null) {
+            dicomSeries = dicomReader.buildSeries(seriesUID);
+            dicomReader.writeMetaData(dicomSeries);
+            dicomSeries.setTag(TagW.ExplorerModel, this);
+            addHierarchyNode(study, dicomSeries);
+            LOGGER.info("Series rebuilding: {}", dicomSeries); //$NON-NLS-1$
+        }
+        dicomSeries.addMedia(media);
+
+        // Load image and create thumbnail in this Thread
+        Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+        if (t == null) {
+            t = DicomExplorer.createThumbnail(dicomSeries, this, Thumbnail.DEFAULT_SIZE);
+            dicomSeries.setTag(TagW.Thumbnail, t);
+        }
+        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, this, null, dicomSeries));
+    }
+
     @Override
     public boolean applySplittingRules(Series original, MediaElement media) {
         if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
             DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
+            String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
+            if (!seriesUID.equals(dicomReader.getTagValue(TagW.SeriesInstanceUID))) {
+                rebuildSeries(dicomReader, media);
+                return true;
+            }
             if (original instanceof DicomSeries) {
                 // Handle cases when the Series is created before getting the image (downloading)
                 if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
@@ -396,6 +440,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     return true;
                 }
                 DicomSeries initialSeries = (DicomSeries) original;
+
                 int frames = dicomReader.getMediaElementNumber();
                 if (frames < 1) {
                     initialSeries.addMedia(media);
@@ -412,8 +457,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         initialSeries.addMedia(media);
                         return false;
                     }
-                    MediaSeriesGroup study = getParent(original, DicomModel.study);
-                    String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
+                    MediaSeriesGroup study = getParent(initialSeries, DicomModel.study);
                     int k = 1;
                     while (true) {
                         String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
@@ -505,9 +549,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < xmlFiles.length; i++) {
                         try {
                             File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            FileUtil.writeFile(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
-                                new FileOutputStream(tempFile));
-                            xmlFiles[i] = tempFile;
+                            if (FileUtil.writeFile(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
+                                new FileOutputStream(tempFile)) == -1) {
+                                xmlFiles[i] = tempFile;
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

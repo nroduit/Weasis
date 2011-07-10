@@ -10,8 +10,10 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.SwingWorker;
@@ -41,7 +43,7 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             if (urls[i] != null) {
                 try {
                     urlRef[i] = new URL(urls[i]);
-                } catch (Exception e) {
+                } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
             }
@@ -83,13 +85,11 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             Series dicomSeries = dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagW.SeriesInstanceUID, seriesUID);
-            dicomSeries.setTag(TagW.WadoParameters, new WadoParameters("", false, "", null, null));
+            final WadoParameters wadoParameters = new WadoParameters("", false, "", null, null);
+            dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             List<DicomInstance> dicomInstances = new ArrayList<DicomInstance>();
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
             dicomModel.addHierarchyNode(study, dicomSeries);
-
-            LoadSeries s = new LoadSeries(dicomSeries, dicomModel);
-
             for (int i = 0; i < urls.length; i++) {
                 if (urls[i] != null) {
                     String url = urls[i].toString();
@@ -98,13 +98,25 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
                     dicomInstances.add(dcmInstance);
                 }
             }
-            LoadRemoteDicomManifest.loadingQueue.offer(s);
-            Runnable[] tasks =
-                LoadRemoteDicomManifest.loadingQueue.toArray(new Runnable[LoadRemoteDicomManifest.loadingQueue.size()]);
-            for (int i = 0; i < tasks.length; i++) {
-                LoadRemoteDicomManifest.currentTasks.add((LoadSeries) tasks[i]);
+
+            if (dicomInstances.size() > 0) {
+                String modality = (String) dicomSeries.getTagValue(TagW.Modality);
+                boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+                final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel);
+                if (!ps) {
+                    loadSeries.startDownloadImageReference(wadoParameters);
+                }
+
+                Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
+
+                DownloadPriority priority =
+                    new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
+                        (String) study.getTagValue(TagW.StudyInstanceUID), (Date) study.getTagValue(TagW.StudyDate), sn);
+                loadSeries.setPriority(priority);
+                LoadRemoteDicomManifest.loadingQueue.offer(loadSeries);
+                LoadRemoteDicomManifest.currentTasks.add(loadSeries);
+                LoadRemoteDicomManifest.executor.prestartAllCoreThreads();
             }
-            LoadRemoteDicomManifest.executor.prestartAllCoreThreads();
         }
         return true;
     }

@@ -140,39 +140,51 @@ public class FileUtil {
         return fn;
     }
 
-    public static boolean writeFile(URL url, File outFilename) {
+    /**
+     * @param inputStream
+     * @param out
+     * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
+     *         interruption
+     */
+    public static int writeFile(URL url, File outFilename) {
         InputStream input;
         try {
             input = url.openStream();
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return 0;
         }
         FileOutputStream outputStream;
         try {
             outputStream = new FileOutputStream(outFilename);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return false;
+            return 0;
         }
         return writeFile(input, outputStream);
     }
 
-    public static boolean writeFile(InputStream inputStream, OutputStream out) {
+    /**
+     * @param inputStream
+     * @param out
+     * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
+     *         interruption
+     */
+    public static int writeFile(InputStream inputStream, OutputStream out) {
         if (inputStream == null && out == null)
-            return false;
+            return 0;
         try {
             byte[] buf = new byte[4096];
             int offset;
             while ((offset = inputStream.read(buf)) > 0) {
                 out.write(buf, 0, offset);
             }
-            return true;
+            return -1;
         } catch (InterruptedIOException e) {
-            return false;
+            return e.bytesTransferred;
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return 0;
         }
 
         finally {

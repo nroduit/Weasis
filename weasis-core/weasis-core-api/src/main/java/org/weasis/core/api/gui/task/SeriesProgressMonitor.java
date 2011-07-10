@@ -15,14 +15,12 @@ public class SeriesProgressMonitor extends FilterInputStream {
     private final Series series;
     private int nread = 0;
     private int size = 0;
-    private double initialSize;
 
     public SeriesProgressMonitor(final Series series, InputStream in) {
         super(in);
         if (series == null)
             throw new IllegalArgumentException("Series cannot be null!");
         this.series = series;
-        this.initialSize = series.getFileSize();
         try {
             size = in.available();
         } catch (IOException ioe) {
@@ -35,8 +33,8 @@ public class SeriesProgressMonitor extends FilterInputStream {
         return (loader == null || loader.isStopped());
     }
 
-    private void updateSeriesProgression() {
-        series.setFileSize(initialSize + nread);
+    private void updateSeriesProgression(double addSize) {
+        series.setFileSize(series.getFileSize() + addSize);
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
@@ -51,45 +49,52 @@ public class SeriesProgressMonitor extends FilterInputStream {
 
     @Override
     public int read() throws IOException {
-        int c = in.read();
-        if (c >= 0) {
-            nread++;
-            updateSeriesProgression();
-        }
         if (isLoadingSeriesCanceled()) {
             InterruptedIOException exc = new InterruptedIOException("progress");
             exc.bytesTransferred = nread;
+            series.setFileSize(series.getFileSize() - nread);
+            nread = 0;
             throw exc;
         }
+        int c = in.read();
+        if (c >= 0) {
+            nread++;
+            updateSeriesProgression(1.0);
+        }
+
         return c;
     }
 
     @Override
     public int read(byte b[]) throws IOException {
-        int nr = in.read(b);
-        if (nr > 0) {
-            nread += nr;
-            updateSeriesProgression();
-        }
         if (isLoadingSeriesCanceled()) {
             InterruptedIOException exc = new InterruptedIOException("progress");
             exc.bytesTransferred = nread;
+            series.setFileSize(series.getFileSize() - nread);
+            nread = 0;
             throw exc;
+        }
+        int nr = in.read(b);
+        if (nr > 0) {
+            nread += nr;
+            updateSeriesProgression(nr);
         }
         return nr;
     }
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
-        int nr = in.read(b, off, len);
-        if (nr > 0) {
-            nread += nr;
-            updateSeriesProgression();
-        }
         if (isLoadingSeriesCanceled()) {
             InterruptedIOException exc = new InterruptedIOException("progress");
             exc.bytesTransferred = nread;
+            series.setFileSize(series.getFileSize() - nread);
+            nread = 0;
             throw exc;
+        }
+        int nr = in.read(b, off, len);
+        if (nr > 0) {
+            nread += nr;
+            updateSeriesProgression(nr);
         }
         return nr;
     }
@@ -99,7 +104,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
         long nr = in.skip(n);
         if (nr > 0) {
             nread += nr;
-            updateSeriesProgression();
+            updateSeriesProgression(nr);
         }
         return nr;
     }
@@ -108,6 +113,6 @@ public class SeriesProgressMonitor extends FilterInputStream {
     public synchronized void reset() throws IOException {
         in.reset();
         nread = size - in.available();
-        updateSeriesProgression();
+        updateSeriesProgression(nread);
     }
 }

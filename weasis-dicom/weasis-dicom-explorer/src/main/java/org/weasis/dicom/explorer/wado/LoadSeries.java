@@ -79,10 +79,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public final static String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
     public final static int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
-    public final static File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+    public final static File DICOM_EXPORT_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+    public final static File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "tmp"); //$NON-NLS-1$
     static {
         try {
             DICOM_TMP_DIR.mkdirs();
+            DICOM_EXPORT_DIR.mkdir();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -156,24 +158,26 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     @Override
     public void resume() {
-        LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar);
-        DownloadPriority p = this.getPriority();
-        p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-        taskResume.setPriority(p);
-        Thumbnail thumbnail = (Thumbnail) this.getDicomSeries().getTagValue(TagW.Thumbnail);
-        if (thumbnail != null) {
-            LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-            thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(taskResume.getDicomSeries(),
-                dicomModel, taskResume));
-            thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(), dicomModel));
+        if (isStopped()) {
+            LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar);
+            DownloadPriority p = this.getPriority();
+            p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
+            taskResume.setPriority(p);
+            Thumbnail thumbnail = (Thumbnail) this.getDicomSeries().getTagValue(TagW.Thumbnail);
+            if (thumbnail != null) {
+                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+                thumbnail.addMouseListener(DicomExplorer.createThumbnailMouseAdapter(taskResume.getDicomSeries(),
+                    dicomModel, taskResume));
+                thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(),
+                    dicomModel));
+            }
+            LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
         }
-        LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
     }
 
     @Override
     protected void done() {
-
-        if (progressBar.getValue() == progressBar.getMaximum()) {
+        if (!isStopped()) {
             LoadRemoteDicomManifest.currentTasks.remove(this);
             Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
@@ -663,7 +667,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         private final URL url; // download URL
         private int size; // size of download in bytes
-        private final int downloaded; // number of bytes downloaded
+        private int downloaded; // number of bytes downloaded
         private Status status; // current status of download
         private File tempFile;
         private final WadoParameters wadoParameters;
@@ -721,22 +725,29 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         public Boolean call() throws Exception {
 
             InputStream stream = null;
-            // If there is a proxy, it should be already configured
-            URLConnection httpCon = url.openConnection();
-            // Set http login (no protection, only convert in base64)
-            if (wadoParameters.getWebLogin() != null) {
-                httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-            if (wadoParameters.getHttpTaglist().size() > 0) {
-                for (HttpTag tag : wadoParameters.getHttpTaglist()) {
-                    httpCon.setRequestProperty(tag.getKey(), tag.getValue());
+            URLConnection httpCon = null;
+            try {
+                // If there is a proxy, it should be already configured
+                httpCon = url.openConnection();
+                // Set http login (no protection, only convert in base64)
+                if (wadoParameters.getWebLogin() != null) {
+                    httpCon.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
                 }
-            }
-            // Specify what portion of file to download.
-            httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            // Connect to server.
-            httpCon.connect();
+                if (wadoParameters.getHttpTaglist().size() > 0) {
+                    for (HttpTag tag : wadoParameters.getHttpTaglist()) {
+                        httpCon.setRequestProperty(tag.getKey(), tag.getValue());
+                    }
+                }
+                // Specify what portion of file to download.
+                httpCon.setRequestProperty("Range", "bytes=" + downloaded + "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
+                // Connect to server.
+                httpCon.connect();
+            } catch (IOException e) {
+                error();
+                log.error("IOException for {}: {} ", url, e.getMessage()); //$NON-NLS-1$
+                return false;
+            }
             if (httpCon instanceof HttpURLConnection) {
                 int responseCode = ((HttpURLConnection) httpCon).getResponseCode();
                 // Make sure response code is in the 200 range.
@@ -767,22 +778,23 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 size = contentLength;
                 // stateChanged();
             }
-            final DicomMediaIO dicomReader = new DicomMediaIO(tempFile);
+            DicomMediaIO dicomReader = null;
             log.debug("Download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                 int[] overrideList = wado.getOverrideDicomTagIDList();
-                boolean downloaded = wado != null;
-                if (overrideList == null && downloaded) {
-                    downloaded =
+                int bytesTransferred = 0;
+                if (overrideList == null && wado != null) {
+                    bytesTransferred =
                         FileUtil.writeFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(
                             tempFile));
-                } else if (downloaded) {
-                    downloaded =
+                } else if (wado != null) {
+                    bytesTransferred =
                         writFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(tempFile),
                             overrideList);
                 }
-                if (!downloaded) {
+
+                if (bytesTransferred >= 0) {
                     log.warn("Download interruption {} ", url); //$NON-NLS-1$
                     try {
                         tempFile.delete();
@@ -791,7 +803,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     }
                     return false;
                 }
+                // TODO handle file interruption
+                // else if (bytesTransferred > 0) {
+                // downloaded = bytesTransferred;
+                // }
 
+                File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
+                tempFile.renameTo(renameFile);
+                tempFile = renameFile;
+
+                dicomReader = new DicomMediaIO(tempFile);
                 if (dicomReader.readMediaTags()) {
                     if (dicomSeries.size() == 0) {
                         // Override the group (patient, study and series) by the dicom fields except the UID of
@@ -823,6 +844,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 status = Status.Complete;
                 if (tempFile != null) {
                     if (dicomSeries != null && dicomReader.readMediaTags()) {
+                        final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
@@ -830,7 +852,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             @Override
                             public void run() {
                                 boolean firstImageToDisplay = false;
-                                MediaElement[] medias = dicomReader.getMediaElement();
+                                MediaElement[] medias = reader.getMediaElement();
                                 if (medias != null) {
                                     firstImageToDisplay = dicomSeries.size() == 0;
                                     for (MediaElement media : medias) {
@@ -841,7 +863,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     }
                                 }
 
-                                dicomReader.reset();
+                                reader.reset();
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumb != null) {
                                     thumb.repaint();
@@ -882,9 +904,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             return true;
         }
 
-        public boolean writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
+        /**
+         * @param inputStream
+         * @param out
+         * @param overrideList
+         * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
+         *         interruption
+         */
+        public int writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
             if (inputStream == null && out == null)
-                return false;
+                return 0;
             DicomInputStream dis = null;
             DicomOutputStream dos = null;
             try {
@@ -920,12 +949,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     }
                 }
                 dos.writeDicomFile(dcm);
-                return true;
+                return -1;
             } catch (InterruptedIOException e) {
-                return false;
+                return e.bytesTransferred;
             } catch (IOException e) {
                 e.printStackTrace();
-                return false;
+                return 0;
             } finally {
                 FileUtil.safeClose(dos);
                 FileUtil.safeClose(dis);

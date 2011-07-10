@@ -133,7 +133,10 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
         Runnable[] tasks = loadingQueue.toArray(new Runnable[loadingQueue.size()]);
         for (int i = 0; i < tasks.length; i++) {
-            currentTasks.add((LoadSeries) tasks[i]);
+            LoadSeries l = (LoadSeries) tasks[i];
+            if (!currentTasks.contains(l)) {
+                currentTasks.add(l);
+            }
         }
         executor.prestartAllCoreThreads();
 

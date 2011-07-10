@@ -84,7 +84,7 @@ public class DownloadManager {
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeFile(url, outFile)) {
+                if (FileUtil.writeFile(url, outFile) == -1) {
                     String mime = MimeInspector.getMimeType(outFile);
                     if (mime != null && mime.equals("application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
@@ -325,7 +325,7 @@ public class DownloadManager {
                 dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             } else if (!wado.getWadoURL().equals(wadoParameters.getWadoURL())) {
                 LOGGER.error("Wado parameters must be unique for a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
-                // Cannot have multiple wado parameter for a Series
+                // Cannot have multiple wado parameters for a Series
                 return dicomSeries;
             }
         }
