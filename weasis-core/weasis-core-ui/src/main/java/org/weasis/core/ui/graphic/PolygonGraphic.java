@@ -14,23 +14,14 @@ import static java.lang.Double.NaN;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Paint;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -379,99 +370,99 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // For graphic DEBUG only
-    @Override
-    public void paint(Graphics2D g2d, AffineTransform transform) {
-        super.paint(g2d, transform);
-
-        Paint oldPaint = g2d.getPaint();
-        Stroke oldStroke = g2d.getStroke();
-
-        PATH_AREA_ITERATION:
-
-        if (handlePointList.size() > 1 && handlePointList.get(0) != null) {
-
-            Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-            polygonPath.moveTo(handlePointList.get(0).getX(), handlePointList.get(0).getY());
-
-            for (int i = 1; i < handlePointList.size(); i++) {
-                Point2D pt = handlePointList.get(i);
-                if (pt == null) {
-                    break PATH_AREA_ITERATION;
-                }
-                polygonPath.lineTo(pt.getX(), pt.getY());
-            }
-
-            List<Line2D> lineSegmentList = new ArrayList<Line2D>(handlePointList.size());
-            PathIterator pathIt = new Area(polygonPath).getPathIterator(null);
-
-            double coords[] = new double[6];
-            double startX = NaN, startY = NaN, curX = NaN, curY = NaN;
-
-            while (!pathIt.isDone()) {
-
-                int segType = pathIt.currentSegment(coords);
-                double lastX = coords[0], lastY = coords[1];
-
-                switch (segType) {
-                    case PathIterator.SEG_CLOSE:
-                        // lineSegmentList.add(new Line2D.Double(curX, curY, startX, startY));
-                        lastX = startX;
-                        lastY = startY;
-                    case PathIterator.SEG_LINETO:
-                        BigDecimal dX = new BigDecimal(Math.abs(curX - lastX)).setScale(10, RoundingMode.DOWN);
-                        BigDecimal dY = new BigDecimal(Math.abs(curY - lastY)).setScale(10, RoundingMode.DOWN);
-                        if (dX.compareTo(BigDecimal.ZERO) != 0 || dY.compareTo(BigDecimal.ZERO) != 0) {
-                            lineSegmentList.add(new Line2D.Double(curX, curY, lastX, lastY));
-                        }
-                        curX = lastX;
-                        curY = lastY;
-                        break;
-                    case PathIterator.SEG_MOVETO:
-                        startX = curX = lastX;
-                        startY = curY = lastY;
-                        break;
-                    default:
-                        break PATH_AREA_ITERATION;
-                }
-                pathIt.next();
-            }
-
-            int ptIndex = 0;
-            Map<Point2D, StringBuilder> ptMap = new HashMap<Point2D, StringBuilder>(lineSegmentList.size() * 2);
-            Set<Point2D> ptSet = ptMap.keySet();
-
-            for (Line2D line : lineSegmentList) {
-                for (Point2D pt : new Point2D[] { line.getP1(), line.getP2() }) {
-
-                    for (Point2D p : ptSet) {
-                        BigDecimal dist = new BigDecimal(p.distance(pt)).setScale(10, RoundingMode.DOWN);
-                        if (dist.compareTo(BigDecimal.ZERO) == 0) {
-                            pt = p;
-                            break;
-                        }
-                    }
-
-                    StringBuilder sb = ptMap.get(pt);
-                    if (sb == null) {
-                        ptMap.put(pt, new StringBuilder(Integer.toString(ptIndex++)));
-                    } else {
-                        sb.append(" , ").append(Integer.toString(ptIndex++));
-                    }
-                }
-            }
-
-            for (Entry<Point2D, StringBuilder> entry : ptMap.entrySet()) {
-                Point2D pt = entry.getKey();
-                String str = entry.getValue().toString();
-                if (transform != null) {
-                    pt = transform.transform(new Point2D.Double(pt.getX() + 5, pt.getY() + 5), null);
-                }
-                g2d.drawString(str, (float) pt.getX(), (float) pt.getY());
-            }
-        }
-
-        g2d.setPaint(oldPaint);
-        g2d.setStroke(oldStroke);
-    }
+    // @Override
+    // public void paint(Graphics2D g2d, AffineTransform transform) {
+    // super.paint(g2d, transform);
+    //
+    // Paint oldPaint = g2d.getPaint();
+    // Stroke oldStroke = g2d.getStroke();
+    //
+    // PATH_AREA_ITERATION:
+    //
+    // if (handlePointList.size() > 1 && handlePointList.get(0) != null) {
+    //
+    // Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
+    // polygonPath.moveTo(handlePointList.get(0).getX(), handlePointList.get(0).getY());
+    //
+    // for (int i = 1; i < handlePointList.size(); i++) {
+    // Point2D pt = handlePointList.get(i);
+    // if (pt == null) {
+    // break PATH_AREA_ITERATION;
+    // }
+    // polygonPath.lineTo(pt.getX(), pt.getY());
+    // }
+    //
+    // List<Line2D> lineSegmentList = new ArrayList<Line2D>(handlePointList.size());
+    // PathIterator pathIt = new Area(polygonPath).getPathIterator(null);
+    //
+    // double coords[] = new double[6];
+    // double startX = NaN, startY = NaN, curX = NaN, curY = NaN;
+    //
+    // while (!pathIt.isDone()) {
+    //
+    // int segType = pathIt.currentSegment(coords);
+    // double lastX = coords[0], lastY = coords[1];
+    //
+    // switch (segType) {
+    // case PathIterator.SEG_CLOSE:
+    // // lineSegmentList.add(new Line2D.Double(curX, curY, startX, startY));
+    // lastX = startX;
+    // lastY = startY;
+    // case PathIterator.SEG_LINETO:
+    // BigDecimal dX = new BigDecimal(Math.abs(curX - lastX)).setScale(10, RoundingMode.DOWN);
+    // BigDecimal dY = new BigDecimal(Math.abs(curY - lastY)).setScale(10, RoundingMode.DOWN);
+    // if (dX.compareTo(BigDecimal.ZERO) != 0 || dY.compareTo(BigDecimal.ZERO) != 0) {
+    // lineSegmentList.add(new Line2D.Double(curX, curY, lastX, lastY));
+    // }
+    // curX = lastX;
+    // curY = lastY;
+    // break;
+    // case PathIterator.SEG_MOVETO:
+    // startX = curX = lastX;
+    // startY = curY = lastY;
+    // break;
+    // default:
+    // break PATH_AREA_ITERATION;
+    // }
+    // pathIt.next();
+    // }
+    //
+    // int ptIndex = 0;
+    // Map<Point2D, StringBuilder> ptMap = new HashMap<Point2D, StringBuilder>(lineSegmentList.size() * 2);
+    // Set<Point2D> ptSet = ptMap.keySet();
+    //
+    // for (Line2D line : lineSegmentList) {
+    // for (Point2D pt : new Point2D[] { line.getP1(), line.getP2() }) {
+    //
+    // for (Point2D p : ptSet) {
+    // BigDecimal dist = new BigDecimal(p.distance(pt)).setScale(10, RoundingMode.DOWN);
+    // if (dist.compareTo(BigDecimal.ZERO) == 0) {
+    // pt = p;
+    // break;
+    // }
+    // }
+    //
+    // StringBuilder sb = ptMap.get(pt);
+    // if (sb == null) {
+    // ptMap.put(pt, new StringBuilder(Integer.toString(ptIndex++)));
+    // } else {
+    // sb.append(" , ").append(Integer.toString(ptIndex++));
+    // }
+    // }
+    // }
+    //
+    // for (Entry<Point2D, StringBuilder> entry : ptMap.entrySet()) {
+    // Point2D pt = entry.getKey();
+    // String str = entry.getValue().toString();
+    // if (transform != null) {
+    // pt = transform.transform(new Point2D.Double(pt.getX() + 5, pt.getY() + 5), null);
+    // }
+    // g2d.drawString(str, (float) pt.getX(), (float) pt.getY());
+    // }
+    // }
+    //
+    // g2d.setPaint(oldPaint);
+    // g2d.setStroke(oldStroke);
+    // }
 
 }

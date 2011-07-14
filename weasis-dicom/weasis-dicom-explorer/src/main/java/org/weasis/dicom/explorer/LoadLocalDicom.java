@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -70,11 +71,11 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        if (flatSearch) {
-            addSelectionAndnotify(files, true);
-        } else {
-            addSelection(files, true);
-        }
+        // if (flatSearch) {
+        addSelectionAndnotify(files, true);
+        // } else {
+        // addSelection(files, true);
+        // }
         return true;
     }
 
@@ -123,11 +124,18 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             }
         }
-        for (Thumbnail t : thumbs) {
+        for (final Thumbnail t : thumbs) {
             MediaSeries series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.getMedias().size() > 2) {
-                t.reBuildThumbnail();
+                GuiExecutor.instance().execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        t.reBuildThumbnail();
+                    }
+
+                });
             }
         }
         for (int i = 0; i < folders.size(); i++) {
