@@ -640,8 +640,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             int buttonMask = getButtonMaskEx();
             // Context menu
             if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
-                final ArrayList<Graphic> selected;
-                if ((selected = new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics())).size() > 0) {
+                final ArrayList<Graphic> selected =
+                    new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics());
+                if (selected.size() > 0) {
 
                     JPopupMenu popupMenu = new JPopupMenu();
 

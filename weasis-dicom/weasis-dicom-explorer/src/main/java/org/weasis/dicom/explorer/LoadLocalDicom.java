@@ -253,6 +253,13 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                             t.repaint();
                         }
                     }
+                    // If Split series or special DICOM element update the explorer view
+                    Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+                    if (splitNb != null || dicomObject != null) {
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update,
+                            dicomModel, null, dicomSeries));
+                    }
                 }
             }
         } catch (Exception e) {
