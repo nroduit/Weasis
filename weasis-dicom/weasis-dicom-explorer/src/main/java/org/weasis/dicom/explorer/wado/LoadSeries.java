@@ -809,8 +809,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 // }
 
                 File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
-                tempFile.renameTo(renameFile);
-                tempFile = renameFile;
+                if (tempFile.renameTo(renameFile)) {
+                    tempFile = renameFile;
+                }
 
                 dicomReader = new DicomMediaIO(tempFile);
                 if (dicomReader.readMediaTags()) {
