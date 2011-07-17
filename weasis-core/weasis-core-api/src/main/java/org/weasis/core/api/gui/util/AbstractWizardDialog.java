@@ -31,24 +31,6 @@ import javax.swing.tree.DefaultTreeModel;
 
 import org.weasis.core.api.Messages;
 
-/**
- * <p>
- * Title: PetroSpector
- * </p>
- * <p>
- * Description: Thin sections analysis
- * </p>
- * <p>
- * Copyright: Copyright (c) 2002
- * </p>
- * <p>
- * Company:
- * </p>
- * 
- * @author non attribuable
- * @version 1.0
- */
-
 public abstract class AbstractWizardDialog extends JDialog {
 
     protected String settingTitle;
@@ -82,6 +64,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
         jButtonClose.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cancel();
             }
@@ -125,9 +108,8 @@ public abstract class AbstractWizardDialog extends JDialog {
             object = jScrollPanePage.getViewport().getComponent(0);
         } catch (Exception ex) {
         }
-        if (object instanceof AbstractItemDialogPage) {
+        if (object instanceof AbstractItemDialogPage)
             return (AbstractItemDialogPage) object;
-        }
         return null;
     }
 
@@ -167,6 +149,7 @@ public abstract class AbstractWizardDialog extends JDialog {
         tree.constructTree(model);
         tree.addTreeSelectionListener(new TreeSelectionListener() {
 
+            @Override
             public void valueChanged(TreeSelectionEvent e) {
                 if (e.getNewLeadSelectionPath() != null) {
                     DefaultMutableTreeNode object =

@@ -14,29 +14,10 @@ import javax.swing.table.AbstractTableModel;
 
 import org.weasis.core.ui.Messages;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * 
- * <p>
- * Description: ImageJai processing and analysis
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2002 -2005
- * </p>
- * 
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.2.2
- */
 public class SimpleTableModel extends AbstractTableModel {
 
-    private String[] columnNames = { Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+    private String[] columnNames = {
+        Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
     private Object[][] data = {};
     private final boolean editable;
 
@@ -54,10 +35,12 @@ public class SimpleTableModel extends AbstractTableModel {
         this.editable = editable;
     }
 
+    @Override
     public int getColumnCount() {
         return columnNames.length;
     }
 
+    @Override
     public int getRowCount() {
         return data.length;
     }
@@ -72,6 +55,7 @@ public class SimpleTableModel extends AbstractTableModel {
         return editable;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         return data[row][col];
     }

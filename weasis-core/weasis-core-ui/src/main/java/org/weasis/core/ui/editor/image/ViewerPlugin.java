@@ -25,12 +25,6 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.util.WtoolBar;
 
-/**
- * "Home" interface for particular tool. It is used by application core to start up tool when user selects appropriate
- * "tab" on the main application window.
- * 
- * @version $Id: ViewerPlugin.java,v 1.1 2008/08/29 14:26:31 nirt Exp $
- */
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
 
     private final String dockableUID;
@@ -78,6 +72,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         this.dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement(); //$NON-NLS-1$
     }
 
+    @Override
     public MediaSeriesGroup getGroupID() {
         return groupID;
     }
@@ -86,6 +81,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         this.groupID = groupID;
     }
 
+    @Override
     public String getPluginName() {
         return pluginName;
     }
@@ -119,6 +115,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         this.requestFocusInWindow();
     }
 
+    @Override
     public void close() {
         UIManager.VIEWER_PLUGINS.remove(ViewerPlugin.this);
     }
@@ -131,9 +128,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         WtoolBar[] bars = getToolBar();
         if (bars != null) {
             for (WtoolBar t : bars) {
-                if (t instanceof ViewerToolBar) {
+                if (t instanceof ViewerToolBar)
                     return (ViewerToolBar) t;
-                }
             }
         }
         return null;

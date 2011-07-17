@@ -14,26 +14,6 @@ import java.util.ArrayList;
 
 import org.weasis.core.api.Messages;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * 
- * <p>
- * Description:
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2002 -2004
- * </p>
- * 
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.1
- */
 public enum Unit {
     PIXEL(-5, Messages.getString("Unit.pix"), Messages.getString("Unit.pix_s"), 1.0), //$NON-NLS-1$ //$NON-NLS-2$
     /*
@@ -127,9 +107,8 @@ public enum Unit {
 
     public static Unit getCurrentIdUnit(int id) {
         for (Unit u : Unit.values()) {
-            if (id == u.getId()) {
+            if (id == u.getId())
                 return u;
-            }
         }
         return Unit.PIXEL;
     }
@@ -144,18 +123,16 @@ public enum Unit {
 
     public Unit getUpUnit() {
         for (Unit u : Unit.values()) {
-            if (u.getId() - getId() == 1) {
+            if (u.getId() - getId() == 1)
                 return u;
-            }
         }
         return null;
     }
 
     public Unit getDownUnit() {
         for (Unit u : Unit.values()) {
-            if (getId() - u.getId() == 1) {
+            if (getId() - u.getId() == 1)
                 return u;
-            }
         }
         return null;
     }

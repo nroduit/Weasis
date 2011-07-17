@@ -10,24 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * <p>
- * Description:
- * </p>
- * <p>
- * Copyright: Copyright (c) 2002 -2004
- * </p>
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.0
- */
-
 public interface PageProps {
 
     public void resetoDefaultValues();

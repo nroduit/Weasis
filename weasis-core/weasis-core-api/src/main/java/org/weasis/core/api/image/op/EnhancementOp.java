@@ -28,33 +28,12 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.JMVUtils;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * 
- * <p>
- * Description:
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2002 -2004
- * </p>
- * 
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.1
- */
 public class EnhancementOp extends JPanel {
 
-    public static final String[] histoLabels =
-        { "None", "Manual Enhancement", "Automatic Levels", "Equalized Levels", "Background subtraction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    public static final String[] histoLabels = {
+        "None", "Manual Enhancement", "Automatic Levels", "Equalized Levels", "Background subtraction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     private Contrast contrast;
     private JPanel jPanel1 = new JPanel();
@@ -78,6 +57,7 @@ public class EnhancementOp extends JPanel {
         jSlider1.setValue(127);
         jSlider1.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateValues();
             }

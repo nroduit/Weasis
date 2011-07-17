@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import org.weasis.core.api.Messages;
-
 /**
  * <code>ByteLutCollection</code> contains a collection of lookup tables (LUT).
  * <p>
@@ -27,7 +25,7 @@ import org.weasis.core.api.Messages;
  *    pb.add(lookup);<br>
  *    PlanarImage dst = JAI.create("lookup", pb, null);</code></blockquote>
  * <p>
- * JMicroVision - Copyright (c) 2002 -2006 Nicolas Roduit
+ * 
  * 
  * @author Nicolas Roduit
  * @version 1.2.0
@@ -40,9 +38,9 @@ public class ByteLutCollection {
      * The names of the LUT collection. The name position corresponds to the index value of the mehtod
      * <code>getLUT(int index)</code>.
      */
-    public final static String[] LUT_COLLECTION =
-        { "Default", "Gray", "Red to yellow", "Fire", "Ice", "Hot", "Spectrum", "Rainbow 1", "Rainbow 2", "Rainbow 3", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-            "Rainbow 4" }; //$NON-NLS-1$
+    public final static String[] LUT_COLLECTION = {
+        "Default", "Gray", "Red to yellow", "Fire", "Ice", "Hot", "Spectrum", "Rainbow 1", "Rainbow 2", "Rainbow 3", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+        "Rainbow 4" }; //$NON-NLS-1$
 
     /**
      * the Red to yellow LUT

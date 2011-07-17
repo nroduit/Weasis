@@ -31,19 +31,20 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     }
 
     public MediaSeriesGroupNode(TagW tagID, Object identifier, TagW displayTag) {
-        if (tagID == null || identifier == null) {
+        if (tagID == null || identifier == null)
             throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
-        }
         this.displayTag = displayTag == null ? tagID : displayTag;
         this.tags = new HashMap<TagW, Object>();
         this.tagID = tagID;
         tags.put(tagID, identifier);
     }
 
+    @Override
     public TagW getTagID() {
         return tagID;
     }
 
+    @Override
     public boolean containTagKey(TagW tag) {
         return tags.containsKey(tag);
     }
@@ -61,12 +62,10 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public boolean equals(Object obj) {
         Object value1 = tags.get(tagID);
-        if (value1 == obj) {
+        if (value1 == obj)
             return true;
-        }
-        if (value1 == null) {
+        if (value1 == null)
             return false;
-        }
         if (obj instanceof MediaSeriesGroupNode) {
             Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
             return value1.equals(value2);
@@ -77,39 +76,40 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public int hashCode() {
         Object val = tags.get(tagID);
-        if (val instanceof Integer) {
+        if (val instanceof Integer)
             return (Integer) val;
-        }
-        // Should never happens, but it does ?
-        if (val == null) {
-            return this.hashCode();
-        }
+        // Should never happens, but it does very rarely ?
+        if (val == null)
+            return super.hashCode();
         return val.hashCode();
     }
 
+    @Override
     public void setTag(TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
+    @Override
     public void setTagNoNull(TagW tag, Object value) {
         if (tag != null && value != null) {
             tags.put(tag, value);
         }
     }
 
+    @Override
     public Object getTagValue(TagW tag) {
         return tags.get(tag);
     }
 
+    @Override
     public TagW getTagElement(int id) {
         Iterator<TagW> enumVal = tags.keySet().iterator();
         while (enumVal.hasNext()) {
             TagW e = enumVal.next();
-            if (e.getId() == id) {
+            if (e.getId() == id)
                 return e;
-            }
         }
         return null;
     }
@@ -118,6 +118,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return tags.entrySet().iterator();
     }
 
+    @Override
     public void dispose() {
 
     }

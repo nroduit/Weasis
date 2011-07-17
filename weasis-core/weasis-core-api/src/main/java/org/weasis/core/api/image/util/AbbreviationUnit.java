@@ -14,7 +14,6 @@ package org.weasis.core.api.image.util;
  * <code>AbbreviationUnit</code> is similar to the Class <code>Unit</code>, except that the method
  * <code>toString()</code> returns the abbreviation of the unit.
  * <p>
- * JMicroVision - Copyright (c) 2002 -2006 Nicolas Roduit
  * 
  * @author Nicolas Roduit
  * @see oorg.weasis.core.api.image.util.Unit

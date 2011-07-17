@@ -8,26 +8,6 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * 
- * <p>
- * Description: Image processing and analysis
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2002 -2005
- * </p>
- * 
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.2.0
- */
 public class RasterizeGraphicsToCoord {
 
     public static ArrayList<ChainPoint> rasterizeSegment(int x0, int y0, int x1, int y1) {
@@ -109,27 +89,24 @@ public class RasterizeGraphicsToCoord {
         int x = next.x - last.x;
         int y = next.y - last.y;
         if (x == 1) {
-            if (y == 1) {
+            if (y == 1)
                 return (byte) 7;
-            } else if (y == -1) {
+            else if (y == -1)
                 return (byte) 1;
-            } else {
+            else
                 return (byte) 0;
-            }
         } else if (x == -1) {
-            if (y == 1) {
+            if (y == 1)
                 return (byte) 5;
-            } else if (y == -1) {
+            else if (y == -1)
                 return (byte) 3;
-            } else {
+            else
                 return (byte) 4;
-            }
         } else {
-            if (y == 1) {
+            if (y == 1)
                 return (byte) 6;
-            } else {
+            else
                 return (byte) 2;
-            }
         }
     }
 
@@ -264,9 +241,8 @@ public class RasterizeGraphicsToCoord {
     }
 
     public static float[] transformToCounterCockWiseCoord(float[] coord) {
-        if (coord == null || coord.length < 6) {
+        if (coord == null || coord.length < 6)
             return coord;
-        }
         int index = 0;
         float miny = Float.MAX_VALUE;
         float minx = Float.MIN_VALUE;
@@ -315,9 +291,8 @@ public class RasterizeGraphicsToCoord {
     }
 
     public static ArrayList<ChainPoint> transformShapeToContour(Shape shape) {
-        if (shape == null) {
+        if (shape == null)
             return null;
-        }
         if (shape instanceof Line2D) {
             Line2D pt = (Line2D) shape;
             return rasterizeSegment(floorInt(pt.getX1()), floorInt(pt.getY1()), floorInt(pt.getX2()),

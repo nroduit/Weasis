@@ -11,24 +11,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 
-/**
- * <p>
- * Title: PetroSpector
- * </p>
- * <p>
- * Description: Thin sections analysis
- * </p>
- * <p>
- * Copyright: Copyright (c) 2002
- * </p>
- * <p>
- * Company:
- * </p>
- * 
- * @author non attribuable
- * @version 1.0
- */
-
 public class Measure1DAnalyse {
 
     public final static String[] measurList = { "First point X", "First point Y", "Last point X", "Last point Y",

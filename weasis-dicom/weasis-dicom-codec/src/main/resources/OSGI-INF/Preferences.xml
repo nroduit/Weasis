@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.codec.pref.DicomPrefView">
-   <implementation class="org.weasis.dicom.codec.pref.DicomPrefView"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.codec.pref.DicomPrefFactory">
+   <implementation class="org.weasis.dicom.codec.pref.DicomPrefFactory"/>
    <service>
-      <provide interface="org.weasis.core.api.gui.util.PageProps"/>
+      <provide interface="org.weasis.core.api.gui.PreferencesPageFactory"/>
    </service>
 </scr:component>

@@ -27,6 +27,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * GridBagLayoutModel is the model for the plugin container.
+ * 
+ */
 public class GridBagLayoutModel implements GUIEntry {
 
     private String title;
@@ -55,9 +59,8 @@ public class GridBagLayoutModel implements GUIEntry {
     }
 
     public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String title, Icon icon) {
-        if (constraints == null) {
+        if (constraints == null)
             throw new IllegalArgumentException("constraints cannot be null");
-        }
         this.title = title;
         this.icon = icon;
         this.constraints = constraints;
@@ -98,20 +101,54 @@ public class GridBagLayoutModel implements GUIEntry {
     }
 
     private final class SAXAdapter extends DefaultHandler {
+        /**
+         * Specifies the component position and size
+         * 
+         */
 
+        /**
+         * @see java.awt.GridBagConstraints#gridx
+         */
         private int x;
+        /**
+         * @see java.awt.GridBagConstraints#gridy
+         */
         private int y;
+        /**
+         * @see java.awt.GridBagConstraints#gridwidth
+         */
         private int width;
+        /**
+         * @see java.awt.GridBagConstraints#gridheight
+         */
         private int height;
+        /**
+         * @see java.awt.GridBagConstraints#weightX
+         */
         private double weightx;
+        /**
+         * @see java.awt.GridBagConstraints#weighty
+         */
         private double weighty;
+        /**
+         * @see java.awt.GridBagConstraints#anchor
+         */
         private int position;
+        /**
+         * @see java.awt.GridBagConstraints#fill
+         */
         private int expand;
+        /**
+         * The component class
+         */
         private String type;
-        private final int increment = 0;
+        /**
+         * ID of the component
+         */
+        private int increment = 0;
 
-        int tag = -1;
-        StringBuffer name = new StringBuffer(80);
+        private int tag = -1;
+        private StringBuffer name = new StringBuffer(80);
 
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
@@ -141,6 +178,7 @@ public class GridBagLayoutModel implements GUIEntry {
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
+                increment++;
                 constraints.put(new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position,
                     expand), null);
                 name.setLength(0);
@@ -149,14 +187,12 @@ public class GridBagLayoutModel implements GUIEntry {
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals("")) { //$NON-NLS-1$
+            if (val.trim().equals(""))
                 return 0.0;
-            }
             // handle fraction format
             int index = val.indexOf('/');
-            if (index != -1) {
+            if (index != -1)
                 return (double) Integer.parseInt(val.substring(0, index)) / Integer.parseInt(val.substring(index + 1));
-            }
             return Double.parseDouble(val);
         }
 

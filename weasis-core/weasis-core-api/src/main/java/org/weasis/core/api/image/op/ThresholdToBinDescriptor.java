@@ -10,23 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.image.op;
 
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * <p>
- * Description: Thin section analysis
- * </p>
- * <p>
- * Copyright: Copyright (c) 2002
- * </p>
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.0
- */
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -78,13 +61,12 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
      * Creates a SampleOpImage with the given ParameterBlock if the SampleOpImage can handle the particular
      * ParameterBlock.
      */
+    @Override
     public RenderedImage create(ParameterBlock parameterblock, RenderingHints renderHints) {
-        if (!validateParameters(parameterblock)) {
+        if (!validateParameters(parameterblock))
             return null;
-        }
-        if (!validateSources(parameterblock)) {
+        if (!validateSources(parameterblock))
             return null;
-        }
         renderHints = LayoutUtil.createBinaryRenderedImage();
         ImageLayout imagelayout = LayoutUtil.getImageLayoutHint(renderHints);
         return new ThresholdToBinOpImage(parameterblock.getRenderedSource(0), renderHints, imagelayout,
@@ -97,12 +79,10 @@ public class ThresholdToBinDescriptor extends OperationDescriptorImpl implements
     public boolean validateParameters(ParameterBlock paramBlock) {
         for (int i = 0; i < 2; i++) {
             Object arg = paramBlock.getObjectParameter(i);
-            if (arg == null) {
+            if (arg == null)
                 return false;
-            }
-            if (!(arg instanceof Double)) {
+            if (!(arg instanceof Double))
                 return false;
-            }
         }
         return true;
     }

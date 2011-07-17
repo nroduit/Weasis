@@ -25,8 +25,8 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 
@@ -44,10 +44,19 @@ public class Activator implements BundleActivator, ServiceListener {
         // Load the bundle preferences
         // PREFERENCES.init(context);
 
-        prefs_tracker = new ServiceTracker(context, PageProps.class.getName(), null);
+        prefs_tracker = new ServiceTracker(context, PreferencesPageFactory.class.getName(), null);
+        try {
+            // Must keep the tracker open, because calling close() will unget service. This is a problem because
+            // the deactivate method is called although the service stay alive in UI.
+            prefs_tracker.open();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         // WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
+            @Override
             public void run() {
                 final WeasisWin app = WeasisWin.getInstance();
                 try {
@@ -73,16 +82,8 @@ public class Activator implements BundleActivator, ServiceListener {
         // Explorer (with non immediate instance)
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
-                try {
-                    // Must keep the tracker open, because calling close() will unget service. This is a problem because
-                    // the desactivate method is called although the service stay alive in UI.
-                    prefs_tracker.open();
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
                 ServiceTracker m_tracker = new ServiceTracker(context, DataExplorerView.class.getName(), null);
                 // Must keep the tracker open, because calling close() will unget service. This is a problem because the
                 // desactivate method is called although the service stay alive in UI.
@@ -93,13 +94,7 @@ public class Activator implements BundleActivator, ServiceListener {
                         if (!UIManager.EXPLORER_PLUGINS.contains(services[i])
                             && services[i] instanceof DataExplorerView) {
                             final DataExplorerView explorer = (DataExplorerView) services[i];
-                            //                            if ("Media Explorer".equals(explorer.getUIName())) { //$NON-NLS-1$
-                            // // in this case, if there are several Explorers, the Media Explorer is selected by
-                            // // default
-                            // UIManager.EXPLORER_PLUGINS.add(0, explorer);
-                            // } else {
                             UIManager.EXPLORER_PLUGINS.add(explorer);
-                            // }
 
                             if (explorer.getDataExplorerModel() != null) {
                                 explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWin.getInstance());
@@ -132,17 +127,18 @@ public class Activator implements BundleActivator, ServiceListener {
         this.context = null;
     }
 
+    @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
         // Explorer (with non immediate instance) and WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().execute(new Runnable() {
 
+            @Override
             public void run() {
 
                 final ServiceReference m_ref = event.getServiceReference();
                 Object service = context.getService(m_ref);
-                if (service == null) {
+                if (service == null)
                     return;
-                }
                 if (service instanceof DataExplorerView) {
                     final DataExplorerView explorer = (DataExplorerView) service;
                     synchronized (UIManager.EXPLORER_PLUGINS) {
@@ -170,6 +166,7 @@ public class Activator implements BundleActivator, ServiceListener {
                         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                             GuiExecutor.instance().execute(new Runnable() {
 
+                                @Override
                                 public void run() {
                                     if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
                                         if (explorer.getDataExplorerModel() != null) {

@@ -11,40 +11,24 @@
 package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JPanel;
 
-/**
- * <p>
- * Title: PetroSpector
- * </p>
- * <p>
- * Description: Thin sections analysis
- * </p>
- * <p>
- * Copyright: Copyright (c) 2002
- * </p>
- * <p>
- * Company:
- * </p>
- * 
- * @author non attribuable
- * @version 1.0
- */
-
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps {
-
-    private static int _lastKey;
-    private final String _key;
-    private String _title;
-    private java.util.List<PageProps> _subPageList;
+    protected final static AtomicInteger keyGenerator = new AtomicInteger(0);
+    private final String key;
+    private String title;
+    private java.util.List<PageProps> subPageList;
 
     public AbstractItemDialogPage() {
-        _key = getClass().getName().concat(String.valueOf(_lastKey++));
+        key = String.valueOf(keyGenerator.incrementAndGet());
     }
 
+    @Override
     public abstract void resetoDefaultValues();
 
+    @Override
     public abstract void closeAdditionalWindow();
 
     public void deselectPageAction() {
@@ -53,53 +37,53 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     public void selectPageAction() {
     }
 
+    @Override
     public String getKey() {
-        return _key;
+        return key;
     }
 
+    @Override
     public String getTitle() {
-        return _title;
+        return title;
     }
 
     public void setTitle(String title) {
-        _title = title;
+        this.title = title;
     }
 
     public void addSubPage(PageProps subPage) {
-        if (_subPageList == null) {
-            _subPageList = new ArrayList<PageProps>();
+        if (subPageList == null) {
+            subPageList = new ArrayList<PageProps>();
         }
-        _subPageList.add(subPage);
+        subPageList.add(subPage);
     }
 
     public void removeSubPage(PageProps subPage) {
-        if (_subPageList == null) {
+        if (subPageList == null)
             return;
-        }
-        _subPageList.remove(subPage);
+        subPageList.remove(subPage);
     }
 
+    @Override
     public PageProps[] getSubPages() {
-        if (_subPageList == null) {
+        if (subPageList == null)
             return null;
-        }
-        final PageProps[] subPages = new PageProps[_subPageList.size()];
-        _subPageList.toArray(subPages);
+        final PageProps[] subPages = new PageProps[subPageList.size()];
+        subPageList.toArray(subPages);
         return subPages;
     }
 
     public void resetAllSubPagesToDefaultValues() {
-        if (_subPageList == null) {
+        if (subPageList == null)
             return;
-        }
-        for (PageProps subPage : _subPageList) {
+        for (PageProps subPage : subPageList) {
             subPage.resetoDefaultValues();
         }
     }
 
     @Override
     public String toString() {
-        return _title;
+        return title;
     }
 
 }

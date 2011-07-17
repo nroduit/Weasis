@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.explorer.pref.WadoPrefView">
-   <implementation class="org.weasis.dicom.explorer.pref.WadoPrefView"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.explorer.pref.WadoPrefFactory">
+   <implementation class="org.weasis.dicom.explorer.pref.WadoPrefFactory"/>
    <service>
-      <provide interface="org.weasis.core.api.gui.util.PageProps"/>
+      <provide interface="org.weasis.core.api.gui.PreferencesPageFactory"/>
    </service>
 </scr:component>

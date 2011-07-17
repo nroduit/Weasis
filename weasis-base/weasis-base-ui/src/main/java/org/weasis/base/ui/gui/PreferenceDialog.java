@@ -16,6 +16,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.base.ui.internal.Activator;
+import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -32,7 +33,10 @@ public class PreferenceDialog extends AbstractWizardDialog {
         pagesRoot.add(new DefaultMutableTreeNode(new GeneralSetting()));
         final Object[] servicesPref = Activator.getPreferencesPages();
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
-            pagesRoot.add(new DefaultMutableTreeNode(servicesPref[i]));
+            if (servicesPref[i] instanceof PreferencesPageFactory) {
+                pagesRoot.add(new DefaultMutableTreeNode(((PreferencesPageFactory) servicesPref[i])
+                    .createPreferencesPage(null)));
+            }
         }
         iniTree();
     }

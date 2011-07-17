@@ -13,18 +13,25 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import javax.accessibility.Accessible;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.PanelUI;
 
 import org.weasis.core.api.gui.util.ActionState;
@@ -105,6 +112,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     protected final JPanel grid;
     protected GridBagLayoutModel layoutModel;
 
+    // private final MouseHandler mouseHandler;
+
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String PluginName) {
         this(eventManager, VIEWS_1x1, PluginName, null, null);
     }
@@ -127,6 +136,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         add(grid, BorderLayout.CENTER);
 
         setLayoutModel(layoutModel);
+        // this.mouseHandler = new MouseHandler();
+        // grid.addMouseListener(mouseHandler);
+        // grid.addMouseMotionListener(mouseHandler);
     }
 
     /**
@@ -520,5 +532,52 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 repaint();
             }
         }
+    }
+
+    class MouseHandler extends MouseAdapter {
+        private Point pickPoint = null;
+        private int pickWidth;
+        private int pickHeight;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            pickPoint = e.getPoint();
+            pickWidth = getWidth();
+            pickHeight = getHeight();
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent mouseevent) {
+            pickPoint = null;
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            int mods = e.getModifiers();
+            if (pickPoint != null && (mods & InputEvent.BUTTON1_MASK) != 0) {
+                Point p = e.getPoint();
+                Accessible comp = SwingUtilities.getAccessibleAt(e.getComponent(), p);
+                int dx = p.x - pickPoint.x;
+                int dy = p.y - pickPoint.y;
+
+                int nw = pickWidth + dx;
+                int nh = pickHeight + dy;
+                nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
+                nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
+
+                setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            }
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent me) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        }
+
+        @Override
+        public void mouseExited(MouseEvent mouseEvent) {
+            setCursor(Cursor.getDefaultCursor());
+        }
+
     }
 }

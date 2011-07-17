@@ -22,28 +22,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import org.weasis.core.api.Messages;
-
-/**
- * <p>
- * Title: JMicroVision
- * </p>
- * 
- * <p>
- * Description: ImageJai processing and analysis
- * </p>
- * 
- * <p>
- * Copyright: Copyright (c) 2002 -2005
- * </p>
- * 
- * <p>
- * Company:
- * </p>
- * 
- * @author Nicolas Roduit
- * @version 1.2.2
- */
 public class TreeSelection extends JTree {
 
     public void constructTree(DefaultTreeModel model) {
