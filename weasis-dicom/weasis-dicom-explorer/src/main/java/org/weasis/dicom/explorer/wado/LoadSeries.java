@@ -920,7 +920,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             try {
                 dis = new DicomInputStream(new BufferedInputStream(inputStream));
                 DicomObject dcm = dis.readDicomObject();
-                dos = new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)));
+                dos = new DicomOutputStream(new BufferedOutputStream(out));
 
                 if (overrideList != null) {
                     MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
