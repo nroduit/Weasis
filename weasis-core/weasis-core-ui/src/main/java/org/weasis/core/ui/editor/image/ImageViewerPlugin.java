@@ -17,6 +17,7 @@ import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,12 +27,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.accessibility.Accessible;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.plaf.PanelUI;
 
 import org.weasis.core.api.gui.util.ActionState;
@@ -112,7 +111,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     protected final JPanel grid;
     protected GridBagLayoutModel layoutModel;
 
-    // private final MouseHandler mouseHandler;
+    private final MouseHandler mouseHandler;
 
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String PluginName) {
         this(eventManager, VIEWS_1x1, PluginName, null, null);
@@ -136,9 +135,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         add(grid, BorderLayout.CENTER);
 
         setLayoutModel(layoutModel);
-        // this.mouseHandler = new MouseHandler();
-        // grid.addMouseListener(mouseHandler);
-        // grid.addMouseMotionListener(mouseHandler);
+        this.mouseHandler = new MouseHandler();
+   //     grid.addMouseListener(mouseHandler);
+   //     grid.addMouseMotionListener(mouseHandler);
     }
 
     /**
@@ -536,47 +535,109 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     class MouseHandler extends MouseAdapter {
         private Point pickPoint = null;
-        private int pickWidth;
-        private int pickHeight;
+        private Entry<LayoutConstraints, JComponent> entry = null;
+        private boolean splitVertical = false;
 
         @Override
         public void mousePressed(MouseEvent e) {
             pickPoint = e.getPoint();
-            pickWidth = getWidth();
-            pickHeight = getHeight();
+            Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
+                ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
+            while (enumVal.hasNext()) {
+                entry = enumVal.next();
+                JComponent c = entry.getValue();
+                if (c != null) {
+                    Rectangle rect = c.getBounds();
+                    if (Math.abs(rect.x - pickPoint.x) <= LayoutConstraints.SPACE
+                        && (pickPoint.y >= rect.y && pickPoint.y <= rect.y + rect.height)) {
+                        splitVertical = true;
+                        break;
+                    }
+
+                    else if (Math.abs(rect.y - pickPoint.y) <= LayoutConstraints.SPACE
+                        && (pickPoint.x >= rect.x && pickPoint.x <= rect.x + rect.width)) {
+                        break;
+                    }
+                }
+                entry = null;
+            }
         }
 
         @Override
         public void mouseReleased(MouseEvent mouseevent) {
             pickPoint = null;
+            entry = null;
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
             int mods = e.getModifiers();
-            if (pickPoint != null && (mods & InputEvent.BUTTON1_MASK) != 0) {
+            if (pickPoint != null && entry != null && (mods & InputEvent.BUTTON1_MASK) != 0) {
                 Point p = e.getPoint();
-                Accessible comp = SwingUtilities.getAccessibleAt(e.getComponent(), p);
                 int dx = p.x - pickPoint.x;
                 int dy = p.y - pickPoint.y;
 
-                int nw = pickWidth + dx;
-                int nh = pickHeight + dy;
-                nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
-                nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
+                if (entry != null) {
+                    if (splitVertical) {
+                        int gridx = entry.getKey().gridx;
+                        int width = entry.getValue().getWidth();
+                        double shiftx = dx * entry.getKey().weightx / width;
+                        System.out.println("width:" + width + " shiftx:" + entry.getKey().weightx);
+                        Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
+                            ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
+                        Entry<LayoutConstraints, JComponent> entry2 = null;
+                        while (enumVal.hasNext()) {
+                            entry2 = enumVal.next();
+                            LayoutConstraints key = entry2.getKey();
+                            if (key.gridx == gridx) {
+                                key.weightx -= shiftx;
+                                grid.remove(entry2.getValue());
+                                grid.add(entry2.getValue(), key);
+                            } else if (key.gridx + key.gridwidth == gridx) {
+                                key.weightx += shiftx;
+                                grid.remove(entry2.getValue());
+                                grid.add(entry2.getValue(), key);
+                            }
 
-                setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+                        }
+                    }
+                    grid.revalidate();
+                    grid.repaint();
+                    setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR
+                        : Cursor.S_RESIZE_CURSOR));
+                }
             }
         }
 
         @Override
         public void mouseMoved(MouseEvent me) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            setCursor(Cursor.getPredefinedCursor(getCursor(me)));
         }
 
         @Override
         public void mouseExited(MouseEvent mouseEvent) {
             setCursor(Cursor.getDefaultCursor());
+        }
+
+        public int getCursor(MouseEvent me) {
+            Point p = me.getPoint();
+            Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
+                ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, JComponent> entry = enumVal.next();
+                JComponent c = entry.getValue();
+                if (c != null) {
+                    Rectangle rect = c.getBounds();
+                    if ((Math.abs(rect.x - p.x) <= LayoutConstraints.SPACE || Math.abs(rect.x + rect.width - p.x) <= LayoutConstraints.SPACE)
+                        && (p.y >= rect.y && p.y <= rect.y + rect.height))
+                        return Cursor.E_RESIZE_CURSOR;
+                    else if ((Math.abs(rect.y - p.y) <= LayoutConstraints.SPACE || Math.abs(rect.y + rect.height - p.y) <= LayoutConstraints.SPACE)
+                        && (p.x >= rect.x && p.x <= rect.x + rect.width))
+                        return Cursor.S_RESIZE_CURSOR;
+                }
+
+            }
+            return Cursor.DEFAULT_CURSOR;
         }
 
     }

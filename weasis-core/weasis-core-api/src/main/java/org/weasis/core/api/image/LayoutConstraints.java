@@ -15,12 +15,14 @@ import java.awt.Insets;
 
 public class LayoutConstraints extends GridBagConstraints implements Comparable<LayoutConstraints> {
 
+    public static final int SPACE = 3;
     private String type;
     private int layoutID;
 
     public LayoutConstraints(String type, int layoutID, int gridx, int gridy, int gridwidth, int gridheight,
         double weightx, double weighty, int anchor, int fill) {
-        super(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, new Insets(0, 0, 0, 0), 0, 0);
+        super(gridx, gridy, gridwidth, gridheight, weightx, weighty, anchor, fill, new Insets(gridy == 0 ? 0 : SPACE,
+            gridx == 0 ? 0 : SPACE, 0, 0), 0, 0);
         this.type = type;
         this.layoutID = layoutID;
     }

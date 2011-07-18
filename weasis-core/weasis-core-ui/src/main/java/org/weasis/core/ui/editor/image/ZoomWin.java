@@ -70,8 +70,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private Color backgroundColor;
     private Stroke stroke;
 
-    public final static String SYNCH_CMD = "synchronize"; //$NON-NLS-1$
-    public final static String FREEZE_CMD = "freeze"; //$NON-NLS-1$
+    public static final String SYNCH_CMD = "synchronize"; //$NON-NLS-1$
+    public static final String FREEZE_CMD = "freeze"; //$NON-NLS-1$
     private PopUpMenuOnZoom popup = null;
     private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
@@ -334,7 +334,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         if (image == null) {
             freezeActionsInView.clear();
             freezeOperations = null;
-            type = SYNCH_TYPE.None;
+            this.type = SYNCH_TYPE.None;
         }
         imageLayer.updateAllImageOperations();
     }
