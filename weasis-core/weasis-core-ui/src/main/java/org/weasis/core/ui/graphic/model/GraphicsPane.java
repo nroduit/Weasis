@@ -304,7 +304,7 @@ public class GraphicsPane extends JComponent {
         @Override
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-                layerModel.deleteSelectedGraphics();
+                layerModel.deleteSelectedGraphics(true);
             }
             // FIXME arrows is already used with pan!
             // else if (e.getKeyCode() == KeyEvent.VK_LEFT) {

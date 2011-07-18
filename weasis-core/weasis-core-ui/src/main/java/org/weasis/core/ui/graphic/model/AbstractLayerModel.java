@@ -48,8 +48,8 @@ public class AbstractLayerModel implements LayerModel {
     public static final GraphicClipboard GraphicClipboard = new GraphicClipboard();
     private static final SelectGraphic selectGraphic = new SelectGraphic();
     public static final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
-        public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-//    public static final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
+    public static final Cursor HAND_CURSOR = getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+    // public static final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
     public static final Cursor EDIT_CURSOR = getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
     public static final Cursor MOVE_CURSOR = new Cursor(Cursor.MOVE_CURSOR);
 
@@ -349,15 +349,18 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
-    public void deleteSelectedGraphics() {
+    public void deleteSelectedGraphics(boolean warningMessage) {
         java.util.List<Graphic> list = getSelectedGraphics();
         if (list != null && list.size() > 0) {
-            int response =
-                JOptionPane
-                    .showConfirmDialog(
-                        canvas,
-                        String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$ //$NON-NLS-2$
-                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            int response = 0;
+            if (warningMessage) {
+                response =
+                    JOptionPane
+                        .showConfirmDialog(
+                            canvas,
+                            String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), Messages.getString("AbstractLayerModel.del_graphs"), //$NON-NLS-1$ //$NON-NLS-2$
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            }
             if (response == 0) {
                 java.util.List<Graphic> selectionList = new ArrayList<Graphic>(list);
                 for (Graphic graphic : selectionList) {

@@ -125,7 +125,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                     if (model.getSelectedGraphics().size() == 0) {
                         model.setSelectedGraphics(model.getdAllGraphics());
                     }
-                    model.deleteSelectedGraphics();
+                    model.deleteSelectedGraphics(true);
                 }
             }
         });

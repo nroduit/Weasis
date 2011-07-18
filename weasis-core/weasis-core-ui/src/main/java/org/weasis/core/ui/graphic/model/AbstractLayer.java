@@ -70,20 +70,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 } else if ("toBack".equals(s)) { //$NON-NLS-1$
                     toBack(graph);
                 }
-                // pour toutes les autres propriétés des graphic : "selected", "shape", "intersectshape"
-                else {
-                    // if (obj instanceof AbstractDragGraphic) {
-                    // repaint(((AbstractDragGraphic) obj).getRepaintBounds());
-                    // }
-                    // else {
-                    // repaint(((Graphic) obj).getRepaintBounds());
-                    // }
-                }
             }
+
         }
 
-        // version 1.0 n'avait pas de UID
-        // protected static final long serialVersionUID = -9094820911680205527L;
         private static final long serialVersionUID = -9094820911680205527L;
 
         private PropertyChangeHandler() {
@@ -101,6 +91,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         if (graphics != null && !graphics.contains(graphic)) {
             // graphic.setSelected(false);
             graphics.add(graphic);
+            graphic.setLayerID(drawType);
             graphic.addPropertyChangeListener(pcl);
             ArrayList<AbstractLayer> layers = graphics.getLayers();
             if (layers != null) {

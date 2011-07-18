@@ -39,6 +39,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.AbstractDragGraphic.AdvancedShape.BasicShape;
+import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -47,7 +48,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
 
-public abstract class AbstractDragGraphic implements Graphic, Cloneable {
+public abstract class AbstractDragGraphic implements Graphic {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractDragGraphic.class);
 
@@ -69,6 +70,8 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
     protected GraphicLabel graphicLabel;
     protected boolean selected = false;
     protected boolean resizingOrMoving = false;
+
+    private int layerID = Tools.TEMPDRAGLAYER.getId();
 
     // TODO none are transient and should be if serialized
 
@@ -926,6 +929,16 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         }
     }
 
+    @Override
+    public int getLayerID() {
+        return layerID;
+    }
+
+    @Override
+    public void setLayerID(int layerID) {
+        this.layerID = layerID;
+    }
+
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void fireDrawingChanged() {
@@ -996,7 +1009,6 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
         newGraphic.pcs = null;
         newGraphic.shape = null;
         newGraphic.handlePointList = new ArrayList<Point2D>(handlePointTotalNumber > 0 ? handlePointTotalNumber : 10);
-        // newGraphic.paintColor = paintColor; // useless
         newGraphic.graphicLabel = null;
         newGraphic.selected = false;
 
@@ -1005,9 +1017,31 @@ public abstract class AbstractDragGraphic implements Graphic, Cloneable {
 
     public Graphic clone(double xPos, double yPos) {
         AbstractDragGraphic graphic = (AbstractDragGraphic) clone();
+        if (graphic == null)
+            return null;
         graphic.setShape(new Rectangle2D.Double(xPos, yPos, 0, 0), null); // needed for selection check when used after
                                                                           // drag
         return graphic;
+    };
+
+    @Override
+    public Graphic deepCopy() {
+        AbstractDragGraphic newGraphic = null;
+        try {
+            newGraphic = (AbstractDragGraphic) super.clone();
+        } catch (CloneNotSupportedException clonenotsupportedexception) {
+            return null;
+        }
+        newGraphic.pcs = null;
+        newGraphic.shape = null;
+        newGraphic.handlePointList = new ArrayList<Point2D>(handlePointList.size());
+        for (Point2D p : handlePointList) {
+            newGraphic.handlePointList.add((Point2D) p.clone());
+        }
+        newGraphic.graphicLabel = null;
+        newGraphic.selected = false;
+        newGraphic.updateShapeOnDrawing(null);
+        return newGraphic;
     };
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////

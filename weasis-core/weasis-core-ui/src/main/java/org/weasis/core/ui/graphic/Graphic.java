@@ -27,7 +27,9 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
  * 
  * @author Nicolas Roduit
  */
-public interface Graphic extends GUIEntry {
+public interface Graphic extends GUIEntry, Cloneable {
+
+    public Graphic deepCopy();
 
     @Deprecated
     public Area getArea();
@@ -74,6 +76,10 @@ public interface Graphic extends GUIEntry {
     public void toFront();
 
     public void toBack();
+
+    public void setLayerID(int layerID);
+
+    public int getLayerID();
 
     public Shape getShape();
 
