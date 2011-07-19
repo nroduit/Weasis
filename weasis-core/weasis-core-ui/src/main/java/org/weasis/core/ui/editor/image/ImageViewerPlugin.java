@@ -136,8 +136,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
         setLayoutModel(layoutModel);
         this.mouseHandler = new MouseHandler();
-   //     grid.addMouseListener(mouseHandler);
-   //     grid.addMouseMotionListener(mouseHandler);
+        grid.addMouseListener(mouseHandler);
+        grid.addMouseMotionListener(mouseHandler);
     }
 
     /**
@@ -535,14 +535,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     class MouseHandler extends MouseAdapter {
         private Point pickPoint = null;
-        private Entry<LayoutConstraints, JComponent> entry = null;
+        private Point point = null;
         private boolean splitVertical = false;
+        private final ArrayList<ImageViewerPlugin.DragLayoutElement> list =
+            new ArrayList<ImageViewerPlugin.DragLayoutElement>();
 
         @Override
         public void mousePressed(MouseEvent e) {
             pickPoint = e.getPoint();
+            point = null;
+            list.clear();
             Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
                 ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
+            Entry<LayoutConstraints, JComponent> entry = null;
             while (enumVal.hasNext()) {
                 entry = enumVal.next();
                 JComponent c = entry.getValue();
@@ -551,61 +556,112 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     if (Math.abs(rect.x - pickPoint.x) <= LayoutConstraints.SPACE
                         && (pickPoint.y >= rect.y && pickPoint.y <= rect.y + rect.height)) {
                         splitVertical = true;
+                        point = new Point(entry.getKey().gridx, entry.getKey().gridy);
                         break;
                     }
 
                     else if (Math.abs(rect.y - pickPoint.y) <= LayoutConstraints.SPACE
                         && (pickPoint.x >= rect.x && pickPoint.x <= rect.x + rect.width)) {
+                        splitVertical = false;
+                        point = new Point(entry.getKey().gridx, entry.getKey().gridy);
                         break;
                     }
                 }
-                entry = null;
+            }
+            if (point != null) {
+                enumVal = ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
+                while (enumVal.hasNext()) {
+                    entry = enumVal.next();
+                    JComponent c = entry.getValue();
+                    if (c != null) {
+                        list.add(new DragLayoutElement(entry.getKey(), c));
+                    }
+                }
             }
         }
 
         @Override
         public void mouseReleased(MouseEvent mouseevent) {
             pickPoint = null;
-            entry = null;
+            point = null;
+            list.clear();
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
             int mods = e.getModifiers();
-            if (pickPoint != null && entry != null && (mods & InputEvent.BUTTON1_MASK) != 0) {
+            if (pickPoint != null && point != null && list.size() > 1 && (mods & InputEvent.BUTTON1_MASK) != 0) {
                 Point p = e.getPoint();
-                int dx = p.x - pickPoint.x;
-                int dy = p.y - pickPoint.y;
-
-                if (entry != null) {
-                    if (splitVertical) {
-                        int gridx = entry.getKey().gridx;
-                        int width = entry.getValue().getWidth();
-                        double shiftx = dx * entry.getKey().weightx / width;
-                        System.out.println("width:" + width + " shiftx:" + entry.getKey().weightx);
-                        Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
-                            ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
-                        Entry<LayoutConstraints, JComponent> entry2 = null;
-                        while (enumVal.hasNext()) {
-                            entry2 = enumVal.next();
-                            LayoutConstraints key = entry2.getKey();
-                            if (key.gridx == gridx) {
-                                key.weightx -= shiftx;
-                                grid.remove(entry2.getValue());
-                                grid.add(entry2.getValue(), key);
-                            } else if (key.gridx + key.gridwidth == gridx) {
-                                key.weightx += shiftx;
-                                grid.remove(entry2.getValue());
-                                grid.add(entry2.getValue(), key);
+                if (splitVertical) {
+                    int dx = p.x - pickPoint.x;
+                    int limitdx = dx;
+                    for (DragLayoutElement element : list) {
+                        LayoutConstraints key = element.getConstraints();
+                        if (key.gridx == point.x) {
+                            int width = element.getOriginalBound().width - dx;
+                            if (width < 50) {
+                                limitdx = dx - (50 - width);
                             }
-
+                        } else if (key.gridx + key.gridwidth == point.x) {
+                            int width = element.getOriginalBound().width + dx;
+                            if (width < 50) {
+                                limitdx = dx + (50 - width);
+                            }
                         }
                     }
-                    grid.revalidate();
-                    grid.repaint();
-                    setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR
-                        : Cursor.S_RESIZE_CURSOR));
+                    for (DragLayoutElement element : list) {
+                        LayoutConstraints key = element.getConstraints();
+                        LayoutConstraints originkey = element.getOriginalConstraints();
+                        if (key.gridx == point.x) {
+                            double shiftx = limitdx * originkey.weightx / element.getOriginalBound().width;
+                            key.weightx = originkey.weightx - shiftx;
+                            grid.remove(element.getComponent());
+                            grid.add(element.getComponent(), key);
+                        } else if (key.gridx + key.gridwidth == point.x) {
+                            double shiftx = limitdx * originkey.weightx / element.getOriginalBound().width;
+                            key.weightx = originkey.weightx + shiftx;
+                            grid.remove(element.getComponent());
+                            grid.add(element.getComponent(), key);
+                        }
+
+                    }
+                } else {
+                    int dy = p.y - pickPoint.y;
+                    int limitdy = dy;
+                    for (DragLayoutElement element : list) {
+                        LayoutConstraints key = element.getConstraints();
+                        if (key.gridy == point.y) {
+                            int height = element.getOriginalBound().height - dy;
+                            if (height < 50) {
+                                limitdy = dy - (50 - height);
+                            }
+                        } else if (key.gridy + key.gridheight == point.y) {
+                            int height = element.getOriginalBound().height + dy;
+                            if (height < 50) {
+                                limitdy = dy + (50 - height);
+                            }
+                        }
+                    }
+                    for (DragLayoutElement element : list) {
+                        LayoutConstraints key = element.getConstraints();
+                        LayoutConstraints originkey = element.getOriginalConstraints();
+                        if (key.gridy == point.y) {
+                            double shifty = limitdy * originkey.weighty / element.getOriginalBound().height;
+                            key.weighty = originkey.weighty - shifty;
+                            grid.remove(element.getComponent());
+                            grid.add(element.getComponent(), key);
+                        } else if (key.gridy + key.gridheight == point.y) {
+                            double shifty = limitdy * originkey.weighty / element.getOriginalBound().height;
+                            key.weighty = originkey.weighty + shifty;
+                            grid.remove(element.getComponent());
+                            grid.add(element.getComponent(), key);
+                        }
+
+                    }
                 }
+                setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR : Cursor.S_RESIZE_CURSOR));
+                grid.revalidate();
+                grid.repaint();
             }
         }
 
@@ -619,7 +675,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             setCursor(Cursor.getDefaultCursor());
         }
 
-        public int getCursor(MouseEvent me) {
+        private int getCursor(MouseEvent me) {
             Point p = me.getPoint();
             Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
                 ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
@@ -638,6 +694,38 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
             }
             return Cursor.DEFAULT_CURSOR;
+        }
+    }
+
+    static class DragLayoutElement {
+        private final LayoutConstraints originalConstraints;
+        private final Rectangle originalBound;
+        private final LayoutConstraints constraints;
+        private final JComponent component;
+
+        public DragLayoutElement(LayoutConstraints constraints, JComponent component) {
+            if (constraints == null || component == null)
+                throw new IllegalArgumentException("Arguments cannot be null");
+            this.constraints = constraints;
+            this.originalConstraints = (LayoutConstraints) constraints.clone();
+            this.component = component;
+            this.originalBound = component.getBounds();
+        }
+
+        public LayoutConstraints getOriginalConstraints() {
+            return originalConstraints;
+        }
+
+        public Rectangle getOriginalBound() {
+            return originalBound;
+        }
+
+        public LayoutConstraints getConstraints() {
+            return constraints;
+        }
+
+        public JComponent getComponent() {
+            return component;
         }
 
     }
