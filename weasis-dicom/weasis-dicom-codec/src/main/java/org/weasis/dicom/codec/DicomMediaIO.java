@@ -255,6 +255,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     TagW.PatientSex,
                     val.startsWith("F") ? Messages.getString("DicomMediaIO.female") : val.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
             group.setTagNoNull(TagW.IssuerOfPatientID, header.getString(Tag.IssuerOfPatientID));
+            group.setTagNoNull(TagW.PatientWeight, getFloatFromDicomElement(header, Tag.PatientWeight, null));
             group.setTagNoNull(TagW.PatientComments, header.getString(Tag.PatientComments));
         }
         // Study Group
@@ -370,6 +371,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             validateDicomImageValues(tags);
             computeSlicePositionVector(tags);
+            computeSUVFactor(dicomObject, tags, 0);
         }
     }
 
@@ -522,6 +524,36 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 slicePosition[1] = imgOrientation[1] * patientPos[1];
                 slicePosition[2] = imgOrientation[2] * patientPos[2];
                 setTag(tagList, TagW.SlicePosition, slicePosition);
+            }
+        }
+    }
+
+    private void computeSUVFactor(DicomObject dicomObject, HashMap<TagW, Object> tagList, int index) {
+        String modlality = (String) tagList.get(TagW.Modality);
+        if ("PT".equals(modlality)) {
+            Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, null);
+            DicomElement seq = dicomObject.get(Tag.RadiopharmaceuticalInformationSequence);
+            if (seq != null && seq.vr() == VR.SQ) {
+                DicomObject dcm = null;
+                try {
+                    dcm = seq.getDicomObject(index);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (dcm != null) {
+                    Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
+                    Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
+                    Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                    Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
+                    if (weight != null && totalDose != null && halfLife != null && injectTime != null
+                        && acqTime != null) {
+                        // Difference is seconds divided by halfLife
+                        double time = (acqTime.getTime() - injectTime.getTime()) / (1000.0 * halfLife);
+                        double correctedDose = totalDose * Math.exp(-Math.log(2) * time);
+                        // Weight convert in kg to g
+                        setTag(tagList, TagW.SuvFactor, weight * 1000.0f / correctedDose);
+                    }
+                }
             }
         }
     }

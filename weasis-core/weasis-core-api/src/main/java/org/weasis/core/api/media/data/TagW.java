@@ -80,6 +80,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW DicomSpecialElement = new TagW("Special DICOM Object", TagType.Object); //$NON-NLS-1$
     public static final TagW DicomSpecialElementList = new TagW("Special DICOM List", TagType.List); //$NON-NLS-1$
     public final static TagW SlicePosition = new TagW("Slice Position", TagType.DoubleArray); //$NON-NLS-1$
+    public final static TagW SuvFactor = new TagW("SUV Factor", TagType.DoubleArray); //$NON-NLS-1$
 
     public final static TagW RootElement = new TagW("Root Element", TagType.String); //$NON-NLS-1$
     public final static TagW CurrentFolder = new TagW(Messages.getString("TagElement.cur_dir"), TagType.String); //$NON-NLS-1$
@@ -97,6 +98,7 @@ public class TagW implements Transferable, Serializable {
     public final static TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
     public final static TagW PatientBirthTime = new TagW(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
     public final static TagW PatientSex = new TagW(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
+    public final static TagW PatientWeight = new TagW(0x00101030, "Patient Weight", TagType.Float, 1); //$NON-NLS-1$
     public final static TagW PatientComments = new TagW(0x00104000, "Patient Comments", TagType.String, 1); //$NON-NLS-1$
 
     public final static TagW StudyInstanceUID = new TagW(0x0020000D, "Study Instance UID", TagType.String, 2); //$NON-NLS-1$

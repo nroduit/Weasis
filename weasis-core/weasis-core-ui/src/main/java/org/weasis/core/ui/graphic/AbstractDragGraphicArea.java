@@ -75,44 +75,53 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                                 // Hounsfield = pixelValue * rescale slope + intercept value
                                 Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
                                 Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
+                                if (slope != null || intercept != null) {
+                                    slope = slope == null ? 1.0f : slope;
+                                    intercept = intercept == null ? 0.0f : intercept;
+                                }
+
                                 min = Double.MAX_VALUE;
                                 max = -Double.MAX_VALUE;
                                 double sum = 0.0;
                                 for (Integer val : pList) {
                                     double v = val.doubleValue();
-                                    if (v < min)
+                                    if (slope != null) {
+                                        v = v * slope + intercept;
+                                    }
+                                    if (v < min) {
                                         min = v;
-
-                                    if (v > max)
+                                    }
+                                    if (v > max) {
                                         max = v;
-
+                                    }
                                     sum += v;
                                 }
-
                                 mean = sum / pList.size();
 
                                 stdv = 0.0D;
                                 for (Integer val : pList) {
                                     double v = val.doubleValue();
-                                    if (v < min)
+                                    if (slope != null) {
+                                        v = v * slope + intercept;
+                                    }
+                                    if (v < min) {
                                         min = v;
-
-                                    if (v > max)
+                                    }
+                                    if (v > max) {
                                         max = v;
-
+                                    }
                                     stdv += (v - mean) * (v - mean);
                                 }
-
                                 stdv = Math.sqrt(stdv / (pList.size() - 1.0));
 
-                                if (slope != null || intercept != null) {
-                                    slope = slope == null ? 1.0f : slope;
-                                    intercept = intercept == null ? 0.0f : intercept;
-                                    mean = mean * slope + intercept;
-                                    stdv = stdv * slope + intercept;
-                                    min = min * slope + intercept;
-                                    max = max * slope + intercept;
-                                }
+                                // if (slope != null || intercept != null) {
+                                // slope = slope == null ? 1.0f : slope;
+                                // intercept = intercept == null ? 0.0f : intercept;
+                                // mean = mean * slope + intercept;
+                                // stdv = stdv * slope + intercept;
+                                // min = min * slope + intercept;
+                                // max = max * slope + intercept;
+                                // }
 
                             } else {
                                 // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
@@ -137,6 +146,25 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                 if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
                     Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
                     measVal.add(new MeasureItem(ImageMean, val, unit));
+                }
+                Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
+                if (suv != null) {
+                    unit = "SUV (bw)";
+                    if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || ImageMin.isQuickComputing() ? min == null ? null : min * suv : null;
+                        measVal.add(new MeasureItem(ImageMin, val, unit));
+                    }
+                    if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || ImageMax.isQuickComputing() ? max == null ? null : max * suv : null;
+                        measVal.add(new MeasureItem(ImageMax, val, unit));
+                    }
+                    if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
+                        Double val =
+                            releaseEvent || ImageMean.isQuickComputing() ? mean == null ? null : mean * suv : null;
+                        measVal.add(new MeasureItem(ImageMean, val, unit));
+                    }
                 }
             }
             return measVal;
