@@ -11,9 +11,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Shape;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -36,7 +34,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
     public final static Measurement Area = new Measurement("Area", true, true, true);
-    public final static Measurement Diameter = new Measurement("Diameter", true, true, true);
+    public final static Measurement Diameter = new Measurement("Diameter", true, true, false);
     public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
     public final static Measurement CenterX = new Measurement("Center X", true, true, false);
     public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
@@ -68,21 +66,20 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
         updateTool();
         Shape newShape = null;
 
-        if (centerPt != null && radius != 0)
+        if (centerPt != null && radius != 0) {
             newShape = new Ellipse2D.Double(centerPt.getX() - radius, centerPt.getY() - radius, 2 * radius, 2 * radius);
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
     }
 
+    /**
+     * Force to display handles even during resizing or moving sequences
+     */
     @Override
-    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
-        if (resizingOrMoving) {
-            resizingOrMoving = false; // Force to display handles even on resizing or moving
-            super.paintHandles(g2d, transform);
-            resizingOrMoving = true;
-        } else
-            super.paintHandles(g2d, transform);
+    protected boolean isResizingOrMoving() {
+        return false;
     }
 
     @Override
@@ -98,14 +95,16 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
                 if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CenterX.isQuickComputing())
+                    if (releaseEvent || CenterX.isQuickComputing()) {
                         val = adapter.getXCalibratedValue(centerPt.getX());
+                    }
                     measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
                 }
                 if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CenterY.isQuickComputing())
+                    if (releaseEvent || CenterY.isQuickComputing()) {
                         val = adapter.getYCalibratedValue(centerPt.getY());
+                    }
                     measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
                 }
                 if (Radius.isComputed() && (!drawOnLabel || Radius.isGraphicLabel())) {
@@ -118,15 +117,17 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                 }
                 if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Area.isQuickComputing())
+                    if (releaseEvent || Area.isQuickComputing()) {
                         val = Math.PI * radius * radius * ratio * ratio;
+                    }
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
                     measVal.add(new MeasureItem(Area, val, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
-                if (stats != null)
+                if (stats != null) {
                     measVal.addAll(stats);
+                }
 
                 return measVal;
             }

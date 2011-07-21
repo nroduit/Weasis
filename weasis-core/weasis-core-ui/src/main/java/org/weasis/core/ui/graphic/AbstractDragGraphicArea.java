@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
+
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
@@ -15,6 +26,9 @@ import javax.media.jai.iterator.RectIterFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
+/**
+ * @author Nicolas Roduit,Benoit Jacquemoud
+ */
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
     public final static Measurement ImageMean = new Measurement("Mean", false, true, true);
@@ -65,6 +79,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                 Double max = null;
                 Double stdv = null;
                 Double mean = null;
+
                 if (releaseEvent) {
                     PlanarImage image = imageElement.getImage();
                     try {
@@ -91,11 +106,14 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                                     if (v < min) {
                                         min = v;
                                     }
+
                                     if (v > max) {
                                         max = v;
                                     }
+
                                     sum += v;
                                 }
+
                                 mean = sum / pList.size();
 
                                 stdv = 0.0D;
@@ -107,21 +125,15 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                                     if (v < min) {
                                         min = v;
                                     }
+
                                     if (v > max) {
                                         max = v;
                                     }
+
                                     stdv += (v - mean) * (v - mean);
                                 }
-                                stdv = Math.sqrt(stdv / (pList.size() - 1.0));
 
-                                // if (slope != null || intercept != null) {
-                                // slope = slope == null ? 1.0f : slope;
-                                // intercept = intercept == null ? 0.0f : intercept;
-                                // mean = mean * slope + intercept;
-                                // stdv = stdv * slope + intercept;
-                                // min = min * slope + intercept;
-                                // max = max * slope + intercept;
-                                // }
+                                stdv = Math.sqrt(stdv / (pList.size() - 1.0));
 
                             } else {
                                 // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
@@ -131,22 +143,27 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     }
                 }
                 String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
-                if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
+                // if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
+                if (ImageMin.isComputed()) {
                     Double val = releaseEvent || ImageMin.isQuickComputing() ? min : null;
                     measVal.add(new MeasureItem(ImageMin, val, unit));
                 }
-                if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
+                // if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
+                if (ImageMax.isComputed()) {
                     Double val = releaseEvent || ImageMax.isQuickComputing() ? max : null;
                     measVal.add(new MeasureItem(ImageMax, val, unit));
                 }
-                if (ImageSTD.isComputed() && (releaseEvent || ImageSTD.isGraphicLabel())) {
+                // if (ImageSTD.isComputed() && (releaseEvent || ImageSTD.isGraphicLabel())) {
+                if (ImageSTD.isComputed()) {
                     Double val = releaseEvent || ImageSTD.isQuickComputing() ? stdv : null;
                     measVal.add(new MeasureItem(ImageSTD, val, unit));
                 }
-                if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
+                // if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
+                if (ImageMean.isComputed()) {
                     Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
                     measVal.add(new MeasureItem(ImageMean, val, unit));
                 }
+
                 Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
                 if (suv != null) {
                     unit = "SUV (bw)";
@@ -176,31 +193,39 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {
         if (imageData == null || shape == null)
             return null;
-        Area area = new Area(shape);
-        Rectangle bound = area.getBounds();
+
+        Area shapeArea = new Area(shape);
+        Rectangle bound = shapeArea.getBounds();
+
         bound = imageData.getBounds().intersection(bound);
+
         if (bound.width == 0 || bound.height == 0)
             return null;
+
         RectIter it;
         try {
             it = RectIterFactory.create(imageData, bound);
         } catch (Exception ex) {
             it = null;
         }
+
         ArrayList<Integer> list = null;
 
         if (it != null) {
             int band = imageData.getSampleModel().getNumBands();
             list = new ArrayList<Integer>();
+
             int[] c = { 0, 0, 0 };
             it.startBands();
             it.startLines();
             int y = bound.y;
+
             while (!it.finishedLines()) {
                 it.startPixels();
                 int x = bound.x;
+
                 while (!it.finishedPixels()) {
-                    if (shape.contains(x, y)) {
+                    if (shapeArea.contains(x, y)) {
                         it.getPixel(c);
                         for (int i = 0; i < band; i++) {
                             list.add(c[i]);

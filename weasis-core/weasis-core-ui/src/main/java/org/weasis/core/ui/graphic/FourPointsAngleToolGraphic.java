@@ -37,7 +37,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         FourPointsAngleToolGraphic.class.getResource("/icon/22x22/draw-4p-angle.png")); //$NON-NLS-1$
 
     public final static Measurement Angle = new Measurement("Angle", true);
-    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -84,23 +84,29 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 6);
 
-        if (ABvalid)
+        if (ABvalid) {
             path.append(new Line2D.Double(A, B), false);
+        }
 
-        if (CDvalid)
+        if (CDvalid) {
             path.append(new Line2D.Double(C, D), false);
+        }
 
-        if (IJvalid)
+        if (IJvalid) {
             path.append(new Line2D.Double(I, J), false);
+        }
 
-        if (EFvalid)
+        if (EFvalid) {
             path.append(new Line2D.Double(E, F), false);
+        }
 
-        if (GHvalid)
+        if (GHvalid) {
             path.append(new Line2D.Double(G, H), false);
+        }
 
-        if (KLvalid)
+        if (KLvalid) {
             path.append(new Line2D.Double(K, L), false);
+        }
 
         // Do not show decoration when lines are nearly parallel
         // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
@@ -123,14 +129,17 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
             aShape.addInvShape(arcAngle, P, scalingMin, true);
 
-            if (!intersectIJsegment)
+            if (!intersectIJsegment) {
                 aShape.addShape(new Line2D.Double(P, IJPline[1]), getDashStroke(1.0f), true);
+            }
 
-            if (!intersectKLsegment)
+            if (!intersectKLsegment) {
                 aShape.addShape(new Line2D.Double(P, KLPline[1]), getDashStroke(1.0f), true);
+            }
 
-        } else if (path.getCurrentPoint() != null)
+        } else if (path.getCurrentPoint() != null) {
             newShape = path;
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
@@ -150,11 +159,13 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
                     double positiveAngle = Math.abs(angleDeg);
 
-                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel()))
+                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(Angle, positiveAngle, "deg"));
+                    }
 
-                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel()))
+                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - positiveAngle, "deg"));
+                    }
                 }
                 return measVal;
             }
@@ -198,21 +209,25 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     protected void updateTool() {
         init();
 
-        if (ABvalid = (A != null && B != null && !B.equals(A)))
+        if (ABvalid = (A != null && B != null && !B.equals(A))) {
             I = GeomUtil.getMidPoint(A, B);
+        }
 
-        if (CDvalid = (C != null && D != null && !C.equals(D)))
+        if (CDvalid = (C != null && D != null && !C.equals(D))) {
             J = GeomUtil.getMidPoint(C, D);
+        }
 
         IJvalid = (I != null && J != null && !I.equals(J));
 
-        if (EFvalid = (E != null && F != null && !E.equals(F)))
+        if (EFvalid = (E != null && F != null && !E.equals(F))) {
             K = GeomUtil.getMidPoint(E, F);
+        }
 
-        if (GHvalid = (G != null && H != null && !G.equals(H)))
+        if (GHvalid = (G != null && H != null && !G.equals(H))) {
             L = GeomUtil.getMidPoint(G, H);
-        else if (G == null && EFvalid)
+        } else if (G == null && EFvalid) {
             L = GeomUtil.getPerpendicularPointFromLine(E, F, K, 1.0); // temporary before GHvalid
+        }
 
         KLvalid = (K != null && L != null && !K.equals(L));
 

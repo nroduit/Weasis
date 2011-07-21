@@ -323,7 +323,7 @@ public class GraphicsPane extends JComponent {
                 layerModel.setSelectedGraphics(null);
 
             } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
-                layerModel.setSelectedGraphics(layerModel.getdAllGraphics());
+                layerModel.setSelectedGraphics(layerModel.getAllGraphics());
             }
         }
 

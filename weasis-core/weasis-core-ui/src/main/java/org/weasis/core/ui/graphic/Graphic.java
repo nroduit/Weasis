@@ -25,16 +25,13 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 /**
  * The Interface Graphic.
  * 
- * @author Nicolas Roduit
+ * @author Nicolas Roduit , Benoit Jacquemoud
  */
-public interface Graphic extends GUIEntry, Cloneable {
+public interface Graphic extends GUIEntry , Cloneable {
 
     public Graphic deepCopy();
-
-    @Deprecated
-    public Area getArea();
-
-    public Area getArea(AffineTransform transform); // New
+  
+    public Area getArea(AffineTransform transform); 
 
     public String[] getLabel();
 
@@ -50,22 +47,15 @@ public interface Graphic extends GUIEntry, Cloneable {
 
     public void updateLabel(Object source, DefaultView2d view2d);
 
-    @Deprecated
-    public Rectangle getBounds();
+    public Rectangle getBounds(AffineTransform transform); 
 
-    public Rectangle getBounds(AffineTransform transform); // New
-
-    @Deprecated
-    public Rectangle getRepaintBounds();
-
-    public Rectangle getRepaintBounds(AffineTransform transform); // New
+    public Rectangle getRepaintBounds(AffineTransform transform); 
 
     public GraphicLabel getGraphicLabel();
 
-    @Deprecated
-    public boolean intersects(Rectangle rectangle);
+    public boolean isLabelVisible();
 
-    public boolean intersects(Rectangle rectangle, AffineTransform transform); // New
+    public boolean intersects(Rectangle rectangle, AffineTransform transform); 
 
     public void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 

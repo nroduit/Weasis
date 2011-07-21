@@ -36,7 +36,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
     public final static Measurement Angle = new Measurement("Angle", true);
-    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true, true, false);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     Point2D A, O, B; // Let AOB be the triangle that represents the measured angle, O being the intersection point
@@ -70,11 +70,13 @@ public class AngleToolGraphic extends AbstractDragGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 2);
 
-        if (OAvalid)
+        if (OAvalid) {
             path.append(new Line2D.Double(A, O), false);
+        }
 
-        if (OBvalid)
+        if (OBvalid) {
             path.append(new Line2D.Double(O, B), false);
+        }
 
         if (OAvalid && OBvalid && !lineColinear) {
             AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(2));
@@ -94,8 +96,9 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
             aShape.addInvShape(arcAngle, O, scalingMin, true);
 
-        } else if (path.getCurrentPoint() != null)
+        } else if (path.getCurrentPoint() != null) {
             newShape = path;
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
@@ -114,11 +117,13 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
                     double positiveAngle = Math.abs(angleDeg);
 
-                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel()))
+                    if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(Angle, positiveAngle, "deg"));
+                    }
 
-                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel()))
+                    if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
                         measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - positiveAngle, "deg"));
+                    }
                 }
                 return measVal;
             }

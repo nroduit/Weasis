@@ -28,35 +28,35 @@ public class DecFormater {
     private static DecimalFormat df4 = new DecimalFormat("0.####E0"); // Sientific format with 4 decimals //$NON-NLS-1$
 
     private static DecimalFormat df5 = new DecimalFormat("###0.#"); //$NON-NLS-1$
-    private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); //$NON-NLS-1$
-    private static DecimalFormat df7 = new DecimalFormat("###0.#"); //$NON-NLS-1$
+    private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); //8 decimals//$NON-NLS-1$
+    private static DecimalFormat df7 = new DecimalFormat("###0.##"); //$NON-NLS-1$
 
     public static String twoDecimal(double val) {
         return df1.format(val);
-    }
-
-    public static String oneDecimalUngroup(double val) {
-        return df5.format(val);
-    }
-
-    public static String twoDecimalUngroup(double val) {
-        return df7.format(val);
-    }
-
-    public static String zeroDecimal(double val) {
-        return df3.format(val);
     }
 
     public static String fourDecimal(double val) {
         return df2.format(val);
     }
 
-    public static String heightDecimal(double val) {
-        return df6.format(val);
+    public static String zeroDecimal(double val) {
+        return df3.format(val);
     }
 
     public static String scientificFormat(double val) {
         return df4.format(val);
+    }
+
+    public static String oneDecimalUngroup(double val) {
+        return df5.format(val);
+    }
+
+    public static String heightDecimal(double val) {
+        return df6.format(val);
+    }
+
+    public static String twoDecimalUngroup(double val) {
+        return df7.format(val);
     }
 
     public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {

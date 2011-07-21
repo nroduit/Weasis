@@ -17,6 +17,8 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.LayerModel;
@@ -25,7 +27,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 /**
  * The Class DragLayer.
  * 
- * @author Nicolas Roduit
+ * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public class DragLayer extends AbstractLayer {
 
@@ -70,50 +72,100 @@ public class DragLayer extends AbstractLayer {
     /**
      * getGraphicsInArea
      * 
-     * @param rect
+     * @param selectGraphic
      *            Rectangle
      * @return List
      */
-    @Override
-    public java.util.List getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform) {
-        ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
 
-        if (graphics != null && rect != null) {
+    @Override
+    public List<Graphic> getGraphicsSurfaceInArea(Rectangle selectGraphic, AffineTransform transform) {
+        ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
+
+        if (graphics != null && graphics.size() > 0 && selectGraphic != null) {
 
             for (Graphic graphic : graphics) {
-                Rectangle selectionBounds = graphic.getBounds(transform);
+                Rectangle graphBounds = graphic.getBounds(transform);
 
-                if (selectionBounds != null && selectionBounds.intersects(rect)) {
+                if (graphBounds != null && graphBounds.intersects(selectGraphic)) {
                     Area selectionArea = graphic.getArea(transform);
-                    if (selectionArea != null && selectionArea.intersects(rect)) {
-                        graphicList.add(graphic);
+
+                    if (selectionArea != null && selectionArea.intersects(selectGraphic)) {
+                        selectedGraphicList.add(graphic);
                         continue;
                     }
                 }
 
                 GraphicLabel graphicLabel = graphic.getGraphicLabel();
-                if (graphicLabel != null) {
+                if (graphicLabel != null && graphic.isLabelVisible()) {
                     Area selectionArea = graphicLabel.getArea(transform);
-                    if (selectionArea != null && selectionArea.intersects(rect)) {
-                        graphicList.add(graphic);
-                        // Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
-                        // if (labelBounds != null && labelBounds.intersects(rect))
-                        // graphicList.add(graphic);
+
+                    if (selectionArea != null && selectionArea.intersects(selectGraphic)) {
+                        selectedGraphicList.add(graphic);
                     }
                 }
             }
         }
-        return graphicList;
+        return selectedGraphicList;
     }
 
     @Override
-    public java.util.List getGraphicsBoundsInArea(Rectangle rect) {
-        ArrayList arraylist = new ArrayList();
-        if (graphics != null) {
+    public List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform, boolean firstGraphicOnly) {
+        ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
+
+        if (graphics != null && graphics.size() > 0 && rect != null) {
+            List<Area> selectedAreaList = new ArrayList<Area>();
+
+            ListIterator<Graphic> graphicsIt = graphics.listIterator(graphics.size());
+
+            while (graphicsIt.hasPrevious()) {
+                Graphic selectedGraphic = graphicsIt.previous(); // starts from top level Front graphic
+
+                if (selectedGraphic != null) {
+                    Area selectedArea = null;
+
+                    Rectangle selectionBounds = selectedGraphic.getRepaintBounds(getAffineTransform());
+                    if (selectionBounds != null && selectionBounds.intersects(rect)) {
+                        selectedArea = selectedGraphic.getArea(transform);
+                    }
+
+                    GraphicLabel graphicLabel = selectedGraphic.getGraphicLabel();
+                    if (graphicLabel != null) {
+                        Area labelArea = graphicLabel.getArea(transform);
+                        if (labelArea != null) {
+                            if (selectedArea != null) {
+                                selectedArea.add(labelArea);
+                            } else if (labelArea.intersects(rect)) {
+                                selectedArea = selectedGraphic.getArea(transform);
+                                selectedArea.add(labelArea);
+                            }
+                        }
+                    }
+
+                    if (selectedArea != null) {
+                        if (firstGraphicOnly) {
+                            for (Area area : selectedAreaList) {
+                                selectedArea.subtract(area);// subtract any areas from front graphics already selected
+                            }
+                        }
+                        if (selectedArea.intersects(rect)) {
+                            selectedAreaList.add(selectedArea);
+                            selectedGraphicList.add(selectedGraphic);
+                        }
+                    }
+                }
+            }
+        }
+        return selectedGraphicList;
+    }
+
+    @Override
+    public List<Graphic> getGraphicsBoundsInArea(Rectangle rect) {
+        ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
+        if (graphics != null && rect != null) {
             for (int j = graphics.size() - 1; j >= 0; j--) {
                 Graphic graphic = graphics.get(j);
-                // if (graphic.getRepaintBounds().intersects(rect)) {
-                if (graphic.getRepaintBounds(getAffineTransform()).intersects(rect)) {
+                Rectangle2D graphicBounds = graphic.getRepaintBounds(getAffineTransform());
+                if (graphicBounds != null && graphicBounds.intersects(rect)) {
                     arraylist.add(graphic);
                 }
             }
@@ -122,61 +174,31 @@ public class DragLayer extends AbstractLayer {
     }
 
     /**
-     * getGraphicsSurfaceInArea
-     * 
-     * @param pos
-     *            Point
-     * @return List
      */
     @Override
-    public Graphic getGraphicContainPoint(MouseEventDouble mouseevent) {
-        AbstractDragGraphic selectedGraphic = null;
-        if (graphics != null) {
-            final Point2D pos = mouseevent.getImageCoordinates();
+    public AbstractDragGraphic getGraphicContainPoint(MouseEventDouble mouseEvt) {
+        final Point2D mousePt = mouseEvt.getImageCoordinates();
+
+        if (graphics != null && mousePt != null) {
+
             for (int j = graphics.size() - 1; j >= 0; j--) {
-                AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
-                // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-                // checker sur shape directement)
-                // if (graphic.getRepaintBounds().contains(pos)) {
-                if (graphic.getRepaintBounds(getAffineTransform()).contains(pos)) {
-                    // if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
-                    if (graphic.getArea(mouseevent).contains(pos) || graphic.getHandlePointIndex(mouseevent) != -1) {
-                        if (selectedGraphic == null || !graphic.isSelected()) {
-                            selectedGraphic = graphic;
-                        } else if (graphic.isSelected()) {
-                            break;
-                        }
+                if (graphics.get(j) instanceof AbstractDragGraphic) {
+
+                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.get(j);
+
+                    if (dragGraph.isOnGraphicLabel(mouseEvt))
+                        return dragGraph;
+
+                    // Improve speed by checking if mousePoint is inside repaintBound before checking if inside Area
+                    Rectangle2D repaintBound = dragGraph.getRepaintBounds(mouseEvt);
+                    if (repaintBound != null && repaintBound.contains(mousePt)) {
+                        if (dragGraph.getArea(mouseEvt).contains(mousePt))
+                            return dragGraph;
                     }
                 }
             }
         }
-        return selectedGraphic;
+        return null;
     }
-    // previous version
-    // public Graphic getGraphicContainPoint(MouseEvent mouseevent) {
-    // if (graphics != null) {
-    // final Point pos = mouseevent.getPoint();
-    // for (int j = graphics.size() - 1; j >= 0; j--) {
-    // AbstractDragGraphic graphic = (AbstractDragGraphic) graphics.get(j);
-    // // optimisation : d'abord check si le rectangle est dans le bounding box (beaucoup plus rapide que de
-    // // checker
-    // // sur shape directement)
-    // if (graphic.getRepaintBounds().contains(pos)) {
-    // if (graphic.getArea().contains(pos) || graphic.getResizeCorner(mouseevent) != -1) {
-    // return graphic;
-    // }
-    // }
-    // }
-    // }
-    // return null;
-    // }
 
-    // REMOVED by btja
-    // seems never to be used instead use AbstractDragGraphic.getUIName or AbstractDragGraphic.getDescription
-    /*
-     * public static String getDrawinType(AbstractDragGraphic graphic) { if (graphic instanceof LineGraphic) { return
-     * "Segment"; //$NON-NLS-1$ } else if (graphic instanceof CircleGraphic) { return "Ellipse"; //$NON-NLS-1$ } else if
-     * (graphic instanceof RectangleGraphic) { return "Rectangle"; //$NON-NLS-1$ } else if (graphic instanceof
-     * PolygonGraphic) { return "Polygon"; //$NON-NLS-1$ } else { return "FreeHand"; //$NON-NLS-1$ } }
-     */
 }

@@ -11,11 +11,14 @@
 
 package org.weasis.core.ui.graphic;
 
+import java.awt.AWTException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
@@ -31,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import javax.swing.SwingUtilities;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -38,7 +43,10 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic.AdvancedShape.BasicShape;
+import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -61,7 +69,8 @@ public abstract class AbstractDragGraphic implements Graphic {
     protected int handlePointTotalNumber;
     protected List<Point2D> handlePointList;
 
-    protected int handleSize = 6; // ????
+    protected int handleSize = 6;
+    protected int selectionSize = 10;
 
     protected Paint colorPaint;
     protected float lineThickness;
@@ -69,11 +78,10 @@ public abstract class AbstractDragGraphic implements Graphic {
     protected boolean labelVisible;
     protected GraphicLabel graphicLabel;
     protected boolean selected = false;
-    protected boolean resizingOrMoving = false;
+
+    private boolean resizingOrMoving = false;
 
     private int layerID = Tools.TEMPDRAGLAYER.getId();
-
-    // TODO none are transient and should be if serialized
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -150,6 +158,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         return selected;
     }
 
+    @Override
     public boolean isLabelVisible() {
         return labelVisible;
     }
@@ -171,7 +180,8 @@ public abstract class AbstractDragGraphic implements Graphic {
     public Point2D getHandlePoint(int index) {
         if (index < 0 || index >= handlePointList.size())
             return null;
-        return handlePointList.get(index);
+        Point2D handlePoint = handlePointList.get(index);
+        return (handlePoint != null) ? (Point2D) handlePointList.get(index).clone() : null;
     }
 
     @Override
@@ -179,34 +189,55 @@ public abstract class AbstractDragGraphic implements Graphic {
         return "";
     }
 
+    /**
+     * Adjust the mouse cursor at the center of the handle point
+     * 
+     * @param handlePtIndex
+     * @param event
+     */
+    public void moveMouseOverHandlePoint(int handlePtIndex, MouseEventDouble event) {
+        DefaultView2d<?> graphPane = getDefaultView2d(event);
+
+        if (graphPane != null) {
+            Point2D p = getHandlePoint(handlePtIndex);
+
+            if (p != null) {
+                Point mp = graphPane.getMouseCoordinatesFromImage(p.getX(), p.getY());
+
+                if (event.getX() != mp.x || event.getY() != mp.y) {
+                    try {
+                        event.translatePoint(mp.x - event.getX(), mp.y - event.getY());
+                        // event = new MouseEventDouble(event, mp.x, mp.y);
+                        event.setImageCoordinates(p);
+                        SwingUtilities.convertPointToScreen(mp, graphPane);
+                        new Robot().mouseMove(mp.x, mp.y);
+                    } catch (AWTException e1) {
+                    }
+                }
+            }
+        }
+
+    }
+
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @deprecated use getArea(AffineTransform transform) instead
+     * @since Weasis v1.1.0 - new in Graphic interface
      */
-    @Deprecated
-    @Override
-    public Area getArea() {
-        return new Area(getShape());
-
-        // NOTE : called trough DefaultView2d.MouseHandler.mouseReleased ->
-        // AbstractLayerModel.getSelectedAllGraphicsIntersecting -> AbstractLayerModel.getGraphicsSurfaceInArea by
-        // AbstractGraphic.intersects
-        // NOTE : called by AbstractGraphic.getArea(MouseEvent mouseEvent)
-        // NOTE : called trough DefaultView2d.MouseHandler.mouseMoved/mousPressed/mouseReleased by
-        // AbstractLayerModel.changeCursorDesign
-        // NOTE : called trough DefaultView2d.MouseHandler.mousPressed -> AbstractLayerModel.getFirstGraphicIntersecting
-        // by Draglayer.getGraphicContainPoint
-    }
 
     @Override
     public Area getArea(AffineTransform transform) {
         if (shape == null)
             return new Area();
+
         if (shape instanceof AdvancedShape)
             return ((AdvancedShape) shape).getArea(transform);
+
         else {
-            double growingSize = getHandleSize() * 2 / GeomUtil.extractScalingFactor(transform);
+            double growingSize = Math.max(selectionSize, handleSize);
+            growingSize = Math.max(growingSize, lineThickness);
+            growingSize /= GeomUtil.extractScalingFactor(transform);
+
             Stroke boundingStroke = new BasicStroke((float) growingSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
             return new Area(boundingStroke.createStrokedShape(shape));
@@ -218,33 +249,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         return getArea(transform);
     }
 
-    /**
-     * @deprecated Use getBounds(AffineTransform affineTransform) instead
-     * 
-     * @return Bounding rectangle of the drawing shape.<br>
-     *         Handle points paintings not included.<br>
-     *         Coordinates are given in RealCoordinates
-     * 
-     */
-    @Deprecated
     @Override
-    public Rectangle getBounds() {
-        if (shape == null)
-            return null;
-
-        // NOTE : bound is not accurate with complex shape (true for rectangle or ellipse with rotation)
-        Rectangle bound = shape.getBounds();
-        bound.grow(bound.width < 1 ? 1 : 0, bound.height < 1 ? 1 : 0);
-        return bound;
-
-        // NOTE : called trough AbstractLayerModel.getSelectedAllGraphicsIntersecting by
-        // DragLayer.getGraphicsSurfaceInArea
-        // NOTE : called trough MouseListener.mouseRelease by DefaultView2d.MouseHandler.mouseReleased
-
-        // NOTE : called in Measure2DAnalyse trough DefaultView2d.MouseHandler ->
-        // AbstractLayermodel.fireGraphicSelectionChanged -> MesureTool.handle -> MesureTool.setSeletedGraphic ->
-        // AbstractGraphic.getShape by Measure2DAnalyse.....()
-
+    public boolean intersects(Rectangle rectangle, AffineTransform transform) {
+        return (rectangle != null) ? getArea(transform).intersects(rectangle) : false;
     }
 
     /**
@@ -253,7 +260,8 @@ public abstract class AbstractDragGraphic implements Graphic {
      *            rectangle in union with drawing shape bounding rectangle.
      * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
      *         Coordinates are given in RealCoordinates. <br>
-     *         null is return if shape is null
+     *         Null is return if shape is Null
+     * 
      * @since Weasis v1.1.0 - new in Graphic interface
      */
 
@@ -267,57 +275,29 @@ public abstract class AbstractDragGraphic implements Graphic {
         }
 
         Rectangle2D bounds = shape.getBounds2D();
-        growSelection(bounds, transform);
 
-        return bounds != null ? bounds.getBounds() : null;
+        double growingSize = lineThickness / 2.0;
+        growingSize /= GeomUtil.extractScalingFactor(transform);
+        GeomUtil.growRectangle(bounds, growingSize);
+
+        return (bounds != null) ? bounds.getBounds() : null;
+    }
+
+    public Rectangle getBounds(MouseEvent mouseEvent) {
+        AffineTransform transform = getAffineTransform(mouseEvent);
+        return getBounds(transform);
     }
 
     /**
-     * @deprecated Use getRepaintBounds(AffineTransform affineTransform) instead
-     */
-    @Deprecated
-    @Override
-    public Rectangle getRepaintBounds() {
-        return getRepaintBounds(shape);
-
-        // NOTE : called trough AbstractLayerModel.createGraphic by AbstractLayer.addGraphic
-        // NOTE : called trough AbstractLayerModel.getFirstGraphicIntersecting by AbstractLayer.getGraphicContainPoint
-        // NOTE : called trough AbstractLayerModel.draw by DragLayer.paint
-        // NOTE : called trough AbstractLayerModel.draw by TempLayer.paint
-        // NOTE : called by DragLayer.getGraphicsBoundsInArea !!! never called - useless ???
-    }
-
-    /**
-     * @deprecated Use getRepaintBounds(Shape shape,AffineTransform affineTransform) instead
-     */
-    @Deprecated
-    public Rectangle getRepaintBounds(Shape shape) {
-        if (shape == null)
-            return null;
-
-        Rectangle rectangle = shape.getBounds();
-        growHandles(rectangle);
-        return rectangle;
-
-        // NOTE : called trough AbstractLayer.propertyChange("remove.repaint") -> AbstractLayer.graphicBoundsChanged by
-        // AbstractGraphic.getTransformedBounds
-    }
-
-    /**
-     * @param affineTransform
-     * @return
+     * 
+     * @return Bounding rectangle which size has to be modified according to the given transform with handle drawings
+     *         and lineThikness taken in consideration<br>
+     *         This assumes that handle drawing size do not change with different scaling of views. Hence, real
+     *         coordinates of bounding rectangle are modified consequently<br>
+     * 
      * @since Weasis v1.1.0 - new in Graphic interface
      */
-    @Override
-    public Rectangle getRepaintBounds(AffineTransform transform) {
-        return getRepaintBounds(shape, transform);
-    }
 
-    /**
-     * @param shape
-     * @param affineTransform
-     * @return
-     */
     public Rectangle getRepaintBounds(Shape shape, AffineTransform transform) {
         if (shape == null)
             return null;
@@ -327,9 +307,23 @@ public abstract class AbstractDragGraphic implements Graphic {
         }
 
         Rectangle2D bounds = shape.getBounds2D();
-        growHandles(bounds, transform);
 
-        return bounds != null ? bounds.getBounds() : null;
+        // Add pixel tolerance to ensure that the graphic is correctly repainted
+        double growingSize = Math.max(handleSize * 1.5 / 2.0, lineThickness / 2.0) + 6;
+        growingSize /= GeomUtil.extractScalingFactor(transform);
+        GeomUtil.growRectangle(bounds, growingSize);
+
+        return (bounds != null) ? bounds.getBounds() : null;
+    }
+
+    @Override
+    public Rectangle getRepaintBounds(AffineTransform transform) {
+        return getRepaintBounds(shape, transform);
+    }
+
+    public Rectangle getRepaintBounds(MouseEvent mouseEvent) {
+        AffineTransform transform = getAffineTransform(mouseEvent);
+        return getRepaintBounds(shape, transform);
     }
 
     /**
@@ -341,7 +335,6 @@ public abstract class AbstractDragGraphic implements Graphic {
 
     @Override
     public Rectangle getTransformedBounds(Shape shape, AffineTransform transform) {
-        // TODO - should be static
         Rectangle rectangle = getRepaintBounds(shape, transform);
 
         if (transform != null && rectangle != null) {
@@ -356,76 +349,15 @@ public abstract class AbstractDragGraphic implements Graphic {
         return (label != null) ? label.getTransformedBounds(transform).getBounds() : null;
     }
 
-    // @Override
-    // public Rectangle getTransformedBounds(Shape shape, AffineTransform affineTransform) {
-    // if (affineTransform == null)
-    // return getRepaintBounds(shape);
-    //
-    // Rectangle rectangle = affineTransform.createTransformedShape(shape).getBounds();
-    // growHandles(rectangle);
-    //
-    // return rectangle;
-    //
-    // // NOTE : called trough AbstractLayer.propertyChange("bounds") by AbstractLayer.graphicBoundsChanged
-    // // NOTE : called trough AbstractLayer.propertyChange("remove.repaint") by AbstractLayer.removeGraphicAndRepaint
-    // }
-
-    @Deprecated
-    public void growHandles(Rectangle rectangle) {
-        // Add 2 pixels tolerance to ensure that the graphic is correctly repainted
-        // int growingValue = (int) Math.floor(Math.max(handleSize, (int) Math.ceil(lineThickness)) / 2.0) + 2;
-        int growingValue = (Math.max((int) Math.ceil(handleSize * 1.5), (int) Math.ceil(lineThickness)) + 1) >> 1;
-        rectangle.grow(growingValue, growingValue);
-    }
-
     /**
-     * @param rectangle
-     *            Bounding rectangle which size has to be modified according to the given transform with handle drawings
-     *            and lineThikness taken in consideration<br>
-     *            This assumes that handle drawing size do not change with different scaling of views. Hence, real
-     *            coordinates of bounding rectangle are modified consequently<br>
-     * @param transform
+     * @return selected handle point index if exist, otherwise -1
      */
-    public void growHandles(Rectangle2D rectangle, AffineTransform transform) {
-        // int growingValue = (Math.max((int) Math.ceil(handleSize * 1.5), (int) Math.ceil(lineThickness)) + 1) >> 1;
-        double growingSize = Math.max(handleSize, lineThickness);
-        if (transform != null) {
-            // growingValue = (int) Math.ceil(growingValue / transform.getScaleX()); // doesn't work with rotation
-            double scalingFactor = GeomUtil.extractScalingFactor(transform);
-            // growingValue = (int) Math.ceil(growingValue / scalingFactor);
-            growingSize = growingSize / scalingFactor;
-
-        }
-        GeomUtil.growRectangle(rectangle, growingSize + 5);
-        // rectangle.grow(growingSize, growingSize);
-    }
-
-    public void growSelection(Rectangle2D rectangle, AffineTransform transform) {
-        double growingSize = handleSize;
-        if (transform != null) {
-            growingSize = growingSize / GeomUtil.extractScalingFactor(transform);
-        }
-        GeomUtil.growRectangle(rectangle, growingSize);
-    }
-
-    /**
-     * @return : selected handle point index if exist, otherwise -1
-     */
-    @Deprecated
-    public int getResizeCorner(MouseEvent mouseEvent) {
-        return -1;
-    }
-
     public int getHandlePointIndex(MouseEventDouble mouseevent) {
         if (mouseevent != null) {
             final Point2D mousePoint = mouseevent.getImageCoordinates();
-            double maxHandleDistance = (handleSize * 1.5) / 2;
 
-            AffineTransform transform = getAffineTransform(mouseevent);
-            if (transform != null) {
-                double scalingFactor = GeomUtil.extractScalingFactor(transform);
-                maxHandleDistance = maxHandleDistance / scalingFactor;
-            }
+            double maxHandleDistance = handleSize * 1.5 / 2.0; // half diagonal of handle point rectangle
+            maxHandleDistance /= GeomUtil.extractScalingFactor(getAffineTransform(mouseevent));
 
             for (int index = 0; index < handlePointList.size(); index++) {
                 Point2D handlePoint = handlePointList.get(index);
@@ -443,7 +375,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         final Point2D mousePoint = mouseevent.getImageCoordinates();
 
         AffineTransform transform = getAffineTransform(mouseevent);
-        if (transform != null && graphicLabel != null) {
+        if (transform != null && labelVisible && graphicLabel != null) {
             Area labelArea = graphicLabel.getArea(transform);
             if (labelArea != null && labelArea.contains(mousePoint))
                 return true;
@@ -469,20 +401,6 @@ public abstract class AbstractDragGraphic implements Graphic {
         if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
             return ((Image2DViewer) mouseevent.getSource()).getImage();
         return null;
-    }
-
-    @Deprecated
-    @Override
-    public boolean intersects(Rectangle rectangle) {
-        return getArea().intersects(rectangle);
-        // NOTE : called trough AbstractLayerModel.getSelectedAllGraphicsIntersecting by
-        // Draglayer.getGraphicsSurfaceInArea
-    }
-
-    @Deprecated
-    @Override
-    public boolean intersects(Rectangle rectangle, AffineTransform transform) {
-        return getArea(transform).intersects(rectangle);
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -543,7 +461,7 @@ public abstract class AbstractDragGraphic implements Graphic {
             Rectangle2D rect;
 
             if (shape instanceof AdvancedShape && ((AdvancedShape) shape).shapeList.size() > 0) {
-                // convention is first shape has to be the user drawing path, else should be decoration
+                // Assuming first shape is the user drawing path, else stands for decoration
                 Shape generalPath = ((AdvancedShape) shape).shapeList.get(0).shape;
                 rect = generalPath.getBounds2D();
             } else {
@@ -557,21 +475,19 @@ public abstract class AbstractDragGraphic implements Graphic {
         }
     }
 
-    public void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
-        if (pos == null) {
+    public final void setLabel(String[] labels, DefaultView2d view2d, Point2D pos) {
+        GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
+
+        if (labels == null || labels.length == 0) {
+            graphicLabel = null;
+            fireLabelChanged(oldLabel);
+        } else if (pos == null) {
             setLabel(labels, view2d);
-        } else if (labelVisible) {
-            GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
-
-            if (labels == null || labels.length == 0) {
-                graphicLabel = null;
-            } else {
-                if (graphicLabel == null) {
-                    graphicLabel = new GraphicLabel();
-                }
-
-                graphicLabel.setLabel(view2d, pos.getX(), pos.getY(), labels);
+        } else {
+            if (graphicLabel == null) {
+                graphicLabel = new GraphicLabel();
             }
+            graphicLabel.setLabel(view2d, pos.getX(), pos.getY(), labels);
             fireLabelChanged(oldLabel);
         }
     }
@@ -592,45 +508,85 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {
-        if (labelVisible) {
-            boolean releasedEvent = true;
-            ImageElement imageElement = null;
-            if (source instanceof MouseEvent) {
-                imageElement = getImageElement((MouseEvent) source);
-                releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
-            } else if (source instanceof ImageElement) {
-                imageElement = (ImageElement) source;
-            }
-            if (imageElement != null) {
-                List<MeasureItem> list = getMeasurements(imageElement, releasedEvent, true);
 
-                if (list != null && list.size() > 0) {
-                    List<String> labelList = new ArrayList<String>(list.size());
+        boolean releasedEvent = false;
+        ImageElement imageElement = null;
 
-                    for (MeasureItem item : list) {
-                        if (item.getMeasurement() != null && item.getMeasurement().isGraphicLabel()) {
+        if (source instanceof MouseEvent) {
+            imageElement = getImageElement((MouseEvent) source);
+            releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
 
-                            StringBuffer buffer = new StringBuffer(item.getMeasurement().getName());
-                            buffer.append(": ");
+        } else if (source instanceof ImageElement) {
+            imageElement = (ImageElement) source;
+        }
 
-                            if (item.getValue() != null) {
-                                buffer.append(DecFormater.oneDecimalUngroup(item.getValue()));
-                            }
+        MeasureTool measureToolListener = null;
+        boolean isMultiSelection = false; // default is single selection
+        AbstractLayerModel model = (view2d != null) ? view2d.getLayerModel() : null;
 
-                            if (item.getUnit() != null) {
-                                buffer.append(" ");
-                                buffer.append(item.getUnit());
-                            }
-                            labelList.add(buffer.toString());
-                        }
-                    }
+        if (model != null) {
+            ArrayList<Graphic> selectedGraphics = model.getSelectedGraphics();
+            isMultiSelection = (selectedGraphics != null && selectedGraphics.size() > 1);
 
-                    if (labelList.size() > 0) {
-                        setLabel(labelList.toArray(new String[labelList.size()]), view2d, pos);
+            GraphicsListener[] gfxListeners = model.getGraphicSelectionListeners();
+            if (gfxListeners != null) {
+                for (GraphicsListener listener : gfxListeners) {
+                    if (listener instanceof MeasureTool) {
+                        measureToolListener = (MeasureTool) listener;
+                        break;
                     }
                 }
             }
         }
+
+        List<MeasureItem> measList = null;
+        String[] labels = null;
+
+        // If isMultiSelection is false, it should return all enable computed measurements when
+        // quickComputing is enable or when releasedEvent is true
+        if (labelVisible || !isMultiSelection) {
+            measList = getMeasurements(imageElement, releasedEvent, isMultiSelection);
+        }
+
+        if (labelVisible && measList != null && measList.size() > 0) {
+            List<String> labelList = new ArrayList<String>(measList.size());
+
+            for (MeasureItem item : measList) {
+                if (item != null) {
+                    Measurement measurement = item.getMeasurement();
+
+                    if (measurement != null && measurement.isGraphicLabel()) {
+                        StringBuilder sb = new StringBuilder();
+
+                        String name = measurement.getName();
+                        Double value = item.getValue();
+                        String unit = item.getUnit();
+
+                        if (name != null) {
+                            sb.append(name).append(" : ");
+                            if (value != null) {
+                                sb.append(DecFormater.oneDecimalUngroup(value));
+                                if (unit != null) {
+                                    sb.append(" ").append(unit);
+                                }
+                            }
+                        }
+                        labelList.add(sb.toString());
+                    }
+                }
+            }
+            if (labelList.size() > 0) {
+                labels = labelList.toArray(new String[labelList.size()]);
+            }
+        }
+
+        setLabel(labels, view2d, pos);
+
+        // update MeasureTool on the fly without calling again getMeasurements
+        if (measureToolListener != null) {
+            measureToolListener.updateMeasuredItems(isMultiSelection ? null : measList);
+        }
+
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -654,7 +610,9 @@ public abstract class AbstractDragGraphic implements Graphic {
             }
         }
 
-        // Graphics DEBUG
+        g2d.setStroke(oldStroke);
+
+        // // Graphics DEBUG 
         // if (transform != null) {
         // g2d.setPaint(Color.CYAN);
         // g2d.draw(transform.createTransformedShape(getBounds(transform)));
@@ -667,10 +625,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         // g2d.setPaint(Color.BLUE);
         // g2d.draw(transform.createTransformedShape(getRepaintBounds(transform)));
         // }
-        // Graphics DEBUG
+        // // Graphics DEBUG
 
         g2d.setPaint(oldPaint);
-        g2d.setStroke(oldStroke);
 
         if (isSelected()) {
             paintHandles(g2d, transform);
@@ -679,7 +636,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         paintLabel(g2d, transform);
     }
 
-    public boolean isResizingOrMoving() {
+    protected boolean isResizingOrMoving() {
         return resizingOrMoving;
     }
 
@@ -690,8 +647,8 @@ public abstract class AbstractDragGraphic implements Graphic {
         }
     }
 
-    public void paintHandles(Graphics2D g2d, AffineTransform transform) {
-        if (!resizingOrMoving) {
+    protected void paintHandles(Graphics2D g2d, AffineTransform transform) {
+        if (!isResizingOrMoving()) {
             double size = handleSize;
             double halfSize = size / 2;
 
@@ -863,9 +820,9 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     /**
-     * @return True if last dragging point equals the previous one
+     * @return False if last dragging point equals the previous one
      */
-    protected boolean isLastPointValid() {
+    protected final boolean isLastPointValid() {
 
         Point2D lastP = getHandlePoint(handlePointList.size() - 1);
         if (lastP != null) {
@@ -879,6 +836,10 @@ public abstract class AbstractDragGraphic implements Graphic {
 
     public DragSequence createMoveDrag() {
         return new DefaultDragSequence();
+    }
+
+    public DragSequence createResizeDrag() {
+        return createResizeDrag(0);
     }
 
     public DragSequence createResizeDrag(int i) {
@@ -999,7 +960,7 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     @Override
-    public Object clone() {
+    public AbstractDragGraphic clone() {
         AbstractDragGraphic newGraphic = null;
         try {
             newGraphic = (AbstractDragGraphic) super.clone();
@@ -1015,15 +976,6 @@ public abstract class AbstractDragGraphic implements Graphic {
         return newGraphic;
     }
 
-    public Graphic clone(double xPos, double yPos) {
-        AbstractDragGraphic graphic = (AbstractDragGraphic) clone();
-        if (graphic == null)
-            return null;
-        graphic.setShape(new Rectangle2D.Double(xPos, yPos, 0, 0), null); // needed for selection check when used after
-                                                                          // drag
-        return graphic;
-    };
-
     @Override
     public Graphic deepCopy() {
         AbstractDragGraphic newGraphic = null;
@@ -1036,7 +988,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         newGraphic.shape = null;
         newGraphic.handlePointList = new ArrayList<Point2D>(handlePointList.size());
         for (Point2D p : handlePointList) {
-            newGraphic.handlePointList.add((Point2D) p.clone());
+            newGraphic.handlePointList.add(p != null ? (Point2D) p.clone() : null);
         }
         newGraphic.graphicLabel = null;
         newGraphic.selected = false;
@@ -1053,8 +1005,8 @@ public abstract class AbstractDragGraphic implements Graphic {
                     point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
                 }
             }
-        } else {
-            Point2D point = getHandlePoint(handlePointIndex);
+        } else if (handlePointIndex >= 0 && handlePointIndex < handlePointList.size()) {
+            Point2D point = handlePointList.get(handlePointIndex);
             if (point != null) {
                 point.setLocation(mouseEvent.getImageCoordinates());
                 // point.setLocation(point.getX() + deltaX, point.getY() + deltaY);

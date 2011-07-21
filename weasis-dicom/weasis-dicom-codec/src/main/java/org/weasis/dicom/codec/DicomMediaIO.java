@@ -543,7 +543,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 if (dcm != null) {
                     Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
                     Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
-                    Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                    Date injectTime =
+                        getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime,
+                            getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null));
                     Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
                     if (weight != null && totalDose != null && halfLife != null && injectTime != null
                         && acqTime != null) {

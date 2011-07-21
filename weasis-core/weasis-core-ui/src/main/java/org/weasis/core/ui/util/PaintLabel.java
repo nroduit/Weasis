@@ -179,7 +179,7 @@ public class PaintLabel extends JDialog {
                     for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
                         if (v instanceof DefaultView2d) {
                             DefaultView2d view = (DefaultView2d) v;
-                            List<Graphic> list = view.getLayerModel().getdAllGraphics();
+                            List<Graphic> list = view.getLayerModel().getAllGraphics();
                             for (Graphic graphic : list) {
                                 graphic.updateLabel(view.getImage(), view);
                             }

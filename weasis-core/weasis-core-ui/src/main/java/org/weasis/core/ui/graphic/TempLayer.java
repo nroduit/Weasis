@@ -52,12 +52,9 @@ public class TempLayer extends DragLayer {
         if (graphics != null) {
             for (int i = 0; i < graphics.size(); i++) {
                 Graphic graphic = graphics.get(i);
-                // rectangle correspond ï¿½ la zone d'affiche de ImageDisplay (zone de l'image visible)
-                // si le rectangle intersecte (si le bounding box du graphic est contenu ou intesecte avec le rectangle)
-                // revoie
-                // true
-                // if (bound == null || bound.intersects(graphic.getRepaintBounds())) {
-                if (bound == null || bound.intersects(graphic.getRepaintBounds(transform))) {
+                Rectangle2D graphicBounds = graphic != null ? graphic.getRepaintBounds(transform) : null;
+
+                if (bound == null || (graphicBounds != null && bound.intersects(graphicBounds))) {
                     graphic.paint(g2, transform);
                 }
             }

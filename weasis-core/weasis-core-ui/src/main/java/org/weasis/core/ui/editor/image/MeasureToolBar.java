@@ -123,7 +123,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 AbstractLayerModel model = getCurrentLayerModel();
                 if (model != null) {
                     if (model.getSelectedGraphics().size() == 0) {
-                        model.setSelectedGraphics(model.getdAllGraphics());
+                        model.setSelectedGraphics(model.getAllGraphics());
                     }
                     model.deleteSelectedGraphics(true);
                 }

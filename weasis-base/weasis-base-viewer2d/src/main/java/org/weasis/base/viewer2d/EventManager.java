@@ -182,7 +182,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
-            layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getLayoutModel());
+            layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
             Graphic graphic = null;
@@ -196,6 +196,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     /** process the action events. */
 
+    @Override
     public void actionPerformed(ActionEvent evt) {
         String command = evt.getActionCommand();
 
@@ -250,16 +251,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     @Override
     public synchronized boolean updateComponentsListener(DefaultView2d<ImageElement> defaultView2d) {
-        if (defaultView2d == null) {
+        if (defaultView2d == null)
             return false;
-        }
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
+        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer)
             return false;
-        }
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
+        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane())
             return false;
-        }
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();

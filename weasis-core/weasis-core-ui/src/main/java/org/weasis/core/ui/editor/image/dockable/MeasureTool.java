@@ -314,39 +314,45 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     }
 
     public void setSelectedGraphic(Graphic graph, ImageElement imageElement) {
-        tableContainer.removeAll();
+        List<MeasureItem> measList = null;
 
         if (graph != null && imageElement != null) {
-            List<MeasureItem> list = graph.getMeasurements(imageElement, true, false);
-            if (list != null) {
-                Object[][] labels = new Object[list.size()][];
-                for (int i = 0; i < labels.length; i++) {
-                    MeasureItem m = list.get(i);
-                    Object[] row = new Object[2];
-                    StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
-                    if (m.getUnit() != null) {
-                        buffer.append(" [");
-                        buffer.append(m.getUnit());
-                        buffer.append("]");
-                    }
-                    row[0] = buffer.toString();
-                    row[1] = m.getValue();
-                    labels[i] = row;
-                }
-                String[] headers = { "Parameter", "Value" };
-                jtable.setModel(new SimpleTableModel(headers, labels));
-                jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-                createTableHeaders(jtable);
-
-                tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-                tableContainer.add(jtable, BorderLayout.CENTER);
-                TableColumnAdjuster.pack(jtable);
-            }
-
+            measList = graph.getMeasurements(imageElement, true, false);
         }
+        updateMeasuredItems(measList);
+    }
+
+    public void updateMeasuredItems(List<MeasureItem> measList) {
+        tableContainer.removeAll();
+
+        // just clear tableContainer if measList is null
+        if (measList != null) {
+            Object[][] labels = new Object[measList.size()][];
+            for (int i = 0; i < labels.length; i++) {
+                MeasureItem m = measList.get(i);
+                Object[] row = new Object[2];
+                StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
+                if (m.getUnit() != null) {
+                    buffer.append(" [");
+                    buffer.append(m.getUnit());
+                    buffer.append("]");
+                }
+                row[0] = buffer.toString();
+                row[1] = m.getValue();
+                labels[i] = row;
+            }
+            String[] headers = { "Parameter", "Value" };
+            jtable.setModel(new SimpleTableModel(headers, labels));
+            jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+            createTableHeaders(jtable);
+
+            tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+            tableContainer.add(jtable, BorderLayout.CENTER);
+            TableColumnAdjuster.pack(jtable);
+        }
+
         tableContainer.revalidate();
         tableContainer.repaint();
-
     }
 
     public static int getNumberOfMeasures(boolean[] select) {
@@ -367,21 +373,31 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     }
 
     @Override
-    public void handle(List<Graphic> selectedGraphics, ImageElement img) {
+    public void handle(List<Graphic> selectedGraphicList, ImageElement img) {
         Graphic g = null;
         List<AbstractDragGraphic> list = null;
-        if (selectedGraphics != null) {
-            if (selectedGraphics.size() == 1) {
-                g = selectedGraphics.get(0);
+        
+        if (selectedGraphicList != null) {
+            if (selectedGraphicList.size() == 1) {
+                g = selectedGraphicList.get(0);
             }
+            
             list = new ArrayList<AbstractDragGraphic>();
-            for (Graphic graphic : selectedGraphics) {
+            
+            for (Graphic graphic : selectedGraphicList) {
                 if (graphic instanceof AbstractDragGraphic) {
                     list.add((AbstractDragGraphic) graphic);
                 }
             }
         }
+
+        if (selectedGraphic != null) {
+            selectedGraphic.clear();
+        }
+
         this.selectedGraphic = list;
+
+        // if g equals null means graphic is not single or no graphic is selected
         setSelectedGraphic(g, img);
     }
 

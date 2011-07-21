@@ -37,7 +37,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
 
     public final static Measurement Angle = new Measurement("Angle", true);
-    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true);
+    public final static Measurement ComplementaryAngle = new Measurement("Compl. Angle", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D A, B, C, D; // Let AB & CD two line segments
@@ -84,11 +84,13 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 6);
 
-        if (ABvalid)
+        if (ABvalid) {
             path.append(new Line2D.Double(A, B), false);
+        }
 
-        if (CDvalid)
+        if (CDvalid) {
             path.append(new Line2D.Double(C, D), false);
+        }
 
         // Do not show decoration when lines are nearly parallel
         // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
@@ -115,11 +117,13 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
             Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angleDeg, Arc2D.OPEN);
             aShape.addShape(arcAngle);
 
-            if (!intersectABsegment)
+            if (!intersectABsegment) {
                 aShape.addShape(new Line2D.Double(P, ABPline[1]), getDashStroke(1.0f), true);
+            }
 
-            if (!intersectCDsegment)
+            if (!intersectCDsegment) {
                 aShape.addShape(new Line2D.Double(P, CDPline[1]), getDashStroke(1.0f), true);
+            }
 
             // Let intersectPtShape be a cross lines inside a circle
             int iPtSize = 8;
@@ -137,8 +141,9 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
             aShape.addInvShape(intersectPtShape, P, getStroke(0.5f), true);
 
-        } else if (path.getCurrentPoint() != null)
+        } else if (path.getCurrentPoint() != null) {
             newShape = path;
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
@@ -155,11 +160,13 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
                 double positiveAngle = Math.abs(angleDeg);
 
-                if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel()))
+                if (Angle.isComputed() && (!drawOnLabel || Angle.isGraphicLabel())) {
                     measVal.add(new MeasureItem(Angle, positiveAngle, "deg"));
+                }
 
-                if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel()))
+                if (ComplementaryAngle.isComputed() && (!drawOnLabel || ComplementaryAngle.isGraphicLabel())) {
                     measVal.add(new MeasureItem(ComplementaryAngle, 180.0 - positiveAngle, "deg"));
+                }
 
                 return measVal;
             }

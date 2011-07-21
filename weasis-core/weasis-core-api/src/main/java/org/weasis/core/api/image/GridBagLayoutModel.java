@@ -13,6 +13,7 @@ package org.weasis.core.api.image;
 import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import javax.swing.Icon;
@@ -31,7 +32,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * GridBagLayoutModel is the model for the plugin container.
  * 
  */
-public class GridBagLayoutModel implements GUIEntry {
+public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
     private String title;
     private final Icon icon;
@@ -217,4 +218,14 @@ public class GridBagLayoutModel implements GUIEntry {
         this.title = title;
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        LinkedHashMap<LayoutConstraints, JComponent> map =
+            new LinkedHashMap<LayoutConstraints, JComponent>(constraints.size());
+        Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
+        while (enumVal.hasNext()) {
+            map.put((LayoutConstraints) enumVal.next().clone(), null);
+        }
+        return new GridBagLayoutModel(map, title, icon);
+    }
 }

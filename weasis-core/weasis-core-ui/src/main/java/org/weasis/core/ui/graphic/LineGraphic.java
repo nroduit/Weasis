@@ -38,7 +38,6 @@ public class LineGraphic extends AbstractDragGraphic {
     public final static Measurement LineLength = new Measurement("Line length", true, true, true);
     public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
     public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
-    public final static Measurement ColorRGB = new Measurement("Color (RGB)", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D A, B; // Let AB be a simple a line segment
@@ -66,8 +65,9 @@ public class LineGraphic extends AbstractDragGraphic {
         updateTool();
         Shape newShape = null;
 
-        if (ABvalid)
+        if (ABvalid) {
             newShape = new Line2D.Double(A, B);
+        }
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
@@ -83,45 +83,52 @@ public class LineGraphic extends AbstractDragGraphic {
 
                 if (FirstPointX.isComputed() && (!drawOnLabel || FirstPointX.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || FirstPointX.isQuickComputing())
+                    if (releaseEvent || FirstPointX.isQuickComputing()) {
                         val = adapter.getXCalibratedValue(A.getX());
+                    }
                     measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
                 }
                 if (FirstPointY.isComputed() && (!drawOnLabel || FirstPointY.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || FirstPointY.isQuickComputing())
+                    if (releaseEvent || FirstPointY.isQuickComputing()) {
                         val = adapter.getXCalibratedValue(A.getY());
+                    }
                     measVal.add(new MeasureItem(FirstPointY, val, adapter.getUnit()));
                 }
                 if (LastPointX.isComputed() && (!drawOnLabel || LastPointX.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LastPointX.isQuickComputing())
-                        adapter.getXCalibratedValue(B.getX());
+                    if (releaseEvent || LastPointX.isQuickComputing()) {
+                        val = adapter.getXCalibratedValue(B.getX());
+                    }
                     measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
                 }
                 if (LastPointY.isComputed() && (!drawOnLabel || LastPointY.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LastPointY.isQuickComputing())
+                    if (releaseEvent || LastPointY.isQuickComputing()) {
                         val = adapter.getXCalibratedValue(B.getY());
+                    }
                     measVal.add(new MeasureItem(LastPointY, val, adapter.getUnit()));
                 }
                 if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LineLength.isQuickComputing())
+                    if (releaseEvent || LineLength.isQuickComputing()) {
                         val = A.distance(B) * adapter.getCalibRatio();
+                    }
                     measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
                 }
                 if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Orientation.isQuickComputing())
+                    if (releaseEvent || Orientation.isQuickComputing()) {
                         val = MathUtil.getOrientation(A, B);
+                    }
                     measVal.add(new MeasureItem(Orientation, val, "deg"));
 
                 }
                 if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Azimuth.isQuickComputing())
+                    if (releaseEvent || Azimuth.isQuickComputing()) {
                         val = MathUtil.getAzimuth(A, B);
+                    }
                     measVal.add(new MeasureItem(Azimuth, val, "deg"));
 
                 }

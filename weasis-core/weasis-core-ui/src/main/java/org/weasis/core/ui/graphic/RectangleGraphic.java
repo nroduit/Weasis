@@ -65,8 +65,9 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     protected int moveAndResizeOnDrawing(int handlePointIndex, double deltaX, double deltaY, MouseEventDouble mouseEvent) {
         if (handlePointIndex == -1) { // move shape
             for (Point2D point : handlePointList) {
-                if (point != null)
+                if (point != null) {
                     point.setLocation(point.getX() + deltaX, point.getY() + deltaY);
+                }
             }
         } else {
             Rectangle2D rectangle = new Rectangle2D.Double();
@@ -123,8 +124,9 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         double x = rectangle.getX(), y = rectangle.getY();
         double w = rectangle.getWidth(), h = rectangle.getHeight();
 
-        while (handlePointList.size() < handlePointTotalNumber)
+        while (handlePointList.size() < handlePointTotalNumber) {
             handlePointList.add(new Point.Double());
+        }
 
         handlePointList.get(eHandlePoint.NW.index).setLocation(new Point2D.Double(x, y));
         handlePointList.get(eHandlePoint.N.index).setLocation(new Point2D.Double(x + w / 2, y));
@@ -138,11 +140,14 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
-        Rectangle2D rectangle = new Rectangle2D.Double();
+        Rectangle2D rectangle = null;
 
         if (handlePointList.size() > 1) {
-            rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                handlePointList.get(eHandlePoint.SE.index));
+            if (!handlePointList.get(eHandlePoint.NW.index).equals(handlePointList.get(eHandlePoint.SE.index))) {
+                rectangle = new Rectangle2D.Double();
+                rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
+                    handlePointList.get(eHandlePoint.SE.index));
+            }
         }
 
         setShape(rectangle, mouseevent);
@@ -188,7 +193,6 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
                             : null;
                     measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
                 }
-
                 if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
                     Double val = releaseEvent || Width.isQuickComputing() ? ratio * rect.getWidth() : null;
                     measVal.add(new MeasureItem(Width, val, adapter.getUnit()));
@@ -197,14 +201,24 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
                     Double val = releaseEvent || Height.isQuickComputing() ? ratio * rect.getHeight() : null;
                     measVal.add(new MeasureItem(Height, val, adapter.getUnit()));
                 }
-
                 if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || Area.isQuickComputing() ? rect.getWidth() * rect.getHeight() * ratio * ratio
-                            : null;
+                    Double val = null;
+                    if (releaseEvent || Area.isQuickComputing()) {
+                        val = rect.getWidth() * rect.getHeight() * ratio * ratio;
+                    }
+
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
                     measVal.add(new MeasureItem(Area, val, unit));
                 }
+                if (Perimeter.isComputed() && (!drawOnLabel || Perimeter.isGraphicLabel())) {
+                    Double val = null;
+                    if (releaseEvent || Perimeter.isQuickComputing()) {
+                        val = (rect.getWidth() + rect.getHeight()) * 2 * ratio;
+                    }
+
+                    measVal.add(new MeasureItem(Perimeter, val, adapter.getUnit()));
+                }
+
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
                 if (stats != null) {
                     measVal.addAll(stats);

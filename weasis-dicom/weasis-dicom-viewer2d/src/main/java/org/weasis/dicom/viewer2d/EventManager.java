@@ -508,14 +508,31 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     @Override
+    public ActionW getActionFromCommand(String command) {
+        ActionW action = super.getActionFromCommand(command);
+
+        if (action == null && command != null) {
+            for (ActionW a : keyEventActions) {
+                if (a.cmd().equals(command))
+                    return a;
+            }
+        }
+
+        return action;
+    }
+
+    @Override
     public ActionW getActionFromkeyEvent(int keyEvent) {
-        if (keyEvent != 0) {
+        ActionW action = super.getActionFromkeyEvent(keyEvent);
+
+        if (action == null && keyEvent != 0) {
             for (ActionW a : keyEventActions) {
                 if (a.getKeyCode() == keyEvent)
                     return a;
             }
         }
-        return null;
+
+        return action;
     }
 
     @Override
@@ -529,7 +546,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
-            layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getLayoutModel());
+            layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
             selectedView2dContainer.setMouseActions(mouseActions);
             Graphic graphic = null;

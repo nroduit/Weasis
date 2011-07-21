@@ -1,7 +1,7 @@
 package org.weasis.core.ui.graphic;
 
 public class Measurement {
-    // private final int id;
+
     private final String name;
     private final boolean quickComputing;
     private boolean computed;

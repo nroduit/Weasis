@@ -71,9 +71,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     toBack(graph);
                 }
             }
-
+            
         }
 
+        
         private static final long serialVersionUID = -9094820911680205527L;
 
         private PropertyChangeHandler() {
@@ -213,6 +214,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform);
 
+    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform,
+        boolean onlyFrontGraphic);
+
     public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
     public abstract Graphic getGraphicContainPoint(MouseEventDouble mouseevent);
@@ -231,8 +235,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void repaint(Rectangle rectangle) {
-        for (int i = 0; i < canvas.size(); i++) {
-            canvas.get(i).repaint(rectangle);
+        if (rectangle != null) {
+            for (int i = 0; i < canvas.size(); i++) {
+                canvas.get(i).repaint(rectangle);
+            }
         }
     }
 
@@ -274,16 +280,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             }
         }
     }
-
-    // @Deprecated
-    // private void transformLabelBound(Rectangle shape, AffineTransform affineTransform, GraphicLabel label) {
-    // if (affineTransform != null) {
-    // Point2D.Double p = new Point2D.Double(shape.getX(), shape.getY());
-    // affineTransform.transform(p, p);
-    // shape.x = (int) (p.x + label.getOffsetX());
-    // shape.y = (int) (p.y + label.getOffsetY());
-    // }
-    // }
 
     protected void labelBoundsChanged(Graphic graphic, GraphicLabel oldLabel, GraphicLabel newLabel,
         AffineTransform transform) {

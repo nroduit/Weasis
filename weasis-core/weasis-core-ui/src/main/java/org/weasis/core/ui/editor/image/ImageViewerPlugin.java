@@ -166,6 +166,21 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         return layoutModel;
     }
 
+    public GridBagLayoutModel getOriginalLayoutModel() {
+        ActionState layout = eventManager.getAction(ActionW.LAYOUT);
+        if (layout instanceof ComboItemListener) {
+            ((ComboItemListener) layout).getAllItem();
+            for (Object element : ((ComboItemListener) layout).getAllItem()) {
+                if (element instanceof GridBagLayoutModel) {
+                    if ((layoutModel.getIcon() != null && ((GridBagLayoutModel) element).getIcon() == layoutModel
+                        .getIcon()) || layoutModel.toString().equals(element.toString()))
+                        return (GridBagLayoutModel) element;
+                }
+            }
+        }
+        return layoutModel;
+    }
+
     @Override
     public void addSeries(MediaSeries<E> sequence) {
         // TODO set series in specific place and if does not exist in
@@ -225,6 +240,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     protected void setLayoutModel(GridBagLayoutModel layoutModel) {
         this.layoutModel = layoutModel == null ? VIEWS_1x1 : layoutModel;
+        try {
+            this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
+        } catch (CloneNotSupportedException e1) {
+            e1.printStackTrace();
+        }
         grid.removeAll();
         // Keep views containing images
         ArrayList<DefaultView2d<E>> oldViews = new ArrayList<DefaultView2d<E>>();
@@ -554,14 +574,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 if (c != null) {
                     Rectangle rect = c.getBounds();
                     if (Math.abs(rect.x - pickPoint.x) <= LayoutConstraints.SPACE
-                        && (pickPoint.y >= rect.y && pickPoint.y <= rect.y + rect.height)) {
+                        && (pickPoint.y >= rect.y && pickPoint.y <= rect.y + rect.height) && entry.getKey().gridx > 0) {
                         splitVertical = true;
                         point = new Point(entry.getKey().gridx, entry.getKey().gridy);
                         break;
                     }
 
                     else if (Math.abs(rect.y - pickPoint.y) <= LayoutConstraints.SPACE
-                        && (pickPoint.x >= rect.x && pickPoint.x <= rect.x + rect.width)) {
+                        && (pickPoint.x >= rect.x && pickPoint.x <= rect.x + rect.width) && entry.getKey().gridy > 0) {
                         splitVertical = false;
                         point = new Point(entry.getKey().gridx, entry.getKey().gridy);
                         break;
@@ -576,6 +596,25 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     if (c != null) {
                         list.add(new DragLayoutElement(entry.getKey(), c));
                     }
+                }
+
+                double totalWidth = 0.0;
+                double totalHeight = 0.0;
+
+                for (DragLayoutElement el : list) {
+                    if (el.originalConstraints.gridy == 0) {
+                        totalWidth += el.originalBound.width;
+                    }
+                    if (el.originalConstraints.gridx == 0) {
+                        totalHeight += el.originalBound.height;
+                    }
+                }
+
+                for (DragLayoutElement el : list) {
+                    el.originalConstraints.weightx = el.originalBound.width / totalWidth;
+                    el.originalConstraints.weighty = el.originalBound.height / totalHeight;
+                    el.constraints.weightx = el.originalConstraints.weightx;
+                    el.constraints.weighty = el.originalConstraints.weighty;
                 }
             }
         }
@@ -613,17 +652,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         LayoutConstraints key = element.getConstraints();
                         LayoutConstraints originkey = element.getOriginalConstraints();
                         if (key.gridx == point.x) {
-                            double shiftx = limitdx * originkey.weightx / element.getOriginalBound().width;
-                            key.weightx = originkey.weightx - shiftx;
-                            grid.remove(element.getComponent());
-                            grid.add(element.getComponent(), key);
+                            key.weightx =
+                                originkey.weightx - limitdx * originkey.weightx / element.getOriginalBound().width;
                         } else if (key.gridx + key.gridwidth == point.x) {
-                            double shiftx = limitdx * originkey.weightx / element.getOriginalBound().width;
-                            key.weightx = originkey.weightx + shiftx;
-                            grid.remove(element.getComponent());
-                            grid.add(element.getComponent(), key);
+                            key.weightx =
+                                originkey.weightx + limitdx * originkey.weightx / element.getOriginalBound().width;
                         }
-
                     }
                 } else {
                     int dy = p.y - pickPoint.y;
@@ -646,18 +680,18 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         LayoutConstraints key = element.getConstraints();
                         LayoutConstraints originkey = element.getOriginalConstraints();
                         if (key.gridy == point.y) {
-                            double shifty = limitdy * originkey.weighty / element.getOriginalBound().height;
-                            key.weighty = originkey.weighty - shifty;
-                            grid.remove(element.getComponent());
-                            grid.add(element.getComponent(), key);
+                            key.weighty =
+                                originkey.weighty - limitdy * originkey.weighty / element.getOriginalBound().height;
                         } else if (key.gridy + key.gridheight == point.y) {
-                            double shifty = limitdy * originkey.weighty / element.getOriginalBound().height;
-                            key.weighty = originkey.weighty + shifty;
-                            grid.remove(element.getComponent());
-                            grid.add(element.getComponent(), key);
+                            key.weighty =
+                                originkey.weighty + limitdy * originkey.weighty / element.getOriginalBound().height;
                         }
 
                     }
+                }
+                grid.removeAll();
+                for (DragLayoutElement element : list) {
+                    grid.add(element.getComponent(), element.getConstraints());
                 }
                 setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR : Cursor.S_RESIZE_CURSOR));
                 grid.revalidate();
