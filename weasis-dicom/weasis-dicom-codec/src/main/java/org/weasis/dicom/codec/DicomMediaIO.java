@@ -550,8 +550,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     if (weight != null && totalDose != null && halfLife != null && injectTime != null
                         && acqTime != null) {
                         // Difference is seconds divided by halfLife
-                        double time = (acqTime.getTime() - injectTime.getTime()) / (1000.0 * halfLife);
-                        double correctedDose = totalDose * Math.exp(-Math.log(2) * time);
+                        double time =
+                            (acqTime.getTime() % TagW.MILLIS_PER_DAY) - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
+                        // Handle case over midnight
+                        // TODO NEED to be validated, time more than one day ?
+                        if (time < 0) {
+                            time += TagW.MILLIS_PER_DAY;
+                        }
+                        double correctedDose = totalDose * Math.exp(-Math.log(2) * time / (1000.0 * halfLife));
                         // Weight convert in kg to g
                         setTag(tagList, TagW.SuvFactor, weight * 1000.0f / correctedDose);
                     }

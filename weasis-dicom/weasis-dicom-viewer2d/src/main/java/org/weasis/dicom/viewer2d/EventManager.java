@@ -78,6 +78,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
+
     /** The single instance of this singleton class. */
 
     private static EventManager instance;

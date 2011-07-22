@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.graphic.Graphic;
@@ -71,10 +72,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     toBack(graph);
                 }
             }
-            
+
         }
 
-        
         private static final long serialVersionUID = -9094820911680205527L;
 
         private PropertyChangeHandler() {
@@ -212,14 +212,16 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return graphics;
     }
 
-    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform);
+    public abstract List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform);
 
-    public abstract java.util.List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform,
+    public abstract List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform,
         boolean onlyFrontGraphic);
 
-    public abstract java.util.List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
+    public abstract List<Graphic> getGraphicsBoundsInArea(Rectangle rect);
 
     public abstract Graphic getGraphicContainPoint(MouseEventDouble mouseevent);
+
+    public abstract List<Graphic> getGraphicListContainPoint(MouseEventDouble mouseevent);
 
     public abstract void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform,
         Rectangle2D bound);

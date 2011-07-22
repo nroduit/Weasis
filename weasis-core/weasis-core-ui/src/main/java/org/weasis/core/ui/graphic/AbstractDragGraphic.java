@@ -612,7 +612,7 @@ public abstract class AbstractDragGraphic implements Graphic {
 
         g2d.setStroke(oldStroke);
 
-        // // Graphics DEBUG 
+        // // Graphics DEBUG
         // if (transform != null) {
         // g2d.setPaint(Color.CYAN);
         // g2d.draw(transform.createTransformedShape(getBounds(transform)));

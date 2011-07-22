@@ -167,17 +167,17 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                 Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
                 if (suv != null) {
                     unit = "SUV (bw)";
-                    if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
+                    if (ImageMin.isComputed()) {
                         Double val =
                             releaseEvent || ImageMin.isQuickComputing() ? min == null ? null : min * suv : null;
                         measVal.add(new MeasureItem(ImageMin, val, unit));
                     }
-                    if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
+                    if (ImageMax.isComputed()) {
                         Double val =
                             releaseEvent || ImageMax.isQuickComputing() ? max == null ? null : max * suv : null;
                         measVal.add(new MeasureItem(ImageMax, val, unit));
                     }
-                    if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
+                    if (ImageMean.isComputed()) {
                         Double val =
                             releaseEvent || ImageMean.isQuickComputing() ? mean == null ? null : mean * suv : null;
                         measVal.add(new MeasureItem(ImageMean, val, unit));

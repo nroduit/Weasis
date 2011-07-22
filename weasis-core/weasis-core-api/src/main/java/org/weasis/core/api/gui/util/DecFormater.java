@@ -27,7 +27,7 @@ public class DecFormater {
     private static DecimalFormat df3 = new DecimalFormat("#,###"); // non decimal //$NON-NLS-1$
     private static DecimalFormat df4 = new DecimalFormat("0.####E0"); // Sientific format with 4 decimals //$NON-NLS-1$
 
-    private static DecimalFormat df5 = new DecimalFormat("###0.#"); //$NON-NLS-1$
+    private static DecimalFormat df5 = new DecimalFormat("###0.0"); //$NON-NLS-1$
     private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); //8 decimals//$NON-NLS-1$
     private static DecimalFormat df7 = new DecimalFormat("###0.##"); //$NON-NLS-1$
 

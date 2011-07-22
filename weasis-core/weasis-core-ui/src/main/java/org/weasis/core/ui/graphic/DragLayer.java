@@ -192,13 +192,49 @@ public class DragLayer extends AbstractLayer {
                     // Improve speed by checking if mousePoint is inside repaintBound before checking if inside Area
                     Rectangle2D repaintBound = dragGraph.getRepaintBounds(mouseEvt);
                     if (repaintBound != null && repaintBound.contains(mousePt)) {
-                        if (dragGraph.getArea(mouseEvt).contains(mousePt))
+                        if ((dragGraph.getHandlePointIndex(mouseEvt) >= 0)
+                            || (dragGraph.getArea(mouseEvt).contains(mousePt)))
                             return dragGraph;
                     }
                 }
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Graphic> getGraphicListContainPoint(MouseEventDouble mouseEvt) {
+
+        ArrayList<Graphic> selectedGraphicList = null;
+
+        final Point2D mousePt = mouseEvt.getImageCoordinates();
+
+        if (graphics != null && mousePt != null) {
+
+            selectedGraphicList = new ArrayList<Graphic>();
+
+            for (int j = graphics.size() - 1; j >= 0; j--) {
+                if (graphics.get(j) instanceof AbstractDragGraphic) {
+
+                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.get(j);
+
+                    if (dragGraph.isOnGraphicLabel(mouseEvt)) {
+                        selectedGraphicList.add(dragGraph);
+                        continue;
+                    }
+
+                    // Improve speed by checking if mousePoint is inside repaintBound before checking if inside Area
+                    Rectangle2D repaintBound = dragGraph.getRepaintBounds(mouseEvt);
+                    if (repaintBound != null && repaintBound.contains(mousePt)) {
+                        if ((dragGraph.getHandlePointIndex(mouseEvt) >= 0)
+                            || (dragGraph.getArea(mouseEvt).contains(mousePt))) {
+                            selectedGraphicList.add(dragGraph);
+                        }
+                    }
+                }
+            }
+        }
+        return selectedGraphicList;
     }
 
 }

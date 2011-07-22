@@ -302,16 +302,31 @@ public class AbstractLayerModel implements LayerModel {
         return arraylist;
     }
 
+    /**
+     * @param mouseevent
+     * @return first selected graphic intersecting if exist, otherwise simply first graphic intersecting, or null
+     */
     public Graphic getFirstGraphicIntersecting(MouseEventDouble mouseevent) {
+
+        Graphic firstSelectedGraph = null;
+
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
             if (layer.isVisible()) {
-                Graphic graph = layer.getGraphicContainPoint(mouseevent);
-                if (graph != null)
-                    return graph;
+                // Graphic graph = layer.getGraphicContainPoint(mouseevent);
+                List<Graphic> graphList = layer.getGraphicListContainPoint(mouseevent);
+                if (graphList != null) {
+                    for (Graphic graph : graphList) {
+                        if (graph.isSelected())
+                            return graph;
+                        else if (firstSelectedGraph == null) {
+                            firstSelectedGraph = graph;
+                        }
+                    }
+                }
             }
         }
-        return null;
+        return firstSelectedGraph;
     }
 
     public void deleteAllGraphics() {
