@@ -106,7 +106,7 @@ public class OrderedFileList extends Vector<MediaElement> {
     /**
      * @return the currentIndex
      */
-    public synchronized final int getCurrentIndex() {
+    public final synchronized int getCurrentIndex() {
         return this.currentIndex;
     }
 
@@ -114,7 +114,7 @@ public class OrderedFileList extends Vector<MediaElement> {
      * @param currentIndex
      *            the currentIndex to set
      */
-    public synchronized final void setCurrentIndex(final int currentIndex) {
+    public final synchronized void setCurrentIndex(final int currentIndex) {
         this.currentIndex = currentIndex;
     }
 

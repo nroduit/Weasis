@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -16,13 +16,13 @@ import org.weasis.core.api.gui.ImageOperation;
 
 public interface ImageOperationAction extends Cloneable {
 
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation);
+    RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation);
 
-    public RenderedImage getRenderedImageNode();
+    RenderedImage getRenderedImageNode();
 
-    public String getOperationName();
+    String getOperationName();
 
-    public void clearNode();
+    void clearNode();
 
-    public Object clone() throws CloneNotSupportedException;
+    Object clone() throws CloneNotSupportedException;
 }

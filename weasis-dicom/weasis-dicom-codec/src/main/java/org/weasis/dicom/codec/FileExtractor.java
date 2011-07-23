@@ -14,6 +14,6 @@ import java.io.File;
 
 public interface FileExtractor {
 
-    public File getExtractFile();
+    File getExtractFile();
 
 }

@@ -14,6 +14,6 @@ import javax.swing.JProgressBar;
 
 public interface ImportDicom {
 
-    public void importDICOM(DicomModel dicomModel, JProgressBar info);
+    void importDICOM(DicomModel dicomModel, JProgressBar info);
 
 }

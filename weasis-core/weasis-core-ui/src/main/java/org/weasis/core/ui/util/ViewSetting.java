@@ -7,7 +7,7 @@ import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
 
 public class ViewSetting {
-    public final static String PREFERENCE_NODE = "view2d.default"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "view2d.default"; //$NON-NLS-1$
     private int fontType;
     private int fontSize;
     private String fontName;

@@ -23,7 +23,7 @@ import org.weasis.core.api.media.data.ImageElement;
 public class WindowLevelOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(WindowLevelOperation.class);
 
-    public final static String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
+    public static final String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         ImageElement image = imageOperation.getImage();

@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -19,20 +19,19 @@ import org.weasis.core.api.media.data.TagW;
 
 public interface TreeModel {
 
-    public final static String ROOT_IDENTIFIER = "__ROOT__"; //$NON-NLS-1$
-    public final static MediaSeriesGroup rootNode =
-        new MediaSeriesGroupNode(TagW.RootElement, ROOT_IDENTIFIER, TagW.RootElement);
+    String ROOT_IDENTIFIER = "__ROOT__"; //$NON-NLS-1$
+    MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, ROOT_IDENTIFIER, TagW.RootElement);
 
-    public List<TreeModelNode> getModelStructure();
+    List<TreeModelNode> getModelStructure();
 
-    public Collection<MediaSeriesGroup> getChildren(MediaSeriesGroup node);
+    Collection<MediaSeriesGroup> getChildren(MediaSeriesGroup node);
 
-    public MediaSeriesGroup getHierarchyNode(MediaSeriesGroup parent, Object value);
+    MediaSeriesGroup getHierarchyNode(MediaSeriesGroup parent, Object value);
 
-    public void addHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf);
+    void addHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf);
 
-    public void removeHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf);
+    void removeHierarchyNode(MediaSeriesGroup root, MediaSeriesGroup leaf);
 
-    public MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode);
+    MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode);
 
 }

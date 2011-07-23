@@ -86,13 +86,11 @@ public class FileFormatFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
         if (f != null) {
-            if (f.isDirectory()) {
+            if (f.isDirectory())
                 return true;
-            }
             String extension = getExtension(f);
-            if (extension != null && fExtensions.get(extension) != null) {
+            if (extension != null && fExtensions.get(extension) != null)
                 return true;
-            }
         }
         return false;
     }
@@ -101,9 +99,8 @@ public class FileFormatFilter extends FileFilter {
         if (f != null) {
             String filename = f.getName();
             int i = filename.lastIndexOf(46);
-            if (i > 0 && i < filename.length() - 1) {
+            if (i > 0 && i < filename.length() - 1)
                 return filename.substring(i + 1).toLowerCase();
-            }
         }
         return null;
     }
@@ -227,19 +224,19 @@ public class FileFormatFilter extends FileFilter {
         chooser.setFileFilter(filter);
     }
 
-    public synchronized static void setTifFilters(JFileChooser chooser, boolean allfiles) {
+    public static synchronized void setTifFilters(JFileChooser chooser, boolean allfiles) {
         String name = "tif"; //$NON-NLS-1$
         String desc = "Tiled TIFF"; //$NON-NLS-1$
         creatOneFilter(chooser, name, desc, allfiles);
     }
 
-    public synchronized static void setJpgFilters(JFileChooser chooser, boolean allfiles) {
+    public static synchronized void setJpgFilters(JFileChooser chooser, boolean allfiles) {
         String name = "jpg"; //$NON-NLS-1$
         String desc = "JPEG"; //$NON-NLS-1$
         creatOneFilter(chooser, name, desc, allfiles);
     }
 
-    public synchronized static void setPngFilters(JFileChooser chooser, boolean allfiles) {
+    public static synchronized void setPngFilters(JFileChooser chooser, boolean allfiles) {
         String name = "png"; //$NON-NLS-1$
         String desc = "PNG"; //$NON-NLS-1$
         creatOneFilter(chooser, name, desc, allfiles);
@@ -250,9 +247,8 @@ public class FileFormatFilter extends FileFilter {
         for (Iterator it = maps.iterator(); it.hasNext();) {
             java.util.Map.Entry me = (java.util.Map.Entry) it.next();
             String value = (String) me.getValue();
-            if (value.equals(codecName)) {
+            if (value.equals(codecName))
                 return (String) me.getKey();
-            }
         }
         return null;
     }

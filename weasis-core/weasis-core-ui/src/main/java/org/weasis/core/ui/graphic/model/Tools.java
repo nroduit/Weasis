@@ -122,7 +122,7 @@ public enum Tools {
         return ""; //$NON-NLS-1$
     }
 
-    public final static ArrayList<String> getToolsName() {
+    public static final ArrayList<String> getToolsName() {
         ArrayList<String> list = new ArrayList<String>();
         // ne pas utiliser la Classe EnumSet et un range, problème de casting après l'obfuscation
         // EnumSet<Tools> toolsEnum = EnumSet.range(G_DESCRIPTION, VPROFILE);
@@ -134,7 +134,7 @@ public enum Tools {
         return list;
     }
 
-    public final static ArrayList<Tools> getToolsToDisplay() {
+    public static final ArrayList<Tools> getToolsToDisplay() {
         ArrayList<Tools> list = new ArrayList<Tools>();
         for (Tools t : Tools.values()) {
             if (!t.equals(TEMPDRAGLAYER) && !t.equals(TEMPCLASSIFLAYER)) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -22,26 +22,26 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public interface SeriesViewer<E extends MediaElement> {
 
-    public String getPluginName();
+    String getPluginName();
 
-    public void close();
+    void close();
 
-    public List<MediaSeries<E>> getOpenSeries();
+    List<MediaSeries<E>> getOpenSeries();
 
-    public void addSeries(MediaSeries<E> series);
+    void addSeries(MediaSeries<E> series);
 
-    public void removeSeries(MediaSeries<E> series);
+    void removeSeries(MediaSeries<E> series);
 
-    public JMenu fillSelectedPluginMenu(JMenu menu);
+    JMenu fillSelectedPluginMenu(JMenu menu);
 
-    public WtoolBar[] getToolBar();
+    WtoolBar[] getToolBar();
 
-    public WtoolBar getStatusBar();
+    WtoolBar getStatusBar();
 
-    public PluginTool[] getToolPanel();
+    PluginTool[] getToolPanel();
 
-    public void setSelected(boolean selected);
+    void setSelected(boolean selected);
 
-    public MediaSeriesGroup getGroupID();
+    MediaSeriesGroup getGroupID();
 
 }

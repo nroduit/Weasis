@@ -16,10 +16,10 @@ import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageOperation {
 
-    public abstract Object getActionValue(String action);
+    Object getActionValue(String action);
 
-    public abstract ImageElement getImage();
+    ImageElement getImage();
 
     // Return the source image for the first operation in the list
-    public RenderedImage getSourceImage();
+    RenderedImage getSourceImage();
 }

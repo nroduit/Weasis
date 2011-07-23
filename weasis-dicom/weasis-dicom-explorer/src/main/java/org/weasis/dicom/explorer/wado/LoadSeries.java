@@ -77,10 +77,10 @@ import org.weasis.dicom.explorer.MimeSystemAppFactory;
 public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImporter {
 
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
-    public final static String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
-    public final static int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
-    public final static File DICOM_EXPORT_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
-    public final static File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "tmp"); //$NON-NLS-1$
+    public static final String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
+    public static final int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
+    public static final File DICOM_EXPORT_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+    public static final File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "tmp"); //$NON-NLS-1$
     static {
         try {
             DICOM_TMP_DIR.mkdirs();

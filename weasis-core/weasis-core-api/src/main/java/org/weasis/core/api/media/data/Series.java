@@ -30,7 +30,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
 
-    private final static Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
     public static DataFlavor sequenceDataFlavor;
     static {
         try {

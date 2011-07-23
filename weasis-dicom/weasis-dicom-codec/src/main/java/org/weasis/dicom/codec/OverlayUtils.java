@@ -80,9 +80,8 @@ public class OverlayUtils {
      * @return
      */
     public static int extractFrameNumber(int imageIndex) {
-        if (isOverlay(imageIndex)) {
+        if (isOverlay(imageIndex))
             return imageIndex & 0xFFFF;
-        }
         throw new IllegalArgumentException("Only frame numbers of overlays can be extracted."); //$NON-NLS-1$
     }
 
@@ -124,18 +123,16 @@ public class OverlayUtils {
     public static BufferedImage extractOverlay(DicomObject ds, int overlayNumber, ImageReader reader, String rgbs)
         throws IOException {
         // We need the original overlay number.
-        if (!OverlayUtils.isOverlay(overlayNumber)) {
+        if (!OverlayUtils.isOverlay(overlayNumber))
             throw new IllegalArgumentException("Overlays must start with 0x60xx xxxx but it starts with " //$NON-NLS-1$
                 + Integer.toString(overlayNumber, 16));
-        }
         int frameNumber = extractFrameNumber(overlayNumber);
         overlayNumber = overlayNumber & 0x60FE0000;
 
         int rows = getOverlayHeight(ds, overlayNumber);
         int cols = getOverlayWidth(ds, overlayNumber);
-        if (cols == 0 || rows == 0) {
+        if (cols == 0 || rows == 0)
             throw new IllegalArgumentException("No overlay found for " + Integer.toString(overlayNumber)); //$NON-NLS-1$
-        }
         int position = ds.getInt(overlayNumber | Tag.OverlayBitPosition);
         byte[] data;
         if (position == 0) {
@@ -208,9 +205,8 @@ public class OverlayUtils {
     protected static byte[] padToFixRowByteBoundary(byte[] unpaddedData, int rows, int cols) {
         int numRowBytes = (cols + 7) / 8;
         int paddedLength = rows * numRowBytes;
-        if ((unpaddedData.length == paddedLength) && (cols % 8) == 0) {
+        if ((unpaddedData.length == paddedLength) && (cols % 8) == 0)
             return unpaddedData;
-        }
 
         byte[] data = new byte[paddedLength];
 
@@ -280,7 +276,7 @@ public class OverlayUtils {
     private static final byte[] icmColorValues = new byte[] { (byte) 0xFF, (byte) 0x00 };
     private static final byte[] bitSwapLut = makeBitSwapLut();
 
-    private static final byte[] makeBitSwapLut() {
+    private static byte[] makeBitSwapLut() {
         byte[] rc = new byte[256];
         for (int i = 0; i < 256; i++) {
             rc[i] = byte_reverse(i);
@@ -289,7 +285,7 @@ public class OverlayUtils {
     }
 
     // reverse the bits in a byte
-    private static final byte byte_reverse(int b) {
+    private static byte byte_reverse(int b) {
         int out = 0;
         for (int i = 0; i < 8; i++) {
             out = (out << 1) | ((b >> i) & 1);
@@ -297,20 +293,20 @@ public class OverlayUtils {
         return (byte) out;
     }
 
-    private static final int groupedTag(int group, int tag) {
+    private static int groupedTag(int group, int tag) {
         int x = group << 16;
         return tag + x;
     }
 
-    private static final int getInt(DicomObject ds, int group, int tag, int def) {
+    private static int getInt(DicomObject ds, int group, int tag, int def) {
         return ds.getInt(groupedTag(group, tag), def);
     }
 
-    private static final int[] getInts(DicomObject ds, int group, int tag) {
+    private static int[] getInts(DicomObject ds, int group, int tag) {
         return ds.getInts(groupedTag(group, tag));
     }
 
-    private static final String getString(DicomObject ds, int group, int tag) {
+    private static String getString(DicomObject ds, int group, int tag) {
         return ds.getString(groupedTag(group, tag));
     }
 

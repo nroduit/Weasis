@@ -49,7 +49,7 @@ import org.weasis.dicom.viewer2d.ResetTools;
 
 public class ImageTool extends PluginTool {
 
-    public final static String BUTTON_NAME = Messages.getString("ImageTool.img_tool"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("ImageTool.img_tool"); //$NON-NLS-1$
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;

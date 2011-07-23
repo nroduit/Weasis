@@ -179,7 +179,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
     /**
      * @return the reloadContext
      */
-    public synchronized final JIExplorerContext getReloadContext() {
+    public final synchronized JIExplorerContext getReloadContext() {
         return this.reloadContext;
     }
 
@@ -187,14 +187,14 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
      * @param reloadContext
      *            the reloadContext to set
      */
-    public synchronized final void setReloadContext(final JIExplorerContext reloadContext) {
+    public final synchronized void setReloadContext(final JIExplorerContext reloadContext) {
         this.reloadContext = reloadContext;
     }
 
     /**
      * @return the loading
      */
-    public synchronized final boolean isLoading() {
+    public final synchronized boolean isLoading() {
         return this.loading;
     }
 

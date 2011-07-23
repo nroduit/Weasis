@@ -127,18 +127,18 @@ public abstract class MediaElement<E> {
         return mediaIO.getMediaFragmentMimeType(key);
     }
 
-    protected synchronized final boolean setAsLoading() {
+    protected final synchronized boolean setAsLoading() {
         if (!this.loading) {
             return (this.loading = true);
         }
         return false;
     }
 
-    protected synchronized final void setAsLoaded() {
+    protected final synchronized void setAsLoaded() {
         this.loading = false;
     }
 
-    public synchronized final boolean isLoading() {
+    public final synchronized boolean isLoading() {
         return loading;
     }
 

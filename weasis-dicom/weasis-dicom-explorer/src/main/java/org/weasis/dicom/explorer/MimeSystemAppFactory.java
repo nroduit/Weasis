@@ -30,9 +30,9 @@ import org.weasis.dicom.codec.FileExtractor;
 
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
-    public final static String NAME = "default system application"; //$NON-NLS-1$
+    public static final String NAME = "default system application"; //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
-    public final static MimeSystemAppViewer mimeSystemViewer = new MimeSystemAppViewer() {
+    public static final MimeSystemAppViewer mimeSystemViewer = new MimeSystemAppViewer() {
         @Override
         public String getPluginName() {
             return Messages.getString("MimeSystemAppViewer.app"); //$NON-NLS-1$

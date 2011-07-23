@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -17,35 +17,35 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 
 public interface MediaReader<E> {
 
-    public void reset();
+    void reset();
 
-    public URI getUri();
+    URI getUri();
 
-    public MediaElement[] getMediaElement();
+    MediaElement[] getMediaElement();
 
-    public MediaSeries getMediaSeries();
+    MediaSeries getMediaSeries();
 
-    public boolean delegate(DataExplorerModel explorerModel);
+    boolean delegate(DataExplorerModel explorerModel);
 
-    public MediaElement<E> getPreview();
+    MediaElement<E> getPreview();
 
-    public E getMediaFragment(MediaElement<E> media) throws Exception;
+    E getMediaFragment(MediaElement<E> media) throws Exception;
 
-    public int getMediaElementNumber();
+    int getMediaElementNumber();
 
-    public URI getMediaFragmentURI(Object key);
+    URI getMediaFragmentURI(Object key);
 
-    public String getMediaFragmentMimeType(Object key);
+    String getMediaFragmentMimeType(Object key);
 
-    public HashMap<TagW, Object> getMediaFragmentTags(Object key);
+    HashMap<TagW, Object> getMediaFragmentTags(Object key);
 
-    public void close();
+    void close();
 
-    public Codec getCodec();
+    Codec getCodec();
 
-    public String[] getReaderDescription();
+    String[] getReaderDescription();
 
-    public Object getTagValue(TagW tag);
+    Object getTagValue(TagW tag);
 
-    public void replaceURI(URI uri);
+    void replaceURI(URI uri);
 }

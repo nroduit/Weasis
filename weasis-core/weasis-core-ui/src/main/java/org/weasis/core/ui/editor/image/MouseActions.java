@@ -19,18 +19,18 @@ import org.weasis.core.ui.Messages;
 
 public class MouseActions {
 
-    public final static int SCROLL_MASK = 1 << 1;
+    public static final int SCROLL_MASK = 1 << 1;
 
-    public final static String PREFERENCE_NODE = "mouse.action"; //$NON-NLS-1$
-    public final static String P_MOUSE_LEFT = "mouse_left"; //$NON-NLS-1$
-    public final static String P_MOUSE_MIDDLE = "mouse_middle"; //$NON-NLS-1$
-    public final static String P_MOUSE_RIGHT = "mouse_right"; //$NON-NLS-1$
-    public final static String P_MOUSE_WHEEL = "mouse_wheel"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "mouse.action"; //$NON-NLS-1$
+    public static final String P_MOUSE_LEFT = "mouse_left"; //$NON-NLS-1$
+    public static final String P_MOUSE_MIDDLE = "mouse_middle"; //$NON-NLS-1$
+    public static final String P_MOUSE_RIGHT = "mouse_right"; //$NON-NLS-1$
+    public static final String P_MOUSE_WHEEL = "mouse_wheel"; //$NON-NLS-1$
 
-    public final static String LEFT = "left"; //$NON-NLS-1$
-    public final static String MIDDLE = "middle"; //$NON-NLS-1$
-    public final static String RIGHT = "right"; //$NON-NLS-1$
-    public final static String WHEEL = "wheel"; //$NON-NLS-1$
+    public static final String LEFT = "left"; //$NON-NLS-1$
+    public static final String MIDDLE = "middle"; //$NON-NLS-1$
+    public static final String RIGHT = "right"; //$NON-NLS-1$
+    public static final String WHEEL = "wheel"; //$NON-NLS-1$
 
     private String left = ActionW.WINLEVEL.cmd();
     private String middle = ActionW.PAN.cmd();

@@ -17,10 +17,10 @@ import org.weasis.core.api.service.BundlePreferences;
 
 public class ZoomSetting {
 
-    public final static String PREFERENCE_NODE = "zoom"; //$NON-NLS-1$
-    //    public final static String P_ZOOM_SYNCH = "zoom.synch"; //$NON-NLS-1$
-    //    public final static String P_SHOW_DRAWINGS = "show.drawings"; //$NON-NLS-1$
-    //    public final static String P_ROUND = "round"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "zoom"; //$NON-NLS-1$
+    //    public static final String P_ZOOM_SYNCH = "zoom.synch"; //$NON-NLS-1$
+    //    public static final String P_SHOW_DRAWINGS = "show.drawings"; //$NON-NLS-1$
+    //    public static final String P_ROUND = "round"; //$NON-NLS-1$
 
     private boolean lensShowDrawings = true;
     private boolean lensSynchronize = false;

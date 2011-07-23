@@ -34,12 +34,12 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 
 public class UIManager {
 
-    public final static MyDoggyToolWindowManager toolWindowManager = builWinManager();
+    public static final MyDoggyToolWindowManager toolWindowManager = builWinManager();
 
-    public final static AtomicInteger dockableUIGenerator = new AtomicInteger(1);
+    public static final AtomicInteger dockableUIGenerator = new AtomicInteger(1);
 
-    public final static List<ViewerPlugin> VIEWER_PLUGINS = Collections.synchronizedList(new ArrayList<ViewerPlugin>());
-    public final static List<DataExplorerView> EXPLORER_PLUGINS =
+    public static final List<ViewerPlugin> VIEWER_PLUGINS = Collections.synchronizedList(new ArrayList<ViewerPlugin>());
+    public static final List<DataExplorerView> EXPLORER_PLUGINS =
         Collections.synchronizedList(new ArrayList<DataExplorerView>());
     public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES =
         Collections.synchronizedList(new ArrayList<SeriesViewerFactory>());

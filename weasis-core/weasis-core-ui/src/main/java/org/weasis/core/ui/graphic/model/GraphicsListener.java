@@ -7,5 +7,5 @@ import org.weasis.core.ui.graphic.Graphic;
 
 public interface GraphicsListener {
 
-    public void handle(List<Graphic> selectedGraphics, ImageElement img);
+    void handle(List<Graphic> selectedGraphics, ImageElement img);
 }

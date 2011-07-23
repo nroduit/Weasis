@@ -26,7 +26,7 @@ import org.weasis.core.api.image.util.ImageToolkit;
 public class FlipOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlipOperation.class);
 
-    public final static String name = Messages.getString("FlipOperation.title"); //$NON-NLS-1$
+    public static final String name = Messages.getString("FlipOperation.title"); //$NON-NLS-1$
 
     public String getOperationName() {
         return name;

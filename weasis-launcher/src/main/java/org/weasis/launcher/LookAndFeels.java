@@ -18,14 +18,14 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 public final class LookAndFeels {
 
-    private final transient static String[] names = { "Substance Autumn", "Substance BusinessBlackSteel", //$NON-NLS-1$ //$NON-NLS-2$
+    private static final transient String[] NAMES = { "Substance Autumn", "Substance BusinessBlackSteel", //$NON-NLS-1$ //$NON-NLS-2$
         "Substance BusinessBlueSteel", "Substance Business", "Substance ChallengerDeep (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         "Substance CremeCoffee", "Substance Creme", "Substance DustCoffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance EmeraldDusk (dark)", "Substance Gemini", "Substance GraphiteAqua", "Substance GraphiteGlass (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance MistAqua", "Substance MistSilver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance Moderate", "Substance NebulaBrickWall", "Substance Nebula", "Substance OfficeBlue2007 (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance OfficeSilver2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-    private final transient static String[] classes = {
+    private static final transient String[] CLASSES = {
         "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel", //$NON-NLS-1$
@@ -54,7 +54,7 @@ public final class LookAndFeels {
 
     public static boolean installSubstanceLookAndFeels() {
         try {
-            Class.forName(classes[0]);
+            Class.forName(CLASSES[0]);
         } catch (Exception e) {
             return false;
         }
@@ -64,8 +64,8 @@ public final class LookAndFeels {
             tmp.add(new ReadableLookAndFeelInfo(i.getName(), i.getClassName()));
         }
 
-        for (int i = 0; i < classes.length; i++) {
-            tmp.add(new ReadableLookAndFeelInfo(names[i], classes[i]));
+        for (int i = 0; i < CLASSES.length; i++) {
+            tmp.add(new ReadableLookAndFeelInfo(NAMES[i], CLASSES[i]));
         }
         UIManager.setInstalledLookAndFeels(tmp.toArray(new LookAndFeelInfo[tmp.size()]));
         return true;
@@ -84,9 +84,8 @@ public final class LookAndFeels {
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof LookAndFeelInfo)) {
+            if (!(obj instanceof LookAndFeelInfo))
                 return false;
-            }
             LookAndFeelInfo other = (LookAndFeelInfo) obj;
             return getClassName().equals(other.getClassName());
         }

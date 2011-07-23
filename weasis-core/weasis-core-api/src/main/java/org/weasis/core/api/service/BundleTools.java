@@ -25,8 +25,8 @@ import org.weasis.core.api.util.FileUtil;
 
 public class BundleTools {
 
-    public final static List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
-    private final static File propsFile;
+    public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
+    private static final File propsFile;
     static {
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         if (user == null) {
@@ -43,7 +43,7 @@ public class BundleTools {
             propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
         }
     }
-    public final static WProperties SYSTEM_PREFERENCES = new WProperties();
+    public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     static {
         if (propsFile.canRead()) {
             FileInputStream fis = null;

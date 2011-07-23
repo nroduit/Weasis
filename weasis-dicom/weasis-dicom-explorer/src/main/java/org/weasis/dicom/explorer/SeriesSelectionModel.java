@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesSelectionModel extends ArrayList<Series> {
-    private final static Color selectedColor = new Color(82, 152, 219);
+    private static final Color selectedColor = new Color(82, 152, 219);
 
     public SeriesSelectionModel(int initialCapacity) {
         super(initialCapacity);

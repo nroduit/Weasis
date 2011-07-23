@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -19,16 +19,16 @@ import org.weasis.core.api.media.data.MediaSeries;
 
 public interface Image2DViewer extends ImageOperation {
 
-    public MediaSeries getSeries();
+    MediaSeries getSeries();
 
-    public int getFrameIndex();
+    int getFrameIndex();
 
-    public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform);
+    void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform);
 
-    public ViewModel getViewModel();
+    ViewModel getViewModel();
 
-    public ImageLayer getImageLayer();
+    ImageLayer getImageLayer();
 
-    public AffineTransform getAffineTransform();
+    AffineTransform getAffineTransform();
 
 }

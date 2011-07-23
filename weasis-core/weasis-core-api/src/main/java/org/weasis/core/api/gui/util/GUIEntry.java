@@ -14,11 +14,11 @@ import javax.swing.Icon;
 
 public interface GUIEntry {
 
-    public Icon getIcon();
+    Icon getIcon();
 
     // Should be getName() but it is already used by java.awt.Component
-    public String getUIName();
+    String getUIName();
 
-    public String getDescription();
+    String getDescription();
 
 }

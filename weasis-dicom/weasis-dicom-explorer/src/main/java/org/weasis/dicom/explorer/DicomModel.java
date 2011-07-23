@@ -64,21 +64,21 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
     public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
-    public final static String NAME = "DICOM"; //$NON-NLS-1$
-    public final static String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
+    public static final String NAME = "DICOM"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
 
-    public final static TreeModelNode patient = new TreeModelNode(1, 0, TagW.PatientPseudoUID);
-    public final static TreeModelNode study = new TreeModelNode(2, 0, TagW.StudyInstanceUID);
-    public final static TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID);
+    public static final TreeModelNode patient = new TreeModelNode(1, 0, TagW.PatientPseudoUID);
+    public static final TreeModelNode study = new TreeModelNode(2, 0, TagW.StudyInstanceUID);
+    public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID);
 
-    public final static ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
+    public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
     static {
         modelStrucure.add(root);
         modelStrucure.add(patient);
         modelStrucure.add(study);
         modelStrucure.add(series);
     }
-    public final static Executor loadingExecutor = Executors.newSingleThreadExecutor();
+    public static final Executor loadingExecutor = Executors.newSingleThreadExecutor();
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
     private final TagW[] multiframeSplittingRules = new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType,

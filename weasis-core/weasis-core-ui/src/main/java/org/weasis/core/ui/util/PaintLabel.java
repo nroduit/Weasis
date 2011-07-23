@@ -32,7 +32,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.Graphic;
 
 public class PaintLabel extends JDialog {
-    public final static String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
+    public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
 
     private JPanel panel1 = new JPanel();
     private BorderLayout borderLayout1 = new BorderLayout();

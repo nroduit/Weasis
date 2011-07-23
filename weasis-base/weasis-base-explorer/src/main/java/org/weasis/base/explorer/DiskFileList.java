@@ -4,8 +4,8 @@ import java.io.File;
 
 public interface DiskFileList extends JIObservable {
 
-    public JIFileModel getFileListModel();
+    JIFileModel getFileListModel();
 
-    public void loadDirectory(File dir);
+    void loadDirectory(File dir);
 
 }

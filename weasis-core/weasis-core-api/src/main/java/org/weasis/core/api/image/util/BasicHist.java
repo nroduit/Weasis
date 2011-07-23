@@ -17,7 +17,7 @@ import org.weasis.core.api.Messages;
 
 public class BasicHist {
 
-    public final static String[] STATISTICS_LIST =
+    public static final String[] STATISTICS_LIST =
         { Messages.getString("BasicHist.pix"), Messages.getString("BasicHist.min"), Messages.getString("BasicHist.max"), Messages.getString("BasicHist.mean"), Messages.getString("BasicHist.median"), Messages.getString("BasicHist.thresh"), Messages.getString("BasicHist.std"), Messages.getString("BasicHist.skew"), Messages.getString("BasicHist.kurtosis"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
             Messages.getString("BasicHist.entropy") }; //$NON-NLS-1$
     private int[] bins;

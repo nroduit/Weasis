@@ -23,7 +23,7 @@ import org.weasis.core.api.gui.util.ImageSectionIcon;
 import org.weasis.core.api.util.FontTools;
 
 public class CircularProgressBar extends JProgressBar {
-    private final static Color BACK_COLOR = new Color(82, 152, 219);
+    private static final Color BACK_COLOR = new Color(82, 152, 219);
     public static final ImageIcon ICON = new ImageIcon(
         CircularProgressBar.class.getResource("/icon/22x22/process-working.png")); //$NON-NLS-1$
 

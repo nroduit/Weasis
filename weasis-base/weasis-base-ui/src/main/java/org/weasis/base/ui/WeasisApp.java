@@ -32,7 +32,7 @@ public class WeasisApp {
     private WeasisApp() {
     }
 
-    public final static WeasisApp getInstance() {
+    public static final WeasisApp getInstance() {
         return instance;
     }
 

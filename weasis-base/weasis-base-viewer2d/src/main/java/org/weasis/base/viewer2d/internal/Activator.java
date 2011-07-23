@@ -25,7 +25,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 
 public class Activator implements BundleActivator {
 
-    public final static BundlePreferences PREFERENCES = new BundlePreferences();
+    public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
     public void start(final BundleContext context) throws Exception {
         PREFERENCES.init(context);

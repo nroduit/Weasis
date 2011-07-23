@@ -40,8 +40,8 @@ public class DefaultViewModel implements ViewModel {
      */
     private double viewScaleMax;
     private double viewScaleMin;
-    public final static double SCALE_MIN = 1.0 / 12.0;
-    public final static double SCALE_MAX = 12.0;
+    public static final double SCALE_MIN = 1.0 / 12.0;
+    public static final double SCALE_MAX = 12.0;
     /**
      * This view model's area. Enables scrolling with scroll bars.
      */

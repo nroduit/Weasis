@@ -76,7 +76,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final Codec CODEC = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
-    private final static DicomImageReaderSpi readerSpi = new DicomImageReaderSpi();
+    private static final DicomImageReaderSpi readerSpi = new DicomImageReaderSpi();
     private URI uri;
     private DicomObject dicomObject = null;
     private int numberOfFrame;

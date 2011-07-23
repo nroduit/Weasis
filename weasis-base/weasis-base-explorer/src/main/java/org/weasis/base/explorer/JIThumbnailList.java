@@ -34,7 +34,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
-final public class JIThumbnailList extends JList implements JIObservable {
+public final class JIThumbnailList extends JList implements JIObservable {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
@@ -116,7 +116,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         JIThumbnailCache.getInstance().invalidate();
     }
 
-    public final JIListModel getThumbnailListModel() {
+    public JIListModel getThumbnailListModel() {
         return (JIListModel) getModel();
     }
 
@@ -124,18 +124,17 @@ final public class JIThumbnailList extends JList implements JIObservable {
     // this.listCellEditor = new JIListCellEditor(this);
     // }
 
-    public final Frame getFrame() {
+    public Frame getFrame() {
         return null;
     }
 
-    public final JViewport getViewPort() {
+    public JViewport getViewPort() {
         return this.viewport.getViewport();
     }
 
-    public final boolean isEditing() {
-        if (this.editingIndex > -1) {
+    public boolean isEditing() {
+        if (this.editingIndex > -1)
             return true;
-        }
         return false;
     }
 
@@ -145,7 +144,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
     // of the JScrollBar to a fixed value. You wouldn't get the nice
     // aligned scrolling, but it should work.
     @Override
-    public final int getScrollableUnitIncrement(final Rectangle visibleRect, final int orientation, final int direction) {
+    public int getScrollableUnitIncrement(final Rectangle visibleRect, final int orientation, final int direction) {
         int row;
         if ((orientation == SwingConstants.VERTICAL) && (direction < 0) && ((row = getFirstVisibleIndex()) != -1)) {
             final Rectangle r = getCellBounds(row, row);
@@ -155,9 +154,8 @@ final public class JIThumbnailList extends JList implements JIObservable {
                 final int prevIndex = locationToIndex(loc);
                 final Rectangle prevR = getCellBounds(prevIndex, prevIndex);
 
-                if ((prevR == null) || (prevR.y >= r.y)) {
+                if ((prevR == null) || (prevR.y >= r.y))
                     return 0;
-                }
                 return prevR.height;
             }
         }
@@ -165,29 +163,27 @@ final public class JIThumbnailList extends JList implements JIObservable {
     }
 
     @Override
-    public final String getToolTipText(final MouseEvent evt) {
+    public String getToolTipText(final MouseEvent evt) {
         // if (!JIPreferences.getInstance().isThumbnailToolTips()) {
         // return null;
         // }
         // Get item index
         final int index = locationToIndex(evt.getPoint());
-        if (index < 0) {
+        if (index < 0)
             return "";
-        }
 
         // Get item
         final Object item = getModel().getElementAt(index);
 
-        if (((MediaElement) item).getName() == null) {
+        if (((MediaElement) item).getName() == null)
             return null;
-        }
 
         return "<html>" + ((MediaElement) item).getName() + "<br> Size: "
             + intGroupFormat.format(((MediaElement) item).getLength() / 1024L) + " KB<br>" + "Date: "
             + new Date(((MediaElement) item).getLastModified()).toString() + "</html>";
     }
 
-    public final void reset() {
+    public void reset() {
         setFixedCellHeight(ICON_DIM.height);
         setFixedCellWidth(ICON_DIM.width);
         setLayoutOrientation(HORIZONTAL_WRAP);
@@ -199,7 +195,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         ensureIndexIsVisible(0);
     }
 
-    public final void openSelection() {
+    public void openSelection() {
         final int index = getSelectedIndex();
         final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
         imageList.setCurrentIndex(index);
@@ -207,7 +203,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         // new JIViewer(imageList);
     }
 
-    public final void nextPage(final KeyEvent e) {
+    public void nextPage(final KeyEvent e) {
         final int lastIndex = getLastVisibleIndex();
 
         if (getLayoutOrientation() != JList.HORIZONTAL_WRAP) {
@@ -231,7 +227,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    public final void lastPage(final KeyEvent e) {
+    public void lastPage(final KeyEvent e) {
         final int lastIndex = getLastVisibleIndex();
 
         if (getLayoutOrientation() != JList.HORIZONTAL_WRAP) {
@@ -253,7 +249,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    public final void jiThumbnail_keyPressed(final KeyEvent e) {
+    public void jiThumbnail_keyPressed(final KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_PAGE_DOWN:
                 nextPage(e);
@@ -268,7 +264,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    private final void openMedia(SeriesViewerFactory factory, MediaElement media) {
+    private void openMedia(SeriesViewerFactory factory, MediaElement media) {
         // TODO should be the SeriesViewer type
         ViewerPlugin view = (ViewerPlugin) factory.createSeriesViewer(null);
 
@@ -304,24 +300,21 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    private final void initOpenWith() {
+    private void initOpenWith() {
         // Open With
         this.jMenuItemOpenWith.removeAll();
         this.jMenuItemOpenWith.setText("Open With");
 
         final int index = getSelectedIndex();
-        if (index == -1) {
+        if (index == -1)
             return;
-        }
 
         final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
         imageList.setCurrentIndex(index);
 
         final MediaElement media = imageList.get(index);
-        if (media == null) {
+        if (media == null)
             return;
-        }
-        // final int selectedIndex = series.getMedias().indexOf(imageList.get(index));
 
         final String mimeType = media.getMimeType();
 
@@ -332,6 +325,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
                     final JMenuItem item4 = new JMenuItem(factory.getUIName(), factory.getIcon());
                     item4.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             openMedia(factory, media);
                         }
@@ -342,7 +336,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    private final void initActions() {
+    private void initActions() {
 
         // Open
         this.jMenuItemOpen.setText("Open");
@@ -353,6 +347,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
 			 */
             private static final long serialVersionUID = 7770033253414532608L;
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 final Thread runner = new Thread() {
 
@@ -360,19 +355,17 @@ final public class JIThumbnailList extends JList implements JIObservable {
                     public void run() {
                         Runnable runnable = new Runnable() {
 
+                            @Override
                             public void run() {
                                 final int index = getSelectedIndex();
-                                if (index < 0) {
+                                if (index < 0)
                                     return;
-                                }
                                 final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
                                 imageList.setCurrentIndex(index);
 
                                 final MediaElement media = imageList.get(index);
-                                if (media == null) {
+                                if (media == null)
                                     return;
-                                }
-                                // final int selectedIndex = series.getMedias().indexOf(imageList.get(index));
 
                                 final String mimeType = media.getMimeType();
 
@@ -404,6 +397,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
 			 */
             private static final long serialVersionUID = -7251048462021844506L;
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 final Thread runner = new Thread() {
 
@@ -411,6 +405,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
                     public void run() {
                         Runnable runnable = new Runnable() {
 
+                            @Override
                             public void run() {
                                 JIThumbnailList.this.getThumbnailListModel().reload();
                             }
@@ -441,15 +436,14 @@ final public class JIThumbnailList extends JList implements JIObservable {
         final Object obj = super.getSelectedValue();
         int cnt = 0;
         for (final Object o : objs) {
-            if (o.equals(obj)) {
+            if (o.equals(obj))
                 return cnt;
-            }
             cnt++;
         }
         return cnt - 1;
     }
 
-    protected final void listValueChanged(final ListSelectionEvent e) {
+    protected void listValueChanged(final ListSelectionEvent e) {
         if (this.lastSelectedDiskObject == null) {
             this.lastSelectedDiskObject = (MediaElement) getModel().getElementAt(e.getLastIndex());
         }
@@ -462,7 +456,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         clearChanged();
     }
 
-    public final void listMouseClicked(final MouseEvent e) {
+    public void listMouseClicked(final MouseEvent e) {
         final int index = this.locationToIndex(e.getPoint());
 
         if (getSelectionModel().isSelectedIndex(index)) {
@@ -486,10 +480,8 @@ final public class JIThumbnailList extends JList implements JIObservable {
                 imageList.setCurrentIndex(indexSel);
 
                 final MediaElement media = imageList.get(indexSel);
-                if (media == null) {
+                if (media == null)
                     return;
-                }
-                // final int selectedIndex = series.getMedias().indexOf(imageList.get(index));
 
                 final String mimeType = media.getMimeType();
                 synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
@@ -506,7 +498,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    public final void listMouseEvent(final MouseEvent e) {
+    public void listMouseEvent(final MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e)) {
             try {
                 final Object obj = getSelectedValue();
@@ -563,7 +555,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
 
         @Override
-        public final void mouseClicked(final MouseEvent e) {
+        public void mouseClicked(final MouseEvent e) {
             // listMouseClicked(e);
         }
 
@@ -602,12 +594,12 @@ final public class JIThumbnailList extends JList implements JIObservable {
      * @see java.util.Observable#hasChanged()
      * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
      */
+    @Override
     public void notifyObservers(final Object arg) {
 
         synchronized (this) {
-            if (!this.changed) {
+            if (!this.changed)
                 return;
-            }
             clearChanged();
         }
 
@@ -648,6 +640,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
      * @see java.util.Observable#clearChanged()
      * @see java.util.Observable#setChanged()
      */
+    @Override
     public synchronized boolean hasChanged() {
         return this.changed;
     }
@@ -660,7 +653,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
 
         /** key event handlers */
         @Override
-        public final void keyPressed(final KeyEvent e) {
+        public void keyPressed(final KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
                 JIThumbnailList.this.selectionModel.setShiftKey(true);
             }
@@ -673,6 +666,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
                 public void run() {
                     Runnable runnable = new Runnable() {
 
+                        @Override
                         public void run() {
                             JIThumbnailList.this.jiThumbnail_keyPressed(e);
                         }
@@ -684,7 +678,7 @@ final public class JIThumbnailList extends JList implements JIObservable {
         }
 
         @Override
-        public final void keyReleased(final KeyEvent e) {
+        public void keyReleased(final KeyEvent e) {
             JIThumbnailList.this.selectionModel.setShiftKey(false);
             JIThumbnailList.this.selectionModel.setCntrlKey(false);
         }

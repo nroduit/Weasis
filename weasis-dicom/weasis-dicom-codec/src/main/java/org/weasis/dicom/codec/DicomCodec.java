@@ -19,7 +19,7 @@ import org.weasis.core.api.media.data.MediaReader;
 
 public class DicomCodec implements Codec {
 
-    public final static String NAME = "dcm4che 2.0.24 (modified)"; //$NON-NLS-1$
+    public static final String NAME = "dcm4che 2.0.24 (modified)"; //$NON-NLS-1$
 
     @Override
     public String[] getReaderMIMETypes() {

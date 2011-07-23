@@ -55,6 +55,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
         this(model, null);
     }
 
+    @Override
     public void loadDirectory(final File dir) {
         try {
             getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -62,6 +63,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
         }
         this.pool.execute(new Runnable() {
 
+            @Override
             public void run() {
 
                 ((JIListModel) JIThumbnailListPane.this.list.getModel()).setData();
@@ -80,14 +82,17 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
         this.list.notifyObservers(null);
     }
 
+    @Override
     public void notifyObservers(final Object arg) {
         this.list.notifyObservers(arg);
     }
 
+    @Override
     public boolean hasChanged() {
         return this.list.hasChanged();
     }
 
+    @Override
     public JIFileModel getFileListModel() {
         return this.list.getThumbnailListModel();
     }
@@ -105,13 +110,15 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
         JIListSelectionAdapter() {
         }
 
-        public final void valueChanged(final ListSelectionEvent e) {
+        @Override
+        public void valueChanged(final ListSelectionEvent e) {
             final Thread runner = new Thread() {
 
                 @Override
                 public void run() {
                     Runnable runnable = new Runnable() {
 
+                        @Override
                         public void run() {
                             JIThumbnailListPane.this.list.listValueChanged(e);
                         }

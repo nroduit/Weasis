@@ -34,7 +34,7 @@ public class WtoolBar extends JPanel {
         main, explorer, tool
     };
 
-    public final static Dimension SEPARATOR_2x24 = new Dimension(2, 24);
+    public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
 
     private final TYPE type;
     private final String barName;

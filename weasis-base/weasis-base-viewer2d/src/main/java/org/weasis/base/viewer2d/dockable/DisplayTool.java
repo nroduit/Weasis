@@ -40,10 +40,10 @@ import org.weasis.core.ui.util.TreeLayer;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-    public final static String IMAGE = "Image";
-    public final static String ANNOTATIONS = "Annotations";
+    public static final String IMAGE = "Image";
+    public static final String ANNOTATIONS = "Annotations";
 
-    public final static String BUTTON_NAME = "Display";
+    public static final String BUTTON_NAME = "Display";
 
     private final TreeLayer tree = new TreeLayer();
     private CheckNode image;

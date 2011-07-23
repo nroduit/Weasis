@@ -22,7 +22,7 @@ public final class JIThumbnailCache {
     private static JIThumbnailCache instance;
     // Set only one concurrent thread, because of the imageio issue with native library
     // (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
-    private final static ExecutorService qExecutor = Executors.newFixedThreadPool(1);
+    private static final ExecutorService qExecutor = Executors.newFixedThreadPool(1);
 
     private final Map<String, ThumbnailIcon> cachedThumbnails;
 
@@ -52,21 +52,16 @@ public final class JIThumbnailCache {
         return instance;
     }
 
-    public synchronized final void invalidate() {
+    public synchronized void invalidate() {
         this.cachedThumbnails.clear();
     }
 
-    public final Icon getThumbnailFor(final ImageElement diskObject, final JIThumbnailList list, final int index) {
+    public Icon getThumbnailFor(final ImageElement diskObject, final JIThumbnailList list, final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getFile().getPath());
-            if (jiIcon != null) {
+            if (jiIcon != null)
                 return jiIcon;
-            }
-            // final BufferedImage bImage = JIThumbnailService.getInstance().getThumbnail(diskObject);
-            // if (bImage != null) {
-            // return JIUtility.scaleIcon(bImage);
-            // }
 
         } catch (final Exception e) {
             // log.debug(e);
@@ -77,10 +72,9 @@ public final class JIThumbnailCache {
         return null;
     }
 
-    private final void loadThumbnail(final ImageElement diskObject, final JIThumbnailList thumbnailList, final int index) {
-        if ((index > thumbnailList.getLastVisibleIndex()) || (index < thumbnailList.getFirstVisibleIndex())) {
+    private void loadThumbnail(final ImageElement diskObject, final JIThumbnailList thumbnailList, final int index) {
+        if ((index > thumbnailList.getLastVisibleIndex()) || (index < thumbnailList.getFirstVisibleIndex()))
             return;
-        }
         try {
             // ///////////////////////////////////////////////////////////////////////
             JIThumbnailCache.qExecutor.execute(new Runnable() {
@@ -89,9 +83,8 @@ public final class JIThumbnailCache {
                 public void run() {
                     // final BufferedImage tIcon = JIUtility.createThumbnailRetry(diskObject);
                     RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage());
-                    if (img == null) {
+                    if (img == null)
                         return;
-                    }
                     final double scale =
                         Math.min((double) ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
                             (double) ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());

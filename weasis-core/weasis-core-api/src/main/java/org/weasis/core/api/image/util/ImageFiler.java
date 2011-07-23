@@ -55,17 +55,17 @@ import com.sun.media.jai.util.ImageUtil;
  */
 public class ImageFiler extends AbstractBufferHandler {
 
-    public final static String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    public final static int TILESIZE = 512;
-    public final static int LIMIT_TO_TILE = 768;
+    public static final String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    public static final int TILESIZE = 512;
+    public static final int LIMIT_TO_TILE = 768;
     public int saveMode = 0;
-    public final static int SAVE_TILED = 0;
-    public final static int SAVE_MULTI = 3;
-    public final static int SAVE_CANVAS = 1;
-    public final static int SAVE_SVG = 4;
-    public final static int OUTPUT_BINARY = 0;
-    public final static int OUTPUT_GRAY = 1;
-    public final static int OUTPUT_COLOR = 2;
+    public static final int SAVE_TILED = 0;
+    public static final int SAVE_MULTI = 3;
+    public static final int SAVE_CANVAS = 1;
+    public static final int SAVE_SVG = 4;
+    public static final int OUTPUT_BINARY = 0;
+    public static final int OUTPUT_GRAY = 1;
+    public static final int OUTPUT_COLOR = 2;
 
     public ImageFiler(Component win) {
         super(win);

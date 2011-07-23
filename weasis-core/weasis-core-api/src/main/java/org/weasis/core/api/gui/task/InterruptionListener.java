@@ -22,5 +22,5 @@ public interface InterruptionListener {
      * Action to execute when the thread is interrupted.
      * 
      */
-    public abstract void interruptionRequested();
+    void interruptionRequested();
 }

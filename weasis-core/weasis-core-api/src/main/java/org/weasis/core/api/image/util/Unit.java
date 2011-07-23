@@ -113,7 +113,7 @@ public enum Unit {
         return Unit.PIXEL;
     }
 
-    public final static ArrayList<String> getUnitsName() {
+    public static final ArrayList<String> getUnitsName() {
         ArrayList<String> list = new ArrayList<String>();
         for (Unit u : Unit.values()) {
             list.add(u.getFullName());

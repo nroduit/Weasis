@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -19,18 +19,18 @@ import org.weasis.core.api.media.data.ImageElement;
 
 public interface ImageLayer<E extends ImageElement> {
 
-    public RandomIter getReadIterator();
+    RandomIter getReadIterator();
 
-    public E getSourceImage();
+    E getSourceImage();
 
-    public RenderedImage getDisplayImage();
+    RenderedImage getDisplayImage();
 
-    public void setImage(E image);
+    void setImage(E image);
 
-    public AffineTransform getTransform();
+    AffineTransform getTransform();
 
-    public void setTransform(AffineTransform transform);
+    void setTransform(AffineTransform transform);
 
-    public void updateImageOperation(String operation);
+    void updateImageOperation(String operation);
 
 }

@@ -44,16 +44,16 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
-    private final static JIExplorerContext treeContext = new JIExplorerContext();
+    private static final JIExplorerContext treeContext = new JIExplorerContext();
     /**
 	 *
 	 */
     private static final long serialVersionUID = 2844546991944685813L;
 
-    public final static String BUTTON_NAME = "Explorer";
-    public final static String NAME = "Media Explorer";
-    public final static String P_LAST_DIR = "last.dir";
-    private final static String PREFERENCE_NODE = "view";
+    public static final String BUTTON_NAME = "Explorer";
+    public static final String NAME = "Media Explorer";
+    public static final String P_LAST_DIR = "last.dir";
+    private static final String PREFERENCE_NODE = "view";
 
     protected FileTreeModel model;
 
@@ -159,10 +159,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 			 */
             private static final long serialVersionUID = 2975977946216576290L;
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
-                if (DefaultExplorer.this.clickedPath == null) {
+                if (DefaultExplorer.this.clickedPath == null)
                     return;
-                }
                 if (tree.isExpanded(DefaultExplorer.this.clickedPath)) {
                     tree.collapsePath(DefaultExplorer.this.clickedPath);
                 } else {
@@ -181,6 +181,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 			 */
             private static final long serialVersionUID = 1118192487617852891L;
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 repaint();
                 refresh();
@@ -195,19 +196,17 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     public TreeNode getSelectedNode() {
         final TreePath path = tree.getSelectionPath();
-        if (path != null) {
+        if (path != null)
             return (TreeNode) path.getLastPathComponent();
-        } else {
+        else
             return null;
-        }
     }
 
     public File getCurrentDir() {
         final TreePath path = tree.getSelectionPath();
 
-        if (path != null) {
+        if (path != null)
             return ((TreeNode) path.getLastPathComponent()).getFile();
-        }
         return null;
     }
 
@@ -255,9 +254,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             if (oneChild instanceof TreeNode) {
                 final File file = (File) ((TreeNode) oneChild).getUserObject();
 
-                if (file.equals(selectedSubDir)) {
+                if (file.equals(selectedSubDir))
                     return (TreeNode) oneChild;
-                }
             }
         }
         return null;
@@ -287,9 +285,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                     break;
                 }
             }
-        } else if (!dirPath.startsWith(parentFile.getAbsolutePath())) {
+        } else if (!dirPath.startsWith(parentFile.getAbsolutePath()))
             return null;
-        }
 
         final Iterator<String> iter = parsePath(dir).iterator();
 
@@ -319,18 +316,17 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 }
             }
 
-            if (pathNotFound) {
+            if (pathNotFound)
                 // log.info("findNodeForDir NULL");
                 return null;
-            } else {
+            else
                 // log.info("findNodeForDir " + parentNode);
                 return parentNode;
-            }
         }
         return null;
     }
 
-    public final static List<String> parsePath(final File selectedDir) {
+    public static final List<String> parsePath(final File selectedDir) {
         // First parse the given directory path into separate path names/fields.
         final List<String> paths = new ArrayList<String>();
         final String selectedAbsPath = selectedDir.getAbsolutePath();
@@ -389,9 +385,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 final int x = e.getX();
                 final int y = e.getY();
                 final TreePath path = tree.getPathForLocation(x, y);
-                if (path == null) {
+                if (path == null)
                     return;
-                }
 
                 DefaultExplorer.this.popup.removeAll();
                 if (tree.isExpanded(path)) {
@@ -441,7 +436,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         }
     }
 
-    private final void jTreeDiskValueChanged(final TreeSelectionEvent e) {
+    private void jTreeDiskValueChanged(final TreeSelectionEvent e) {
 
         final TreeNode selectedTreeNode = (TreeNode) getTreeNode(e.getPath());
 
@@ -473,10 +468,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     public final void expandPaths(final File selectedDir) {
 
         final TreeNode node = findNodeForDir(selectedDir);
-        if (node == null) {
+        if (node == null)
             // log.debug("expandPaths NULL ");
             return;
-        }
 
         final Vector<TreeNode> vec = new Vector<TreeNode>(1);
         vec.add(node);
@@ -494,7 +488,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     final class JITreeDiskWillExpandAdapter implements javax.swing.event.TreeWillExpandListener {
 
-        public final void treeWillExpand(final TreeExpansionEvent e) throws ExpandVetoException {
+        @Override
+        public void treeWillExpand(final TreeExpansionEvent e) throws ExpandVetoException {
             final TreePath path = e.getPath();
 
             final TreeNode selectedNode = (TreeNode) path.getLastPathComponent();
@@ -504,19 +499,22 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             }
         }
 
-        public final void treeWillCollapse(final TreeExpansionEvent e) {
+        @Override
+        public void treeWillCollapse(final TreeExpansionEvent e) {
         }
     }
 
     final class JITreeDiskExpansionAdapter implements javax.swing.event.TreeExpansionListener {
 
-        public final void treeExpanded(final TreeExpansionEvent e) {
+        @Override
+        public void treeExpanded(final TreeExpansionEvent e) {
             final Thread runner = new Thread() {
 
                 @Override
                 public void run() {
                     Runnable runnable = new Runnable() {
 
+                        @Override
                         public void run() {
                             TreePath path = DefaultExplorer.this.tree.getSelectionPath();
                             if (path != null) {
@@ -530,19 +528,22 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             runner.start();
         }
 
-        public final void treeCollapsed(final TreeExpansionEvent e) {
+        @Override
+        public void treeCollapsed(final TreeExpansionEvent e) {
         }
     }
 
     final class JITreeDiskSelectionAdapter implements javax.swing.event.TreeSelectionListener {
 
-        public final void valueChanged(final TreeSelectionEvent e) {
+        @Override
+        public void valueChanged(final TreeSelectionEvent e) {
             final Thread runner = new Thread() {
 
                 @Override
                 public void run() {
                     Runnable runnable = new Runnable() {
 
+                        @Override
                         public void run() {
                             jTreeDiskValueChanged(e);
                         }
@@ -561,6 +562,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             public void run() {
                 Runnable runnable = new Runnable() {
 
+                    @Override
                     public void run() {
                         expandPaths(dObj.getFile());
                     }

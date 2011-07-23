@@ -28,8 +28,8 @@ import org.weasis.core.api.image.util.ImageToolkit;
 public class RotationOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(RotationOperation.class);
 
-    public final static String name = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
-    public final static double epsilon = 1e-5;
+    public static final String name = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
+    public static final double epsilon = 1e-5;
 
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         Integer rotationAngle = (Integer) imageOperation.getActionValue(ActionW.ROTATION.cmd());

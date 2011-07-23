@@ -31,13 +31,13 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public final static Measurement FirstPointX = new Measurement("First point X", true, true, false);
-    public final static Measurement FirstPointY = new Measurement("First point Y", true, true, false);
-    public final static Measurement LastPointX = new Measurement("Last point X", true, true, false);
-    public final static Measurement LastPointY = new Measurement("Last point Y", true, true, false);
-    public final static Measurement LineLength = new Measurement("Line length", true, true, true);
-    public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
-    public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public static final Measurement FirstPointX = new Measurement("First point X", true, true, false);
+    public static final Measurement FirstPointY = new Measurement("First point Y", true, true, false);
+    public static final Measurement LastPointX = new Measurement("Last point X", true, true, false);
+    public static final Measurement LastPointY = new Measurement("Last point Y", true, true, false);
+    public static final Measurement LineLength = new Measurement("Line length", true, true, true);
+    public static final Measurement Orientation = new Measurement("Orientation", true, true, false);
+    public static final Measurement Azimuth = new Measurement("Azimuth", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D A, B; // Let AB be a simple a line segment

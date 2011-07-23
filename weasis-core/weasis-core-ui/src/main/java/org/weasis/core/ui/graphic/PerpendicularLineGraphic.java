@@ -23,9 +23,9 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public final static Measurement LineLength = new Measurement("Line length", true, true, true);
-    public final static Measurement Orientation = new Measurement("Orientation", true, true, false);
-    public final static Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public static final Measurement LineLength = new Measurement("Line length", true, true, true);
+    public static final Measurement Orientation = new Measurement("Orientation", true, true, false);
+    public static final Measurement Azimuth = new Measurement("Azimuth", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let AB & CD two perpendicular line segments with D being the projected point C on AB

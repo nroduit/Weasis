@@ -24,5 +24,5 @@ public interface JWInterruptionListener {
      * 
      * @see org.weasis.media.gui.util.JmvThread
      */
-    public abstract void interruptionRequested();
+    void interruptionRequested();
 }

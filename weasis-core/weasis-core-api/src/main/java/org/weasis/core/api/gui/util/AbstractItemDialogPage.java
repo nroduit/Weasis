@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JPanel;
 
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps {
-    protected final static AtomicInteger keyGenerator = new AtomicInteger(0);
+    protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
     private final String key;
     private String title;
     private java.util.List<PageProps> subPageList;

@@ -32,7 +32,7 @@ import org.weasis.core.ui.docking.UIManager;
 
 public class Activator implements BundleActivator, ServiceListener {
 
-    // public final static BundlePreferences PREFERENCES = new BundlePreferences();
+    // public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static final String dataExplorerViewFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DataExplorerView.class.getName()); //$NON-NLS-1$
     private static ServiceTracker prefs_tracker = null;

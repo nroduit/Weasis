@@ -33,7 +33,7 @@ import org.weasis.dicom.explorer.DicomModel;
 
 public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
-    public final static String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
+    public static final String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
     public static final BlockingQueue<Runnable> loadingQueue = new PriorityBlockingQueue<Runnable>(10,
         new PriorityTaskComparator());
     public static final ThreadPoolExecutor executor =

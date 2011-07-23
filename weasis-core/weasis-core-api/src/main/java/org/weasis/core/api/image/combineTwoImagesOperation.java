@@ -34,7 +34,7 @@ import com.sun.media.jai.util.ImageUtil;
 public class combineTwoImagesOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(combineTwoImagesOperation.class);
 
-    public final static String name = "CombineImage"; //$NON-NLS-1$
+    public static final String name = "CombineImage"; //$NON-NLS-1$
 
     public String getOperationName() {
         return name;

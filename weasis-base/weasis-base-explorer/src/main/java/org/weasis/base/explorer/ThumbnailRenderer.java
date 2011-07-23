@@ -25,7 +25,7 @@ public class ThumbnailRenderer extends JPanel implements ListCellRenderer {
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
     private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
-    private final static Color back = new Color(242, 242, 242);
+    private static final Color back = new Color(242, 242, 242);
 
     // TODO renderer not supported by Substance laf
     public ThumbnailRenderer() {

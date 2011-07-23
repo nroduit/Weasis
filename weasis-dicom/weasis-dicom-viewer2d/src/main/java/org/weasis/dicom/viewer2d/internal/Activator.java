@@ -11,11 +11,8 @@
 package org.weasis.dicom.viewer2d.internal;
 
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
 
-import org.apache.felix.service.command.CommandProcessor;
 import org.noos.xing.mydoggy.Content;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -28,7 +25,7 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 
 public class Activator implements BundleActivator {
 
-    public final static BundlePreferences PREFERENCES = new BundlePreferences();
+    public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
     @Override
     public void start(final BundleContext context) throws Exception {

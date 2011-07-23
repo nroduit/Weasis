@@ -26,9 +26,9 @@ import org.weasis.core.api.util.FileUtil;
  */
 public abstract class AbstractProperties {
 
-    public final static String WEASIS_VERSION = System.getProperty("weasis.version"); //$NON-NLS-1$
-    public final static String WEASIS_PATH = System.getProperty("weasis.path"); //$NON-NLS-1$
-    public final static File APP_TEMP_DIR;
+    public static final String WEASIS_VERSION = System.getProperty("weasis.version"); //$NON-NLS-1$
+    public static final String WEASIS_PATH = System.getProperty("weasis.path"); //$NON-NLS-1$
+    public static final File APP_TEMP_DIR;
 
     static {
         String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
@@ -62,7 +62,7 @@ public abstract class AbstractProperties {
         'F' };
     /** Container for Properties */
     protected static Properties s_prop = new Properties();
-    public final static GhostGlassPane glassPane = new GhostGlassPane();
+    public static final GhostGlassPane glassPane = new GhostGlassPane();
 
     protected static String checkProperty(String key, String defaultValue) {
         String result = null;

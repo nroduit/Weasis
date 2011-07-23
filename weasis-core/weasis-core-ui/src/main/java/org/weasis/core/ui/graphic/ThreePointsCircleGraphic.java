@@ -33,12 +33,12 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public final static Measurement Area = new Measurement("Area", true, true, true);
-    public final static Measurement Diameter = new Measurement("Diameter", true, true, false);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public final static Measurement CenterX = new Measurement("Center X", true, true, false);
-    public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public final static Measurement Radius = new Measurement("Radius", true, true, false);
+    public static final Measurement Area = new Measurement("Area", true, true, true);
+    public static final Measurement Diameter = new Measurement("Diameter", true, true, false);
+    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
+    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
+    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
+    public static final Measurement Radius = new Measurement("Radius", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 

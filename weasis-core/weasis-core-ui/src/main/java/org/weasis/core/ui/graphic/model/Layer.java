@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -12,12 +12,12 @@ package org.weasis.core.ui.graphic.model;
 
 public interface Layer {
 
-    public void setVisible(boolean flag);
+    void setVisible(boolean flag);
 
-    public boolean isVisible();
+    boolean isVisible();
 
-    public void setLevel(int i);
+    void setLevel(int i);
 
-    public int getLevel();
+    int getLevel();
 
 }

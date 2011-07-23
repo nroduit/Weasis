@@ -18,7 +18,7 @@ import org.weasis.core.api.media.data.TagW;
 public final class SortSeriesStack {
 
     // Comparator cannot be a generic list of DicomOpImage because the Collection to sort has an AbstractImage type
-    public final static Comparator<DicomImageElement> instanceNumber = new Comparator<DicomImageElement>() {
+    public static final Comparator<DicomImageElement> instanceNumber = new Comparator<DicomImageElement>() {
 
         public int compare(DicomImageElement m1, DicomImageElement m2) {
             Integer val1 = (Integer) m1.getTagValue(TagW.InstanceNumber);
@@ -35,7 +35,7 @@ public final class SortSeriesStack {
         }
     };
 
-    public final static Comparator<DicomImageElement> sliceLocation = new Comparator<DicomImageElement>() {
+    public static final Comparator<DicomImageElement> sliceLocation = new Comparator<DicomImageElement>() {
 
         public int compare(DicomImageElement m1, DicomImageElement m2) {
             Float val1 = (Float) m1.getTagValue(TagW.SliceLocation);
@@ -52,7 +52,7 @@ public final class SortSeriesStack {
         }
     };
 
-    public final static Comparator<DicomImageElement> instanceTime = new Comparator<DicomImageElement>() {
+    public static final Comparator<DicomImageElement> instanceTime = new Comparator<DicomImageElement>() {
 
         public int compare(DicomImageElement m1, DicomImageElement m2) {
             Date val1 = (Date) m1.getTagValue(TagW.AcquisitionTime);

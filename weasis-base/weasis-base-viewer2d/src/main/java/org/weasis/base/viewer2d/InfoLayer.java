@@ -41,7 +41,7 @@ public class InfoLayer implements AnnotationsLayer {
     private final HashMap<String, Boolean> displayPreferences = new HashMap<String, Boolean>();
     private boolean visible = true;
     private final Color color = Color.yellow;
-    private final static int BORDER = 10;
+    private static final int BORDER = 10;
     private final DefaultView2d view2DPane;
     private String pixelInfo = "";
     private final Rectangle pixelInfoBound;

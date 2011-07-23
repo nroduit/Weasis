@@ -17,7 +17,7 @@ import org.weasis.core.api.media.data.TagW;
 public class CornerInfoData implements Serializable {
 
     private static final long serialVersionUID = 5017001560431431636L;
-    public final static int ELEMENT_NUMBER = 7;
+    public static final int ELEMENT_NUMBER = 7;
     private final CornerDisplay corner;
     private TagW[] infos;
 

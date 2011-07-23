@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -14,23 +14,24 @@ import java.util.Comparator;
 
 public interface MediaSeriesGroup {
 
-    public TagW getTagID();
+    TagW getTagID();
 
-    public boolean equals(Object obj);
+    @Override
+    boolean equals(Object obj);
 
-    public void setTag(TagW tag, Object value);
+    void setTag(TagW tag, Object value);
 
-    public boolean containTagKey(TagW tag);
+    boolean containTagKey(TagW tag);
 
-    public Object getTagValue(TagW tag);
+    Object getTagValue(TagW tag);
 
-    public TagW getTagElement(int id);
+    TagW getTagElement(int id);
 
-    public void dispose();
+    void dispose();
 
-    public void setComparator(Comparator<TagW> comparator);
+    void setComparator(Comparator<TagW> comparator);
 
-    public Comparator<TagW> getComparator();
+    Comparator<TagW> getComparator();
 
-    public void setTagNoNull(TagW tag, Object value);
+    void setTagNoNull(TagW tag, Object value);
 }

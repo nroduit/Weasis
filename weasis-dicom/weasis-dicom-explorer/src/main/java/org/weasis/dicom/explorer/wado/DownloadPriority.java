@@ -17,7 +17,7 @@ import org.weasis.dicom.explorer.Messages;
 
 public class DownloadPriority {
 
-    public final static AtomicInteger COUNTER = new AtomicInteger(Integer.MAX_VALUE - 1);
+    public static final AtomicInteger COUNTER = new AtomicInteger(Integer.MAX_VALUE - 1);
     private final String patientName;
     private final String studyInstanceUID;
     private final Date studyDate;

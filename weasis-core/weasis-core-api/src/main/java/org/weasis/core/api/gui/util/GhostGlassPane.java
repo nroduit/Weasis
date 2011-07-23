@@ -23,7 +23,7 @@ import javax.swing.JComponent;
 
 public class GhostGlassPane extends JComponent {
 
-    private final static AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
+    private static final AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
     private Image dragged = null;
     private Point location = null;
     private Icon draggedIcon = null;

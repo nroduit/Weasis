@@ -74,7 +74,7 @@ import org.weasis.core.api.Messages;
  */
 public class JMVUtils {
 
-    public final static Color lightGray = new Color(237, 237, 237);
+    public static final Color lightGray = new Color(237, 237, 237);
 
     public static int getNumberOfInvolvedTiles(PlanarImage img, Rectangle bound) {
         int maxTileIndexX = img.getMinTileX() + img.getNumXTiles();

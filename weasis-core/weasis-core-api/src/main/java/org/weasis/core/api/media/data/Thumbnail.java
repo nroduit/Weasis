@@ -84,12 +84,12 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     static {
         DownScaleQualityHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, null));
     }
-    public final static int MIN_SIZE = 48;
-    public final static int DEFAULT_SIZE = 112;
-    public final static int MAX_SIZE = 256;
+    public static final int MIN_SIZE = 48;
+    public static final int DEFAULT_SIZE = 112;
+    public static final int MAX_SIZE = 256;
 
-    protected SoftReference<BufferedImage> imageSoftRef;
-    protected boolean readable = true;
+    private SoftReference<BufferedImage> imageSoftRef;
+    private boolean readable = true;
     private File thumbnailPath = null;
     private int thumbnailSize;
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;

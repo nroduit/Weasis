@@ -339,7 +339,7 @@ public abstract class LocalizerPoster {
 
     // depends on corner order being tlhc, trhc, brhc, blhc for both rectangles ...
 
-    static public Rectangle getBoundsOfContainedRectangle(Point3d[] containedRectangle, Point3d[] wholeRectangle,
+    public static Rectangle getBoundsOfContainedRectangle(Point3d[] containedRectangle, Point3d[] wholeRectangle,
         Rectangle boundsOfWholeRectangle) {
         Rectangle boundsOfContainedRectangle = new Rectangle();
 

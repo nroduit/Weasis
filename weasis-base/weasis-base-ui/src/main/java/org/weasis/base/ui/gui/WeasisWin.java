@@ -103,7 +103,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
-    private final static WeasisWin instance = new WeasisWin();
+    private static final WeasisWin instance = new WeasisWin();
 
     private final ToolBarContainer toolbarContainer;
 

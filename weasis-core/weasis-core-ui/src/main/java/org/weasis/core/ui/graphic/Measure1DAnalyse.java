@@ -13,7 +13,7 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 
 public class Measure1DAnalyse {
 
-    public final static String[] measurList = { "First point X", "First point Y", "Last point X", "Last point Y",
+    public static final String[] measurList = { "First point X", "First point Y", "Last point X", "Last point Y",
         "Line length", "Orientation", "Orientation significance", "Azimuth", "Azimuth significance", "Barycenter x",
         "Barycenter y", "Color (RGB)" };
     private MeasurementsAdapter adapter;

@@ -60,7 +60,7 @@ public abstract class AbstractDragGraphic implements Graphic {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractDragGraphic.class);
 
-    public final static int UNDEFINED = -1;
+    public static final int UNDEFINED = -1;
 
     protected PropertyChangeSupport pcs;
 

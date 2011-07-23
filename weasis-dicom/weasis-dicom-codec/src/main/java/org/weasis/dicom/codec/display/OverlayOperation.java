@@ -30,7 +30,7 @@ import org.weasis.dicom.codec.OverlayUtils;
 public class OverlayOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOperation.class);
 
-    public final static String name = Messages.getString("OverlayOperation.title"); //$NON-NLS-1$
+    public static final String name = Messages.getString("OverlayOperation.title"); //$NON-NLS-1$
 
     public String getOperationName() {
         return name;

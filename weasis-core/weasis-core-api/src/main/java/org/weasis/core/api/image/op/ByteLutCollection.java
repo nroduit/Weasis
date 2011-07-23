@@ -38,14 +38,14 @@ public class ByteLutCollection {
      * The names of the LUT collection. The name position corresponds to the index value of the mehtod
      * <code>getLUT(int index)</code>.
      */
-    public final static String[] LUT_COLLECTION = {
+    public static final String[] LUT_COLLECTION = {
         "Default", "Gray", "Red to yellow", "Fire", "Ice", "Hot", "Spectrum", "Rainbow 1", "Rainbow 2", "Rainbow 3", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
         "Rainbow 4" }; //$NON-NLS-1$
 
     /**
      * the Red to yellow LUT
      */
-    public final static byte redToYellow[][] = new byte[3][256];
+    public static final byte redToYellow[][] = new byte[3][256];
     static {
         int[] g =
             { 0, 0, 2, 3, 4, 4, 6, 6, 7, 9, 9, 11, 12, 12, 14, 14, 15, 17, 17, 19, 20, 20, 22, 22, 23, 25, 25, 26, 27,
@@ -71,7 +71,7 @@ public class ByteLutCollection {
     /**
      * the Fire LUT
      */
-    public final static byte[][] fire = new byte[3][256];
+    public static final byte[][] fire = new byte[3][256];
     static {
         int[] r =
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43,
@@ -121,7 +121,7 @@ public class ByteLutCollection {
     /**
      * the Ice LUT
      */
-    public final static byte[][] ice = new byte[3][256];
+    public static final byte[][] ice = new byte[3][256];
     static {
         int[] r =
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -172,7 +172,7 @@ public class ByteLutCollection {
     /**
      * the Rainbow 3 LUT
      */
-    public final static byte[][] rainbow3 = new byte[3][256];
+    public static final byte[][] rainbow3 = new byte[3][256];
     static {
         int[] r =
             { 73, 72, 70, 69, 68, 66, 65, 63, 62, 61, 59, 58, 57, 55, 54, 52, 51, 48, 45, 41, 38, 35, 32, 29, 26, 22,
@@ -222,7 +222,7 @@ public class ByteLutCollection {
     /**
      * the Flag LUT
      */
-    public final static byte[][] flag = new byte[3][256];
+    public static final byte[][] flag = new byte[3][256];
     static {
         int[] r = { 255, 255, 0, 0 };
         int[] g = { 0, 255, 0, 0 };
@@ -237,7 +237,7 @@ public class ByteLutCollection {
     /**
      * the Hot LUT
      */
-    public final static byte[][] hot = new byte[3][256];
+    public static final byte[][] hot = new byte[3][256];
     static {
         int[] r =
             { 0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14, 15, 16, 18, 19, 21, 22, 23, 25, 26, 28, 29, 30, 32, 33, 35, 36, 37,
@@ -283,7 +283,7 @@ public class ByteLutCollection {
     /**
      * the Rainbow 4 LUT
      */
-    public final static byte[][] rainbow4 = new byte[3][256];
+    public static final byte[][] rainbow4 = new byte[3][256];
     static {
         int[] r =
             { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52,
@@ -328,7 +328,7 @@ public class ByteLutCollection {
     /**
      * the Spectrum LUT
      */
-    public final static byte[][] spectrum = new byte[3][256];
+    public static final byte[][] spectrum = new byte[3][256];
     static {
         int[] r =
             { 255, 250, 245, 240, 235, 230, 225, 220, 215, 210, 205, 200, 195, 190, 185, 180, 175, 170, 165, 160, 155,
@@ -381,7 +381,7 @@ public class ByteLutCollection {
     /**
      * the Rainbow 2 LUT
      */
-    public final static byte[][] rainbow2 = new byte[3][256];
+    public static final byte[][] rainbow2 = new byte[3][256];
     static {
         int[] r =
             { 0, 12, 25, 38, 51, 63, 76, 89, 102, 114, 127, 140, 153, 165, 178, 191, 204, 216, 229, 242, 255, 255, 255,
@@ -429,7 +429,7 @@ public class ByteLutCollection {
     /**
      * the Rainbow 1 LUT
      */
-    public final static byte[][] rainbow1 = new byte[3][256];
+    public static final byte[][] rainbow1 = new byte[3][256];
     static {
         int[] r =
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -477,7 +477,7 @@ public class ByteLutCollection {
     /**
      * the Multi color LUT
      */
-    public final static byte[][] multiColor = new byte[3][256];
+    public static final byte[][] multiColor = new byte[3][256];
     static {
         int[] r =
             { 255, 0, 255, 0, 255, 128, 64, 255, 0, 128, 236, 189, 250, 154, 221, 255, 128, 255, 0, 128, 228, 131, 189,
@@ -499,7 +499,7 @@ public class ByteLutCollection {
     /**
      * the IHS LUT
      */
-    public final static byte[][] ihs = new byte[3][256];
+    public static final byte[][] ihs = new byte[3][256];
     static {
         Color c;
         for (int i = 0; i < 256; i++) {
@@ -512,7 +512,7 @@ public class ByteLutCollection {
     /**
      * the Gray levels LUT
      */
-    public final static byte[][] grays = new byte[3][256];
+    public static final byte[][] grays = new byte[3][256];
     static {
         for (int i = 0; i < 256; i++) {
             grays[0][i] = (byte) i;
@@ -524,7 +524,7 @@ public class ByteLutCollection {
     /**
      * the Red LUT
      */
-    public final static byte[][] red = new byte[3][256];
+    public static final byte[][] red = new byte[3][256];
     static {
         for (int i = 0; i < 256; i++) {
             red[0][i] = (byte) i;
@@ -536,7 +536,7 @@ public class ByteLutCollection {
     /**
      * the Green LUT
      */
-    public final static byte[][] green = new byte[3][256];
+    public static final byte[][] green = new byte[3][256];
     static {
         for (int i = 0; i < 256; i++) {
             green[0][i] = 0;
@@ -548,7 +548,7 @@ public class ByteLutCollection {
     /**
      * the Blue LUT
      */
-    public final static byte[][] blue = new byte[3][256];
+    public static final byte[][] blue = new byte[3][256];
     static {
         for (int i = 0; i < 256; i++) {
             blue[0][i] = 0;

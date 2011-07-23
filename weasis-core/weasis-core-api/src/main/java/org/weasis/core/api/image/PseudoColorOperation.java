@@ -30,7 +30,7 @@ import org.weasis.core.api.image.util.ImageToolkit;
 public class PseudoColorOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(PseudoColorOperation.class);
 
-    public final static String name = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
+    public static final String name = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
 
     public String getOperationName() {
         return name;

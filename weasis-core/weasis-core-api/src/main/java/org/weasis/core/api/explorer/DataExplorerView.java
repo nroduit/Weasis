@@ -20,11 +20,11 @@ import org.weasis.core.api.gui.util.GUIEntry;
 public interface DataExplorerView extends PropertyChangeListener, GUIEntry {
 
     // Must unregister listeners and close model if it not use by other view
-    public void dispose();
+    void dispose();
 
-    public DataExplorerModel getDataExplorerModel();
+    DataExplorerModel getDataExplorerModel();
 
-    public Action getOpenImportDialogAction();
+    Action getOpenImportDialogAction();
 
-    public Action getOpenExportDialogAction();
+    Action getOpenExportDialogAction();
 }

@@ -49,7 +49,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 
 public class ImageTool extends PluginTool {
 
-    public final static String BUTTON_NAME = "Image Tool";
+    public static final String BUTTON_NAME = "Image Tool";
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;

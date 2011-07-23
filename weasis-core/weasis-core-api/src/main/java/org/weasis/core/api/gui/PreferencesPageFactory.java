@@ -6,6 +6,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public interface PreferencesPageFactory {
 
-    public AbstractItemDialogPage createPreferencesPage(Hashtable<String, Object> properties);
+    AbstractItemDialogPage createPreferencesPage(Hashtable<String, Object> properties);
 
 }

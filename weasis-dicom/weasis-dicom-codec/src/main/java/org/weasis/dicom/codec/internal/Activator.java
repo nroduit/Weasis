@@ -30,7 +30,7 @@ public class Activator implements BundleActivator {
 
     private static final String LOGGER_KEY = "always.info.ItemParser";
     private static final String LOGGER_VAL = "org.dcm4che2.imageio.ItemParser";
-    public final static BundlePreferences PREFERENCES = new BundlePreferences();
+    public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private BundleContext bundleContext = null;
 
     // @Override

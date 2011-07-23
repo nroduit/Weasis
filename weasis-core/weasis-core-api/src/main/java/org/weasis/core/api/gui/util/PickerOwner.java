@@ -22,5 +22,5 @@ public interface PickerOwner {
     /**
      * setPickerValues
      */
-    public void setPickerValues(int[][] values, Rectangle area);
+    void setPickerValues(int[][] values, Rectangle area);
 }

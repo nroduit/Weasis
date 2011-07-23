@@ -24,14 +24,14 @@ public final class JIUtility {
         }
     }
 
-    private static final Set<String> unwanted = new HashSet<String>();
+    private static Set<String> unwanted = new HashSet<String>();
     // TODO is using faster jpeg codec ?
     static {
         unwanted.add("com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReader");
         unwanted.add("com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageWriter");
     }
 
-    public static final FileTreeModel createTreeModel() {
+    public static FileTreeModel createTreeModel() {
         // Using "My Computer" as root.
         TreeNode rootNode = null;
 
@@ -115,11 +115,11 @@ public final class JIUtility {
             + " KB ");
     }
 
-    public final static File[] getRoots() {
+    public static File[] getRoots() {
         return constructRoots();
     }
 
-    private final static File[] constructRoots() {
+    private static File[] constructRoots() {
         File[] roots;
         final Vector<File> rootsVector = new Vector<File>();
 
@@ -150,31 +150,28 @@ public final class JIUtility {
         return roots;
     }
 
-    public final static Icon getSystemIcon(final MediaElement dObj) {
-        if (dObj.getFile().exists()) {
+    public static Icon getSystemIcon(final MediaElement dObj) {
+        if (dObj.getFile().exists())
             return FileSystemView.getFileSystemView().getSystemIcon(dObj.getFile());
-        } else {
+        else
             return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
-        }
     }
 
-    public final static Icon getSystemIcon(final File f) {
-        if (f.exists()) {
+    public static Icon getSystemIcon(final File f) {
+        if (f.exists())
             return FileSystemView.getFileSystemView().getSystemIcon(f);
-        } else {
+        else
             return FileSystemView.getFileSystemView().getSystemIcon(new File(System.getProperty("user.home")));
-        }
     }
 
-    public final static String suffix(final String name) {
+    public static String suffix(final String name) {
         final int i = name.lastIndexOf('.');
-        if (i > 0) {
+        if (i > 0)
             return name.toLowerCase().substring(i + 1);
-        }
         return null;
     }
 
-    public static final String getNumericPaddedString(final int value, final int radix, final int padding) {
+    public static String getNumericPaddedString(final int value, final int radix, final int padding) {
         final String str = Integer.toString(value, radix);
         final StringBuffer strBuf = new StringBuffer();
 

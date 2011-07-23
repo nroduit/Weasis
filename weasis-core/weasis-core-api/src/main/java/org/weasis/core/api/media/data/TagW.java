@@ -29,8 +29,8 @@ import org.weasis.core.api.gui.InfoViewListPanel;
  * @version $Rev$ $Date$
  */
 public class TagW implements Transferable, Serializable {
-    public final static AtomicInteger AppID = new AtomicInteger(1);
-    private final static AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
+    public static final AtomicInteger AppID = new AtomicInteger(1);
+    private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
     // TODO date format in general settings
     public static final long MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
     public static final SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy"); //$NON-NLS-1$
@@ -54,7 +54,7 @@ public class TagW implements Transferable, Serializable {
     // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an institution,
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)
-    public final static TagW PatientPseudoUID = new TagW(Messages.getString("TagElement.pat_uid"), TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientPseudoUID = new TagW(Messages.getString("TagElement.pat_uid"), TagType.String, 1); //$NON-NLS-1$
     public static final TagW SeriesLoading = new TagW(Messages.getString("TagElement.laod"), TagType.Integer); //$NON-NLS-1$
     public static final TagW Thumbnail = new TagW(Messages.getString("TagElement.thumb"), TagType.Thumbnail); //$NON-NLS-1$
     public static final TagW ExplorerModel = new TagW(Messages.getString("TagElement.exp_model"), TagType.Object); //$NON-NLS-1$
@@ -73,120 +73,120 @@ public class TagW implements Transferable, Serializable {
     // Do not internationalize WadoTransferSyntaxUID, WadoCompressionRate and DirectDownloadFile because they are
     // defined in wado_query.xsd
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
-    public final static TagW WadoTransferSyntaxUID = new TagW("Wado Transfer Syntax UID", TagType.String); //$NON-NLS-1$
-    public final static TagW DirectDownloadFile = new TagW("Direct Download File", TagType.String); //$NON-NLS-1$
+    public static final TagW WadoTransferSyntaxUID = new TagW("Wado Transfer Syntax UID", TagType.String); //$NON-NLS-1$
+    public static final TagW DirectDownloadFile = new TagW("Direct Download File", TagType.String); //$NON-NLS-1$
 
-    public final static TagW WadoParameters = new TagW("Wado Parameter", TagType.Object); //$NON-NLS-1$
-    public final static TagW WadoInstanceReferenceList = new TagW("List of DICOM instance References", TagType.List); //$NON-NLS-1$
+    public static final TagW WadoParameters = new TagW("Wado Parameter", TagType.Object); //$NON-NLS-1$
+    public static final TagW WadoInstanceReferenceList = new TagW("List of DICOM instance References", TagType.List); //$NON-NLS-1$
     public static final TagW DicomSpecialElement = new TagW("Special DICOM Object", TagType.Object); //$NON-NLS-1$
     public static final TagW DicomSpecialElementList = new TagW("Special DICOM List", TagType.List); //$NON-NLS-1$
-    public final static TagW SlicePosition = new TagW("Slice Position", TagType.DoubleArray); //$NON-NLS-1$
-    public final static TagW SuvFactor = new TagW("SUV Factor", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW SlicePosition = new TagW("Slice Position", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW SuvFactor = new TagW("SUV Factor", TagType.DoubleArray); //$NON-NLS-1$
 
-    public final static TagW RootElement = new TagW("Root Element", TagType.String); //$NON-NLS-1$
-    public final static TagW CurrentFolder = new TagW(Messages.getString("TagElement.cur_dir"), TagType.String); //$NON-NLS-1$
+    public static final TagW RootElement = new TagW("Root Element", TagType.String); //$NON-NLS-1$
+    public static final TagW CurrentFolder = new TagW(Messages.getString("TagElement.cur_dir"), TagType.String); //$NON-NLS-1$
 
     /**
      * DICOM common tags
      * 
      */
-    public final static TagW TransferSyntaxUID = new TagW(0x00020010, "Transfer Syntax UID", TagType.String); //$NON-NLS-1$
+    public static final TagW TransferSyntaxUID = new TagW(0x00020010, "Transfer Syntax UID", TagType.String); //$NON-NLS-1$
 
-    public final static TagW PatientName = new TagW(0x00100010, "Patient Name", TagType.String, 1); //$NON-NLS-1$
-    public final static TagW PatientID = new TagW(0x00100020, "PatientID", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientName = new TagW(0x00100010, "Patient Name", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientID = new TagW(0x00100020, "PatientID", TagType.String, 1); //$NON-NLS-1$
 
-    public final static TagW IssuerOfPatientID = new TagW(0x00100021, "Issuer of PatientID", TagType.String, 1); //$NON-NLS-1$
-    public final static TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
-    public final static TagW PatientBirthTime = new TagW(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
-    public final static TagW PatientSex = new TagW(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
-    public final static TagW PatientWeight = new TagW(0x00101030, "Patient Weight", TagType.Float, 1); //$NON-NLS-1$
-    public final static TagW PatientComments = new TagW(0x00104000, "Patient Comments", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW IssuerOfPatientID = new TagW(0x00100021, "Issuer of PatientID", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
+    public static final TagW PatientBirthTime = new TagW(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
+    public static final TagW PatientSex = new TagW(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientWeight = new TagW(0x00101030, "Patient Weight", TagType.Float, 1); //$NON-NLS-1$
+    public static final TagW PatientComments = new TagW(0x00104000, "Patient Comments", TagType.String, 1); //$NON-NLS-1$
 
-    public final static TagW StudyInstanceUID = new TagW(0x0020000D, "Study Instance UID", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW SubseriesInstanceUID = new TagW("Subseries Instance UID", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW SeriesInstanceUID = new TagW(0x0020000E, "Series Instance UID", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW StudyID = new TagW(0x00200010, "Study ID", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW InstanceNumber = new TagW(0x00200013, "Instance Number", TagType.Integer, 4); //$NON-NLS-1$
+    public static final TagW StudyInstanceUID = new TagW(0x0020000D, "Study Instance UID", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW SubseriesInstanceUID = new TagW("Subseries Instance UID", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW SeriesInstanceUID = new TagW(0x0020000E, "Series Instance UID", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW StudyID = new TagW(0x00200010, "Study ID", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW InstanceNumber = new TagW(0x00200013, "Instance Number", TagType.Integer, 4); //$NON-NLS-1$
     public static final TagW ImagePositionPatient = new TagW(0x00200032,
         "Image Position Patient", TagType.DoubleArray, 4); //$NON-NLS-1$
     public static final TagW ImageOrientationPatient =
         new TagW(0x00200037, "Image Orientation", TagType.DoubleArray, 4); //$NON-NLS-1$
-    public final static TagW SliceLocation = new TagW(0x00201041, "Slice Location", TagType.Float, 4); //$NON-NLS-1$
-    public final static TagW SliceThickness = new TagW(0x00180050, "Slice Thickness", TagType.Float, 4); //$NON-NLS-1$
+    public static final TagW SliceLocation = new TagW(0x00201041, "Slice Location", TagType.Float, 4); //$NON-NLS-1$
+    public static final TagW SliceThickness = new TagW(0x00180050, "Slice Thickness", TagType.Float, 4); //$NON-NLS-1$
 
-    public final static TagW ImageType = new TagW(0x00080008, "Image Type", TagType.String, 4); //$NON-NLS-1$
+    public static final TagW ImageType = new TagW(0x00080008, "Image Type", TagType.String, 4); //$NON-NLS-1$
 
-    public final static TagW SOPClassUID = new TagW(0x00080016, "SOP Class UID", TagType.String, 4); //$NON-NLS-1$
-    public final static TagW SOPInstanceUID = new TagW(0x00080018, "SOP Instance UID", TagType.String, 4); //$NON-NLS-1$
-    public final static TagW StudyDate = new TagW(0x00080020, "Study Date", TagType.Date, 2); //$NON-NLS-1$
-    public final static TagW SeriesDate = new TagW(0x00080021, "Series Date", TagType.Date, 3); //$NON-NLS-1$
-    public final static TagW AcquisitionDate = new TagW(0x00080022, "Acquisition Date", TagType.Date, 4); //$NON-NLS-1$
+    public static final TagW SOPClassUID = new TagW(0x00080016, "SOP Class UID", TagType.String, 4); //$NON-NLS-1$
+    public static final TagW SOPInstanceUID = new TagW(0x00080018, "SOP Instance UID", TagType.String, 4); //$NON-NLS-1$
+    public static final TagW StudyDate = new TagW(0x00080020, "Study Date", TagType.Date, 2); //$NON-NLS-1$
+    public static final TagW SeriesDate = new TagW(0x00080021, "Series Date", TagType.Date, 3); //$NON-NLS-1$
+    public static final TagW AcquisitionDate = new TagW(0x00080022, "Acquisition Date", TagType.Date, 4); //$NON-NLS-1$
 
-    public final static TagW StudyTime = new TagW(0x00080030, "Study Time", TagType.Time, 2); //$NON-NLS-1$
-    public final static TagW AcquisitionTime = new TagW(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
-    public final static TagW AccessionNumber = new TagW(0x00080050, "Accession Number", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW RetrieveAETitle = new TagW(0x00080054, "Retrieve AE Title", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW Modality = new TagW(0x00080060, "Modality", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW ModalitiesInStudy = new TagW(0x00080061, "Modalities in Study", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW Manufacturer = new TagW(0x00080070, "Manufacturer", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW InstitutionName = new TagW(0x00080080, "Institution Name", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW StudyTime = new TagW(0x00080030, "Study Time", TagType.Time, 2); //$NON-NLS-1$
+    public static final TagW AcquisitionTime = new TagW(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
+    public static final TagW AccessionNumber = new TagW(0x00080050, "Accession Number", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW RetrieveAETitle = new TagW(0x00080054, "Retrieve AE Title", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW Modality = new TagW(0x00080060, "Modality", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW ModalitiesInStudy = new TagW(0x00080061, "Modalities in Study", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW Manufacturer = new TagW(0x00080070, "Manufacturer", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW InstitutionName = new TagW(0x00080080, "Institution Name", TagType.String, 3); //$NON-NLS-1$
 
-    public final static TagW ReferringPhysicianName = new TagW(0x00080090,
+    public static final TagW ReferringPhysicianName = new TagW(0x00080090,
         "Referring Physician Name", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW StationName = new TagW(0x00081010, "Station Name", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW StudyDescription = new TagW(0x00081030, "Study Description", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW ProcedureCodeSequence = new TagW(0x00081032,
+    public static final TagW StationName = new TagW(0x00081010, "Station Name", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW StudyDescription = new TagW(0x00081030, "Study Description", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW ProcedureCodeSequence = new TagW(0x00081032,
         "Procedure Code Sequence", TagType.Sequence, 2); //$NON-NLS-1$
-    public final static TagW SeriesDescription = new TagW(0x0008103E, "Series Description", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW InstitutionalDepartmentName = new TagW(0x00081040,
+    public static final TagW SeriesDescription = new TagW(0x0008103E, "Series Description", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW InstitutionalDepartmentName = new TagW(0x00081040,
         "Institutional Department Name", TagType.String, 3); //$NON-NLS-1$
-    public final static TagW ManufacturerModelName = new TagW(0x00081090, "Manufacturer Model Name", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW ManufacturerModelName = new TagW(0x00081090, "Manufacturer Model Name", TagType.String, 3); //$NON-NLS-1$
 
-    public final static TagW ReferencedPerformedProcedureStepSequence = new TagW(0x00081111,
+    public static final TagW ReferencedPerformedProcedureStepSequence = new TagW(0x00081111,
         "Referenced Performed Procedure Step Sequence", TagType.Sequence, 3); //$NON-NLS-1$
-    public final static TagW ReferencedImageSequence = new TagW(0x00081140,
+    public static final TagW ReferencedImageSequence = new TagW(0x00081140,
         "Referenced Image Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW FrameType = new TagW(0x00089007, "Frame Type", TagType.String, 4); //$NON-NLS-1$
 
-    public final static TagW ContrastBolusAgent = new TagW(0x00180010, "Contras tBolus Agent", TagType.String); //$NON-NLS-1$
-    public final static TagW ScanningSequence = new TagW(0x00180020, "Scanning Sequence", TagType.String); //$NON-NLS-1$
+    public static final TagW ContrastBolusAgent = new TagW(0x00180010, "Contras tBolus Agent", TagType.String); //$NON-NLS-1$
+    public static final TagW ScanningSequence = new TagW(0x00180020, "Scanning Sequence", TagType.String); //$NON-NLS-1$
 
-    public final static TagW SequenceVariant = new TagW(0x00180021, "Sequence Variant", TagType.String); //$NON-NLS-1$
-    public final static TagW ScanOptions = new TagW(0x00180022, "Scan Options", TagType.String); //$NON-NLS-1$
+    public static final TagW SequenceVariant = new TagW(0x00180021, "Sequence Variant", TagType.String); //$NON-NLS-1$
+    public static final TagW ScanOptions = new TagW(0x00180022, "Scan Options", TagType.String); //$NON-NLS-1$
     public static final TagW CineRate = new TagW(0x00180040, "Cine Rate", TagType.Integer); //$NON-NLS-1$
-    public final static TagW KVP = new TagW(0x00180060, "kVP", TagType.String); //$NON-NLS-1$
+    public static final TagW KVP = new TagW(0x00180060, "kVP", TagType.String); //$NON-NLS-1$
 
-    public final static TagW RepetitionTime = new TagW(0x00180080, "Repetition Time", TagType.Float); //$NON-NLS-1$
-    public final static TagW EchoTime = new TagW(0x00180081, "Echo Time", TagType.Float); //$NON-NLS-1$
-    public final static TagW InversionTime = new TagW(0x00180082, "Inversion Time", TagType.Float); //$NON-NLS-1$
+    public static final TagW RepetitionTime = new TagW(0x00180080, "Repetition Time", TagType.Float); //$NON-NLS-1$
+    public static final TagW EchoTime = new TagW(0x00180081, "Echo Time", TagType.Float); //$NON-NLS-1$
+    public static final TagW InversionTime = new TagW(0x00180082, "Inversion Time", TagType.Float); //$NON-NLS-1$
     public static final TagW EchoNumbers = new TagW(0x00180086, "Echo Number", TagType.Integer); //$NON-NLS-1$
-    public final static TagW ImagerPixelSpacing = new TagW(0x00181164, "Imager Pixel Spacing", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW ImagerPixelSpacing = new TagW(0x00181164, "Imager Pixel Spacing", TagType.DoubleArray); //$NON-NLS-1$
 
-    public final static TagW GantryDetectorTilt = new TagW(0x00181120, "Gantry Detector Tilt", TagType.Float); //$NON-NLS-1$
+    public static final TagW GantryDetectorTilt = new TagW(0x00181120, "Gantry Detector Tilt", TagType.Float); //$NON-NLS-1$
     public static final TagW PreferredPlaybackSequencing = new TagW(0x00181244,
         "Preferred Playback Sequencing", TagType.Integer); //$NON-NLS-1$
-    public final static TagW ConvolutionKernel = new TagW(0x00181210, "Convolution Kernel", TagType.String); //$NON-NLS-1$
-    public final static TagW FlipAngle = new TagW(0x00181314, "Scan Options", TagType.Float); //$NON-NLS-1$
-    public final static TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
+    public static final TagW ConvolutionKernel = new TagW(0x00181210, "Convolution Kernel", TagType.String); //$NON-NLS-1$
+    public static final TagW FlipAngle = new TagW(0x00181314, "Scan Options", TagType.Float); //$NON-NLS-1$
+    public static final TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
 
     public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text); //$NON-NLS-1$
     public static final TagW PixelSpacing = new TagW(0x00280030, "Pixel Spacing", TagType.DoubleArray); //$NON-NLS-1$
-    public final static TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
+    public static final TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
         "Pixel Spacing Calibration Description", TagType.String); //$NON-NLS-1$
     public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.Float); //$NON-NLS-1$
     public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleSlope = new TagW(0x00281053, "Rescale Slope", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleIntercept = new TagW(0x00281052, "Rescale Intercept", TagType.Float); //$NON-NLS-1$
-    public final static TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
-    public final static TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
+    public static final TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
+    public static final TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
 
     public static final TagW SmallestImagePixelValue = new TagW(0x00280106, "Smallest ImagePixel Value", TagType.Float); //$NON-NLS-1$
     public static final TagW LargestImagePixelValue = new TagW(0x00280107, "Largest Image PixelValue", TagType.Float); //$NON-NLS-1$
-    public final static TagW BodyPartExamined = new TagW(0x00180015, "Body Part Examined", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW BodyPartExamined = new TagW(0x00180015, "Body Part Examined", TagType.String, 3); //$NON-NLS-1$
 
     public static final TagW SeriesNumber = new TagW(0x00200011, "Series Number", TagType.Integer, 3); //$NON-NLS-1$
 
-    public final static TagW Laterality = new TagW(0x00200060, "Laterality", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW Laterality = new TagW(0x00200060, "Laterality", TagType.String, 3); //$NON-NLS-1$
 
     public static final TagW NumberOfStudyRelatedSeries = new TagW(0x00201206,
         "Number of Study Related Series", TagType.Integer, 2); //$NON-NLS-1$
@@ -215,14 +215,14 @@ public class TagW implements Transferable, Serializable {
     public static final TagW BitsStored = new TagW(0x00280101, "Bits Stored", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelRepresentation = new TagW(0x00280103, "Pixel Representation", TagType.Integer); //$NON-NLS-1$
 
-    public final static TagW StudyStatusID = new TagW(0x0032000A, "Study StatusID", TagType.String, 2); //$NON-NLS-1$
-    public final static TagW PerformedProcedureStepStartDate = new TagW(0x00400244,
+    public static final TagW StudyStatusID = new TagW(0x0032000A, "Study StatusID", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW PerformedProcedureStepStartDate = new TagW(0x00400244,
         "Performed Procedure Step Start Date", TagType.Date, 3); //$NON-NLS-1$
-    public final static TagW PerformedProcedureStepStartTime = new TagW(0x00400245,
+    public static final TagW PerformedProcedureStepStartTime = new TagW(0x00400245,
         "Performed Procedure Step Start Time", TagType.Time, 3); //$NON-NLS-1$
-    public final static TagW RequestAttributesSequence = new TagW(0x00400275,
+    public static final TagW RequestAttributesSequence = new TagW(0x00400275,
         "Request Attributes Sequence", TagType.Sequence, 3); //$NON-NLS-1$
-    public final static TagW Units = new TagW(0x00541001, "Units", TagType.String); //$NON-NLS-1$
+    public static final TagW Units = new TagW(0x00541001, "Units", TagType.String); //$NON-NLS-1$
 
     public static final TagW MIMETypeOfEncapsulatedDocument = new TagW(0x00420012,
         "MIME Type Of Encapsulated Document", TagType.String); //$NON-NLS-1$
@@ -239,7 +239,7 @@ public class TagW implements Transferable, Serializable {
         }
     }
 
-    private final static DataFlavor[] flavors = { infoElementDataFlavor };
+    private static final DataFlavor[] flavors = { infoElementDataFlavor };
 
     protected final int id;
     protected final int level;

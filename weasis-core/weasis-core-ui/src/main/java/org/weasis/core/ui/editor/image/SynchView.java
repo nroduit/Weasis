@@ -24,10 +24,10 @@ public class SynchView implements GUIEntry {
         None, Stack, Tile
     }
 
-    public final static SynchView NONE = new SynchView(
+    public static final SynchView NONE = new SynchView(
         Messages.getString("SynchView.none"), Mode.None, null, new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
-    public final static SynchView DEFAULT_TILE;
-    public final static SynchView DEFAULT_STACK;
+    public static final SynchView DEFAULT_TILE;
+    public static final SynchView DEFAULT_STACK;
     static {
         HashMap<ActionW, Boolean> actions = new HashMap<ActionW, Boolean>();
         actions.put(ActionW.SCROLL_SERIES, true);

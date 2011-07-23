@@ -12,7 +12,7 @@ package org.weasis.core.api.gui.util;
 
 public interface ActionState {
 
-    public void enableAction(boolean enabled);
+    void enableAction(boolean enabled);
 
-    public ActionW getActionW();
+    ActionW getActionW();
 }

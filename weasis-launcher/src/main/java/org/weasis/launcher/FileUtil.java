@@ -39,10 +39,9 @@ public class FileUtil {
         }
     }
 
-    public final static void deleteDirectoryContents(final File dir) {
-        if ((dir == null) || !dir.isDirectory()) {
+    public static final void deleteDirectoryContents(final File dir) {
+        if ((dir == null) || !dir.isDirectory())
             return;
-        }
         final File[] files = dir.listFiles();
         if (files != null) {
             for (final File f : files) {

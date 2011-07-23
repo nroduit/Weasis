@@ -5,8 +5,8 @@ import javax.swing.event.ListDataListener;
 
 public interface ComboBoxModelAdapter extends ListDataListener {
 
-    public void setModel(ComboBoxModel dataModel);
+    void setModel(ComboBoxModel dataModel);
 
-    public void setEnabled(boolean enabled);
+    void setEnabled(boolean enabled);
 
 }

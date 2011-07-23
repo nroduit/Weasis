@@ -20,7 +20,7 @@ import org.weasis.core.ui.docking.PluginTool;
 
 public class DrawTool extends PluginTool {
 
-    public final static String BUTTON_NAME = "Draw";
+    public static final String BUTTON_NAME = "Draw";
 
     public DrawTool(String pluginName, Icon icon) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);

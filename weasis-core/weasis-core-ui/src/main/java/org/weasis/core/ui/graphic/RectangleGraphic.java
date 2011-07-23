@@ -36,14 +36,14 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
-    public final static Measurement Area = new Measurement("Area", true, true, true);
-    public final static Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public final static Measurement TopLeftPointX = new Measurement("Top Left X", true, true, false);
-    public final static Measurement TopLeftPointY = new Measurement("Top Left Y", true, true, false);
-    public final static Measurement CenterX = new Measurement("Center X", true, true, false);
-    public final static Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public final static Measurement Width = new Measurement("Width", true, true, false);
-    public final static Measurement Height = new Measurement("Height", true, true, false);
+    public static final Measurement Area = new Measurement("Area", true, true, true);
+    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
+    public static final Measurement TopLeftPointX = new Measurement("Top Left X", true, true, false);
+    public static final Measurement TopLeftPointY = new Measurement("Top Left Y", true, true, false);
+    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
+    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
+    public static final Measurement Width = new Measurement("Width", true, true, false);
+    public static final Measurement Height = new Measurement("Height", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -231,7 +231,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static protected enum eHandlePoint {
+    protected static enum eHandlePoint {
         NONE(-1), NW(0), SE(1), NE(2), SW(3), N(4), S(5), E(6), W(7);
         // 0 and 1 must be diagonal point of rectangle
 
@@ -241,7 +241,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
             this.index = index;
         }
 
-        final static Map<Integer, eHandlePoint> map = new HashMap<Integer, eHandlePoint>(eHandlePoint.values().length);
+        static final Map<Integer, eHandlePoint> map = new HashMap<Integer, eHandlePoint>(eHandlePoint.values().length);
 
         static {
             for (eHandlePoint corner : eHandlePoint.values()) {

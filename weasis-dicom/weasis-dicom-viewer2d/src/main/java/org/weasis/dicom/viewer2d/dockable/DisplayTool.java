@@ -50,11 +50,11 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-    public final static String IMAGE = Messages.getString("DisplayTool.image"); //$NON-NLS-1$
-    public final static String DICOM_IMAGE_OVERLAY = Messages.getString("DisplayTool.dicom_overlay"); //$NON-NLS-1$
-    public final static String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano"); //$NON-NLS-1$
+    public static final String IMAGE = Messages.getString("DisplayTool.image"); //$NON-NLS-1$
+    public static final String DICOM_IMAGE_OVERLAY = Messages.getString("DisplayTool.dicom_overlay"); //$NON-NLS-1$
+    public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano"); //$NON-NLS-1$
 
-    public final static String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
 
     private final JCheckBox applyAllViews = new JCheckBox(Messages.getString("DisplayTool.btn_apply_all"), true); //$NON-NLS-1$
     private final TreeLayer tree = new TreeLayer();

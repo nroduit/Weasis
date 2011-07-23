@@ -111,13 +111,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
 
-    public final static String NAME = Messages.getString("DicomExplorer.title"); //$NON-NLS-1$
-    public final static String PREFERENCE_NODE = "dicom.explorer"; //$NON-NLS-1$
-    public final static String BUTTON_NAME = Messages.getString("DicomExplorer.btn_title"); //$NON-NLS-1$
-    public final static String DESCRIPTION = Messages.getString("DicomExplorer.desc"); //$NON-NLS-1$
-    // private final static JMenuItem openDicomMenu = new JMenuItem(OpenMediaAction.getInstance());
-    private final static String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
-    private final static String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("DicomExplorer.title"); //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "dicom.explorer"; //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("DicomExplorer.btn_title"); //$NON-NLS-1$
+    public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc"); //$NON-NLS-1$
+    // private static final JMenuItem openDicomMenu = new JMenuItem(OpenMediaAction.getInstance());
+    private static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
+    private static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
 
     private JPanel panel = null;
@@ -220,7 +220,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private final JComboBox patientCombobox = new JComboBox(modelPatient);
     private final JComboBox studyCombobox = new JComboBox(modelStudy);
     protected final PatientContainerPane patientContainer = new PatientContainerPane();
-    private transient final ItemListener patientChangeListener = new ItemListener() {
+    private final transient ItemListener patientChangeListener = new ItemListener() {
 
         @Override
         public void itemStateChanged(final ItemEvent e) {
@@ -237,7 +237,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             }
         }
     };
-    private transient final ItemListener studyItemListener = new ItemListener() {
+    private final transient ItemListener studyItemListener = new ItemListener() {
 
         @Override
         public void itemStateChanged(ItemEvent e) {

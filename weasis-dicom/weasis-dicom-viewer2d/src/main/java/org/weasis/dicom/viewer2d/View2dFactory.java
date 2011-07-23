@@ -35,7 +35,7 @@ import org.weasis.dicom.explorer.DicomModel;
 
 public class View2dFactory implements SeriesViewerFactory {
 
-    public final static String NAME = Messages.getString("View2dFactory.title"); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("View2dFactory.title"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/dicom.png")); //$NON-NLS-1$
 
     public View2dFactory() {

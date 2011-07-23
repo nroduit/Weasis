@@ -12,6 +12,6 @@ package org.weasis.core.ui.editor;
 
 public interface SeriesViewerListener {
 
-    public void changingViewContentEvent(SeriesViewerEvent event);
+    void changingViewContentEvent(SeriesViewerEvent event);
 
 }

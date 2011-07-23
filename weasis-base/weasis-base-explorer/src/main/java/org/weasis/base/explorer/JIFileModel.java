@@ -1,15 +1,15 @@
 package org.weasis.base.explorer;
 
-public interface JIFileModel {
+interface JIFileModel {
 
-    public void setData();
+    void setData();
 
-    public void reload();
+    void reload();
 
-    public JIExplorerContext getReloadContext();
+    JIExplorerContext getReloadContext();
 
-    public void setReloadContext(JIExplorerContext reloadContext);
+    void setReloadContext(JIExplorerContext reloadContext);
 
-    public OrderedFileList getDiskObjectList();
+    OrderedFileList getDiskObjectList();
 
 }

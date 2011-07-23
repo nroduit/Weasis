@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse  License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
@@ -27,55 +27,55 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
  * 
  * @author Nicolas Roduit , Benoit Jacquemoud
  */
-public interface Graphic extends GUIEntry , Cloneable {
+public interface Graphic extends GUIEntry, Cloneable {
 
-    public Graphic deepCopy();
-  
-    public Area getArea(AffineTransform transform); 
+    Graphic deepCopy();
 
-    public String[] getLabel();
+    Area getArea(AffineTransform transform);
 
-    public void setLabel(String[] label, DefaultView2d view2d);
+    String[] getLabel();
 
-    public void setSelected(boolean flag);
+    void setLabel(String[] label, DefaultView2d view2d);
 
-    public boolean isSelected();
+    void setSelected(boolean flag);
 
-    public void paint(Graphics2D g2, AffineTransform transform);
+    boolean isSelected();
 
-    public void paintLabel(Graphics2D g2, AffineTransform transform);
+    void paint(Graphics2D g2, AffineTransform transform);
 
-    public void updateLabel(Object source, DefaultView2d view2d);
+    void paintLabel(Graphics2D g2, AffineTransform transform);
 
-    public Rectangle getBounds(AffineTransform transform); 
+    void updateLabel(Object source, DefaultView2d view2d);
 
-    public Rectangle getRepaintBounds(AffineTransform transform); 
+    Rectangle getBounds(AffineTransform transform);
 
-    public GraphicLabel getGraphicLabel();
+    Rectangle getRepaintBounds(AffineTransform transform);
 
-    public boolean isLabelVisible();
+    GraphicLabel getGraphicLabel();
 
-    public boolean intersects(Rectangle rectangle, AffineTransform transform); 
+    boolean isLabelVisible();
 
-    public void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
+    boolean intersects(Rectangle rectangle, AffineTransform transform);
 
-    public void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
+    void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 
-    public void fireRemoveAction();
+    void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
 
-    public void toFront();
+    void fireRemoveAction();
 
-    public void toBack();
+    void toFront();
 
-    public void setLayerID(int layerID);
+    void toBack();
 
-    public int getLayerID();
+    void setLayerID(int layerID);
 
-    public Shape getShape();
+    int getLayerID();
 
-    public Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
+    Shape getShape();
 
-    public Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
+    Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
 
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel);
+    Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
+
+    List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel);
 }

@@ -35,7 +35,7 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {
 
-    public final static String BUTTON_NAME = Messages.getString("MiniToolDockable.title"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("MiniToolDockable.title"); //$NON-NLS-1$
 
     private SliderChangeListener currentAction;
     private final JSliderW slider;

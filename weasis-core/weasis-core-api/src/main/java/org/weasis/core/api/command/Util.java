@@ -19,7 +19,7 @@ import org.weasis.core.api.Messages;
 
 public class Util {
 
-    private final static Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$
+    private static final Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$
 
     static String[] splitStringExceptQuotes(String s) {
         if (s == null) {

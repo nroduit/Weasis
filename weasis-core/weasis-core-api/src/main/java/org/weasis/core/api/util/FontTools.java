@@ -21,13 +21,13 @@ import org.weasis.core.api.Messages;
 
 public class FontTools {
 
-    private final static String defaultFamily = "Dialog"; //$NON-NLS-1$
-    private final static Font font12 = new Font(defaultFamily, 0, 12);
-    private final static Font font12Bold = new Font(defaultFamily, Font.BOLD, 12);
-    private final static Font font11 = new Font(defaultFamily, 0, 11);
-    private final static Font font10 = new Font(defaultFamily, 0, 10);
-    private final static Font font9 = new Font(defaultFamily, 0, 9);
-    private final static Font font8 = new Font(defaultFamily, 0, 8);
+    private static final String defaultFamily = "Dialog"; //$NON-NLS-1$
+    private static final Font font12 = new Font(defaultFamily, 0, 12);
+    private static final Font font12Bold = new Font(defaultFamily, Font.BOLD, 12);
+    private static final Font font11 = new Font(defaultFamily, 0, 11);
+    private static final Font font10 = new Font(defaultFamily, 0, 10);
+    private static final Font font9 = new Font(defaultFamily, 0, 9);
+    private static final Font font8 = new Font(defaultFamily, 0, 8);
 
     public static Font getFont12() {
         return font12;

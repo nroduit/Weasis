@@ -35,7 +35,7 @@ public class JIExplorerContext {
     /**
      * @return the selsectedDirNodes
      */
-    public synchronized final Vector<TreeNode> getSelectedDirNodes() {
+    public final synchronized Vector<TreeNode> getSelectedDirNodes() {
         return this.selectedDirNodes;
     }
 
@@ -43,7 +43,7 @@ public class JIExplorerContext {
      * @param selectedDirNodes
      *            the selectedDirNodes to set
      */
-    public synchronized final void setSelectedDirNodes(final Vector<TreeNode> selectedDirNodes,
+    public final synchronized void setSelectedDirNodes(final Vector<TreeNode> selectedDirNodes,
         final TreeNode lastSelectedDirNodes) {
         this.selectedDirNodes = selectedDirNodes;
         this.lastSelectedDirNodesIndex = this.selectedDirNodes.indexOf(lastSelectedDirNodes);
@@ -55,7 +55,7 @@ public class JIExplorerContext {
      * @param lastSelectedDirNodesIndex
      *            the lastSelectedDirNodesIndex to set
      */
-    public synchronized final void setSelectedDirNodes(final Vector<TreeNode> selectedDirNodes,
+    public final synchronized void setSelectedDirNodes(final Vector<TreeNode> selectedDirNodes,
         final int lastSelectedDirNodesIndex) {
         this.selectedDirNodes = selectedDirNodes;
         this.lastSelectedDirNodesIndex = lastSelectedDirNodesIndex;
@@ -64,7 +64,7 @@ public class JIExplorerContext {
     /**
      * @return the selsectedDiskObjects
      */
-    public synchronized final MediaElement[] getSelectedDiskObjects() {
+    public final synchronized MediaElement[] getSelectedDiskObjects() {
         return this.selectedDiskObjects;
     }
 
@@ -74,7 +74,7 @@ public class JIExplorerContext {
      * @param lastSelectedDiskObject
      *            the lastSelectedDiskObjectIndex to set
      */
-    public synchronized final void setSelectedDiskObjects(final MediaElement[] selsectedDiskObjects,
+    public final synchronized void setSelectedDiskObjects(final MediaElement[] selsectedDiskObjects,
         final MediaElement lastSelectedDiskObject) {
         // log.debug("setSelectedDiskObjects - " + selsectedDiskObjects);
         this.selectedDiskObjects = selsectedDiskObjects;
@@ -94,7 +94,7 @@ public class JIExplorerContext {
      * @param lastSelectedDiskObject
      *            the lastSelectedDiskObjectIndex to set
      */
-    public synchronized final void setSelectedDiskObjects(final MediaElement[] selsectedDiskObjects,
+    public final synchronized void setSelectedDiskObjects(final MediaElement[] selsectedDiskObjects,
         final int lastSelectedDiskObjectIndex) {
         // log.debug("setSelectedDiskObjects - " + selsectedDiskObjects);
         this.selectedDiskObjects = selsectedDiskObjects;
@@ -104,7 +104,7 @@ public class JIExplorerContext {
     /**
      * @return the includeCatNodes
      */
-    public synchronized final boolean isIncludeCatNodes() {
+    public final synchronized boolean isIncludeCatNodes() {
         return this.includeCatNodes;
     }
 
@@ -112,14 +112,14 @@ public class JIExplorerContext {
      * @param includeCatNodes
      *            the includeCatNodes to set
      */
-    public synchronized final void setIncludeCatNodes(final boolean includeCatNodes) {
+    public final synchronized void setIncludeCatNodes(final boolean includeCatNodes) {
         this.includeCatNodes = includeCatNodes;
     }
 
     /**
      * @return the includeDateNodes
      */
-    public synchronized final boolean isIncludeDateNodes() {
+    public final synchronized boolean isIncludeDateNodes() {
         return this.includeDateNodes;
     }
 
@@ -127,14 +127,14 @@ public class JIExplorerContext {
      * @param includeDateNodes
      *            the includeDateNodes to set
      */
-    public synchronized final void setIncludeDateNodes(final boolean includeDateNodes) {
+    public final synchronized void setIncludeDateNodes(final boolean includeDateNodes) {
         this.includeDateNodes = includeDateNodes;
     }
 
     /**
      * @return the includeDirNodes
      */
-    public synchronized final boolean isIncludeDirNodes() {
+    public final synchronized boolean isIncludeDirNodes() {
         return this.includeDirNodes;
     }
 
@@ -142,14 +142,14 @@ public class JIExplorerContext {
      * @param includeDirNodes
      *            the includeDirNodes to set
      */
-    public synchronized final void setIncludeDirNodes(final boolean includeDirNodes) {
+    public final synchronized void setIncludeDirNodes(final boolean includeDirNodes) {
         this.includeDirNodes = includeDirNodes;
     }
 
     /**
      * @return the includeKeyWords
      */
-    public synchronized final boolean isIncludeKeyWords() {
+    public final synchronized boolean isIncludeKeyWords() {
         return this.includeKeyWords;
     }
 
@@ -157,14 +157,14 @@ public class JIExplorerContext {
      * @param includeKeyWords
      *            the includeKeyWords to set
      */
-    public synchronized final void setIncludeKeyWords(final boolean includeKeyWords) {
+    public final synchronized void setIncludeKeyWords(final boolean includeKeyWords) {
         this.includeKeyWords = includeKeyWords;
     }
 
     /**
      * @return the state
      */
-    public synchronized final int getState() {
+    public final synchronized int getState() {
         return this.state;
     }
 
@@ -172,7 +172,7 @@ public class JIExplorerContext {
      * @param state
      *            the state to set
      */
-    public synchronized final void setState(final int state) {
+    public final synchronized void setState(final int state) {
         this.state = state;
         clearListObjects();
     }
@@ -180,7 +180,7 @@ public class JIExplorerContext {
     /**
      * @return the includeDiskObjects
      */
-    public synchronized final boolean isIncludeDiskObjects() {
+    public final synchronized boolean isIncludeDiskObjects() {
         return this.includeDiskObjects;
     }
 
@@ -188,35 +188,35 @@ public class JIExplorerContext {
      * @param includeDiskObjects
      *            the includeDiskObjects to set
      */
-    public synchronized final void setIncludeDiskObjects(final boolean includeDiskObjects) {
+    public final synchronized void setIncludeDiskObjects(final boolean includeDiskObjects) {
         this.includeDiskObjects = includeDiskObjects;
     }
 
     /**
      * @return the lastSelectedDirNodesIndex
      */
-    public synchronized final int getLastSelectedDirNodesIndex() {
+    public final synchronized int getLastSelectedDirNodesIndex() {
         return this.lastSelectedDirNodesIndex > -1 ? this.lastSelectedDirNodesIndex : 0;
     }
 
     /**
      * @return the lastSelectedDiskObjectIndex
      */
-    public synchronized final int getLastSelectedDiskObjectIndex() {
+    public final synchronized int getLastSelectedDiskObjectIndex() {
         return this.lastSelectedDiskObjectIndex > -1 ? this.lastSelectedDiskObjectIndex : 0;
     }
 
     /**
      * @return the lastSelectedKeyWordsIndex
      */
-    public synchronized final int getLastSelectedKeyWordsIndex() {
+    public final synchronized int getLastSelectedKeyWordsIndex() {
         return this.lastSelectedKeyWordsIndex > -1 ? this.lastSelectedKeyWordsIndex : 0;
     }
 
     /**
      * @return the imageCnt
      */
-    public synchronized final int getImageCnt() {
+    public final synchronized int getImageCnt() {
         return this.imageCnt;
     }
 
@@ -224,14 +224,14 @@ public class JIExplorerContext {
      * @param imageCnt
      *            the imageCnt to set
      */
-    public synchronized final void setImageCnt(final int imageCnt) {
+    public final synchronized void setImageCnt(final int imageCnt) {
         this.imageCnt = imageCnt;
     }
 
     /**
      * @return the statusBarProgressTaskRunning
      */
-    public synchronized final boolean isStatusBarProgressTaskRunning() {
+    public final synchronized boolean isStatusBarProgressTaskRunning() {
         return this.statusBarProgressTaskRunning;
     }
 
@@ -239,19 +239,18 @@ public class JIExplorerContext {
      * @param statusBarProgressTaskRunning
      *            the statusBarProgressTaskRunning to set
      */
-    public synchronized final void setStatusBarProgressTaskRunning(final boolean statusBarProgressTaskRunning) {
+    public final synchronized void setStatusBarProgressTaskRunning(final boolean statusBarProgressTaskRunning) {
         this.statusBarProgressTaskRunning = statusBarProgressTaskRunning;
     }
 
-    public synchronized final MediaElement getLastSelectedDiskObj() {
+    public final synchronized MediaElement getLastSelectedDiskObj() {
         if ((this.lastSelectedDiskObjectIndex > -1) && (this.selectedDiskObjects != null)
-            && (this.selectedDiskObjects.length > this.lastSelectedDiskObjectIndex)) {
+            && (this.selectedDiskObjects.length > this.lastSelectedDiskObjectIndex))
             return this.selectedDiskObjects[this.lastSelectedDiskObjectIndex];
-        }
         return null;
     }
 
-    public synchronized final void clearListObjects() {
+    public final synchronized void clearListObjects() {
         // log.debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!clearListObjects!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         this.selectedDiskObjects = null;
         this.lastSelectedDiskObjectIndex = -1;

@@ -19,19 +19,22 @@ public final class ThumbnailIcon implements Icon {
         this.image = image;
     }
 
-    public final void paintIcon(final Component c, final Graphics g, final int x, final int y) {
+    @Override
+    public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
         g.drawImage(this.image, x, y, c);
     }
 
-    public final int getIconWidth() {
+    @Override
+    public int getIconWidth() {
         return this.image.getWidth();
     }
 
-    public final int getIconHeight() {
+    @Override
+    public int getIconHeight() {
         return this.image.getHeight();
     }
 
-    public final BufferedImage getImage() {
+    public BufferedImage getImage() {
         return this.image;
     }
 }

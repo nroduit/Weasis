@@ -88,8 +88,8 @@ public class WeasisLauncher {
     protected static ServiceTracker m_tracker = null;
 
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
-    public final static String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
-    public final static String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
+    public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
+    public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     static Properties modulesi18n = null;
     private static String look = null;
 

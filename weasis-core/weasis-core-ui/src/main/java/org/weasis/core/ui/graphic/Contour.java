@@ -22,8 +22,8 @@ import java.util.ArrayList;
 public class Contour implements Serializable {
 
     private static final long serialVersionUID = 9056317484468365515L;
-    public final static int[] DIRX = { 1, 1, 0, -1, -1, -1, 0, 1 };
-    public final static int[] DIRY = { 0, -1, -1, -1, 0, 1, 1, 1 };
+    public static final int[] DIRX = { 1, 1, 0, -1, -1, -1, 0, 1 };
+    public static final int[] DIRY = { 0, -1, -1, -1, 0, 1, 1, 1 };
     private int coordx;
     private int coordy;
     private byte[] codeFreeman;

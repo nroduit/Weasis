@@ -102,7 +102,7 @@ public interface ViewModel {
      * @see #setModelOffset
      * @see #setViewScale
      */
-    public void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale);
+    void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale);
 
     /**
      * Gets the model area of this view model. The model area enables a viewport to specify scrolling limits and to

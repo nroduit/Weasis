@@ -17,10 +17,10 @@ import org.weasis.core.api.image.util.Statistics;
  */
 
 public class Measure2DAnalyse {
-    public final static String[] measurList = { "Box X min", "Box Y min", "Box X width", "Box Y height", "Area",
+    public static final String[] measurList = { "Box X min", "Box Y min", "Box X width", "Box Y height", "Area",
         "Perimeter", "Barycenter x", "Barycenter y", "Orientation", "Length", "width", "Eccentricity", "Color (RGB)" };
-    public final static int[] positionParameters = { 0, 1, 2, 3, 6, 7 };
-    public final static int[] basicParameters = { 4, 5, 8, 9, 10, 11 };
+    public static final int[] positionParameters = { 0, 1, 2, 3, 6, 7 };
+    public static final int[] basicParameters = { 4, 5, 8, 9, 10, 11 };
 
     private Statistics stat;
     private Shape shape;

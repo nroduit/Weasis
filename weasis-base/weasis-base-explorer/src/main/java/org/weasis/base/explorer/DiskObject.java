@@ -82,64 +82,58 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
     }
 
     public String getMimeType() {
-        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg")) {
+        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg"))
             return MIMETYPE_JPEG;
-        }
-        if (getSuffix().equals("gif")) {
+        if (getSuffix().equals("gif"))
             return MIMETYPE_GIF;
-        }
-        if (getSuffix().equals("png")) {
+        if (getSuffix().equals("png"))
             return MIMETYPE_PNG;
-        }
-        if (getSuffix().equals("tiff") || getSuffix().equals("tif")) {
+        if (getSuffix().equals("tiff") || getSuffix().equals("tif"))
             return MIMETYPE_TIFF;
-        }
         return null;
     }
 
-    public final String getShortDate() {
+    public String getShortDate() {
         final Format formatter = new SimpleDateFormat("dd/MM/yy hh:mm a");
         return formatter.format(new java.util.Date(this.lastModified));
     }
 
-    public final String getDim() {
-        if ((this.width > 0) && (this.height > 0)) {
+    public String getDim() {
+        if ((this.width > 0) && (this.height > 0))
             return this.width + " x " + this.height;
-        }
         return "";
     }
 
-    public final Dimension getDimension() {
+    public Dimension getDimension() {
         return new Dimension(this.width, this.height);
     }
 
-    public final String getSize() {
+    public String getSize() {
         return JIUtility.length2KB(this.length);
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return this.name;
     }
 
     public File getFile() {
-        if (absolutePath != null) {
+        if (absolutePath != null)
             return new File(absolutePath);
-        } else {
+        else
             return new File(path);
-        }
 
     }
 
+    @Override
     public int compare(final DiskObject a, final DiskObject b) {
         return a.getFile().compareTo(b.getFile());
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (obj instanceof DiskObject) {
+        if (obj instanceof DiskObject)
             return (compare(this, (DiskObject) obj) == 0) ? true : false;
-        }
         return false;
     }
 
@@ -150,7 +144,7 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
     /**
      * @return the suffix
      */
-    public synchronized final String getSuffix() {
+    public synchronized String getSuffix() {
         if (this.suffix == null) {
             this.suffix = JIUtility.suffix(this.name);
         }
@@ -160,29 +154,27 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     public boolean validate() throws FileNotFoundException, IOException {
         if (!this.validated) {
-            if (!getFile().exists()) {
+            if (!getFile().exists())
                 throw new FileNotFoundException(getFile().getAbsolutePath());
-            }
 
-            if (!getFile().canRead()) {
+            if (!getFile().canRead())
                 throw new IOException("Cannot read " + getFile().getAbsolutePath());
-            }
         }
         return (this.validated = true);
     }
 
-    public synchronized final int getOrientationValue() {
+    public synchronized int getOrientationValue() {
         return this.orientation;
     }
 
-    public synchronized final void setOrientation(final int orientation) {
+    public synchronized void setOrientation(final int orientation) {
         this.orientation = orientation;
     }
 
     /**
      * @return the uid
      */
-    public synchronized final String getUid() {
+    public synchronized String getUid() {
         if ((this.uid == null) || (this.uid.trim().length() < 2)) {
             // this.uid = JIThumbnailService.getInstance().getImageID(this);
         }

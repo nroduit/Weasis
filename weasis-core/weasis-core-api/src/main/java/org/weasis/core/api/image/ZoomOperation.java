@@ -26,11 +26,11 @@ import org.weasis.core.api.media.data.ImageElement;
 
 public class ZoomOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZoomOperation.class);
-    public final static String name = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
+    public static final String name = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
     public static final String[] INTERPOLATIONS =
         {
             Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.bicubic2") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-    public final static String INTERPOLATION_CMD = "zoomInterpolation"; //$NON-NLS-1$
+    public static final String INTERPOLATION_CMD = "zoomInterpolation"; //$NON-NLS-1$
 
     @Override
     public String getOperationName() {

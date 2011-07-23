@@ -14,8 +14,8 @@ import org.weasis.core.api.Messages;
 
 public class ByteLut {
 
-    public final static ByteLut defaultLUT = new ByteLut("Default", null, null); //$NON-NLS-1$
-    public final static ByteLut grayLUT =
+    public static final ByteLut defaultLUT = new ByteLut("Default", null, null); //$NON-NLS-1$
+    public static final ByteLut grayLUT =
         new ByteLut("Gray", ByteLutCollection.grays, ByteLutCollection.invert(ByteLutCollection.grays)); //$NON-NLS-1$
     private final String name;
     private final byte[][] lutTable;

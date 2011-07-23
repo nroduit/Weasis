@@ -51,7 +51,7 @@ import org.weasis.dicom.explorer.Messages;
 
 public class ModalityPrefView extends AbstractItemDialogPage implements DragGestureListener {
 
-    public final static HashMap<Integer, TagW> tagList = new HashMap<Integer, TagW>();
+    public static final HashMap<Integer, TagW> tagList = new HashMap<Integer, TagW>();
     static {
         // Patient
         fillMap(TagW.PatientID);
@@ -158,7 +158,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
 
     private final InfoViewElementPanel cornerView = new InfoViewElementPanel();
 
-    private transient final ItemListener changeViewListener = new ItemListener() {
+    private final transient ItemListener changeViewListener = new ItemListener() {
 
         public void itemStateChanged(final ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {

@@ -108,7 +108,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     private final PannerListener panAction;
 
-    public final static ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
+    public static final ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
     static {
         SYNCH_LIST.add(SynchView.NONE);
         SYNCH_LIST.add(SynchView.DEFAULT_STACK);

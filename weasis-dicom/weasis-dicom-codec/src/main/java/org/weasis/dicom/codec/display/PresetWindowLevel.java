@@ -23,16 +23,16 @@ import org.weasis.dicom.codec.Messages;
 
 public class PresetWindowLevel {
 
-    public final static PresetWindowLevel CUSTOM =
+    public static final PresetWindowLevel CUSTOM =
         new PresetWindowLevel(
             Messages.getString("PresetWindowLevel.custom"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
-    public final static PresetWindowLevel DEFAULT =
+    public static final PresetWindowLevel DEFAULT =
         new PresetWindowLevel(
             Messages.getString("PresetWindowLevel.default"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
-    public final static PresetWindowLevel AUTO =
+    public static final PresetWindowLevel AUTO =
         new PresetWindowLevel(
             Messages.getString("PresetWindowLevel.full"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
-    private final static ArrayList<PresetWindowLevel> presets = getPresetCollection();
+    private static final ArrayList<PresetWindowLevel> presets = getPresetCollection();
     private final String name;
     private final String modality;
     private final float window;

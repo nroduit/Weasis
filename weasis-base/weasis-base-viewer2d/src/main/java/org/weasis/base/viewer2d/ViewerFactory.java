@@ -30,7 +30,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
 public class ViewerFactory implements SeriesViewerFactory {
 
-    public final static String NAME = "Image Viewer";
+    public static final String NAME = "Image Viewer";
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png"));
 
     public ViewerFactory() {

@@ -39,7 +39,7 @@ import org.weasis.dicom.codec.DicomImageElement;
  * 
  * @author dclunie
  */
-abstract public class ImageOrientation {
+public abstract class ImageOrientation {
 
     public static final String[] LABELS = { "UNKNOWN", "AXIAL", "SAGITTAL", "CORONAL", "OBLIQUE" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     // 0.5477 would be the square root of 1 (unit vector sum of squares) divided by 3 (oblique axes - a "double"
@@ -135,9 +135,8 @@ abstract public class ImageOrientation {
     }
 
     public static final String makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
-        if (v == null || v.length < 6) {
+        if (v == null || v.length < 6)
             return null;
-        }
         return ImageOrientation
             .makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4], v[5]);
     }
@@ -223,57 +222,51 @@ abstract public class ImageOrientation {
     }
 
     public static final TransposeType getAxialImageRotationCcw(DicomObject dcmObj) {
-        if (dcmObj == null) {
+        if (dcmObj == null)
             return null;
-        }
         double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
         if (v != null) {
             if (v.length == 6) {
                 String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
                 String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
 
-                if ((rowAxis.equals("A") && (colAxis.equals("L") || rowAxis.equals("R")))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                if ((rowAxis.equals("A") && (colAxis.equals("L") || rowAxis.equals("R"))))
                     return TransposeDescriptor.ROTATE_270;
-                } else if ((rowAxis.equals("R") || rowAxis.equals("L")) && colAxis.equals("A")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                else if ((rowAxis.equals("R") || rowAxis.equals("L")) && colAxis.equals("A"))
                     return TransposeDescriptor.ROTATE_180;
-                } else if (rowAxis.equals("P") && (colAxis.equals("L") || colAxis.equals("R"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                else if (rowAxis.equals("P") && (colAxis.equals("L") || colAxis.equals("R")))
                     return TransposeDescriptor.ROTATE_90;
-                }
             }
         }
         return null;
     }
 
     public static final TransposeType getImageRotationCcwFromSagittal(DicomObject dcmObj) {
-        if (dcmObj == null) {
+        if (dcmObj == null)
             return null;
-        }
         double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
         if (v != null) {
             if (v.length == 6) {
                 String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
-                if (rowAxis.equals("A")) { //$NON-NLS-1$
+                if (rowAxis.equals("A"))
                     return TransposeDescriptor.ROTATE_270;
-                } else if (rowAxis.equals("P")) { //$NON-NLS-1$
+                else if (rowAxis.equals("P"))
                     return TransposeDescriptor.ROTATE_90;
-                }
             }
         }
         return null;
     }
 
     public static final TransposeType getImageRotationCcwFromCoronal(DicomObject dcmObj) {
-        if (dcmObj == null) {
+        if (dcmObj == null)
             return null;
-        }
         double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
         if (v != null) {
             if (v.length == 6) {
                 String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
                 String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
-                if (((rowAxis.equals("R") && colAxis.equals("F")) || (rowAxis.equals("L")) && colAxis.equals("H"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                if (((rowAxis.equals("R") && colAxis.equals("F")) || (rowAxis.equals("L")) && colAxis.equals("H")))
                     return TransposeDescriptor.ROTATE_180;
-                }
 
             }
         }
@@ -315,9 +308,8 @@ abstract public class ImageOrientation {
                     ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
                         v2[4], v2[5]);
 
-                if (label1 != null && !label1.equals(LABELS[4])) {
+                if (label1 != null && !label1.equals(LABELS[4]))
                     return label1.equals(label2);
-                }
                 // If oblique search if the plan has approximately the same orientation
                 double[] postion1 =
                     computeNormalVectorOfPlan((double[]) image1.getTagValue(TagW.ImageOrientationPatient));
@@ -326,9 +318,8 @@ abstract public class ImageOrientation {
                 if (postion1 != null && postion2 != null) {
                     double prod = postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
                     // A little tolerance
-                    if (prod > 0.95) {
+                    if (prod > 0.95)
                         return true;
-                    }
                 }
             }
         }

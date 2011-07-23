@@ -22,8 +22,6 @@ import javax.media.jai.ROI;
 import javax.media.jai.StatisticsOpImage;
 import javax.media.jai.UnpackedImageData;
 
-import org.weasis.core.api.Messages;
-
 public class ExtremaRangeLimitOpImage extends StatisticsOpImage {
 
     protected double[][] extrema;
@@ -42,12 +40,11 @@ public class ExtremaRangeLimitOpImage extends StatisticsOpImage {
 
     private int srcSampleType;
 
-    private final boolean tileIntersectsROI(int tileX, int tileY) {
-        if (roi == null) { // ROI is entire tile
+    private boolean tileIntersectsROI(int tileX, int tileY) {
+        if (roi == null)
             return true;
-        } else {
+        else
             return roi.intersects(tileXToX(tileX), tileYToY(tileY), tileWidth, tileHeight);
-        }
     }
 
     /**
@@ -70,11 +67,11 @@ public class ExtremaRangeLimitOpImage extends StatisticsOpImage {
     public Object getProperty(String name) {
         int numBands = sampleModel.getNumBands();
 
-        if (extrema == null) {
+        if (extrema == null)
             // Statistics have not been accumulated: call superclass
             // method to do so.
             return super.getProperty(name);
-        } else if (name.equalsIgnoreCase("extrema")) { //$NON-NLS-1$
+        else if (name.equalsIgnoreCase("extrema")) { //$NON-NLS-1$
             double[][] stats = new double[2][numBands];
             for (int i = 0; i < numBands; i++) {
                 stats[0][i] = extrema[0][i];
@@ -118,7 +115,7 @@ public class ExtremaRangeLimitOpImage extends StatisticsOpImage {
         return stats;
     }
 
-    private final int startPosition(int pos, int start, int period) {
+    private int startPosition(int pos, int start, int period) {
         int t = (pos - start) % period;
         return t == 0 ? pos : pos + (period - t);
     }
@@ -139,9 +136,8 @@ public class ExtremaRangeLimitOpImage extends StatisticsOpImage {
             rectList.addLast(srcBounds);
         } else {
             rectList = roi.getAsRectangleList(srcBounds.x, srcBounds.y, srcBounds.width, srcBounds.height);
-            if (rectList == null) {
+            if (rectList == null)
                 return; // ROI does not intersect with Raster boundary.
-            }
         }
         ListIterator iterator = rectList.listIterator(0);
 

@@ -41,11 +41,11 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
-    public final static ActionW[] actionsButtons =
+    public static final ActionW[] actionsButtons =
     // ActionW.DRAW,
         { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.MEASURE,
             ActionW.CONTEXTMENU };
-    public final static ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
+    public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
     public static final Icon MouseLeftIcon =
         new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png")); //$NON-NLS-1$
     public static final Icon MouseRightIcon = new ImageIcon(
@@ -372,7 +372,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return MouseLeftIcon;
     }
 
-    public final static ActionW getNextCommand(ActionW[] actions, String command) {
+    public static final ActionW getNextCommand(ActionW[] actions, String command) {
         if (actions != null && actions.length > 0) {
             int index = 0;
             for (int i = 0; i < actions.length; i++) {
