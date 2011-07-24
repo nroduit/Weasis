@@ -90,7 +90,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void addGraphic(Graphic graphic) {
         if (graphics != null && !graphics.contains(graphic)) {
-            // graphic.setSelected(false);
             graphics.add(graphic);
             graphic.setLayerID(drawType);
             graphic.addPropertyChangeListener(pcl);
@@ -98,11 +97,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if (layers != null) {
                 for (AbstractLayer layer : layers) {
                     graphic.addPropertyChangeListener(layer.pcl);
-                    // layer.repaint(graphic.getRepaintBounds());
                     layer.repaint(graphic.getRepaintBounds(getAffineTransform()));
                 }
             }
-            // repaint(graphic.getRepaintBounds());
         }
     }
 

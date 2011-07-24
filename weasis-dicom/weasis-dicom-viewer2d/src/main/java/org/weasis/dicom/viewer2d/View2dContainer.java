@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -486,11 +487,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public Action[] getExportActions() {
-        Action[] actions = null;
-        if (selectedImagePane != null) {
-            actions = new Action[] { selectedImagePane.getExportToClipboardAction() };
-        }
+    public List<Action> getExportActions() {
+        List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
+
         if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
                 new AbstractAction(
@@ -544,8 +543,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         }
                     }
                 };
-
-            actions = new Action[] { selectedImagePane.getExportToClipboardAction(), importAll };
+            if (actions == null) {
+                actions = new ArrayList<Action>(1);
+            }
+            actions.add(importAll);
         }
         return actions;
     }

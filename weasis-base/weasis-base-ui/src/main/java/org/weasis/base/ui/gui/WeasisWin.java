@@ -619,7 +619,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         synchronized (UIManager.EXPLORER_PLUGINS) {
             if (selectedPlugin != null) {
-                Action[] actions = selectedPlugin.getExportActions();
+                List<Action> actions = selectedPlugin.getExportActions();
                 if (actions != null) {
                     for (Action action : actions) {
                         JMenuItem item = new JMenuItem(action);

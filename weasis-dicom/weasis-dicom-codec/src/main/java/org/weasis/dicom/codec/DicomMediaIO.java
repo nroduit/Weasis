@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -64,7 +65,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     /**
      * Logger for this class
      */
-    private static final Logger logger = LoggerFactory.getLogger(DicomMediaIO.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
@@ -212,13 +213,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    public static void setTag(HashMap<TagW, Object> tags, TagW tag, Object value) {
+    public static void setTag(Map<TagW, Object> tags, TagW tag, Object value) {
         if (tag != null) {
             tags.put(tag, value);
         }
     }
 
-    public static void setTagNoNull(HashMap<TagW, Object> tags, TagW tag, Object value) {
+    public static void setTagNoNull(Map<TagW, Object> tags, TagW tag, Object value) {
         if (tag != null && value != null) {
             tags.put(tag, value);
         }
@@ -708,7 +709,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             int frame = (Integer) media.getKey();
             if (frame >= 0 && frame < numberOfFrame && stored > 0) {
                 // read as tiled rendered image
-                logger.debug("read dicom image frame: {} sopUID: {}", frame, dicomObject.getString(Tag.SOPInstanceUID)); //$NON-NLS-1$
+                LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, dicomObject.getString(Tag.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;
                 if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
                     if (jpipReader == null) {

@@ -124,6 +124,9 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
         }
 
         if (ABvalid && CDvalid && O != null) {
+            // TODO Fix refresh issue. Very very very bad practice to pass the class Point2D instance to different shape
+            // that can be modified !!!
+            Point2D O = (Point2D) this.O.clone();
             AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(10));
             aShape.addShape(path);
 

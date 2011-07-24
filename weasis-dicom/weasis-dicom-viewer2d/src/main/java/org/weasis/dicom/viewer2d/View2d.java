@@ -821,11 +821,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                                 JOptionPane
                                                     .showConfirmDialog(View2d.this,
                                                         "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
-                                            if (option != JOptionPane.YES_OPTION)
-                                                return;
-                                            else {
+                                            if (option == JOptionPane.YES_OPTION) {
                                                 break;
-                                            }
+                                            } else
+                                                return;
                                         }
                                     }
                                     for (Graphic g : graphs) {
@@ -838,6 +837,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                             }
                                         }
                                     }
+                                    // Repaint all because labels are not drawn
+                                    View2d.this.getLayerModel().repaint();
                                 }
                             }
                         });

@@ -49,6 +49,7 @@ import java.util.List;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -104,8 +105,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
 
-    private static final ImageTransferHandler EXPORT_TO_CLIPBOARD = new ImageTransferHandler();
-
     protected final FocusHandler focusHandler = new FocusHandler();
     protected final MouseHandler mouseClickHandler = new MouseHandler();
 
@@ -118,15 +117,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
-    private final AbstractAction exportToClipboardAction = new AbstractAction(
-        Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EXPORT_TO_CLIPBOARD.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                    .getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
     protected Point highlightedPosition = null;
     private int pointerType = 0;
     private final Color pointerColor1 = Color.black;
@@ -798,8 +789,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C && e.isControlDown()) {
-            EXPORT_TO_CLIPBOARD.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit().getSystemClipboard(),
-                TransferHandler.COPY);
+            final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
+            imageTransferHandler.exportToClipboard(DefaultView2d.this,
+                Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
         }
     }
 
@@ -1255,8 +1247,29 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    public AbstractAction getExportToClipboardAction() {
-        return exportToClipboardAction;
+    public List<Action> getExportToClipboardAction() {
+        List<Action> list = new ArrayList<Action>();
+        AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
+                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                        .getSystemClipboard(), TransferHandler.COPY);
+                }
+            };
+        list.add(exportToClipboardAction);
+        exportToClipboardAction = new AbstractAction("Selected View to Clipboard (except demographics)") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                    .getSystemClipboard(), TransferHandler.COPY);
+            }
+        };
+        list.add(exportToClipboardAction);
+        return list;
     }
 
     public abstract void enableMouseAndKeyListener(MouseActions mouseActions);

@@ -80,16 +80,19 @@ public class GraphicLabel implements Cloneable {
 
         invTransform.translate(anchorPt.getX(), anchorPt.getY());
 
-        if (scale != 1.0)
+        if (scale != 1.0) {
             invTransform.scale(1 / scale, 1 / scale);
-        if (angleRad != 0)
+        }
+        if (angleRad != 0) {
             invTransform.rotate(-angleRad);
+        }
 
         invTransform.translate(-anchorPt.getX(), -anchorPt.getY());
 
-        if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0)
+        if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0) {
             invTransform.translate(0, -labelBounds.getHeight());
-        // invTransform.translate(-labelBounds.getWidth(), -labelBounds.getHeight());
+            // invTransform.translate(-labelBounds.getWidth(), -labelBounds.getHeight());
+        }
 
         // invTransform.translate(offsetX, offsetY);
         Area areaBounds = new Area(invTransform.createTransformedShape(labelBounds));
@@ -107,8 +110,9 @@ public class GraphicLabel implements Cloneable {
 
         // Only translates origin because no rotation or scaling is applied
         Point2D.Double anchorPoint = new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
-        if (transform != null)
+        if (transform != null) {
             transform.transform(anchorPoint, anchorPoint);
+        }
 
         return new Rectangle2D.Double(anchorPoint.getX(), anchorPoint.getY(), labelBounds.getWidth(),
             labelBounds.getHeight());
@@ -167,8 +171,9 @@ public class GraphicLabel implements Cloneable {
 
             Point2D pt = new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
 
-            if (transform != null)
+            if (transform != null) {
                 transform.transform(pt, pt);
+            }
 
             float px = (float) pt.getX() + GROWING_BOUND;
             float py = (float) pt.getY() + GROWING_BOUND;
@@ -198,8 +203,9 @@ public class GraphicLabel implements Cloneable {
             // }
             // Graphics DEBUG
 
-            if (selected)
+            if (selected) {
                 paintBoundOutline(g2d, transform);
+            }
 
             g2d.setPaint(oldPaint);
         }
@@ -225,7 +231,6 @@ public class GraphicLabel implements Cloneable {
     protected void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
 
         Paint oldPaint = g2d.getPaint();
-
         TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
 
         g2d.setPaint(Color.BLACK);

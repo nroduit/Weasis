@@ -518,6 +518,8 @@ public abstract class AbstractDragGraphic implements Graphic {
 
         } else if (source instanceof ImageElement) {
             imageElement = (ImageElement) source;
+            // When Source is an ImageElement all the measurements are recomputed.
+            releasedEvent = true;
         }
 
         MeasureTool measureToolListener = null;

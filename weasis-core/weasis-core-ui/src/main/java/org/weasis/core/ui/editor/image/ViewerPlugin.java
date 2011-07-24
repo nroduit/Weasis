@@ -13,6 +13,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -135,5 +136,5 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         return null;
     }
 
-    public abstract Action[] getExportActions();
+    public abstract List<Action> getExportActions();
 }

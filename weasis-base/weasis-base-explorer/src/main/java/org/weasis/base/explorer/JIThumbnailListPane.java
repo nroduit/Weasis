@@ -196,7 +196,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
     }
 
     @Override
-    public Action[] getExportActions() {
+    public List<Action> getExportActions() {
         // TODO Auto-generated method stub
         return null;
     }
