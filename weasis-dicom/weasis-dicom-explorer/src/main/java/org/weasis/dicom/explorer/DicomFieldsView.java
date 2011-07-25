@@ -47,6 +47,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.AnnotationsLayer;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
@@ -75,6 +78,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private final JTextPane jTextPane1 = new JTextPane();
     private MediaElement currentMedia;
     private Series currentSeries;
+    private boolean anonymize = false;
 
     public DicomFieldsView() {
         JPanel panel = new JPanel();
@@ -177,6 +181,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (event.getEventType().equals(EVENT.SELECT) || event.getEventType().equals(EVENT.LAYOUT)) {
             currentMedia = event.getMediaElement();
             currentSeries = event.getSeries();
+            if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
+                DefaultView2d sel = ((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane();
+                if (sel != null) {
+                    anonymize = sel.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
+                }
+            }
             changeDicomInfo(currentSeries, currentMedia);
         }
     }
@@ -260,7 +270,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         int insertTitle = doc.getLength();
         boolean exist = false;
         for (TagW t : tags) {
-            if (t.getAnonymizationType() != 1) {
+            if (!anonymize || t.getAnonymizationType() != 1) {
                 try {
                     Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
                     if (val != null) {

@@ -206,10 +206,11 @@ public class InfoLayer implements AnnotationsLayer {
             MediaSeriesGroup study = model.getParent(series, DicomModel.study);
             MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
+            boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
             drawY = fontHeight;
             TagW[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         paintFontOutline(g2, infos[j].getFormattedText(value), BORDER, drawY);
@@ -221,7 +222,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = fontHeight;
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
@@ -234,7 +235,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = bound.height - BORDER;
             infos = corner.getInfos();
             for (int j = infos.length - 1; j >= 0; j--) {
-                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
+                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);

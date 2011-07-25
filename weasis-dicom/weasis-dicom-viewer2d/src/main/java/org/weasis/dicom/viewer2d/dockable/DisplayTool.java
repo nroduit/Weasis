@@ -33,7 +33,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -290,7 +289,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             boolean diff = newValue != isSelected();
             if (diff) {
                 super.setSelected(newValue);
-                TagW.enableAnonymizationProfile(newValue);
                 DefaultView2d<DicomImageElement> selectedImagePane =
                     EventManager.getInstance().getSelectedView2dContainer().getSelectedImagePane();
                 if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {

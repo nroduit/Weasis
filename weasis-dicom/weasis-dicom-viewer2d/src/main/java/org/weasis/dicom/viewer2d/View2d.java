@@ -646,47 +646,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (selected.size() > 0) {
 
                     JPopupMenu popupMenu = new JPopupMenu();
-
-                    JMenuItem menuItem = new JMenuItem("Delete Selected");
-                    menuItem.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            View2d.this.getLayerModel().deleteSelectedGraphics(true);
-                        }
-                    });
-                    popupMenu.add(menuItem);
-                    menuItem = new JMenuItem("Cut");
-                    menuItem.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                            View2d.this.getLayerModel().deleteSelectedGraphics(false);
-                        }
-                    });
-                    popupMenu.add(menuItem);
-                    menuItem = new JMenuItem("Copy");
-                    menuItem.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                        }
-                    });
-                    popupMenu.add(menuItem);
-
-                    // TODO separate AbstractDragGraphic and ClassGraphic for properties
-                    final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
-                    for (Graphic graphic : selected) {
-                        if (graphic instanceof AbstractDragGraphic) {
-                            list.add((AbstractDragGraphic) graphic);
-                        }
-                    }
-
+                    boolean graphicComplete = true;
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
-                        popupMenu.add(new JSeparator());
+
                         if (ds != null && graph instanceof AbstractDragGraphic) {
                             AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
                             if (absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED
@@ -703,8 +666,55 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     }
                                 });
                                 popupMenu.add(item2);
+                                popupMenu.add(new JSeparator());
+                            }
+                            if (!absgraph.isGraphicComplete()) {
+                                graphicComplete = false;
                             }
                         }
+                    }
+                    if (graphicComplete) {
+                        JMenuItem menuItem = new JMenuItem("Delete Selected");
+                        menuItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                View2d.this.getLayerModel().deleteSelectedGraphics(true);
+                            }
+                        });
+                        popupMenu.add(menuItem);
+
+                        menuItem = new JMenuItem("Cut");
+                        menuItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                                View2d.this.getLayerModel().deleteSelectedGraphics(false);
+                            }
+                        });
+                        popupMenu.add(menuItem);
+                        menuItem = new JMenuItem("Copy");
+                        menuItem.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                            }
+                        });
+                        popupMenu.add(menuItem);
+                        popupMenu.add(new JSeparator());
+                    }
+                    // TODO separate AbstractDragGraphic and ClassGraphic for properties
+                    final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+                    for (Graphic graphic : selected) {
+                        if (graphic instanceof AbstractDragGraphic) {
+                            list.add((AbstractDragGraphic) graphic);
+                        }
+                    }
+
+                    if (selected.size() == 1) {
+                        final Graphic graph = selected.get(0);
                         JMenuItem item = new JMenuItem("To Front");
                         item.addActionListener(new ActionListener() {
 
@@ -723,9 +733,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             }
                         });
                         popupMenu.add(item);
+                        popupMenu.add(new JSeparator());
 
-                        if (graph instanceof LineGraphic && ((LineGraphic) graph).isGraphicComplete()) {
-                            popupMenu.add(new JSeparator());
+                        if (graphicComplete && graph instanceof LineGraphic) {
 
                             final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
                             calibMenu.addActionListener(new ActionListener() {
@@ -744,10 +754,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 }
                             });
                             popupMenu.add(calibMenu);
+                            popupMenu.add(new JSeparator());
                         }
                     }
                     if (list.size() > 0) {
-                        popupMenu.add(new JSeparator());
                         JMenuItem properties = new JMenuItem("Drawing Properties");
                         properties.addActionListener(new ActionListener() {
 

@@ -240,6 +240,10 @@ public class TagW implements Transferable, Serializable {
     }
 
     private static final DataFlavor[] flavors = { infoElementDataFlavor };
+    static {
+        // TODO init with a profile
+        TagW.enableAnonymizationProfile(true);
+    }
 
     protected final int id;
     protected final int level;

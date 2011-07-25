@@ -109,7 +109,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final FocusHandler focusHandler = new FocusHandler();
     protected final MouseHandler mouseClickHandler = new MouseHandler();
 
-    protected static final Shape[] pointer;
+    static final Shape[] pointer;
     static {
         pointer = new Shape[5];
         pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
@@ -1250,7 +1250,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public List<Action> getExportToClipboardAction() {
         List<Action> list = new ArrayList<Action>();
-        AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
+
+        AbstractAction exportToClipboardAction =
+            new AbstractAction("Selected View to Clipboard (except demographics)") {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                        .getSystemClipboard(), TransferHandler.COPY);
+                }
+            };
+        exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
+            KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+        list.add(exportToClipboardAction);
+
+        exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1259,20 +1274,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         .getSystemClipboard(), TransferHandler.COPY);
                 }
             };
-
         list.add(exportToClipboardAction);
-        exportToClipboardAction = new AbstractAction("Selected View to Clipboard (except demographics)") {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-                imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                    .getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
-        exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
-            KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-        list.add(exportToClipboardAction);
         return list;
     }
 

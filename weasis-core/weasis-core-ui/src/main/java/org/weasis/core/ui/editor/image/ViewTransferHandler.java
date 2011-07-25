@@ -23,7 +23,6 @@ import javax.swing.TransferHandler;
 
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
 
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
@@ -86,12 +85,12 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         if (g != null) {
             boolean aononymOld = canvas.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
             if (!aononymOld) {
-                TagW.enableAnonymizationProfile(true);
+                canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, true);
             }
             canvas.draw(g);
             g.dispose();
             if (!aononymOld) {
-                TagW.enableAnonymizationProfile(false);
+                canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, false);
             }
         }
         return image;
