@@ -260,15 +260,18 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         int insertTitle = doc.getLength();
         boolean exist = false;
         for (TagW t : tags) {
-            try {
-                Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
-                if (val != null) {
-                    exist = true;
-                    doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
-                    doc.insertString(doc.getLength(), ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
+            if (t.getAnonymizationType() != 1) {
+                try {
+                    Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
+                    if (val != null) {
+                        exist = true;
+                        doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
+                        doc.insertString(doc.getLength(),
+                            ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
                 }
-            } catch (BadLocationException e) {
-                e.printStackTrace();
             }
         }
         if (exist) {

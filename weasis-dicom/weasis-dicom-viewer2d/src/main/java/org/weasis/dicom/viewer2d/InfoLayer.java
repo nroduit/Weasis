@@ -66,6 +66,7 @@ public class InfoLayer implements AnnotationsLayer {
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
         displayPreferences.put(ANNOTATIONS, true);
+        displayPreferences.put(ANONYM_ANNOTATIONS, false);
         displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(SCALE, true);
         displayPreferences.put(LUT, false);
@@ -208,7 +209,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = fontHeight;
             TagW[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null) {
+                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         paintFontOutline(g2, infos[j].getFormattedText(value), BORDER, drawY);
@@ -220,7 +221,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = fontHeight;
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null) {
+                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
@@ -233,7 +234,7 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = bound.height - BORDER;
             infos = corner.getInfos();
             for (int j = infos.length - 1; j >= 0; j--) {
-                if (infos[j] != null) {
+                if (infos[j] != null && infos[j].getAnonymizationType() != 1) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);

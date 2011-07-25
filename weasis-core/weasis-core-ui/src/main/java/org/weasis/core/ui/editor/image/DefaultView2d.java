@@ -51,6 +51,7 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
@@ -789,7 +790,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C && e.isControlDown()) {
-            final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
+            final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
             imageTransferHandler.exportToClipboard(DefaultView2d.this,
                 Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
         }
@@ -1258,6 +1259,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         .getSystemClipboard(), TransferHandler.COPY);
                 }
             };
+
         list.add(exportToClipboardAction);
         exportToClipboardAction = new AbstractAction("Selected View to Clipboard (except demographics)") {
 
@@ -1268,6 +1270,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     .getSystemClipboard(), TransferHandler.COPY);
             }
         };
+        exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
+            KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);
         return list;
     }

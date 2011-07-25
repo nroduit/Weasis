@@ -643,7 +643,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuFile.removeAll();
         final JMenu importMenu = new JMenu(Messages.getString("WeasisWin.import")); //$NON-NLS-1$
         JPopupMenu menuImport = importMenu.getPopupMenu();
-        // #WEA-6 - workaround, PopupMenuListener don't work on Mac in the top bar with native look and feel
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
         if (AbstractProperties.isMacNativeLookAndFeel()) {
             importMenu.addChangeListener(new ChangeListener() {
                 @Override
@@ -677,7 +677,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         final JMenu exportMenu = new JMenu(Messages.getString("WeasisWin.export")); //$NON-NLS-1$
         JPopupMenu menuExport = exportMenu.getPopupMenu();
-        // #WEA-6 - workaround, PopupMenuListener don't work on Mac in the top bar with native look and feel
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
         if (AbstractProperties.isMacNativeLookAndFeel()) {
             exportMenu.addChangeListener(new ChangeListener() {
                 @Override

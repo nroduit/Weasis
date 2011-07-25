@@ -246,6 +246,7 @@ public class TagW implements Transferable, Serializable {
     protected final String name;
     protected final TagType type;
     protected String format;
+    protected int anonymizationType;
 
     public TagW(int id, String name, TagType type, int level) {
         this.id = id;
@@ -253,6 +254,7 @@ public class TagW implements Transferable, Serializable {
         this.type = type == null ? TagType.String : type;
         this.format = null;
         this.level = level;
+        this.anonymizationType = 0;
     }
 
     public TagW(int id, String name, TagType type) {
@@ -445,6 +447,14 @@ public class TagW implements Transferable, Serializable {
         return format;
     }
 
+    public synchronized int getAnonymizationType() {
+        return anonymizationType;
+    }
+
+    public synchronized void setAnonymizationType(int anonymizationType) {
+        this.anonymizationType = anonymizationType;
+    }
+
     public static Date getDateTime(String dateTime) {
         if (dateTime != null) {
             try {
@@ -511,4 +521,39 @@ public class TagW implements Transferable, Serializable {
             return this;
         throw new UnsupportedFlavorException(flavor);
     }
+
+    public static synchronized void enableAnonymizationProfile(boolean activate) {
+        // Default anonymization profile
+        /*
+         * Other Patient tags to activate if there are accessible 1052673=Other Patient Names (0010,1001) 1052672=Other
+         * Patient IDs (0010,1000) 1052704=Patient's Size (0010,1020) 1052688=Patient's Age (0010,1010)
+         * 1052736=Patient's Address (0010,1040) 1057108=Patient's Telephone Numbers (0010,2154) 1057120=Ethnic Group
+         * (0010,2160)
+         */
+
+        /*
+         * Other tags to activate if there are accessible 524417=Institution Address (0008,0081) 528456=Physician(s) of
+         * Record (0008,1048) 524436=Referring Physician's Telephone Numbers (0008,0094) 524434=Referring Physician's
+         * Address (0008,0092) 528480=Name of Physician(s) Reading Study (0008,1060) 3280946=Requesting Physician
+         * (0032,1032) 528464=Performing Physician's Name (0008,1050) 528496=Operators' Name (0008,1070)
+         * 1057152=Occupation (0010,2180) 1577008=*Protocol Name (0018,1030) 4194900=*Performed Procedure Step
+         * Description (0040,0254) 3280992=*Requested Procedure Description (0032,1060) 4237104=Content Sequence
+         * (0040,A730) 532753=Derivation Description (0008,2111) 1576960=Device Serial Number (0018,1000)
+         * 1052816=Medical Record Locator (0010,1090) 528512=Admitting Diagnoses Description (0008,1080)
+         * 1057200=Additional Patient History (0010,21B0)
+         */
+
+        TagW[] list =
+            { TagW.PatientName, TagW.PatientID, TagW.PatientSex, TagW.PatientBirthDate, TagW.PatientBirthTime,
+                TagW.PatientComments, TagW.PatientPseudoUID, TagW.PatientWeight, TagW.AccessionNumber, TagW.StudyID,
+                TagW.InstitutionalDepartmentName, TagW.InstitutionName, TagW.ReferringPhysicianName,
+                TagW.StudyDescription, TagW.SeriesDescription, TagW.RequestAttributesSequence, TagW.StationName,
+                TagW.ImageComments };
+        int type = activate ? 1 : 0;
+        for (TagW t : list) {
+            t.setAnonymizationType(type);
+        }
+
+    }
+
 }

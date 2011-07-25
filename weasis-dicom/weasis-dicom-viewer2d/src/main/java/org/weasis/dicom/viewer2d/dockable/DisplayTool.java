@@ -32,6 +32,8 @@ import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -81,6 +83,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         image.add(new CheckNode(DICOM_IMAGE_OVERLAY, true));
         dicomInfo = new CheckNode(DICOM_ANNOTATIONS, true);
         dicomInfo.add(new CheckNode(AnnotationsLayer.ANNOTATIONS, true));
+        dicomInfo.add(new AnonymCheckNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
         dicomInfo.add(new CheckNode(AnnotationsLayer.SCALE, true));
         dicomInfo.add(new CheckNode(AnnotationsLayer.LUT, true));
         dicomInfo.add(new CheckNode(AnnotationsLayer.IMAGE_ORIENTATION, true));
@@ -272,4 +275,31 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         return;
     }
 
+    static class AnonymCheckNode extends CheckNode {
+
+        public AnonymCheckNode(Object object, boolean selected) {
+            this(object, selected, false, false);
+        }
+
+        public AnonymCheckNode(Object object, boolean selected, boolean updateParent, boolean updateChildren) {
+            super(object, selected, updateParent, updateChildren);
+        }
+
+        @Override
+        public void setSelected(boolean newValue) {
+            boolean diff = newValue != isSelected();
+            if (diff) {
+                super.setSelected(newValue);
+                TagW.enableAnonymizationProfile(newValue);
+                DefaultView2d<DicomImageElement> selectedImagePane =
+                    EventManager.getInstance().getSelectedView2dContainer().getSelectedImagePane();
+                if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {
+                    Series series = (Series) selectedImagePane.getSeries();
+                    EventManager.getInstance().fireSeriesViewerListeners(
+                        new SeriesViewerEvent(EventManager.getInstance().getSelectedView2dContainer(), series, series
+                            .getMedia(selectedImagePane.getFrameIndex()), EVENT.LAYOUT));
+                }
+            }
+        }
+    }
 }

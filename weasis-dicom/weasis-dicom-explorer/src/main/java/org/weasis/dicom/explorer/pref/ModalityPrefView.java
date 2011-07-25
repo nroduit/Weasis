@@ -160,6 +160,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
 
     private final transient ItemListener changeViewListener = new ItemListener() {
 
+        @Override
         public void itemStateChanged(final ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 changCornerView();
@@ -251,6 +252,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         jButtonFormat.setText(Messages.getString("ModalityPrefView.format")); //$NON-NLS-1$
         jButtonFormat.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 TagW element = (TagW) jListPosition.getSelectedValue();
                 if (element != null) {
@@ -292,6 +294,18 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
 
     public static synchronized ModalityInfoData[] loadDefaultModalityDisplayPreferences() {
         if (infos == null) {
+            // Default profile of tag formats
+            TagW.PatientID.setFormat(Messages.getString("ModalityPrefView.id")); //$NON-NLS-1$
+            TagW.PatientSex.setFormat(Messages.getString("ModalityPrefView.sex")); //$NON-NLS-1$
+            TagW.StudyID.setFormat(Messages.getString("ModalityPrefView.study")); //$NON-NLS-1$
+            TagW.StudyDescription.setFormat(Messages.getString("ModalityPrefView.study_des")); //$NON-NLS-1$
+            TagW.AcquisitionDate.setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
+            TagW.AcquisitionTime.setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
+            TagW.SeriesNumber.setFormat(Messages.getString("ModalityPrefView.series_nb")); //$NON-NLS-1$
+            TagW.SeriesDescription.setFormat(Messages.getString("ModalityPrefView.series_desc")); //$NON-NLS-1$
+            TagW.SliceThickness.setFormat(Messages.getString("ModalityPrefView.thick")); //$NON-NLS-1$
+            TagW.SliceLocation.setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
+
             Modality[] modalities = Modality.values();
             infos = new ModalityInfoData[modalities.length - 1];
             for (int i = 0; i < infos.length; i++) {
@@ -300,32 +314,21 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
                 disElements[0] = TagW.PatientName;
                 disElements[1] = TagW.PatientBirthDate;
                 disElements[2] = TagW.PatientID;
-                // TODO set format once at the beginning
-                disElements[2].setFormat(Messages.getString("ModalityPrefView.id")); //$NON-NLS-1$
                 disElements[3] = TagW.PatientSex;
-                disElements[3].setFormat(Messages.getString("ModalityPrefView.sex")); //$NON-NLS-1$
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
                 disElements[0] = TagW.InstitutionName;
                 disElements[1] = TagW.StudyID;
-                disElements[1].setFormat(Messages.getString("ModalityPrefView.study")); //$NON-NLS-1$
                 disElements[2] = TagW.StudyDescription;
-                disElements[2].setFormat(Messages.getString("ModalityPrefView.study_des")); //$NON-NLS-1$
                 disElements[3] = TagW.AcquisitionDate;
-                disElements[3].setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
                 disElements[4] = TagW.AcquisitionTime;
-                disElements[4].setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
                 disElements[2] = TagW.SeriesNumber;
-                disElements[2].setFormat(Messages.getString("ModalityPrefView.series_nb")); //$NON-NLS-1$
                 disElements[3] = TagW.ContrastBolusAgent;
                 disElements[4] = TagW.SeriesDescription;
-                disElements[4].setFormat(Messages.getString("ModalityPrefView.series_desc")); //$NON-NLS-1$
                 disElements[5] = TagW.SliceThickness;
-                disElements[5].setFormat(Messages.getString("ModalityPrefView.thick")); //$NON-NLS-1$
                 disElements[6] = TagW.SliceLocation;
-                disElements[6].setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
             }
         }
         return infos;
@@ -336,9 +339,8 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             loadDefaultModalityDisplayPreferences();
         }
         for (int i = 0; i < infos.length; i++) {
-            if (infos[i].getModality().equals(mod)) {
+            if (infos[i].getModality().equals(mod))
                 return infos[i];
-            }
         }
         return infos[0];
     }
@@ -360,6 +362,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         }
     }
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         Component component = dge.getComponent();
         Transferable t = null;
