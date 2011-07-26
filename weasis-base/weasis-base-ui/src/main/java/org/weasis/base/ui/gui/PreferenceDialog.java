@@ -11,12 +11,14 @@
 package org.weasis.base.ui.gui;
 
 import java.awt.Dimension;
+import java.util.Hashtable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.base.ui.internal.Activator;
 import org.weasis.core.api.gui.PreferencesPageFactory;
+import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -31,11 +33,16 @@ public class PreferenceDialog extends AbstractWizardDialog {
     @Override
     protected void initializePages() {
         pagesRoot.add(new DefaultMutableTreeNode(new GeneralSetting()));
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user"));
         final Object[] servicesPref = Activator.getPreferencesPages();
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             if (servicesPref[i] instanceof PreferencesPageFactory) {
-                pagesRoot.add(new DefaultMutableTreeNode(((PreferencesPageFactory) servicesPref[i])
-                    .createPreferencesPage(null)));
+                AbstractItemDialogPage page =
+                    ((PreferencesPageFactory) servicesPref[i]).createPreferencesPage(properties);
+                if (page != null) {
+                    pagesRoot.add(new DefaultMutableTreeNode(page));
+                }
             }
         }
         iniTree();

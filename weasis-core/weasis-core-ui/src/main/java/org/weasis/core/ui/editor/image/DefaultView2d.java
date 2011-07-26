@@ -1251,16 +1251,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public List<Action> getExportToClipboardAction() {
         List<Action> list = new ArrayList<Action>();
 
-        AbstractAction exportToClipboardAction =
-            new AbstractAction("Selected View to Clipboard (except demographics)") {
+        AbstractAction exportToClipboardAction = new AbstractAction("Selected View to Clipboard") {
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                        .getSystemClipboard(), TransferHandler.COPY);
-                }
-            };
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                    .getSystemClipboard(), TransferHandler.COPY);
+            }
+        };
         exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);

@@ -544,19 +544,29 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 if (dcm != null) {
                     Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
                     Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
-                    Date injectTime =
-                        getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime,
-                            getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null));
+                    Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                    Date injectDateTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
                     Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
                     if (weight != null && totalDose != null && halfLife != null && injectTime != null
                         && acqTime != null) {
-                        // Difference is seconds divided by halfLife
-                        double time =
-                            (acqTime.getTime() % TagW.MILLIS_PER_DAY) - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
-                        // Handle case over midnight
-                        // TODO NEED to be validated, time more than one day ?
-                        if (time < 0) {
-                            time += TagW.MILLIS_PER_DAY;
+                        double time = 0.0;
+                        if (injectDateTime != null) {
+                            Date acqDate = (Date) tagList.get(TagW.AcquisitionDate);
+                            if (acqDate != null) {
+                                Date dateTime = TagW.dateTime(acqDate, acqTime);
+                                time = dateTime.getTime() - injectDateTime.getTime();
+                            }
+                        }
+                        if (time == 0.0) {
+                            // Difference is seconds divided by halfLife
+                            time =
+                                (acqTime.getTime() % TagW.MILLIS_PER_DAY)
+                                    - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
+                            // Handle case over midnight
+                            // TODO NEED to be validated, time more than one day ?
+                            if (time < 0) {
+                                time += TagW.MILLIS_PER_DAY;
+                            }
                         }
                         double correctedDose = totalDose * Math.exp(-Math.log(2) * time / (1000.0 * halfLife));
                         // Weight convert in kg to g

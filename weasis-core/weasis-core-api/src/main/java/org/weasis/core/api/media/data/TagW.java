@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -497,6 +498,39 @@ public class TagW implements Transferable, Serializable {
             }
         }
         return null;
+    }
+
+    public static Date dateTime(Date date, Date time) {
+        if (time == null)
+            return date;
+        else if (date == null)
+            return time;
+        Calendar calendarA = Calendar.getInstance();
+        calendarA.setTime(date);
+
+        Calendar calendarB = Calendar.getInstance();
+        calendarB.setTime(time);
+
+        calendarA.set(Calendar.HOUR_OF_DAY, calendarB.get(Calendar.HOUR_OF_DAY));
+        calendarA.set(Calendar.MINUTE, calendarB.get(Calendar.MINUTE));
+        calendarA.set(Calendar.SECOND, calendarB.get(Calendar.SECOND));
+        calendarA.set(Calendar.MILLISECOND, calendarB.get(Calendar.MILLISECOND));
+
+        return calendarA.getTime();
+    }
+
+    public static Date getOnlyDate(Date date) {
+        if (date == null)
+            return null;
+        Calendar calendarA = Calendar.getInstance();
+        calendarA.setTime(date);
+
+        calendarA.set(Calendar.HOUR_OF_DAY, 0);
+        calendarA.set(Calendar.MINUTE, 0);
+        calendarA.set(Calendar.SECOND, 0);
+        calendarA.set(Calendar.MILLISECOND, 0);
+
+        return calendarA.getTime();
     }
 
     public static String formatDate(Date date) {

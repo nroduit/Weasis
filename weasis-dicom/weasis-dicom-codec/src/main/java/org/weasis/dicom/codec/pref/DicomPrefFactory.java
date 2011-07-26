@@ -9,7 +9,10 @@ public class DicomPrefFactory implements PreferencesPageFactory {
 
     @Override
     public AbstractItemDialogPage createPreferencesPage(Hashtable<String, Object> properties) {
-        return new DicomPrefView();
+        if (properties != null) {
+            if ("superuser".equals(properties.get("weasis.user.prefs")))
+                return new DicomPrefView();
+        }
+        return null;
     }
-
 }
