@@ -33,12 +33,12 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(
         ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true);
-    public static final Measurement Diameter = new Measurement("Diameter", true, true, false);
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
-    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public static final Measurement Radius = new Measurement("Radius", true, true, false);
+    public static final Measurement AREA = new Measurement("Area", true, true, true);
+    public static final Measurement DIAMETER = new Measurement("Diameter", true, true, false);
+    public static final Measurement PERIMETER = new Measurement("Perimeter", true, true, false);
+    public static final Measurement CENTER_X = new Measurement("Center X", true, true, false);
+    public static final Measurement CENTER_Y = new Measurement("Center Y", true, true, false);
+    public static final Measurement RADIUS = new Measurement("Radius", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -93,35 +93,35 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
                 double ratio = adapter.getCalibRatio();
 
-                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
+                if (CENTER_X.isComputed() && (!drawOnLabel || CENTER_X.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CenterX.isQuickComputing()) {
+                    if (releaseEvent || CENTER_X.isQuickComputing()) {
                         val = adapter.getXCalibratedValue(centerPt.getX());
                     }
-                    measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(CENTER_X, val, adapter.getUnit()));
                 }
-                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
+                if (CENTER_Y.isComputed() && (!drawOnLabel || CENTER_Y.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CenterY.isQuickComputing()) {
+                    if (releaseEvent || CENTER_Y.isQuickComputing()) {
                         val = adapter.getYCalibratedValue(centerPt.getY());
                     }
-                    measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(CENTER_Y, val, adapter.getUnit()));
                 }
-                if (Radius.isComputed() && (!drawOnLabel || Radius.isGraphicLabel())) {
-                    Double val = releaseEvent || Radius.isQuickComputing() ? ratio * radius : null;
-                    measVal.add(new MeasureItem(Radius, val, adapter.getUnit()));
+                if (RADIUS.isComputed() && (!drawOnLabel || RADIUS.isGraphicLabel())) {
+                    Double val = releaseEvent || RADIUS.isQuickComputing() ? ratio * radius : null;
+                    measVal.add(new MeasureItem(RADIUS, val, adapter.getUnit()));
                 }
-                if (Diameter.isComputed() && (!drawOnLabel || Diameter.isGraphicLabel())) {
-                    Double val = releaseEvent || Diameter.isQuickComputing() ? ratio * radius * 2.0 : null;
-                    measVal.add(new MeasureItem(Diameter, val, adapter.getUnit()));
+                if (DIAMETER.isComputed() && (!drawOnLabel || DIAMETER.isGraphicLabel())) {
+                    Double val = releaseEvent || DIAMETER.isQuickComputing() ? ratio * radius * 2.0 : null;
+                    measVal.add(new MeasureItem(DIAMETER, val, adapter.getUnit()));
                 }
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
+                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Area.isQuickComputing()) {
+                    if (releaseEvent || AREA.isQuickComputing()) {
                         val = Math.PI * radius * radius * ratio * ratio;
                     }
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                    measVal.add(new MeasureItem(AREA, val, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
@@ -144,10 +144,10 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void updateTool() {
-        Point2D C1 = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
+        Point2D ptA = getHandlePoint(0);
 
         centerPt = GeomUtil.getCircleCenter(handlePointList);
-        radius = (centerPt != null && C1 != null) ? centerPt.distance(C1) : 0;
+        radius = (centerPt != null && ptA != null) ? centerPt.distance(ptA) : 0;
     }
 
 }

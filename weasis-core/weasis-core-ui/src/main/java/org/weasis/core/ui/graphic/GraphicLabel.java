@@ -231,20 +231,31 @@ public class GraphicLabel implements Cloneable {
     protected void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
 
         Paint oldPaint = g2d.getPaint();
-        TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
+        // TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
+        // NOTE : when using TextLayout, export to clipboard doesn't work
 
         g2d.setPaint(Color.BLACK);
-        layout.draw(g2d, x - 1f, y - 1f);
-        layout.draw(g2d, x - 1f, y);
-        layout.draw(g2d, x - 1f, y + 1f);
-        layout.draw(g2d, x, y - 1f);
-        layout.draw(g2d, x, y + 1f);
-        layout.draw(g2d, x + 1f, y - 1f);
-        layout.draw(g2d, x + 1f, y);
-        layout.draw(g2d, x + 1f, y + 1f);
+        // layout.draw(g2d, x - 1f, y - 1f);
+        // layout.draw(g2d, x - 1f, y);
+        // layout.draw(g2d, x - 1f, y + 1f);
+        // layout.draw(g2d, x, y - 1f);
+        // layout.draw(g2d, x, y + 1f);
+        // layout.draw(g2d, x + 1f, y - 1f);
+        // layout.draw(g2d, x + 1f, y);
+        // layout.draw(g2d, x + 1f, y + 1f);
+
+        g2d.drawString(str, x - 1f, y - 1f);
+        g2d.drawString(str, x - 1f, y);
+        g2d.drawString(str, x - 1f, y + 1f);
+        g2d.drawString(str, x, y - 1f);
+        g2d.drawString(str, x, y + 1f);
+        g2d.drawString(str, x + 1f, y - 1f);
+        g2d.drawString(str, x + 1f, y);
+        g2d.drawString(str, x + 1f, y + 1f);
 
         g2d.setPaint(Color.WHITE);
-        layout.draw(g2d, x, y);
+        // layout.draw(g2d, x, y);
+        g2d.drawString(str, x, y);
 
         g2d.setPaint(oldPaint);
     }

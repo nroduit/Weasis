@@ -44,14 +44,14 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true); //$NON-NLS-1$
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false); //$NON-NLS-1$
-    public static final Measurement Width = new Measurement("Width", true, true, false); //$NON-NLS-1$
-    public static final Measurement Height = new Measurement("Height", true, true, false); //$NON-NLS-1$
-    public static final Measurement TopLeftPointX = new Measurement("Top Left X", true, true, false); //$NON-NLS-1$
-    public static final Measurement TopLeftPointY = new Measurement("Top Left Y", true, true, false); //$NON-NLS-1$
-    public static final Measurement CentroidX = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
-    public static final Measurement CentroidY = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
+    public static final Measurement AREA = new Measurement("Area", true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement("Perimeter", true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement("Width", true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT = new Measurement("Height", true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_X = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -86,16 +86,17 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
         Shape newShape = null;
+        Point2D firstHandlePoint = (handlePointList.size() > 1) ? getHandlePoint(0) : null;
 
         PATH_AREA_ITERATION:
 
-        if (handlePointList.size() > 1 && handlePointList.get(0) != null) {
+        if (firstHandlePoint != null) {
 
             Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-            polygonPath.moveTo(handlePointList.get(0).getX(), handlePointList.get(0).getY());
+            polygonPath.moveTo(firstHandlePoint.getX(), firstHandlePoint.getY());
 
             for (int i = 1; i < handlePointList.size(); i++) {
-                Point2D pt = handlePointList.get(i);
+                Point2D pt = getHandlePoint(i);
                 if (pt == null) {
                     break PATH_AREA_ITERATION;
                 }
@@ -125,43 +126,43 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 Area pathArea = null;
                 List<Line2D> lineSegmentList = null;
 
-                if (TopLeftPointX.isComputed() && (!drawOnLabel || TopLeftPointX.isGraphicLabel())) {
+                if (TOP_LEFT_POINT_X.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_X.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || TopLeftPointX.isQuickComputing()) {
+                    if (releaseEvent || TOP_LEFT_POINT_X.isQuickComputing()) {
                         pathArea = (pathArea == null) ? getPathArea() : pathArea;
                         val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getX()) : null;
                     }
-                    measVal.add(new MeasureItem(TopLeftPointX, val, unitStr));
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_X, val, unitStr));
                 }
-                if (TopLeftPointY.isComputed() && (!drawOnLabel || TopLeftPointY.isGraphicLabel())) {
+                if (TOP_LEFT_POINT_Y.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_Y.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || TopLeftPointY.isQuickComputing()) {
+                    if (releaseEvent || TOP_LEFT_POINT_Y.isQuickComputing()) {
                         pathArea = (pathArea == null) ? getPathArea() : pathArea;
                         val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getY()) : null;
                     }
-                    measVal.add(new MeasureItem(TopLeftPointY, val, unitStr));
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, val, unitStr));
                 }
-                if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
+                if (WIDTH.isComputed() && (!drawOnLabel || WIDTH.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Width.isQuickComputing()) {
+                    if (releaseEvent || WIDTH.isQuickComputing()) {
                         pathArea = (pathArea == null) ? getPathArea() : pathArea;
                         val = (pathArea != null) ? ratio * pathArea.getBounds2D().getWidth() : null;
                     }
-                    measVal.add(new MeasureItem(Width, val, unitStr));
+                    measVal.add(new MeasureItem(WIDTH, val, unitStr));
                 }
-                if (Height.isComputed() && (!drawOnLabel || Height.isGraphicLabel())) {
+                if (HEIGHT.isComputed() && (!drawOnLabel || HEIGHT.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Height.isQuickComputing()) {
+                    if (releaseEvent || HEIGHT.isQuickComputing()) {
                         pathArea = (pathArea == null) ? getPathArea() : pathArea;
                         val = (pathArea != null) ? ratio * pathArea.getBounds2D().getHeight() : null;
                     }
-                    measVal.add(new MeasureItem(Height, val, unitStr));
+                    measVal.add(new MeasureItem(HEIGHT, val, unitStr));
                 }
 
                 Point2D centroid = null;
-                if (CentroidX.isComputed() && (!drawOnLabel || CentroidX.isGraphicLabel())) {
+                if (CENTROID_X.isComputed() && (!drawOnLabel || CENTROID_X.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CentroidX.isQuickComputing()) {
+                    if (releaseEvent || CENTROID_X.isQuickComputing()) {
                         if (lineSegmentList == null) {
                             pathArea = (pathArea == null) ? getPathArea() : pathArea;
                             lineSegmentList = getClosedPathSegments(pathArea);
@@ -169,11 +170,11 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
                         val = (centroid != null) ? centroid.getX() * ratio : null;
                     }
-                    measVal.add(new MeasureItem(CentroidX, val, unitStr));
+                    measVal.add(new MeasureItem(CENTROID_X, val, unitStr));
                 }
-                if (CentroidY.isComputed() && (!drawOnLabel || CentroidY.isGraphicLabel())) {
+                if (CENTROID_Y.isComputed() && (!drawOnLabel || CENTROID_Y.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || CentroidY.isQuickComputing()) {
+                    if (releaseEvent || CENTROID_Y.isQuickComputing()) {
                         if (lineSegmentList == null) {
                             pathArea = (pathArea == null) ? getPathArea() : pathArea;
                             lineSegmentList = getClosedPathSegments(pathArea);
@@ -181,11 +182,11 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
                         val = (centroid != null) ? centroid.getY() * ratio : null;
                     }
-                    measVal.add(new MeasureItem(CentroidY, val, unitStr));
+                    measVal.add(new MeasureItem(CENTROID_Y, val, unitStr));
                 }
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
+                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Area.isQuickComputing()) {
+                    if (releaseEvent || AREA.isQuickComputing()) {
                         if (lineSegmentList == null) {
                             pathArea = (pathArea == null) ? getPathArea() : pathArea;
                             lineSegmentList = getClosedPathSegments(pathArea);
@@ -193,18 +194,18 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         val = (lineSegmentList != null) ? getAreaValue(lineSegmentList) * ratio * ratio : null;
                     }
                     String unit = "pix".equals(unitStr) ? unitStr : unitStr + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                    measVal.add(new MeasureItem(AREA, val, unit));
                 }
-                if (Perimeter.isComputed() && (!drawOnLabel || Perimeter.isGraphicLabel())) {
+                if (PERIMETER.isComputed() && (!drawOnLabel || PERIMETER.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Perimeter.isQuickComputing()) {
+                    if (releaseEvent || PERIMETER.isQuickComputing()) {
                         if (lineSegmentList == null) {
                             pathArea = (pathArea == null) ? getPathArea() : pathArea;
                             lineSegmentList = getClosedPathSegments(pathArea);
                         }
                         val = (lineSegmentList != null) ? getPerimeter(lineSegmentList) * ratio : null;
                     }
-                    measVal.add(new MeasureItem(Perimeter, val, unitStr));
+                    measVal.add(new MeasureItem(PERIMETER, val, unitStr));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
@@ -226,12 +227,14 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
      */
     protected final Area getPathArea() {
 
-        if (handlePointList.size() > 1 && handlePointList.get(0) != null) {
+        Point2D firstHandlePoint = (handlePointList.size() > 1) ? getHandlePoint(0) : null;
+
+        if (firstHandlePoint != null) {
             Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-            polygonPath.moveTo(handlePointList.get(0).getX(), handlePointList.get(0).getY());
+            polygonPath.moveTo(firstHandlePoint.getX(), firstHandlePoint.getY());
 
             for (int i = 1; i < handlePointList.size(); i++) {
-                Point2D pt = handlePointList.get(i);
+                Point2D pt = getHandlePoint(i);
                 if (pt == null)
                     return null;
                 polygonPath.lineTo(pt.getX(), pt.getY());
@@ -278,12 +281,12 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lastX = startX;
                         lastY = startY;
                     case PathIterator.SEG_LINETO:
-                        Point2D P1 = new Point2D.Double(curX, curY);
-                        Point2D P2 = new Point2D.Double(lastX, lastY);
+                        Point2D ptP1 = new Point2D.Double(curX, curY);
+                        Point2D ptP2 = new Point2D.Double(lastX, lastY);
 
-                        BigDecimal dist = new BigDecimal(P1.distance(P2)).setScale(10, RoundingMode.DOWN);
+                        BigDecimal dist = new BigDecimal(ptP1.distance(ptP2)).setScale(10, RoundingMode.DOWN);
                         if (dist.compareTo(BigDecimal.ZERO) != 0) {
-                            for (Point2D pt : new Point2D[] { P1, P2 }) {
+                            for (Point2D pt : new Point2D[] { ptP1, ptP2 }) {
                                 boolean newPt = true;
                                 for (Point2D p : ptSet) {
                                     dist = new BigDecimal(p.distance(pt)).setScale(10, RoundingMode.DOWN);
@@ -297,7 +300,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                                     ptSet.add(pt);
                                 }
                             }
-                            lineSegmentList.add(new Line2D.Double(P1, P2));
+                            lineSegmentList.add(new Line2D.Double(ptP1, ptP2));
                         }
 
                         curX = lastX;

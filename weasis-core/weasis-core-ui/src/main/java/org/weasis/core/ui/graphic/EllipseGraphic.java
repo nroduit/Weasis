@@ -31,12 +31,12 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public static final Measurement Area = new Measurement("Area", true, true, true);
-    public static final Measurement Perimeter = new Measurement("Perimeter", true, true, false);
-    public static final Measurement CenterX = new Measurement("Center X", true, true, false);
-    public static final Measurement CenterY = new Measurement("Center Y", true, true, false);
-    public static final Measurement Width = new Measurement("Width", true, true, false);
-    public static final Measurement Height = new Measurement("Height", true, true, false);
+    public static final Measurement AREA = new Measurement("Area", true, true, true);
+    public static final Measurement PERIMETER = new Measurement("Perimeter", true, true, false);
+    public static final Measurement CENTER_X = new Measurement("Center X", true, true, false);
+    public static final Measurement CENTER_Y = new Measurement("Center Y", true, true, false);
+    public static final Measurement WIDTH = new Measurement("Width", true, true, false);
+    public static final Measurement HEIGHT = new Measurement("Height", true, true, false);
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);
@@ -55,8 +55,7 @@ public class EllipseGraphic extends RectangleGraphic {
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = new Rectangle2D.Double();
-        rectangle.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-            handlePointList.get(eHandlePoint.SE.index));
+        rectangle.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
         setShape(new Ellipse2D.Double(rectangle.getX(), rectangle.getY(), rectangle.getWidth(), rectangle.getHeight()),
             mouseevent);
@@ -73,39 +72,38 @@ public class EllipseGraphic extends RectangleGraphic {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
                 Rectangle2D rect = new Rectangle2D.Double();
 
-                rect.setFrameFromDiagonal(handlePointList.get(eHandlePoint.NW.index),
-                    handlePointList.get(eHandlePoint.SE.index));
+                rect.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 
                 double ratio = adapter.getCalibRatio();
 
-                if (CenterX.isComputed() && (!drawOnLabel || CenterX.isGraphicLabel())) {
+                if (CENTER_X.isComputed() && (!drawOnLabel || CENTER_X.isGraphicLabel())) {
                     Double val =
-                        releaseEvent || CenterX.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
+                        releaseEvent || CENTER_X.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
                             : null;
-                    measVal.add(new MeasureItem(CenterX, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(CENTER_X, val, adapter.getUnit()));
                 }
-                if (CenterY.isComputed() && (!drawOnLabel || CenterY.isGraphicLabel())) {
+                if (CENTER_Y.isComputed() && (!drawOnLabel || CENTER_Y.isGraphicLabel())) {
                     Double val =
-                        releaseEvent || CenterY.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
+                        releaseEvent || CENTER_Y.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
                             : null;
-                    measVal.add(new MeasureItem(CenterY, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(CENTER_Y, val, adapter.getUnit()));
                 }
 
-                if (Width.isComputed() && (!drawOnLabel || Width.isGraphicLabel())) {
-                    Double val = releaseEvent || Width.isQuickComputing() ? ratio * rect.getWidth() : null;
-                    measVal.add(new MeasureItem(Width, val, adapter.getUnit()));
+                if (WIDTH.isComputed() && (!drawOnLabel || WIDTH.isGraphicLabel())) {
+                    Double val = releaseEvent || WIDTH.isQuickComputing() ? ratio * rect.getWidth() : null;
+                    measVal.add(new MeasureItem(WIDTH, val, adapter.getUnit()));
                 }
-                if (Height.isComputed() && (!drawOnLabel || Height.isGraphicLabel())) {
-                    Double val = releaseEvent || Height.isQuickComputing() ? ratio * rect.getHeight() : null;
-                    measVal.add(new MeasureItem(Height, val, adapter.getUnit()));
+                if (HEIGHT.isComputed() && (!drawOnLabel || HEIGHT.isGraphicLabel())) {
+                    Double val = releaseEvent || HEIGHT.isQuickComputing() ? ratio * rect.getHeight() : null;
+                    measVal.add(new MeasureItem(HEIGHT, val, adapter.getUnit()));
                 }
 
-                if (Area.isComputed() && (!drawOnLabel || Area.isGraphicLabel())) {
+                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
                     Double val =
-                        releaseEvent || Area.isQuickComputing() ? Math.PI * rect.getWidth() * ratio * rect.getHeight()
+                        releaseEvent || AREA.isQuickComputing() ? Math.PI * rect.getWidth() * ratio * rect.getHeight()
                             * ratio / 4.0 : null;
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(Area, val, unit));
+                    measVal.add(new MeasureItem(AREA, val, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);

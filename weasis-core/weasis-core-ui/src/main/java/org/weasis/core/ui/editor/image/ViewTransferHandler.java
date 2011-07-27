@@ -83,13 +83,15 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         TiledImage image = ImageFiler.getEmptyTiledImage(Color.BLACK, canvas.getWidth(), canvas.getHeight());
         Graphics2D g = image.createGraphics();
         if (g != null) {
-            boolean aononymOld = canvas.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
-            if (!aononymOld) {
+            boolean anonymAnnotationsStatus =
+                canvas.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
+            if (!anonymAnnotationsStatus) {
                 canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, true);
             }
             canvas.draw(g);
             g.dispose();
-            if (!aononymOld) {
+
+            if (!anonymAnnotationsStatus) {
                 canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, false);
             }
         }

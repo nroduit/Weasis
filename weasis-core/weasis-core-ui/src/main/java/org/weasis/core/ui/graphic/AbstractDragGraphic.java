@@ -11,7 +11,6 @@
 
 package org.weasis.core.ui.graphic;
 
-import java.awt.AWTException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -33,6 +32,8 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
 
@@ -177,11 +178,44 @@ public abstract class AbstractDragGraphic implements Graphic {
         return handlePointList.size() == handlePointTotalNumber;
     }
 
+    public void addHandlePoint(Point2D handlePt) {
+        handlePointList.add(handlePt);
+    }
+
     public Point2D getHandlePoint(int index) {
-        if (index < 0 || index >= handlePointList.size())
-            return null;
-        Point2D handlePoint = handlePointList.get(index);
-        return (handlePoint != null) ? (Point2D) handlePointList.get(index).clone() : null;
+        Point2D handlePoint = null;
+
+        if (index >= 0 && index < handlePointList.size()) {
+            if ((handlePoint = handlePointList.get(index)) != null) {
+                handlePoint = (Point2D) handlePoint.clone();
+            }
+        }
+        return handlePoint;
+    }
+
+    public List<Point2D> getHandlePointList() {
+        List<Point2D> handlePointListcopy = new ArrayList<Point2D>(handlePointList.size());
+
+        for (Point2D handlePt : handlePointList) {
+            handlePointListcopy.add(handlePt != null ? (Point2D) handlePt.clone() : null);
+        }
+
+        return handlePointListcopy;
+
+    }
+
+    public void setHandlePoint(int index, Point2D newPoint) {
+        if (index >= 0 && index <= handlePointList.size()) {
+            if (index == handlePointList.size()) {
+                handlePointList.add(newPoint);
+            } else {
+                handlePointList.set(index, newPoint);
+            }
+        }
+    }
+
+    public int getHandlePointListSize() {
+        return handlePointList.size();
     }
 
     @Override
@@ -199,19 +233,22 @@ public abstract class AbstractDragGraphic implements Graphic {
         DefaultView2d<?> graphPane = getDefaultView2d(event);
 
         if (graphPane != null) {
-            Point2D p = getHandlePoint(handlePtIndex);
+            Point2D handlePt = null;
 
-            if (p != null) {
-                Point mp = graphPane.getMouseCoordinatesFromImage(p.getX(), p.getY());
+            if (handlePtIndex >= 0 && handlePtIndex < handlePointList.size()) {
+                handlePt = handlePointList.get(handlePtIndex);
+            }
 
-                if (event.getX() != mp.x || event.getY() != mp.y) {
+            if (handlePt != null) {
+                Point mousePt = graphPane.getMouseCoordinatesFromImage(handlePt.getX(), handlePt.getY());
+
+                if (event.getX() != mousePt.x || event.getY() != mousePt.y) {
                     try {
-                        event.translatePoint(mp.x - event.getX(), mp.y - event.getY());
-                        // event = new MouseEventDouble(event, mp.x, mp.y);
-                        event.setImageCoordinates(p);
-                        SwingUtilities.convertPointToScreen(mp, graphPane);
-                        new Robot().mouseMove(mp.x, mp.y);
-                    } catch (AWTException e1) {
+                        event.translatePoint(mousePt.x - event.getX(), mousePt.y - event.getY());
+                        event.setImageCoordinates(handlePt);
+                        SwingUtilities.convertPointToScreen(mousePt, graphPane);
+                        new Robot().mouseMove(mousePt.x, mousePt.y);
+                    } catch (Exception doNothing) {
                     }
                 }
             }
@@ -309,7 +346,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         Rectangle2D bounds = shape.getBounds2D();
 
         // Add pixel tolerance to ensure that the graphic is correctly repainted
-        double growingSize = Math.max(handleSize * 1.5 / 2.0, lineThickness / 2.0) + 6;
+        double growingSize = Math.max(handleSize * 1.5 / 2.0, lineThickness / 2.0) + 2;
         growingSize /= GeomUtil.extractScalingFactor(transform);
         GeomUtil.growRectangle(bounds, growingSize);
 
@@ -352,20 +389,50 @@ public abstract class AbstractDragGraphic implements Graphic {
     /**
      * @return selected handle point index if exist, otherwise -1
      */
-    public int getHandlePointIndex(MouseEventDouble mouseevent) {
-        if (mouseevent != null) {
-            final Point2D mousePoint = mouseevent.getImageCoordinates();
+    public int getHandlePointIndex(MouseEventDouble mouseEvent) {
 
-            double maxHandleDistance = handleSize * 1.5 / 2.0; // half diagonal of handle point rectangle
-            maxHandleDistance /= GeomUtil.extractScalingFactor(getAffineTransform(mouseevent));
+        int nearestHandlePtIndex = -1;
+        final Point2D mousePoint = (mouseEvent != null) ? mouseEvent.getImageCoordinates() : null;
+
+        if (mousePoint != null && handlePointList.size() > 0) {
+            double minHandleDistance = Double.MAX_VALUE;
+            double maxHandleDistance = handleSize * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
 
             for (int index = 0; index < handlePointList.size(); index++) {
                 Point2D handlePoint = handlePointList.get(index);
-                if (mousePoint != null && handlePoint != null && mousePoint.distance(handlePoint) <= maxHandleDistance)
-                    return index;
+                double handleDistance = (handlePoint != null) ? mousePoint.distance(handlePoint) : Double.MAX_VALUE;
+
+                if (handleDistance <= maxHandleDistance && handleDistance < minHandleDistance) {
+                    minHandleDistance = handleDistance;
+                    nearestHandlePtIndex = index;
+                }
             }
         }
-        return -1;
+        return nearestHandlePtIndex;
+    }
+
+    public List<Integer> getHandlePointIndexList(MouseEventDouble mouseEvent) {
+
+        Map<Double, Integer> indexByDistanceMap = null;
+        final Point2D mousePoint = (mouseEvent != null) ? mouseEvent.getImageCoordinates() : null;
+
+        if (mousePoint != null && handlePointList.size() > 0) {
+            double maxHandleDistance = handleSize * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
+
+            for (int index = 0; index < handlePointList.size(); index++) {
+                Point2D handlePoint = handlePointList.get(index);
+                double handleDistance = (handlePoint != null) ? mousePoint.distance(handlePoint) : Double.MAX_VALUE;
+
+                if (handleDistance <= maxHandleDistance) {
+                    if (indexByDistanceMap == null) {
+                        indexByDistanceMap = new TreeMap<Double, Integer>();
+                    }
+                    indexByDistanceMap.put(handleDistance, index);
+                }
+            }
+        }
+
+        return (indexByDistanceMap != null) ? new ArrayList<Integer>(indexByDistanceMap.values()) : null;
     }
 
     public boolean isOnGraphicLabel(MouseEventDouble mouseevent) {
@@ -805,20 +872,23 @@ public abstract class AbstractDragGraphic implements Graphic {
      * @return True when not handle points equals each another. <br>
      */
     public boolean isShapeValid() {
-        if (isGraphicComplete()) {
-            int lastPointIndex = handlePointList.size() - 1;
-
-            while (lastPointIndex > 0) {
-                Point2D checkPoint = getHandlePoint(lastPointIndex);
-                ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
-                while (listIt.hasPrevious()) {
-                    if (checkPoint != null && checkPoint.equals(listIt.previous()))
-                        return false;
-                }
-            }
-            return true;
-        } else
+        if (!isGraphicComplete())
             return false;
+
+        int lastPointIndex = handlePointList.size() - 1;
+
+        while (lastPointIndex > 0) {
+            Point2D checkPoint = handlePointList.get(lastPointIndex);
+
+            ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
+
+            while (listIt.hasPrevious()) {
+                if (checkPoint != null && checkPoint.equals(listIt.previous()))
+                    return false;
+            }
+        }
+        return true;
+
     }
 
     /**
@@ -826,12 +896,10 @@ public abstract class AbstractDragGraphic implements Graphic {
      */
     protected final boolean isLastPointValid() {
 
-        Point2D lastP = getHandlePoint(handlePointList.size() - 1);
-        if (lastP != null) {
-            if (lastP.equals(getHandlePoint(handlePointList.size() - 2)))
-                return false;
-        }
-        return true;
+        Point2D lastPt = handlePointList.size() > 0 ? handlePointList.get(handlePointList.size() - 1) : null;
+        Point2D previousPt = handlePointList.size() > 1 ? handlePointList.get(handlePointList.size() - 2) : null;
+
+        return lastPt == null || !lastPt.equals(previousPt);
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1017,26 +1085,10 @@ public abstract class AbstractDragGraphic implements Graphic {
         return handlePointIndex;
     }
 
-    protected abstract void updateShapeOnDrawing(MouseEventDouble mouseevent);
+    protected abstract void updateShapeOnDrawing(MouseEventDouble mouseEvent);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public interface eHandlePoint {
-        Point2D get(AbstractDragGraphic graphic);
-    }
-
-    static boolean isLineValid(eHandlePoint eP1, eHandlePoint eP2, AbstractDragGraphic g) {
-        if (eP1 == null || eP2 == null || g == null)
-            return false;
-
-        Point2D p1 = eP1.get(g), p2 = eP2.get(g);
-        return p1 != null && p2 != null && !p2.equals(p1);
-    }
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
-
     public class AdvancedShape implements Shape {
 
         /**
@@ -1098,7 +1150,7 @@ public abstract class AbstractDragGraphic implements Graphic {
                 if (scalingMin < 0)
                     throw new IllegalArgumentException();
 
-                this.anchorPoint = anchorPoint;
+                this.anchorPoint = (Point2D) anchorPoint.clone();
                 this.scalingMin = scalingMin;
             }
 

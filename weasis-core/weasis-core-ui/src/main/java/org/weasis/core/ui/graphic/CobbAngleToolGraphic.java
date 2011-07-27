@@ -32,12 +32,12 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
-    public static final Measurement Angle = new Measurement("Angle", true);
-    public static final Measurement ComplementaryAngle = new Measurement("Compl. Angle", true, true, false);
+    public static final Measurement ANGLE = new Measurement("Angle", true);
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let O be center of perpendicular projections in Cobb's angle
-    protected Point2D O;
+    protected Point2D ptO;
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     public CobbAngleToolGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
@@ -61,47 +61,47 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
         if (handlePointIndex != -1 && handlePointList.size() >= 4) {
             updateTool();
 
-            if (ABvalid && CDvalid) {
+            if (lineABvalid && lineCDvalid) {
                 // Let MN be the bisector of the two line segments AB & CD, if parallel MN is the median line
                 Line2D lineMN;
 
-                if (lineParallel) {
-                    lineMN = GeomUtil.getMedianLine(A, B, C, D);
+                if (linesParallel) {
+                    lineMN = GeomUtil.getMedianLine(ptA, ptB, ptC, ptD);
                 } else {
                     AffineTransform rotate =
-                        AffineTransform.getRotateInstance(-Math.toRadians(angleDeg) / 2, P.getX(), P.getY());
+                        AffineTransform.getRotateInstance(-Math.toRadians(angleDeg) / 2, ptP.getX(), ptP.getY());
 
-                    Point2D M = (Point2D) ABPline[0].clone();
-                    rotate.transform(M, M);
-                    lineMN = new Line2D.Double(M, P);
+                    Point2D ptM = (Point2D) lineABP[0].clone();
+                    rotate.transform(ptM, ptM);
+                    lineMN = new Line2D.Double(ptM, ptP);
                 }
 
-                if (handlePointIndex == 4 && O != null) {
-                    O = GeomUtil.getPerpendicularPointToLine(lineMN, O);
+                if (handlePointIndex == 4 && ptO != null) {
+                    ptO = GeomUtil.getPerpendicularPointToLine(lineMN, ptO);
                 } else {
-                    if (lineParallel) {
-                        O = GeomUtil.getMidPoint(lineMN.getP1(), lineMN.getP1());
+                    if (linesParallel) {
+                        ptO = GeomUtil.getMidPoint(lineMN.getP1(), lineMN.getP1());
                     } else {
                         // Point2D H1 = GeomUtil.getColinearPointWithRatio(ABPline[0], ABPline[1], 3 / 4);
                         // Point2D H2 = GeomUtil.getColinearPointWithRatio(CDPline[0], CDPline[1], 3 / 4);
 
-                        Point2D H1 = GeomUtil.getMidPoint(ABPline[1], GeomUtil.getMidPoint(ABPline[0], ABPline[1]));
-                        Point2D H2 = GeomUtil.getMidPoint(CDPline[1], GeomUtil.getMidPoint(CDPline[0], CDPline[1]));
+                        Point2D H1 = GeomUtil.getMidPoint(lineABP[1], GeomUtil.getMidPoint(lineABP[0], lineABP[1]));
+                        Point2D H2 = GeomUtil.getMidPoint(lineCDP[1], GeomUtil.getMidPoint(lineCDP[0], lineCDP[1]));
 
                         Point2D O1 = GeomUtil.getPerpendicularPointToLine(lineMN, H1);
                         Point2D O2 = GeomUtil.getPerpendicularPointToLine(lineMN, H2);
 
-                        O = GeomUtil.getMidPoint(O1, O2);
+                        ptO = GeomUtil.getMidPoint(O1, O2);
                     }
                 }
             } else {
-                O = null;
+                ptO = null;
             }
 
             if (handlePointList.size() < 5) {
-                handlePointList.add(O);
+                handlePointList.add(ptO);
             } else {
-                handlePointList.set(4, O);
+                handlePointList.set(4, ptO);
             }
         }
 
@@ -115,88 +115,87 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
         Shape newShape = null;
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 6);
 
-        if (ABvalid) {
-            path.append(new Line2D.Double(A, B), false);
+        if (lineABvalid) {
+            path.append(new Line2D.Double(ptA, ptB), false);
         }
 
-        if (CDvalid) {
-            path.append(new Line2D.Double(C, D), false);
+        if (lineCDvalid) {
+            path.append(new Line2D.Double(ptC, ptD), false);
         }
 
-        if (ABvalid && CDvalid && O != null) {
-            // TODO Fix refresh issue. Very very very bad practice to pass the class Point2D instance to different shape
-            // that can be modified !!!
-            Point2D O = (Point2D) this.O.clone();
+        if (lineABvalid && lineCDvalid && ptO != null) {
+
             AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(10));
             aShape.addShape(path);
 
-            double Ax = A.getX(), Ay = A.getY();
-            double Bx = B.getX(), By = B.getY();
-            double Cx = C.getX(), Cy = C.getY();
-            double Dx = D.getX(), Dy = D.getY();
+            double ax = ptA.getX(), ay = ptA.getY();
+            double bx = ptB.getX(), by = ptB.getY();
+            double cx = ptC.getX(), cy = ptC.getY();
+            double dx = ptD.getX(), dy = ptD.getY();
 
             // Let I be the perpendicular projection of O onto AB
             // Let J be the perpendicular projection of O onto CD
-            double distAB2 = Point2D.distanceSq(Ax, Ay, Bx, By);
-            double distCD2 = Point2D.distanceSq(Cx, Cy, Dx, Dy);
+            double distAB2 = Point2D.distanceSq(ax, ay, bx, by);
+            double distCD2 = Point2D.distanceSq(cx, cy, dx, dy);
 
-            double r1 = ((Ay - O.getY()) * (Ay - By) + (Ax - O.getX()) * (Ax - Bx)) / distAB2;
-            double r2 = ((Cy - O.getY()) * (Cy - Dy) + (Cx - O.getX()) * (Cx - Dx)) / distCD2;
+            double r1 = ((ay - ptO.getY()) * (ay - by) + (ax - ptO.getX()) * (ax - bx)) / distAB2;
+            double r2 = ((cy - ptO.getY()) * (cy - dy) + (cx - ptO.getX()) * (cx - dx)) / distCD2;
 
-            final Point2D I = new Point2D.Double(Ax + r1 * (Bx - Ax), Ay + r1 * (By - Ay));
-            final Point2D J = new Point2D.Double(Cx + r2 * (Dx - Cx), Cy + r2 * (Dy - Cy));
+            final Point2D ptI = new Point2D.Double(ax + r1 * (bx - ax), ay + r1 * (by - ay));
+            final Point2D ptJ = new Point2D.Double(cx + r2 * (dx - cx), cy + r2 * (dy - cy));
 
             if (r1 < 0 || r1 > 1) {
-                aShape.addShape(new Line2D.Double(r1 > 1 ? B : A, I), getDashStroke(1.0f), true);
+                aShape.addShape(new Line2D.Double(r1 > 1 ? ptB : ptA, ptI), getDashStroke(1.0f), true);
             }
 
             if (r2 < 0 || r2 > 1) {
-                aShape.addShape(new Line2D.Double(r1 > 1 ? D : C, J), getDashStroke(1.0f), true);
+                aShape.addShape(new Line2D.Double(r1 > 1 ? ptD : ptC, ptJ), getDashStroke(1.0f), true);
             }
 
-            aShape.addShape(new Line2D.Double(O, I));
-            aShape.addShape(new Line2D.Double(O, J));
+            aShape.addShape(new Line2D.Double(ptO, ptI));
+            aShape.addShape(new Line2D.Double(ptO, ptJ));
 
             // Add angle corners where I & J lies on AB & CD line segments
             double cLength = 10;
 
-            double cImax = (2.0 / 3.0) * Math.min(O.distance(I), Math.max(I.distance(A), I.distance(B)));
-            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(A, B), I, O, cLength), I, cLength / cImax,
-                getStroke(1.0f), true);
+            double cImax = (2.0 / 3.0) * Math.min(ptO.distance(ptI), Math.max(ptI.distance(ptA), ptI.distance(ptB)));
+            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptA, ptB), ptI, ptO, cLength), ptI, cLength
+                / cImax, getStroke(1.0f), true);
 
-            double cJmax = (2.0 / 3.0) * Math.min(O.distance(J), Math.max(J.distance(C), J.distance(D)));
-            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(C, D), J, O, cLength), J, cLength / cJmax,
-                getStroke(1.0f), true);
+            double cJmax = (2.0 / 3.0) * Math.min(ptO.distance(ptJ), Math.max(ptJ.distance(ptC), ptJ.distance(ptD)));
+            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptC, ptD), ptJ, ptO, cLength), ptJ, cLength
+                / cJmax, getStroke(1.0f), true);
 
-            if (!lineParallel) {
+            if (!linesParallel) {
 
                 // Let K be the point on extension of IO segment
                 // Let L be the point on extension of JO segment
                 double extSegLength = 32;
 
-                Point2D K = GeomUtil.getColinearPointWithLength(I, O, O.distance(I) + extSegLength);
-                Point2D L = GeomUtil.getColinearPointWithLength(J, O, O.distance(J) + extSegLength);
+                Point2D ptK = GeomUtil.getColinearPointWithLength(ptI, ptO, ptO.distance(ptI) + extSegLength);
+                Point2D ptL = GeomUtil.getColinearPointWithLength(ptJ, ptO, ptO.distance(ptJ) + extSegLength);
 
-                double dOKmax = (1.0 / 2.0) * O.distance(I);
-                aShape.addInvShape(new Line2D.Double(O, K), O, extSegLength / dOKmax, false);
+                double distOKmax = (1.0 / 2.0) * ptO.distance(ptI);
+                aShape.addInvShape(new Line2D.Double(ptO, ptK), ptO, extSegLength / distOKmax, false);
 
-                double dOLmax = (1.0 / 2.0) * O.distance(J);
-                aShape.addInvShape(new Line2D.Double(O, L), O, extSegLength / dOLmax, false);
+                double distOLmax = (1.0 / 2.0) * ptO.distance(ptJ);
+                aShape.addInvShape(new Line2D.Double(ptO, ptL), ptO, extSegLength / distOLmax, false);
 
                 // Let arcAngle be the partial section of the ellipse that represents the measured angle
-                double startingAngle = (K.getY() > L.getY()) ? GeomUtil.getAngleDeg(O, J) : GeomUtil.getAngleDeg(O, I);
+                double startingAngle =
+                    (ptK.getY() > ptL.getY()) ? GeomUtil.getAngleDeg(ptO, ptJ) : GeomUtil.getAngleDeg(ptO, ptI);
                 double angularExtent =
-                    K.getY() > L.getY() ? GeomUtil.getAngleDeg(J, O, K) : GeomUtil.getAngleDeg(I, O, L);
+                    ptK.getY() > ptL.getY() ? GeomUtil.getAngleDeg(ptJ, ptO, ptK) : GeomUtil.getAngleDeg(ptI, ptO, ptL);
                 angularExtent = GeomUtil.getSmallestRotationAngleDeg(angularExtent);
 
                 double radius = (2.0 / 3.0) * extSegLength;
                 Rectangle2D arcAngleBounds =
-                    new Rectangle2D.Double(O.getX() - radius, O.getY() - radius, 2 * radius, 2 * radius);
+                    new Rectangle2D.Double(ptO.getX() - radius, ptO.getY() - radius, 2 * radius, 2 * radius);
 
                 Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
-                double rMax = (K.getY() > L.getY() ? dOKmax : dOLmax) * 2 / 3;
-                aShape.addInvShape(arcAngle, O, radius / rMax, false);
+                double rMax = (ptK.getY() > ptL.getY() ? distOKmax : distOLmax) * 2 / 3;
+                aShape.addInvShape(arcAngle, ptO, radius / rMax, false);
             }
 
         } else if (path.getCurrentPoint() != null) {
@@ -205,7 +204,6 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
-
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,6 +211,6 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     @Override
     protected void updateTool() {
         super.updateTool();
-        O = handlePointList.size() >= 5 ? handlePointList.get(4) : null;
+        ptO = getHandlePoint(4);
     }
 }

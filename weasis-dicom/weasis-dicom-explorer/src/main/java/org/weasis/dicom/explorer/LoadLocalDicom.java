@@ -73,6 +73,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     protected Boolean doInBackground() throws Exception {
         // if (flatSearch) {
         addSelectionAndnotify(files, true);
+        // Issue on linux to many files opened
         // } else {
         // addSelection(files, true);
         // }

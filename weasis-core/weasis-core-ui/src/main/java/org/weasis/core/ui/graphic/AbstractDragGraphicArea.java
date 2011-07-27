@@ -31,10 +31,10 @@ import org.weasis.core.api.media.data.TagW;
  */
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
-    public static final Measurement ImageMean = new Measurement("Mean", false, true, true);
-    public static final Measurement ImageMin = new Measurement("Min", false, true, false);
-    public static final Measurement ImageMax = new Measurement("Max", false, true, false);
-    public static final Measurement ImageSTD = new Measurement("StDev", false, true, false);
+    public static final Measurement IMAGE_MEAN = new Measurement("Mean", false, true, true);
+    public static final Measurement IMAGE_MIN = new Measurement("Min", false, true, false);
+    public static final Measurement IMAGE_MAX = new Measurement("Max", false, true, false);
+    public static final Measurement IMAGE_STD = new Measurement("StDev", false, true, false);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,10 +71,10 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     }
 
     public List<MeasureItem> getImageStatistics(ImageElement imageElement, boolean releaseEvent) {
-        if (imageElement != null && shape != null) {
+        if (imageElement != null && isShapeValid()) {
             ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(5);
 
-            if (ImageMin.isComputed() || ImageMax.isComputed() || ImageMean.isComputed() || ImageSTD.isComputed()) {
+            if (IMAGE_MIN.isComputed() || IMAGE_MAX.isComputed() || IMAGE_MEAN.isComputed() || IMAGE_STD.isComputed()) {
                 Double min = null;
                 Double max = null;
                 Double stdv = null;
@@ -143,44 +143,44 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     }
                 }
                 String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
-                // if (ImageMin.isComputed() && (releaseEvent || ImageMin.isGraphicLabel())) {
-                if (ImageMin.isComputed()) {
-                    Double val = releaseEvent || ImageMin.isQuickComputing() ? min : null;
-                    measVal.add(new MeasureItem(ImageMin, val, unit));
+
+                if (IMAGE_MIN.isComputed()) {
+                    Double val = releaseEvent || IMAGE_MIN.isQuickComputing() ? min : null;
+                    measVal.add(new MeasureItem(IMAGE_MIN, val, unit));
                 }
-                // if (ImageMax.isComputed() && (releaseEvent || ImageMax.isGraphicLabel())) {
-                if (ImageMax.isComputed()) {
-                    Double val = releaseEvent || ImageMax.isQuickComputing() ? max : null;
-                    measVal.add(new MeasureItem(ImageMax, val, unit));
+
+                if (IMAGE_MAX.isComputed()) {
+                    Double val = releaseEvent || IMAGE_MAX.isQuickComputing() ? max : null;
+                    measVal.add(new MeasureItem(IMAGE_MAX, val, unit));
                 }
-                // if (ImageSTD.isComputed() && (releaseEvent || ImageSTD.isGraphicLabel())) {
-                if (ImageSTD.isComputed()) {
-                    Double val = releaseEvent || ImageSTD.isQuickComputing() ? stdv : null;
-                    measVal.add(new MeasureItem(ImageSTD, val, unit));
+
+                if (IMAGE_STD.isComputed()) {
+                    Double val = releaseEvent || IMAGE_STD.isQuickComputing() ? stdv : null;
+                    measVal.add(new MeasureItem(IMAGE_STD, val, unit));
                 }
-                // if (ImageMean.isComputed() && (releaseEvent || ImageMean.isGraphicLabel())) {
-                if (ImageMean.isComputed()) {
-                    Double val = releaseEvent || ImageMean.isQuickComputing() ? mean : null;
-                    measVal.add(new MeasureItem(ImageMean, val, unit));
+
+                if (IMAGE_MEAN.isComputed()) {
+                    Double val = releaseEvent || IMAGE_MEAN.isQuickComputing() ? mean : null;
+                    measVal.add(new MeasureItem(IMAGE_MEAN, val, unit));
                 }
 
                 Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
                 if (suv != null) {
                     unit = "SUV (bw)";
-                    if (ImageMin.isComputed()) {
+                    if (IMAGE_MIN.isComputed()) {
                         Double val =
-                            releaseEvent || ImageMin.isQuickComputing() ? min == null ? null : min * suv : null;
-                        measVal.add(new MeasureItem(ImageMin, val, unit));
+                            releaseEvent || IMAGE_MIN.isQuickComputing() ? min == null ? null : min * suv : null;
+                        measVal.add(new MeasureItem(IMAGE_MIN, val, unit));
                     }
-                    if (ImageMax.isComputed()) {
+                    if (IMAGE_MAX.isComputed()) {
                         Double val =
-                            releaseEvent || ImageMax.isQuickComputing() ? max == null ? null : max * suv : null;
-                        measVal.add(new MeasureItem(ImageMax, val, unit));
+                            releaseEvent || IMAGE_MAX.isQuickComputing() ? max == null ? null : max * suv : null;
+                        measVal.add(new MeasureItem(IMAGE_MAX, val, unit));
                     }
-                    if (ImageMean.isComputed()) {
+                    if (IMAGE_MEAN.isComputed()) {
                         Double val =
-                            releaseEvent || ImageMean.isQuickComputing() ? mean == null ? null : mean * suv : null;
-                        measVal.add(new MeasureItem(ImageMean, val, unit));
+                            releaseEvent || IMAGE_MEAN.isQuickComputing() ? mean == null ? null : mean * suv : null;
+                        measVal.add(new MeasureItem(IMAGE_MEAN, val, unit));
                     }
                 }
             }

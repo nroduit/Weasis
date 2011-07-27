@@ -31,17 +31,17 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public static final Measurement FirstPointX = new Measurement("First point X", true, true, false);
-    public static final Measurement FirstPointY = new Measurement("First point Y", true, true, false);
-    public static final Measurement LastPointX = new Measurement("Last point X", true, true, false);
-    public static final Measurement LastPointY = new Measurement("Last point Y", true, true, false);
-    public static final Measurement LineLength = new Measurement("Line length", true, true, true);
-    public static final Measurement Orientation = new Measurement("Orientation", true, true, false);
-    public static final Measurement Azimuth = new Measurement("Azimuth", true, true, false);
+    public static final Measurement FIRST_POINT_X = new Measurement("First point X", true, true, false);
+    public static final Measurement FIRST_POINT_Y = new Measurement("First point Y", true, true, false);
+    public static final Measurement LAST_POINT_X = new Measurement("Last point X", true, true, false);
+    public static final Measurement LAST_POINT_Y = new Measurement("Last point Y", true, true, false);
+    public static final Measurement LINE_LENGTH = new Measurement("Line length", true, true, true);
+    public static final Measurement ORIENTATION = new Measurement("Orientation", true, true, false);
+    public static final Measurement AZIMUTH = new Measurement("Azimuth", true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected Point2D A, B; // Let AB be a simple a line segment
-    protected boolean ABvalid; // estimate if line segment is valid or not
+    protected Point2D ptA, ptB; // Let AB be a simple a line segment
+    protected boolean lineABvalid; // estimate if line segment is valid or not
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,8 +65,8 @@ public class LineGraphic extends AbstractDragGraphic {
         updateTool();
         Shape newShape = null;
 
-        if (ABvalid) {
-            newShape = new Line2D.Double(A, B);
+        if (lineABvalid) {
+            newShape = new Line2D.Double(ptA, ptB);
         }
 
         setShape(newShape, mouseEvent);
@@ -81,55 +81,55 @@ public class LineGraphic extends AbstractDragGraphic {
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
-                if (FirstPointX.isComputed() && (!drawOnLabel || FirstPointX.isGraphicLabel())) {
+                if (FIRST_POINT_X.isComputed() && (!drawOnLabel || FIRST_POINT_X.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || FirstPointX.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(A.getX());
+                    if (releaseEvent || FIRST_POINT_X.isQuickComputing()) {
+                        val = adapter.getXCalibratedValue(ptA.getX());
                     }
-                    measVal.add(new MeasureItem(FirstPointX, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(FIRST_POINT_X, val, adapter.getUnit()));
                 }
-                if (FirstPointY.isComputed() && (!drawOnLabel || FirstPointY.isGraphicLabel())) {
+                if (FIRST_POINT_Y.isComputed() && (!drawOnLabel || FIRST_POINT_Y.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || FirstPointY.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(A.getY());
+                    if (releaseEvent || FIRST_POINT_Y.isQuickComputing()) {
+                        val = adapter.getXCalibratedValue(ptA.getY());
                     }
-                    measVal.add(new MeasureItem(FirstPointY, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(FIRST_POINT_Y, val, adapter.getUnit()));
                 }
-                if (LastPointX.isComputed() && (!drawOnLabel || LastPointX.isGraphicLabel())) {
+                if (LAST_POINT_X.isComputed() && (!drawOnLabel || LAST_POINT_X.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LastPointX.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(B.getX());
+                    if (releaseEvent || LAST_POINT_X.isQuickComputing()) {
+                        val = adapter.getXCalibratedValue(ptB.getX());
                     }
-                    measVal.add(new MeasureItem(LastPointX, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(LAST_POINT_X, val, adapter.getUnit()));
                 }
-                if (LastPointY.isComputed() && (!drawOnLabel || LastPointY.isGraphicLabel())) {
+                if (LAST_POINT_Y.isComputed() && (!drawOnLabel || LAST_POINT_Y.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LastPointY.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(B.getY());
+                    if (releaseEvent || LAST_POINT_Y.isQuickComputing()) {
+                        val = adapter.getXCalibratedValue(ptB.getY());
                     }
-                    measVal.add(new MeasureItem(LastPointY, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(LAST_POINT_Y, val, adapter.getUnit()));
                 }
-                if (LineLength.isComputed() && (!drawOnLabel || LineLength.isGraphicLabel())) {
+                if (LINE_LENGTH.isComputed() && (!drawOnLabel || LINE_LENGTH.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || LineLength.isQuickComputing()) {
-                        val = A.distance(B) * adapter.getCalibRatio();
+                    if (releaseEvent || LINE_LENGTH.isQuickComputing()) {
+                        val = ptA.distance(ptB) * adapter.getCalibRatio();
                     }
-                    measVal.add(new MeasureItem(LineLength, val, adapter.getUnit()));
+                    measVal.add(new MeasureItem(LINE_LENGTH, val, adapter.getUnit()));
                 }
-                if (Orientation.isComputed() && (!drawOnLabel || Orientation.isGraphicLabel())) {
+                if (ORIENTATION.isComputed() && (!drawOnLabel || ORIENTATION.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Orientation.isQuickComputing()) {
-                        val = MathUtil.getOrientation(A, B);
+                    if (releaseEvent || ORIENTATION.isQuickComputing()) {
+                        val = MathUtil.getOrientation(ptA, ptB);
                     }
-                    measVal.add(new MeasureItem(Orientation, val, "deg"));
+                    measVal.add(new MeasureItem(ORIENTATION, val, "deg"));
 
                 }
-                if (Azimuth.isComputed() && (!drawOnLabel || Azimuth.isGraphicLabel())) {
+                if (AZIMUTH.isComputed() && (!drawOnLabel || AZIMUTH.isGraphicLabel())) {
                     Double val = null;
-                    if (releaseEvent || Azimuth.isQuickComputing()) {
-                        val = MathUtil.getAzimuth(A, B);
+                    if (releaseEvent || AZIMUTH.isQuickComputing()) {
+                        val = MathUtil.getAzimuth(ptA, ptB);
                     }
-                    measVal.add(new MeasureItem(Azimuth, val, "deg"));
+                    measVal.add(new MeasureItem(AZIMUTH, val, "deg"));
 
                 }
                 return measVal;
@@ -141,22 +141,22 @@ public class LineGraphic extends AbstractDragGraphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected void updateTool() {
-        A = handlePointList.size() >= 1 ? handlePointList.get(0) : null;
-        B = handlePointList.size() >= 2 ? handlePointList.get(1) : null;
+        ptA = getHandlePoint(0);
+        ptB = getHandlePoint(1);
 
-        ABvalid = A != null && B != null && !B.equals(A);
+        lineABvalid = ptA != null && ptB != null && !ptB.equals(ptA);
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Point2D getStartPoint() {
         updateTool();
-        return A;
+        return ptA;
     }
 
     public Point2D getEndPoint() {
         updateTool();
-        return B;
+        return ptB;
     }
 
 }
