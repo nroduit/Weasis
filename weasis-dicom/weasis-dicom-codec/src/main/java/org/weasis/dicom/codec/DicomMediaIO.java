@@ -397,7 +397,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private void writeOnlyinstance(DicomObject dicomObject) {
         if (dicomObject != null && tags != null) {
             // Instance tags
-            setTagNoNull(TagW.ImageType, dicomObject.getString(Tag.ImageType));
+            setTagNoNull(TagW.ImageType, getStringFromDicomElement(dicomObject, Tag.ImageType, null));
             setTagNoNull(TagW.ImageComments, dicomObject.getString(Tag.ImageComments));
             setTagNoNull(TagW.ContrastBolusAgent, dicomObject.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.TransferSyntaxUID, dicomObject.getString(Tag.TransferSyntaxUID));
@@ -532,49 +532,88 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private void computeSUVFactor(DicomObject dicomObject, HashMap<TagW, Object> tagList, int index) {
         String modlality = (String) tagList.get(TagW.Modality);
         if ("PT".equals(modlality)) {
-            Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, null);
-            DicomElement seq = dicomObject.get(Tag.RadiopharmaceuticalInformationSequence);
-            if (seq != null && seq.vr() == VR.SQ) {
-                DicomObject dcm = null;
-                try {
-                    dcm = seq.getDicomObject(index);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (dcm != null) {
-                    Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
-                    Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
-                    Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
-                    Date injectDateTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-                    Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
-                    if (weight != null && totalDose != null && halfLife != null && injectTime != null
-                        && acqTime != null) {
-                        double time = 0.0;
-                        if (injectDateTime != null) {
-                            Date acqDate = (Date) tagList.get(TagW.AcquisitionDate);
-                            if (acqDate != null) {
-                                Date dateTime = TagW.dateTime(acqDate, acqTime);
-                                time = dateTime.getTime() - injectDateTime.getTime();
+            String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage, null);
+            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) {
+                double suvFactor = 0.0;
+                String units = dicomObject.getString(Tag.Units);
+                if ("BQML".equals(units)) {
+                    Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
+                    DicomElement seq = dicomObject.get(Tag.RadiopharmaceuticalInformationSequence);
+                    if (weight != 0.0f && seq != null && seq.vr() == VR.SQ) {
+                        DicomObject dcm = null;
+                        try {
+                            dcm = seq.getDicomObject(index);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        if (dcm != null) {
+                            Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
+                            Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
+                            Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                            Date injectDateTime =
+                                getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
+                            Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
+                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null
+                                && halfLife != null && injectTime != null && acqTime != null) {
+                                double time = 0.0;
+                                if (injectDateTime != null) {
+                                    Date acqDate = (Date) tagList.get(TagW.AcquisitionDate);
+                                    if (acqDate != null) {
+                                        Date dateTime = TagW.dateTime(acqDate, acqTime);
+                                        time = dateTime.getTime() - injectDateTime.getTime();
+                                    }
+                                }
+                                if (time == 0.0) {
+                                    // Difference is seconds divided by halfLife
+                                    time =
+                                        (acqTime.getTime() % TagW.MILLIS_PER_DAY)
+                                            - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
+                                    // Handle case over midnight
+                                    // TODO NEED to be validated, time more than one day ?
+                                    if (time < 0) {
+                                        time += TagW.MILLIS_PER_DAY;
+                                    }
+                                }
+                                double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
+                                // Weight convert in kg to g
+                                suvFactor = weight * 1000.0 / correctedDose;
                             }
                         }
-                        if (time == 0.0) {
-                            // Difference is seconds divided by halfLife
-                            time =
-                                (acqTime.getTime() % TagW.MILLIS_PER_DAY)
-                                    - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
-                            // Handle case over midnight
-                            // TODO NEED to be validated, time more than one day ?
-                            if (time < 0) {
-                                time += TagW.MILLIS_PER_DAY;
-                            }
-                        }
-                        double correctedDose = totalDose * Math.exp(-Math.log(2) * time / (1000.0 * halfLife));
-                        // Weight convert in kg to g
-                        setTag(tagList, TagW.SuvFactor, weight * 1000.0f / correctedDose);
                     }
+                } else if ("CNTS".equals(units)) {
+                    String privateTagCreator = dicomObject.getString(0x70530010);
+                    double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
+                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) {
+                        suvFactor = privateSUVFactor;
+                        // units= "g/ml";
+                    }
+                } else if ("GML".equals(units)) {
+                    suvFactor = 1.0;
+                    // UNIT
+                    // String unit = dicomObject.getString(Tag.SUVType);
+
+                }
+                if (suvFactor != 0.0) {
+                    setTag(tagList, TagW.SuvFactor, suvFactor);
                 }
             }
         }
+    }
+
+    private String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
+        DicomElement element = dicom.get(tag);
+        if (element == null || element.isEmpty())
+            return defaultValue;
+        String[] s = dicom.getStrings(tag);
+        if (s.length == 1)
+            return s[0];
+        if (s.length == 0)
+            return "";
+        StringBuffer sb = new StringBuffer(s[0]);
+        for (int i = 1; i < s.length; i++) {
+            sb.append("\\" + s[i]);
+        }
+        return sb.toString();
     }
 
     private Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
