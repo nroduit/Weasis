@@ -101,7 +101,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
-            if (file[i].isDirectory()) {
+            if (file[i] == null) {
+                continue;
+            } else if (file[i].isDirectory()) {
                 if (firstLevel || recursive) {
                     folders.add(file[i]);
                 }
