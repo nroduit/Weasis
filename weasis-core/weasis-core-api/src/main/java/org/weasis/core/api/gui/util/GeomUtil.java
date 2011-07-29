@@ -61,9 +61,9 @@ public final class GeomUtil {
      * @return angle in the range of [ -pi ; pi ]
      */
     public static double getSmallestRotationAngleRad(double angle) {
-        angle = angle % Math.PI;
+        angle = angle % (2 * Math.PI);
         if (Math.abs(angle) > Math.PI) {
-            angle -= Math.signum(angle) * 2.0 * Math.PI;
+            angle -= Math.signum(angle) * (2.0 * Math.PI);
         }
         return angle;
     }
@@ -77,6 +77,32 @@ public final class GeomUtil {
         angle = angle % 360.0;
         if (Math.abs(angle) > 180.0) {
             angle -= Math.signum(angle) * 360.0;
+        }
+        return angle;
+    }
+
+    /**
+     * @param angle
+     *            in Radiant
+     * @return angle in the range of [ -pi ; pi ]
+     */
+    public static double getSmallestAngleRad(double angle) {
+        angle = angle % Math.PI;
+        if (Math.abs(angle) > (Math.PI / 2.0)) {
+            angle -= Math.signum(angle) * Math.PI;
+        }
+        return angle;
+    }
+
+    /**
+     * @param angle
+     *            in Degree
+     * @return angle in the range of [ -90 ; 90 ]
+     */
+    public static double getSmallestAngleDeg(double angle) {
+        angle = angle % 180.0;
+        if (Math.abs(angle) > 90.0) {
+            angle -= Math.signum(angle) * 180.0;
         }
         return angle;
     }

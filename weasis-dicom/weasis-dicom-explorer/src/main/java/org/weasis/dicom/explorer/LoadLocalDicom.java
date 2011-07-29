@@ -243,6 +243,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     }
                 }
             } else {
+                // Test if SOPInstanceUID already exists
+                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader.getTagValue(TagW.SOPInstanceUID)))
+                    return null;
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {

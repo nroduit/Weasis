@@ -85,13 +85,15 @@ public class WeasisLauncher {
 
     private static HostActivator m_activator = null;
     private static Felix m_felix = null;
-    protected static ServiceTracker m_tracker = null;
+    static ServiceTracker m_tracker = null;
 
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
     public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     static Properties modulesi18n = null;
     private static String look = null;
+
+    private static RemotePreferences REMOTE_PREFS;
 
     /**
      * <p>
@@ -257,6 +259,9 @@ public class WeasisLauncher {
                 public void run() {
                     int exitStatus = 0;
                     try {
+                        if (REMOTE_PREFS != null) {
+                            REMOTE_PREFS.store();
+                        }
                         if (m_felix != null) {
                             m_felix.stop();
                             // wait asynchronous stop (max 25 seconds)
@@ -678,6 +683,9 @@ public class WeasisLauncher {
             }
         }
         File common_file = new File(basdir, APP_PROPERTY_FILE);
+        if (REMOTE_PREFS != null && user != null) {
+            REMOTE_PREFS.read(basdir);
+        }
         Properties s_prop = readProperties(common_file);
 
         // Get locale from system properties otherwise set en_US (only for the first launch of Weasis on a user session)

@@ -61,16 +61,11 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                 if (handlePointIndex == 0 || handlePointIndex == 1) {
                     // drag point is A or B
 
-                    Point2D anchor;// anchor is opposite point of A or B
-                    double theta; // rotation angle around anchor point
+                    Point2D anchor = (handlePointIndex == 0) ? ptB : ptA;
+                    double theta =
+                        GeomUtil.getSmallestAngleRad(GeomUtil.getAngleRad(ptC, ptD) - GeomUtil.getAngleRad(ptA, ptB));
 
-                    if (handlePointIndex == 0) {
-                        anchor = ptB;
-                        theta = GeomUtil.getAngleRad(ptC, ptD) - GeomUtil.getAngleRad(ptA, ptB);
-                    } else {
-                        anchor = ptA;
-                        theta = GeomUtil.getAngleRad(ptD, ptC) - GeomUtil.getAngleRad(ptB, ptA);
-                    }
+                    // rotation angle around anchor point
                     AffineTransform rotate = AffineTransform.getRotateInstance(theta, anchor.getX(), anchor.getY());
 
                     rotate.transform(ptC, ptC);
