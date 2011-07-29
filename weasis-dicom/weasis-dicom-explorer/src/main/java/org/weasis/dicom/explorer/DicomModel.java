@@ -569,19 +569,21 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
                     if (prop != null && baseDir != null) {
                         String[] dirs = prop.split(","); //$NON-NLS-1$
+                        for (int i = 0; i < dirs.length; i++) {
+                            dirs[i] = dirs[i].trim().replaceAll("/", File.separator);
+                        }
                         File[] files = new File[dirs.length];
                         boolean notCaseSensitive = AbstractProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
                         if (notCaseSensitive) {
-                            Arrays.sort(files);
+                            Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
                         }
                         String last = null;
                         for (int i = 0; i < files.length; i++) {
-                            String dir = dirs[i].trim().replaceAll("/", File.separator);
-                            if (notCaseSensitive && last != null && dir.equalsIgnoreCase(last)) {
+                            if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
                                 last = null;
                             } else {
-                                last = dir;
-                                files[i] = new File(baseDir, dir); //$NON-NLS-1$
+                                last = dirs[i];
+                                files[i] = new File(baseDir, dirs[i]);
                             }
                         }
                         loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, true));
