@@ -387,7 +387,7 @@ public class ImageFiler extends AbstractBufferHandler {
         enc.encode(image);
     }
 
-    public static PlanarImage tileImage(PlanarImage img) {
+    public static PlanarImage tileImage(RenderedImage img) {
         // Tile image while reading to handle large images
         ImageLayout layout = new ImageLayout();
         layout.setTileWidth(TILESIZE);

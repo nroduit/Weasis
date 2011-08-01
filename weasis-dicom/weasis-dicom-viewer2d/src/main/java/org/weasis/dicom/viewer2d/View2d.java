@@ -184,8 +184,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         super.propertyChange(evt);
-        if (series == null)
+        if (series == null) {
             return;
+        }
         if (evt.getPropertyName().equals(ActionW.PRESET.cmd())) {
             actionsInView.put(ActionW.PRESET.cmd(), evt.getNewValue());
         } else if (evt.getPropertyName().equals(ActionW.IMAGE_OVERLAY.cmd())) {
@@ -367,8 +368,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private void addMouseAdapter(String actionName, int buttonMask) {
         MouseActionAdapter adapter = getMouseAdapter(actionName);
-        if (adapter == null)
+        if (adapter == null) {
             return;
+        }
         adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
         if (adapter == mouseClickHandler) {
             this.addKeyListener(drawingsKeyListeners);
@@ -398,24 +400,25 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     private MouseActionAdapter getMouseAdapter(String action) {
-        if (action.equals(ActionW.MEASURE.cmd()))
+        if (action.equals(ActionW.MEASURE.cmd())) {
             return mouseClickHandler;
-        else if (action.equals(ActionW.PAN.cmd()))
+        } else if (action.equals(ActionW.PAN.cmd())) {
             return getAction(ActionW.PAN);
-        else if (action.equals(ActionW.CONTEXTMENU.cmd()))
+        } else if (action.equals(ActionW.CONTEXTMENU.cmd())) {
             return contextMenuHandler;
-        else if (action.equals(ActionW.WINDOW.cmd()))
+        } else if (action.equals(ActionW.WINDOW.cmd())) {
             return getAction(ActionW.WINDOW);
-        else if (action.equals(ActionW.LEVEL.cmd()))
+        } else if (action.equals(ActionW.LEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        else if (action.equals(ActionW.WINLEVEL.cmd()))
+        } else if (action.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
-        else if (action.equals(ActionW.SCROLL_SERIES.cmd()))
+        } else if (action.equals(ActionW.SCROLL_SERIES.cmd())) {
             return getAction(ActionW.SCROLL_SERIES);
-        else if (action.equals(ActionW.ZOOM.cmd()))
+        } else if (action.equals(ActionW.ZOOM.cmd())) {
             return getAction(ActionW.ZOOM);
-        else if (action.equals(ActionW.ROTATION.cmd()))
+        } else if (action.equals(ActionW.ROTATION.cmd())) {
             return getAction(ActionW.ROTATION);
+        }
         return null;
     }
 
@@ -432,8 +435,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private MouseActionAdapter getAction(ActionW action) {
         ActionState a = eventManager.getAction(action);
-        if (a instanceof MouseActionAdapter)
+        if (a instanceof MouseActionAdapter) {
             return (MouseActionAdapter) a;
+        }
         return null;
     }
 
@@ -514,30 +518,35 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         public Transferable createTransferable(JComponent comp) {
             if (comp instanceof Thumbnail) {
                 MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series)
+                if (t instanceof Series) {
                     return t;
+                }
             }
             return null;
         }
 
         @Override
         public boolean canImport(TransferSupport support) {
-            if (!support.isDrop())
+            if (!support.isDrop()) {
                 return false;
+            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor))
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
                 return true;
+            }
             return false;
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (!canImport(support))
+            if (!canImport(support)) {
                 return false;
+            }
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-            if (dicomView == null)
+            if (dicomView == null) {
                 return false;
+            }
             DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
             Transferable transferable = support.getTransferable();
 
@@ -637,10 +646,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     class ContextMenuHandler extends MouseActionAdapter {
 
         @Override
-        public void mousePressed(final MouseEvent mouseevent) {
+        public void mousePressed(final MouseEvent evt) {
             int buttonMask = getButtonMaskEx();
             // Context menu
-            if ((mouseevent.getModifiersEx() & buttonMask) != 0) {
+            if ((evt.getModifiersEx() & buttonMask) != 0) {
                 final ArrayList<Graphic> selected =
                     new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics());
                 if (selected.size() > 0) {
@@ -649,27 +658,64 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     boolean graphicComplete = true;
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
-
-                        if (ds != null && graph instanceof AbstractDragGraphic) {
-                            AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
-                            if (absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED
-                                && !absgraph.isGraphicComplete()) {
-                                final JMenuItem item2 = new JMenuItem("Stop drawing");
-                                item2.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        MouseEventDouble event =
-                                            new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
-                                        ds.completeDrag(event);
-                                        mouseClickHandler.mouseReleased(event);
-                                    }
-                                });
-                                popupMenu.add(item2);
-                                popupMenu.add(new JSeparator());
-                            }
+                        if (graph instanceof AbstractDragGraphic) {
+                            final AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
                             if (!absgraph.isGraphicComplete()) {
                                 graphicComplete = false;
+                            }
+                            if (absgraph.isVariablePointsNumber()) {
+                                if (graphicComplete) {
+                                    // Convert mouse event point to real image coordinate point (without geometric
+                                    // transformation)
+                                    final MouseEventDouble mouseEvt =
+                                        new MouseEventDouble(View2d.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16,
+                                            0, 0, 0, 0, 1, true, 1);
+                                    mouseEvt.setSource(View2d.this);
+                                    mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
+                                    final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
+                                    if (ptIndex >= 0) {
+                                        JMenuItem menuItem = new JMenuItem("Remove this Point");
+                                        menuItem.addActionListener(new ActionListener() {
+
+                                            @Override
+                                            public void actionPerformed(ActionEvent e) {
+                                                absgraph.removeHandlePoint(ptIndex, mouseEvt);
+                                            }
+                                        });
+                                        popupMenu.add(menuItem);
+
+                                        menuItem = new JMenuItem("Continue to Draw");
+                                        menuItem.addActionListener(new ActionListener() {
+
+                                            @Override
+                                            public void actionPerformed(ActionEvent e) {
+                                                absgraph.forceToAddPoints(ptIndex);
+                                                MouseEventDouble evt2 =
+                                                    new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt
+                                                        .getWhen(), 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt
+                                                        .getYOnScreen(), 1, true, 1);
+                                                mouseClickHandler.mousePressed(evt2);
+                                            }
+                                        });
+                                        popupMenu.add(menuItem);
+                                        popupMenu.add(new JSeparator());
+                                    }
+                                } else if (ds != null
+                                    && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                                    final JMenuItem item2 = new JMenuItem("Stop drawing");
+                                    item2.addActionListener(new ActionListener() {
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            MouseEventDouble event =
+                                                new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
+                                            ds.completeDrag(event);
+                                            mouseClickHandler.mouseReleased(event);
+                                        }
+                                    });
+                                    popupMenu.add(item2);
+                                    popupMenu.add(new JSeparator());
+                                }
                             }
                         }
                     }
@@ -764,13 +810,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
-                                WinUtil.adjustLocationToFitScreen(dialog, mouseevent.getLocationOnScreen());
+                                WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
                                 dialog.setVisible(true);
                             }
                         });
                         popupMenu.add(properties);
                     }
-                    popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
+                    popupMenu.show(evt.getComponent(), evt.getX() - 5, evt.getY() - 5);
                 } else if (View2d.this.getSourceImage() != null) {
                     JPopupMenu popupMenu = new JPopupMenu();
                     final EventManager event = EventManager.getInstance();
@@ -833,8 +879,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                                         "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
                                             if (option == JOptionPane.YES_OPTION) {
                                                 break;
-                                            } else
+                                            } else {
                                                 return;
+                                            }
                                         }
                                     }
                                     for (Graphic g : graphs) {
@@ -940,7 +987,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     });
                     popupMenu.add(close);
-                    popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
+                    popupMenu.show(evt.getComponent(), evt.getX() - 5, evt.getY() - 5);
                 }
             }
         }

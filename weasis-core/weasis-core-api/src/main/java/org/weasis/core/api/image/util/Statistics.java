@@ -117,6 +117,33 @@ public class Statistics {
         return sHat;
     }
 
+    /**
+     * Compute standard deviation in one pass (less accurate for small or large values) Ref.
+     * http://www.strchr.com/standard_deviation_in_one_pass
+     * 
+     * @param data
+     * @return
+     */
+    public static double stDevOnePass(double[] data) {
+        double sHat;
+        if (data == null || data.length == 0) {
+            sHat = (0.0D / 0.0D);
+        } else {
+
+            double meanSum = data[0];
+            sHat = 0.0;
+            for (int i = 1; i < data.length; ++i) {
+                double stepSum = data[i] - meanSum;
+                double stepMean = ((i - 1) * stepSum) / i;
+                meanSum += stepMean;
+                sHat += stepMean * stepSum;
+            }
+            sHat = Math.sqrt(sHat / (data.length - 1.0));
+        }
+        return sHat;
+
+    }
+
     public static double stDev(int[] data, double mu) {
         double sHat;
         if (data == null || data.length == 0) {
@@ -282,7 +309,7 @@ public class Statistics {
             for (int i = 0; i < x.length; i++) {
                 sum += Math.pow((x[i] - mu), order);
             }
-            return (sum / x.length);
+            return (sum / (x.length - 1));
         }
     }
 

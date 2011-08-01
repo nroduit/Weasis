@@ -101,7 +101,7 @@ import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
- * @author Nicolas Roduit,Benoit Jacquemoud
+ * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
@@ -146,8 +146,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager, AbstractLayerModel layerModel, ViewModel viewModel) {
         super(layerModel, viewModel);
-        if (eventManager == null)
+        if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+        }
         this.eventManager = eventManager;
         tileOffset = 0;
         initActionWState();
@@ -297,8 +298,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void closingSeries(MediaSeries<E> series) {
-        if (series == null)
+        if (series == null) {
             return;
+        }
         boolean open = false;
         synchronized (UIManager.VIEWER_PLUGINS) {
             List<ViewerPlugin> plugins = UIManager.VIEWER_PLUGINS;
@@ -414,8 +416,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public int getCurrentImageIndex() {
-        if (series instanceof Series)
+        if (series instanceof Series) {
             return ((Series) series).getImageIndex(imageLayer.getSourceImage());
+        }
         return 0;
     }
 
@@ -427,8 +430,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public RenderedImage getSourceImage() {
         E image = getImage();
-        if (image == null)
+        if (image == null) {
             return null;
+        }
         return image.getImage();
     }
 
@@ -465,12 +469,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public Font getFont() {
         final Rectangle bound = getBounds();
-        if (bound.height < 300 || bound.width < 300)
+        if (bound.height < 300 || bound.width < 300) {
             return FontTools.getFont8();
-        else if (bound.height < 500 || bound.width < 500)
+        } else if (bound.height < 500 || bound.width < 500) {
             return FontTools.getFont10();
-        else
+        } else {
             return FontTools.getFont12();
+        }
     }
 
     @Override
@@ -600,8 +605,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public Object getLensActionValue(String action) {
-        if (lens == null)
+        if (lens == null) {
             return null;
+        }
         return lens.getActionValue(action);
     }
 
@@ -620,8 +626,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (series == null)
+        if (series == null) {
             return;
+        }
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
             Object value = evt.getNewValue();
@@ -836,8 +843,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     private void drawPointer(Graphics2D g) {
-        if (pointerType < 1)
+        if (pointerType < 1) {
             return;
+        }
         if (pointerType == 1) {
             drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
         } else if (pointerType == 3) {
@@ -907,16 +915,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0)
+            if ((e.getModifiersEx() & buttonMask) == 0) {
                 return;
+            }
 
             // Convert mouse event point to real image coordinate point (without geometric transformation)
             MouseEventDouble mouseEvt = new MouseEventDouble(e);
             mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
             // Do nothing and return if current dragSequence is not completed
-            if (ds != null && !ds.completeDrag(mouseEvt))
+            if (ds != null && !ds.completeDrag(mouseEvt)) {
                 return;
+            }
 
             Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
 
@@ -1003,12 +1013,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // Check if extended modifier of mouse event equals the current buttonMask
             // Note that extended modifiers are not triggered in mouse released
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiers() & buttonMask) == 0)
+            if ((e.getModifiers() & buttonMask) == 0) {
                 return;
+            }
 
             // Do nothing and return if no dragSequence exist
-            if (ds == null)
+            if (ds == null) {
                 return;
+            }
 
             // Convert mouse event point to real image coordinate point (without geometric transformation)
             MouseEventDouble mouseEvt = new MouseEventDouble(e);
@@ -1125,8 +1137,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0)
+            if ((e.getModifiersEx() & buttonMask) == 0) {
                 return;
+            }
 
             if (ds != null) {
                 // Convert mouse event point to real image coordinate point (without geometric transformation)
@@ -1206,8 +1219,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         @Override
         public void mousePressed(MouseEvent mouseevent) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
-            if (pane == null)
+            if (pane == null) {
                 return;
+            }
             if (pane.isContainingView(DefaultView2d.this)) {
                 // register all actions of the EventManager with this view waiting the focus gained in some cases is not
                 // enough, because others mouseListeners are triggered before the focus event (that means before
@@ -1281,8 +1295,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public abstract void enableMouseAndKeyListener(MouseActions mouseActions);
 
     public static final AffineTransform getAffineTransform(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
+        }
         return null;
     }
 

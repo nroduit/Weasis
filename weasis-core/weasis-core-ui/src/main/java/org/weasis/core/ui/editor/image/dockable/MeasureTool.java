@@ -90,7 +90,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     }
 
-    private void jbInit() {
+    private final void jbInit() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         add(getGeneralOptions());
@@ -104,7 +104,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     }
 
-    public JPanel getIconsPanel() {
+    public final JPanel getIconsPanel() {
         final JPanel transform = new JPanel();
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -345,12 +345,16 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             jtable.setModel(new SimpleTableModel(headers, labels));
             jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
             createTableHeaders(jtable);
-
+            int height =
+                (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
+                    + jtable.getTableHeader().getHeight() + 5;
+            tableContainer.setPreferredSize(new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
             tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
             tableContainer.add(jtable, BorderLayout.CENTER);
             TableColumnAdjuster.pack(jtable);
+        } else {
+            tableContainer.setPreferredSize(new Dimension(50, 50));
         }
-
         tableContainer.revalidate();
         tableContainer.repaint();
     }
@@ -376,14 +380,14 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     public void handle(List<Graphic> selectedGraphicList, ImageElement img) {
         Graphic g = null;
         List<AbstractDragGraphic> list = null;
-        
+
         if (selectedGraphicList != null) {
             if (selectedGraphicList.size() == 1) {
                 g = selectedGraphicList.get(0);
             }
-            
+
             list = new ArrayList<AbstractDragGraphic>();
-            
+
             for (Graphic graphic : selectedGraphicList) {
                 if (graphic instanceof AbstractDragGraphic) {
                     list.add((AbstractDragGraphic) graphic);

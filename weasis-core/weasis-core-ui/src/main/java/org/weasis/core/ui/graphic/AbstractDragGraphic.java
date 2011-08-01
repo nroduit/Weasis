@@ -81,6 +81,7 @@ public abstract class AbstractDragGraphic implements Graphic {
     protected boolean selected = false;
 
     private boolean resizingOrMoving = false;
+    private final boolean variablePointsNumber;
 
     private int layerID = Tools.TEMPDRAGLAYER.getId();
 
@@ -104,7 +105,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         if (paintColor == null) {
             paintColor = Color.YELLOW;
         }
-
+        this.variablePointsNumber = handlePointTotalNumber == UNDEFINED;
         this.handlePointTotalNumber = handlePointTotalNumber;
         this.handlePointList =
             handlePointList == null ? new ArrayList<Point2D>(handlePointTotalNumber > 0 ? handlePointTotalNumber : 10)
@@ -127,6 +128,10 @@ public abstract class AbstractDragGraphic implements Graphic {
 
     public int getHandlePointTotalNumber() {
         return handlePointTotalNumber;
+    }
+
+    public boolean isVariablePointsNumber() {
+        return variablePointsNumber;
     }
 
     public Stroke getStroke(float lineThickness) {
@@ -178,13 +183,32 @@ public abstract class AbstractDragGraphic implements Graphic {
         return handlePointList.size() == handlePointTotalNumber;
     }
 
-    public void addHandlePoint(Point2D handlePt) {
-        handlePointList.add(handlePt);
+    public void forceToAddPoints(int fromPtIndex) {
+        if (variablePointsNumber && fromPtIndex >= 0 && fromPtIndex < handlePointList.size()) {
+            if (fromPtIndex < handlePointList.size() - 1) {
+                List<Point2D> list = handlePointList.subList(fromPtIndex + 1, handlePointList.size());
+                for (int i = 0; i <= fromPtIndex; i++) {
+                    list.add(handlePointList.get(i));
+                }
+                handlePointList = list;
+            }
+            handlePointTotalNumber = UNDEFINED;
+        }
+    }
+
+    public Point2D removeHandlePoint(int index, MouseEventDouble mouseEvent) {
+        // To keep a valid shape, do not remove when there are 2 points left.
+        if (variablePointsNumber && handlePointList.size() > 2 && index >= 0 && index < handlePointList.size()) {
+            Point2D pt = handlePointList.remove(index);
+            handlePointTotalNumber = handlePointList.size();
+            updateShapeOnDrawing(mouseEvent);
+            return pt;
+        }
+        return null;
     }
 
     public Point2D getHandlePoint(int index) {
         Point2D handlePoint = null;
-
         if (index >= 0 && index < handlePointList.size()) {
             if ((handlePoint = handlePointList.get(index)) != null) {
                 handlePoint = (Point2D) handlePoint.clone();
@@ -259,18 +283,18 @@ public abstract class AbstractDragGraphic implements Graphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @since Weasis v1.1.0 - new in Graphic interface
+     * @since v1.1.0 - new in Graphic interface
      */
 
     @Override
     public Area getArea(AffineTransform transform) {
-        if (shape == null)
+        if (shape == null) {
             return new Area();
+        }
 
-        if (shape instanceof AdvancedShape)
+        if (shape instanceof AdvancedShape) {
             return ((AdvancedShape) shape).getArea(transform);
-
-        else {
+        } else {
             double growingSize = Math.max(selectionSize, handleSize);
             growingSize = Math.max(growingSize, lineThickness);
             growingSize /= GeomUtil.extractScalingFactor(transform);
@@ -299,13 +323,14 @@ public abstract class AbstractDragGraphic implements Graphic {
      *         Coordinates are given in RealCoordinates. <br>
      *         Null is return if shape is Null
      * 
-     * @since Weasis v1.1.0 - new in Graphic interface
+     * @since v1.1.0 - new in Graphic interface
      */
 
     @Override
     public Rectangle getBounds(AffineTransform transform) {
-        if (shape == null)
+        if (shape == null) {
             return null;
+        }
 
         if (shape instanceof AdvancedShape) {
             ((AdvancedShape) shape).updateScalingFactor(transform);
@@ -332,12 +357,13 @@ public abstract class AbstractDragGraphic implements Graphic {
      *         This assumes that handle drawing size do not change with different scaling of views. Hence, real
      *         coordinates of bounding rectangle are modified consequently<br>
      * 
-     * @since Weasis v1.1.0 - new in Graphic interface
+     * @since v1.1.0 - new in Graphic interface
      */
 
     public Rectangle getRepaintBounds(Shape shape, AffineTransform transform) {
-        if (shape == null)
+        if (shape == null) {
             return null;
+        }
 
         if (shape instanceof AdvancedShape) {
             ((AdvancedShape) shape).updateScalingFactor(transform);
@@ -436,16 +462,18 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     public boolean isOnGraphicLabel(MouseEventDouble mouseevent) {
-        if (mouseevent == null)
+        if (mouseevent == null) {
             return false;
+        }
 
         final Point2D mousePoint = mouseevent.getImageCoordinates();
 
         AffineTransform transform = getAffineTransform(mouseevent);
         if (transform != null && labelVisible && graphicLabel != null) {
             Area labelArea = graphicLabel.getArea(transform);
-            if (labelArea != null && labelArea.contains(mousePoint))
+            if (labelArea != null && labelArea.contains(mousePoint)) {
                 return true;
+            }
         }
         return false;
     }
@@ -453,20 +481,23 @@ public abstract class AbstractDragGraphic implements Graphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected DefaultView2d getDefaultView2d(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof DefaultView2d)
+        if (mouseevent != null && mouseevent.getSource() instanceof DefaultView2d) {
             return (DefaultView2d) mouseevent.getSource();
+        }
         return null;
     }
 
     protected AffineTransform getAffineTransform(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
+        }
         return null;
     }
 
     protected ImageElement getImageElement(MouseEvent mouseevent) {
-        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer)
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
             return ((Image2DViewer) mouseevent.getSource()).getImage();
+        }
         return null;
     }
 
@@ -872,8 +903,9 @@ public abstract class AbstractDragGraphic implements Graphic {
      * @return True when not handle points equals each another. <br>
      */
     public boolean isShapeValid() {
-        if (!isGraphicComplete())
+        if (!isGraphicComplete()) {
             return false;
+        }
 
         int lastPointIndex = handlePointList.size() - 1;
 
@@ -883,8 +915,9 @@ public abstract class AbstractDragGraphic implements Graphic {
             ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
 
             while (listIt.hasPrevious()) {
-                if (checkPoint != null && checkPoint.equals(listIt.previous()))
+                if (checkPoint != null && checkPoint.equals(listIt.previous())) {
                     return false;
+                }
             }
         }
         return true;
@@ -928,9 +961,11 @@ public abstract class AbstractDragGraphic implements Graphic {
             pcs = new PropertyChangeSupport(this);
         }
 
-        for (PropertyChangeListener listener : pcs.getPropertyChangeListeners())
-            if (listener == propertychangelistener)
+        for (PropertyChangeListener listener : pcs.getPropertyChangeListeners()) {
+            if (listener == propertychangelistener) {
                 return;
+            }
+        }
 
         pcs.addPropertyChangeListener(propertychangelistener);
     }
@@ -1106,8 +1141,9 @@ public abstract class AbstractDragGraphic implements Graphic {
             Stroke stroke;
 
             public BasicShape(Shape shape, Stroke stroke, boolean fixedLineWidth) {
-                if (shape == null || stroke == null)
+                if (shape == null || stroke == null) {
                     throw new IllegalArgumentException();
+                }
                 this.shape = shape;
                 this.stroke = stroke;
                 this.fixedLineWidth = fixedLineWidth;
@@ -1144,11 +1180,13 @@ public abstract class AbstractDragGraphic implements Graphic {
                 boolean fixedLineWidth) {
                 super(shape, stroke, fixedLineWidth);
 
-                if (anchorPoint == null)
+                if (anchorPoint == null) {
                     throw new IllegalArgumentException();
+                }
 
-                if (scalingMin < 0)
+                if (scalingMin < 0) {
                     throw new IllegalArgumentException();
+                }
 
                 this.anchorPoint = (Point2D) anchorPoint.clone();
                 this.scalingMin = scalingMin;
@@ -1194,8 +1232,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         }
 
         void updateScalingFactor(double scalingFactor) {
-            if (scalingFactor == 0)
+            if (scalingFactor == 0) {
                 throw new IllegalArgumentException("scalingFactor cannot be zero");
+            }
             this.scalingFactor = scalingFactor;
         }
 
@@ -1238,8 +1277,9 @@ public abstract class AbstractDragGraphic implements Graphic {
          *         drawing
          */
         public Shape getGeneralShape() {
-            if (shapeList.size() > 0 && shapeList.get(0) != null)
+            if (shapeList.size() > 0 && shapeList.get(0) != null) {
                 return shapeList.get(0).getRealShape();
+            }
             return null;
         }
 
@@ -1286,8 +1326,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         public boolean contains(double x, double y) {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
-                if (realShape != null && realShape.contains(x, y))
+                if (realShape != null && realShape.contains(x, y)) {
                     return true;
+                }
             }
             return false;
         }
@@ -1297,8 +1338,9 @@ public abstract class AbstractDragGraphic implements Graphic {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
 
-                if (realShape != null && realShape.contains(p))
+                if (realShape != null && realShape.contains(p)) {
                     return true;
+                }
             }
             return false;
         }
@@ -1307,8 +1349,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         public boolean contains(double x, double y, double w, double h) {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
-                if (realShape != null && realShape.contains(x, y, w, h))
+                if (realShape != null && realShape.contains(x, y, w, h)) {
                     return true;
+                }
             }
             return false;
         }
@@ -1318,8 +1361,9 @@ public abstract class AbstractDragGraphic implements Graphic {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
 
-                if (realShape != null && realShape.contains(r))
+                if (realShape != null && realShape.contains(r)) {
                     return true;
+                }
             }
             return false;
         }
@@ -1328,8 +1372,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         public boolean intersects(double x, double y, double w, double h) {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
-                if (realShape != null && realShape.intersects(x, y, w, h))
+                if (realShape != null && realShape.intersects(x, y, w, h)) {
                     return true;
+                }
             }
             return false;
         }
@@ -1338,8 +1383,9 @@ public abstract class AbstractDragGraphic implements Graphic {
         public boolean intersects(Rectangle2D r) {
             for (BasicShape item : shapeList) {
                 Shape realShape = item.getRealShape();
-                if (realShape != null && realShape.intersects(r))
+                if (realShape != null && realShape.intersects(r)) {
                     return true;
+                }
             }
             return false;
         }

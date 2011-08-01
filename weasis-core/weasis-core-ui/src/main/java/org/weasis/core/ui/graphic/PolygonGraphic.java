@@ -235,8 +235,9 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
             for (int i = 1; i < handlePointList.size(); i++) {
                 Point2D pt = getHandlePoint(i);
-                if (pt == null)
+                if (pt == null) {
                     return null;
+                }
                 polygonPath.lineTo(pt.getX(), pt.getY());
             }
             // polygonPath.closePath(); // Useless since Area constructor decompose the shape into a closed path

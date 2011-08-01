@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
+import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -235,8 +236,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public void writeMetaData(MediaSeriesGroup group) {
-        if (group == null)
+        if (group == null) {
             return;
+        }
         // Get the dicom header
         DicomObject header = getDicomObject();
 
@@ -508,8 +510,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // hu = pixelValue * rescale slope + intercept value
             Float slope = (Float) tagList.get(TagW.RescaleSlope);
             Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
-            if (slope != null || intercept != null)
+            if (slope != null || intercept != null) {
                 return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+            }
         }
         return pixelValue;
     }
@@ -602,13 +605,16 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
         DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty())
+        if (element == null || element.isEmpty()) {
             return defaultValue;
+        }
         String[] s = dicom.getStrings(tag);
-        if (s.length == 1)
+        if (s.length == 1) {
             return s[0];
-        if (s.length == 0)
+        }
+        if (s.length == 0) {
             return "";
+        }
         StringBuffer sb = new StringBuffer(s[0]);
         for (int i = 1; i < s.length; i++) {
             sb.append("\\" + s[i]);
@@ -618,9 +624,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
         DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty())
+        if (element == null || element.isEmpty()) {
             return defaultValue;
-        else {
+        } else {
             try {
                 return dicom.getDate(tag);
             } catch (Exception e) {
@@ -633,26 +639,29 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
         DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty())
+        if (element == null || element.isEmpty()) {
             return defaultValue;
-        else
+        } else {
             return dicom.getFloat(tag);
+        }
     }
 
     private Integer getIntegerFromDicomElement(DicomObject dicom, int tag, Integer defaultValue) {
         DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty())
+        if (element == null || element.isEmpty()) {
             return defaultValue;
-        else
+        } else {
             return dicom.getInt(tag);
+        }
     }
 
     private Double getDoubleFromDicomElement(DicomObject dicom, int tag, Double defaultValue) {
         DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty())
+        if (element == null || element.isEmpty()) {
             return defaultValue;
-        else
+        } else {
             return dicom.getDouble(tag);
+        }
     }
 
     // public boolean readMediaTags(ImageInputStream iis) {
@@ -689,8 +698,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     public boolean containTag(int id) {
         for (Iterator<TagW> it = tags.keySet().iterator(); it.hasNext();) {
-            if (it.next().getId() == id)
+            if (it.next().getId() == id) {
                 return true;
+            }
         }
         return false;
     }
@@ -776,16 +786,23 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 }
                 PlanarImage img = null;
                 if (buffer != null) {
-                    img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
                     // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
                     // for short data. They convert signed short to unsigned short.
                     if (getDataType() == DataBuffer.TYPE_SHORT
-                        && img.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                        img = RectifyUShortToShortDataDescriptor.create(img, null);
-                    } else if (ImageUtil.isBinary(img.getSampleModel())) {
+                        && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
+                        img =
+                            RectifyUShortToShortDataDescriptor
+                                .create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+                    } else if (ImageUtil.isBinary(buffer.getSampleModel())) {
                         ParameterBlock pb = new ParameterBlock();
-                        pb.addSource(img);
+                        pb.addSource(buffer);
+                        // Tile size are set in this operation
                         img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
+                    } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
+                        || buffer.getTileHeight() != ImageFiler.TILESIZE) {
+                        img = ImageFiler.tileImage(buffer);
+                    } else {
+                        img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
                     }
                 }
                 return img;
@@ -796,8 +813,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private MediaElement getSingleImage() {
         MediaElement[] elements = getMediaElement();
-        if (elements != null && elements.length > 0)
+        if (elements != null && elements.length > 0) {
             return elements[0];
+        }
         return null;
     }
 
@@ -1030,12 +1048,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public Series buildSeries(String seriesUID) {
-        if (IMAGE_MIMETYPE.equals(mimeType))
+        if (IMAGE_MIMETYPE.equals(mimeType)) {
             return new DicomSeries(seriesUID);
-        else if (SERIES_VIDEO_MIMETYPE.equals(mimeType))
+        } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
             return new DicomVideoSeries(seriesUID);
-        else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType))
+        } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
             return new DicomEncapDocSeries(seriesUID);
+        }
         return new DicomSeries(seriesUID);
     }
 

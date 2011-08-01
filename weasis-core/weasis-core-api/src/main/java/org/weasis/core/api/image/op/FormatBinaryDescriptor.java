@@ -27,6 +27,8 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.PlanarImage;
 
+import org.weasis.core.api.image.util.ImageFiler;
+
 import com.sun.media.jai.util.ImageUtil;
 
 /**
@@ -42,15 +44,15 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
      */
     private static final String[][] resources = { { "GlobalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "LocalName", "FormatBinary" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "Description", "format bilevel to be displayed correctly" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
+        { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
+        { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String supportedModes[] = { "rendered" }; //$NON-NLS-1$
 
@@ -63,6 +65,7 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
      * Creates a SampleOpImage with the given ParameterBlock if the SampleOpImage can handle the particular
      * ParameterBlock.
      */
+    @Override
     public RenderedImage create(ParameterBlock paramBlock, RenderingHints renderHints) {
         if (!validateSources(paramBlock)) {
             return null;
@@ -80,6 +83,8 @@ public class FormatBinaryDescriptor extends OperationDescriptorImpl implements R
         }
         LookupTableJAI lut = new LookupTableJAI(table_data);
         ImageLayout layout = new ImageLayout();
+        layout.setTileWidth(ImageFiler.TILESIZE);
+        layout.setTileHeight(ImageFiler.TILESIZE);
         layout.setColorModel(cm);
         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
         hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));

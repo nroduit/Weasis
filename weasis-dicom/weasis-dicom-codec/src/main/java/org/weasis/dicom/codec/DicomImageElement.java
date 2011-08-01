@@ -12,13 +12,12 @@ package org.weasis.dicom.codec;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
 
-import javax.media.jai.JAI;
 import javax.media.jai.OpImage;
 import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 
+import org.weasis.core.api.image.op.ExtremaRangeLimitDescriptor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
@@ -64,8 +63,9 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getPixelWindow(float window) {
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        if (slope != null)
+        if (slope != null) {
             return window /= slope;
+        }
         return window;
     }
 
@@ -123,17 +123,12 @@ public class DicomImageElement extends ImageElement {
                 this.minValue = 0;
                 this.maxValue = 255;
             } else {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(img);
-                pb.add((ROI) null);
-                pb.add(1);
-                pb.add(1);
-                pb.add(paddingValueMin);
-                pb.add(paddingValueMax);
-                RenderedOp dst = JAI.create("ExtremaRangeLimit", pb, null); //$NON-NLS-1$
+                RenderedOp dst =
+                    ExtremaRangeLimitDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin), new Double(
+                        paddingValueMax), null);
                 // To ensure this image is not stored in tile cache
                 ((OpImage) dst.getRendering()).setTileCache(null);
-                double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
+                double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
                 double min = Double.MAX_VALUE;
                 double max = -Double.MAX_VALUE;
                 int numBands = dst.getSampleModel().getNumBands();
@@ -150,16 +145,18 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getDefaultWindow() {
         Float val = (Float) getTagValue(TagW.WindowWidth);
-        if (val == null)
+        if (val == null) {
             return super.getDefaultWindow();
+        }
         return val;
     }
 
     @Override
     public float getDefaultLevel() {
         Float val = (Float) getTagValue(TagW.WindowCenter);
-        if (val == null)
+        if (val == null) {
             return super.getDefaultLevel();
+        }
         return val;
     }
 
@@ -168,8 +165,9 @@ public class DicomImageElement extends ImageElement {
         // hu = pixelValue * rescale slope + intercept value
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null)
+        if (slope != null || intercept != null) {
             return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+        }
         return pixelValue;
 
     }
@@ -179,8 +177,9 @@ public class DicomImageElement extends ImageElement {
         // pixelValue = (hu - intercept value) / rescale slope
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null)
+        if (slope != null || intercept != null) {
             return (hounsfieldValue - (intercept == null ? 0.0f : intercept)) / (slope == null ? 1.0f : slope);
+        }
         return hounsfieldValue;
 
     }
@@ -194,12 +193,13 @@ public class DicomImageElement extends ImageElement {
                 Float sliceTickness = (Float) getTagValue(TagW.SliceThickness);
                 Integer rows = (Integer) getTagValue(TagW.Rows);
                 Integer columns = (Integer) getTagValue(TagW.Columns);
-                if (rows != null && columns != null && rows > 0 && columns > 0)
+                if (rows != null && columns != null && rows > 0 && columns > 0) {
                     // If no sliceTickness: set 0, sliceTickness is only use in IntersectVolume
                     // Multiply rows and columns by getZoomScale() to have square pixel image size
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
                         imgOr[4], imgOr[5] }, pos, spacing, sliceTickness == null ? 0.0 : sliceTickness.doubleValue(),
                         new double[] { rows * getRescaleY(), columns * getRescaleX(), 1 });
+                }
             }
         }
         return null;

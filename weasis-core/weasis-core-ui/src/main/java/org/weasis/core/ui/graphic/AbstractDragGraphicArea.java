@@ -27,10 +27,12 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
 /**
- * @author Nicolas Roduit,Benoit Jacquemoud
+ * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
+    // Common flag to compute statistics, individual flag "computed" is not used
+    public static volatile boolean COMPUTE_STATS = true;
     public static final Measurement IMAGE_MEAN = new Measurement("Mean", false, true, true);
     public static final Measurement IMAGE_MIN = new Measurement("Min", false, true, false);
     public static final Measurement IMAGE_MAX = new Measurement("Max", false, true, false);
@@ -61,9 +63,9 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public Area getArea(AffineTransform transform) {
-        if (shape == null)
+        if (shape == null) {
             return new Area();
-        else {
+        } else {
             Area area = super.getArea(transform);
             area.add(new Area(shape)); // Add inside area for closed shape
             return area;
@@ -72,9 +74,9 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
     public List<MeasureItem> getImageStatistics(ImageElement imageElement, boolean releaseEvent) {
         if (imageElement != null && isShapeValid()) {
-            ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(5);
+            ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(4);
 
-            if (IMAGE_MIN.isComputed() || IMAGE_MAX.isComputed() || IMAGE_MEAN.isComputed() || IMAGE_STD.isComputed()) {
+            if (COMPUTE_STATS) {
                 Double min = null;
                 Double max = null;
                 Double stdv = null;
@@ -142,46 +144,20 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     } catch (ArrayIndexOutOfBoundsException ex) {
                     }
                 }
+
                 String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
-
-                if (IMAGE_MIN.isComputed()) {
-                    Double val = releaseEvent || IMAGE_MIN.isQuickComputing() ? min : null;
-                    measVal.add(new MeasureItem(IMAGE_MIN, val, unit));
-                }
-
-                if (IMAGE_MAX.isComputed()) {
-                    Double val = releaseEvent || IMAGE_MAX.isQuickComputing() ? max : null;
-                    measVal.add(new MeasureItem(IMAGE_MAX, val, unit));
-                }
-
-                if (IMAGE_STD.isComputed()) {
-                    Double val = releaseEvent || IMAGE_STD.isQuickComputing() ? stdv : null;
-                    measVal.add(new MeasureItem(IMAGE_STD, val, unit));
-                }
-
-                if (IMAGE_MEAN.isComputed()) {
-                    Double val = releaseEvent || IMAGE_MEAN.isQuickComputing() ? mean : null;
-                    measVal.add(new MeasureItem(IMAGE_MEAN, val, unit));
-                }
+                measVal.add(new MeasureItem(IMAGE_MIN, min, unit));
+                measVal.add(new MeasureItem(IMAGE_MAX, max, unit));
+                measVal.add(new MeasureItem(IMAGE_MEAN, mean, unit));
+                measVal.add(new MeasureItem(IMAGE_STD, stdv, unit));
 
                 Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
                 if (suv != null) {
-                    unit = "SUV (bw)";
-                    if (IMAGE_MIN.isComputed()) {
-                        Double val =
-                            releaseEvent || IMAGE_MIN.isQuickComputing() ? min == null ? null : min * suv : null;
-                        measVal.add(new MeasureItem(IMAGE_MIN, val, unit));
-                    }
-                    if (IMAGE_MAX.isComputed()) {
-                        Double val =
-                            releaseEvent || IMAGE_MAX.isQuickComputing() ? max == null ? null : max * suv : null;
-                        measVal.add(new MeasureItem(IMAGE_MAX, val, unit));
-                    }
-                    if (IMAGE_MEAN.isComputed()) {
-                        Double val =
-                            releaseEvent || IMAGE_MEAN.isQuickComputing() ? mean == null ? null : mean * suv : null;
-                        measVal.add(new MeasureItem(IMAGE_MEAN, val, unit));
-                    }
+                    unit = "SUVbw"; //$NON-NLS-1$
+                    measVal.add(new MeasureItem(IMAGE_MIN, min == null ? null : min * suv, unit));
+                    measVal.add(new MeasureItem(IMAGE_MAX, max == null ? null : max * suv, unit));
+                    measVal.add(new MeasureItem(IMAGE_MEAN, mean == null ? null : mean * suv, unit));
+                    measVal.add(new MeasureItem(IMAGE_STD, stdv == null ? null : stdv * suv, unit));
                 }
             }
             return measVal;
@@ -191,16 +167,18 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
     }
 
     protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {
-        if (imageData == null || shape == null)
+        if (imageData == null || shape == null) {
             return null;
+        }
 
         Area shapeArea = new Area(shape);
         Rectangle bound = shapeArea.getBounds();
 
         bound = imageData.getBounds().intersection(bound);
 
-        if (bound.width == 0 || bound.height == 0)
+        if (bound.width == 0 || bound.height == 0) {
             return null;
+        }
 
         RectIter it;
         try {
