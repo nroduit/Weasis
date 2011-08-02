@@ -24,51 +24,45 @@ import javax.media.jai.UnpackedImageData;
 
 public class ImageStatistics2OpImage extends StatisticsOpImage {
 
-    private double[][] stats;
+    private double[][] results;
     private final Double excludedMin;
     private final Double excludedMax;
+    private final Double mean;
     private final Double slope;
     private final Double intercept;
     private boolean isInitialized = false;
     private PixelAccessor srcPA;
     private int srcSampleType;
+    private long totalPixelCount;
+    private double totalPixelValue;
 
-    private boolean tileIntersectsROI(int tileX, int tileY) {
-        if (roi == null) {
-            return true;
-        } else {
-            return roi.intersects(tileXToX(tileX), tileYToY(tileY), tileWidth, tileHeight);
-        }
-    }
-
-    /**
-     * Constructs an <code>ExtremaOpImage</code>.
-     * 
-     * @param source
-     *            The source image.
-     */
     public ImageStatistics2OpImage(RenderedImage source, ROI roi, int xStart, int yStart, int xPeriod, int yPeriod,
-        Double excludedMin, Double excludedMax, Double slope, Double intercept) {
+        Double mean, Double excludedMin, Double excludedMax, Double slope, Double intercept) {
         super(source, roi, xStart, yStart, xPeriod, yPeriod);
 
-        stats = null;
+        results = null;
+        this.mean = mean;
         this.excludedMin = excludedMin;
         this.excludedMax = excludedMax;
         this.slope = slope;
         this.intercept = intercept;
     }
 
-    /** Returns one of the available statistics as a property. */
-    @Override
-    public Object getProperty(String name) {
-        if (stats == null) {
-            // Statistics have not been accumulated: call superclass
-            // method to do so.
-            return super.getProperty(name);
-        } else if (name.equalsIgnoreCase("statistics")) { //$NON-NLS-1$
-            return stats.clone();
+    private final boolean tileIntersectsROI(int tileX, int tileY) {
+        if (roi == null) { // ROI is entire tile
+            return true;
+        } else {
+            return roi.intersects(tileXToX(tileX), tileYToY(tileY), tileWidth, tileHeight);
         }
-        return java.awt.Image.UndefinedProperty;
+    }
+
+    private final int startPosition(int pos, int start, int period) {
+        int t = (pos - start) % period;
+        if (t == 0) {
+            return pos;
+        } else {
+            return (pos + (period - t));
+        }
     }
 
     @Override
@@ -79,26 +73,30 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
     @Override
     protected Object createStatistics(String name) {
         int numBands = sampleModel.getNumBands();
-        Object statistics = null;
+        Object stats = null;
 
         if (name.equalsIgnoreCase("statistics")) { //$NON-NLS-1$
-            statistics = new double[3][numBands];
+            stats = new double[3][numBands];
         } else {
-            statistics = java.awt.Image.UndefinedProperty;
+            stats = java.awt.Image.UndefinedProperty;
         }
-        return statistics;
-    }
-
-    private final int startPosition(int pos, int start, int period) {
-        int t = (pos - start) % period;
-        return t == 0 ? pos : pos + (period - t);
+        return stats;
     }
 
     @Override
-    protected void accumulateStatistics(String name, Raster source, Object statistics) {
+    protected void accumulateStatistics(String name, Raster source, Object stats) {
         if (!isInitialized) {
             srcPA = new PixelAccessor(getSourceImage(0));
             srcSampleType = srcPA.sampleType == PixelAccessor.TYPE_BIT ? DataBuffer.TYPE_BYTE : srcPA.sampleType;
+            results = new double[3][srcPA.numBands];
+
+            for (int i = 0; i < results[0].length; i++) {
+                results[0][i] = 0.0;
+                results[1][i] = 0.0;
+                results[2][i] = 0.0;
+            }
+            totalPixelCount = 0;
+            totalPixelValue = 0.0;
             isInitialized = true;
         }
 
@@ -131,8 +129,6 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                 continue; // no pixel to count in this rectangle
             }
 
-            initializeState(source);
-
             UnpackedImageData uid = srcPA.getPixels(source, rect, srcSampleType, false);
             switch (uid.type) {
                 case DataBuffer.TYPE_BYTE:
@@ -157,11 +153,25 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         }
 
         if (name.equalsIgnoreCase("statistics")) { //$NON-NLS-1$
-            double[][] ext = (double[][]) statistics;
+            double[][] ext = (double[][]) stats;
             for (int i = 0; i < srcPA.numBands; i++) {
-                ext[0][i] = stats[0][i];
-                ext[1][i] = stats[1][i];
-                ext[2][i] = stats[2][i];
+                if (totalPixelCount < 4) {
+                    ext[0][i] = Double.NaN;
+                    ext[1][i] = Double.NaN;
+                    ext[2][i] = Double.NaN;
+                } else {
+                    double pix = totalPixelCount;
+                    double variance = (results[0][i] - (totalPixelValue * totalPixelValue / pix)) / (pix - 1.0);
+                    // Standard Deviation
+                    ext[0][i] = Math.sqrt(variance);
+                    // Skewness
+                    ext[1][i] = (pix / ((pix - 1) * (pix - 2))) * (results[1][i] / (variance * ext[0][i]));
+
+                    double c1 = (pix * (pix + 1)) / ((pix - 1) * (pix - 2) * (pix - 3));
+                    double c2 = (3 * Math.pow(pix - 1, 2.0)) / ((pix - 2) * (pix - 3));
+                    // Kurtosis
+                    ext[2][i] = (c1 * results[2][i] / Math.pow(ext[0][i], 4.0d)) - c2;
+                }
             }
         }
     }
@@ -180,8 +190,11 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         int exMax = noBound ? 0 : excludedMax.intValue();
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            int min = (int) stats[0][b]; // minimum
-            int max = (int) stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             byte[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -191,17 +204,26 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     int p = d[po] & 0xff;
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
 
     }
 
@@ -219,8 +241,11 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         int exMax = noBound ? 0 : excludedMax.intValue();
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            int min = (int) stats[0][b]; // minimum
-            int max = (int) stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             short[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -230,17 +255,26 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     int p = d[po] & 0xffff;
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
 
     }
 
@@ -258,8 +292,11 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         int exMax = noBound ? 0 : excludedMax.intValue();
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            int min = (int) stats[0][b]; // minimum
-            int max = (int) stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             short[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -269,17 +306,26 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     int p = d[po];
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
     }
 
     private void accumulateStatisticsInt(UnpackedImageData uid) {
@@ -292,12 +338,15 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         int pixelInc = pixelStride * xPeriod;
 
         boolean noBound = excludedMin == null || excludedMax == null;
-        int exMin = noBound ? 0 : excludedMin.intValue();
-        int exMax = noBound ? 0 : excludedMax.intValue();
+        float exMin = noBound ? 0 : excludedMin.floatValue();
+        float exMax = noBound ? 0 : excludedMax.floatValue();
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            int min = (int) stats[0][b]; // minimum
-            int max = (int) stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             int[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -307,17 +356,26 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     int p = d[po];
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
 
     }
 
@@ -335,8 +393,11 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         float exMax = noBound ? 0 : excludedMax.floatValue();
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            float min = (float) stats[0][b]; // minimum
-            float max = (float) stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             float[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -346,17 +407,26 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     float p = d[po];
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
 
     }
 
@@ -374,8 +444,11 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         double exMax = noBound ? 0 : excludedMax;
 
         for (int b = 0; b < srcPA.numBands; b++) {
-            double min = stats[0][b]; // minimum
-            double max = stats[1][b]; // maximum
+            int outRange = 0;
+            double totalValues = 0.0;
+            double accum2 = 0.0;
+            double accum3 = 0.0;
+            double accum4 = 0.0;
 
             double[] d = data[b];
             int lastLine = uid.bandOffsets[b] + rect.height * lineStride;
@@ -385,31 +458,27 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
 
                 for (int po = lo; po < lastPixel; po += pixelInc) {
                     double p = d[po];
-                    if (p < min && (noBound || (p < exMin || p > exMax))) {
-                        min = p;
-                    }
-                    if (p > max && (noBound || (p < exMin || p > exMax))) {
-                        max = p;
+                    boolean inRange = noBound || (p < exMin || p > exMax);
+                    if (inRange) {
+                        final double val = slope == null ? p - mean : p * slope + intercept - mean;
+                        totalValues += val;
+                        accum2 += val * val;
+                        accum3 += val * val * val;
+                        accum4 += val * val * val * val;
+                    } else {
+                        outRange++;
                     }
                 }
             }
-            stats[0][b] = min;
-            stats[1][b] = max;
+            totalPixelCount -= outRange;
+            totalPixelValue += totalValues;
+            results[0][b] += accum2;
+            results[1][b] += accum3;
+            results[2][b] += accum4;
         }
+        totalPixelCount +=
+            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
 
-    }
-
-    protected void initializeState(Raster source) {
-        if (stats == null) {
-            int numBands = sampleModel.getNumBands();
-            stats = new double[3][numBands];
-
-            for (int i = 0; i < numBands; i++) {
-                stats[0][i] = Double.MAX_VALUE;
-                stats[1][i] = -Double.MAX_VALUE;
-                stats[2][i] = 0.0;
-            }
-        }
     }
 
 }

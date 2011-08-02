@@ -15,8 +15,12 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.awt.image.renderable.RenderedImageFactory;
 
+import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
+import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.ROI;
+import javax.media.jai.RenderedOp;
+import javax.media.jai.registry.RenderedRegistryMode;
 
 public class ImageStatistics2Descriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
@@ -25,15 +29,15 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
      */
     private static final String[][] resources =
         {
-            { "GlobalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
+            { "GlobalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "LocalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
+            { "LocalName", "ImageStatistics2" }, //$NON-NLS-1$ //$NON-NLS-2$
 
             { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
             {
                 "Description", //$NON-NLS-1$
-                "Finds the min, max, mean, standard deviation of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
+                "Finds the standard deviation, skewness and kurtosis of pixel values in each band with the option to exclude a range of values." }, //$NON-NLS-1$
 
             { "DocURL", "" }, { "Version", "1.0" }, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
@@ -43,15 +47,15 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
 
             { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exlude" },
+            { "arg3Desc", "Mean of pixel values" },
 
-            { "arg4Desc", "The highest value to exlude" },
+            { "arg3Desc", "The lowest value to exclude" },
+
+            { "arg4Desc", "The highest value to exclude" },
 
             { "arg5Desc", "The rescale slope" },
 
-            { "arg6Desc", "The rescale intercept" }
-
-        }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            { "arg6Desc", "The rescale intercept" } };
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and
@@ -61,15 +65,15 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
 
     /** The parameter name list for this operation. */
     private static final String[] paramNames = {
-        "roi", "xPeriod", "yPeriod", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        "roi", "xPeriod", "yPeriod", "mean", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     /** The parameter class list for this operation. */
     private static final Class[] paramClasses = { javax.media.jai.ROI.class, java.lang.Integer.class,
         java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class, java.lang.Double.class,
-        java.lang.Double.class };
+        java.lang.Double.class, java.lang.Double.class };
 
     /** The parameter default value list for this operation. */
-    private static final Object[] paramDefaults = { null, 1, 1, null, null, null, null };
+    private static final Object[] paramDefaults = { null, 1, 1, null, null, null, null, null };
 
     /** Constructor. */
     public ImageStatistics2Descriptor() {
@@ -89,10 +93,12 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
         int i = renderedimage.getMinX();
         int j = renderedimage.getMinY();
 
+        // TEST slope and intercept and min and max
         return new ImageStatistics2OpImage(renderedimage, (ROI) paramBlock.getObjectParameter(0), i, j,
             (Integer) paramBlock.getObjectParameter(1), (Integer) paramBlock.getObjectParameter(2),
             (Double) paramBlock.getObjectParameter(3), (Double) paramBlock.getObjectParameter(4),
-            (Double) paramBlock.getObjectParameter(5), (Double) paramBlock.getObjectParameter(6));
+            (Double) paramBlock.getObjectParameter(5), (Double) paramBlock.getObjectParameter(6),
+            (Double) paramBlock.getObjectParameter(7));
     }
 
     public boolean validateSources(ParameterBlock parameterblock) {
@@ -104,6 +110,25 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
         if (!(arg instanceof ROI) && arg != null) {
             return false;
         }
+        // Mean is required to compute standard deviation
+        if (!(paramBlock.getObjectParameter(3) instanceof Double)) {
+            return false;
+        }
         return true;
+    }
+
+    public static RenderedOp create(RenderedImage source0, ROI roi, Integer xPeriod, Integer yPeriod, Double mean,
+        Double excludedMin, Double excludedMax, Double slope, Double intercept, RenderingHints hints) {
+        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics2", RenderedRegistryMode.MODE_NAME);
+        pb.setSource("source0", source0);
+        pb.setParameter("roi", roi);
+        pb.setParameter("xPeriod", xPeriod);
+        pb.setParameter("yPeriod", yPeriod);
+        pb.setParameter("mean", mean);
+        pb.setParameter("excludedMin", excludedMin);
+        pb.setParameter("excludedMax", excludedMax);
+        pb.setParameter("slope", slope);
+        pb.setParameter("intercept", intercept);
+        return JAI.create("ImageStatistics2", pb, hints);
     }
 }

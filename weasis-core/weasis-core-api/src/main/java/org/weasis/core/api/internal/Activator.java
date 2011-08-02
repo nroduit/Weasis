@@ -29,8 +29,9 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.op.ExtremaRangeLimitDescriptor;
 import org.weasis.core.api.image.op.FormatBinaryDescriptor;
+import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
+import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.op.NotBinaryDescriptor;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
@@ -47,6 +48,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static final String codecFilter = String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()); //$NON-NLS-1$
     private BundleContext bundleContext;
 
+    @Override
     public void start(final BundleContext bundleContext) throws Exception {
         this.bundleContext = bundleContext;
         bundleContext.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(bundleContext), null);
@@ -67,6 +69,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
         jai.setImagingListener(new ImagingListener() {
 
+            @Override
             public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
                 throws RuntimeException {
                 LOGGER.error("JAI error ocurred: {}", message); //$NON-NLS-1$
@@ -75,7 +78,8 @@ public class Activator implements BundleActivator, ServiceListener {
         });
         registerOp(or, new FormatBinaryDescriptor());
         registerOp(or, new NotBinaryDescriptor());
-        registerOp(or, new ExtremaRangeLimitDescriptor());
+        registerOp(or, new ImageStatisticsDescriptor());
+        registerOp(or, new ImageStatistics2Descriptor());
         registerOp(or, new ThresholdToBinDescriptor());
         registerOp(or, new RectifySignedShortDataDescriptor());
         registerOp(or, new RectifyUShortToShortDataDescriptor());
@@ -87,6 +91,7 @@ public class Activator implements BundleActivator, ServiceListener {
         ProxyDetector.setProxyFromJavaWebStart();
     }
 
+    @Override
     public void stop(BundleContext bundleContext) throws Exception {
         this.bundleContext = null;
         BundleTools.saveSystemPreferences();
@@ -114,6 +119,7 @@ public class Activator implements BundleActivator, ServiceListener {
         }
     }
 
+    @Override
     public synchronized void serviceChanged(ServiceEvent event) {
         ServiceReference m_ref = event.getServiceReference();
         Codec codec = (Codec) bundleContext.getService(m_ref);

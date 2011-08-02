@@ -17,7 +17,7 @@ import javax.media.jai.OpImage;
 import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 
-import org.weasis.core.api.image.op.ExtremaRangeLimitDescriptor;
+import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
@@ -124,7 +124,7 @@ public class DicomImageElement extends ImageElement {
                 this.maxValue = 255;
             } else {
                 RenderedOp dst =
-                    ExtremaRangeLimitDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin), new Double(
+                    ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin), new Double(
                         paddingValueMax), null);
                 // To ensure this image is not stored in tile cache
                 ((OpImage) dst.getRendering()).setTileCache(null);

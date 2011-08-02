@@ -22,16 +22,16 @@ import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RenderedRegistryMode;
 
-public class ExtremaRangeLimitDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
+public class ImageStatisticsDescriptor extends OperationDescriptorImpl implements RenderedImageFactory {
 
     /**
      * The resource strings that provide the general documentation and specify the parameter list for this operation.
      */
     private static final String[][] resources =
         {
-            { "GlobalName", "ExtremaRangeLimit" }, //$NON-NLS-1$ //$NON-NLS-2$
+            { "GlobalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "LocalName", "ExtremaRangeLimit" }, //$NON-NLS-1$ //$NON-NLS-2$
+            { "LocalName", "ImageStatistics" }, //$NON-NLS-1$ //$NON-NLS-2$
 
             { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -46,7 +46,9 @@ public class ExtremaRangeLimitDescriptor extends OperationDescriptorImpl impleme
 
             { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exlude" }, { "arg4Desc", "The highest value to exlude" } }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            { "arg3Desc", "The lowest value to exclude" },
+
+            { "arg4Desc", "The highest value to exclude" } };
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and
@@ -65,7 +67,7 @@ public class ExtremaRangeLimitDescriptor extends OperationDescriptorImpl impleme
     private static final Object[] paramDefaults = { null, 1, 1, null, null };
 
     /** Constructor. */
-    public ExtremaRangeLimitDescriptor() {
+    public ImageStatisticsDescriptor() {
         super(resources, supportedModes, 1, paramNames, paramClasses, paramDefaults, null);
     }
 
@@ -82,7 +84,7 @@ public class ExtremaRangeLimitDescriptor extends OperationDescriptorImpl impleme
         int i = renderedimage.getMinX();
         int j = renderedimage.getMinY();
 
-        return new ExtremaRangeLimitOpImage(renderedimage, (ROI) paramBlock.getObjectParameter(0), i, j,
+        return new ImageStatisticsOpImage(renderedimage, (ROI) paramBlock.getObjectParameter(0), i, j,
             (Integer) paramBlock.getObjectParameter(1), (Integer) paramBlock.getObjectParameter(2),
             (Double) paramBlock.getObjectParameter(3), (Double) paramBlock.getObjectParameter(4));
     }
@@ -101,13 +103,13 @@ public class ExtremaRangeLimitDescriptor extends OperationDescriptorImpl impleme
 
     public static RenderedOp create(RenderedImage source0, ROI roi, Integer xPeriod, Integer yPeriod,
         Double excludedMin, Double excludedMax, RenderingHints hints) {
-        ParameterBlockJAI pb = new ParameterBlockJAI("ExtremaRangeLimit", RenderedRegistryMode.MODE_NAME);
+        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics", RenderedRegistryMode.MODE_NAME);
         pb.setSource("source0", source0);
         pb.setParameter("roi", roi);
         pb.setParameter("xPeriod", xPeriod);
         pb.setParameter("yPeriod", yPeriod);
         pb.setParameter("excludedMin", excludedMin);
         pb.setParameter("excludedMax", excludedMax);
-        return JAI.create("ExtremaRangeLimit", pb, hints);
+        return JAI.create("ImageStatistics", pb, hints);
     }
 }

@@ -26,7 +26,8 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
-import org.weasis.core.api.image.op.ExtremaRangeLimitDescriptor;
+import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
+import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
@@ -94,7 +95,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                         if (pList != null && pList.size() > 0) {
                             int band = image.getSampleModel().getNumBands();
                             if (band == 1) {
-                                // Hounsfield = pixelValue * rescale slope + intercept value
+                                // unit = pixelValue * rescale slope + rescale intercept
                                 Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
                                 Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
                                 if (slope != null || intercept != null) {
@@ -152,18 +153,35 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                     startTime = System.currentTimeMillis();
                     // Second method
                     RenderedOp dst =
-                        ExtremaRangeLimitDescriptor.create(image, new ROIShape(shape), 1, 1, null, null, null);
+                        ImageStatisticsDescriptor.create(image, new ROIShape(shape), 1, 1, null, null, null);
                     // To ensure this image is not stored in tile cache
                     ((OpImage) dst.getRendering()).setTileCache(null);
                     double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
                     logger.error("2 method [ms]: {}", System.currentTimeMillis() - startTime);
-                    measVal.add(new MeasureItem(IMAGE_MIN, extrema[0][0], "TEST"));
-                    measVal.add(new MeasureItem(IMAGE_MAX, extrema[1][0], "TEST"));
-                    measVal.add(new MeasureItem(IMAGE_MEAN, extrema[2][0], "TEST"));
+                    // unit = pixelValue * rescale slope + rescale intercept
+                    Float slopeVal = (Float) imageElement.getTagValue(TagW.RescaleSlope);
+                    Float interceptVal = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
+                    double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
+                    double intercept = interceptVal == null ? 0.0f : interceptVal.doubleValue();
+                    measVal.add(new MeasureItem(IMAGE_MIN, extrema[0][0] * slope + intercept, "TEST"));
+                    measVal.add(new MeasureItem(IMAGE_MAX, extrema[1][0] * slope + intercept, "TEST"));
+                    measVal.add(new MeasureItem(IMAGE_MEAN, extrema[2][0] * slope + intercept, "TEST"));
+
+                    startTime = System.currentTimeMillis();
+                    dst =
+                        ImageStatistics2Descriptor.create(image, new ROIShape(shape), 1, 1, extrema[2][0], null, null,
+                            slope, intercept, null);
+                    // To ensure this image is not stored in tile cache
+                    ((OpImage) dst.getRendering()).setTileCache(null);
+                    double[][] extrema2 = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
+                    logger.error("2 method adv [ms]: {}", System.currentTimeMillis() - startTime);
+                    measVal.add(new MeasureItem(IMAGE_STD, extrema2[0][0], "TEST"));
+                    measVal.add(new MeasureItem(IMAGE_STD, extrema2[1][0], "Skewness"));
+                    measVal.add(new MeasureItem(IMAGE_STD, extrema2[2][0], "Kurtosis"));
 
                 }
 
-                String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
+                String unit = imageElement.getPixelValueUnit();
                 measVal.add(new MeasureItem(IMAGE_MIN, min, unit));
                 measVal.add(new MeasureItem(IMAGE_MAX, max, unit));
                 measVal.add(new MeasureItem(IMAGE_MEAN, mean, unit));
