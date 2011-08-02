@@ -27,9 +27,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -661,6 +663,18 @@ public class WeasisLauncher {
     public static WebStartLoader loadProperties(Properties config) {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
+        if (REMOTE_PREFS == null) {
+            ServiceLoader<RemotePreferences> prefs = ServiceLoader.load(RemotePreferences.class);
+            Iterator<RemotePreferences> commandsIterator = prefs.iterator();
+            while (commandsIterator.hasNext()) {
+                REMOTE_PREFS = commandsIterator.next();
+                REMOTE_PREFS.initialize();
+                break;
+            }
+        }
+        if (REMOTE_PREFS != null) {
+            REMOTE_PREFS.read();
+        }
 
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
@@ -683,9 +697,6 @@ public class WeasisLauncher {
             }
         }
         File common_file = new File(basdir, APP_PROPERTY_FILE);
-        if (REMOTE_PREFS != null && user != null) {
-            REMOTE_PREFS.read(basdir);
-        }
         Properties s_prop = readProperties(common_file);
 
         // Get locale from system properties otherwise set en_US (only for the first launch of Weasis on a user session)

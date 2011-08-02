@@ -19,10 +19,14 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.media.jai.OpImage;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.ROIShape;
+import javax.media.jai.RenderedOp;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 
+import org.weasis.core.api.image.op.ExtremaRangeLimitDescriptor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
@@ -84,6 +88,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
 
                 if (releaseEvent) {
                     PlanarImage image = imageElement.getImage();
+                    long startTime = System.currentTimeMillis();
                     try {
                         ArrayList<Integer> pList = getValueFromArea(image);
                         if (pList != null && pList.size() > 0) {
@@ -143,6 +148,19 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
                         }
                     } catch (ArrayIndexOutOfBoundsException ex) {
                     }
+                    logger.error("1 method [ms]: {}", System.currentTimeMillis() - startTime);
+                    startTime = System.currentTimeMillis();
+                    // Second method
+                    RenderedOp dst =
+                        ExtremaRangeLimitDescriptor.create(image, new ROIShape(shape), 1, 1, null, null, null);
+                    // To ensure this image is not stored in tile cache
+                    ((OpImage) dst.getRendering()).setTileCache(null);
+                    double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
+                    logger.error("2 method [ms]: {}", System.currentTimeMillis() - startTime);
+                    measVal.add(new MeasureItem(IMAGE_MIN, extrema[0][0], "TEST"));
+                    measVal.add(new MeasureItem(IMAGE_MAX, extrema[1][0], "TEST"));
+                    measVal.add(new MeasureItem(IMAGE_MEAN, extrema[2][0], "TEST"));
+
                 }
 
                 String unit = imageElement.getPixelValueUnit() == null ? "" : imageElement.getPixelValueUnit(); //$NON-NLS-1$ 
