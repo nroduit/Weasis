@@ -93,7 +93,6 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
         int i = renderedimage.getMinX();
         int j = renderedimage.getMinY();
 
-        // TEST slope and intercept and min and max
         return new ImageStatistics2OpImage(renderedimage, (ROI) paramBlock.getObjectParameter(0), i, j,
             (Integer) paramBlock.getObjectParameter(1), (Integer) paramBlock.getObjectParameter(2),
             (Double) paramBlock.getObjectParameter(3), (Double) paramBlock.getObjectParameter(4),
@@ -124,6 +123,7 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
         pb.setParameter("roi", roi);
         pb.setParameter("xPeriod", xPeriod);
         pb.setParameter("yPeriod", yPeriod);
+        // mean, excludedMin and excludedMax are values where the slope and intercept function has not been applied
         pb.setParameter("mean", mean);
         pb.setParameter("excludedMin", excludedMin);
         pb.setParameter("excludedMax", excludedMax);

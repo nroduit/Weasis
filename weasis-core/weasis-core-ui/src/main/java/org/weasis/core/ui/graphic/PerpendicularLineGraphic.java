@@ -156,7 +156,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -164,26 +164,15 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(3);
 
-                if (LINE_LENGTH.isComputed() && (!drawOnLabel || LINE_LENGTH.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || LINE_LENGTH.isQuickComputing()) {
-                        val = ptC.distance(ptD) * adapter.getCalibRatio();
-                    }
-                    measVal.add(new MeasureItem(LINE_LENGTH, val, adapter.getUnit()));
+                if (LINE_LENGTH.isComputed()) {
+                    measVal.add(new MeasureItem(LINE_LENGTH, ptC.distance(ptD) * adapter.getCalibRatio(), adapter
+                        .getUnit()));
                 }
-                if (ORIENTATION.isComputed() && (!drawOnLabel || ORIENTATION.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || ORIENTATION.isQuickComputing()) {
-                        val = MathUtil.getOrientation(ptC, ptD);
-                    }
-                    measVal.add(new MeasureItem(ORIENTATION, val, "deg"));
+                if (ORIENTATION.isComputed()) {
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), "deg"));
                 }
-                if (AZIMUTH.isComputed() && (!drawOnLabel || AZIMUTH.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || AZIMUTH.isQuickComputing()) {
-                        val = MathUtil.getAzimuth(ptC, ptD);
-                    }
-                    measVal.add(new MeasureItem(AZIMUTH, val, "deg"));
+                if (AZIMUTH.isComputed()) {
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), "deg"));
                 }
                 return measVal;
             }

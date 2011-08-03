@@ -41,11 +41,25 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         super(source, roi, xStart, yStart, xPeriod, yPeriod);
 
         results = null;
-        this.mean = mean;
-        this.excludedMin = excludedMin;
-        this.excludedMax = excludedMax;
-        this.slope = slope;
-        this.intercept = intercept;
+        if (excludedMin == null && excludedMax != null) {
+            this.excludedMin = excludedMax;
+            this.excludedMax = excludedMax;
+        } else if (excludedMax == null && excludedMin != null) {
+            this.excludedMin = excludedMin;
+            this.excludedMax = excludedMin;
+        } else {
+            this.excludedMin = excludedMin;
+            this.excludedMax = excludedMax;
+        }
+        if (slope != null || intercept != null) {
+            this.slope = slope == null ? 1.0f : slope;
+            this.intercept = intercept == null ? 0.0f : intercept;
+            this.mean = mean * this.slope + this.intercept;
+        } else {
+            this.slope = slope;
+            this.intercept = intercept;
+            this.mean = mean;
+        }
     }
 
     private final boolean tileIntersectsROI(int tileX, int tileY) {

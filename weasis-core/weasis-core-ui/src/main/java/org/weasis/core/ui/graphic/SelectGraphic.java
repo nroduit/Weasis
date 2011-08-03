@@ -99,7 +99,7 @@ public class SelectGraphic extends RectangleGraphic {
 
     @Override
     public List<MeasureItem> getMeasurements(org.weasis.core.api.media.data.ImageElement imageElement,
-        boolean releaseEvent, boolean drawOnLabel) {
+        boolean releaseEvent) {
         return null;
     };
 

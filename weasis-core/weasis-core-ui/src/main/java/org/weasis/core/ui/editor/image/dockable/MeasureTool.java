@@ -53,6 +53,7 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.AbstractDragGraphicArea;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.MeasureItem;
@@ -276,7 +277,36 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Display Options",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
-        final JButton btnGerenralOptions = new JButton("Label Font");
+        final JCheckBox chckbxAdvStats = new JCheckBox("More Pixel Statistics");
+        chckbxAdvStats.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JCheckBox box = (JCheckBox) e.getSource();
+                boolean sel = box.isSelected();
+                AbstractDragGraphicArea.IMAGE_STD.setComputed(sel);
+                AbstractDragGraphicArea.IMAGE_SKEW.setComputed(sel);
+                AbstractDragGraphicArea.IMAGE_KURTOSIS.setComputed(sel);
+            }
+        });
+        JCheckBox chckbxBasicImageStatistics = new JCheckBox("Basic Pixel Statistics");
+        chckbxBasicImageStatistics.setSelected(true);
+        chckbxBasicImageStatistics.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JCheckBox box = (JCheckBox) e.getSource();
+                boolean sel = box.isSelected();
+                chckbxAdvStats.setEnabled(sel);
+                AbstractDragGraphicArea.IMAGE_MIN.setComputed(sel);
+                AbstractDragGraphicArea.IMAGE_MAX.setComputed(sel);
+                AbstractDragGraphicArea.IMAGE_MEAN.setComputed(sel);
+                if (selectedGraphic.size() == 1) {
+
+                }
+            }
+        });
+        transform.add(chckbxBasicImageStatistics);
+        transform.add(chckbxAdvStats);
+        final JButton btnGerenralOptions = new JButton("Label Option");
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -317,7 +347,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         List<MeasureItem> measList = null;
 
         if (graph != null && imageElement != null) {
-            measList = graph.getMeasurements(imageElement, true, false);
+            measList = graph.getMeasurements(imageElement, true);
         }
         updateMeasuredItems(measList);
     }
@@ -395,14 +425,24 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             }
         }
 
+        boolean computeAllMeasures = true;
         if (selectedGraphic != null) {
+            if (g != null && selectedGraphic.size() == 1) {
+                // Warning only comparing if it is the same instance, cannot compare handle points.
+                // Update of the list of measures is performed in the drag sequence (move, complete). Here only the
+                // change of selection will compute the measurements
+                if (g == selectedGraphic.get(0)) {
+                    computeAllMeasures = false;
+                }
+            }
             selectedGraphic.clear();
         }
 
         this.selectedGraphic = list;
-
-        // if g equals null means graphic is not single or no graphic is selected
-        setSelectedGraphic(g, img);
+        if (computeAllMeasures) {
+            // if g equals null means graphic is not single or no graphic is selected
+            setSelectedGraphic(g, img);
+        }
     }
 
 }

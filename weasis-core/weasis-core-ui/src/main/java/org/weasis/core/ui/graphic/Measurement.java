@@ -12,8 +12,9 @@ public class Measurement {
     }
 
     public Measurement(String name, boolean quickComputing, boolean computed, boolean graphicLabel) {
-        if (name == null)
+        if (name == null) {
             throw new IllegalArgumentException("Name cannot be null!");
+        }
         this.name = name;
         this.quickComputing = quickComputing;
         this.computed = computed;
@@ -30,9 +31,6 @@ public class Measurement {
 
     public void setComputed(boolean computed) {
         this.computed = computed;
-        if (!computed && graphicLabel) {
-            graphicLabel = false;
-        }
     }
 
     public boolean isGraphicLabel() {
@@ -40,10 +38,7 @@ public class Measurement {
     }
 
     public void setGraphicLabel(boolean graphicLabel) {
-        this.graphicLabel = graphicLabel;
-        if (graphicLabel && !computed) {
-            computed = true;
-        }
+        computed = true;
     }
 
     public boolean isQuickComputing() {

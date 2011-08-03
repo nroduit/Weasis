@@ -155,7 +155,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -168,53 +168,35 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
                 double ratio = adapter.getCalibRatio();
 
-                if (TOP_LEFT_POINT_X.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_X.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || TOP_LEFT_POINT_X.isQuickComputing() ? adapter.getXCalibratedValue(rect.getX())
-                            : null;
-                    measVal.add(new MeasureItem(TOP_LEFT_POINT_X, val, adapter.getUnit()));
+                if (TOP_LEFT_POINT_X.isComputed()) {
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_X, adapter.getXCalibratedValue(rect.getX()), adapter
+                        .getUnit()));
                 }
-                if (TOP_LEFT_POINT_Y.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_Y.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || TOP_LEFT_POINT_Y.isQuickComputing() ? adapter.getYCalibratedValue(rect.getY())
-                            : null;
-                    measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, val, adapter.getUnit()));
+                if (TOP_LEFT_POINT_Y.isComputed()) {
+                    measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, adapter.getYCalibratedValue(rect.getY()), adapter
+                        .getUnit()));
                 }
-                if (CENTER_X.isComputed() && (!drawOnLabel || CENTER_X.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CENTER_X.isQuickComputing() ? adapter.getXCalibratedValue(rect.getCenterX())
-                            : null;
-                    measVal.add(new MeasureItem(CENTER_X, val, adapter.getUnit()));
+                if (CENTER_X.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(rect.getCenterX()), adapter
+                        .getUnit()));
                 }
-                if (CENTER_Y.isComputed() && (!drawOnLabel || CENTER_Y.isGraphicLabel())) {
-                    Double val =
-                        releaseEvent || CENTER_Y.isQuickComputing() ? adapter.getYCalibratedValue(rect.getCenterY())
-                            : null;
-                    measVal.add(new MeasureItem(CENTER_Y, val, adapter.getUnit()));
+                if (CENTER_Y.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(rect.getCenterY()), adapter
+                        .getUnit()));
                 }
-                if (WIDTH.isComputed() && (!drawOnLabel || WIDTH.isGraphicLabel())) {
-                    Double val = releaseEvent || WIDTH.isQuickComputing() ? ratio * rect.getWidth() : null;
-                    measVal.add(new MeasureItem(WIDTH, val, adapter.getUnit()));
+                if (WIDTH.isComputed()) {
+                    measVal.add(new MeasureItem(WIDTH, ratio * rect.getWidth(), adapter.getUnit()));
                 }
-                if (HEIGHT.isComputed() && (!drawOnLabel || HEIGHT.isGraphicLabel())) {
-                    Double val = releaseEvent || HEIGHT.isQuickComputing() ? ratio * rect.getHeight() : null;
-                    measVal.add(new MeasureItem(HEIGHT, val, adapter.getUnit()));
+                if (HEIGHT.isComputed()) {
+                    measVal.add(new MeasureItem(HEIGHT, ratio * rect.getHeight(), adapter.getUnit()));
                 }
-                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || AREA.isQuickComputing()) {
-                        val = rect.getWidth() * rect.getHeight() * ratio * ratio;
-                    }
-
+                if (AREA.isComputed()) {
+                    Double val = rect.getWidth() * rect.getHeight() * ratio * ratio;
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
                     measVal.add(new MeasureItem(AREA, val, unit));
                 }
-                if (PERIMETER.isComputed() && (!drawOnLabel || PERIMETER.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || PERIMETER.isQuickComputing()) {
-                        val = (rect.getWidth() + rect.getHeight()) * 2 * ratio;
-                    }
-
+                if (PERIMETER.isComputed()) {
+                    Double val = (rect.getWidth() + rect.getHeight()) * 2 * ratio;
                     measVal.add(new MeasureItem(PERIMETER, val, adapter.getUnit()));
                 }
 
@@ -250,8 +232,9 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
         static eHandlePoint valueFromIndex(int index) {
             eHandlePoint point = map.get(index);
-            if (point == null)
+            if (point == null) {
                 throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index);
+            }
             return point;
         }
 

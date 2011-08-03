@@ -105,7 +105,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -117,11 +117,11 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
                     double positiveAngle = Math.abs(angleDeg);
 
-                    if (ANGLE.isComputed() && (!drawOnLabel || ANGLE.isGraphicLabel())) {
+                    if (ANGLE.isComputed()) {
                         measVal.add(new MeasureItem(ANGLE, positiveAngle, "deg"));
                     }
 
-                    if (COMPLEMENTARY_ANGLE.isComputed() && (!drawOnLabel || COMPLEMENTARY_ANGLE.isGraphicLabel())) {
+                    if (COMPLEMENTARY_ANGLE.isComputed()) {
                         measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, "deg"));
                     }
                 }

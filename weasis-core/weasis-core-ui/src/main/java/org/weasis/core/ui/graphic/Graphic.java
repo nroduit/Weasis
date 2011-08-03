@@ -77,5 +77,5 @@ public interface Graphic extends GUIEntry, Cloneable {
 
     Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
 
-    List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel);
+    List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent);
 }

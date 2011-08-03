@@ -74,62 +74,38 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
-                if (FIRST_POINT_X.isComputed() && (!drawOnLabel || FIRST_POINT_X.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || FIRST_POINT_X.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(ptA.getX());
-                    }
-                    measVal.add(new MeasureItem(FIRST_POINT_X, val, adapter.getUnit()));
+                if (FIRST_POINT_X.isComputed()) {
+                    measVal.add(new MeasureItem(FIRST_POINT_X, adapter.getXCalibratedValue(ptA.getX()), adapter
+                        .getUnit()));
                 }
-                if (FIRST_POINT_Y.isComputed() && (!drawOnLabel || FIRST_POINT_Y.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || FIRST_POINT_Y.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(ptA.getY());
-                    }
-                    measVal.add(new MeasureItem(FIRST_POINT_Y, val, adapter.getUnit()));
+                if (FIRST_POINT_Y.isComputed()) {
+                    measVal.add(new MeasureItem(FIRST_POINT_Y, adapter.getXCalibratedValue(ptA.getY()), adapter
+                        .getUnit()));
                 }
-                if (LAST_POINT_X.isComputed() && (!drawOnLabel || LAST_POINT_X.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || LAST_POINT_X.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(ptB.getX());
-                    }
-                    measVal.add(new MeasureItem(LAST_POINT_X, val, adapter.getUnit()));
+                if (LAST_POINT_X.isComputed()) {
+                    measVal.add(new MeasureItem(LAST_POINT_X, adapter.getXCalibratedValue(ptB.getX()), adapter
+                        .getUnit()));
                 }
-                if (LAST_POINT_Y.isComputed() && (!drawOnLabel || LAST_POINT_Y.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || LAST_POINT_Y.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(ptB.getY());
-                    }
-                    measVal.add(new MeasureItem(LAST_POINT_Y, val, adapter.getUnit()));
+                if (LAST_POINT_Y.isComputed()) {
+                    measVal.add(new MeasureItem(LAST_POINT_Y, adapter.getXCalibratedValue(ptB.getY()), adapter
+                        .getUnit()));
                 }
-                if (LINE_LENGTH.isComputed() && (!drawOnLabel || LINE_LENGTH.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || LINE_LENGTH.isQuickComputing()) {
-                        val = ptA.distance(ptB) * adapter.getCalibRatio();
-                    }
-                    measVal.add(new MeasureItem(LINE_LENGTH, val, adapter.getUnit()));
+                if (LINE_LENGTH.isComputed()) {
+                    measVal.add(new MeasureItem(LINE_LENGTH, ptA.distance(ptB) * adapter.getCalibRatio(), adapter
+                        .getUnit()));
                 }
-                if (ORIENTATION.isComputed() && (!drawOnLabel || ORIENTATION.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || ORIENTATION.isQuickComputing()) {
-                        val = MathUtil.getOrientation(ptA, ptB);
-                    }
-                    measVal.add(new MeasureItem(ORIENTATION, val, "deg"));
-
+                if (ORIENTATION.isComputed()) {
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), "deg"));
                 }
-                if (AZIMUTH.isComputed() && (!drawOnLabel || AZIMUTH.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || AZIMUTH.isQuickComputing()) {
-                        val = MathUtil.getAzimuth(ptA, ptB);
-                    }
-                    measVal.add(new MeasureItem(AZIMUTH, val, "deg"));
+                if (AZIMUTH.isComputed()) {
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), "deg"));
 
                 }
                 return measVal;

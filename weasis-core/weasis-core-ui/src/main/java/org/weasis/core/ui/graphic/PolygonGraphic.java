@@ -112,7 +112,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -126,85 +126,70 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 Area pathArea = null;
                 List<Line2D> lineSegmentList = null;
 
-                if (TOP_LEFT_POINT_X.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_X.isGraphicLabel())) {
+                if (TOP_LEFT_POINT_X.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || TOP_LEFT_POINT_X.isQuickComputing()) {
-                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                        val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getX()) : null;
-                    }
+                    pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                    val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getX()) : null;
+
                     measVal.add(new MeasureItem(TOP_LEFT_POINT_X, val, unitStr));
                 }
-                if (TOP_LEFT_POINT_Y.isComputed() && (!drawOnLabel || TOP_LEFT_POINT_Y.isGraphicLabel())) {
+                if (TOP_LEFT_POINT_Y.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || TOP_LEFT_POINT_Y.isQuickComputing()) {
-                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                        val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getY()) : null;
-                    }
+                    pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                    val = (pathArea != null) ? adapter.getXCalibratedValue(pathArea.getBounds2D().getY()) : null;
                     measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, val, unitStr));
                 }
-                if (WIDTH.isComputed() && (!drawOnLabel || WIDTH.isGraphicLabel())) {
+                if (WIDTH.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || WIDTH.isQuickComputing()) {
-                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                        val = (pathArea != null) ? ratio * pathArea.getBounds2D().getWidth() : null;
-                    }
+                    pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                    val = (pathArea != null) ? ratio * pathArea.getBounds2D().getWidth() : null;
                     measVal.add(new MeasureItem(WIDTH, val, unitStr));
                 }
-                if (HEIGHT.isComputed() && (!drawOnLabel || HEIGHT.isGraphicLabel())) {
+                if (HEIGHT.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || HEIGHT.isQuickComputing()) {
-                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                        val = (pathArea != null) ? ratio * pathArea.getBounds2D().getHeight() : null;
-                    }
+                    pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                    val = (pathArea != null) ? ratio * pathArea.getBounds2D().getHeight() : null;
                     measVal.add(new MeasureItem(HEIGHT, val, unitStr));
                 }
 
                 Point2D centroid = null;
-                if (CENTROID_X.isComputed() && (!drawOnLabel || CENTROID_X.isGraphicLabel())) {
+                if (CENTROID_X.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || CENTROID_X.isQuickComputing()) {
-                        if (lineSegmentList == null) {
-                            pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                            lineSegmentList = getClosedPathSegments(pathArea);
-                        }
-                        centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                        val = (centroid != null) ? centroid.getX() * ratio : null;
+                    if (lineSegmentList == null) {
+                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                        lineSegmentList = getClosedPathSegments(pathArea);
                     }
+                    centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
+                    val = (centroid != null) ? centroid.getX() * ratio : null;
                     measVal.add(new MeasureItem(CENTROID_X, val, unitStr));
                 }
-                if (CENTROID_Y.isComputed() && (!drawOnLabel || CENTROID_Y.isGraphicLabel())) {
+                if (CENTROID_Y.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || CENTROID_Y.isQuickComputing()) {
-                        if (lineSegmentList == null) {
-                            pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                            lineSegmentList = getClosedPathSegments(pathArea);
-                        }
-                        centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                        val = (centroid != null) ? centroid.getY() * ratio : null;
+                    if (lineSegmentList == null) {
+                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                        lineSegmentList = getClosedPathSegments(pathArea);
                     }
+                    centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
+                    val = (centroid != null) ? centroid.getY() * ratio : null;
                     measVal.add(new MeasureItem(CENTROID_Y, val, unitStr));
                 }
-                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
+                if (AREA.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || AREA.isQuickComputing()) {
-                        if (lineSegmentList == null) {
-                            pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                            lineSegmentList = getClosedPathSegments(pathArea);
-                        }
-                        val = (lineSegmentList != null) ? getAreaValue(lineSegmentList) * ratio * ratio : null;
+                    if (lineSegmentList == null) {
+                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                        lineSegmentList = getClosedPathSegments(pathArea);
                     }
+                    val = (lineSegmentList != null) ? getAreaValue(lineSegmentList) * ratio * ratio : null;
                     String unit = "pix".equals(unitStr) ? unitStr : unitStr + "2";
                     measVal.add(new MeasureItem(AREA, val, unit));
                 }
-                if (PERIMETER.isComputed() && (!drawOnLabel || PERIMETER.isGraphicLabel())) {
+                if (PERIMETER.isComputed()) {
                     Double val = null;
-                    if (releaseEvent || PERIMETER.isQuickComputing()) {
-                        if (lineSegmentList == null) {
-                            pathArea = (pathArea == null) ? getPathArea() : pathArea;
-                            lineSegmentList = getClosedPathSegments(pathArea);
-                        }
-                        val = (lineSegmentList != null) ? getPerimeter(lineSegmentList) * ratio : null;
+                    if (lineSegmentList == null) {
+                        pathArea = (pathArea == null) ? getPathArea() : pathArea;
+                        lineSegmentList = getClosedPathSegments(pathArea);
                     }
+                    val = (lineSegmentList != null) ? getPerimeter(lineSegmentList) * ratio : null;
                     measVal.add(new MeasureItem(PERIMETER, val, unitStr));
                 }
 

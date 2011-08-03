@@ -59,7 +59,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class AbstractDragGraphic implements Graphic {
 
-    protected static final Logger logger = LoggerFactory.getLogger(AbstractDragGraphic.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractDragGraphic.class);
 
     public static final int UNDEFINED = -1;
 
@@ -645,7 +645,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         // If isMultiSelection is false, it should return all enable computed measurements when
         // quickComputing is enable or when releasedEvent is true
         if (labelVisible || !isMultiSelection) {
-            measList = getMeasurements(imageElement, releasedEvent, isMultiSelection);
+            measList = getMeasurements(imageElement, releasedEvent);
         }
 
         if (labelVisible && measList != null && measList.size() > 0) {

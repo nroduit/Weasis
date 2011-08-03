@@ -83,7 +83,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent, boolean drawOnLabel) {
+    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -93,35 +93,23 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
                 double ratio = adapter.getCalibRatio();
 
-                if (CENTER_X.isComputed() && (!drawOnLabel || CENTER_X.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || CENTER_X.isQuickComputing()) {
-                        val = adapter.getXCalibratedValue(centerPt.getX());
-                    }
-                    measVal.add(new MeasureItem(CENTER_X, val, adapter.getUnit()));
+                if (CENTER_X.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_X, adapter.getXCalibratedValue(centerPt.getX()), adapter
+                        .getUnit()));
                 }
-                if (CENTER_Y.isComputed() && (!drawOnLabel || CENTER_Y.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || CENTER_Y.isQuickComputing()) {
-                        val = adapter.getYCalibratedValue(centerPt.getY());
-                    }
-                    measVal.add(new MeasureItem(CENTER_Y, val, adapter.getUnit()));
+                if (CENTER_Y.isComputed()) {
+                    measVal.add(new MeasureItem(CENTER_Y, adapter.getYCalibratedValue(centerPt.getY()), adapter
+                        .getUnit()));
                 }
-                if (RADIUS.isComputed() && (!drawOnLabel || RADIUS.isGraphicLabel())) {
-                    Double val = releaseEvent || RADIUS.isQuickComputing() ? ratio * radius : null;
-                    measVal.add(new MeasureItem(RADIUS, val, adapter.getUnit()));
+                if (RADIUS.isComputed()) {
+                    measVal.add(new MeasureItem(RADIUS, ratio * radius, adapter.getUnit()));
                 }
-                if (DIAMETER.isComputed() && (!drawOnLabel || DIAMETER.isGraphicLabel())) {
-                    Double val = releaseEvent || DIAMETER.isQuickComputing() ? ratio * radius * 2.0 : null;
-                    measVal.add(new MeasureItem(DIAMETER, val, adapter.getUnit()));
+                if (DIAMETER.isComputed()) {
+                    measVal.add(new MeasureItem(DIAMETER, ratio * radius * 2.0, adapter.getUnit()));
                 }
-                if (AREA.isComputed() && (!drawOnLabel || AREA.isGraphicLabel())) {
-                    Double val = null;
-                    if (releaseEvent || AREA.isQuickComputing()) {
-                        val = Math.PI * radius * radius * ratio * ratio;
-                    }
+                if (AREA.isComputed()) {
                     String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
-                    measVal.add(new MeasureItem(AREA, val, unit));
+                    measVal.add(new MeasureItem(AREA, Math.PI * radius * radius * ratio * ratio, unit));
                 }
 
                 List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
