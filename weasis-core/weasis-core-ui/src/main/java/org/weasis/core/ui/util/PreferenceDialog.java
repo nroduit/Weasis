@@ -8,23 +8,26 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.base.ui.gui;
+package org.weasis.core.ui.util;
 
 import java.awt.Dimension;
+import java.awt.Window;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import org.weasis.base.ui.Messages;
-import org.weasis.base.ui.internal.Activator;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.internal.Activator;
 
 public class PreferenceDialog extends AbstractWizardDialog {
 
-    public PreferenceDialog() {
-        super(WeasisWin.getInstance(), Messages.getString("OpenPreferencesAction.title"), true, new Dimension(640, 480)); //$NON-NLS-1$
+    public PreferenceDialog(Window parentWin) {
+        super(parentWin,
+            Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         initializePages();
         pack();
         initGUI();
@@ -61,5 +64,23 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     private void initGUI() {
         showPageFirstPage();
+    }
+
+    public void showPage(String pageName) {
+        if (pageName != null) {
+            Enumeration children = pagesRoot.children();
+            int index = 0;
+            while (children.hasMoreElements()) {
+                DefaultMutableTreeNode page = (DefaultMutableTreeNode) children.nextElement();
+                Object object = page.getUserObject();
+                if (object instanceof AbstractItemDialogPage
+                    && pageName.equals(((AbstractItemDialogPage) object).getTitle())) {
+                    tree.setSelectionRow(index);
+                    tree.expandRow(index);
+                    break;
+                }
+                index++;
+            }
+        }
     }
 }

@@ -229,8 +229,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public int getCurrentCineRate() {
-                if (currentCine != null)
+                if (currentCine != null) {
                     return currentCine.getCurrentCineRate();
+                }
                 return 0;
             }
 
@@ -524,8 +525,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     }
 
     public ActionState getAction(ActionW action) {
-        if (action != null)
+        if (action != null) {
             return actions.get(action);
+        }
         return null;
     }
 
@@ -533,8 +535,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         if (command != null) {
             for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
                 ActionW action = iterator.next();
-                if (action.cmd().equals(command))
+                if (action.cmd().equals(command)) {
                     return action;
+                }
             }
         }
         return null;
@@ -544,8 +547,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         if (keyEvent != 0) {
             for (Iterator<ActionW> iterator = actions.keySet().iterator(); iterator.hasNext();) {
                 ActionW action = iterator.next();
-                if (action.getKeyCode() == keyEvent)
+                if (action.getKeyCode() == keyEvent) {
                     return action;
+                }
             }
         }
         return null;
@@ -587,8 +591,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     }
 
     public DefaultView2d<E> getSelectedViewPane() {
-        if (selectedView2dContainer != null)
+        if (selectedView2dContainer != null) {
             return selectedView2dContainer.getSelectedImagePane();
+        }
         return null;
     }
 
@@ -600,8 +605,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         clearAllPropertyChangeListeners();
         if (viewerPlugin != null) {
             DefaultView2d<E> viewPane = viewerPlugin.getSelectedImagePane();
-            if (viewPane == null)
+            if (viewPane == null) {
                 return;
+            }
             if (viewPane.getSeries() != null) {
                 addPropertyChangeListeners(viewPane);
                 Boolean synchLink = (Boolean) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());

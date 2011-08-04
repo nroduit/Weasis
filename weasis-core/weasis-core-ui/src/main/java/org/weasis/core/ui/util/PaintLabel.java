@@ -1,28 +1,24 @@
 package org.weasis.core.ui.util;
 
-import java.awt.AWTEvent;
 import java.awt.BorderLayout;
-import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
+import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -31,11 +27,9 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.Graphic;
 
-public class PaintLabel extends JDialog {
+public class PaintLabel extends AbstractItemDialogPage {
     public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
 
-    private JPanel panel1 = new JPanel();
-    private BorderLayout borderLayout1 = new BorderLayout();
     private JPanel jPanelChangeCanal = new JPanel();
     private GridBagLayout gridBagLayout2 = new GridBagLayout();
     private JButton jButtonApply = new JButton();
@@ -45,29 +39,25 @@ public class PaintLabel extends JDialog {
     private JComboBox jComboName = new JComboBox();
     private JLabel jLabelSize = new JLabel();
     private JComboBox jComboSize = new JComboBox(fontSize);
-    private JButton jButtonClose = new JButton();
     private JCheckBox jCheckBoxBold = new JCheckBox();
     private JCheckBox jCheckBoxItalic = new JCheckBox();
     private ImageViewerEventManager eventManager;
 
     public PaintLabel(ImageViewerEventManager eventManager) {
-        super(WinUtil.getParentDialogOrFrame(eventManager.getSelectedView2dContainer()), "Default Graphic Properties",
-            Dialog.ModalityType.APPLICATION_MODAL);
+        setTitle("Font");
         this.eventManager = eventManager;
-        enableEvents(AWTEvent.WINDOW_EVENT_MASK);
         try {
             JMVUtils.setList(jComboName, "Default", GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getAvailableFontFamilyNames());
             jbInit();
             initialize();
-            pack();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
     private void jbInit() throws Exception {
-        panel1.setLayout(borderLayout1);
+        this.setLayout(new BorderLayout());
         jPanelChangeCanal.setLayout(gridBagLayout2);
         jButtonApply.setText("Apply");
         jButtonApply.addActionListener(new java.awt.event.ActionListener() {
@@ -76,19 +66,10 @@ public class PaintLabel extends JDialog {
                 apply();
             }
         });
-
-        jButtonClose.setText("Close");
-        jButtonClose.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                closeWin();
-            }
-        });
-        getContentPane().add(panel1);
-        panel1.add(jPanelChangeCanal, BorderLayout.SOUTH);
+        this.add(jPanelChangeCanal, BorderLayout.SOUTH);
         jPanelChangeCanal.add(jButtonApply, new GridBagConstraints(0, 0, 1, 1, 0.5, 0.0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, new Insets(25, 25, 10, 15), 0, 0));
-        panel1.add(jPanel2, BorderLayout.WEST);
+        this.add(jPanel2, BorderLayout.WEST);
         jPanel2.setLayout(gridBagLayout1);
         jLabelFont.setText("Name:");
         jLabelSize.setText("Size:");
@@ -107,23 +88,7 @@ public class PaintLabel extends JDialog {
             GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
         jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanelChangeCanal.add(jButtonClose, new GridBagConstraints(1, 0, 1, 1, 0.5, 0.0, GridBagConstraints.CENTER,
-            GridBagConstraints.NONE, new Insets(25, 15, 10, 20), 0, 0));
 
-    }
-
-    // Overridden so we can exit when window is closed
-    @Override
-    protected void processWindowEvent(WindowEvent e) {
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            closeWin();
-        }
-        super.processWindowEvent(e);
-    }
-
-    // Close the dialog
-    private void closeWin() {
-        dispose();
     }
 
     private void initialize() {
@@ -189,5 +154,16 @@ public class PaintLabel extends JDialog {
             }
         }
 
+    }
+
+    @Override
+    public void resetoDefaultValues() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void closeAdditionalWindow() {
+        apply();
     }
 }

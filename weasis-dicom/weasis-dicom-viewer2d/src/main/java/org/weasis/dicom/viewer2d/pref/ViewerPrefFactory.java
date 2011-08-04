@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d;
+package org.weasis.dicom.viewer2d.pref;
 
 import java.util.Hashtable;
 

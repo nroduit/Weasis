@@ -47,10 +47,13 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.AbstractDragGraphicArea;
@@ -58,7 +61,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.util.PaintLabel;
+import org.weasis.core.ui.util.PreferenceDialog;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.ui.util.TableNumberRenderer;
@@ -67,6 +70,7 @@ import org.weasis.core.ui.util.ViewSetting;
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
     public static final String BUTTON_NAME = "Measure";
+    public static final String LABEL_PREF_NAME = "Labels on image";
     public static final int DockableWidth = 210;
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
@@ -114,16 +118,6 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         final ViewSetting setting = eventManager.getViewSetting();
-
-        JButton jButtonLabel = new JButton("Options");
-        jButtonLabel.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JDialog lab = new PaintLabel(eventManager);
-                JMVUtils.showCenterScreen(lab);
-            }
-        });
 
         // transform.add(Box.createVerticalStrut(7));
 
@@ -299,8 +293,21 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 AbstractDragGraphicArea.IMAGE_MIN.setComputed(sel);
                 AbstractDragGraphicArea.IMAGE_MAX.setComputed(sel);
                 AbstractDragGraphicArea.IMAGE_MEAN.setComputed(sel);
-                if (selectedGraphic.size() == 1) {
-
+                synchronized (UIManager.VIEWER_PLUGINS) {
+                    for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                        ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                        if (p instanceof ImageViewerPlugin) {
+                            for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
+                                if (v instanceof DefaultView2d) {
+                                    DefaultView2d view = (DefaultView2d) v;
+                                    List<Graphic> list = view.getLayerModel().getAllGraphics();
+                                    for (Graphic graphic : list) {
+                                        graphic.updateLabel(view.getImage(), view);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -310,11 +317,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JDialog dialog = new PaintLabel(eventManager);
-                Point location = btnGerenralOptions.getLocation();
-                SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
-                WinUtil.adjustLocationToFitScreen(dialog, location);
-                dialog.setVisible(true);
+                PreferenceDialog dialog = new PreferenceDialog(WinUtil.getParentWindow(MeasureTool.this));
+                dialog.showPage(LABEL_PREF_NAME);
+                JMVUtils.showCenterScreen(dialog);
             }
         });
         transform.add(btnGerenralOptions);

@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.base.ui.gui;
+package org.weasis.core.ui.util;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

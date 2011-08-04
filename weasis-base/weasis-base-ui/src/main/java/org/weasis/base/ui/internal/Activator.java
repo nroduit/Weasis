@@ -25,7 +25,6 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -35,7 +34,6 @@ public class Activator implements BundleActivator, ServiceListener {
     // public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static final String dataExplorerViewFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DataExplorerView.class.getName()); //$NON-NLS-1$
-    private static ServiceTracker prefs_tracker = null;
     private BundleContext context = null;
 
     @Override
@@ -44,15 +42,6 @@ public class Activator implements BundleActivator, ServiceListener {
         // Load the bundle preferences
         // PREFERENCES.init(context);
 
-        prefs_tracker = new ServiceTracker(context, PreferencesPageFactory.class.getName(), null);
-        try {
-            // Must keep the tracker open, because calling close() will unget service. This is a problem because
-            // the deactivate method is called although the service stay alive in UI.
-            prefs_tracker.open();
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
         // WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
@@ -137,8 +126,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
                 final ServiceReference m_ref = event.getServiceReference();
                 Object service = context.getService(m_ref);
-                if (service == null)
+                if (service == null) {
                     return;
+                }
                 if (service instanceof DataExplorerView) {
                     final DataExplorerView explorer = (DataExplorerView) service;
                     synchronized (UIManager.EXPLORER_PLUGINS) {
@@ -189,10 +179,6 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
             }
         });
-    }
-
-    public static Object[] getPreferencesPages() {
-        return prefs_tracker == null ? null : prefs_tracker.getServices();
     }
 
 }

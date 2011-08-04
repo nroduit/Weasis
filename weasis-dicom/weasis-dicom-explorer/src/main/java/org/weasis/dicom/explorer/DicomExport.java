@@ -29,7 +29,8 @@ public class DicomExport extends AbstractWizardDialog {
     private final DicomModel dicomModel;
 
     public DicomExport(final DicomModel dicomModel) {
-        super(null, Messages.getString("DicomExport.exp_dicom"), true, new Dimension(640, 480)); //$NON-NLS-1$
+        super(null,
+            Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
 
         jPanelButtom.removeAll();
@@ -50,6 +51,7 @@ public class DicomExport extends AbstractWizardDialog {
         final JButton exportButton = new JButton();
         exportButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 Object object = null;
                 try {

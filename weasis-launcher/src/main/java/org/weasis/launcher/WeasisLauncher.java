@@ -266,8 +266,8 @@ public class WeasisLauncher {
                         }
                         if (m_felix != null) {
                             m_felix.stop();
-                            // wait asynchronous stop (max 25 seconds)
-                            m_felix.waitForStop(25000);
+                            // wait asynchronous stop (max 10 seconds)
+                            m_felix.waitForStop(10000);
                         }
                     } catch (Exception ex) {
                         exitStatus = -1;
@@ -337,8 +337,9 @@ public class WeasisLauncher {
                 }
             }
             // TODO Handle Weasis version without ui
-            if (!uiStarted)
+            if (!uiStarted) {
                 throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+            }
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -386,8 +387,9 @@ public class WeasisLauncher {
     }
 
     public static Object getCommandSession(Object commandProcessor) {
-        if (commandProcessor == null)
+        if (commandProcessor == null) {
             return null;
+        }
         Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
@@ -407,8 +409,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_close(Object commandSession) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         try {
             Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
             nameMethod.invoke(commandSession, null);
@@ -424,8 +427,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         Class[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };

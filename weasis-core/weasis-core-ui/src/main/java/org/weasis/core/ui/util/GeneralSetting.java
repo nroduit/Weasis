@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.base.ui.gui;
+package org.weasis.core.ui.util;
 
 import java.awt.Component;
 import java.awt.Dialog;
@@ -30,11 +30,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.Messages;
 
 public class GeneralSetting extends AbstractItemDialogPage {
 
@@ -96,10 +96,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_button.gridx = 2;
         gbc_button.gridy = 1;
         button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 LookInfo item = (LookInfo) jComboBox1.getSelectedItem();
                 final String finalLafClassName = item.getClassName();
                 Runnable runnable = new Runnable() {
+                    @Override
                     public void run() {
                         try {
                             // JFrame dialog = WeasisWin.getInstance();
@@ -188,6 +190,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
         if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
             Runnable runnable = new Runnable() {
+                @Override
                 public void run() {
                     try {
                         WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);

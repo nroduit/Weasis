@@ -12,10 +12,10 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
@@ -40,15 +40,15 @@ public abstract class AbstractWizardDialog extends JDialog {
     private final BorderLayout borderLayout3 = new BorderLayout();
     protected final JButton jButtonClose = new JButton();
     private final BorderLayout borderLayout2 = new BorderLayout();
-    private final TreeSelection tree = new TreeSelection();
+    protected final TreeSelection tree = new TreeSelection();
     protected JPanel jPanelButtom = new JPanel();
     private final JPanel jPanelMain = new JPanel();
     protected JScrollPane jScrollPanePage = new JScrollPane();
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JScrollPane jScrollPane1 = new JScrollPane();
 
-    public AbstractWizardDialog(Frame frame, String title, boolean modal, Dimension pageSize) {
-        super(frame, title, modal);
+    public AbstractWizardDialog(Window window, String title, ModalityType modal, Dimension pageSize) {
+        super(window, title, modal);
         this.settingTitle = title;
         try {
             jScrollPanePage.setPreferredSize(pageSize);
@@ -108,8 +108,9 @@ public abstract class AbstractWizardDialog extends JDialog {
             object = jScrollPanePage.getViewport().getComponent(0);
         } catch (Exception ex) {
         }
-        if (object instanceof AbstractItemDialogPage)
+        if (object instanceof AbstractItemDialogPage) {
             return (AbstractItemDialogPage) object;
+        }
         return null;
     }
 
@@ -204,9 +205,5 @@ public abstract class AbstractWizardDialog extends JDialog {
     }
 
     public abstract void cancel();
-
-    public void expandNode(int position) {
-        tree.expandRow(position);
-    }
 
 }

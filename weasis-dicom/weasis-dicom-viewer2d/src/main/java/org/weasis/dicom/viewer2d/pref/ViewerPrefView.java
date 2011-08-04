@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.dicom.viewer2d;
+package org.weasis.dicom.viewer2d.pref;
 
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -32,6 +32,10 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.View2dContainer;
+import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
     private final Hashtable labels = new Hashtable();

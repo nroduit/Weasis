@@ -494,6 +494,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setBorder(selected ? focusBorder : normalBorder);
         // Remove the selection of graphics
         getLayerModel().setSelectedGraphics(null);
+        // Throws to the tool listener the current graphic selection.
+        getLayerModel().fireGraphicsSelectionChanged(getImage());
     }
 
     /** paint routine */

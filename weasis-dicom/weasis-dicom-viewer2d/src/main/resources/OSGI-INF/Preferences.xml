@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.viewer2d.ViewerPrefFactory">
-   <implementation class="org.weasis.dicom.viewer2d.ViewerPrefFactory"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="false" name="org.weasis.dicom.viewer2d.pref.ViewerPrefFactory">
+   <implementation class="org.weasis.dicom.viewer2d.pref.ViewerPrefFactory"/>
    <service>
       <provide interface="org.weasis.core.api.gui.PreferencesPageFactory"/>
    </service>

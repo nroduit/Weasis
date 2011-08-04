@@ -626,14 +626,16 @@ public abstract class AbstractDragGraphic implements Graphic {
 
         if (model != null) {
             ArrayList<Graphic> selectedGraphics = model.getSelectedGraphics();
-            isMultiSelection = (selectedGraphics != null && selectedGraphics.size() > 1);
+            isMultiSelection = selectedGraphics.size() > 1;
 
-            GraphicsListener[] gfxListeners = model.getGraphicSelectionListeners();
-            if (gfxListeners != null) {
-                for (GraphicsListener listener : gfxListeners) {
-                    if (listener instanceof MeasureTool) {
-                        measureToolListener = (MeasureTool) listener;
-                        break;
+            if (selectedGraphics.size() == 1 && selectedGraphics.get(0) == this) {
+                GraphicsListener[] gfxListeners = model.getGraphicSelectionListeners();
+                if (gfxListeners != null) {
+                    for (GraphicsListener listener : gfxListeners) {
+                        if (listener instanceof MeasureTool) {
+                            measureToolListener = (MeasureTool) listener;
+                            break;
+                        }
                     }
                 }
             }

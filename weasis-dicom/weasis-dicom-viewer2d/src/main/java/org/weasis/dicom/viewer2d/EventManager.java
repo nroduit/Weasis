@@ -266,8 +266,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
                                 if (val != null) {
                                     location = val[0] + val[1] + val[2];
-                                } else
+                                } else {
                                     return; // Do not throw event because
+                                }
                                 break;
                             }
                         }
@@ -400,8 +401,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             @Override
             public int getCurrentCineRate() {
-                if (currentCine != null)
+                if (currentCine != null) {
                     return currentCine.getCurrentCineRate();
+                }
                 return 0;
             }
 
@@ -420,8 +422,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (selectedView2dContainer != null) {
                         img = selectedView2dContainer.getSelectedImagePane().getImage();
                     }
-                    if (img == null)
+                    if (img == null) {
                         return;
+                    }
                     PresetWindowLevel preset = (PresetWindowLevel) object;
 
                     if (preset.equals(PresetWindowLevel.DEFAULT)) {
@@ -514,8 +517,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         if (action == null && command != null) {
             for (ActionW a : keyEventActions) {
-                if (a.cmd().equals(command))
+                if (a.cmd().equals(command)) {
                     return a;
+                }
             }
         }
 
@@ -528,8 +532,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         if (action == null && keyEvent != 0) {
             for (ActionW a : keyEventActions) {
-                if (a.getKeyCode() == keyEvent)
+                if (a.getKeyCode() == keyEvent) {
                     return a;
+                }
             }
         }
 
@@ -614,13 +619,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public synchronized boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
-        if (defaultView2d == null)
+        if (defaultView2d == null) {
             return false;
+        }
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer)
+        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
             return false;
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane())
+        }
+        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
+        }
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
@@ -689,8 +697,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (viewerPlugin != null) {
             DefaultView2d<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
             // if (viewPane == null || viewPane.getSeries() == null) {
-            if (viewPane == null)
+            if (viewPane == null) {
                 return;
+            }
             MediaSeries<DicomImageElement> series = viewPane.getSeries();
             if (series != null) {
                 addPropertyChangeListeners(viewPane);
@@ -778,8 +787,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (series1 != null && series2 != null) {
             DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE);
             DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE);
-            if (image1 != null && image2 != null)
+            if (image1 != null && image2 != null) {
                 return image1.hasSameSize(image2);
+            }
         }
         return false;
     }
@@ -788,6 +798,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         // Default view
         viewSetting.savePreferences(prefs);
+        zoomSetting.savePreferences(prefs);
         // Mouse buttons preferences
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
