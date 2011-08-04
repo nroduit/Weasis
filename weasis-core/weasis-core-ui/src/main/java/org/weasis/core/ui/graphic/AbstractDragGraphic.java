@@ -647,7 +647,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         // If isMultiSelection is false, it should return all enable computed measurements when
         // quickComputing is enable or when releasedEvent is true
         if (labelVisible || !isMultiSelection) {
-            measList = getMeasurements(imageElement, releasedEvent);
+            measList = computeMeasurements(imageElement, releasedEvent);
         }
 
         if (labelVisible && measList != null && measList.size() > 0) {

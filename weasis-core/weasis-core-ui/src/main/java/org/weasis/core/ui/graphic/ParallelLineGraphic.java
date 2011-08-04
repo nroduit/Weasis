@@ -145,7 +145,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -190,4 +190,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
         lineCDvalid = ptC != null && ptD != null && !ptC.equals(ptD);
     }
 
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(DISTANCE);
+        list.add(ORIENTATION);
+        list.add(AZIMUTH);
+        return list;
+    }
 }

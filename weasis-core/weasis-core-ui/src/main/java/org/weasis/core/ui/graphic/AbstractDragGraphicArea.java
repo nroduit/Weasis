@@ -34,16 +34,7 @@ import org.weasis.core.api.media.data.TagW;
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
-public abstract class AbstractDragGraphicArea extends AbstractDragGraphic {
-
-    public static final Measurement IMAGE_MEAN = new Measurement("Mean", false, true, true);
-    public static final Measurement IMAGE_MIN = new Measurement("Min", false, true, false);
-    public static final Measurement IMAGE_MAX = new Measurement("Max", false, true, false);
-    public static final Measurement IMAGE_STD = new Measurement("StDev", false, false, false);
-    public static final Measurement IMAGE_SKEW = new Measurement("Skewness", false, false, false);
-    public static final Measurement IMAGE_KURTOSIS = new Measurement("Kurtosis", false, false, false);
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////
+public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implements ImageStatistics {
 
     public AbstractDragGraphicArea(int handlePointTotalNumber) {
         this(handlePointTotalNumber, Color.YELLOW, 1f, true);

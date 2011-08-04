@@ -352,7 +352,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         List<MeasureItem> measList = null;
 
         if (graph != null && imageElement != null) {
-            measList = graph.getMeasurements(imageElement, true);
+            measList = graph.computeMeasurements(imageElement, true);
         }
         updateMeasuredItems(measList);
     }

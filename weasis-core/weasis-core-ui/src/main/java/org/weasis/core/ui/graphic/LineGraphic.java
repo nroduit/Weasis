@@ -74,7 +74,7 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
 
@@ -106,7 +106,6 @@ public class LineGraphic extends AbstractDragGraphic {
                 }
                 if (AZIMUTH.isComputed()) {
                     measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), "deg"));
-
                 }
                 return measVal;
             }
@@ -135,4 +134,16 @@ public class LineGraphic extends AbstractDragGraphic {
         return ptB;
     }
 
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(FIRST_POINT_X);
+        list.add(FIRST_POINT_Y);
+        list.add(LAST_POINT_X);
+        list.add(LAST_POINT_Y);
+        list.add(LINE_LENGTH);
+        list.add(ORIENTATION);
+        list.add(AZIMUTH);
+        return list;
+    }
 }

@@ -105,7 +105,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -160,5 +160,13 @@ public class AngleToolGraphic extends AbstractDragGraphic {
             angleDeg = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(ptA, ptO, ptB));
             lineColinear = GeomUtil.lineColinear(ptO, ptA, ptO, ptB);
         }
+    }
+
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(ANGLE);
+        list.add(COMPLEMENTARY_ANGLE);
+        return list;
     }
 }

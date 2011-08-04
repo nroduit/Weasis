@@ -27,7 +27,7 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.Graphic;
 
-public class PaintLabel extends AbstractItemDialogPage {
+public class LabelPrefView extends AbstractItemDialogPage {
     public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
 
     private JPanel jPanelChangeCanal = new JPanel();
@@ -43,7 +43,7 @@ public class PaintLabel extends AbstractItemDialogPage {
     private JCheckBox jCheckBoxItalic = new JCheckBox();
     private ImageViewerEventManager eventManager;
 
-    public PaintLabel(ImageViewerEventManager eventManager) {
+    public LabelPrefView(ImageViewerEventManager eventManager) {
         setTitle("Font");
         this.eventManager = eventManager;
         try {

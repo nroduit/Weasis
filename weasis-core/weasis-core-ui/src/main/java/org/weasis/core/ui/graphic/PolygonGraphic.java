@@ -112,7 +112,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -203,6 +203,20 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(TOP_LEFT_POINT_X);
+        list.add(TOP_LEFT_POINT_Y);
+        list.add(WIDTH);
+        list.add(HEIGHT);
+        list.add(CENTROID_X);
+        list.add(CENTROID_Y);
+        list.add(AREA);
+        list.add(PERIMETER);
+        return list;
     }
 
     /**

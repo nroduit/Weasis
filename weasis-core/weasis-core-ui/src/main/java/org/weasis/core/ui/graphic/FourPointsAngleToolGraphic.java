@@ -148,7 +148,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -305,5 +305,13 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                 angleDeg = GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(lineIJP[0], ptP, lineKLP[0]));
             }
         }
+    }
+
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(ANGLE);
+        list.add(COMPLEMENTARY_ANGLE);
+        return list;
     }
 }

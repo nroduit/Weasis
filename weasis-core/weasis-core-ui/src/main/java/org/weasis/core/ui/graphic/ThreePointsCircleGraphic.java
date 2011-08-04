@@ -83,7 +83,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> getMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
 
         if (imageElement != null && isShapeValid()) {
             MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
@@ -121,6 +121,18 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Measurement> getMeasurementList() {
+        List<Measurement> list = new ArrayList<Measurement>();
+        list.add(CENTER_X);
+        list.add(CENTER_Y);
+        list.add(RADIUS);
+        list.add(DIAMETER);
+        list.add(AREA);
+        list.add(PERIMETER);
+        return list;
     }
 
     @Override

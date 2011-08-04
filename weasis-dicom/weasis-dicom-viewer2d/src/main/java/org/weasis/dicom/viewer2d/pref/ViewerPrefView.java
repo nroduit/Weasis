@@ -14,9 +14,12 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Hashtable;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -67,7 +70,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         JPanel panel_1 = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
         flowLayout.setAlignment(FlowLayout.LEADING);
-        panel_1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
+        panel_1.setBorder(new TitledBorder(null,
+            Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel_1);
 
         JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp")); //$NON-NLS-1$
@@ -77,6 +81,22 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         comboBoxInterpolation = new JComboBox(ZoomOperation.INTERPOLATIONS);
         comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
         panel_1.add(comboBoxInterpolation);
+
+        JPanel panel_2 = new JPanel();
+        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
+        flowLayout_1.setHgap(10);
+        flowLayout_1.setAlignment(FlowLayout.RIGHT);
+        flowLayout_1.setVgap(7);
+        add(panel_2);
+
+        JButton btnNewButton = new JButton(Messages.getString("ViewerPrefView.btnNewButton.text"));
+        panel_2.add(btnNewButton);
+        btnNewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetoDefaultValues();
+            }
+        });
 
         ActionState winAction = eventManager.getAction(ActionW.WINDOW);
         if (winAction instanceof MouseActionAdapter) {
@@ -237,8 +257,12 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        // TODO Auto-generated method stub
-
+        sliderWindow.setValue(realValueToslider(1.25));
+        sliderLevel.setValue(realValueToslider(1.25));
+        sliderScroll.setValue(realValueToslider(0.1));
+        sliderRotation.setValue(realValueToslider(0.25));
+        sliderZoom.setValue(realValueToslider(0.1));
+        comboBoxInterpolation.setSelectedIndex(1);
     }
 
     private void formatSlider(JSlider slider) {
