@@ -1,12 +1,14 @@
 package org.weasis.core.ui.util;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +17,12 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -29,9 +33,6 @@ import org.weasis.core.ui.graphic.Graphic;
 
 public class LabelPrefView extends AbstractItemDialogPage {
     public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
-
-    private JPanel jPanelChangeCanal = new JPanel();
-    private GridBagLayout gridBagLayout2 = new GridBagLayout();
     private JButton jButtonApply = new JButton();
     private JPanel jPanel2 = new JPanel();
     private GridBagLayout gridBagLayout1 = new GridBagLayout();
@@ -44,6 +45,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     private ImageViewerEventManager eventManager;
 
     public LabelPrefView(ImageViewerEventManager eventManager) {
+        setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle("Font");
         this.eventManager = eventManager;
         try {
@@ -58,7 +60,33 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     private void jbInit() throws Exception {
         this.setLayout(new BorderLayout());
-        jPanelChangeCanal.setLayout(gridBagLayout2);
+        this.add(jPanel2, BorderLayout.CENTER);
+        jPanel2.setLayout(gridBagLayout1);
+        jLabelFont.setText("Name:");
+        jLabelSize.setText("Size:");
+        jPanel2.setBorder(new TitledBorder("All Labels Font"));
+        jCheckBoxBold.setText("Bold");
+        jCheckBoxItalic.setText("Italic");
+        jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE, new Insets(5, 2, 5, 0), 0, 0));
+        jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
+        jPanel2.add(jComboName, new GridBagConstraints(2, 0, 3, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE, new Insets(0, 2, 0, 5), 0, 0));
+        jPanel2.add(jCheckBoxItalic, new GridBagConstraints(4, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
+        jPanel2.add(jCheckBoxBold, new GridBagConstraints(3, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
+        jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
+            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
+
+        JPanel panel_2 = new JPanel();
+        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
+        flowLayout_1.setHgap(10);
+        flowLayout_1.setAlignment(FlowLayout.RIGHT);
+        flowLayout_1.setVgap(7);
+        add(panel_2, BorderLayout.SOUTH);
+        panel_2.add(jButtonApply);
         jButtonApply.setText("Apply");
         jButtonApply.addActionListener(new java.awt.event.ActionListener() {
             @Override
@@ -66,43 +94,33 @@ public class LabelPrefView extends AbstractItemDialogPage {
                 apply();
             }
         });
-        this.add(jPanelChangeCanal, BorderLayout.SOUTH);
-        jPanelChangeCanal.add(jButtonApply, new GridBagConstraints(0, 0, 1, 1, 0.5, 0.0, GridBagConstraints.CENTER,
-            GridBagConstraints.NONE, new Insets(25, 25, 10, 15), 0, 0));
-        this.add(jPanel2, BorderLayout.WEST);
-        jPanel2.setLayout(gridBagLayout1);
-        jLabelFont.setText("Name:");
-        jLabelSize.setText("Size:");
-        jPanel2.setBorder(new TitledBorder("Font (Global)"));
-        jCheckBoxBold.setText("Bold");
-        jCheckBoxItalic.setText("Italic");
-        jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(5, 2, 5, 0), 0, 0));
-        jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-        jPanel2.add(jComboName, new GridBagConstraints(2, 0, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(0, 2, 0, 5), 0, 0));
-        jPanel2.add(jCheckBoxItalic, new GridBagConstraints(4, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanel2.add(jCheckBoxBold, new GridBagConstraints(3, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
+
+        JButton btnNewButton = new JButton(Messages.getString("restore.values"));
+        panel_2.add(btnNewButton);
+        btnNewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetoDefaultValues();
+            }
+        });
 
     }
 
     private void initialize() {
         ViewSetting setting = eventManager.getViewSetting();
         int style = setting.getFontType();
+        boolean italic = false;
+        boolean bold = false;
         if (style == (Font.BOLD | Font.ITALIC)) {
-            jCheckBoxBold.setSelected(true);
-            jCheckBoxItalic.setSelected(true);
+            italic = true;
+            bold = true;
         } else if (style == Font.BOLD) {
-            jCheckBoxBold.setSelected(true);
+            bold = true;
         } else if (style == Font.ITALIC) {
-            style = Font.ITALIC;
-            jCheckBoxItalic.setSelected(true);
+            italic = true;
         }
+        jCheckBoxItalic.setSelected(italic);
+        jCheckBoxBold.setSelected(bold);
         String size = String.valueOf(setting.getFontSize());
         int index = 2;
         for (int i = 0; i < fontSize.length; i++) {
@@ -158,8 +176,11 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        // TODO Auto-generated method stub
-
+        ViewSetting setting = eventManager.getViewSetting();
+        setting.setFontName("Default");
+        setting.setFontType(0);
+        setting.setFontSize(12);
+        initialize();
     }
 
     @Override

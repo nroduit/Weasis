@@ -23,9 +23,9 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
-    public static final Measurement DISTANCE = new Measurement("Distance", true, true, true);
-    public static final Measurement ORIENTATION = new Measurement("Orientation", true, true, false);
-    public static final Measurement AZIMUTH = new Measurement("Azimuth", true, true, false);
+    public static final Measurement DISTANCE = new Measurement("Distance", 1, true, true, true);
+    public static final Measurement ORIENTATION = new Measurement("Orientation", 2, true, true, false);
+    public static final Measurement AZIMUTH = new Measurement("Azimuth", 3, true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two parallel line segments

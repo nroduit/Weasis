@@ -36,8 +36,8 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         FourPointsAngleToolGraphic.class.getResource("/icon/22x22/draw-4p-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", true, true, false);
+    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 

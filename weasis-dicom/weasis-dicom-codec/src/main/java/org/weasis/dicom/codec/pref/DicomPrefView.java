@@ -24,6 +24,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.dcm4che2.imageio.ImageReaderFactory;
@@ -31,10 +32,15 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public class DicomPrefView extends AbstractItemDialogPage {
 
-    private final JPanel panel = new JPanel();
-    private final JComboBox comboBox;
+    private JPanel panel = new JPanel();
+    private JComboBox comboBox;
 
     public DicomPrefView() {
+        initGUI();
+    }
+
+    private void initGUI() {
+        setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle("DICOM"); //$NON-NLS-1$
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         add(panel);

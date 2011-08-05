@@ -24,6 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -47,9 +48,23 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     private JSlider sliderZoom;
     private JSlider sliderRotation;
     private JSlider sliderScroll;
-    private final JComboBox comboBoxInterpolation;
+    private JComboBox comboBoxInterpolation;
 
     public ViewerPrefView() {
+
+        // JButton button = new JButton("Restore Defaults");
+        // GridBagConstraints gbc_button = new GridBagConstraints();
+        // gbc_button.insets = new Insets(15, 15, 15, 15);
+        // gbc_button.anchor = GridBagConstraints.SOUTHEAST;
+        // gbc_button.gridx = 1;
+        // gbc_button.gridy = 5;
+        // panel.add(button, gbc_button);
+
+        initGUI();
+    }
+
+    private final void initGUI() {
+        setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle(View2dFactory.NAME); //$NON-NLS-1$
         labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low"))); //$NON-NLS-1$
         labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid"))); //$NON-NLS-1$
@@ -89,7 +104,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         flowLayout_1.setVgap(7);
         add(panel_2);
 
-        JButton btnNewButton = new JButton(Messages.getString("ViewerPrefView.btnNewButton.text"));
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel_2.add(btnNewButton);
         btnNewButton.addActionListener(new ActionListener() {
             @Override
@@ -207,15 +222,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             formatSlider(sliderScroll);
             panel.add(sliderScroll, gbc_slider_1);
         }
-
-        // JButton button = new JButton("Restore Defaults");
-        // GridBagConstraints gbc_button = new GridBagConstraints();
-        // gbc_button.insets = new Insets(15, 15, 15, 15);
-        // gbc_button.anchor = GridBagConstraints.SOUTHEAST;
-        // gbc_button.gridx = 1;
-        // gbc_button.gridy = 5;
-        // panel.add(button, gbc_button);
-
     }
 
     @Override

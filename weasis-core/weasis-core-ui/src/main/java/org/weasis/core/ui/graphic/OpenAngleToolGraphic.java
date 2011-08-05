@@ -36,8 +36,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", true, true, false);
+    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two line segments

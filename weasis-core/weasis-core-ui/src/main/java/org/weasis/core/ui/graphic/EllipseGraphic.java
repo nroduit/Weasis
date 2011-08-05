@@ -31,12 +31,12 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement("Area", true, true, true);
-    public static final Measurement PERIMETER = new Measurement("Perimeter", true, true, false);
-    public static final Measurement CENTER_X = new Measurement("Center X", true, true, false);
-    public static final Measurement CENTER_Y = new Measurement("Center Y", true, true, false);
-    public static final Measurement WIDTH = new Measurement("Width", true, true, false);
-    public static final Measurement HEIGHT = new Measurement("Height", true, true, false);
+    public static final Measurement AREA = new Measurement("Area", 1, true, true, true);
+    public static final Measurement PERIMETER = new Measurement("Perimeter", 2, true, true, false);
+    public static final Measurement CENTER_X = new Measurement("Center X", 3, true, true, false);
+    public static final Measurement CENTER_Y = new Measurement("Center Y", 4, true, true, false);
+    public static final Measurement WIDTH = new Measurement("Width", 5, true, true, false);
+    public static final Measurement HEIGHT = new Measurement("Height", 6, true, true, false);
 
     public EllipseGraphic(float lineThickness, Color paint, boolean labelVisible) {
         super(lineThickness, paint, labelVisible);

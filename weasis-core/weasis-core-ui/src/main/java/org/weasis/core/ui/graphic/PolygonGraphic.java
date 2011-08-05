@@ -44,14 +44,14 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement("Area", true, true, true); //$NON-NLS-1$
-    public static final Measurement PERIMETER = new Measurement("Perimeter", true, true, false); //$NON-NLS-1$
-    public static final Measurement WIDTH = new Measurement("Width", true, true, false); //$NON-NLS-1$
-    public static final Measurement HEIGHT = new Measurement("Height", true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_X = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_Y = new Measurement("Centroid X", true, true, false); //$NON-NLS-1$
+    public static final Measurement AREA = new Measurement("Area", 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement("Perimeter", 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement("Width", 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT = new Measurement("Height", 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_X = new Measurement("Centroid X", 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y = new Measurement("Centroid X", 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 

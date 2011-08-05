@@ -32,8 +32,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", true, true, false);
+    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let O be center of perpendicular projections in Cobb's angle

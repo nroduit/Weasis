@@ -35,8 +35,8 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", true, true, false);
+    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     Point2D ptA, ptO, ptB; // Let AOB be the triangle that represents the measured angle, O being the intersection point

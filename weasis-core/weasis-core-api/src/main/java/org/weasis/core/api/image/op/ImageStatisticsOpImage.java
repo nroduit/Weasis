@@ -150,8 +150,12 @@ public class ImageStatisticsOpImage extends StatisticsOpImage {
                 ext[0][i] = results[0][i];
                 ext[1][i] = results[1][i];
                 if (totalPixelCount <= 0) {
+                    ext[0][i] = Double.NaN;
+                    ext[1][i] = Double.NaN;
                     ext[2][i] = Double.NaN;
                 } else {
+                    ext[0][i] = results[0][i];
+                    ext[1][i] = results[1][i];
                     ext[2][i] = results[2][i] / totalPixelCount;
                 }
             }

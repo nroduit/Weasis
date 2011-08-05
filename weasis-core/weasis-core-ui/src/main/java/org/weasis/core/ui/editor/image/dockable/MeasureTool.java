@@ -271,24 +271,42 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Display Options",
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
-        final JCheckBox chckbxAdvStats = new JCheckBox("More Pixel Statistics");
+        final ViewSetting setting = eventManager.getViewSetting();
+        final JCheckBox chckbxAdvStats = new JCheckBox("More Pixel Statistics", setting.isMoreStatistics());
         chckbxAdvStats.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JCheckBox box = (JCheckBox) e.getSource();
                 boolean sel = box.isSelected();
+                setting.setMoreStatistics(sel);
                 AbstractDragGraphicArea.IMAGE_STD.setComputed(sel);
                 AbstractDragGraphicArea.IMAGE_SKEW.setComputed(sel);
                 AbstractDragGraphicArea.IMAGE_KURTOSIS.setComputed(sel);
+                synchronized (UIManager.VIEWER_PLUGINS) {
+                    for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                        ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                        if (p instanceof ImageViewerPlugin) {
+                            for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
+                                if (v instanceof DefaultView2d) {
+                                    DefaultView2d view = (DefaultView2d) v;
+                                    List<Graphic> list = view.getLayerModel().getAllGraphics();
+                                    for (Graphic graphic : list) {
+                                        graphic.updateLabel(view.getImage(), view);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
-        JCheckBox chckbxBasicImageStatistics = new JCheckBox("Basic Pixel Statistics");
-        chckbxBasicImageStatistics.setSelected(true);
+        JCheckBox chckbxBasicImageStatistics = new JCheckBox("Basic Pixel Statistics", setting.isBasicStatistics());
         chckbxBasicImageStatistics.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JCheckBox box = (JCheckBox) e.getSource();
                 boolean sel = box.isSelected();
+                setting.setBasicStatistics(sel);
                 chckbxAdvStats.setEnabled(sel);
                 AbstractDragGraphicArea.IMAGE_MIN.setComputed(sel);
                 AbstractDragGraphicArea.IMAGE_MAX.setComputed(sel);

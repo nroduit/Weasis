@@ -35,20 +35,26 @@ import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class WadoPrefView extends AbstractItemDialogPage {
 
-    private final ItemListener changeViewListener = new ItemListener() {
+    private ItemListener changeViewListener = new ItemListener() {
 
+        @Override
         public void itemStateChanged(final ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 selectTSUID((TransferSyntax) comboBox.getSelectedItem());
             }
         }
     };
-    private final JPanel panel = new JPanel();
-    private final JComboBox comboBox;
-    private final JSpinner spinnerScroll = new JSpinner();
+    private JPanel panel = new JPanel();
+    private JComboBox comboBox;
+    private JSpinner spinnerScroll = new JSpinner();
     private JLabel lblCompression;
 
     public WadoPrefView() {
+        initGUI();
+    }
+
+    private void initGUI() {
+        setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle(Messages.getString("WadoPrefView.wado")); //$NON-NLS-1$
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         lblCompression = new JLabel(Messages.getString("WadoPrefView.compr")); //$NON-NLS-1$

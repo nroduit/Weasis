@@ -26,19 +26,24 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.Measurement;
 import org.weasis.core.ui.util.LabelPrefView;
 import org.weasis.core.ui.util.StatisticsPrefView;
 import org.weasis.dicom.viewer2d.EventManager;
-import org.weasis.dicom.viewer2d.Messages;
 
 public class LabelsPrefView extends AbstractItemDialogPage {
     private final JPanel panelList = new JPanel();
+    private JComboBox comboBoxTool;
     private final ItemListener toolsListener = new ItemListener() {
 
         @Override
@@ -56,37 +61,14 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
 
-        JPanel panel = new JPanel();
-        FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-        flowLayout.setHgap(2);
-        flowLayout.setAlignment(FlowLayout.LEFT);
-        add(panel, BorderLayout.NORTH);
-
-        JLabel lblNewLabel = new JLabel("Measure Tool:");
-        panel.add(lblNewLabel);
-        ArrayList<Graphic> tools = new ArrayList<Graphic>(MeasureToolBar.graphicList);
-        tools.remove(0);
-        JComboBox comboBox = new JComboBox(tools.toArray());
-        comboBox.addItemListener(toolsListener);
-        comboBox.setSelectedIndex(0);
-        panel.add(comboBox);
-
-        add(panelList);
-        panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
-
-        addSubPage(new LabelPrefView(EventManager.getInstance()));
-        addSubPage(new StatisticsPrefView());
-    }
-
-    private void init() {
         JPanel panel_2 = new JPanel();
         FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
         flowLayout_1.setHgap(10);
         flowLayout_1.setAlignment(FlowLayout.RIGHT);
         flowLayout_1.setVgap(7);
-        add(panel_2);
+        add(panel_2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(Messages.getString("ViewerPrefView.btnNewButton.text"));
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel_2.add(btnNewButton);
         btnNewButton.addActionListener(new ActionListener() {
             @Override
@@ -94,6 +76,32 @@ public class LabelsPrefView extends AbstractItemDialogPage {
                 resetoDefaultValues();
             }
         });
+
+        JPanel panel1 = new JPanel();
+        panel1.setBorder(new TitledBorder(null, "Visible Measurements", TitledBorder.LEADING, TitledBorder.TOP, null,
+            null));
+        add(panel1, BorderLayout.CENTER);
+        panel1.setLayout(new BorderLayout(0, 0));
+
+        JPanel panel = new JPanel();
+        panel1.add(panel, BorderLayout.NORTH);
+        FlowLayout flowLayout = (FlowLayout) panel.getLayout();
+        flowLayout.setHgap(2);
+        flowLayout.setAlignment(FlowLayout.LEFT);
+
+        JLabel lblNewLabel = new JLabel("Measure Tool:");
+        panel.add(lblNewLabel);
+        ArrayList<Graphic> tools = new ArrayList<Graphic>(MeasureToolBar.graphicList);
+        tools.remove(0);
+        comboBoxTool = new JComboBox(tools.toArray());
+        selectTool((Graphic) comboBoxTool.getSelectedItem());
+        comboBoxTool.addItemListener(toolsListener);
+        panel.add(comboBoxTool);
+        panel1.add(panelList);
+        panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
+
+        addSubPage(new LabelPrefView(EventManager.getInstance()));
+        addSubPage(new StatisticsPrefView());
     }
 
     private void selectTool(Graphic graph) {
@@ -101,8 +109,18 @@ public class LabelsPrefView extends AbstractItemDialogPage {
             panelList.removeAll();
             List<Measurement> list = graph.getMeasurementList();
             if (list != null) {
-                for (Measurement m : list) {
+                for (final Measurement m : list) {
                     JCheckBox box = new JCheckBox(m.getName(), m.isGraphicLabel());
+                    box.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Object source = e.getSource();
+                            if (source instanceof JCheckBox) {
+                                m.setGraphicLabel(((JCheckBox) source).isSelected());
+                            }
+                        }
+                    });
                     panelList.add(box);
                 }
             }
@@ -114,12 +132,35 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
+        synchronized (UIManager.VIEWER_PLUGINS) {
+            for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                if (p instanceof ImageViewerPlugin) {
+                    for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
+                        if (v instanceof DefaultView2d) {
+                            DefaultView2d view = (DefaultView2d) v;
+                            List<Graphic> list = view.getLayerModel().getAllGraphics();
+                            for (Graphic graphic : list) {
+                                graphic.updateLabel(view.getImage(), view);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public void resetoDefaultValues() {
-        // TODO Auto-generated method stub
-
+        for (Graphic graph : MeasureToolBar.graphicList) {
+            List<Measurement> list = graph.getMeasurementList();
+            if (list != null) {
+                for (Measurement m : list) {
+                    m.resetToGraphicLabelValue();
+                }
+            }
+        }
+        selectTool((Graphic) comboBoxTool.getSelectedItem());
     }
 
 }
