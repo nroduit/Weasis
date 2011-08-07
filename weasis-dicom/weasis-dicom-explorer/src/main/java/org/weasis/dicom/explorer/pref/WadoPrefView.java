@@ -11,14 +11,18 @@
 package org.weasis.dicom.explorer.pref;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,7 +39,7 @@ import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class WadoPrefView extends AbstractItemDialogPage {
 
-    private ItemListener changeViewListener = new ItemListener() {
+    private final ItemListener changeViewListener = new ItemListener() {
 
         @Override
         public void itemStateChanged(final ItemEvent e) {
@@ -44,9 +48,9 @@ public class WadoPrefView extends AbstractItemDialogPage {
             }
         }
     };
-    private JPanel panel = new JPanel();
+    private final JPanel panel = new JPanel();
     private JComboBox comboBox;
-    private JSpinner spinnerScroll = new JSpinner();
+    private final JSpinner spinnerScroll = new JSpinner();
     private JLabel lblCompression;
 
     public WadoPrefView() {
@@ -114,6 +118,22 @@ public class WadoPrefView extends AbstractItemDialogPage {
         panel.add(txtpnNoteWhenThe, gbc_txtpnNoteWhenThe);
 
         comboBox.setSelectedItem(DicomManager.getInstance().getWadoTSUID());
+
+        JPanel panel_2 = new JPanel();
+        FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
+        flowLayout_1.setHgap(10);
+        flowLayout_1.setAlignment(FlowLayout.RIGHT);
+        flowLayout_1.setVgap(7);
+        add(panel_2);
+
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
+        panel_2.add(btnNewButton);
+        btnNewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetoDefaultValues();
+            }
+        });
     }
 
     private void selectTSUID(TransferSyntax tsuid) {
@@ -144,15 +164,17 @@ public class WadoPrefView extends AbstractItemDialogPage {
     public void closeAdditionalWindow() {
         TransferSyntax tsuid = (TransferSyntax) comboBox.getSelectedItem();
         if (tsuid != null) {
-            tsuid.setCompression((Integer) spinnerScroll.getValue());
+            if (tsuid.getCompression() != null) {
+                tsuid.setCompression((Integer) spinnerScroll.getValue());
+            }
             DicomManager.getInstance().setWadoTSUID(tsuid);
         }
     }
 
     @Override
     public void resetoDefaultValues() {
-        // TODO Auto-generated method stub
-
+        DicomManager.getInstance().restoreDefaultValues();
+        comboBox.setSelectedItem(DicomManager.getInstance().getWadoTSUID());
     }
 
 }

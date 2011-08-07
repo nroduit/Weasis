@@ -1,4 +1,4 @@
-package org.weasis.core.ui.util;
+package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -25,29 +25,32 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.util.ViewSetting;
 
 public class LabelPrefView extends AbstractItemDialogPage {
     public static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" };
-    private JButton jButtonApply = new JButton();
-    private JPanel jPanel2 = new JPanel();
-    private GridBagLayout gridBagLayout1 = new GridBagLayout();
-    private JLabel jLabelFont = new JLabel();
-    private JComboBox jComboName = new JComboBox();
-    private JLabel jLabelSize = new JLabel();
-    private JComboBox jComboSize = new JComboBox(fontSize);
-    private JCheckBox jCheckBoxBold = new JCheckBox();
-    private JCheckBox jCheckBoxItalic = new JCheckBox();
-    private ImageViewerEventManager eventManager;
+    private final JButton jButtonApply = new JButton();
+    private final JPanel jPanel2 = new JPanel();
+    private final GridBagLayout gridBagLayout1 = new GridBagLayout();
+    private final JLabel jLabelFont = new JLabel();
+    private final JComboBox jComboName = new JComboBox();
+    private final JLabel jLabelSize = new JLabel();
+    private final JComboBox jComboSize = new JComboBox(fontSize);
+    private final JCheckBox jCheckBoxBold = new JCheckBox();
+    private final JCheckBox jCheckBoxItalic = new JCheckBox();
+    private final ViewSetting viewSetting;
 
-    public LabelPrefView(ImageViewerEventManager eventManager) {
+    public LabelPrefView(ViewSetting viewSetting) {
+        if (viewSetting == null) {
+            throw new IllegalArgumentException("ViewSetting cannot be null");
+        }
+        this.viewSetting = viewSetting;
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle("Font");
-        this.eventManager = eventManager;
         try {
             JMVUtils.setList(jComboName, "Default", GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getAvailableFontFamilyNames());
@@ -64,7 +67,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         jPanel2.setLayout(gridBagLayout1);
         jLabelFont.setText("Name:");
         jLabelSize.setText("Size:");
-        jPanel2.setBorder(new TitledBorder("All Labels Font"));
+        jPanel2.setBorder(new TitledBorder("Font"));
         jCheckBoxBold.setText("Bold");
         jCheckBoxItalic.setText("Italic");
         jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
@@ -107,8 +110,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     }
 
     private void initialize() {
-        ViewSetting setting = eventManager.getViewSetting();
-        int style = setting.getFontType();
+        int style = viewSetting.getFontType();
         boolean italic = false;
         boolean bold = false;
         if (style == (Font.BOLD | Font.ITALIC)) {
@@ -121,7 +123,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         jCheckBoxItalic.setSelected(italic);
         jCheckBoxBold.setSelected(bold);
-        String size = String.valueOf(setting.getFontSize());
+        String size = String.valueOf(viewSetting.getFontSize());
         int index = 2;
         for (int i = 0; i < fontSize.length; i++) {
             if (fontSize[i].equals(size)) {
@@ -130,31 +132,12 @@ public class LabelPrefView extends AbstractItemDialogPage {
             }
         }
         jComboSize.setSelectedIndex(index);
-        jComboName.setSelectedItem(setting.getFontName());
+        jComboName.setSelectedItem(viewSetting.getFontName());
 
     }
 
     public void apply() {
-        int size = Integer.parseInt(jComboSize.getSelectedItem().toString());
-        int style = 0;
-        if (jCheckBoxBold.isSelected() && jCheckBoxItalic.isSelected()) {
-            style = Font.BOLD | Font.ITALIC;
-        } else if (jCheckBoxBold.isSelected()) {
-            style = Font.BOLD;
-        } else if (jCheckBoxItalic.isSelected()) {
-            style = Font.ITALIC;
-        }
-        String name = jComboName.getSelectedItem().toString();
-        ViewSetting setting = eventManager.getViewSetting();
-        setting.setFontName(name);
-        setting.setFontSize(size);
-        setting.setFontType(style);
-
-        ArrayList<Graphic> graphicList = MeasureToolBar.graphicList;
-        for (int i = 1; i < graphicList.size(); i++) {
-            MeasureToolBar.applyDefaultSetting(setting, graphicList.get(i));
-        }
-
+        closeAdditionalWindow();
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
                 ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
@@ -176,15 +159,32 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        ViewSetting setting = eventManager.getViewSetting();
-        setting.setFontName("Default");
-        setting.setFontType(0);
-        setting.setFontSize(12);
+        viewSetting.setFontName("Default");
+        viewSetting.setFontType(0);
+        viewSetting.setFontSize(12);
         initialize();
     }
 
     @Override
     public void closeAdditionalWindow() {
-        apply();
+        int size = Integer.parseInt(jComboSize.getSelectedItem().toString());
+        int style = 0;
+        if (jCheckBoxBold.isSelected() && jCheckBoxItalic.isSelected()) {
+            style = Font.BOLD | Font.ITALIC;
+        } else if (jCheckBoxBold.isSelected()) {
+            style = Font.BOLD;
+        } else if (jCheckBoxItalic.isSelected()) {
+            style = Font.ITALIC;
+        }
+        String name = jComboName.getSelectedItem().toString();
+
+        viewSetting.setFontName(name);
+        viewSetting.setFontSize(size);
+        viewSetting.setFontType(style);
+
+        ArrayList<Graphic> graphicList = MeasureToolBar.graphicList;
+        for (int i = 1; i < graphicList.size(); i++) {
+            MeasureToolBar.applyDefaultSetting(viewSetting, graphicList.get(i));
+        }
     }
 }

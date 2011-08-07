@@ -10,8 +10,9 @@ public class WadoPrefFactory implements PreferencesPageFactory {
     @Override
     public AbstractItemDialogPage createPreferencesPage(Hashtable<String, Object> properties) {
         if (properties != null) {
-            if ("superuser".equals(properties.get("weasis.user.prefs")))
+            if ("superuser".equals(properties.get("weasis.user.prefs"))) {
                 return new WadoPrefView();
+            }
         }
         return null;
     }

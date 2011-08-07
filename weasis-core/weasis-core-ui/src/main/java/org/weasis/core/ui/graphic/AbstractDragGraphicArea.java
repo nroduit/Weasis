@@ -12,7 +12,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Point2D;
@@ -23,8 +22,6 @@ import javax.media.jai.OpImage;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
 import javax.media.jai.RenderedOp;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
 
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
@@ -84,74 +81,27 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                 if (releaseEvent) {
                     PlanarImage image = imageElement.getImage();
                     // long startTime = System.currentTimeMillis();
-
-                    // try {
-                    // ArrayList<Integer> pList = getValueFromArea(image);
-                    // if (pList != null && pList.size() > 0) {
-                    // int band = image.getSampleModel().getNumBands();
-                    // if (band == 1) {
-                    // // unit = pixelValue * rescale slope + rescale intercept
-                    // Float slope = (Float) imageElement.getTagValue(TagW.RescaleSlope);
-                    // Float intercept = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
-                    // if (slope != null || intercept != null) {
-                    // slope = slope == null ? 1.0f : slope;
-                    // intercept = intercept == null ? 0.0f : intercept;
-                    // }
-                    //
-                    // min = Double.MAX_VALUE;
-                    // max = -Double.MAX_VALUE;
-                    // double sum = 0.0;
-                    // for (Integer val : pList) {
-                    // double v = val.doubleValue();
-                    // if (slope != null) {
-                    // v = v * slope + intercept;
-                    // }
-                    // if (v < min) {
-                    // min = v;
-                    // }
-                    //
-                    // if (v > max) {
-                    // max = v;
-                    // }
-                    //
-                    // sum += v;
-                    // }
-                    //
-                    // mean = sum / pList.size();
-                    //
-                    // stdv = 0.0D;
-                    // for (Integer val : pList) {
-                    // double v = val.doubleValue();
-                    // if (slope != null) {
-                    // v = v * slope + intercept;
-                    // }
-                    // if (v < min) {
-                    // min = v;
-                    // }
-                    //
-                    // if (v > max) {
-                    // max = v;
-                    // }
-                    //
-                    // stdv += (v - mean) * (v - mean);
-                    // }
-                    //
-                    // stdv = Math.sqrt(stdv / (pList.size() - 1.0));
-                    //
-                    // } else {
-                    // // message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]);
-                    // }
-                    // }
-                    // } catch (ArrayIndexOutOfBoundsException ex) {
-                    // }
-                    // logger.info("1 method [ms]: {}", System.currentTimeMillis() - startTime);
-                    // startTime = System.currentTimeMillis();
-
-                    // Second method
                     ROIShape roi = new ROIShape(shape);
-                    RenderedOp dst = ImageStatisticsDescriptor.create(image, roi, 1, 1, null, null, null);
+                    // Get padding values => exclude values
+                    Double excludedMin = null;
+                    Double excludedMax = null;
+                    Integer paddingValue = (Integer) imageElement.getTagValue(TagW.PixelPaddingValue);
+                    Integer paddingLimit = (Integer) imageElement.getTagValue(TagW.PixelPaddingRangeLimit);
+                    if (paddingValue != null) {
+                        if (paddingLimit == null) {
+                            paddingLimit = paddingValue;
+                        } else if (paddingLimit < paddingValue) {
+                            int temp = paddingValue;
+                            paddingValue = paddingLimit;
+                            paddingLimit = temp;
+                        }
+                        excludedMin = paddingValue == null ? null : new Double(paddingValue);
+                        excludedMax = paddingLimit == null ? null : new Double(paddingLimit);
+                    }
+                    RenderedOp dst = ImageStatisticsDescriptor.create(image, roi, 1, 1, excludedMin, excludedMax, null);
                     // To ensure this image is not stored in tile cache
                     ((OpImage) dst.getRendering()).setTileCache(null);
+                    // For basic statistics, rescale values can be computed afterwards
                     double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
                     // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                     // unit = pixelValue * rescale slope + rescale intercept
@@ -165,9 +115,11 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
 
                     if (IMAGE_STD.isComputed() || IMAGE_SKEW.isComputed() || IMAGE_KURTOSIS.isComputed()) {
                         // startTime = System.currentTimeMillis();
+                        // Required the mean value (not rescaled), slope and intercept to calculate correctly std, skew
+                        // and kurtosis
                         dst =
-                            ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], null, null, slope,
-                                intercept, null);
+                            ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], excludedMin,
+                                excludedMax, slope, intercept, null);
                         // To ensure this image is not stored in tile cache
                         ((OpImage) dst.getRendering()).setTileCache(null);
                         double[][] extrema2 = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
@@ -217,59 +169,6 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
         }
 
         return null;
-    }
-
-    protected ArrayList<Integer> getValueFromArea(PlanarImage imageData) {
-        if (imageData == null || shape == null) {
-            return null;
-        }
-
-        Area shapeArea = new Area(shape);
-        Rectangle bound = shapeArea.getBounds();
-
-        bound = imageData.getBounds().intersection(bound);
-
-        if (bound.width == 0 || bound.height == 0) {
-            return null;
-        }
-
-        RectIter it;
-        try {
-            it = RectIterFactory.create(imageData, bound);
-        } catch (Exception ex) {
-            it = null;
-        }
-
-        ArrayList<Integer> list = null;
-
-        if (it != null) {
-            int band = imageData.getSampleModel().getNumBands();
-            list = new ArrayList<Integer>();
-
-            int[] c = { 0, 0, 0 };
-            it.startBands();
-            it.startLines();
-            int y = bound.y;
-
-            while (!it.finishedLines()) {
-                it.startPixels();
-                int x = bound.x;
-
-                while (!it.finishedPixels()) {
-                    if (shapeArea.contains(x, y)) {
-                        it.getPixel(c);
-                        for (int i = 0; i < band; i++) {
-                            list.add(c[i]);
-                        }
-                    }
-                    it.nextPixel();
-                    x++;
-                }
-                it.nextLine();
-                y++;
-            }
-        }
-        return list;
     }
 
 }

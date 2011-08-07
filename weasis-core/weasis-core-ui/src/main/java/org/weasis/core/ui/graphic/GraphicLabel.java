@@ -24,6 +24,7 @@ import java.awt.geom.Rectangle2D;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class GraphicLabel implements Cloneable {
     /**
@@ -66,11 +67,13 @@ public class GraphicLabel implements Cloneable {
     }
 
     public Area getArea(AffineTransform transform) {
-        if (labelBounds == null)
+        if (labelBounds == null) {
             return new Area();
+        }
 
-        if (transform == null)
+        if (transform == null) {
             return new Area(labelBounds);
+        }
 
         AffineTransform invTransform = new AffineTransform(); // Identity transformation.
         Point2D anchorPt = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
@@ -127,7 +130,7 @@ public class GraphicLabel implements Cloneable {
             reset();
         } else {
             labelStringArray = labels;
-            Font defaultFont = view2d.getEventManager().getViewSetting().getFont();
+            Font defaultFont = MeasureTool.viewSetting.getFont();
             FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
@@ -139,10 +142,12 @@ public class GraphicLabel implements Cloneable {
     }
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
-        if (defaultFont == null)
+        if (defaultFont == null) {
             throw new RuntimeException("Font should not be null");
-        if (fontRenderContext == null)
+        }
+        if (fontRenderContext == null) {
             throw new RuntimeException("FontRenderContext should not be null");
+        }
 
         if (labelStringArray == null || labelStringArray.length == 0) {
             reset();

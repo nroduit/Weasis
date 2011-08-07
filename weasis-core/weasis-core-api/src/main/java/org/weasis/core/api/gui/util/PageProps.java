@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-interface PageProps {
+public interface PageProps {
 
     void resetoDefaultValues();
 

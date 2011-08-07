@@ -39,9 +39,9 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.util.ViewSetting;
 import org.weasis.core.ui.util.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> {
@@ -57,7 +57,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
-    protected final ViewSetting viewSetting = new ViewSetting();
     protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
@@ -438,7 +437,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             @Override
             public void actionPerformed(boolean selected) {
                 firePropertyChange(action.cmd(), null, selected);
-                viewSetting.setDrawOnlyOnce(selected);
+                MeasureTool.viewSetting.setDrawOnlyOnce(selected);
             }
         };
     }
@@ -565,10 +564,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
     public ZoomSetting getZoomSetting() {
         return zoomSetting;
-    }
-
-    public ViewSetting getViewSetting() {
-        return viewSetting;
     }
 
     public int viewScaleToSliderValue(double viewScale) {

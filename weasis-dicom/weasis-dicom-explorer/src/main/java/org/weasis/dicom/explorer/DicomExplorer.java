@@ -147,8 +147,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
         @Override
         public int compare(Object o1, Object o2) {
-            if (o1 == o2)
+            if (o1 == o2) {
                 return 0;
+            }
             if (o1 instanceof StudyPane && o2 instanceof StudyPane) {
                 o1 = ((StudyPane) o1).dicomStudy;
                 o2 = ((StudyPane) o2).dicomStudy;
@@ -165,28 +166,34 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     if (res == 0) {
                         Date time1 = (Date) st1.getTagValue(TagW.StudyTime);
                         Date time2 = (Date) st2.getTagValue(TagW.StudyTime);
-                        if (time1 != null && time2 != null)
+                        if (time1 != null && time2 != null) {
                             // inverse time
                             return time2.compareTo(time1);
-                    } else
+                        }
+                    } else {
                         return res;
+                    }
                 }
 
                 String uid1 = (String) st1.getTagValue(TagW.StudyInstanceUID);
                 String uid2 = (String) st2.getTagValue(TagW.StudyInstanceUID);
-                if (date1 == null && date2 == null && uid1 != null && uid2 != null)
+                if (date1 == null && date2 == null && uid1 != null && uid2 != null) {
                     return uid1.compareTo(uid2);
-                else {
-                    if (date1 == null)
+                } else {
+                    if (date1 == null) {
                         return 1;
-                    if (date2 == null)
+                    }
+                    if (date2 == null) {
                         return -1;
+                    }
                 }
             } else {
-                if (o1 instanceof MediaSeriesGroup)
+                if (o1 instanceof MediaSeriesGroup) {
                     return 1;
-                if (o2 instanceof MediaSeriesGroup)
+                }
+                if (o2 instanceof MediaSeriesGroup) {
                     return -1;
+                }
             }
             return 0;
         }
@@ -418,8 +425,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     private PatientPane getPatientPane(MediaSeriesGroup patient) {
         for (PatientPane p : patientPaneList) {
-            if (p.isPatient(patient))
+            if (p.isPatient(patient)) {
                 return p;
+            }
         }
         return null;
     }
@@ -429,8 +437,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         if (studies != null) {
             for (int i = 0; i < studies.size(); i++) {
                 StudyPane st = studies.get(i);
-                if (st.isStudy(study))
+                if (st.isStudy(study)) {
                     return st;
+                }
             }
         }
         return null;
@@ -477,8 +486,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         if (seriesList != null) {
             for (int j = 0; j < seriesList.size(); j++) {
                 SeriesPane se = seriesList.get(j);
-                if (se.isSeries(series))
+                if (se.isSeries(series)) {
                     return se;
+                }
             }
         }
         return null;
@@ -556,18 +566,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     }
 
     private int getOrientationLabelPosition(String orientationPlane) {
-        if (orientationPlane == null)
+        if (orientationPlane == null) {
             return 0;
+        }
         for (int i = 0; i < ImageOrientation.LABELS.length; i++) {
-            if (ImageOrientation.LABELS[i].equals(orientationPlane))
+            if (ImageOrientation.LABELS[i].equals(orientationPlane)) {
                 return i;
+            }
         }
         return 0;
     }
 
     private boolean isSelectedPatient(MediaSeriesGroup patient) {
-        if (selectedPatient != null && selectedPatient.patient == patient)
+        if (selectedPatient != null && selectedPatient.patient == patient) {
             return true;
+        }
         return false;
     }
 
@@ -664,8 +677,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         public boolean isPatientVisible(MediaSeriesGroup patient) {
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
-                    if (((PatientPane) c).isPatient(patient))
+                    if (((PatientPane) c).isPatient(patient)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -676,8 +690,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
                     PatientPane patientPane = (PatientPane) c;
-                    if (patientPane.isPatient(patient) && patientPane.isStudyVisible(study))
+                    if (patientPane.isPatient(patient) && patientPane.isStudyVisible(study)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -688,8 +703,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
                     PatientPane patientPane = (PatientPane) c;
-                    if (patientPane.isPatient(patient) && patientPane.isSeriesVisible(series))
+                    if (patientPane.isPatient(patient) && patientPane.isSeriesVisible(series)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -703,8 +719,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
 
         public PatientPane(MediaSeriesGroup patient) {
-            if (patient == null)
+            if (patient == null) {
                 throw new IllegalArgumentException("Patient cannot be null"); //$NON-NLS-1$
+            }
             this.patient = patient;
             this.setAlignmentX(LEFT_ALIGNMENT);
             this.setAlignmentY(TOP_ALIGNMENT);
@@ -730,8 +747,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             for (Component c : this.getComponents()) {
                 if (c instanceof StudyPane) {
                     StudyPane studyPane = (StudyPane) c;
-                    if (studyPane.isStudy(study))
+                    if (studyPane.isStudy(study)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -742,8 +760,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             for (Component c : this.getComponents()) {
                 if (c instanceof StudyPane) {
                     StudyPane studyPane = (StudyPane) c;
-                    if (studyPane.isStudy(study) && studyPane.isSeriesVisible(series))
+                    if (studyPane.isStudy(study) && studyPane.isSeriesVisible(series)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -812,8 +831,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         private final TitleBorder title;
 
         public StudyPane(MediaSeriesGroup dicomStudy) {
-            if (dicomStudy == null)
+            if (dicomStudy == null) {
                 throw new IllegalArgumentException("Study cannot be null"); //$NON-NLS-1$
+            }
             this.setAlignmentX(LEFT_ALIGNMENT);
             this.setAlignmentY(TOP_ALIGNMENT);
             this.dicomStudy = dicomStudy;
@@ -828,8 +848,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         public boolean isSeriesVisible(MediaSeriesGroup series) {
             for (Component c : this.getComponents()) {
                 if (c instanceof SeriesPane) {
-                    if (((SeriesPane) c).isSeries(series))
+                    if (((SeriesPane) c).isSeries(series)) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -886,8 +907,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         private final boolean selected;
 
         public SeriesPane(MediaSeriesGroup sequence) {
-            if (sequence == null)
+            if (sequence == null) {
                 throw new IllegalArgumentException("Series cannot be null"); //$NON-NLS-1$
+            }
             this.sequence = sequence;
             this.selected = false;
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -1156,8 +1178,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private void updateSplitSeries(Series dcmSeries) {
         MediaSeriesGroup study = model.getParent(dcmSeries, DicomModel.study);
         // In case the Series has been replaced (split number = -1) and removed
-        if (study == null)
+        if (study == null) {
             return;
+        }
         StudyPane studyPane = createStudyPaneInstance(study, null);
         List<Series> list = getSplitSeries(dcmSeries);
 
@@ -1196,9 +1219,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     int val1 = getIntValue((Integer) s1.getSequence().getTagValue(TagW.SeriesNumber));
                     int val2 = getIntValue((Integer) s2.getSequence().getTagValue(TagW.SeriesNumber));
                     if (val1 == val2) {
-                        if (val1 == 0)
+                        if (val1 == 0) {
                             return 1;
-                        else {
+                        } else {
                             int split1 = getIntValue((Integer) s1.getSequence().getTagValue(TagW.SplitSeriesNumber));
                             int split2 = getIntValue((Integer) s2.getSequence().getTagValue(TagW.SplitSeriesNumber));
                             return (split1 < split2 ? -1 : (split1 == split2 ? 0 : 1));

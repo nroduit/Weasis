@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.pref;
+package org.weasis.core.ui.pref;
 
 import java.util.Hashtable;
 

@@ -32,19 +32,27 @@ public class DicomPrefManager {
     }
 
     private DicomPrefManager() {
-        Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
-        if (pref != null) {
-            Preferences prefNode = pref.node("dicom"); //$NON-NLS-1$
-            j2kReader = prefNode.get("jpeg2000.reader", null);
+        restoreDefaultValues();
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+            Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
+            if (pref != null) {
+                Preferences prefNode = pref.node("dicom"); //$NON-NLS-1$
+                j2kReader = prefNode.get("jpeg2000.reader", null);
+            }
         }
+    }
 
+    public void restoreDefaultValues() {
+        j2kReader = null;
     }
 
     public void savePreferences() {
-        Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
-        if (prefs != null) {
-            Preferences prefNode = prefs.node("dicom"); //$NON-NLS-1$
-            BundlePreferences.putStringPreferences(prefNode, "jpeg2000.reader", j2kReader); //$NON-NLS-1$
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            if (prefs != null) {
+                Preferences prefNode = prefs.node("dicom"); //$NON-NLS-1$
+                BundlePreferences.putStringPreferences(prefNode, "jpeg2000.reader", j2kReader); //$NON-NLS-1$
+            }
         }
     }
 

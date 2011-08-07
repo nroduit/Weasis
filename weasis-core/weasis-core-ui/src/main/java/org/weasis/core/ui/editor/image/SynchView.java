@@ -24,8 +24,9 @@ public class SynchView implements GUIEntry {
         None, Stack, Tile
     }
 
-    public static final SynchView NONE = new SynchView(
-        Messages.getString("SynchView.none"), Mode.None, null, new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
+    public static final SynchView NONE =
+        new SynchView(
+            Messages.getString("SynchView.none"), Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
     public static final SynchView DEFAULT_TILE;
     public static final SynchView DEFAULT_STACK;
     static {
@@ -61,7 +62,7 @@ public class SynchView implements GUIEntry {
     private final HashMap<ActionW, Boolean> actions;
     private final Mode mode;
     private final String name;
-    private Icon icon;
+    private final Icon icon;
 
     public SynchView(String name, Mode mode, Icon icon, HashMap<ActionW, Boolean> actions) {
         if (name == null || actions == null) {

@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.dicom.viewer2d.pref;
+package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -29,6 +29,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -37,13 +38,10 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.Measurement;
-import org.weasis.core.ui.util.LabelPrefView;
-import org.weasis.core.ui.util.StatisticsPrefView;
-import org.weasis.dicom.viewer2d.EventManager;
 
 public class LabelsPrefView extends AbstractItemDialogPage {
     private final JPanel panelList = new JPanel();
-    private JComboBox comboBoxTool;
+    private final JComboBox comboBoxTool;
     private final ItemListener toolsListener = new ItemListener() {
 
         @Override
@@ -78,7 +76,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         });
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, "Visible Measurements", TitledBorder.LEADING, TitledBorder.TOP, null,
+        panel1.setBorder(new TitledBorder(null, "Geometric Measurement", TitledBorder.LEADING, TitledBorder.TOP, null,
             null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -86,22 +84,23 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         JPanel panel = new JPanel();
         panel1.add(panel, BorderLayout.NORTH);
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-        flowLayout.setHgap(2);
+        flowLayout.setHgap(5);
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        JLabel lblNewLabel = new JLabel("Measure Tool:");
+        JLabel lblNewLabel = new JLabel("Shape:");
         panel.add(lblNewLabel);
         ArrayList<Graphic> tools = new ArrayList<Graphic>(MeasureToolBar.graphicList);
         tools.remove(0);
         comboBoxTool = new JComboBox(tools.toArray());
+        comboBoxTool.setMaximumRowCount(12);
         selectTool((Graphic) comboBoxTool.getSelectedItem());
         comboBoxTool.addItemListener(toolsListener);
         panel.add(comboBoxTool);
         panel1.add(panelList);
         panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
 
-        addSubPage(new LabelPrefView(EventManager.getInstance()));
         addSubPage(new StatisticsPrefView());
+        addSubPage(new LabelPrefView(MeasureTool.viewSetting));
     }
 
     private void selectTool(Graphic graph) {
@@ -132,6 +131,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
+        for (PageProps subpage : getSubPages()) {
+            subpage.closeAdditionalWindow();
+        }
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
                 ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);

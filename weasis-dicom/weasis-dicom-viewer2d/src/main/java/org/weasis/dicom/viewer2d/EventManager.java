@@ -22,6 +22,7 @@ import javax.swing.BoundedRangeModel;
 import javax.swing.event.ChangeEvent;
 
 import org.noos.xing.mydoggy.Content;
+import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
@@ -58,6 +59,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.util.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
@@ -157,8 +159,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
-        viewSetting.applyPreferences(prefs);
-
         mouseActions.applyPreferences(prefs);
 
         if (prefs != null) {
@@ -796,8 +796,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void savePreferences() {
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
-        // Default view
-        viewSetting.savePreferences(prefs);
+        // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
+        try {
+            if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {
+                Preferences oldPref = prefs.node(ViewSetting.PREFERENCE_NODE);
+                oldPref.removeNode();
+            }
+        } catch (BackingStoreException e) {
+            // Do nothing
+        }
         zoomSetting.savePreferences(prefs);
         // Mouse buttons preferences
         mouseActions.savePreferences(prefs);

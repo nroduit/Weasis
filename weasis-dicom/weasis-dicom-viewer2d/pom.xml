@@ -22,7 +22,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Service-Component>OSGI-INF/viewerFactory.xml,OSGI-INF/Preferences.xml,OSGI-INF/LabelsPref.xml</Service-Component>
+						<Service-Component>OSGI-INF/viewerFactory.xml,OSGI-INF/Preferences.xml</Service-Component>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>

@@ -19,13 +19,16 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class Activator implements BundleActivator, ServiceListener {
 
     private static final String pluginViewerFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
+    public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static ServiceTracker prefs_tracker = null;
 
     private BundleContext bundleContext = null;
@@ -34,6 +37,8 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
         this.bundleContext = bundleContext;
+        PREFERENCES.init(bundleContext);
+        MeasureTool.viewSetting.applyPreferences(PREFERENCES.getDefaultPreferences());
 
         prefs_tracker = new ServiceTracker(bundleContext, PreferencesPageFactory.class.getName(), null);
         try {
@@ -70,7 +75,9 @@ public class Activator implements BundleActivator, ServiceListener {
     // @Override
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-
+        // Save preferences
+        MeasureTool.viewSetting.savePreferences(PREFERENCES.getDefaultPreferences());
+        PREFERENCES.close();
     }
 
     @Override

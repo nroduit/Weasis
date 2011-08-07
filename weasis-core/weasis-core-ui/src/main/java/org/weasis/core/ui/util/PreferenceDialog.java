@@ -12,6 +12,9 @@ package org.weasis.core.ui.util;
 
 import java.awt.Dimension;
 import java.awt.Window;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -39,14 +42,25 @@ public class PreferenceDialog extends AbstractWizardDialog {
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user"));
         final Object[] servicesPref = Activator.getPreferencesPages();
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             if (servicesPref[i] instanceof PreferencesPageFactory) {
                 AbstractItemDialogPage page =
                     ((PreferencesPageFactory) servicesPref[i]).createPreferencesPage(properties);
                 if (page != null) {
-                    pagesRoot.add(new DefaultMutableTreeNode(page));
+                    list.add(page);
                 }
             }
+        }
+        Collections.sort(list, new Comparator<AbstractItemDialogPage>() {
+
+            @Override
+            public int compare(AbstractItemDialogPage o1, AbstractItemDialogPage o2) {
+                return o1.getTitle().compareToIgnoreCase(o2.getTitle());
+            }
+        });
+        for (AbstractItemDialogPage page : list) {
+            pagesRoot.add(new DefaultMutableTreeNode(page));
         }
         iniTree();
     }

@@ -25,17 +25,28 @@ public class ViewSetting {
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            fontName = p.get("font.name", "Default"); //$NON-NLS-1$
-            fontType = p.getInt("font.type", 0); //$NON-NLS-1$
-            fontSize = p.getInt("font.size", 12); //$NON-NLS-1$
-            drawOnlyOnce = p.getBoolean("draw.once", true); //$NON-NLS-1$
-            lineWidth = p.getInt("line.width", 1); //$NON-NLS-1$
-            int rgb = p.getInt("line.color", Color.YELLOW.getRGB()); //$NON-NLS-1$
+            Preferences font = p.node("font");
+            fontName = font.get("name", "Default"); //$NON-NLS-1$
+            fontType = font.getInt("type", 0); //$NON-NLS-1$
+            fontSize = font.getInt("size", 12); //$NON-NLS-1$
+            Preferences draw = p.node("drawing");
+            drawOnlyOnce = draw.getBoolean("once", true); //$NON-NLS-1$
+            lineWidth = draw.getInt("width", 1); //$NON-NLS-1$
+            int rgb = draw.getInt("color", Color.YELLOW.getRGB()); //$NON-NLS-1$
             lineColor = new Color(rgb);
-            basicStatistics = p.getBoolean("statistics.basic", true); //$NON-NLS-1$
-            moreStatistics = p.getBoolean("statistics.more", false); //$NON-NLS-1$
+            Preferences stats = p.node("statistics");
+            basicStatistics = stats.getBoolean("basic", true); //$NON-NLS-1$
+            moreStatistics = stats.getBoolean("more", false); //$NON-NLS-1$
 
-            String labels = p.get("statistics.labels", null); //$NON-NLS-1$
+            ImageStatistics.IMAGE_MIN.setComputed(basicStatistics);
+            ImageStatistics.IMAGE_MAX.setComputed(basicStatistics);
+            ImageStatistics.IMAGE_MEAN.setComputed(basicStatistics);
+
+            ImageStatistics.IMAGE_STD.setComputed(moreStatistics);
+            ImageStatistics.IMAGE_SKEW.setComputed(moreStatistics);
+            ImageStatistics.IMAGE_KURTOSIS.setComputed(moreStatistics);
+
+            String labels = stats.get("label", null); //$NON-NLS-1$
             if (labels != null) {
                 String[] items = labels.split(",");
                 for (int i = 0; i < items.length; i++) {
@@ -56,7 +67,8 @@ public class ViewSetting {
                 Graphic graph = MeasureToolBar.graphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && list.size() > 0) {
-                    labels = p.get(graph.getClass().getSimpleName() + ".labels", null); //$NON-NLS-1$
+                    Preferences gpref = p.node(graph.getClass().getSimpleName());
+                    labels = gpref.get("label", null); //$NON-NLS-1$
                     if (labels != null) {
                         String[] items = labels.split(",");
                         for (int k = 0; k < items.length; k++) {
@@ -89,36 +101,40 @@ public class ViewSetting {
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            BundlePreferences.putStringPreferences(p, "font.name", fontName); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(p, "font.type", fontType); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(p, "font.size", fontSize); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(p, "draw.once", drawOnlyOnce); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(p, "line.width", lineWidth); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(p, "line.color", lineColor.getRGB()); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(p, "statistics.basic", basicStatistics); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(p, "statistics.more", moreStatistics); //$NON-NLS-1$
+            Preferences font = p.node("font");
+            BundlePreferences.putStringPreferences(font, "name", fontName); //$NON-NLS-1$
+            BundlePreferences.putIntPreferences(font, "type", fontType); //$NON-NLS-1$
+            BundlePreferences.putIntPreferences(font, "size", fontSize); //$NON-NLS-1$
 
+            Preferences draw = p.node("drawing");
+            BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); //$NON-NLS-1$
+            BundlePreferences.putIntPreferences(draw, "width", lineWidth); //$NON-NLS-1$
+            BundlePreferences.putIntPreferences(draw, "color", lineColor.getRGB()); //$NON-NLS-1$
+
+            Preferences stats = p.node("statistics");
+            BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); //$NON-NLS-1$
+            BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); //$NON-NLS-1$
             StringBuffer buffer = new StringBuffer();
             writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[0]);
             for (int i = 1; i < ImageStatistics.ALL_MEASUREMENTS.length; i++) {
                 buffer.append(",");
                 writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[i]);
             }
-            BundlePreferences.putStringPreferences(p, "statistics.labels", buffer.toString()); //$NON-NLS-1$
+            BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //$NON-NLS-1$
 
             // Forget the Selection Graphic
             for (int i = 1; i < MeasureToolBar.graphicList.size(); i++) {
                 Graphic graph = MeasureToolBar.graphicList.get(i);
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && list.size() > 0) {
+                    Preferences gpref = p.node(graph.getClass().getSimpleName());
                     buffer = new StringBuffer();
                     writeLabels(buffer, list.get(0));
                     for (int j = 1; j < list.size(); j++) {
                         buffer.append(",");
                         writeLabels(buffer, list.get(j));
                     }
-                    BundlePreferences.putStringPreferences(p,
-                        graph.getClass().getSimpleName() + ".labels", buffer.toString()); //$NON-NLS-1$
+                    BundlePreferences.putStringPreferences(gpref, "label", buffer.toString()); //$NON-NLS-1$
                 }
             }
         }

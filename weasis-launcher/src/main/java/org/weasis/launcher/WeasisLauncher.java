@@ -266,8 +266,8 @@ public class WeasisLauncher {
                         }
                         if (m_felix != null) {
                             m_felix.stop();
-                            // wait asynchronous stop (max 10 seconds)
-                            m_felix.waitForStop(10000);
+                            // wait asynchronous stop (max 20 seconds to stop all bundles)
+                            m_felix.waitForStop(20000);
                         }
                     } catch (Exception ex) {
                         exitStatus = -1;

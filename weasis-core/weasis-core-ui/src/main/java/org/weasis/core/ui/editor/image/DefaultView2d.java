@@ -83,6 +83,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.DragPoint;
@@ -515,7 +516,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
-        Font defaultFont = eventManager.getViewSetting().getFont();
+        Font defaultFont = MeasureTool.viewSetting.getFont();
         g2d.setFont(defaultFont);
 
         imageLayer.drawImage(g2d);

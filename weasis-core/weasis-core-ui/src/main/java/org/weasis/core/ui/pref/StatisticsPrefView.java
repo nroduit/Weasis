@@ -1,4 +1,4 @@
-package org.weasis.core.ui.util;
+package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,11 +18,6 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.ImageStatistics;
 import org.weasis.core.ui.graphic.Measurement;
 
@@ -42,8 +36,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
         setLayout(new BorderLayout(0, 0));
 
         JPanel panel = new JPanel();
-        panel
-            .setBorder(new TitledBorder(null, "Visible Parameters", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        panel.setBorder(new TitledBorder(null, getTitle(), TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel, BorderLayout.CENTER);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -85,22 +78,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
-        synchronized (UIManager.VIEWER_PLUGINS) {
-            for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
-                if (p instanceof ImageViewerPlugin) {
-                    for (Object v : ((ImageViewerPlugin) p).getImagePanels()) {
-                        if (v instanceof DefaultView2d) {
-                            DefaultView2d view = (DefaultView2d) v;
-                            List<Graphic> list = view.getLayerModel().getAllGraphics();
-                            for (Graphic graphic : list) {
-                                graphic.updateLabel(view.getImage(), view);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
     }
 
     @Override

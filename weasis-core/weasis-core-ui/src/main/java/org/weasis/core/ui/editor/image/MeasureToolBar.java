@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
@@ -97,10 +98,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
         this.eventManager = eventManager;
 
-        ViewSetting setting = eventManager.getViewSetting();
         // Do not apply to selectionGraphic
         for (int i = 1; i < graphicList.size(); i++) {
-            applyDefaultSetting(setting, graphicList.get(i));
+            applyDefaultSetting(MeasureTool.viewSetting, graphicList.get(i));
         }
 
         GroupRadioMenu menu = null;

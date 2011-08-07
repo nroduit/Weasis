@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
@@ -112,16 +113,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         add(Box.createRigidArea(new Dimension(5, 0)));
 
-        final DropDownButton button =
-            new DropDownButton(ActionW.SYNCH.cmd(), new DropButtonIcon(new ImageIcon(
-                MouseActions.class.getResource("/icon/32x32/synch.png")))) { //$NON-NLS-1$
-
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    return getSychPopupMenuButton(this);
-                }
-            };
-        button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
+        final DropDownButton button = buildSynchButton();
         add(button);
 
         addSeparator(WtoolBar.SEPARATOR_2x24);
@@ -131,6 +123,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
         jButtonActualZoom.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 ActionState zoom = eventManager.getAction(ActionW.ZOOM);
                 if (zoom instanceof SliderChangeListener) {
@@ -145,6 +138,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         jButtonBestFit.setToolTipText(Messages.getString("ViewerToolBar.zoom_b")); //$NON-NLS-1$
         jButtonBestFit.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
                 // value is adjusted by the BoundedRangeModel
@@ -167,13 +161,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {
         String action = actions.getAction(actionLabel);
-        final DropDownButton button = new DropDownButton(actionLabel, buildMouseIcon(actionLabel, action)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final DropDownButton button = new DropDownButton(actionLabel, buildMouseIcon(actionLabel, action)) {
 
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    return getPopupMenuButton(this);
-                }
-            };
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                return getPopupMenuButton(this);
+            }
+        };
         button.setActionCommand(action);
         button.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1$
         return button;
@@ -183,14 +177,29 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return mouseLeft;
     }
 
-    private JPopupMenu getSychPopupMenuButton(DropDownButton dropDownButton) {
+    private JPopupMenu getSychPopupMenuButton(final DropDownButton dropDownButton) {
         ActionState synch = eventManager.getAction(ActionW.SYNCH);
         JPopupMenu popupMouseButtons = new JPopupMenu();
         if (synch instanceof ComboItemListener) {
-            JMenu menu = ((ComboItemListener) synch).createUnregisteredRadioMenu("synch"); //$NON-NLS-1$
+            final ComboItemListener combo = ((ComboItemListener) synch);
+            ActionListener listener = new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (e.getSource() instanceof RadioMenuItem) {
+                        RadioMenuItem item = (RadioMenuItem) e.getSource();
+                        Icon icon = buildSynchIcon((SynchView) item.getObject());
+                        dropDownButton.setIcon(icon);
+                    }
+                }
+            };
+            JMenu menu = combo.createUnregisteredRadioMenu("synch"); //$NON-NLS-1$
             popupMouseButtons.setInvoker(dropDownButton);
             Component[] cps = menu.getMenuComponents();
             for (int i = 0; i < cps.length; i++) {
+                if (cps[i] instanceof RadioMenuItem) {
+                    RadioMenuItem button = (RadioMenuItem) cps[i];
+                    button.addActionListener(listener);
+                }
                 popupMouseButtons.add(cps[i]);
             }
         }
@@ -256,6 +265,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return popupMouseScroll;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JRadioButtonMenuItem) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
@@ -321,6 +331,53 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                     y += mouseIcon.getIconHeight() - smallIcon.getIconHeight();
                     smallIcon.paintIcon(c, g, x, y);
                 }
+            }
+
+            @Override
+            public int getIconWidth() {
+                return mouseIcon.getIconWidth();
+            }
+
+            @Override
+            public int getIconHeight() {
+                return mouseIcon.getIconHeight();
+            }
+        });
+    }
+
+    private DropDownButton buildSynchButton() {
+        ActionState synch = eventManager.getAction(ActionW.SYNCH);
+        SynchView synchView = SynchView.DEFAULT_STACK;
+        if (synch instanceof ComboItemListener) {
+            Object sel = ((ComboItemListener) synch).getSelectedItem();
+            if (sel instanceof SynchView) {
+                synchView = (SynchView) sel;
+            }
+        }
+        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView)) { //$NON-NLS-1$
+
+                @Override
+                protected JPopupMenu getPopupMenu() {
+                    return getSychPopupMenuButton(this);
+                }
+            };
+        button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
+        return button;
+    }
+
+    private Icon buildSynchIcon(SynchView synch) {
+        final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png"));
+        final Icon smallIcon = synch.getIcon();
+        return new DropButtonIcon(new Icon() {
+
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                if (smallIcon != null) {
+                    int x2 = x + mouseIcon.getIconWidth() / 2 - smallIcon.getIconWidth() / 2;
+                    int y2 = y + mouseIcon.getIconHeight() / 2 - smallIcon.getIconHeight() / 2;
+                    smallIcon.paintIcon(c, g, x2, y2);
+                }
+                mouseIcon.paintIcon(c, g, x, y);
             }
 
             @Override
