@@ -261,9 +261,6 @@ public class WeasisLauncher {
                 public void run() {
                     int exitStatus = 0;
                     try {
-                        if (REMOTE_PREFS != null) {
-                            REMOTE_PREFS.store();
-                        }
                         if (m_felix != null) {
                             m_felix.stop();
                             // wait asynchronous stop (max 20 seconds to stop all bundles)
@@ -273,6 +270,10 @@ public class WeasisLauncher {
                         exitStatus = -1;
                         System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
                     } finally {
+                        // After all bundles has been stopped, we can copy the preferences
+                        if (REMOTE_PREFS != null) {
+                            REMOTE_PREFS.store();
+                        }
                         // Clean temp folder.
                         FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir()); //$NON-NLS-1$
                         Runtime.getRuntime().halt(exitStatus);
@@ -667,12 +668,13 @@ public class WeasisLauncher {
     public static WebStartLoader loadProperties(Properties config) {
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
-        if (REMOTE_PREFS == null) {
+        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
+        if (REMOTE_PREFS == null && user != null) {
             ServiceLoader<RemotePreferences> prefs = ServiceLoader.load(RemotePreferences.class);
             Iterator<RemotePreferences> commandsIterator = prefs.iterator();
             while (commandsIterator.hasNext()) {
                 REMOTE_PREFS = commandsIterator.next();
-                REMOTE_PREFS.initialize();
+                REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user);
                 break;
             }
         }
@@ -686,7 +688,6 @@ public class WeasisLauncher {
                 .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         File basdir;
         if (user == null) {
             basdir = new File(dir); //$NON-NLS-1$
