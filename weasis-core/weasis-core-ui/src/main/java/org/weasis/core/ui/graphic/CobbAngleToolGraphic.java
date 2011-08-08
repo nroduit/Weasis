@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -32,8 +33,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
+    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let O be center of perpendicular projections in Cobb's angle
@@ -51,7 +52,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     @Override
     public String getUIName() {
-        return "Cobb's Angle";
+        return Messages.getString("measure.coobs"); //$NON-NLS-1$
     }
 
     @Override

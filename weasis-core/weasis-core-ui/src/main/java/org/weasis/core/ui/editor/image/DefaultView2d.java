@@ -1268,7 +1268,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public List<Action> getExportToClipboardAction() {
         List<Action> list = new ArrayList<Action>();
 
-        AbstractAction exportToClipboardAction = new AbstractAction("Selected View to Clipboard") {
+        AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -1281,7 +1281,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);
 
-        exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
+        exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard_real")) { //$NON-NLS-1$
 
                 @Override
                 public void actionPerformed(ActionEvent e) {

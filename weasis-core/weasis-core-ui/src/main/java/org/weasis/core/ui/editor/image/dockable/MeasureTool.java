@@ -47,6 +47,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -71,8 +72,8 @@ import org.weasis.core.ui.util.ViewSetting;
 
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
-    public static final String BUTTON_NAME = "Measure";
-    public static final String LABEL_PREF_NAME = "Labels on image";
+    public static final String BUTTON_NAME = Messages.getString("MeasureTool.measure"); //$NON-NLS-1$
+    public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
     public static final int DockableWidth = 195;
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
@@ -92,7 +93,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     public MeasureTool(ImageViewerEventManager eventManager) {
         super(BUTTON_NAME, BUTTON_NAME, ToolWindowAnchor.RIGHT);
         this.eventManager = eventManager;
-        setIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
+        setIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
         setDockableWidth(DockableWidth);
         jbInit();
 
@@ -115,7 +116,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Draw Measurement",
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.draw_meas"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         // transform.add(Box.createVerticalStrut(7));
@@ -176,17 +177,17 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         transform.add(panel);
 
-        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + ":");
+        JLabel label = new JLabel(MeasureToolBar.lineGraphic.getUIName() + ":"); //$NON-NLS-1$
         panel.add(label);
 
-        JButton button = new JButton("Pick");
+        JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
         button.setBackground(viewSetting.getLineColor());
         button.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
                 Color newColor =
-                    JColorChooser.showDialog(WinUtil.getParentDialogOrFrame(MeasureTool.this), "Pick a color",
+                    JColorChooser.showDialog(WinUtil.getParentDialogOrFrame(MeasureTool.this), Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
                         button.getBackground());
                 if (newColor != null) {
                     button.setBackground(newColor);
@@ -227,7 +228,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         }
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel_1);
-        JCheckBox chckbxBasicImageStatistics = new JCheckBox("Pixel Statistics", viewSetting.isBasicStatistics());
+        JCheckBox chckbxBasicImageStatistics = new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics()); //$NON-NLS-1$
         chckbxBasicImageStatistics.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_1.add(chckbxBasicImageStatistics);
         chckbxBasicImageStatistics.addActionListener(new ActionListener() {
@@ -263,7 +264,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.add(Box.createVerticalStrut(5));
         JPanel panel_2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel_2);
-        final JButton btnGerenralOptions = new JButton("More Options");
+        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options")); //$NON-NLS-1$
         btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_2.add(btnGerenralOptions);
         btnGerenralOptions.addActionListener(new ActionListener() {
@@ -293,11 +294,11 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Selected",
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        final JButton btnGerenralOptions = new JButton("Change Properties");
+        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -373,15 +374,15 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 Object[] row = new Object[2];
                 StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
                 if (m.getUnit() != null) {
-                    buffer.append(" [");
+                    buffer.append(" ["); //$NON-NLS-1$
                     buffer.append(m.getUnit());
-                    buffer.append("]");
+                    buffer.append("]"); //$NON-NLS-1$
                 }
                 row[0] = buffer.toString();
                 row[1] = m.getValue();
                 labels[i] = row;
             }
-            String[] headers = { "Parameter", "Value" };
+            String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") }; //$NON-NLS-1$ //$NON-NLS-2$
             jtable.setModel(new SimpleTableModel(headers, labels));
             jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
             createTableHeaders(jtable);

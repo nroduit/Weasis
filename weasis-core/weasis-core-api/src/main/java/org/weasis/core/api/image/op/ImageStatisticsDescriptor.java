@@ -46,9 +46,9 @@ public class ImageStatisticsDescriptor extends OperationDescriptorImpl implement
 
             { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exclude" },
+            { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg4Desc", "The highest value to exclude" } };
+            { "arg4Desc", "The highest value to exclude" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and
@@ -103,13 +103,13 @@ public class ImageStatisticsDescriptor extends OperationDescriptorImpl implement
 
     public static RenderedOp create(RenderedImage source0, ROI roi, Integer xPeriod, Integer yPeriod,
         Double excludedMin, Double excludedMax, RenderingHints hints) {
-        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics", RenderedRegistryMode.MODE_NAME);
-        pb.setSource("source0", source0);
-        pb.setParameter("roi", roi);
-        pb.setParameter("xPeriod", xPeriod);
-        pb.setParameter("yPeriod", yPeriod);
-        pb.setParameter("excludedMin", excludedMin);
-        pb.setParameter("excludedMax", excludedMax);
-        return JAI.create("ImageStatistics", pb, hints);
+        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics", RenderedRegistryMode.MODE_NAME); //$NON-NLS-1$
+        pb.setSource("source0", source0); //$NON-NLS-1$
+        pb.setParameter("roi", roi); //$NON-NLS-1$
+        pb.setParameter("xPeriod", xPeriod); //$NON-NLS-1$
+        pb.setParameter("yPeriod", yPeriod); //$NON-NLS-1$
+        pb.setParameter("excludedMin", excludedMin); //$NON-NLS-1$
+        pb.setParameter("excludedMax", excludedMax); //$NON-NLS-1$
+        return JAI.create("ImageStatistics", pb, hints); //$NON-NLS-1$
     }
 }

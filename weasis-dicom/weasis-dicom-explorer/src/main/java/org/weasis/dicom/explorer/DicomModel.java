@@ -570,7 +570,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (prop != null && baseDir != null) {
                         String[] dirs = prop.split(","); //$NON-NLS-1$
                         for (int i = 0; i < dirs.length; i++) {
-                            dirs[i] = dirs[i].trim().replaceAll("/", File.separator);
+                            dirs[i] = dirs[i].trim().replaceAll("/", File.separator); //$NON-NLS-1$
                         }
                         File[] files = new File[dirs.length];
                         boolean notCaseSensitive = AbstractProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$

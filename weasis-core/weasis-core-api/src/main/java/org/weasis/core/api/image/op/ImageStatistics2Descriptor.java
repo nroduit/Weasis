@@ -47,15 +47,15 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
 
             { "arg2Desc", "The vertical sampling rate, may not be less than 1." }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "Mean of pixel values" },
+            { "arg3Desc", "Mean of pixel values" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg3Desc", "The lowest value to exclude" },
+            { "arg3Desc", "The lowest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg4Desc", "The highest value to exclude" },
+            { "arg4Desc", "The highest value to exclude" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg5Desc", "The rescale slope" },
+            { "arg5Desc", "The rescale slope" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-            { "arg6Desc", "The rescale intercept" } };
+            { "arg6Desc", "The rescale intercept" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The modes that this operator supports. maybe one or more of "rendered", "renderable", "collection", and
@@ -65,7 +65,7 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
 
     /** The parameter name list for this operation. */
     private static final String[] paramNames = {
-        "roi", "xPeriod", "yPeriod", "mean", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        "roi", "xPeriod", "yPeriod", "mean", "excludedMin", "excludedMax", "slope", "intercept" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     /** The parameter class list for this operation. */
     private static final Class[] paramClasses = { javax.media.jai.ROI.class, java.lang.Integer.class,
@@ -118,17 +118,17 @@ public class ImageStatistics2Descriptor extends OperationDescriptorImpl implemen
 
     public static RenderedOp create(RenderedImage source0, ROI roi, Integer xPeriod, Integer yPeriod, Double mean,
         Double excludedMin, Double excludedMax, Double slope, Double intercept, RenderingHints hints) {
-        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics2", RenderedRegistryMode.MODE_NAME);
-        pb.setSource("source0", source0);
-        pb.setParameter("roi", roi);
-        pb.setParameter("xPeriod", xPeriod);
-        pb.setParameter("yPeriod", yPeriod);
+        ParameterBlockJAI pb = new ParameterBlockJAI("ImageStatistics2", RenderedRegistryMode.MODE_NAME); //$NON-NLS-1$
+        pb.setSource("source0", source0); //$NON-NLS-1$
+        pb.setParameter("roi", roi); //$NON-NLS-1$
+        pb.setParameter("xPeriod", xPeriod); //$NON-NLS-1$
+        pb.setParameter("yPeriod", yPeriod); //$NON-NLS-1$
         // mean, excludedMin and excludedMax are values where the slope and intercept function has not been applied
-        pb.setParameter("mean", mean);
-        pb.setParameter("excludedMin", excludedMin);
-        pb.setParameter("excludedMax", excludedMax);
-        pb.setParameter("slope", slope);
-        pb.setParameter("intercept", intercept);
-        return JAI.create("ImageStatistics2", pb, hints);
+        pb.setParameter("mean", mean); //$NON-NLS-1$
+        pb.setParameter("excludedMin", excludedMin); //$NON-NLS-1$
+        pb.setParameter("excludedMax", excludedMax); //$NON-NLS-1$
+        pb.setParameter("slope", slope); //$NON-NLS-1$
+        pb.setParameter("intercept", intercept); //$NON-NLS-1$
+        return JAI.create("ImageStatistics2", pb, hints); //$NON-NLS-1$
     }
 }

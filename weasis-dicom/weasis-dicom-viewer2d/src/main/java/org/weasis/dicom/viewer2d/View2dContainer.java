@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -20,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -46,7 +44,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -78,18 +75,18 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$
                 View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
 
-    public static final GridBagLayoutModel VIEWS_2x2_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, JComponent>(3), "Orthogonal MPR", null);
-    static {
-        LinkedHashMap<LayoutConstraints, JComponent> constraints = VIEWS_2x2_mpr.getConstraints();
-        constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
-        constraints.put(new LayoutConstraints(MprView.class.getName(), 1, 1, 0, 1, 1, 0.5, 0.5,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
-        constraints.put(new LayoutConstraints(MprView.class.getName(), 2, 1, 1, 1, 1, 0.5, 0.5,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
-
-    }
+    // public static final GridBagLayoutModel VIEWS_2x2_mpr = new GridBagLayoutModel(
+    // new LinkedHashMap<LayoutConstraints, JComponent>(3), "Orthogonal MPR", null);
+    // static {
+    // LinkedHashMap<LayoutConstraints, JComponent> constraints = VIEWS_2x2_mpr.getConstraints();
+    // constraints.put(new LayoutConstraints(MprView.class.getName(), 0, 0, 0, 1, 2, 0.5, 1.0,
+    // GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
+    // constraints.put(new LayoutConstraints(MprView.class.getName(), 1, 1, 0, 1, 1, 0.5, 0.5,
+    // GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
+    // constraints.put(new LayoutConstraints(MprView.class.getName(), 2, 1, 1, 1, 1, 0.5, 0.5,
+    // GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
+    //
+    // }
 
     public static final GridBagLayoutModel[] MODELS = { VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2,
         VIEWS_2x1_r1xc2_dump, VIEWS_2x2, VIEWS_3x2, VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
@@ -265,8 +262,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             MediaSeries<DicomImageElement> series = selectedImagePane.getSeries();
             if (series != null) {
                 DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel))
+                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel)) {
                     return;
+                }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, series));
             }
@@ -437,15 +435,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
-        if (MprView.class.getName().equals(classType))
-            return new MprView(eventManager, VIEWS_2x2_mpr);
+        // if (MprView.class.getName().equals(classType)) {
+        // return new MprView(eventManager, VIEWS_2x2_mpr);
+        // }
         return new View2d(eventManager);
     }
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (isViewType(DefaultView2d.class, clazz))
+        if (isViewType(DefaultView2d.class, clazz)) {
             return createDefaultView(clazz);
+        }
 
         try {
             // FIXME use classloader.loadClass or injection
@@ -497,7 +497,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String cmd = "/usr/bin/open -a OsiriX";
+                        String cmd = "/usr/bin/open -a OsiriX"; //$NON-NLS-1$
                         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
                         if (baseDir != null) {
                             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
@@ -512,7 +512,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         } else {
-                            File file = new File(AbstractProperties.APP_TEMP_DIR, "dicom");
+                            File file = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
                             if (file.canRead()) {
                                 cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
                             }

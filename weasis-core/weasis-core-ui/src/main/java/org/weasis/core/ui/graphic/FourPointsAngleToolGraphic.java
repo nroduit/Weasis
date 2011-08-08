@@ -26,6 +26,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -36,8 +37,8 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         FourPointsAngleToolGraphic.class.getResource("/icon/22x22/draw-4p-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement("Angle", 1, true);
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement("Compl. Angle", 2, true, true, false);
+    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +76,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Four Points Angle Tool";
+        return Messages.getString("measure.four_pt_angle"); //$NON-NLS-1$
     }
 
     @Override
@@ -161,11 +162,11 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                     double positiveAngle = Math.abs(angleDeg);
 
                     if (ANGLE.isComputed()) {
-                        measVal.add(new MeasureItem(ANGLE, positiveAngle, "deg"));
+                        measVal.add(new MeasureItem(ANGLE, positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
                     }
 
                     if (COMPLEMENTARY_ANGLE.isComputed()) {
-                        measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, "deg"));
+                        measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
                     }
                 }
                 return measVal;

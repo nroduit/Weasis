@@ -15,7 +15,7 @@ public class Measurement {
 
     public Measurement(String name, int id, boolean quickComputing, boolean computed, boolean graphicLabel) {
         if (name == null) {
-            throw new IllegalArgumentException("Name cannot be null!");
+            throw new IllegalArgumentException("Name cannot be null!"); //$NON-NLS-1$
         }
         this.name = name;
         this.id = id;

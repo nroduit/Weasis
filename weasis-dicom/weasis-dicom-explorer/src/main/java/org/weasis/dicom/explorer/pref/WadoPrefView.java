@@ -126,7 +126,7 @@ public class WadoPrefView extends AbstractItemDialogPage {
         flowLayout_1.setVgap(7);
         add(panel_2);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
         panel_2.add(btnNewButton);
         btnNewButton.addActionListener(new ActionListener() {
             @Override

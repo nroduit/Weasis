@@ -19,7 +19,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     public SeriesProgressMonitor(final Series series, InputStream in) {
         super(in);
         if (series == null)
-            throw new IllegalArgumentException("Series cannot be null!");
+            throw new IllegalArgumentException("Series cannot be null!"); //$NON-NLS-1$
         this.series = series;
         try {
             size = in.available();
@@ -50,7 +50,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read() throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress");
+            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -68,7 +68,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read(byte b[]) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress");
+            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -85,7 +85,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read(byte b[], int off, int len) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException("progress");
+            InterruptedIOException exc = new InterruptedIOException("progress"); //$NON-NLS-1$
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;

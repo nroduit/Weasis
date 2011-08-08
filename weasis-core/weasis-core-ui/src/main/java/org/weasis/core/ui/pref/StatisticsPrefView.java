@@ -27,7 +27,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
 
     public StatisticsPrefView() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        setTitle("Pixel Statistics");
+        setTitle(Messages.getString("MeasureTool.pix_stats")); //$NON-NLS-1$
         init();
     }
 
@@ -66,7 +66,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
         flowLayout_1.setVgap(7);
         add(panel_2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(Messages.getString("restore.values"));
+        JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
         panel_2.add(btnNewButton);
         btnNewButton.addActionListener(new ActionListener() {
             @Override

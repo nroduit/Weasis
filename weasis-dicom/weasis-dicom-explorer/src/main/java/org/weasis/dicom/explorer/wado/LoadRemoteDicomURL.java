@@ -26,7 +26,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -36,8 +35,9 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
     private final DicomModel dicomModel;
 
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
-        if (urls == null || !(explorerModel instanceof DicomModel))
+        if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
         URL[] urlRef = new URL[urls.length];
         for (int i = 0; i < urls.length; i++) {
             if (urls[i] != null) {
@@ -53,8 +53,9 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
     }
 
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
-        if (urls == null || !(explorerModel instanceof DicomModel))
+        if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
         this.urls = urls;
         this.dicomModel = (DicomModel) explorerModel;
     }
@@ -69,7 +70,7 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             }
         }
         if (seriesUID != null) {
-            String unknown = Messages.getString("DownloadManager.unknown");//$NON-NLS-1$
+            String unknown = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, unknown);
             if (patient == null) {
                 patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, unknown, TagW.PatientName);
@@ -85,7 +86,7 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             Series dicomSeries = dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagW.SeriesInstanceUID, seriesUID);
-            final WadoParameters wadoParameters = new WadoParameters("", false, "", null, null);
+            final WadoParameters wadoParameters = new WadoParameters("", false, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             List<DicomInstance> dicomInstances = new ArrayList<DicomInstance>();
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);

@@ -31,13 +31,13 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public static final Measurement FIRST_POINT_X = new Measurement("First point X", 1, true, true, false);
-    public static final Measurement FIRST_POINT_Y = new Measurement("First point Y", 2, true, true, false);
-    public static final Measurement LAST_POINT_X = new Measurement("Last point X", 3, true, true, false);
-    public static final Measurement LAST_POINT_Y = new Measurement("Last point Y", 4, true, true, false);
-    public static final Measurement LINE_LENGTH = new Measurement("Line length", 5, true, true, true);
-    public static final Measurement ORIENTATION = new Measurement("Orientation", 6, true, true, false);
-    public static final Measurement AZIMUTH = new Measurement("Azimuth", 7, true, true, false);
+    public static final Measurement FIRST_POINT_X = new Measurement(Messages.getString("measure.firstx"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement FIRST_POINT_Y = new Measurement(Messages.getString("measure.firsty"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement LAST_POINT_X = new Measurement(Messages.getString("measure.lastx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement LAST_POINT_Y = new Measurement(Messages.getString("measure.lasty"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement LINE_LENGTH = new Measurement(Messages.getString("measure.line_length"), 5, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION = new Measurement(Messages.getString("measure.orientation"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH = new Measurement(Messages.getString("measure.azimuth"), 7, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB; // Let AB be a simple a line segment
@@ -102,10 +102,10 @@ public class LineGraphic extends AbstractDragGraphic {
                         .getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), "deg"));
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), "deg"));
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

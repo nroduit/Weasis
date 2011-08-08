@@ -674,7 +674,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
                                     final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
                                     if (ptIndex >= 0) {
-                                        JMenuItem menuItem = new JMenuItem("Remove this Point");
+                                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt")); //$NON-NLS-1$
                                         menuItem.addActionListener(new ActionListener() {
 
                                             @Override
@@ -684,7 +684,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         });
                                         popupMenu.add(menuItem);
 
-                                        menuItem = new JMenuItem("Continue to Draw");
+                                        menuItem = new JMenuItem(Messages.getString("View2d.draw_pt")); //$NON-NLS-1$
                                         menuItem.addActionListener(new ActionListener() {
 
                                             @Override
@@ -702,7 +702,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     }
                                 } else if (ds != null
                                     && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
-                                    final JMenuItem item2 = new JMenuItem("Stop drawing");
+                                    final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                                     item2.addActionListener(new ActionListener() {
 
                                         @Override
@@ -720,7 +720,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     }
                     if (graphicComplete) {
-                        JMenuItem menuItem = new JMenuItem("Delete Selected");
+                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -730,7 +730,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         });
                         popupMenu.add(menuItem);
 
-                        menuItem = new JMenuItem("Cut");
+                        menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -740,7 +740,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             }
                         });
                         popupMenu.add(menuItem);
-                        menuItem = new JMenuItem("Copy");
+                        menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -761,7 +761,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
-                        JMenuItem item = new JMenuItem("To Front");
+                        JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front")); //$NON-NLS-1$
                         item.addActionListener(new ActionListener() {
 
                             @Override
@@ -770,7 +770,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             }
                         });
                         popupMenu.add(item);
-                        item = new JMenuItem("To Back");
+                        item = new JMenuItem(Messages.getString("View2d.to_back")); //$NON-NLS-1$
                         item.addActionListener(new ActionListener() {
 
                             @Override
@@ -804,7 +804,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                     }
                     if (list.size() > 0) {
-                        JMenuItem properties = new JMenuItem("Drawing Properties");
+                        JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop")); //$NON-NLS-1$
                         properties.addActionListener(new ActionListener() {
 
                             @Override
@@ -863,7 +863,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
                         popupMenu.add(new JSeparator());
-                        JMenuItem menuItem = new JMenuItem("Paste Drawings");
+                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override

@@ -17,7 +17,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
 
-import org.weasis.base.ui.Messages;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.ui.util.AbstractUIAction;
@@ -37,8 +36,8 @@ public class OpenPreferencesAction extends AbstractUIAction {
     }
 
     private OpenPreferencesAction() {
-        super(Messages.getString("OpenPreferencesAction.title")); //$NON-NLS-1$
-        setDescription(Messages.getString("OpenPreferencesAction.description")); //$NON-NLS-1$
+        super(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title")); //$NON-NLS-1$
+        setDescription(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.description")); //$NON-NLS-1$
         putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_MASK));
     }
 

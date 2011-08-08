@@ -27,7 +27,7 @@ public class TableNumberRenderer extends DefaultTableCellRenderer {
             setText(formatter.format(value));
         } else {
             setHorizontalAlignment(SwingConstants.LEFT);
-            setText((value == null) ? "" : value.toString());
+            setText((value == null) ? "" : value.toString()); //$NON-NLS-1$
         }
     }
 }

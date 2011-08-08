@@ -4,13 +4,15 @@ import java.awt.Color;
 import java.awt.Window;
 import java.util.List;
 
+import org.weasis.core.ui.Messages;
+
 public class MeasureDialog extends PropertiesDialog {
     private List<AbstractDragGraphic> graphics;
 
     public MeasureDialog(Window parent, List<AbstractDragGraphic> selectedGraphic) {
-        super(parent, "Drawing Properties");
+        super(parent, Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
         if (selectedGraphic == null)
-            throw new IllegalArgumentException("Selected Graphics cannot be null!");
+            throw new IllegalArgumentException("Selected Graphics cannot be null!"); //$NON-NLS-1$
         this.graphics = selectedGraphic;
         iniGraphicDialog();
         pack();

@@ -244,7 +244,7 @@ public abstract class AbstractDragGraphic implements Graphic {
 
     @Override
     public String getDescription() {
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     /**
@@ -665,11 +665,11 @@ public abstract class AbstractDragGraphic implements Graphic {
                         String unit = item.getUnit();
 
                         if (name != null) {
-                            sb.append(name).append(" : ");
+                            sb.append(name).append(" : "); //$NON-NLS-1$
                             if (value != null) {
                                 sb.append(DecFormater.oneDecimalUngroup(value));
                                 if (unit != null) {
-                                    sb.append(" ").append(unit);
+                                    sb.append(" ").append(unit); //$NON-NLS-1$
                                 }
                             }
                         }
@@ -1014,7 +1014,7 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     protected void fireDrawingChanged(Shape oldShape) {
-        firePropertyChange("bounds", oldShape, shape);
+        firePropertyChange("bounds", oldShape, shape); //$NON-NLS-1$
     }
 
     protected void fireLabelChanged() {
@@ -1022,40 +1022,40 @@ public abstract class AbstractDragGraphic implements Graphic {
     }
 
     protected void fireLabelChanged(GraphicLabel oldLabel) {
-        firePropertyChange("graphicLabel", oldLabel, graphicLabel);
+        firePropertyChange("graphicLabel", oldLabel, graphicLabel); //$NON-NLS-1$
     }
 
     protected void fireMoveAction() {
         if (isGraphicComplete()) {
-            firePropertyChange("move", null, this);
+            firePropertyChange("move", null, this); //$NON-NLS-1$
         }
     }
 
     @Override
     public void toFront() {
         if (isGraphicComplete()) {
-            firePropertyChange("toFront", null, this);
+            firePropertyChange("toFront", null, this); //$NON-NLS-1$
         }
     }
 
     @Override
     public void toBack() {
         if (isGraphicComplete()) {
-            firePropertyChange("toBack", null, this);
+            firePropertyChange("toBack", null, this); //$NON-NLS-1$
         }
     }
 
     @Override
     public void fireRemoveAction() {
         if (isGraphicComplete()) {
-            firePropertyChange("remove", null, this);
+            firePropertyChange("remove", null, this); //$NON-NLS-1$
         }
 
     }
 
     public void fireRemoveAndRepaintAction() {
         if (isGraphicComplete()) {
-            firePropertyChange("remove.repaint", null, this);
+            firePropertyChange("remove.repaint", null, this); //$NON-NLS-1$
         }
     }
 
@@ -1235,7 +1235,7 @@ public abstract class AbstractDragGraphic implements Graphic {
 
         void updateScalingFactor(double scalingFactor) {
             if (scalingFactor == 0) {
-                throw new IllegalArgumentException("scalingFactor cannot be zero");
+                throw new IllegalArgumentException("scalingFactor cannot be zero"); //$NON-NLS-1$
             }
             this.scalingFactor = scalingFactor;
         }
@@ -1445,7 +1445,7 @@ public abstract class AbstractDragGraphic implements Graphic {
 
                 } catch (Throwable e) {
                     e.printStackTrace();
-                    System.err.println("This graphic is not drawable, it is deleted");
+                    System.err.println("This graphic is not drawable, it is deleted"); //$NON-NLS-1$
                     // When the Shape cannot be drawn, the graphic is deleted.
                     fireRemoveAction();
                 }

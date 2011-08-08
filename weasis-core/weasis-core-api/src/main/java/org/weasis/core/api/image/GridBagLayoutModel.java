@@ -61,7 +61,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
     public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String title, Icon icon) {
         if (constraints == null)
-            throw new IllegalArgumentException("constraints cannot be null");
+            throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
         this.title = title;
         this.icon = icon;
         this.constraints = constraints;
@@ -188,7 +188,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals(""))
+            if (val.trim().equals("")) //$NON-NLS-1$
                 return 0.0;
             // handle fraction format
             int index = val.indexOf('/');

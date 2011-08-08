@@ -313,9 +313,9 @@ public class JMVUtils {
 
     public static Dimension getSmallIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif"))
+        if (look.equalsIgnoreCase("CDE/Motif")) //$NON-NLS-1$
             return new Dimension(38, 34);
-        else if (look.startsWith("GTK"))
+        else if (look.startsWith("GTK")) //$NON-NLS-1$
             return new Dimension(28, 28);
         else
             return new Dimension(22, 22);
@@ -323,9 +323,9 @@ public class JMVUtils {
 
     public static Dimension getBigIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif"))
+        if (look.equalsIgnoreCase("CDE/Motif")) //$NON-NLS-1$
             return new Dimension(46, 42);
-        else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK"))
+        else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         else
             return new Dimension(34, 34);
@@ -333,7 +333,7 @@ public class JMVUtils {
 
     public static Dimension getBigIconToogleButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK"))
+        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         else
             return new Dimension(30, 30);

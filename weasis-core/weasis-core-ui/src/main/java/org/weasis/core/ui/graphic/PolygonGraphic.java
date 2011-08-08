@@ -180,7 +180,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lineSegmentList = getClosedPathSegments(pathArea);
                     }
                     val = (lineSegmentList != null) ? getAreaValue(lineSegmentList) * ratio * ratio : null;
-                    String unit = "pix".equals(unitStr) ? unitStr : unitStr + "2";
+                    String unit = "pix".equals(unitStr) ? unitStr : unitStr + "2"; //$NON-NLS-1$ //$NON-NLS-2$
                     measVal.add(new MeasureItem(AREA, val, unit));
                 }
                 if (PERIMETER.isComputed()) {

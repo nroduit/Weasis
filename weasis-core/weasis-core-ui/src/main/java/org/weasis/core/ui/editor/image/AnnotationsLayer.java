@@ -19,7 +19,7 @@ import org.weasis.core.ui.graphic.model.Layer;
 public interface AnnotationsLayer extends Layer {
 
     String ANNOTATIONS = Messages.getString("AnnotationsLayer.anno"); //$NON-NLS-1$
-    String ANONYM_ANNOTATIONS = "Anonymize";
+    String ANONYM_ANNOTATIONS = Messages.getString("AnnotationsLayer.anonym"); //$NON-NLS-1$
     String SCALE = Messages.getString("AnnotationsLayer.scale"); //$NON-NLS-1$
     String LUT = Messages.getString("AnnotationsLayer.lut"); //$NON-NLS-1$
     String IMAGE_ORIENTATION = Messages.getString("AnnotationsLayer.or"); //$NON-NLS-1$

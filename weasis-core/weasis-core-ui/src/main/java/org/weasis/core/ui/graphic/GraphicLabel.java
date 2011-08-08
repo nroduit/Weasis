@@ -143,10 +143,10 @@ public class GraphicLabel implements Cloneable {
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
         if (defaultFont == null) {
-            throw new RuntimeException("Font should not be null");
+            throw new RuntimeException("Font should not be null"); //$NON-NLS-1$
         }
         if (fontRenderContext == null) {
-            throw new RuntimeException("FontRenderContext should not be null");
+            throw new RuntimeException("FontRenderContext should not be null"); //$NON-NLS-1$
         }
 
         if (labelStringArray == null || labelStringArray.length == 0) {
@@ -159,7 +159,7 @@ public class GraphicLabel implements Cloneable {
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
             }
-            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2;
+            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2; //$NON-NLS-1$
             labelWidth = maxWidth;
         }
     }

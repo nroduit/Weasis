@@ -19,10 +19,11 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.ui.Messages;
 
 public abstract class PropertiesDialog extends JDialog {
-    private JPanel panel1 = new JPanel();
-    private BorderLayout borderLayout1 = new BorderLayout();
+    private final JPanel panel1 = new JPanel();
+    private final BorderLayout borderLayout1 = new BorderLayout();
 
     private final JPanel jPanelFooter = new JPanel();
     private final JButton jButtonOk = new JButton();
@@ -35,10 +36,11 @@ public abstract class PropertiesDialog extends JDialog {
     protected final JLabel jLabelLineColor = new JLabel();
     protected final JButton jButtonColor = new JButton();
     protected final JCheckBox jCheckBoxFilled = new JCheckBox();
-    protected final JLabel lbloverridesmultipleValues = new JLabel("<html>Overrides<p>multiple values");
-    protected final JCheckBox checkBox_color = new JCheckBox("");
-    protected final JCheckBox checkBox_width = new JCheckBox("");
-    protected final JCheckBox checkBox_fill = new JCheckBox("");
+    protected final JLabel lbloverridesmultipleValues = new JLabel(
+        Messages.getString("PropertiesDialog.header_override")); //$NON-NLS-1$
+    protected final JCheckBox checkBox_color = new JCheckBox();
+    protected final JCheckBox checkBox_width = new JCheckBox();
+    protected final JCheckBox checkBox_fill = new JCheckBox();
 
     public PropertiesDialog(Window parent, String title) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
@@ -51,14 +53,14 @@ public abstract class PropertiesDialog extends JDialog {
 
     private void jbInit() throws Exception {
         panel1.setLayout(borderLayout1);
-        jButtonOk.setText("OK");
+        jButtonOk.setText(Messages.getString("PropertiesDialog.ok")); //$NON-NLS-1$
         jButtonOk.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 okAction();
             }
         });
-        jButtonCancel.setText("Cancel");
+        jButtonCancel.setText(Messages.getString("PropertiesDialog.cancel")); //$NON-NLS-1$
         jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -69,23 +71,24 @@ public abstract class PropertiesDialog extends JDialog {
 
         jPanel1.setLayout(gridBagLayout1);
         JMVUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
-        jLabelLineWidth.setText("Line Width :");
-        jLabelLineColor.setText("Line Color :");
-        jButtonColor.setText("Pick");
+        jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width")); //$NON-NLS-1$
+        jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color")); //$NON-NLS-1$
+        jButtonColor.setText(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
 
         jButtonColor.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
                 Color newColor =
-                    JColorChooser.showDialog(PropertiesDialog.this, "Pick a color", button.getBackground());
+                    JColorChooser.showDialog(PropertiesDialog.this,
+                        Messages.getString("MeasureTool.pick_color"), button.getBackground()); //$NON-NLS-1$
                 if (newColor != null) {
                     button.setBackground(newColor);
                 }
             }
         });
 
-        jCheckBoxFilled.setText("Fill shape");
+        jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape")); //$NON-NLS-1$
         getContentPane().add(panel1);
         panel1.add(jPanelFooter, BorderLayout.SOUTH);
         jPanelFooter.add(jButtonCancel, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,

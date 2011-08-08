@@ -36,14 +36,14 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement("Area", 1, true, true, true);
-    public static final Measurement PERIMETER = new Measurement("Perimeter", 2, true, true, false);
-    public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", 3, true, true, false);
-    public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", 4, true, true, false);
-    public static final Measurement CENTER_X = new Measurement("Center X", 5, true, true, false);
-    public static final Measurement CENTER_Y = new Measurement("Center Y", 6, true, true, false);
-    public static final Measurement WIDTH = new Measurement("Width", 7, true, true, false);
-    public static final Measurement HEIGHT = new Measurement("Height", 8, true, true, false);
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement(Messages.getString("measure.topx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(Messages.getString("measure.topy"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X = new Measurement(Messages.getString("measure.centerx"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y = new Measurement(Messages.getString("measure.centery"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT = new Measurement(Messages.getString("measure.height"), 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -192,7 +192,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
                 }
                 if (AREA.isComputed()) {
                     Double val = rect.getWidth() * rect.getHeight() * ratio * ratio;
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2";
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
                     measVal.add(new MeasureItem(AREA, val, unit));
                 }
                 if (PERIMETER.isComputed()) {
@@ -247,7 +247,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         static eHandlePoint valueFromIndex(int index) {
             eHandlePoint point = map.get(index);
             if (point == null) {
-                throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index);
+                throw new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index); //$NON-NLS-1$
             }
             return point;
         }

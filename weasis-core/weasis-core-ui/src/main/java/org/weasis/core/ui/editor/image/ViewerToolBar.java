@@ -366,7 +366,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private Icon buildSynchIcon(SynchView synch) {
-        final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png"));
+        final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png")); //$NON-NLS-1$
         final Icon smallIcon = synch.getIcon();
         return new DropButtonIcon(new Icon() {
 

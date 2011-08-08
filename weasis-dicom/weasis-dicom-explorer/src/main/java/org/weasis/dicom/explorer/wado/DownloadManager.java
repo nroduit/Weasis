@@ -56,7 +56,6 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.Messages;
 import org.xml.sax.SAXException;
 
 public class DownloadManager {
@@ -94,7 +93,7 @@ public class DownloadManager {
                 }
             }
             File tempFile = null;
-            if (uri.toString().startsWith("file:") && path.endsWith(".xml")) {
+            if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { //$NON-NLS-1$ //$NON-NLS-2$
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
@@ -204,14 +203,14 @@ public class DownloadManager {
         // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
         // the tags located in DICOM object (because original DICOM can contain different values after merging
         // patient or study
-        String unknown = Messages.getString("DownloadManager.unknown");//$NON-NLS-1$
+        String unknown = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), unknown); //$NON-NLS-1$
         Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
         String name = getTagAttribute(xmler, TagW.PatientName.getTagName(), unknown); //$NON-NLS-1$
 
         // TODO set preferences of building patientPseudoUID
         String patientPseudoUID =
-            patientID + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString());
+            patientID + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()); //$NON-NLS-1$
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
@@ -399,8 +398,9 @@ public class DownloadManager {
     private static String getTagAttribute(XMLStreamReader xmler, String attribute, String defaultValue) {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
-            if (val != null)
+            if (val != null) {
                 return val;
+            }
         }
         return defaultValue;
     }
@@ -409,8 +409,9 @@ public class DownloadManager {
         if (attribute != null) {
             try {
                 String val = xmler.getAttributeValue(null, attribute);
-                if (val != null)
+                if (val != null) {
                     return Integer.valueOf(val);
+                }
             } catch (NumberFormatException e) {
             }
         }

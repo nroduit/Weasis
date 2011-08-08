@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.ImageStatistics;
@@ -25,16 +26,16 @@ public class ViewSetting {
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences font = p.node("font");
-            fontName = font.get("name", "Default"); //$NON-NLS-1$
+            Preferences font = p.node("font"); //$NON-NLS-1$
+            fontName = font.get("name", Messages.getString("ViewSetting.LabelPrefView.default")); //$NON-NLS-1$ //$NON-NLS-2$
             fontType = font.getInt("type", 0); //$NON-NLS-1$
             fontSize = font.getInt("size", 12); //$NON-NLS-1$
-            Preferences draw = p.node("drawing");
+            Preferences draw = p.node("drawing"); //$NON-NLS-1$
             drawOnlyOnce = draw.getBoolean("once", true); //$NON-NLS-1$
             lineWidth = draw.getInt("width", 1); //$NON-NLS-1$
             int rgb = draw.getInt("color", Color.YELLOW.getRGB()); //$NON-NLS-1$
             lineColor = new Color(rgb);
-            Preferences stats = p.node("statistics");
+            Preferences stats = p.node("statistics"); //$NON-NLS-1$
             basicStatistics = stats.getBoolean("basic", true); //$NON-NLS-1$
             moreStatistics = stats.getBoolean("more", false); //$NON-NLS-1$
 
@@ -48,9 +49,9 @@ public class ViewSetting {
 
             String labels = stats.get("label", null); //$NON-NLS-1$
             if (labels != null) {
-                String[] items = labels.split(",");
+                String[] items = labels.split(","); //$NON-NLS-1$
                 for (int i = 0; i < items.length; i++) {
-                    String[] val = items[i].split(":");
+                    String[] val = items[i].split(":"); //$NON-NLS-1$
                     if (val.length == 2) {
                         for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
                             if (val[0].equals(String.valueOf(m.getId()))) {
@@ -70,9 +71,9 @@ public class ViewSetting {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
                     labels = gpref.get("label", null); //$NON-NLS-1$
                     if (labels != null) {
-                        String[] items = labels.split(",");
+                        String[] items = labels.split(","); //$NON-NLS-1$
                         for (int k = 0; k < items.length; k++) {
-                            String[] val = items[k].split(":");
+                            String[] val = items[k].split(":"); //$NON-NLS-1$
                             if (val.length == 2) {
                                 for (Measurement m : list) {
                                     if (val[0].equals(String.valueOf(m.getId()))) {
@@ -89,35 +90,35 @@ public class ViewSetting {
     }
 
     private boolean isTrueValue(String val) {
-        return "1".equals(val.trim());
+        return "1".equals(val.trim()); //$NON-NLS-1$
     }
 
     private void writeLabels(StringBuffer buffer, Measurement m) {
         buffer.append(m.getId());
-        buffer.append(":");
-        buffer.append((m.isGraphicLabel() ? "1" : "0"));
+        buffer.append(":"); //$NON-NLS-1$
+        buffer.append((m.isGraphicLabel() ? "1" : "0")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences font = p.node("font");
+            Preferences font = p.node("font"); //$NON-NLS-1$
             BundlePreferences.putStringPreferences(font, "name", fontName); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(font, "type", fontType); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(font, "size", fontSize); //$NON-NLS-1$
 
-            Preferences draw = p.node("drawing");
+            Preferences draw = p.node("drawing"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(draw, "width", lineWidth); //$NON-NLS-1$
             BundlePreferences.putIntPreferences(draw, "color", lineColor.getRGB()); //$NON-NLS-1$
 
-            Preferences stats = p.node("statistics");
+            Preferences stats = p.node("statistics"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); //$NON-NLS-1$
             StringBuffer buffer = new StringBuffer();
             writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[0]);
             for (int i = 1; i < ImageStatistics.ALL_MEASUREMENTS.length; i++) {
-                buffer.append(",");
+                buffer.append(","); //$NON-NLS-1$
                 writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[i]);
             }
             BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //$NON-NLS-1$
@@ -131,7 +132,7 @@ public class ViewSetting {
                     buffer = new StringBuffer();
                     writeLabels(buffer, list.get(0));
                     for (int j = 1; j < list.size(); j++) {
-                        buffer.append(",");
+                        buffer.append(","); //$NON-NLS-1$
                         writeLabels(buffer, list.get(j));
                     }
                     BundlePreferences.putStringPreferences(gpref, "label", buffer.toString()); //$NON-NLS-1$

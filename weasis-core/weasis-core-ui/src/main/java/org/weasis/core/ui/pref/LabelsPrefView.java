@@ -30,6 +30,7 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -66,7 +67,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         flowLayout_1.setVgap(7);
         add(panel_2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
         panel_2.add(btnNewButton);
         btnNewButton.addActionListener(new ActionListener() {
             @Override
@@ -76,7 +77,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         });
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, "Geometric Measurement", TitledBorder.LEADING, TitledBorder.TOP, null,
+        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
             null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -87,7 +88,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         flowLayout.setHgap(5);
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        JLabel lblNewLabel = new JLabel("Shape:");
+        JLabel lblNewLabel = new JLabel(Messages.getString("LabelsPrefView.geometricshape")); //$NON-NLS-1$
         panel.add(lblNewLabel);
         ArrayList<Graphic> tools = new ArrayList<Graphic>(MeasureToolBar.graphicList);
         tools.remove(0);

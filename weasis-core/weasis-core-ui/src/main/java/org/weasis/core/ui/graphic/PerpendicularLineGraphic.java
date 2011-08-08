@@ -16,6 +16,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class PerpendicularLineGraphic extends AbstractDragGraphic {
@@ -23,9 +24,9 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public static final Measurement LINE_LENGTH = new Measurement("Line length", 1, true, true, true);
-    public static final Measurement ORIENTATION = new Measurement("Orientation", 2, true, true, false);
-    public static final Measurement AZIMUTH = new Measurement("Azimuth", 3, true, true, false);
+    public static final Measurement LINE_LENGTH = new Measurement(Messages.getString("measure.line_length"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION = new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH = new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let AB & CD two perpendicular line segments with D being the projected point C on AB
@@ -46,7 +47,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Perpendicular";
+        return Messages.getString("measure.perpendicular"); //$NON-NLS-1$
     }
 
     @Override
@@ -169,10 +170,10 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                         .getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), "deg"));
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), "deg"));
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

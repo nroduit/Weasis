@@ -26,7 +26,7 @@ public class SynchView implements GUIEntry {
 
     public static final SynchView NONE =
         new SynchView(
-            Messages.getString("SynchView.none"), Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$
+            Messages.getString("SynchView.none"), Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$ //$NON-NLS-2$
     public static final SynchView DEFAULT_TILE;
     public static final SynchView DEFAULT_STACK;
     static {

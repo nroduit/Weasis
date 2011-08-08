@@ -7,7 +7,7 @@ public class MeasureItem {
 
     public MeasureItem(Measurement measurement, Double value, String unit) {
         if (measurement == null)
-            throw new IllegalArgumentException("Measurement cannot be null!");
+            throw new IllegalArgumentException("Measurement cannot be null!"); //$NON-NLS-1$
         this.measurement = measurement;
         this.value = value;
         this.unit = unit;

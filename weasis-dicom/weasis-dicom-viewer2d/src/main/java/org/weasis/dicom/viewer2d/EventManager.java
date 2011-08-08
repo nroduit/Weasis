@@ -76,7 +76,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom", "wl", "move" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String[] functions = { "zoom", "wl", "move" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };

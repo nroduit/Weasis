@@ -34,7 +34,7 @@ public class DicomManager {
 
     private DicomManager() {
         restoreDefaultValues();
-        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
             Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
             if (pref != null) {
                 Preferences prefNode = pref.node("wado"); //$NON-NLS-1$
@@ -59,7 +59,7 @@ public class DicomManager {
     }
 
     public void savePreferences() {
-        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
+        if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
                 Preferences prefNode = prefs.node("wado"); //$NON-NLS-1$

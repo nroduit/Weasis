@@ -106,24 +106,24 @@ public class MprView extends View2d {
         String colAxis = ImageOrientation.getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
         TransposeType rotate = null;
         // Coronal
-        if (((rowAxis.equals("L") && colAxis.equals("F")) || (rowAxis.equals("R")) && colAxis.equals("H"))) {
+        if (((rowAxis.equals("L") && colAxis.equals("F")) || (rowAxis.equals("R")) && colAxis.equals("H"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             rotate = TransposeDescriptor.ROTATE_180;
-        } else if ((rowAxis.equals("H") || rowAxis.equals("F")) && (colAxis.equals("R") || colAxis.equals("L"))) {
+        } else if ((rowAxis.equals("H") || rowAxis.equals("F")) && (colAxis.equals("R") || colAxis.equals("L"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             readVert = true;
-            if ((rowAxis.equals("H") && colAxis.equals("L")) || (rowAxis.equals("F") && colAxis.equals("R"))) {
+            if ((rowAxis.equals("H") && colAxis.equals("L")) || (rowAxis.equals("F") && colAxis.equals("R"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 rotate = TransposeDescriptor.ROTATE_180;
             }
         }
 
         // Sagittal
-        else if (rowAxis.equals("A") && (colAxis.equals("F") || colAxis.equals("H"))) {
+        else if (rowAxis.equals("A") && (colAxis.equals("F") || colAxis.equals("H"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             rotate = TransposeDescriptor.ROTATE_270;
-        } else if (rowAxis.equals("P") && (colAxis.equals("F") || colAxis.equals("H"))) {
+        } else if (rowAxis.equals("P") && (colAxis.equals("F") || colAxis.equals("H"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             rotate = TransposeDescriptor.ROTATE_90;
-        } else if (colAxis.equals("P") && (rowAxis.equals("H") || rowAxis.equals("F"))) {
+        } else if (colAxis.equals("P") && (rowAxis.equals("H") || rowAxis.equals("F"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             readVert = true;
             rotate = TransposeDescriptor.ROTATE_90;
-        } else if (colAxis.equals("A") && (rowAxis.equals("H") || rowAxis.equals("F"))) {
+        } else if (colAxis.equals("A") && (rowAxis.equals("H") || rowAxis.equals("F"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             readVert = true;
             rotate = TransposeDescriptor.ROTATE_270;
         }

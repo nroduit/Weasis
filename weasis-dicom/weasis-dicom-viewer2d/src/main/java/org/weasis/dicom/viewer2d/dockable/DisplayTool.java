@@ -65,7 +65,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
-        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png")));
+        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
         jbInit();
 

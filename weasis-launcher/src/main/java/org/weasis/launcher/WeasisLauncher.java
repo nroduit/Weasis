@@ -217,14 +217,14 @@ public class WeasisLauncher {
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             File basePortableDir = new File(portable);
-            String baseURL = "";
+            String baseURL = ""; //$NON-NLS-1$
             try {
                 baseURL = basePortableDir.toURI().toURL().toString();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.setProperty("weasis.codebase.url", baseURL + "weasis");
-            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties");
+            System.setProperty("weasis.codebase.url", baseURL + "weasis"); //$NON-NLS-1$ //$NON-NLS-2$
+            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties"); //$NON-NLS-1$
         }
         // Read configuration properties.
         Properties configProps = WeasisLauncher.loadConfigProperties();
@@ -674,7 +674,7 @@ public class WeasisLauncher {
             Iterator<RemotePreferences> commandsIterator = prefs.iterator();
             while (commandsIterator.hasNext()) {
                 REMOTE_PREFS = commandsIterator.next();
-                REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user);
+                REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user); //$NON-NLS-1$
                 break;
             }
         }

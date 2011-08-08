@@ -739,7 +739,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
         public DragLayoutElement(LayoutConstraints constraints, JComponent component) {
             if (constraints == null || component == null)
-                throw new IllegalArgumentException("Arguments cannot be null");
+                throw new IllegalArgumentException("Arguments cannot be null"); //$NON-NLS-1$
             this.constraints = constraints;
             this.originalConstraints = (LayoutConstraints) constraints.clone();
             this.component = component;

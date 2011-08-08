@@ -1780,8 +1780,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         if (series.getMedias().size() > 1) {
                             if (series.getMedia(0) instanceof ImageElement) {
                                 popupMenu.add(new JSeparator());
-                                JMenu menu = new JMenu("Rebuild Thumbnail");
-                                item2 = new JMenuItem("From first image");
+                                JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb")); //$NON-NLS-1$
+                                item2 = new JMenuItem(Messages.getString("DicomExplorer.from_1")); //$NON-NLS-1$
                                 item2.addActionListener(new ActionListener() {
 
                                     @Override
@@ -1793,7 +1793,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     }
                                 });
                                 menu.add(item2);
-                                item2 = new JMenuItem("From middle image");
+                                item2 = new JMenuItem(Messages.getString("DicomExplorer.from_mid")); //$NON-NLS-1$
                                 item2.addActionListener(new ActionListener() {
 
                                     @Override
@@ -1805,7 +1805,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     }
                                 });
                                 menu.add(item2);
-                                item2 = new JMenuItem("From last image");
+                                item2 = new JMenuItem(Messages.getString("DicomExplorer.from_last")); //$NON-NLS-1$
                                 item2.addActionListener(new ActionListener() {
 
                                     @Override

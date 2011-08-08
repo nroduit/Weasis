@@ -165,7 +165,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     @Override
     protected void initImageReader(int imageIndex) throws IOException {
         super.initImageReader(imageIndex);
-        if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+        if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             setTagNoNull(TagW.PixelDataProviderURL, dicomObject.getString(Tag.PixelDataProviderURL));
             MediaElement[] elements = getMediaElement();
             // TODO handle frame
@@ -330,7 +330,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
-            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
                 MediaElement[] elements = getMediaElement();
                 if (elements != null) {
                     for (MediaElement m : elements) {
@@ -359,7 +359,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // Identifier for the patient. Tend to be unique.
             // TODO set preferences for what is PatientUID
             setTag(TagW.PatientPseudoUID, getTagValue(TagW.PatientID).toString()
-                + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()));
+                + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString())); //$NON-NLS-1$
             setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, unknown));
             setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, unknown));
             setTag(TagW.Modality, dicomObject.getString(Tag.Modality, unknown));
@@ -534,12 +534,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private void computeSUVFactor(DicomObject dicomObject, HashMap<TagW, Object> tagList, int index) {
         String modlality = (String) tagList.get(TagW.Modality);
-        if ("PT".equals(modlality)) {
+        if ("PT".equals(modlality)) { //$NON-NLS-1$
             String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage, null);
-            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) {
+            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { //$NON-NLS-1$ //$NON-NLS-2$
                 double suvFactor = 0.0;
                 String units = dicomObject.getString(Tag.Units);
-                if ("BQML".equals(units)) {
+                if ("BQML".equals(units)) { //$NON-NLS-1$
                     Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
                     DicomElement seq = dicomObject.get(Tag.RadiopharmaceuticalInformationSequence);
                     if (weight != 0.0f && seq != null && seq.vr() == VR.SQ) {
@@ -556,7 +556,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             Date injectDateTime =
                                 getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
                             Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
-                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null
+                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
                                 && halfLife != null && injectTime != null && acqTime != null) {
                                 double time = 0.0;
                                 if (injectDateTime != null) {
@@ -583,14 +583,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             }
                         }
                     }
-                } else if ("CNTS".equals(units)) {
+                } else if ("CNTS".equals(units)) { //$NON-NLS-1$
                     String privateTagCreator = dicomObject.getString(0x70530010);
                     double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
-                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) {
+                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) { //$NON-NLS-1$
                         suvFactor = privateSUVFactor;
                         // units= "g/ml";
                     }
-                } else if ("GML".equals(units)) {
+                } else if ("GML".equals(units)) { //$NON-NLS-1$
                     suvFactor = 1.0;
                     // UNIT
                     // String unit = dicomObject.getString(Tag.SUVType);
@@ -613,11 +613,11 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             return s[0];
         }
         if (s.length == 0) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         StringBuffer sb = new StringBuffer(s[0]);
         for (int i = 1; i < s.length; i++) {
-            sb.append("\\" + s[i]);
+            sb.append("\\" + s[i]); //$NON-NLS-1$
         }
         return sb.toString();
     }
@@ -770,7 +770,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 // read as tiled rendered image
                 LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, dicomObject.getString(Tag.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;
-                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) {
+                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
                     if (jpipReader == null) {
                         ImageReaderFactory f = ImageReaderFactory.getInstance();
                         jpipReader = f.getReaderForTransferSyntax(tsuid);
