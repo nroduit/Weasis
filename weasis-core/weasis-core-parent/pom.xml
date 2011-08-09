@@ -5,11 +5,11 @@
 	<artifactId>weasis-core-parent</artifactId>
 	<name>Parent of Core Plug-ins [${project.artifactId}]</name>
 	<packaging>pom</packaging>
-	<version>1.6</version>
+	<version>1.7-SNAPSHOT</version>
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.7</version>
+		<version>1.8-SNAPSHOT</version>
 		<relativePath>../../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<issueManagement>

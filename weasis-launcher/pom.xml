@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.7</version>
+		<version>1.8-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -12,7 +12,7 @@
 	<!-- The weasis launcher is not OSGI bundle, it is a simple jar -->
 	<packaging>jar</packaging>
 	<name>Weasis Launcher (Felix) [${project.artifactId}]</name>
-	<version>0.5.7</version>
+	<version>0.5.8-SNAPSHOT</version>
 	<licenses>
 		<license>
 			<name>Eclipse Public License v1.0</name>
@@ -28,9 +28,9 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.1.0/weasis-launcher</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.1.0/weasis-launcher</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/tags/weasis-framework-1.1.0/weasis-launcher</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</url>
 	</scm>
 	<profiles>
 		<profile>

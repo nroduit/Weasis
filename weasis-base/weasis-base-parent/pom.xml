@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.7</version>
+		<version>1.8-SNAPSHOT</version>
 		<relativePath>../../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -11,18 +11,18 @@
 	<artifactId>weasis-base-parent</artifactId>
 	<packaging>pom</packaging>
 	<name>Parent of Default Plug-ins [${project.artifactId}]</name>
-	<version>1.6</version>
+	<version>1.7-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>0.5.7</version>
+			<version>0.5.8-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>0.5.7</version>
+			<version>0.5.8-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
