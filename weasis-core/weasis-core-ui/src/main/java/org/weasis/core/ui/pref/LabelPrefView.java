@@ -1,6 +1,7 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -12,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -43,6 +45,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     private final JCheckBox jCheckBoxBold = new JCheckBox();
     private final JCheckBox jCheckBoxItalic = new JCheckBox();
     private final ViewSetting viewSetting;
+    private final Component verticalStrut = Box.createVerticalStrut(20);
 
     public LabelPrefView(ViewSetting viewSetting) {
         if (viewSetting == null) {
@@ -71,18 +74,25 @@ public class LabelPrefView extends AbstractItemDialogPage {
         jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font"))); //$NON-NLS-1$
         jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold")); //$NON-NLS-1$
         jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic")); //$NON-NLS-1$
-        jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-            GridBagConstraints.NONE, new Insets(5, 2, 5, 0), 0, 0));
-        jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-            GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-        jPanel2.add(jComboName, new GridBagConstraints(2, 0, 3, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-            GridBagConstraints.NONE, new Insets(0, 2, 0, 5), 0, 0));
-        jPanel2.add(jCheckBoxItalic, new GridBagConstraints(4, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+        jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.NONE, new Insets(5, 2, 5, 5), 0, 0));
+        jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.NONE, new Insets(0, 5, 5, 5), 0, 0));
+        jPanel2.add(jComboName, new GridBagConstraints(2, 0, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.NONE, new Insets(0, 2, 5, 0), 0, 0));
+        jPanel2.add(jCheckBoxItalic, new GridBagConstraints(4, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanel2.add(jCheckBoxBold, new GridBagConstraints(3, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
-        jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
-            GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0));
+        jPanel2.add(jCheckBoxBold, new GridBagConstraints(3, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+        jPanel2.add(jLabelSize, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+            GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0));
+
+        GridBagConstraints gbc_verticalStrut = new GridBagConstraints();
+        gbc_verticalStrut.weighty = 1.0;
+        gbc_verticalStrut.weightx = 1.0;
+        gbc_verticalStrut.gridx = 4;
+        gbc_verticalStrut.gridy = 2;
+        jPanel2.add(verticalStrut, gbc_verticalStrut);
 
         JPanel panel_2 = new JPanel();
         FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();

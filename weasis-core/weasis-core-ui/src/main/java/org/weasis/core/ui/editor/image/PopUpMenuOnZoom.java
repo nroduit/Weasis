@@ -41,6 +41,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
     private JRadioButtonMenuItem[] jRadioButtonMenuItemMagnify;
     private final ActionListener magnifyListener = new java.awt.event.ActionListener() {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             magnifyActionPerformed(e);
         }
@@ -68,6 +69,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jMenuItemZoom.setText(Messages.getString("PopUpMenuOnZoom.hide")); //$NON-NLS-1$
         jMenuItemZoom.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoomWin.hideZoom();
             }
@@ -75,6 +77,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jCheckBoxMenuItemDraw.setText(Messages.getString("PopUpMenuOnZoom.showDraw")); //$NON-NLS-1$
         jCheckBoxMenuItemDraw.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoomWin.setActionInView(ActionW.DRAW.cmd(), jCheckBoxMenuItemDraw.isSelected());
                 zoomWin.repaint();
@@ -113,6 +116,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jCheckBoxMenutemSychronize.setText(Messages.getString("PopUpMenuOnZoom.synch")); //$NON-NLS-1$
         jCheckBoxMenutemSychronize.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 zoomWin.setActionInView(ZoomWin.SYNCH_CMD, jCheckBoxMenutemSychronize.isSelected());
                 zoomWin.updateZoom();
@@ -120,12 +124,11 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         });
         this.add(jMenuItemZoom);
         this.addSeparator();
-        this.add(jCheckBoxMenutemSychronize);
         this.add(jCheckBoxMenuItemDraw);
-        this.add(jMenuImage);
+        this.add(jCheckBoxMenutemSychronize);
         this.add(jMenuMagnify);
         iniMenuItemZoomMagnify();
-        this.addSeparator();
+        this.add(jMenuImage);
     }
 
     public void iniMenuItemZoomMagnify() {

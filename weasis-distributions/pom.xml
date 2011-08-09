@@ -6,7 +6,7 @@
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>1.1.0</version>
 	<properties>
 		<!-- dollar property to avoid replacing some variables when filtering resources 
 			files (ex. ${user.home} in config.properties) -->
@@ -24,12 +24,12 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.1.2</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.7-SNAPSHOT</weasis.launcher.version>
-		<weasis.core.version>0.5.7-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.7.5-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.7-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.7-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.7-SNAPSHOT</weasis.dicom.version>
+		<weasis.launcher.version>0.5.7</weasis.launcher.version>
+		<weasis.core.version>0.5.7</weasis.core.version>
+		<weasis.imageio.version>0.7.5</weasis.imageio.version>
+		<weasis.jmc.version>0.5.7</weasis.jmc.version>
+		<weasis.base.version>0.5.7</weasis.base.version>
+		<weasis.dicom.version>0.5.7</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>6.1.0-b02</substance.version>

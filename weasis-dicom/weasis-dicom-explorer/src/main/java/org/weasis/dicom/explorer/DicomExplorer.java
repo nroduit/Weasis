@@ -1596,8 +1596,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         popupMenu.add(item4);
                         // TODO add if viewerFactory supports add method
                         item4 =
-                            new JMenuItem(
-                                "Add selected Series to " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
+                            new JMenuItem(Messages.getString("DicomExplorer.add_sel_series") + viewerFactory.getUIName(), //$NON-NLS-1$
+                                viewerFactory.getIcon());
                         item4.addActionListener(new ActionListener() {
 
                             @Override
@@ -1608,7 +1608,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         });
                         popupMenu.add(item4);
                         if (viewerFactory instanceof MimeSystemAppFactory) {
-                            final JMenuItem item5 = new JMenuItem("Open DICOM information", null); //$NON-NLS-1$
+                            final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
                             item5.addActionListener(new ActionListener() {
 
                                 @Override
