@@ -149,7 +149,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         final JToggleButton jButtonLens =
             new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
-        jButtonLens.setToolTipText("Show the magnifying lens"); //$NON-NLS-1$
+        jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
         ActionState lens = eventManager.getAction(ActionW.LENS);
         if (lens instanceof ToggleButtonListener) {
             ((ToggleButtonListener) lens).registerComponent(jButtonLens);

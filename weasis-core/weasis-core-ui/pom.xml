@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-core-parent</artifactId>
 		<groupId>org.weasis.core</groupId>
-		<version>1.6-SNAPSHOT</version>
+		<version>1.6</version>
 		<relativePath>../weasis-core-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-core-ui</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
-	<version>0.5.7-SNAPSHOT</version>
+	<version>0.5.7</version>
 	<properties>
 		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
@@ -35,7 +34,7 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>0.5.7-SNAPSHOT</version>
+			<version>0.5.7</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

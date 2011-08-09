@@ -763,7 +763,11 @@ public class WeasisLauncher {
         // changing Look and Feel when upgrade version
         if (LookAndFeels.installSubstanceLookAndFeels()
             && (look == null || (!forceLook && versionNew != null && !versionNew.equals(versionOld)))) {
-            look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
+            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+                look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            } else {
+                look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
+            }
         }
 
         // Set look and feels
@@ -797,7 +801,6 @@ public class WeasisLauncher {
             }
         }
         if (update) {
-            common_prop.put("weasis.look", look); //$NON-NLS-1$
             FileOutputStream fout = null;
             try {
                 fout = new FileOutputStream(common_file);
