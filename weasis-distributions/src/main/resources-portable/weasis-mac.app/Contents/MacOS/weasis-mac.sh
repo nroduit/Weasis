@@ -102,8 +102,18 @@ for i in {1..2} ; do
 	fi
 done
 
+# Get additional weasis arguments
+userParameters=()
+for var in "$@"
+do
+if  [[ $var == \$* ]]
+then
+    userParameters+=("$var")
+fi
+done
+echo user arguments: ${userParameters[@]}
 echo "Launching Weasis with JAVA_HOME set to $JAVA_HOME"
 
 # launch
 
-$JAVA_HOME/bin/java -Xms64m -Xmx512m -Xdock:name=Weasis -Xdock:icon="$resourcespath/logo-button.icns" -Dapple.laf.useScreenMenuBar=true -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.portable.dir="$basepath" -classpath "$basepath/weasis/weasis-launcher.jar:$basepath/weasis/felix.jar:$basepath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable $1
+$JAVA_HOME/bin/java -Xms64m -Xmx512m -Xdock:name=Weasis -Xdock:icon="$resourcespath/logo-button.icns" -Dapple.laf.useScreenMenuBar=true -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.portable.dir="$basepath" -classpath "$basepath/weasis/weasis-launcher.jar:$basepath/weasis/felix.jar:$basepath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}

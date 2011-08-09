@@ -783,7 +783,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                         if (graphicComplete && graph instanceof LineGraphic) {
 
-                            final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration"); //$NON-NLS-1$
+                            final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
                             calibMenu.addActionListener(new ActionListener() {
 
                                 @Override

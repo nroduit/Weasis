@@ -37,7 +37,7 @@ public class ViewSetting {
             lineColor = new Color(rgb);
             Preferences stats = p.node("statistics"); //$NON-NLS-1$
             basicStatistics = stats.getBoolean("basic", true); //$NON-NLS-1$
-            moreStatistics = stats.getBoolean("more", false); //$NON-NLS-1$
+            moreStatistics = stats.getBoolean("more", true); //$NON-NLS-1$
 
             ImageStatistics.IMAGE_MIN.setComputed(basicStatistics);
             ImageStatistics.IMAGE_MAX.setComputed(basicStatistics);
