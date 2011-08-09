@@ -801,6 +801,7 @@ public class WeasisLauncher {
             }
         }
         if (update) {
+            common_prop.put("weasis.look", look); //$NON-NLS-1$
             FileOutputStream fout = null;
             try {
                 fout = new FileOutputStream(common_file);
