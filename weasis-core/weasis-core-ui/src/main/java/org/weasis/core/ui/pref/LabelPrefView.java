@@ -52,8 +52,9 @@ public class LabelPrefView extends AbstractItemDialogPage {
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setTitle(Messages.getString("LabelPrefView.font")); //$NON-NLS-1$
         try {
-            JMVUtils.setList(jComboName, Messages.getString("LabelPrefView.default"), GraphicsEnvironment.getLocalGraphicsEnvironment() //$NON-NLS-1$
-                .getAvailableFontFamilyNames());
+            JMVUtils.setList(jComboName,
+                Messages.getString("LabelPrefView.default"), GraphicsEnvironment.getLocalGraphicsEnvironment() //$NON-NLS-1$
+                    .getAvailableFontFamilyNames());
             jbInit();
             initialize();
         } catch (Exception ex) {
@@ -67,7 +68,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         jPanel2.setLayout(gridBagLayout1);
         jLabelFont.setText(Messages.getString("LabelPrefView.name")); //$NON-NLS-1$
         jLabelSize.setText(Messages.getString("LabelPrefView.size")); //$NON-NLS-1$
-        jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.Font"))); //$NON-NLS-1$
+        jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font"))); //$NON-NLS-1$
         jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold")); //$NON-NLS-1$
         jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic")); //$NON-NLS-1$
         jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,

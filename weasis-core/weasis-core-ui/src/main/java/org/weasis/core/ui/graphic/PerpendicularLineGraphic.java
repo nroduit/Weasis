@@ -24,9 +24,12 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
-    public static final Measurement LINE_LENGTH = new Measurement(Messages.getString("measure.line_length"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement ORIENTATION = new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement AZIMUTH = new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement LINE_LENGTH = new Measurement(
+        Messages.getString("measure.length"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION = new Measurement(
+        Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH = new Measurement(
+        Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let AB & CD two perpendicular line segments with D being the projected point C on AB
@@ -170,10 +173,12 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                         .getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD), Messages
+                        .getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages
+                        .getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

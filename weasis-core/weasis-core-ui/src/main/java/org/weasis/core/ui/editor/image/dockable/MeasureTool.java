@@ -72,7 +72,7 @@ import org.weasis.core.ui.util.ViewSetting;
 
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
-    public static final String BUTTON_NAME = Messages.getString("MeasureTool.measure"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("Tools.meas"); //$NON-NLS-1$
     public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
     public static final int DockableWidth = 195;
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
@@ -116,8 +116,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.draw_meas"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("MeasureTool.draw_meas"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         // transform.add(Box.createVerticalStrut(7));
 
@@ -187,7 +188,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
                 Color newColor =
-                    JColorChooser.showDialog(WinUtil.getParentDialogOrFrame(MeasureTool.this), Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
+                    JColorChooser.showDialog(WinUtil.getParentDialogOrFrame(MeasureTool.this),
+                        Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
                         button.getBackground());
                 if (newColor != null) {
                     button.setBackground(newColor);
@@ -228,7 +230,8 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         }
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel_1);
-        JCheckBox chckbxBasicImageStatistics = new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics()); //$NON-NLS-1$
+        JCheckBox chckbxBasicImageStatistics =
+            new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics()); //$NON-NLS-1$
         chckbxBasicImageStatistics.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_1.add(chckbxBasicImageStatistics);
         chckbxBasicImageStatistics.addActionListener(new ActionListener() {
@@ -294,8 +297,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$

@@ -27,7 +27,7 @@ public class ViewSetting {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
             Preferences font = p.node("font"); //$NON-NLS-1$
-            fontName = font.get("name", Messages.getString("ViewSetting.LabelPrefView.default")); //$NON-NLS-1$ //$NON-NLS-2$
+            fontName = font.get("name", Messages.getString("LabelPrefView.default")); //$NON-NLS-1$ //$NON-NLS-2$
             fontType = font.getInt("type", 0); //$NON-NLS-1$
             fontSize = font.getInt("size", 12); //$NON-NLS-1$
             Preferences draw = p.node("drawing"); //$NON-NLS-1$
