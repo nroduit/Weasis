@@ -329,18 +329,18 @@ public class WeasisLauncher {
                 }
             });
 
-            boolean uiStarted = false;
-
-            for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
-                    uiStarted = true;
-                    break;
-                }
-            }
-            // TODO Handle Weasis version without ui
-            if (!uiStarted) {
-                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
-            }
+            // boolean uiStarted = false;
+            //
+            // for (Bundle b : m_felix.getBundleContext().getBundles()) {
+            //                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
+            // uiStarted = true;
+            // break;
+            // }
+            // }
+            // // TODO Handle Weasis version without ui
+            // if (!uiStarted) {
+            //                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+            // }
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
