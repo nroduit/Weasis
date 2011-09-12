@@ -15,6 +15,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -29,9 +30,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -53,6 +52,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public static final String IMAGE = Messages.getString("DisplayTool.image"); //$NON-NLS-1$
     public static final String DICOM_IMAGE_OVERLAY = Messages.getString("DisplayTool.dicom_overlay"); //$NON-NLS-1$
+    public static final String DICOM_PIXEL_PADDING = "Pixel padding";
+    public static final String DICOM_SHUTTER = "Shutter";
     public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano"); //$NON-NLS-1$
 
     public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
@@ -80,6 +81,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("root"); //$NON-NLS-1$
         root.add(image = new CheckNode(IMAGE, true));
         image.add(new CheckNode(DICOM_IMAGE_OVERLAY, true));
+        image.add(new CheckNode(DICOM_SHUTTER, true));
+        image.add(new CheckNode(DICOM_PIXEL_PADDING, true));
         dicomInfo = new CheckNode(DICOM_ANNOTATIONS, true);
         dicomInfo.add(new CheckNode(AnnotationsLayer.ANNOTATIONS, true));
         dicomInfo.add(new AnonymCheckNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
@@ -136,7 +139,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     public void changeLayerSelection(CheckNode userObject) {
         String selection = userObject.toString();
         boolean selected = userObject.isSelected();
-        boolean allViews = applyAllViews.isSelected();
+
         ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
         ArrayList<DefaultView2d<DicomImageElement>> views = null;
         if (container != null) {
@@ -155,11 +158,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 }
             }
         } else if (DICOM_IMAGE_OVERLAY.equals(selection)) {
-            // TODO need to update all views !
-            ActionState overlay = EventManager.getInstance().getAction(ActionW.IMAGE_OVERLAY);
-            if (overlay instanceof ToggleButtonListener) {
-                ((ToggleButtonListener) overlay).setSelected(userObject.isSelected());
-            }
+            sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
+        } else if (DICOM_SHUTTER.equals(selection)) {
+            sendPropertyChangeEvent(views, ActionW.IMAGE_SCHUTTER.cmd(), selected);
+        } else if (DICOM_PIXEL_PADDING.equals(selection)) {
+            sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
         } else if (DICOM_ANNOTATIONS.equals(selection) && views != null) {
             for (DefaultView2d<DicomImageElement> v : views) {
                 if (selected != v.getInfoLayer().isVisible()) {
@@ -197,17 +200,30 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
+    private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
+        for (DefaultView2d<DicomImageElement> v : views) {
+            Boolean overlay = (Boolean) v.getActionValue(cmd);
+            if (overlay != null && selected != overlay) {
+                v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
+            }
+        }
+    }
+
+    private void iniDicomView(DefaultView2d view, String cmd, int index) {
+        TreeNode treeNode = image.getChildAt(index);
+        if (treeNode instanceof CheckNode) {
+            CheckNode item = (CheckNode) treeNode;
+            Boolean val = (Boolean) view.getActionValue(cmd);
+            item.setSelected(val == null ? false : val);
+        }
+    }
+
     public void iniTreeValues(DefaultView2d view) {
         if (view != null) {
             image.setSelected(view.getImageLayer().isVisible());
-            TreeNode treeNode = image.getChildAt(0);
-            if (treeNode instanceof CheckNode) {
-                CheckNode dicom_overlay = (CheckNode) treeNode;
-                ActionState overlay = EventManager.getInstance().getAction(ActionW.IMAGE_OVERLAY);
-                if (overlay instanceof ToggleButtonListener) {
-                    dicom_overlay.setSelected(((ToggleButtonListener) overlay).isSelected());
-                }
-            }
+            iniDicomView(view, ActionW.IMAGE_OVERLAY.cmd(), 0);
+            iniDicomView(view, ActionW.IMAGE_SCHUTTER.cmd(), 1);
+            iniDicomView(view, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
             tree.upadateNode(image);
             AnnotationsLayer layer = view.getInfoLayer();
             if (layer != null) {

@@ -102,8 +102,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private DownloadPriority priority = null;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel) {
-        if (dicomModel == null || dicomSeries == null)
+        if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
+        }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         final List<DicomInstance> sopList =
@@ -123,8 +124,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     }
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar) {
-        if (dicomModel == null || dicomSeries == null || progressBar == null)
+        if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
+        }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         this.progressBar = progressBar;
@@ -199,8 +201,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
-        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID))
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
             return true;
+        }
         // Search in split Series, cannot use "has this series a SplitNumber" because splitting can be executed later
         // for Dicom Video and other special Dicom
         String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
@@ -211,8 +214,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 if (dicomSeries != group && group instanceof Series) {
                     Series s = (Series) group;
                     if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID))
+                        if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
                             return true;
+                        }
                     }
                 }
             }
@@ -240,8 +244,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-        if (wado == null)
+        if (wado == null) {
             return false;
+        }
         ExecutorService imageDownloader = Executors.newFixedThreadPool(CODOWNLOAD_NUMBER);
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
@@ -254,8 +259,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         });
         for (int k = 0; k < sopList.size(); k++) {
             DicomInstance instance = sopList.get(dindex[k]);
-            if (isCancelled())
+            if (isCancelled()) {
                 return true;
+            }
             // Test if SOPInstanceUID already exists
             if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
                 incrementProgressBarValue();
@@ -382,8 +388,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             str2 = str2.substring(0, index) + new String(c) + str2.substring(index);
                         }
                         return str1.compareTo(str2);
-                    } else
+                    } else {
                         return (nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1));
+                    }
                 }
             });
             final DicomInstance instance = sopList.get(sopList.size() / 2);
@@ -480,8 +487,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
         DicomModel dicomModel, boolean removeOldSeries) {
-        if (factory == null)
+        if (factory == null) {
             return;
+        }
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, dicomModel, null,
             new ViewerPluginBuilder(factory, series, dicomModel, true, removeOldSeries)));
 
@@ -588,8 +596,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         httpCon.connect();
 
         // Make sure response code is in the 200 range.
-        if (httpCon.getResponseCode() / 100 != 2)
+        if (httpCon.getResponseCode() / 100 != 2) {
             return null;
+        }
 
         OutputStream out = null;
         InputStream in = null;
@@ -667,7 +676,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         private final URL url; // download URL
         private int size; // size of download in bytes
-        private int downloaded; // number of bytes downloaded
+        private final int downloaded; // number of bytes downloaded
         private Status status; // current status of download
         private File tempFile;
         private final WadoParameters wadoParameters;
@@ -818,11 +827,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     if (dicomSeries.size() == 0) {
                         // Override the group (patient, study and series) by the dicom fields except the UID of
                         // the group
-                        dicomReader.writeMetaData(dicomSeries);
-                        MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                        dicomReader.writeMetaData(study);
                         MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
                         dicomReader.writeMetaData(patient);
+                        MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                        dicomReader.writeMetaData(study);
+                        dicomReader.writeMetaData(dicomSeries);
                         GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             @Override
@@ -913,8 +922,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
          *         interruption
          */
         public int writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
-            if (inputStream == null && out == null)
+            if (inputStream == null && out == null) {
                 return 0;
+            }
             DicomInputStream dis = null;
             DicomOutputStream dos = null;
             try {

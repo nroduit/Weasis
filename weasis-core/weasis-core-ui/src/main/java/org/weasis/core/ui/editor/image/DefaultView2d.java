@@ -71,6 +71,7 @@ import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
+import org.weasis.core.api.image.ShutterOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.op.ByteLut;
@@ -183,6 +184,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.FILTER.cmd(), KernelData.NONE);
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
+        actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -731,6 +733,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.FILTER.cmd())) {
             actionsInView.put(ActionW.FILTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
+        } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
+            actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(ShutterOperation.name);
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
             imageLayer.updateAllImageOperations();
@@ -1270,13 +1275,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         AbstractAction exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard")) { //$NON-NLS-1$
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-                imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
-                    .getSystemClipboard(), TransferHandler.COPY);
-            }
-        };
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+                    imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit()
+                        .getSystemClipboard(), TransferHandler.COPY);
+                }
+            };
         exportToClipboardAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);

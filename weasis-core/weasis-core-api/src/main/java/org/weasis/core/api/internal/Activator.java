@@ -35,6 +35,7 @@ import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.op.NotBinaryDescriptor;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
+import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.op.ThresholdToBinDescriptor;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
@@ -80,6 +81,7 @@ public class Activator implements BundleActivator, ServiceListener {
         registerOp(or, new NotBinaryDescriptor());
         registerOp(or, new ImageStatisticsDescriptor());
         registerOp(or, new ImageStatistics2Descriptor());
+        registerOp(or, new ShutterDescriptor());
         registerOp(or, new ThresholdToBinDescriptor());
         registerOp(or, new RectifySignedShortDataDescriptor());
         registerOp(or, new RectifyUShortToShortDataDescriptor());

@@ -76,7 +76,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom", "wl", "move", "scroll" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-43$
+    public static final String[] functions = { "zoom", "wl", "move", "scroll" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -96,7 +96,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ToggleButtonListener inverseLutAction;
     private final ToggleButtonListener inverseStackAction;
     private final ToggleButtonListener showLensAction;
-    private final ToggleButtonListener imageOverlayAction;
+    // private final ToggleButtonListener imageOverlayAction;
     private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener presetAction;
@@ -143,7 +143,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(inverseStackAction = newInverseStackAction());
         iniAction(showLensAction = newLensAction());
         iniAction(lensZoomAction = newLensZoomAction());
-        iniAction(imageOverlayAction = newImageOverlayAction());
+        // iniAction(imageOverlayAction = newImageOverlayAction());
         iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(presetAction = newPresetAction());
@@ -470,15 +470,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ToggleButtonListener newImageOverlayAction() {
-        return new ToggleButtonListener(ActionW.IMAGE_OVERLAY, true) {
-
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
-            }
-        };
-    }
+    // private ToggleButtonListener newImageOverlayAction() {
+    // return new ToggleButtonListener(ActionW.IMAGE_OVERLAY, true) {
+    //
+    // @Override
+    // public void actionPerformed(boolean selected) {
+    // firePropertyChange(action.cmd(), null, selected);
+    // }
+    // };
+    // }
 
     private ComboItemListener newSortStackAction() {
         return new ComboItemListener(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
@@ -666,8 +666,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
             .cmd()));
         filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
-        imageOverlayAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
-            .cmd()));
+        // imageOverlayAction.setSelectedWithoutTriggerAction((Boolean)
+        // defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
+        // .cmd()));
         sortStackAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.SORTSTACK.cmd()));
         viewingProtocolAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.VIEWINGPROTOCOL
             .cmd()));

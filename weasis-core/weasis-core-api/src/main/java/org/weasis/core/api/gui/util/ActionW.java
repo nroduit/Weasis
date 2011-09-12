@@ -72,6 +72,8 @@ public class ActionW {
     public static final ActionW MODE = new ActionW(Messages.getString("ActionW.switch_mode"), "mode", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW IMAGE_OVERLAY = new ActionW(
         Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW IMAGE_PIX_PADDING = new ActionW("Pixel Padding", "pixel_padding", 0, 0, null); //$NON-NLS-2$
+    public static final ActionW IMAGE_SCHUTTER = new ActionW("Shutter", "shutter", 0, 0, null); //$NON-NLS-2$
     public static final ActionW INVERSESTACK = new ActionW("", "inverseStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW STACK_OFFSET = new ActionW("", "stackOffset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW SYNCH_LINK = new ActionW("", "synchLink", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -80,8 +82,9 @@ public class ActionW {
     public static final ActionW FILTER = new ActionW("", "filter", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW DRAW_ONLY_ONCE = new ActionW(Messages.getString("ActionW.draw_once"), "drawOnce", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
-    public static final ActionW PROGRESSION = new ActionW("", "img_progress", 0, 0, null);  //$NON-NLS-1$//$NON-NLS-2$
+    public static final ActionW DRAW_ONLY_ONCE = new ActionW(
+        Messages.getString("ActionW.draw_once"), "drawOnce", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
+    public static final ActionW PROGRESSION = new ActionW("", "img_progress", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
 
     // keep TempLayer in last position
 

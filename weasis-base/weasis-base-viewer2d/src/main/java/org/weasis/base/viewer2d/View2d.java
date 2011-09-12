@@ -65,11 +65,11 @@ public class View2d extends DefaultView2d<ImageElement> {
         OperationsManager manager = imageLayer.getOperationsManager();
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new FlipOperation());
-        manager.addImageOperationAction(new RotationOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
-        // Zoom must be the last operation to send to the lens the image state before zooming
+        // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
+        manager.addImageOperationAction(new RotationOperation());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
@@ -367,6 +367,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue(0);
                             }
@@ -375,6 +376,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         menuItem = new JMenuItem("- 90");
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() - 90 + 360) % 360);
                             }
@@ -383,6 +385,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         menuItem = new JMenuItem("+ 90");
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() + 90) % 360);
                             }
@@ -391,6 +394,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         menuItem = new JMenuItem("+ 180");
                         menuItem.addActionListener(new ActionListener() {
 
+                            @Override
                             public void actionPerformed(ActionEvent e) {
                                 rotation.setValue((rotation.getValue() + 180) % 360);
                             }
@@ -410,6 +414,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     JMenuItem close = new JMenuItem("Close");
                     close.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             View2d.this.setSeries(null, -1);
                         }

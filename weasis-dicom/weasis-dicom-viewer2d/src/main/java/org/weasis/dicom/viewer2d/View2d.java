@@ -59,6 +59,7 @@ import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
+import org.weasis.core.api.image.ShutterOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
@@ -118,9 +119,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         OperationsManager manager = imageLayer.getOperationsManager();
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new OverlayOperation());
-        manager.addImageOperationAction(new FlipOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
+        manager.addImageOperationAction(new ShutterOperation());
+        manager.addImageOperationAction(new FlipOperation());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new RotationOperation());
@@ -178,6 +180,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
+        actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
     }
 
@@ -187,21 +190,28 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (series == null) {
             return;
         }
-        if (evt.getPropertyName().equals(ActionW.PRESET.cmd())) {
+        final String command = evt.getPropertyName();
+        if (command.equals(ActionW.PRESET.cmd())) {
             actionsInView.put(ActionW.PRESET.cmd(), evt.getNewValue());
-        } else if (evt.getPropertyName().equals(ActionW.IMAGE_OVERLAY.cmd())) {
+        } else if (command.equals(ActionW.IMAGE_OVERLAY.cmd())) {
             actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(OverlayOperation.name);
-        } else if (evt.getPropertyName().equals(ActionW.SORTSTACK.cmd())) {
+        } else if (command.equals(ActionW.SORTSTACK.cmd())) {
             actionsInView.put(ActionW.SORTSTACK.cmd(), evt.getNewValue());
             sortStack();
-        } else if (evt.getPropertyName().equals(ActionW.VIEWINGPROTOCOL.cmd())) {
+        } else if (command.equals(ActionW.VIEWINGPROTOCOL.cmd())) {
             actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), evt.getNewValue());
             repaint();
-        } else if (evt.getPropertyName().equals(ActionW.INVERSESTACK.cmd())) {
+        } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
             sortStack();
+
+        } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
+            // TODO synch with statistics
+            actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(WindowLevelOperation.name);
         }
+
     }
 
     @Override

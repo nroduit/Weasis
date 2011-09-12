@@ -10,6 +10,9 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -42,6 +45,7 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -374,6 +378,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             validateDicomImageValues(tags);
             computeSlicePositionVector(tags);
+            setTagNoNull(TagW.ShutterFinalShape, buildShutterArea(dicomObject));
             computeSUVFactor(dicomObject, tags, 0);
         }
     }
@@ -444,10 +449,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 getIntegerFromDicomElement(dicomObject, Tag.SmallestImagePixelValue, null));
             setTagNoNull(TagW.LargestImagePixelValue,
                 getIntegerFromDicomElement(dicomObject, Tag.LargestImagePixelValue, null));
-            setTagNoNull(TagW.PixelPaddingValue, getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingValue, null));
             setTagNoNull(TagW.NumberOfFrames, getIntegerFromDicomElement(dicomObject, Tag.NumberOfFrames, null));
-            setTagNoNull(TagW.PixelPaddingRangeLimit,
-                getIntegerFromDicomElement(dicomObject, Tag.PixelPaddingRangeLimit, null));
             setTagNoNull(TagW.OverlayRows, getIntegerFromDicomElement(dicomObject, Tag.OverlayRows, null));
 
             Integer samplesPerPixel = getIntegerFromDicomElement(dicomObject, Tag.SamplesPerPixel, null);
@@ -466,6 +468,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 getIntegerFromDicomElement(dicomObject, Tag.BitsStored, (Integer) getTagValue(TagW.BitsAllocated)));
             setTagNoNull(TagW.PixelRepresentation,
                 getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, null));
+
+            // Bug fix: http://www.dcm4che.org/jira/browse/DCM-460
+            boolean signed = dicomObject.getInt(Tag.PixelRepresentation) != 0;
+            setTagNoNull(TagW.PixelPaddingValue,
+            // TODO change the method from org.dcm4che2.image.LookupTable 2.0.25
+                getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, stored));
+            setTagNoNull(TagW.PixelPaddingRangeLimit,
+                getIntPixelValue(dicomObject, Tag.PixelPaddingRangeLimit, signed, stored));
 
             setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
         }
@@ -608,7 +618,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         }
-        String[] s = dicom.getStrings(tag);
+        String[] s = element.getStrings(dicom.getSpecificCharacterSet(), false);
         if (s.length == 1) {
             return s[0];
         }
@@ -628,7 +638,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             return defaultValue;
         } else {
             try {
-                return dicom.getDate(tag);
+                return element.getDate(false);
             } catch (Exception e) {
                 // Value that not respect DICOM standard
                 e.printStackTrace();
@@ -642,7 +652,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getFloat(tag);
+            return element.getFloat(false);
         }
     }
 
@@ -651,7 +661,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getInt(tag);
+            return element.getInt(false);
         }
     }
 
@@ -660,8 +670,28 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return dicom.getDouble(tag);
+            return element.getDouble(false);
         }
+    }
+
+    public static Integer getIntPixelValue(DicomObject ds, int tag, boolean signed, int stored) {
+        DicomElement de = ds.get(tag);
+        if (de == null) {
+            return null;
+        }
+        VR vr = de.vr();
+        if (vr == VR.OB || vr == VR.OW) {
+            int ret = ByteUtils.bytesLE2ushort(de.getBytes(), 0);
+            if (signed) {
+                if ((ret & (1 << (stored - 1))) != 0) {
+                    int andmask = (1 << stored) - 1;
+                    int ormask = ~andmask;
+                    ret |= ormask;
+                }
+            }
+            return ret;
+        }
+        return de.getInt(false);
     }
 
     // public boolean readMediaTags(ImageInputStream iis) {
@@ -1000,8 +1030,54 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
                 // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));
 
+                // Frame Display Shutter Sequence (0018,9472)
+                // Display Shutter Macro Table C.7-17A in PS 3.3
+                seq = dcm.get(Tag.FrameDisplayShutterSequence);
+                if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                    DicomObject frame = seq.getDicomObject(0);
+                    Area shape = buildShutterArea(frame);
+                    if (shape != null) {
+                        setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
+                    }
+                }
             }
         }
+    }
+
+    private Area buildShutterArea(DicomObject dcmObject) {
+        Area shape = null;
+        String shutterShape = getStringFromDicomElement(dcmObject, Tag.ShutterShape, null);
+        if (shutterShape != null) {
+            // RECTANGULAR is legal
+            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) {
+                Rectangle2D rect = new Rectangle2D.Double();
+                rect.setFrameFromDiagonal(getIntegerFromDicomElement(dcmObject, Tag.ShutterLeftVerticalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterUpperHorizontalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterRightVerticalEdge, 0),
+                    getIntegerFromDicomElement(dcmObject, Tag.ShutterLowerHorizontalEdge, 0));
+                shape = new Area(rect);
+
+            }
+            if (shutterShape.contains("CIRCULAR")) {
+                int[] centerOfCircularShutter = dcmObject.getInts(Tag.CenterOfCircularShutter, (int[]) null);
+                if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
+                    Ellipse2D ellipse = new Ellipse2D.Double();
+                    int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
+                    // Thanks Dicom for reversing x,y by row,column
+                    ellipse.setFrameFromCenter(centerOfCircularShutter[1], centerOfCircularShutter[0],
+                        centerOfCircularShutter[1] + radius, centerOfCircularShutter[0] + radius);
+                    if (shape == null) {
+                        shape = new Area(ellipse);
+                    } else {
+                        shape.intersect(new Area(ellipse));
+                    }
+                }
+            }
+            if (shutterShape.contains("POLYGONAL")) {
+
+            }
+        }
+        return shape;
     }
 
     @Override
