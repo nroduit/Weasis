@@ -35,6 +35,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.internal.Activator;
 
 public class GeneralSetting extends AbstractItemDialogPage {
 
@@ -134,7 +135,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_txtpnNote.gridx = 0;
         gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
-        txtpnNote.setText(Messages.getString("GeneralSetting.txtpnNote")); //$NON-NLS-1$
+        txtpnNote.setContentType("text/html");
+
+        txtpnNote.setText(String.format(
+            Messages.getString("GeneralSetting.txtpnNote"), Activator.getInstalledLanguages())); //$NON-NLS-1$
         add(txtpnNote, gbc_txtpnNote);
         this.add(component1, new GridBagConstraints(3, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));

@@ -292,6 +292,8 @@ public class AutoProcessor {
                         // Version v = b.getVersion();
                         StringBuffer p = new StringBuffer(b.getSymbolicName());
                         p.append("-i18n-"); //$NON-NLS-1$
+                        // From 1.1.0, i18n module can be plugged in any version. The SVN revision (the qualifier) will
+                        // update the version.
                         p.append("1.1.0"); //$NON-NLS-1$
                         // p.append(v.getMajor());
                         // p.append("."); //$NON-NLS-1$
