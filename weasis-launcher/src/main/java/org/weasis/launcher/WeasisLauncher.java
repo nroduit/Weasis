@@ -712,18 +712,23 @@ public class WeasisLauncher {
         String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
         // Set the locale of the previous launch if exists
         lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
-        if (!lang.equals("en")) { //$NON-NLS-1$
-            String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
-            if (translation_modules != null) {
 
-                try {
-                    translation_modules +=
-                        translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    modulesi18n = readProperties(new URL(translation_modules));
-                } catch (MalformedURLException ex) {
-                    System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
+        String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
+        if (translation_modules != null) {
+            try {
+                translation_modules +=
+                    translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                modulesi18n = readProperties(new URL(translation_modules));
+                if (modulesi18n != null) {
+                    System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
                 }
+            } catch (MalformedURLException ex) {
+                System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
             }
+        }
+        if (lang.equals("en")) { //$NON-NLS-1$
+            // if English no need to load i18n bundle fragments
+            modulesi18n = null;
         }
         country = s_prop.getProperty("locale.country", country); //$NON-NLS-1$ 
         variant = s_prop.getProperty("locale.variant", variant); //$NON-NLS-1$ 

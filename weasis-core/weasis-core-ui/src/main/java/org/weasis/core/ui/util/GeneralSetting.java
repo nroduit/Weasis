@@ -18,6 +18,7 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Locale;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -35,7 +36,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.internal.Activator;
 
 public class GeneralSetting extends AbstractItemDialogPage {
 
@@ -137,8 +137,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html");
 
-        txtpnNote.setText(String.format(
-            Messages.getString("GeneralSetting.txtpnNote"), Activator.getInstalledLanguages())); //$NON-NLS-1$
+        txtpnNote.setText(String.format(Messages.getString("GeneralSetting.txtpnNote"), getInstalledLanguages())); //$NON-NLS-1$
         add(txtpnNote, gbc_txtpnNote);
         this.add(component1, new GridBagConstraints(3, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -173,6 +172,103 @@ public class GeneralSetting extends AbstractItemDialogPage {
             jComboBox1.setSelectedItem(oldUILook);
         }
 
+    }
+
+    private String getInstalledLanguages() {
+        StringBuffer buffer = new StringBuffer("<BR>English");
+        String langs = System.getProperty("weasis.languages", null);
+        if (langs != null) {
+            String[] items = langs.split(","); //$NON-NLS-1$
+            for (int i = 0, k = 1; i < items.length; i++) {
+                Locale l = toLocale(items[i].trim());
+                if (l == null) {
+                    continue;
+                }
+                if (k % 4 == 0) {
+                    buffer.append(",<BR>");
+                } else {
+                    buffer.append(", ");
+                }
+                buffer.append(l.getDisplayName());
+                k++;
+            }
+        }
+
+        return buffer.toString();
+    }
+
+    /**
+     * <p>
+     * Converts a String to a Locale.
+     * </p>
+     * <p/>
+     * <p>
+     * This method takes the string format of a locale and creates the locale object from it.
+     * </p>
+     * <p/>
+     * 
+     * <pre>
+     *   LocaleUtils.toLocale("en")         = new Locale("en", "")
+     *   LocaleUtils.toLocale("en_GB")      = new Locale("en", "GB")
+     *   LocaleUtils.toLocale("en_GB_xxx")  = new Locale("en", "GB", "xxx")   (#)
+     * </pre>
+     * <p/>
+     * <p/>
+     * <p>
+     * This method validates the input strictly. The language code must be lowercase. The country code must be
+     * uppercase. The separator must be an underscore. The length must be correct.
+     * </p>
+     * 
+     * @param input
+     *            the locale String to convert, null returns null
+     * @return a Locale, null if null input
+     * @throws IllegalArgumentException
+     *             if the string is an invalid format
+     */
+    public static Locale toLocale(String input) {
+        if (input == null) {
+            return null;
+        }
+
+        int len = input.length();
+        if (len != 2 && len != 5 && len < 7) {
+            return null;
+        }
+
+        char ch0 = input.charAt(0);
+        char ch1 = input.charAt(1);
+
+        if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
+            return null;
+        }
+
+        if (len == 2) {
+            return new Locale(input, "");
+        }
+
+        if (input.charAt(2) != '_') {
+            return null;
+        }
+
+        char ch3 = input.charAt(3);
+        if (ch3 == '_') {
+            return new Locale(input.substring(0, 2), "", input.substring(4));
+        }
+
+        char ch4 = input.charAt(4);
+        if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
+            return null;
+        }
+
+        if (len == 5) {
+            return new Locale(input.substring(0, 2), input.substring(3, 5));
+        }
+
+        if (input.charAt(5) != '_') {
+            return null;
+        }
+
+        return new Locale(input.substring(0, 2), input.substring(3, 5), input.substring(6));
     }
 
     public void setList(JComboBox jComboBox, LookAndFeelInfo[] look) {

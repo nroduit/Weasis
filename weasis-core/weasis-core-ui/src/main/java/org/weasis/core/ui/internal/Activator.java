@@ -115,13 +115,4 @@ public class Activator implements BundleActivator, ServiceListener {
         return prefs_tracker == null ? null : prefs_tracker.getServices();
     }
 
-    public static String getInstalledLanguages() {
-        StringBuffer buffer = new StringBuffer("English");
-        buffer.append(", ");
-
-        // StringBuffer p = new StringBuffer(b.getSymbolicName());
-        //        p.append("-i18n-1.1.0.jar"); //$NON-NLS-1$
-
-        return buffer.toString();
-    }
 }
