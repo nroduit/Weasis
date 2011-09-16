@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.Polygon;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -1038,6 +1039,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     Area shape = buildShutterArea(frame);
                     if (shape != null) {
                         setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
+                        // TODO implement color for PS
+                        // setTagNoNull(tagList, TagW.ShutterPSValue, getIntegerFromDicomElement(frame,
+                        // Tag.ShutterPresentationValue, null));
+                        // setTagNoNull(tagList, TagW.ShutterRGBColor, shape);
                     }
                 }
             }
@@ -1074,7 +1079,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 }
             }
             if (shutterShape.contains("POLYGONAL")) {
-
+                int[] points = dcmObject.getInts(Tag.VerticesOfThePolygonalShutter, (int[]) null);
+                if (points != null) {
+                    Polygon polygon = new Polygon();
+                    for (int i = 0; i < points.length / 2; i++) {
+                        // Thanks Dicom for reversing x,y by row,column
+                        polygon.addPoint(points[i * 2 + 1], points[i * 2]);
+                    }
+                    if (shape == null) {
+                        shape = new Area(polygon);
+                    } else {
+                        shape.intersect(new Area(polygon));
+                    }
+                }
             }
         }
         return shape;
