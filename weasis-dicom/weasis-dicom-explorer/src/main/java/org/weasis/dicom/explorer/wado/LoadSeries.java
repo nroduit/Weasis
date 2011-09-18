@@ -394,6 +394,32 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
             });
             final DicomInstance instance = sopList.get(sopList.size() / 2);
+
+            GuiExecutor.instance().execute(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                    if (thumbnail == null) {
+                        thumbnail = new Thumbnail(dicomSeries, null, Thumbnail.DEFAULT_SIZE);
+                    }
+                    // In case series is downloaded or canceled
+                    if (LoadSeries.this.isDone()) {
+                        thumbnail.setProgressBar(null);
+                        thumbnail.repaint();
+                    } else {
+                        thumbnail.setProgressBar(progressBar);
+                    }
+                    addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
+                    thumbnail.registerListeners();
+                    dicomSeries.setTag(TagW.Thumbnail, thumbnail);
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
+                        null, dicomSeries));
+                }
+
+            });
+
             Runnable thumbnailLoader = new Runnable() {
 
                 @Override
@@ -419,31 +445,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                             @Override
                             public void run() {
-
                                 Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                                if (thumbnail == null) {
-                                    thumbnail = new Thumbnail(dicomSeries, finalfile, Thumbnail.DEFAULT_SIZE);
+                                if (thumbnail != null) {
+                                    thumbnail.reBuildThumbnail(finalfile, MediaSeries.MEDIA_POSITION.MIDDLE);
                                 }
-                                // In case series is downloaded or canceled
-                                if (LoadSeries.this.isDone()) {
-                                    thumbnail.setProgressBar(null);
-                                    thumbnail.repaint();
-                                } else {
-                                    thumbnail.setProgressBar(progressBar);
-                                }
-                                addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
-                                thumbnail.registerListeners();
-                                dicomSeries.setTag(TagW.Thumbnail, thumbnail);
                             }
-
                         });
-                    }
-                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
-                        null, dicomSeries));
-                    // Let EDT time for repainting
-                    try {
-                        Thread.sleep(100);
-                    } catch (Exception e) {
                     }
                 }
             };

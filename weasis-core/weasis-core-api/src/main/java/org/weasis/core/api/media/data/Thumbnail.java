@@ -89,7 +89,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     public static final int MAX_SIZE = 256;
 
     private SoftReference<BufferedImage> imageSoftRef;
-    private boolean readable = true;
+    private volatile boolean readable = true;
     private File thumbnailPath = null;
     private int thumbnailSize;
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
@@ -164,6 +164,17 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     public synchronized void reBuildThumbnail() {
         File old = thumbnailPath;
         thumbnailPath = null;
+        readable = true;
+        buildThumbnail();
+        if (old != null) {
+            old.delete();
+        }
+    }
+
+    public void reBuildThumbnail(File file, MediaSeries.MEDIA_POSITION position) {
+        mediaPosition = position;
+        File old = thumbnailPath;
+        thumbnailPath = file;
         readable = true;
         buildThumbnail();
         if (old != null) {
@@ -273,50 +284,63 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         // return ImageFiler.getReadableImage(img);
     }
 
-    public synchronized BufferedImage getImage() {
+    public BufferedImage getImage() {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             readable = false;
             BufferedImage thumb = null;
             if (thumbnailPath == null || !thumbnailPath.canRead()) {
                 Object media = series.getMedia(mediaPosition);
                 if (media instanceof ImageElement) {
-                    ImageElement image = (ImageElement) media;
-                    PlanarImage imgPl = image.getImage();
-                    if (imgPl != null) {
-                        RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
-                        final double scale =
-                            Math.min(MAX_SIZE / (double) img.getHeight(), MAX_SIZE / (double) img.getWidth());
-                        final PlanarImage t =
-                            scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale, DownScaleQualityHints)
-                                .getRendering() : PlanarImage.wrapRenderedImage(img);
-                        try {
-                            thumbnailPath = File.createTempFile("tumb_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        if (thumbnailPath != null) {
-                            ImageElement.IMAGE_LOADER.submit(new Runnable() {
-
-                                @Override
-                                public void run() {
+                    final ImageElement image = (ImageElement) media;
+                    Thread t = new Thread() {
+                        @Override
+                        public void run() {
+                            PlanarImage imgPl = image.getImage();
+                            if (imgPl != null) {
+                                RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
+                                final double scale =
+                                    Math.min(MAX_SIZE / (double) img.getHeight(), MAX_SIZE / (double) img.getWidth());
+                                final PlanarImage t =
+                                    scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale,
+                                        DownScaleQualityHints).getRendering() : PlanarImage.wrapRenderedImage(img);
+                                try {
+                                    thumbnailPath =
+                                        File.createTempFile("tumb_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                BufferedImage thumbnail = null;
+                                if (thumbnailPath != null) {
                                     if (ImageFiler.writeJPG(thumbnailPath, t, 0.75f)) {
-                                        // will read the thumbnail in temp folder, better than getting the thumbnail
-                                        // from
-                                        // t.getAsBufferedImage() (it
-                                        // is true if the image is big and cannot handle all the tiles in memory)
+                                        // will read the thumbnail in temp folder, better than getting the
+                                        // thumbnail
+                                        // from t.getAsBufferedImage() (it
+                                        // is true if the image is big and cannot handle all the tiles in
+                                        // memory)
                                         readable = true;
-                                        repaint(100L);
+                                        repaint(50L);
+                                        return;
                                     } else {
                                         // out of memory
                                     }
-                                }
-                            });
-                            return null;
 
+                                } else {
+                                    thumbnail = t.getAsBufferedImage();
+                                }
+                                if (thumbnail == null
+                                    && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE) != null)) {
+                                    readable = false;
+                                } else {
+                                    readable = true;
+                                    imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
+                                }
+                                repaint(50L);
+                            }
                         }
-                        thumb = t.getAsBufferedImage();
-                    }
+                    };
+                    t.start();
                 }
+                return null;
             } else {
                 Load ref = new Load(thumbnailPath);
                 // loading images sequentially, only one thread pool
@@ -587,4 +611,5 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     @Override
     public void mouseExited(MouseEvent e) {
     }
+
 }

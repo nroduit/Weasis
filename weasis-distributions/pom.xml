@@ -32,7 +32,7 @@
 		<weasis.dicom.version>0.5.8-SNAPSHOT</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>6.1.0-b02</substance.version>
+		<substance.version>6.3.0</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 <!-- 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
