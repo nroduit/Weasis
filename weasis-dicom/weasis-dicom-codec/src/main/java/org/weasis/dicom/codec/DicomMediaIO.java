@@ -579,7 +579,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                                     TagW.dateTime(scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
                                         .getTime();
                                 if (injectDateTime == null) {
-
                                     if (scanDateTime > acquisitionDateTime.getTime()) {
                                         // per GE docs, may have been updated during post-processing into new series
                                         String privateCreator = dicomObject.getString(0x00090010);
@@ -592,8 +591,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                                     }
                                     if (scanDate != null) {
                                         injectDateTime = TagW.dateTime(scanDate, injectTime);
+                                        time = scanDateTime - injectDateTime.getTime();
                                     }
-                                    time = scanDateTime - injectDateTime.getTime();
 
                                 } else {
                                     time = scanDateTime - injectDateTime.getTime();
