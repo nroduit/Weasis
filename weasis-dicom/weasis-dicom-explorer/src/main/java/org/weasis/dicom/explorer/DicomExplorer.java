@@ -207,6 +207,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             int index = binarySearch(anObject, patientComparator);
             if (index < 0) {
                 super.insertElementAt(anObject, -(index + 1));
+            } else {
+                super.insertElementAt(anObject, index);
             }
         }
     };
@@ -1596,7 +1598,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         popupMenu.add(item4);
                         // TODO add if viewerFactory supports add method
                         item4 =
-                            new JMenuItem(Messages.getString("DicomExplorer.add_sel_series") + viewerFactory.getUIName(), //$NON-NLS-1$
+                            new JMenuItem(
+                                Messages.getString("DicomExplorer.add_sel_series") + viewerFactory.getUIName(), //$NON-NLS-1$
                                 viewerFactory.getIcon());
                         item4.addActionListener(new ActionListener() {
 

@@ -11,7 +11,6 @@
 package org.weasis.dicom.explorer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,8 +47,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private JProgressBar progressBar = null;
 
     public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel, boolean flatSearch) {
-        if (files == null || !(explorerModel instanceof DicomModel))
+        if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
         this.dicomModel = (DicomModel) explorerModel;
         this.files = files;
         this.recursive = recursive;
@@ -96,8 +96,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     public void addSelectionAndnotify(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1)
+        if (file == null || file.length < 1) {
             return;
+        }
         final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
@@ -109,12 +110,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             } else {
                 if (file[i].canRead()) {
-                    String mime = null;
-                    try {
-                        mime = MimeInspector.getMimeType(file[i]);
-                    } catch (IOException e) {
-                    }
-                    if (DicomMediaIO.MIMETYPE.equals(mime)) {
+                    if (DicomMediaIO.MIMETYPE.equals(MimeInspector.getMimeType(file[i]))) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
@@ -147,8 +143,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     public void addSelection(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1)
+        if (file == null || file.length < 1) {
             return;
+        }
         final ArrayList<DicomMediaIO> files = new ArrayList<DicomMediaIO>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
@@ -158,12 +155,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             } else {
                 if (file[i].canRead()) {
-                    String mime = null;
-                    try {
-                        mime = MimeInspector.getMimeType(file[i]);
-                    } catch (IOException e) {
-                    }
-                    if (DicomMediaIO.MIMETYPE.equals(mime)) {
+                    if (DicomMediaIO.MIMETYPE.equals(MimeInspector.getMimeType(file[i]))) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
                             files.add(loader);
@@ -244,8 +236,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             } else {
                 // Test if SOPInstanceUID already exists
-                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader.getTagValue(TagW.SOPInstanceUID)))
+                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID, dicomReader.getTagValue(TagW.SOPInstanceUID))) {
                     return null;
+                }
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
@@ -367,8 +360,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {
-        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID))
+        if (dicomSeries.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
             return true;
+        }
         Object splitNb = dicomSeries.getTagValue(TagW.SplitSeriesNumber);
         if (splitNb != null && study != null) {
             String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
@@ -379,8 +373,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     if (dicomSeries != group && group instanceof Series) {
                         Series s = (Series) group;
                         if (uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
-                            if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID))
+                            if (s.hasMediaContains(TagW.SOPInstanceUID, sopUID)) {
                                 return true;
+                            }
                         }
                     }
                 }

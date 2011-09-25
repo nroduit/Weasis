@@ -362,9 +362,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             Date birthdate = getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null);
             setTagNoNull(TagW.PatientBirthDate, birthdate);
             // Identifier for the patient. Tend to be unique.
-            // TODO set preferences for what is PatientUID
-            setTag(TagW.PatientPseudoUID, getTagValue(TagW.PatientID).toString()
-                + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString())); //$NON-NLS-1$
+            setTag(
+                TagW.PatientPseudoUID,
+                getTagValue(TagW.PatientID).toString()
+                    + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()) + name.substring(0, name.length() < 5 ? name.length() : 5)); //$NON-NLS-1$
             setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, unknown));
             setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, unknown));
             setTag(TagW.Modality, dicomObject.getString(Tag.Modality, unknown));
@@ -566,31 +567,43 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
                             Date injectDateTime =
                                 getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-                            Date acqTime = (Date) tagList.get(TagW.AcquisitionTime);
+                            Date acquisitionDateTime =
+                                TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
+                                    (Date) tagList.get(TagW.AcquisitionTime));
+                            Date scanDate = (Date) tagList.get(TagW.SeriesDate);
                             if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
-                                && halfLife != null && injectTime != null && acqTime != null) {
+                                && halfLife != null && acquisitionDateTime != null
+                                && (injectDateTime != null || (scanDate != null && injectTime != null))) {
                                 double time = 0.0;
-                                if (injectDateTime != null) {
-                                    Date acqDate = (Date) tagList.get(TagW.AcquisitionDate);
-                                    if (acqDate != null) {
-                                        Date dateTime = TagW.dateTime(acqDate, acqTime);
-                                        time = dateTime.getTime() - injectDateTime.getTime();
+                                long scanDateTime =
+                                    TagW.dateTime(scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
+                                        .getTime();
+                                if (injectDateTime == null) {
+
+                                    if (scanDateTime > acquisitionDateTime.getTime()) {
+                                        // per GE docs, may have been updated during post-processing into new series
+                                        String privateCreator = dicomObject.getString(0x00090010);
+                                        Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
+                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //$NON-NLS-1$
+                                            scanDate = privateScanDateTime;
+                                        } else {
+                                            scanDate = null;
+                                        }
                                     }
-                                }
-                                if (time == 0.0) {
-                                    // Difference is seconds divided by halfLife
-                                    time =
-                                        (acqTime.getTime() % TagW.MILLIS_PER_DAY)
-                                            - (injectTime.getTime() % TagW.MILLIS_PER_DAY);
-                                    // Handle case over midnight
-                                    // TODO NEED to be validated, time more than one day ?
-                                    if (time < 0) {
-                                        time += TagW.MILLIS_PER_DAY;
+                                    if (scanDate != null) {
+                                        injectDateTime = TagW.dateTime(scanDate, injectTime);
                                     }
+                                    time = scanDateTime - injectDateTime.getTime();
+
+                                } else {
+                                    time = scanDateTime - injectDateTime.getTime();
                                 }
-                                double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                                // Weight convert in kg to g
-                                suvFactor = weight * 1000.0 / correctedDose;
+                                // Exclude negative value (case over midnight)
+                                if (time > 0) {
+                                    double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
+                                    // Weight convert in kg to g
+                                    suvFactor = weight * 1000.0 / correctedDose;
+                                }
                             }
                         }
                     }

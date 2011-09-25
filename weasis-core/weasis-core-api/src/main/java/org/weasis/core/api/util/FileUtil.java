@@ -26,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.text.DecimalFormat;
+import java.util.Properties;
 
 import javax.imageio.stream.ImageInputStream;
 import javax.xml.stream.XMLStreamException;
@@ -60,8 +61,9 @@ public class FileUtil {
     }
 
     public static final void deleteDirectoryContents(final File dir) {
-        if ((dir == null) || !dir.isDirectory())
+        if ((dir == null) || !dir.isDirectory()) {
             return;
+        }
         final File[] files = dir.listFiles();
         if (files != null) {
             for (final File f : files) {
@@ -101,8 +103,9 @@ public class FileUtil {
     public static boolean isWriteable(File file) {
         if (file.exists()) {
             // Check the existing file.
-            if (!file.canWrite())
+            if (!file.canWrite()) {
                 return false;
+            }
         } else {
             // Check the file that doesn't exist yet.
             // Create a new file. The file is writeable if
@@ -132,11 +135,13 @@ public class FileUtil {
     }
 
     public static String nameWithoutExtension(String fn) {
-        if (fn == null)
+        if (fn == null) {
             return null;
+        }
         int i = fn.lastIndexOf('.');
-        if (i > 0)
+        if (i > 0) {
             return fn.substring(0, i);
+        }
         return fn;
     }
 
@@ -171,8 +176,9 @@ public class FileUtil {
      *         interruption
      */
     public static int writeFile(InputStream inputStream, OutputStream out) {
-        if (inputStream == null && out == null)
+        if (inputStream == null && out == null) {
             return 0;
+        }
         try {
             byte[] buf = new byte[4096];
             int offset;
@@ -194,18 +200,22 @@ public class FileUtil {
     }
 
     public static String formatSize(double size) {
-        if (size >= GB)
+        if (size >= GB) {
             return df.format(size / GB) + Messages.getString("FileUtil.gb"); //$NON-NLS-1$
-        if (size >= MB)
+        }
+        if (size >= MB) {
             return df.format(size / MB) + Messages.getString("FileUtil.mb"); //$NON-NLS-1$
-        if (size >= KB)
+        }
+        if (size >= KB) {
             return df.format(size / KB) + Messages.getString("FileUtil.kb"); //$NON-NLS-1$
+        }
         return (int) size + Messages.getString("FileUtil.bytes"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {
-        if (inputStream == null && out == null)
+        if (inputStream == null && out == null) {
             return false;
+        }
         try {
             FileChannel fci = inputStream.getChannel();
             FileChannel fco = out.getChannel();
@@ -221,8 +231,9 @@ public class FileUtil {
     }
 
     public static boolean nioWriteFile(InputStream in, OutputStream out, final int bufferSize) {
-        if (in == null && out == null)
+        if (in == null && out == null) {
             return false;
+        }
         try {
             ReadableByteChannel readChannel = Channels.newChannel(in);
             WritableByteChannel writeChannel = Channels.newChannel(out);
@@ -240,6 +251,39 @@ public class FileUtil {
         } finally {
             FileUtil.safeClose(in);
             FileUtil.safeClose(out);
+        }
+    }
+
+    public static Properties readProperties(File propsFile, Properties props) {
+        Properties p = props == null ? new Properties() : props;
+        if (propsFile != null && propsFile.canRead()) {
+            FileInputStream fileStream = null;
+            try {
+                fileStream = new FileInputStream(propsFile);
+                p.load(fileStream);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                FileUtil.safeClose(fileStream);
+            }
+        }
+        return p;
+    }
+
+    public static void storeProperties(File propsFile, Properties props, String comments) {
+        if (props != null && propsFile != null) {
+            FileOutputStream fout = null;
+            try {
+                fout = new FileOutputStream(propsFile);
+                props.store(fout, comments);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                FileUtil.safeClose(fout);
+            }
         }
     }
 }

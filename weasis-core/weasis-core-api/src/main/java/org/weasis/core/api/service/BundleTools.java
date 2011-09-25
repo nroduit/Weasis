@@ -11,9 +11,6 @@
 package org.weasis.core.api.service;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,20 +42,8 @@ public class BundleTools {
     }
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     static {
-        if (propsFile.canRead()) {
-            FileInputStream fis = null;
-            try {
-                fis = new FileInputStream(propsFile);
-                SYSTEM_PREFERENCES.load(fis);
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(fis);
-            }
-        } else {
+        FileUtil.readProperties(propsFile, SYSTEM_PREFERENCES);
+        if (!propsFile.canRead()) {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
@@ -87,19 +72,7 @@ public class BundleTools {
     }
 
     public static void saveSystemPreferences() {
-        if (propsFile.canRead()) {
-            FileOutputStream fout = null;
-            try {
-                fout = new FileOutputStream(propsFile);
-                SYSTEM_PREFERENCES.store(fout, null);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(fout);
-            }
-        }
+        FileUtil.storeProperties(propsFile, SYSTEM_PREFERENCES, null);
     }
 
 }

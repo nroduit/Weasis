@@ -20,19 +20,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import org.weasis.core.api.Messages;
-
-/*
- * A single MagicMime entry from the magic.mime file. This entry can contain subentries; so it recursivelyincludes
- * itself, if subentries are found. Basically this class represents a node in a simple n-ary tree
- * 
- * TODO: o More commenting o Testing lelong, leshort, byte o Method stringWithEscapeSubstitutions to support more escape
- * sequences o Its a problem if the content has spaces (eg., "#!\ /bin/bash"). This needs to be fixed o Is any operation
- * other equality on the contents supported? there are entries in the magic file where what seemed like a greater than
- * operator is supported. eg., ">85     byte&0x01       >0      \b, zoomed" but such entries are commented out in
- * magic.mime file.
- */
-
 public class MagicMimeEntry {
 
     public static final int STRING_TYPE = 1;
@@ -44,7 +31,7 @@ public class MagicMimeEntry {
     public static final int BYTE_TYPE = 7;
     public static final int UNKNOWN_TYPE = 20;
 
-    private ArrayList<MagicMimeEntry> subEntries = new ArrayList<MagicMimeEntry>();
+    private final ArrayList<MagicMimeEntry> subEntries = new ArrayList<MagicMimeEntry>();
     private int checkBytesFrom;
     private int type;
     private String typeStr;
@@ -365,7 +352,7 @@ public class MagicMimeEntry {
     }
 
     /*
-     * private methods used for matching differet types
+     * private methods used for matching different types
      */
 
     private boolean match(ByteBuffer buf) throws IOException {

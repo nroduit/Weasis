@@ -84,8 +84,7 @@ public class DownloadManager {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 if (FileUtil.writeFile(url, outFile) == -1) {
-                    String mime = MimeInspector.getMimeType(outFile);
-                    if (mime != null && mime.equals("application/x-gzip")) { //$NON-NLS-1$
+                    if ("application/x-gzip".equals(MimeInspector.getMimeType(outFile))) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
                     } else {
                         stream = url.openStream();
@@ -207,18 +206,19 @@ public class DownloadManager {
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), unknown); //$NON-NLS-1$
         Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
         String name = getTagAttribute(xmler, TagW.PatientName.getTagName(), unknown); //$NON-NLS-1$
+        if (name.trim().equals("")) { //$NON-NLS-1$
+            name = unknown; //$NON-NLS-1$
+        }
+        name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
 
-        // TODO set preferences of building patientPseudoUID
         String patientPseudoUID =
-            patientID + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()); //$NON-NLS-1$
+            patientID
+                + (birthdate == null
+                    ? "" : TagW.dicomformatDate.format(birthdate).toString() + name.substring(0, name.length() < 5 ? name.length() : 5)); //$NON-NLS-1$
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             patient.setTag(TagW.PatientID, patientID);
-            if (name.trim().equals("")) { //$NON-NLS-1$
-                name = unknown; //$NON-NLS-1$
-            }
-            name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
             patient.setTag(TagW.PatientName, name);
 
             patient.setTag(TagW.PatientSex, getTagAttribute(xmler, TagW.PatientSex.getTagName(), "O")); //$NON-NLS-1$

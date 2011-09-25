@@ -7,6 +7,71 @@
 #    Column #4: MIME type of result
 #    Column #5: MIME encoding of result (optional)
 
+# Dicom
+128	string		DICM		application/dicom
+
+# compress:  file(1) magic for pure-compression formats (no archives)
+#
+# compress, gzip, pack, compact, huf, squeeze, crunch, freeze, yabba, whap, etc.
+#
+# Formats for various forms of compressed data
+# Formats for "compress" proper have been moved into "compress.c",
+# because it tries to uncompress it to figure out what's inside.
+
+# standard unix compress
+#0	string		\037\235	application/x-compress
+
+# gzip (GNU zip, not to be confused with [Info-ZIP/PKWARE] zip archiver)
+0       string          \037\213        application/x-gzip
+
+0		string			PK\003\004		application/x-zip
+
+# RAR archiver (Greg Roelofs, newt@uchicago.edu)
+0	string		Rar!		application/x-rar
+
+# According to gzip.h, this is the correct byte order for packed data.
+0	string		\037\036	application/octet-stream
+#
+# This magic number is byte-order-independent.
+#
+0	short		017437		application/octet-stream
+
+# XXX - why *two* entries for "compacted data", one of which is
+# byte-order independent, and one of which is byte-order dependent?
+#
+# compacted data
+0	short		0x1fff		application/octet-stream
+0	string		\377\037	application/octet-stream
+# huf output
+0	short		0145405		application/octet-stream
+
+# Squeeze and Crunch...
+# These numbers were gleaned from the Unix versions of the programs to
+# handle these formats.  Note that I can only uncrunch, not crunch, and
+# I didn't have a crunched file handy, so the crunch number is untested.
+#				Keith Waclena <keith@cerberus.uchicago.edu>
+#0	leshort		0x76FF		squeezed data (CP/M, DOS)
+#0	leshort		0x76FE		crunched data (CP/M, DOS)
+
+# Freeze
+#0	string		\037\237	Frozen file 2.1
+#0	string		\037\236	Frozen file 1.0 (or gzip 0.5)
+
+# lzh?
+#0	string		\037\240	LZH compressed data
+
+257	string		ustar\0		application/x-tar	posix
+257	string		ustar\040\040\0		application/x-tar	gnu
+
+0	short		070707		application/x-cpio
+0	short		0143561		application/x-cpio	swapped
+
+0	string		=<ar>		application/x-archive
+0	string		\!<arch>	application/x-archive
+>8	string		debian		application/x-debian-package
+
+#------------------------------------------------------------------------------
+
 #------------------------------------------------------------------------------
 # Localstuff:  file(1) magic for locally observed files
 # Add any locally observed files here.
@@ -94,8 +159,7 @@
 #------------------------------------------------------------------------------
 # end local stuff
 #------------------------------------------------------------------------------
-# Dicom
-128	string		DICM		application/dicom
+
 
 # xml based formats!
 
@@ -298,67 +362,7 @@
 0	string		#!\ /usr/bin/env\ lua	application/x-lua
 
 #------------------------------------------------------------------------------
-# compress:  file(1) magic for pure-compression formats (no archives)
-#
-# compress, gzip, pack, compact, huf, squeeze, crunch, freeze, yabba, whap, etc.
-#
-# Formats for various forms of compressed data
-# Formats for "compress" proper have been moved into "compress.c",
-# because it tries to uncompress it to figure out what's inside.
 
-# standard unix compress
-#0	string		\037\235	application/x-compress
-
-# gzip (GNU zip, not to be confused with [Info-ZIP/PKWARE] zip archiver)
-0       string          \037\213        application/x-gzip
-
-0		string			PK\003\004		application/x-zip
-
-# RAR archiver (Greg Roelofs, newt@uchicago.edu)
-0	string		Rar!		application/x-rar
-
-# According to gzip.h, this is the correct byte order for packed data.
-0	string		\037\036	application/octet-stream
-#
-# This magic number is byte-order-independent.
-#
-0	short		017437		application/octet-stream
-
-# XXX - why *two* entries for "compacted data", one of which is
-# byte-order independent, and one of which is byte-order dependent?
-#
-# compacted data
-0	short		0x1fff		application/octet-stream
-0	string		\377\037	application/octet-stream
-# huf output
-0	short		0145405		application/octet-stream
-
-# Squeeze and Crunch...
-# These numbers were gleaned from the Unix versions of the programs to
-# handle these formats.  Note that I can only uncrunch, not crunch, and
-# I didn't have a crunched file handy, so the crunch number is untested.
-#				Keith Waclena <keith@cerberus.uchicago.edu>
-#0	leshort		0x76FF		squeezed data (CP/M, DOS)
-#0	leshort		0x76FE		crunched data (CP/M, DOS)
-
-# Freeze
-#0	string		\037\237	Frozen file 2.1
-#0	string		\037\236	Frozen file 1.0 (or gzip 0.5)
-
-# lzh?
-#0	string		\037\240	LZH compressed data
-
-257	string		ustar\0		application/x-tar	posix
-257	string		ustar\040\040\0		application/x-tar	gnu
-
-0	short		070707		application/x-cpio
-0	short		0143561		application/x-cpio	swapped
-
-0	string		=<ar>		application/x-archive
-0	string		\!<arch>	application/x-archive
->8	string		debian		application/x-debian-package
-
-#------------------------------------------------------------------------------
 # html:  file(1) magic for HTML (HyperText Markup Language) docs
 #
 # from Michael Piefel <piefel@debian.org>
