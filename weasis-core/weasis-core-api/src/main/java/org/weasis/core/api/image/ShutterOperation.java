@@ -42,9 +42,7 @@ public class ShutterOperation extends AbstractOperation {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else if (shutter && (area = (Area) image.getTagValue(TagW.ShutterFinalShape)) != null) {
-            result =
-                ShutterDescriptor.create(source, new ROIShape(area), (int[]) image.getTagValue(TagW.ShutterRGBColor),
-                    null);
+            result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(image), null);
         } else {
             result = source;
         }
@@ -52,4 +50,18 @@ public class ShutterOperation extends AbstractOperation {
         return result;
     }
 
+    private int[] getShutterColor(ImageElement image) {
+        Boolean val = (Boolean) image.getTagValue(TagW.MonoChrome);
+        int[] color = null;
+        if (val == null || !val) {
+            color = (int[]) image.getTagValue(TagW.ShutterRGBColor);
+            // if(color != null){
+            // CIELab.getInstance().toRGB(colorvalue)
+            // }
+        } else {
+            color = (int[]) image.getTagValue(TagW.ShutterPSValue);
+        }
+        // color = new int[] { 1300 };
+        return color;
+    }
 }

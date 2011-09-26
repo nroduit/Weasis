@@ -380,7 +380,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             validateDicomImageValues(tags);
             computeSlicePositionVector(tags);
-            setTagNoNull(TagW.ShutterFinalShape, buildShutterArea(dicomObject));
+            Area shape = buildShutterArea(dicomObject);
+            if (shape != null) {
+                setTagNoNull(TagW.ShutterFinalShape, shape);
+                setTagNoNull(TagW.ShutterPSValue,
+                    getIntegerFromDicomElement(dicomObject, Tag.ShutterPresentationValue, null));
+                setTagNoNull(TagW.ShutterRGBColor,
+                    dicomObject.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+            }
             computeSUVFactor(dicomObject, tags, 0);
         }
     }
@@ -1051,10 +1058,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     Area shape = buildShutterArea(frame);
                     if (shape != null) {
                         setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
-                        // TODO implement color for PS
-                        // setTagNoNull(tagList, TagW.ShutterPSValue, getIntegerFromDicomElement(frame,
-                        // Tag.ShutterPresentationValue, null));
-                        // setTagNoNull(tagList, TagW.ShutterRGBColor, shape);
+                        setTagNoNull(tagList, TagW.ShutterPSValue,
+                            getIntegerFromDicomElement(frame, Tag.ShutterPresentationValue, null));
+                        setTagNoNull(tagList, TagW.ShutterRGBColor,
+                            frame.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
                     }
                 }
             }
