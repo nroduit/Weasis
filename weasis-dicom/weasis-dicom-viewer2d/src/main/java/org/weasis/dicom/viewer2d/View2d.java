@@ -936,9 +936,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             List list = (List) study.getTagValue(TagW.DicomSpecialElementList);
                             if (list != null) {
                                 JMenu menu = new JMenu(Messages.getString("Presentation State"));
+                                JMenuItem mItem = new JMenuItem("None");
+                                mItem.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
+                                            ActionW.PR_STATE.cmd(), null, null));
+                                    }
+                                });
+                                menu.add(mItem);
                                 for (Object object : list) {
                                     if (object instanceof DicomSpecialElement) {
-                                        DicomSpecialElement element = (DicomSpecialElement) object;
+                                        final DicomSpecialElement element = (DicomSpecialElement) object;
                                         JMenuItem menuItem =
                                             new JMenuItem((String) element.getTagValue(TagW.PatientName));
                                         menuItem.addActionListener(new ActionListener() {
@@ -946,7 +956,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                             @Override
                                             public void actionPerformed(ActionEvent e) {
                                                 propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
-                                                    ActionW.PR_STATE.cmd(), null, selected));
+                                                    ActionW.PR_STATE.cmd(), null, element));
                                             }
                                         });
                                         menu.add(menuItem);
