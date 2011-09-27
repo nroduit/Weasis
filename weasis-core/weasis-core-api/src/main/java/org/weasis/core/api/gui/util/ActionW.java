@@ -72,6 +72,7 @@ public class ActionW {
     public static final ActionW MODE = new ActionW(Messages.getString("ActionW.switch_mode"), "mode", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW IMAGE_OVERLAY = new ActionW(
         Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW PR_STATE = new ActionW("Presentation State", "pr_state", 0, 0, null); //$NON-NLS-2$
     public static final ActionW IMAGE_PIX_PADDING = new ActionW("Pixel Padding", "pixel_padding", 0, 0, null); //$NON-NLS-2$
     public static final ActionW IMAGE_SCHUTTER = new ActionW("Shutter", "shutter", 0, 0, null); //$NON-NLS-2$
     public static final ActionW INVERSESTACK = new ActionW("", "inverseStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$

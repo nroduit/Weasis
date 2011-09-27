@@ -75,51 +75,63 @@ public class MimeInspector {
     }
 
     public static String getMimeType(final File file) {
-        String[] values = getMimeTypes(file);
-        if (values == null || values.length == 0) {
-            return null;
-        }
-        // Return only the first Mime Type
-        return values[0];
-    }
-
-    public static String[] getMimeTypes(final File file) {
         if (file == null || !file.canRead()) {
             return null;
+        } else if (file.isDirectory()) {
+            return "application/directory"; //$NON-NLS-1$
         }
-
-        // Get the file extension
-        String fileName = file.getName();
-        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
-        String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
-
         String mimeType = null;
 
-        // Get Mime Type form the extension if the length > 0 and < 5
-        if (extension != null && extension.length() > 0 && extension.length() < 5) {
-            mimeType = mimeTypes.getProperty(extension.toLowerCase());
+        // Otherwise find Mime Type from the magic number in file
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
+            mimeType = MimeInspector.getMagicMimeType(raf);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            FileUtil.safeClose(raf);
         }
-        if (mimeType == null) {
-            if (file.isDirectory()) {
-                return new String[] { "application/directory" }; //$NON-NLS-1$
-            }
-            // Otherwise find Mime Type from the magic number in file
-            RandomAccessFile raf = null;
-            try {
-                raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
-                mimeType = MimeInspector.getMagicMimeType(raf);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(raf);
-            }
-        }
-
-        if (mimeType == null) {
-            return null;
-        }
-        return mimeType.split(",");
+        return mimeType;
     }
+
+    // public static String[] getMimeTypes(final File file) {
+    // if (file == null || !file.canRead()) {
+    // return null;
+    // }
+    //
+    // // Get the file extension
+    // String fileName = file.getName();
+    //        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
+    // String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
+    //
+    // String mimeType = null;
+    //
+    // // Get Mime Type form the extension if the length > 0 and < 5
+    // if (extension != null && extension.length() > 0 && extension.length() < 5) {
+    // mimeType = mimeTypes.getProperty(extension.toLowerCase());
+    // }
+    // if (mimeType == null) {
+    // if (file.isDirectory()) {
+    //                return new String[] { "application/directory" }; //$NON-NLS-1$
+    // }
+    // // Otherwise find Mime Type from the magic number in file
+    // RandomAccessFile raf = null;
+    // try {
+    //                raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
+    // mimeType = MimeInspector.getMagicMimeType(raf);
+    // } catch (IOException e) {
+    // e.printStackTrace();
+    // } finally {
+    // FileUtil.safeClose(raf);
+    // }
+    // }
+    //
+    // if (mimeType == null) {
+    // return null;
+    // }
+    // return mimeType.split(",");
+    // }
 
     private static void parse(Reader r) throws IOException {
         BufferedReader br = new BufferedReader(r);

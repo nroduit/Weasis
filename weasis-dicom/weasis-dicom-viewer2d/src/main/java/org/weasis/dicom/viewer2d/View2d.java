@@ -47,6 +47,7 @@ import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -96,6 +97,7 @@ import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
@@ -182,6 +184,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
+
     }
 
     @Override
@@ -210,6 +213,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // TODO synch with statistics
             actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
+        } else if (command.equals(ActionW.PR_STATE.cmd())) {
+            MediaElement m = (MediaElement) evt.getNewValue();
+            actionsInView.put(ActionW.PR_STATE.cmd(), m);
+            // If no Presentation State use the current image
+            if (m == null) {
+                m = getImage();
+            }
+            setShutter(m);
+            imageLayer.updateAllImageOperations();
         }
 
     }
@@ -916,6 +928,33 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (viewingAction instanceof ComboItemListener) {
                         popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
                             .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
+                    }
+                    if (series != null) {
+                        DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+                        if (model instanceof DicomModel) {
+                            MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
+                            List list = (List) study.getTagValue(TagW.DicomSpecialElementList);
+                            if (list != null) {
+                                JMenu menu = new JMenu(Messages.getString("Presentation State"));
+                                for (Object object : list) {
+                                    if (object instanceof DicomSpecialElement) {
+                                        DicomSpecialElement element = (DicomSpecialElement) object;
+                                        JMenuItem menuItem =
+                                            new JMenuItem((String) element.getTagValue(TagW.PatientName));
+                                        menuItem.addActionListener(new ActionListener() {
+
+                                            @Override
+                                            public void actionPerformed(ActionEvent e) {
+                                                propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
+                                                    ActionW.PR_STATE.cmd(), null, selected));
+                                            }
+                                        });
+                                        menu.add(menuItem);
+                                    }
+                                }
+                                popupMenu.add(menu);
+                            }
+                        }
                     }
                     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                     if (presetAction instanceof ComboItemListener) {

@@ -159,14 +159,12 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
 
     public MediaReader getMedia(File file) {
         if (file != null && file.canRead()) {
-            String[] mimeTypes = MimeInspector.getMimeTypes(file);
-            if (mimeTypes != null) {
-                for (String mimeType : mimeTypes) {
-                    // TODO should be in data explorer model
-                    Codec codec = BundleTools.getCodec(mimeType, null);
-                    if (codec != null) {
-                        return codec.getMediaIO(file.toURI(), mimeType, null);
-                    }
+            String mimeType = MimeInspector.getMimeType(file);
+            if (mimeType != null) {
+                // TODO should be in data explorer model
+                Codec codec = BundleTools.getCodec(mimeType, null);
+                if (codec != null) {
+                    return codec.getMediaIO(file.toURI(), mimeType, null);
                 }
             }
         }

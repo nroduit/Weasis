@@ -41,8 +41,8 @@ public class ShutterOperation extends AbstractOperation {
         if (shutter == null || image == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
-        } else if (shutter && (area = (Area) image.getTagValue(TagW.ShutterFinalShape)) != null) {
-            result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(image), null);
+        } else if (shutter && (area = (Area) imageOperation.getActionValue(TagW.ShutterFinalShape.getName())) != null) {
+            result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(imageOperation), null);
         } else {
             result = source;
         }
@@ -50,16 +50,14 @@ public class ShutterOperation extends AbstractOperation {
         return result;
     }
 
-    private int[] getShutterColor(ImageElement image) {
-        Boolean val = (Boolean) image.getTagValue(TagW.MonoChrome);
-        int[] color = null;
-        if (val == null || !val) {
-            color = (int[]) image.getTagValue(TagW.ShutterRGBColor);
-            // if(color != null){
-            // CIELab.getInstance().toRGB(colorvalue)
-            // }
-        } else {
-            color = (int[]) image.getTagValue(TagW.ShutterPSValue);
+    private int[] getShutterColor(ImageOperation imageOperation) {
+        int[] color = (int[]) imageOperation.getActionValue(TagW.ShutterRGBColor.getName());
+        // if(color != null){
+        // CIELab.getInstance().toRGB(colorvalue)
+        // }
+
+        if (color == null) {
+            color = (int[]) imageOperation.getActionValue(TagW.ShutterPSValue.getName());
         }
         // color = new int[] { 1300 };
         return color;

@@ -78,6 +78,7 @@ import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -348,7 +349,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             synchronized (this) {
                 GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
                 if (list != null) {
-                    // TODO handle graphics without shape, ecxlude them!
+                    // TODO handle graphics without shape, exclude them!
                     layer.setGraphics(list);
                 } else {
                     GraphicList graphics = new GraphicList();
@@ -356,6 +357,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     layer.setGraphics(graphics);
                 }
             }
+            setShutter(img);
             setWindowLevel(img);
             Rectangle2D area = getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
@@ -603,10 +605,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setWindowLevel(E img) {
-        float min = img.getMinValue();
-        float max = img.getMaxValue();
-        actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-        actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        if (img != null) {
+            float min = img.getMinValue();
+            float max = img.getMaxValue();
+            actionsInView.put(ActionW.WINDOW.cmd(), max - min);
+            actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        }
+    }
+
+    protected void setShutter(MediaElement media) {
+        if (media != null) {
+            actionsInView.put(TagW.ShutterFinalShape.getName(), media.getTagValue(TagW.ShutterFinalShape));
+            actionsInView.put(TagW.ShutterPSValue.getName(), media.getTagValue(TagW.ShutterPSValue));
+            actionsInView.put(TagW.ShutterRGBColor.getName(), media.getTagValue(TagW.ShutterRGBColor));
+        }
     }
 
     public Object getLensActionValue(String action) {

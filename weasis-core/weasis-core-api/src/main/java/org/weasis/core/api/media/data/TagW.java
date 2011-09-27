@@ -70,7 +70,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ImageOrientationPlane = new TagW(Messages.getString("TagElement.img_or"), TagType.String); //$NON-NLS-1$
     public static final TagW ImageBitsPerPixel = new TagW(Messages.getString("TagElement.img_bpp"), TagType.Integer); //$NON-NLS-1$
     public static final TagW ImageCache = new TagW("Image Cache", TagType.Boolean); //$NON-NLS-1$
-    public static final TagW ShutterFinalShape = new TagW("Shutter", TagType.Object); //$NON-NLS-1$
+    public static final TagW ShutterFinalShape = new TagW("Shutter Shape", TagType.Object); //$NON-NLS-1$
     public static final TagW ShutterRGBColor = new TagW("Shutter Color", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
 
