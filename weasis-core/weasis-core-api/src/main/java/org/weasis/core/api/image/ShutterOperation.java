@@ -52,12 +52,23 @@ public class ShutterOperation extends AbstractOperation {
 
     private int[] getShutterColor(ImageOperation imageOperation) {
         int[] color = (int[]) imageOperation.getActionValue(TagW.ShutterRGBColor.getName());
-        // if(color != null){
-        // CIELab.getInstance().toRGB(colorvalue)
-        // }
+        if (color != null) {
+            // TODO convert LAB to RGB
+            // CIELab.getInstance().toRGB(color);
+        }
 
         if (color == null) {
-            color = (int[]) imageOperation.getActionValue(TagW.ShutterPSValue.getName());
+            // A single gray unsigned value used to
+            // replace those parts of the image occluded
+            // by the shutter, when rendered on a
+            // monochrome display. The units are
+            // specified in P-Values, from a minimum of
+            // 0000H (black) up to a maximum of FFFFH
+            // (white).
+            Integer val = (Integer) imageOperation.getActionValue(TagW.ShutterPSValue.getName());
+            if (val != null) {
+                color = new int[] { val >> 8 };
+            }
         }
         // color = new int[] { 1300 };
         return color;

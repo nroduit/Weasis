@@ -46,6 +46,10 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 
+import org.dcm4che2.data.DicomElement;
+import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.VR;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -935,7 +939,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
                             List list = (List) study.getTagValue(TagW.DicomSpecialElementList);
                             if (list != null) {
-                                JMenu menu = new JMenu(Messages.getString("Presentation State"));
+                                JMenu menu = new JMenu("Presentation State");
                                 JMenuItem mItem = new JMenuItem("None");
                                 mItem.addActionListener(new ActionListener() {
 
@@ -946,20 +950,46 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     }
                                 });
                                 menu.add(mItem);
+                                String suid = (String) series.getTagValue(TagW.SeriesInstanceUID);
                                 for (Object object : list) {
                                     if (object instanceof DicomSpecialElement) {
                                         final DicomSpecialElement element = (DicomSpecialElement) object;
-                                        JMenuItem menuItem =
-                                            new JMenuItem((String) element.getTagValue(TagW.PatientName));
-                                        menuItem.addActionListener(new ActionListener() {
+                                        DicomElement seq =
+                                            (DicomElement) element.getTagValue(TagW.ReferencedSeriesSequence);
+                                        if (seq != null && seq.vr() == VR.SQ) {
+                                            for (int i = 0; i < seq.countItems(); ++i) {
+                                                DicomObject dcmObj = null;
+                                                try {
+                                                    dcmObj = seq.getDicomObject(i);
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                                if (dcmObj != null
+                                                    && suid.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
+                                                    String desc = (String) element.getTagValue(TagW.SeriesDescription);
+                                                    if (desc == null) {
+                                                        desc = "Presentation State";
+                                                    } else {
+                                                        int limit = 25;
+                                                        int size = desc.length();
+                                                        if (size > limit) {
+                                                            desc = desc.substring(0, limit) + "..."; //$NON-NLS-1$
+                                                        }
+                                                    }
+                                                    JMenuItem menuItem = new JMenuItem(desc);
+                                                    menuItem.addActionListener(new ActionListener() {
 
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
-                                                    ActionW.PR_STATE.cmd(), null, element));
+                                                        @Override
+                                                        public void actionPerformed(ActionEvent e) {
+                                                            propertyChange(new PropertyChangeEvent(EventManager
+                                                                .getInstance(), ActionW.PR_STATE.cmd(), null, element));
+                                                        }
+                                                    });
+                                                    menu.add(menuItem);
+                                                }
                                             }
-                                        });
-                                        menu.add(menuItem);
+                                        }
+
                                     }
                                 }
                                 popupMenu.add(menu);

@@ -146,6 +146,8 @@ public class TagW implements Transferable, Serializable {
         "Institutional Department Name", TagType.String, 3); //$NON-NLS-1$
     public static final TagW ManufacturerModelName = new TagW(0x00081090, "Manufacturer Model Name", TagType.String, 3); //$NON-NLS-1$
 
+    public static final TagW ReferencedSeriesSequence = new TagW(0x00081115,
+        "Referenced Series Sequence", TagType.Sequence, 4); //$NON-NLS-1$
     public static final TagW ReferencedPerformedProcedureStepSequence = new TagW(0x00081111,
         "Referenced Performed Procedure Step Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public static final TagW ReferencedImageSequence = new TagW(0x00081140,
@@ -244,6 +246,7 @@ public class TagW implements Transferable, Serializable {
     }
 
     private static final DataFlavor[] flavors = { infoElementDataFlavor };
+
     static {
         // TODO init with a profile
         TagW.enableAnonymizationProfile(true);
