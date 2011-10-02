@@ -123,7 +123,8 @@ public class View2d extends DefaultView2d<ImageElement> {
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
-
+            // All the action values are initialized again with the series changing
+            initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null);

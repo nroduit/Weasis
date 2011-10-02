@@ -448,6 +448,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             setTagNoNull(TagW.ImagerPixelSpacing, dicomObject.getDoubles(Tag.ImagerPixelSpacing, (double[]) null));
             setTagNoNull(TagW.PixelSpacing, dicomObject.getDoubles(Tag.PixelSpacing, (double[]) null));
+            setTagNoNull(TagW.PixelAspectRatio, dicomObject.getInts(Tag.PixelAspectRatio, (int[]) null));
             setTagNoNull(TagW.PixelSpacingCalibrationDescription,
                 dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
 

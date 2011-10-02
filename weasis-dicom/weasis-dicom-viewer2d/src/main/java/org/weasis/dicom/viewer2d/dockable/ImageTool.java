@@ -242,7 +242,7 @@ public class ImageTool extends PluginTool {
         ActionState flipAction = EventManager.getInstance().getAction(ActionW.FLIP);
         if (flipAction instanceof ToggleButtonListener) {
             JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 3));
-            pane.add(((ToggleButtonListener) flipAction).createCheckBox(Messages.getString("ImageTool.flip"))); //$NON-NLS-1$
+            pane.add(((ToggleButtonListener) flipAction).createCheckBox(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
             transform.add(pane);
         }
         return transform;

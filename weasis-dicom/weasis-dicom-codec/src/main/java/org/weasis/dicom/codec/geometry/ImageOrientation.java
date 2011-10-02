@@ -1,10 +1,5 @@
 package org.weasis.dicom.codec.geometry;
 
-import javax.media.jai.operator.TransposeDescriptor;
-import javax.media.jai.operator.TransposeType;
-
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
@@ -135,8 +130,9 @@ public abstract class ImageOrientation {
     }
 
     public static final String makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
-        if (v == null || v.length < 6)
+        if (v == null || v.length < 6) {
             return null;
+        }
         return ImageOrientation
             .makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4], v[5]);
     }
@@ -221,58 +217,6 @@ public abstract class ImageOrientation {
             + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
     }
 
-    public static final TransposeType getAxialImageRotationCcw(DicomObject dcmObj) {
-        if (dcmObj == null)
-            return null;
-        double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
-        if (v != null) {
-            if (v.length == 6) {
-                String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
-                String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
-
-                if ((rowAxis.equals("A") && (colAxis.equals("L") || rowAxis.equals("R"))))
-                    return TransposeDescriptor.ROTATE_270;
-                else if ((rowAxis.equals("R") || rowAxis.equals("L")) && colAxis.equals("A"))
-                    return TransposeDescriptor.ROTATE_180;
-                else if (rowAxis.equals("P") && (colAxis.equals("L") || colAxis.equals("R")))
-                    return TransposeDescriptor.ROTATE_90;
-            }
-        }
-        return null;
-    }
-
-    public static final TransposeType getImageRotationCcwFromSagittal(DicomObject dcmObj) {
-        if (dcmObj == null)
-            return null;
-        double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
-        if (v != null) {
-            if (v.length == 6) {
-                String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
-                if (rowAxis.equals("A"))
-                    return TransposeDescriptor.ROTATE_270;
-                else if (rowAxis.equals("P"))
-                    return TransposeDescriptor.ROTATE_90;
-            }
-        }
-        return null;
-    }
-
-    public static final TransposeType getImageRotationCcwFromCoronal(DicomObject dcmObj) {
-        if (dcmObj == null)
-            return null;
-        double[] v = dcmObj.getDoubles(Tag.ImageOrientationPatient);
-        if (v != null) {
-            if (v.length == 6) {
-                String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
-                String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
-                if (((rowAxis.equals("R") && colAxis.equals("F")) || (rowAxis.equals("L")) && colAxis.equals("H")))
-                    return TransposeDescriptor.ROTATE_180;
-
-            }
-        }
-        return null;
-    }
-
     public static double[] computeNormalVectorOfPlan(double[] vector) {
         if (vector != null && vector.length == 6) {
             double[] norm = new double[3];
@@ -308,8 +252,9 @@ public abstract class ImageOrientation {
                     ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v2[0], v2[1], v2[2], v2[3],
                         v2[4], v2[5]);
 
-                if (label1 != null && !label1.equals(LABELS[4]))
+                if (label1 != null && !label1.equals(LABELS[4])) {
                     return label1.equals(label2);
+                }
                 // If oblique search if the plan has approximately the same orientation
                 double[] postion1 =
                     computeNormalVectorOfPlan((double[]) image1.getTagValue(TagW.ImageOrientationPatient));
@@ -318,8 +263,9 @@ public abstract class ImageOrientation {
                 if (postion1 != null && postion2 != null) {
                     double prod = postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
                     // A little tolerance
-                    if (prod > 0.95)
+                    if (prod > 0.95) {
                         return true;
+                    }
                 }
             }
         }

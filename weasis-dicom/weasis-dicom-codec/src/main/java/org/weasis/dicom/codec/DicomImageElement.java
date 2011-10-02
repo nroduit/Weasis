@@ -41,13 +41,22 @@ public class DicomImageElement extends ImageElement {
                 pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
             if (val != null && val[0] > 0.0 && val[1] > 0.0) {
-                // Pixel Spacing = Row Spacing \ Column Spacing
+                // Pixel Spacing = Row Spacing \ Column Spacing => (Y,X)
                 // The first value is the row spacing in mm, that is the spacing between the centers of adjacent rows,
                 // or vertical spacing.
                 // Pixel Spacing must be always positive, but some DICOMs have negative values
-                pixelSizeX = val[1];
-                pixelSizeY = val[0];
+                setPixelSize(val[1], val[0]);
                 pixelSpacingUnit = Unit.MILLIMETER;
+            } else if (val == null) {
+                int[] aspects = (int[]) mediaIO.getTagValue(TagW.PixelAspectRatio);
+                if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
+                    // set the aspects to the pixel size of the image to stretch the image rendering (square pixel)
+                    if (aspects[1] < aspects[0]) {
+                        setPixelSize(1.0, (double) aspects[0] / (double) aspects[1]);
+                    } else {
+                        setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
+                    }
+                }
             }
             pixelValueUnit = (String) getTagValue(TagW.RescaleType);
             if (pixelValueUnit == null) {

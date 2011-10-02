@@ -212,8 +212,9 @@ public class WeasisLauncher {
             }
         }
 
+        // TODO use with felix framework 4 (split properties) - and make ext-config for end-user
         // Load system properties.
-        WeasisLauncher.loadSystemProperties();
+        // WeasisLauncher.loadSystemProperties();
 
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
@@ -473,52 +474,18 @@ public class WeasisLauncher {
         // Try to load it from one of these places.
 
         // See if the property URL was specified as a property.
-        URL propURL = null;
-        String custom = System.getProperty(SYSTEM_PROPERTIES_PROP);
-        if (custom != null) {
-            try {
-                propURL = new URL(custom);
-            } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
-                return;
-            }
-        } else {
-            // Determine where the configuration directory is by figuring
-            // out where felix.jar is located on the system class path.
-            File confDir = null;
-            String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
-            int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
-            int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
-            if (index >= start) {
-                // Get the path of the felix.jar file.
-                String jarLocation = classpath.substring(start, index);
-                // Calculate the conf directory based on the parent
-                // directory of the felix.jar directory.
-                confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
-            } else {
-                // Can't figure it out so use the current directory as default.
-                confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
-            }
-
-            try {
-                propURL = new File(confDir, SYSTEM_PROPERTIES_FILE_VALUE).toURL();
-            } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
-                return;
-            }
-        }
 
         // Read the properties file.
         Properties props = new Properties();
         InputStream is = null;
         try {
-            is = propURL.openConnection().getInputStream();
+            is = WeasisLauncher.class.getResourceAsStream("/" + SYSTEM_PROPERTIES_FILE_VALUE);
             props.load(is);
             is.close();
         } catch (FileNotFoundException ex) {
             // Ignore file not found.
         } catch (Exception ex) {
-            System.err.println("Main: Error loading system properties from " + propURL); //$NON-NLS-1$
+            System.err.println("Main: Error loading system properties"); //$NON-NLS-1$
             System.err.println("Main: " + ex); //$NON-NLS-1$
             FileUtil.safeClose(is);
             return;

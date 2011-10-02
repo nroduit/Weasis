@@ -280,6 +280,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            // All the action values are initialized again with the series changing
+            initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null);
@@ -338,6 +340,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (img != null && !img.equals(oldImage)) {
 
             RenderedImage source = img.getImage();
+            // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
+
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
                     TagW.ImageWidth, TagW.Columns)) : source.getWidth();
@@ -733,6 +737,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
         } else if (command.equals(ActionW.FLIP.cmd())) {
+            // Horizontal flip is applied after rotation
             actionsInView.put(ActionW.FLIP.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(FlipOperation.name);
             updateAffineTransform();

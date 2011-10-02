@@ -177,6 +177,7 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text); //$NON-NLS-1$
     public static final TagW PixelSpacing = new TagW(0x00280030, "Pixel Spacing", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW PixelAspectRatio = new TagW(0x00280034, "Pixel Aspect Ratio", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
         "Pixel Spacing Calibration Description", TagType.String); //$NON-NLS-1$
     public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.Float); //$NON-NLS-1$

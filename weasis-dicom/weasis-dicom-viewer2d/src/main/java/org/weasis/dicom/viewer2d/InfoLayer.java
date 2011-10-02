@@ -12,14 +12,18 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.font.TextAttribute;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.Hashtable;
 
 import javax.media.jai.PlanarImage;
+import javax.vecmath.Vector3d;
 
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionW;
@@ -52,6 +56,7 @@ import org.weasis.dicom.explorer.pref.ModalityPrefView;
  * @author Nicolas Roduit
  */
 public class InfoLayer implements AnnotationsLayer {
+    private static final Color highlight = new Color(255, 153, 153);
 
     private final HashMap<String, Boolean> displayPreferences = new HashMap<String, Boolean>();
     private boolean visible = true;
@@ -88,8 +93,10 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
-        if (!visible || image == null)
+        if (!visible || image == null) {
             return;
+        }
+
         ModalityInfoData modality;
         Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
         modality = ModalityPrefView.getModlatityInfos(mod);
@@ -110,12 +117,12 @@ public class InfoLayer implements AnnotationsLayer {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            paintRedFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y);
+            paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
             String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
             if (tsuid != null) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                paintRedFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y);
+                paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y, Color.RED);
             }
 
             String[] desc = image.getMediaReader().getReaderDescription();
@@ -123,7 +130,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (String str : desc) {
                     if (str != null) {
                         y += fontHeight;
-                        paintRedFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y);
+                        paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
             }
@@ -141,9 +148,9 @@ public class InfoLayer implements AnnotationsLayer {
             String tsuid = getLossyTransferSyntaxUID((String) dcm.getTagValue(TagW.TransferSyntaxUID));
             if (tsuid != null) {
                 Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
-                paintRedFontOutline(
+                paintColorFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.lossy") + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + Messages.getString("InfoLayer.percent_symb")), BORDER, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.lossy") + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + Messages.getString("InfoLayer.percent_symb")), BORDER, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 drawY -= fontHeight;
             }
         }
@@ -265,36 +272,89 @@ public class InfoLayer implements AnnotationsLayer {
             }
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
                 orientation.append(" - ");//$NON-NLS-1$ 
-                orientation.append(ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
-                    v[2], v[3], v[4], v[5]));
-                char colLeft = getMajorAxisFromPatientRelativeDirectionCosine(v[0], v[1], v[2]);
-                char rowTop = getMajorAxisFromPatientRelativeDirectionCosine(v[3], v[4], v[5]);
-                if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
-                    colLeft = getImageOrientationOposite(colLeft);
+                String imgOrientation =
+                    ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3], v[4],
+                        v[5]);
+                if (imgOrientation != null) {
+                    orientation.append(imgOrientation);
                 }
+                Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
+                Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
+
                 int angle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
-                if (angle > 45) {
-                    char rowBottom = getImageOrientationOposite(rowTop);
-                    char colRight = getImageOrientationOposite(colLeft);
-                    if (angle <= 135) {
-                        rowTop = colLeft;
-                        colLeft = rowBottom;
-                    } else if (angle <= 225) {
-                        rowTop = rowBottom;
-                        colLeft = colRight;
-                    } else if (angle <= 315) {
-                        colLeft = rowTop;
-                        rowTop = colRight;
-                    }
+                // TODO implemement
+                // if (angle != 0) {
+                // double rad = Math.toRadians(angle);
+                // double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
+                // if (normal != null && normal.length == 3) {
+                // Vector3d result = new Vector3d(0.0, 0.0, 0.0);
+                // rotateX(vr, rad, result);
+                // rotateY(vr, rad, result);
+                // rotateZ(vr, rad, result);
+                // vr = result;
+                //
+                // result = new Vector3d(0.0, 0.0, 0.0);
+                // rotateX(vc, rad, result);
+                // rotateY(vc, rad, result);
+                // rotateZ(vc, rad, result);
+                // vc = result;
+                // }
+                // }
+
+                if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
+                    vr.x = -vr.x;
+                    vr.y = -vr.y;
+                    vr.z = -vr.z;
                 }
-                paintFontOutline(g2, "[" + rowTop + "]", midx, 15); //$NON-NLS-1$ //$NON-NLS-2$
-                paintFontOutline(g2, "[" + colLeft + "]", BORDER, midy + fontHeight / 2); //$NON-NLS-1$ //$NON-NLS-2$
+                // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
+                String colLeft =
+                    ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vr.x, vr.y, vr.z);
+                String rowTop =
+                    ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
+                Font oldFont = g2.getFont();
+                Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
+                g2.setFont(bigFont);
+                Hashtable<TextAttribute, Object> map = new Hashtable<TextAttribute, Object>(1);
+                map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
+                String fistLetter = rowTop.substring(0, 1);
+                paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
+                int shiftx = g2.getFontMetrics().stringWidth(fistLetter);
+                Font subscriptFont = bigFont.deriveFont(map);
+                if (rowTop.length() > 1) {
+                    g2.setFont(subscriptFont);
+                    paintColorFontOutline(g2, rowTop.substring(1, rowTop.length()), midx + shiftx, fontHeight + 5f,
+                        highlight);
+                    g2.setFont(bigFont);
+                }
+
+                paintColorFontOutline(g2, colLeft.substring(0, 1), BORDER + 15, midy + fontHeight / 2.0f, highlight);
+
+                if (colLeft.length() > 1) {
+                    g2.setFont(subscriptFont);
+                    paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()), BORDER + 15 + shiftx, midy
+                        + fontHeight / 2.0f, highlight);
+                }
+                g2.setFont(oldFont);
             }
 
             paintFontOutline(g2, orientation.toString(), BORDER, bound.height - BORDER);
 
         }
+    }
 
+    private void rotateX(Vector3d vSrc, double angle, Vector3d vDst) {
+        vDst.y += vSrc.y * Math.cos(angle) - vSrc.z * Math.sin(angle);
+        vDst.z += vSrc.y * Math.sin(angle) + vSrc.z * Math.cos(angle);
+    }
+
+    private void rotateY(Vector3d vSrc, double angle, Vector3d vDst) {
+        vDst.x += vSrc.x * Math.cos(angle) + vSrc.z * Math.sin(angle);
+        vDst.z += vSrc.x * Math.sin(angle) + vSrc.z * Math.cos(angle);
+    }
+
+    private void rotateZ(Vector3d vSrc, double angle, Vector3d vDst) {
+        vDst.x += vSrc.x * Math.cos(angle) - vSrc.y * Math.sin(angle);
+        vDst.y += vSrc.x * Math.sin(angle) + vSrc.y * Math.cos(angle);
     }
 
     private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
@@ -319,28 +379,36 @@ public class InfoLayer implements AnnotationsLayer {
 
     private String getLossyTransferSyntaxUID(String tsuid) {
         if (tsuid != null) {
-            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) //$NON-NLS-1$
+            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) {
                 return "JPEG Baseline"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) //$NON-NLS-1$
+            }
+            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) {
                 return "JPEG Extended"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) //$NON-NLS-1$
+            }
+            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) {
                 return "JPEG-LS (Near-Lossless)"; //$NON-NLS-1$
-            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) //$NON-NLS-1$
+            }
+            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) {
                 return "JPEG 2000"; //$NON-NLS-1$
+            }
         }
         return null;
     }
 
     private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, Series series,
         ImageElement image) {
-        if (image.containTagKey(tag))
+        if (image.containTagKey(tag)) {
             return image.getTagValue(tag);
-        if (series.containTagKey(tag))
+        }
+        if (series.containTagKey(tag)) {
             return series.getTagValue(tag);
-        if (study.containTagKey(tag))
+        }
+        if (study.containTagKey(tag)) {
             return study.getTagValue(tag);
-        if (patient.containTagKey(tag))
+        }
+        if (patient.containTagKey(tag)) {
             return patient.getTagValue(tag);
+        }
         return null;
     }
 
@@ -390,7 +458,7 @@ public class InfoLayer implements AnnotationsLayer {
 
     }
 
-    public void paintRedFontOutline(Graphics2D g2, String str, float x, float y) {
+    public void paintColorFontOutline(Graphics2D g2, String str, float x, float y, Color color) {
         g2.setPaint(Color.BLACK);
         g2.drawString(str, x - 1f, y - 1f);
         g2.drawString(str, x - 1f, y);
@@ -400,7 +468,7 @@ public class InfoLayer implements AnnotationsLayer {
         g2.drawString(str, x + 1f, y - 1f);
         g2.drawString(str, x + 1f, y);
         g2.drawString(str, x + 1f, y + 1f);
-        g2.setPaint(Color.RED);
+        g2.setPaint(color);
         g2.drawString(str, x, y);
     }
 
@@ -472,8 +540,9 @@ public class InfoLayer implements AnnotationsLayer {
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
         PlanarImage source = image.getImage();
-        if (source == null)
+        if (source == null) {
             return;
+        }
 
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
@@ -557,7 +626,7 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setPaint(Color.black);
 
-            double posx = BORDER + 20;
+            double posx = BORDER;
             double posy = bound.height / 2.0 - scaleSizeY / 2.0;
             Line2D line = new Line2D.Double(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
@@ -621,8 +690,9 @@ public class InfoLayer implements AnnotationsLayer {
             scaleLength /= findGeometricSuite(scaleLength);
             scaleSize = scaleLength / ratio;
             loop++;
-            if (loop > 50)
+            if (loop > 50) {
                 return 0.0;
+            }
         }
         return scaleSize;
     }
@@ -630,8 +700,9 @@ public class InfoLayer implements AnnotationsLayer {
     public double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
-        if (firstDigit == 5)
+        if (firstDigit == 5) {
             return 2.5;
+        }
         return 2.0;
 
     }
@@ -664,9 +735,10 @@ public class InfoLayer implements AnnotationsLayer {
         }
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
-        if (ajustScaleLength < 1.0)
+        if (ajustScaleLength < 1.0) {
             return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
                 .fourDecimal(ajustScaleLength);
+        }
         return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
             .twoDecimal(ajustScaleLength);
     }

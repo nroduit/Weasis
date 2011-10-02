@@ -103,6 +103,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.OverlayOperation;
@@ -223,9 +224,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // If no Presentation State use the current image
             if (m == null) {
                 m = getImage();
+                setShutter(m);
+                imageLayer.updateAllImageOperations();
+            } else {
+                PresentationStateReader reader = new PresentationStateReader(m);
+                int frame = 0;
+                if (m.getKey() instanceof Integer) {
+                    frame = (Integer) m.getKey();
+                }
+                double[] pixelSize = reader.applyDisplayAreaModule(frame, actionsInView);
+                reader.applyShutter(frame, actionsInView);
+                Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+                zoom(val == null ? 1.0 : val);
+                imageLayer.updateAllImageOperations();
+                center();
             }
-            setShutter(m);
-            imageLayer.updateAllImageOperations();
+
         }
 
     }
@@ -236,6 +250,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            // All the action values are initialized again with the series changing
+            initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null);
