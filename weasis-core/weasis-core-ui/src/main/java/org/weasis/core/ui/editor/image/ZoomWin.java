@@ -39,6 +39,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.ImageOperationAction;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.RotationOperation;
@@ -88,6 +89,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         OperationsManager operations = imageLayer.getOperationsManager();
         operations.addImageOperationAction(new ZoomOperation());
         operations.addImageOperationAction(new RotationOperation());
+        operations.addImageOperationAction(new FlipOperation());
 
         ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
         if (zoomAction instanceof SliderChangeListener) {
@@ -101,6 +103,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         ZoomSetting z = manager.getZoomSetting();
         actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
+        actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
         actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
         actionsInView.put(FREEZE_CMD, null);
@@ -212,8 +215,19 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     protected void updateAffineTransform() {
         double viewScale = getViewModel().getViewScale();
+        affineTransform.setToScale(viewScale, viewScale);
+
         // Get Rotation and flip from parent (it does not make sens to have different geometric position)
         Boolean flip = (Boolean) view2d.getActionValue(ActionW.FLIP.cmd());
+        Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
+        if (rotationAngle != null && rotationAngle > 0) {
+            if (flip != null && flip) {
+                rotationAngle = 360 - rotationAngle;
+            }
+            Rectangle2D imageCanvas = getViewModel().getModelArea();
+            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
+                imageCanvas.getHeight() / 2.0);
+        }
         if (flip != null && flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
@@ -228,21 +242,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
             // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
             // at.translate(-imageWid, -imageHt);
-            affineTransform.setToScale(-viewScale, viewScale);
+            affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
-        } else {
-            affineTransform.setToScale(viewScale, viewScale);
         }
 
-        Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
-        if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
-                rotationAngle = 360 - rotationAngle;
-            }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
-        }
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
@@ -322,9 +325,10 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     @Override
     public RenderedImage getSourceImage() {
         RenderedImage img = (RenderedImage) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (img == null)
+        if (img == null) {
             // return the image before the zoom operation from the parent view
             return view2d.getImageLayer().getOperationsManager().getSourceImage(ZoomOperation.name);
+        }
         return img;
     }
 
@@ -350,8 +354,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             @Override
             public RenderedImage getSourceImage() {
                 ImageElement image = getImage();
-                if (image == null)
+                if (image == null) {
                     return null;
+                }
                 return image.getImage();
             }
 
@@ -362,8 +367,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             @Override
             public Object getActionValue(String action) {
-                if (action == null)
+                if (action == null) {
                     return null;
+                }
                 return freezeActionsInView.get(action);
             }
         });
@@ -390,8 +396,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             @Override
             public RenderedImage getSourceImage() {
                 ImageElement image = view2d.getImage();
-                if (image == null)
+                if (image == null) {
                     return null;
+                }
                 return image.getImage();
             }
 
@@ -402,8 +409,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             @Override
             public Object getActionValue(String action) {
-                if (action == null)
+                if (action == null) {
                     return null;
+                }
                 return freezeActionsInView.get(action);
             }
         });
@@ -429,8 +437,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         @Override
         public void mousePressed(MouseEvent e) {
             ImageViewerPlugin<E> pane = view2d.getEventManager().getSelectedView2dContainer();
-            if (pane == null)
+            if (pane == null) {
                 return;
+            }
             if (pane.isContainingView(view2d)) {
                 pane.setSelectedImagePane(view2d);
             }
@@ -504,8 +513,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             int h = c.getHeight();
 
             Rectangle rect = new Rectangle(w - 12 - borderOffset, h - 12 - borderOffset, 12, 12);
-            if (rect.contains(me.getPoint()))
+            if (rect.contains(me.getPoint())) {
                 return Cursor.SE_RESIZE_CURSOR;
+            }
 
             return Cursor.MOVE_CURSOR;
         }
@@ -548,6 +558,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             setFreezeImage(freezeOperations.updateAllOperations(), type);
         } else if (command.equals(ActionW.ROTATION.cmd())) {
             actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
+            refreshZoomWin();
+        } else if (command.equals(ActionW.FLIP.cmd())) {
+            actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
             refreshZoomWin();
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             refreshZoomWin();

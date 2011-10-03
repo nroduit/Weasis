@@ -168,13 +168,13 @@ public abstract class ImageOrientation {
         double absZ = Math.abs(z);
 
         for (int i = 0; i < 3; ++i) {
-            if (absX > .0001 && absX > absY && absX > absZ) {
+            if (absX > .0001 && absX >= absY && absX >= absZ) {
                 buffer.append(orientationX);
                 absX = 0;
-            } else if (absY > .0001 && absY > absX && absY > absZ) {
+            } else if (absY > .0001 && absY >= absX && absY >= absZ) {
                 buffer.append(orientationY);
                 absY = 0;
-            } else if (absZ > .0001 && absZ > absX && absZ > absY) {
+            } else if (absZ > .0001 && absZ >= absX && absZ >= absY) {
                 buffer.append(orientationZ);
                 absZ = 0;
             } else {

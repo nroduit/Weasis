@@ -278,39 +278,43 @@ public class InfoLayer implements AnnotationsLayer {
                 if (imgOrientation != null) {
                     orientation.append(imgOrientation);
                 }
+                // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
 
                 int angle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
-                // TODO implemement
-                // if (angle != 0) {
-                // double rad = Math.toRadians(angle);
-                // double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
-                // if (normal != null && normal.length == 3) {
-                // Vector3d result = new Vector3d(0.0, 0.0, 0.0);
-                // rotateX(vr, rad, result);
-                // rotateY(vr, rad, result);
-                // rotateZ(vr, rad, result);
-                // vr = result;
-                //
-                // result = new Vector3d(0.0, 0.0, 0.0);
-                // rotateX(vc, rad, result);
-                // rotateY(vc, rad, result);
-                // rotateZ(vc, rad, result);
-                // vc = result;
-                // }
-                // }
+
+                if (angle != 0) {
+                    double rad = Math.toRadians(angle);
+                    double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
+                    if (normal != null && normal.length == 3) {
+                        Vector3d result = new Vector3d(0.0, 0.0, 0.0);
+                        Vector3d axis = new Vector3d(normal);
+                        rotate(vr, axis, -rad, result);
+                        vr = result;
+
+                        result = new Vector3d(0.0, 0.0, 0.0);
+                        rotate(vc, axis, -rad, result);
+                        vc = result;
+                    }
+                }
 
                 if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
                     vr.x = -vr.x;
                     vr.y = -vr.y;
                     vr.z = -vr.z;
                 }
-                // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
+
                 String colLeft =
                     ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vr.x, vr.y, vr.z);
                 String rowTop =
                     ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
+                if (colLeft.length() < 1) {
+                    colLeft = " ";
+                }
+                if (rowTop.length() < 1) {
+                    rowTop = " ";
+                }
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
                 g2.setFont(bigFont);
@@ -342,19 +346,17 @@ public class InfoLayer implements AnnotationsLayer {
         }
     }
 
-    private void rotateX(Vector3d vSrc, double angle, Vector3d vDst) {
-        vDst.y += vSrc.y * Math.cos(angle) - vSrc.z * Math.sin(angle);
-        vDst.z += vSrc.y * Math.sin(angle) + vSrc.z * Math.cos(angle);
-    }
-
-    private void rotateY(Vector3d vSrc, double angle, Vector3d vDst) {
-        vDst.x += vSrc.x * Math.cos(angle) + vSrc.z * Math.sin(angle);
-        vDst.z += vSrc.x * Math.sin(angle) + vSrc.z * Math.cos(angle);
-    }
-
-    private void rotateZ(Vector3d vSrc, double angle, Vector3d vDst) {
-        vDst.x += vSrc.x * Math.cos(angle) - vSrc.y * Math.sin(angle);
-        vDst.y += vSrc.x * Math.sin(angle) + vSrc.y * Math.cos(angle);
+    private void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
+        axis.normalize();
+        vDst.x =
+            axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.x
+                * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
+        vDst.y =
+            axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.y
+                * Math.cos(angle) + (axis.z * vSrc.x + axis.x * vSrc.z) * Math.sin(angle);
+        vDst.z =
+            axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.z
+                * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
     }
 
     private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {

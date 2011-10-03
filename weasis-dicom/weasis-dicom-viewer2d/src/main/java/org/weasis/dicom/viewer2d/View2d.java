@@ -129,10 +129,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
         manager.addImageOperationAction(new ShutterOperation());
-        manager.addImageOperationAction(new FlipOperation());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new RotationOperation());
+        manager.addImageOperationAction(new FlipOperation());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
@@ -232,8 +232,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (m.getKey() instanceof Integer) {
                     frame = (Integer) m.getKey();
                 }
-                double[] pixelSize = reader.applyDisplayAreaModule(frame, actionsInView);
-                reader.applyShutter(frame, actionsInView);
+                reader.readDisplayArea(frame);
+                setShutter(m);
                 Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);
                 imageLayer.updateAllImageOperations();

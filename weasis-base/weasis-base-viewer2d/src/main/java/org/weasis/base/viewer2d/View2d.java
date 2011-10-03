@@ -64,12 +64,12 @@ public class View2d extends DefaultView2d<ImageElement> {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
         manager.addImageOperationAction(new WindowLevelOperation());
-        manager.addImageOperationAction(new FlipOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new RotationOperation());
+        manager.addImageOperationAction(new FlipOperation());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());

@@ -31,6 +31,7 @@ public class RotationOperation extends AbstractOperation {
     public static final String name = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
     public static final double epsilon = 1e-5;
 
+    @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         Integer rotationAngle = (Integer) imageOperation.getActionValue(ActionW.ROTATION.cmd());
         if (rotationAngle == null) {
@@ -58,6 +59,18 @@ public class RotationOperation extends AbstractOperation {
                 pb.addSource(source);
                 pb.add(rotOp);
                 result = JAI.create("transpose", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                // Handle non square images. Translation is necessary because the transpose operator keeps the same
+                // origin (top left not the center of the image)
+                float diffw = source.getWidth() / 2.0f - result.getWidth() / 2.0f;
+                float diffh = source.getHeight() / 2.0f - result.getHeight() / 2.0f;
+                if (diffw != 0.0f || diffh != 0.0f) {
+                    pb = new ParameterBlock();
+                    pb.addSource(result);
+                    pb.add(diffw);
+                    pb.add(diffh);
+                    result = JAI.create("translate", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+                }
+
             } else {
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(source);
@@ -82,6 +95,7 @@ public class RotationOperation extends AbstractOperation {
         return result;
     }
 
+    @Override
     public String getOperationName() {
         return name;
     }
