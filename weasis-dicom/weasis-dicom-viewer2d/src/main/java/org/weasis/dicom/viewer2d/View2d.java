@@ -26,6 +26,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.CropOperation;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -95,6 +97,7 @@ import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.UriListFlavor;
@@ -124,11 +127,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
+        manager.addImageOperationAction(new ShutterOperation());
+        manager.addImageOperationAction(new CropOperation());
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new OverlayOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
-        manager.addImageOperationAction(new ShutterOperation());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new RotationOperation());
@@ -225,22 +229,65 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (m == null) {
                 m = getImage();
                 setShutter(m);
-                imageLayer.updateAllImageOperations();
+                actionsInView.put(ActionW.CROP.cmd(), null);
+                actionsInView.put(ActionW.ROTATION.cmd(), 0);
+                actionsInView.put(ActionW.FLIP.cmd(), false);
             } else {
-                PresentationStateReader reader = new PresentationStateReader(m);
-                int frame = 0;
-                if (m.getKey() instanceof Integer) {
-                    frame = (Integer) m.getKey();
-                }
-                reader.readDisplayArea(frame);
-                setShutter(m);
-                Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                zoom(val == null ? 1.0 : val);
-                imageLayer.updateAllImageOperations();
-                center();
+                applyPresentationState(new PresentationStateReader(m));
             }
-
+            eventManager.updateComponentsListener(this);
+            imageLayer.updateAllImageOperations();
+            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+            zoom(val == null ? 1.0 : val);
+            center();
         }
+
+    }
+
+    private void applyPresentationState(PresentationStateReader reader) {
+        int frame = 0;
+        MediaElement m = reader.getDicom();
+        if (m.getKey() instanceof Integer) {
+            frame = (Integer) m.getKey();
+        }
+        reader.readDisplayArea(frame);
+        setShutter(m);
+        Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
+        actionsInView.put(ActionW.CROP.cmd(), area);
+        actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
+        actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
+
+        actionsInView.put("originalPixelSpacing",
+            reader.getTagValue(TagW.PixelSpacing.getName(), new double[] { 1.0, 1.0 }));
+
+        if (area != null) {
+            RenderedImage source = getSourceImage();
+            if (source != null) {
+                DicomImageElement img = getImage();
+                area =
+                    area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
+                        .getHeight()));
+                if (area.width > 1 && area.height > 1) {
+                    // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
+                    // int width =
+                    // source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(
+                    // img, TagW.ImageWidth, TagW.Columns)) : source.getWidth();
+                    // int height =
+                    // source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(
+                    // img, TagW.ImageHeight, TagW.Rows)) : source.getHeight();
+                    final Rectangle modelArea = new Rectangle(0, 0, area.width, area.height);
+
+                    if (!modelArea.equals(getViewModel().getModelArea())) {
+                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
+                            modelArea.height);
+                        getViewModel().setModelArea(modelArea);
+                        center();
+                    }
+                }
+            }
+        }
+        double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
+        actionsInView.put(ActionW.ZOOM.cmd(), zoom == 0.0 ? -getBestFitViewScale() : zoom);
 
     }
 

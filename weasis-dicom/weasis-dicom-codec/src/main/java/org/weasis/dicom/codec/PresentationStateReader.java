@@ -1,5 +1,6 @@
 package org.weasis.dicom.codec;
 
+import java.awt.Rectangle;
 import java.util.HashMap;
 
 import org.dcm4che2.data.DicomElement;
@@ -66,23 +67,17 @@ public class PresentationStateReader {
                 String presentationMode = dam.getPresentationSizeMode();
                 int[] tlhc = dam.getDisplayedAreaTopLeftHandCorner();
                 int[] brhc = dam.getDisplayedAreaBottomRightHandCorner();
-                // Lots of systems encode topLeft as 1,1, even when they mean 0,0
-                if (tlhc[0] == 1) {
-                    tlhc[0] = 0;
-                }
-                if (tlhc[1] == 1) {
-                    tlhc[1] = 0;
 
-                    // left = tlhc[0] / imgCols;
-                    // top = tlhc[1] / imgRows;
-                    // right = brhc[0] / imgCols;
-                    // bottom = brhc[1] / imgRows;
-                    // if( left<0 ) left = 0;
-                    // if( top<0 ) top = 0;
-                    // if( right>1 ) right = 1;
-                    // if( bottom>1 ) bottom = 1;
-                    // cols = (int) (imgCols * (right - left));
-                    // rows = (int) (imgRows * (bottom - top) * aspect);
+                if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
+                    // Lots of systems encode topLeft as 1,1, even when they mean 0,0
+                    if (tlhc[0] == 1) {
+                        tlhc[0] = 0;
+                    }
+                    if (tlhc[1] == 1) {
+                        tlhc[1] = 0;
+
+                    }
+                    tags.put(ActionW.CROP.cmd(), new Rectangle(tlhc[0], tlhc[1], brhc[0] - tlhc[0], brhc[1] - tlhc[1]));
                 }
 
                 if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) {
@@ -98,10 +93,23 @@ public class PresentationStateReader {
         }
     }
 
-    public Object getTagValue(String key) {
+    public MediaElement getDicom() {
+        return dicom;
+    }
+
+    public DicomObject getDcmobj() {
+        return dcmobj;
+    }
+
+    public HashMap<String, Object> getTags() {
+        return tags;
+    }
+
+    public Object getTagValue(String key, Object defaultValue) {
         if (key == null) {
-            return null;
+            return defaultValue;
         }
-        return tags.get(key);
+        Object object = tags.get(key);
+        return object == null ? defaultValue : object;
     }
 }

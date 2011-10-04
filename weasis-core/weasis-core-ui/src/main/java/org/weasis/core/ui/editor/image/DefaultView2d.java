@@ -66,6 +66,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.CropOperation;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -186,6 +187,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
+        actionsInView.put(ActionW.CROP.cmd(), null);
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -327,7 +329,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         series.setSelected(false, 0);
     }
 
-    private int getImageSize(E img, TagW tag1, TagW tag2) {
+    protected int getImageSize(E img, TagW tag1, TagW tag2) {
         Integer size = (Integer) img.getTagValue(tag1);
         if (size == null) {
             size = (Integer) img.getTagValue(tag2);
@@ -752,6 +754,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
             actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(ShutterOperation.name);
+        } else if (command.equals(ActionW.CROP.cmd())) {
+            actionsInView.put(ActionW.CROP.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(CropOperation.name);
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
             imageLayer.updateAllImageOperations();

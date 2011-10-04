@@ -81,6 +81,7 @@ public class ActionW {
     public static final ActionW SYNCH_CROSSLINE = new ActionW("", "synchCrossline", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LENS = new ActionW("", "showLens", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW FILTER = new ActionW("", "filter", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
+    public static final ActionW CROP = new ActionW("", "crop", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null);//$NON-NLS-1$ //$NON-NLS-2$ 
     public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DRAW_ONLY_ONCE = new ActionW(
