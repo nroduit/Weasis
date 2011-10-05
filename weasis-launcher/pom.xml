@@ -60,7 +60,6 @@
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
 			<version>3.2.2</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
@@ -140,7 +139,6 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>substance</artifactId>
 			<version>6.1.0-b02</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.sling</groupId>
