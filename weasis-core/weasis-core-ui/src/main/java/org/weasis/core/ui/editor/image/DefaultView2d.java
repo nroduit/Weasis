@@ -337,20 +337,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return (size == null) ? ImageFiler.TILESIZE : size;
     }
 
-    protected void setImage(E img, boolean bestFit) {
-        E oldImage = imageLayer.getSourceImage();
-        if (img != null && !img.equals(oldImage)) {
-
+    protected Rectangle getImageBounds(E img) {
+        if (img != null) {
             RenderedImage source = img.getImage();
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
-
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
                     TagW.ImageWidth, TagW.Columns)) : source.getWidth();
             int height =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(img,
                     TagW.ImageHeight, TagW.Rows)) : source.getHeight();
-            final Rectangle modelArea = new Rectangle(0, 0, width, height);
+            return new Rectangle(0, 0, width, height);
+        }
+        return new Rectangle(0, 0, 512, 512);
+    }
+
+    protected void setImage(E img, boolean bestFit) {
+        E oldImage = imageLayer.getSourceImage();
+        if (img != null && !img.equals(oldImage)) {
+            final Rectangle modelArea = getImageBounds(img);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {
                 GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);

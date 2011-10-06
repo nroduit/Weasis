@@ -228,10 +228,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // If no Presentation State use the current image
             if (m == null) {
                 m = getImage();
+                initActionWState();
+                if (m instanceof DicomImageElement) {
+                    final Rectangle modelArea = getImageBounds((DicomImageElement) m);
+                    if (!modelArea.equals(getViewModel().getModelArea())) {
+                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
+                            modelArea.height);
+                        getViewModel().setModelArea(modelArea);
+                    }
+                }
                 setShutter(m);
-                actionsInView.put(ActionW.CROP.cmd(), null);
-                actionsInView.put(ActionW.ROTATION.cmd(), 0);
-                actionsInView.put(ActionW.FLIP.cmd(), false);
             } else {
                 applyPresentationState(new PresentationStateReader(m));
             }
@@ -253,7 +259,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         reader.readDisplayArea(frame);
         setShutter(m);
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
-        actionsInView.put(ActionW.CROP.cmd(), area);
+
         actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
         actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
 
@@ -263,29 +269,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (area != null) {
             RenderedImage source = getSourceImage();
             if (source != null) {
-                DicomImageElement img = getImage();
                 area =
                     area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
                         .getHeight()));
                 if (area.width > 1 && area.height > 1) {
-                    // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
-                    // int width =
-                    // source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(
-                    // img, TagW.ImageWidth, TagW.Columns)) : source.getWidth();
-                    // int height =
-                    // source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleHeight(getImageSize(
-                    // img, TagW.ImageHeight, TagW.Rows)) : source.getHeight();
-                    final Rectangle modelArea = new Rectangle(0, 0, area.width, area.height);
-
-                    if (!modelArea.equals(getViewModel().getModelArea())) {
-                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
-                            modelArea.height);
-                        getViewModel().setModelArea(modelArea);
-                        center();
+                    if (!area.equals(getViewModel().getModelArea())) {
+                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
+                        getViewModel().setModelArea(area);
                     }
                 }
             }
         }
+        actionsInView.put(ActionW.CROP.cmd(), area);
         double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
         actionsInView.put(ActionW.ZOOM.cmd(), zoom == 0.0 ? -getBestFitViewScale() : zoom);
 

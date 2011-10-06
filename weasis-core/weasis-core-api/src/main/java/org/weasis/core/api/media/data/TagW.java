@@ -173,6 +173,7 @@ public class TagW implements Transferable, Serializable {
         "Preferred Playback Sequencing", TagType.Integer); //$NON-NLS-1$
     public static final TagW ConvolutionKernel = new TagW(0x00181210, "Convolution Kernel", TagType.String); //$NON-NLS-1$
     public static final TagW FlipAngle = new TagW(0x00181314, "Scan Options", TagType.Float); //$NON-NLS-1$
+    public static final TagW PatientOrientation = new TagW(0x00200020, "Patient Orientation", TagType.DoubleArray); //$NON-NLS-1$
     public static final TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
 
     public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text); //$NON-NLS-1$
@@ -229,6 +230,9 @@ public class TagW implements Transferable, Serializable {
         "Performed Procedure Step Start Time", TagType.Time, 3); //$NON-NLS-1$
     public static final TagW RequestAttributesSequence = new TagW(0x00400275,
         "Request Attributes Sequence", TagType.Sequence, 3); //$NON-NLS-1$
+    public static final TagW PurposeOfReferenceCodeSequence = new TagW(0x0040A170,
+        "Purpose Of Reference Code Sequence", TagType.Sequence); //$NON-NLS-1$
+    ;
     public static final TagW Units = new TagW(0x00541001, "Units", TagType.String); //$NON-NLS-1$
 
     public static final TagW MIMETypeOfEncapsulatedDocument = new TagW(0x00420012,

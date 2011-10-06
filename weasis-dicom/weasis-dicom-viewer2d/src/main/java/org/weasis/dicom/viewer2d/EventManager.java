@@ -749,7 +749,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                         hasLink = true;
                                         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
-                                        if (hasSameSize(series, s)) {
+                                        // Only fully synch if no PR is applied (because can change pixel size)
+                                        if (pane.getActionValue(ActionW.PR_STATE.cmd()) == null
+                                            && hasSameSize(series, s)) {
                                             // If the image has the same reference and the same spatial calibration, all
                                             // the actions are synchronized
                                             addPropertyChangeListeners(pane, synchView);

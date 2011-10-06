@@ -79,7 +79,7 @@ public class PresentationStateReader {
                     }
                     tags.put(ActionW.CROP.cmd(), new Rectangle(tlhc[0], tlhc[1], brhc[0] - tlhc[0], brhc[1] - tlhc[1]));
                 }
-
+                tags.put("presentationMode", presentationMode);
                 if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) {
                     tags.put(ActionW.ZOOM.cmd(), 0.0);
                 } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) {

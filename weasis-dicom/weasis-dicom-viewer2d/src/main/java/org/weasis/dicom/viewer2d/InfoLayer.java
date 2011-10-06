@@ -270,6 +270,8 @@ public class InfoLayer implements AnnotationsLayer {
                 orientation.append(")");//$NON-NLS-1$ 
 
             }
+            String colLeft = null;
+            String rowTop = null;
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
                 orientation.append(" - ");//$NON-NLS-1$ 
                 String imgOrientation =
@@ -305,10 +307,30 @@ public class InfoLayer implements AnnotationsLayer {
                     vr.z = -vr.z;
                 }
 
-                String colLeft =
-                    ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vr.x, vr.y, vr.z);
-                String rowTop =
-                    ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
+                colLeft = ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vr.x, vr.y, vr.z);
+                rowTop = ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
+
+            } else {
+                String[] po = (String[]) dcm.getTagValue(TagW.PatientOrientation);
+                if (po != null && po.length == 2 && (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd()) == 0) {
+                    // Do not display if there is a transformation
+                    if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
+                        colLeft = po[0];
+                    } else {
+                        StringBuffer buf = new StringBuffer();
+                        for (char c : po[0].toCharArray()) {
+                            buf.append(getImageOrientationOposite(c));
+                        }
+                        colLeft = buf.toString();
+                    }
+                    StringBuffer buf = new StringBuffer();
+                    for (char c : po[1].toCharArray()) {
+                        buf.append(getImageOrientationOposite(c));
+                    }
+                    rowTop = buf.toString();
+                }
+            }
+            if (rowTop != null && colLeft != null) {
                 if (colLeft.length() < 1) {
                     colLeft = " ";
                 }

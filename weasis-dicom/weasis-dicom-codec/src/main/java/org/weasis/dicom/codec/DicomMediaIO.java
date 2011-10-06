@@ -433,6 +433,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTagNoNull(TagW.GantryDetectorTilt, getFloatFromDicomElement(dicomObject, Tag.GantryDetectorTilt, null));
             setTagNoNull(TagW.ConvolutionKernel, dicomObject.getString(Tag.ConvolutionKernel));
             setTagNoNull(TagW.FlipAngle, getFloatFromDicomElement(dicomObject, Tag.FlipAngle, null));
+            setTagNoNull(TagW.PatientOrientation, dicomObject.getStrings(Tag.PatientOrientation, (String[]) null));
             setTagNoNull(TagW.SliceLocation, getFloatFromDicomElement(dicomObject, Tag.SliceLocation, null));
             setTagNoNull(TagW.SliceThickness, getFloatFromDicomElement(dicomObject, Tag.SliceThickness, null));
             setTagNoNull(TagW.AcquisitionDate, getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null));
@@ -997,11 +998,20 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     setTagNoNull(tagList, TagW.ImageOrientationPlane,
                         ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(imgOrientation));
                 }
+                // TODO
+                // seq = dcm.get(Tag.ReferencedImageSequence);
+                // if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                // DicomObject ref = seq.getDicomObject(0);
+                // setTagNoNull(tagList, TagW.PurposeOfReferenceCodeSequence, getFloatFromDicomElement(ref,
+                // Tag.PurposeOfReferenceCodeSequence, null));
+                //
+                // }
                 seq = dcm.get(Tag.FrameVOILUTSequence);
                 if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
                     DicomObject lut = seq.getDicomObject(0);
                     setTagNoNull(tagList, TagW.WindowWidth, getFloatFromDicomElement(lut, Tag.WindowWidth, null));
                     setTagNoNull(tagList, TagW.WindowCenter, getFloatFromDicomElement(lut, Tag.WindowCenter, null));
+                    // TODO implement VOI LUT
                     // setTagNoNull(tagList, TagW.WindowCenterWidthExplanation,
                     // lut.getString(Tag.WindowCenterWidthExplanation));
                     // setTagNoNull(tagList, TagW.VOILUTFunction, lut.getString(Tag.VOILUTFunction));
