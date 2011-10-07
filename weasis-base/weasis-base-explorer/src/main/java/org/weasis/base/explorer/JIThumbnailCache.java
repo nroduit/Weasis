@@ -60,8 +60,9 @@ public final class JIThumbnailCache {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getFile().getPath());
-            if (jiIcon != null)
+            if (jiIcon != null) {
                 return jiIcon;
+            }
 
         } catch (final Exception e) {
             // log.debug(e);
@@ -73,8 +74,9 @@ public final class JIThumbnailCache {
     }
 
     private void loadThumbnail(final ImageElement diskObject, final JIThumbnailList thumbnailList, final int index) {
-        if ((index > thumbnailList.getLastVisibleIndex()) || (index < thumbnailList.getFirstVisibleIndex()))
+        if ((index > thumbnailList.getLastVisibleIndex()) || (index < thumbnailList.getFirstVisibleIndex())) {
             return;
+        }
         try {
             // ///////////////////////////////////////////////////////////////////////
             JIThumbnailCache.qExecutor.execute(new Runnable() {
@@ -82,9 +84,10 @@ public final class JIThumbnailCache {
                 @Override
                 public void run() {
                     // final BufferedImage tIcon = JIUtility.createThumbnailRetry(diskObject);
-                    RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage());
-                    if (img == null)
+                    RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null));
+                    if (img == null) {
                         return;
+                    }
                     final double scale =
                         Math.min((double) ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
                             (double) ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());

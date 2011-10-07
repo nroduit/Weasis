@@ -45,6 +45,25 @@ public class OperationsManager {
         return null;
     }
 
+    public RenderedImage getFinalImage() {
+        int size = operations.size();
+        RenderedImage source = imageOperation.getSourceImage();
+        if (size == 0) {
+            return source;
+        }
+        RenderedImage result = source;
+        if (source != null && operations.size() > 0) {
+            result = source;
+            for (int i = 0; i < operations.size(); i++) {
+                if (result == null) {
+                    return updateAllOperations();
+                }
+                result = operations.get(i).getRenderedImage(result, imageOperation);
+            }
+        }
+        return result;
+    }
+
     public void addImageOperationAction(ImageOperationAction action) {
         if (action != null) {
             operations.add(action);

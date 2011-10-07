@@ -66,7 +66,6 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.CropOperation;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.OperationsManager;
@@ -187,7 +186,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
-        actionsInView.put(ActionW.CROP.cmd(), null);
+
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -198,8 +197,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         ImageElement imageElement = imageLayer.getSourceImage();
         StringBuffer message = new StringBuffer();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-
-            PlanarImage image = imageElement.getImage();
+            PlanarImage image =
+                imageElement.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             Point realPoint =
                 new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
                     / imageElement.getRescaleY() - 0.5));
@@ -286,7 +285,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             initActionWState();
         }
         if (series == null) {
-            imageLayer.setImage(null);
+            imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
@@ -339,7 +338,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected Rectangle getImageBounds(E img) {
         if (img != null) {
-            RenderedImage source = img.getImage();
+            RenderedImage source = img.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
@@ -380,7 +379,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (bestFit) {
                 actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
             }
-            imageLayer.setImage(img);
+            imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
         }
     }
 
@@ -449,7 +448,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image == null) {
             return null;
         }
-        return image.getImage();
+        return image.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
     public final void center() {
@@ -759,9 +758,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
             actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(ShutterOperation.name);
-        } else if (command.equals(ActionW.CROP.cmd())) {
-            actionsInView.put(ActionW.CROP.cmd(), evt.getNewValue());
-            imageLayer.updateImageOperation(CropOperation.name);
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
             imageLayer.updateAllImageOperations();

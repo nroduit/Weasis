@@ -124,7 +124,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     private void refreshZoomWin() {
-        imageLayer.setImage(view2d.getImage());
+        imageLayer.setImage(view2d.getImage(), (OperationsManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         Point loc = getLocation();
         if ((loc.x == -1 && loc.y == -1)) {
@@ -348,16 +348,13 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         freezeActionsInView.clear();
         view2d.copyActionWState(freezeActionsInView);
         final E image = view2d.getImage();
+        final RenderedImage img = view2d.getSourceImage();
 
         freezeOperations = new OperationsManager(new ImageOperation() {
 
             @Override
             public RenderedImage getSourceImage() {
-                ImageElement image = getImage();
-                if (image == null) {
-                    return null;
-                }
-                return image.getImage();
+                return img;
             }
 
             @Override
@@ -395,11 +392,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             @Override
             public RenderedImage getSourceImage() {
-                ImageElement image = view2d.getImage();
-                if (image == null) {
-                    return null;
-                }
-                return image.getImage();
+                return view2d.getSourceImage();
             }
 
             @Override

@@ -251,18 +251,21 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     @Override
     public synchronized boolean updateComponentsListener(DefaultView2d<ImageElement> defaultView2d) {
-        if (defaultView2d == null)
+        if (defaultView2d == null) {
             return false;
+        }
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer)
+        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
             return false;
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane())
+        }
+        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
+        }
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
         ImageElement image = defaultView2d.getImage();
-        if (image == null || image.getImage() == null) {
+        if (image == null || image.getImage(null) == null) {
             enableActions(false);
             return false;
         }

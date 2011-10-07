@@ -29,6 +29,7 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
@@ -243,7 +244,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * 
      * @return
      */
-    public synchronized PlanarImage getImage() {
+    public synchronized PlanarImage getImage(OperationsManager manager) {
         PlanarImage cacheImage;
         try {
             cacheImage = startImageLoading();
@@ -259,7 +260,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
             cacheImage = startImageLoading();
         }
+        if (manager != null && cacheImage != null) {
+            cacheImage = PlanarImage.wrapRenderedImage(manager.getFinalImage());
+        }
         return cacheImage;
+    }
+
+    public PlanarImage getImage() {
+        return getImage(null);
     }
 
     private PlanarImage startImageLoading() throws OutOfMemoryError {

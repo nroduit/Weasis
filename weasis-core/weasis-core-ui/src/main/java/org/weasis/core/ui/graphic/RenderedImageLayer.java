@@ -40,6 +40,7 @@ import org.weasis.core.ui.graphic.model.Layer;
 public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageLayer<E> {
 
     private final OperationsManager operations;
+    private OperationsManager preprocessing;
     private E sourceImage;
     private RandomIter readIterator;
     private ArrayList<ImageLayerChangeListener<E>> listenerList;
@@ -50,15 +51,17 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     // private final Image2DViewer view2DPane;
 
     public RenderedImageLayer(OperationsManager manager, boolean buildIterator) {
-        this(manager, null, buildIterator);
+        this(manager, null, null, buildIterator);
     }
 
-    public RenderedImageLayer(OperationsManager manager, E image, boolean buildIterator) {
-        if (manager == null)
+    public RenderedImageLayer(OperationsManager manager, E image, OperationsManager preprocessing, boolean buildIterator) {
+        if (manager == null) {
             throw new IllegalArgumentException("OperationsManager argument cannot be null"); //$NON-NLS-1$
+        }
         this.operations = manager;
         // tileListener = new TileListener();
         this.sourceImage = image;
+        this.preprocessing = preprocessing;
         this.buildIterator = buildIterator;
         // this.view2DPane = view2DPane;
         this.listenerList = new ArrayList<ImageLayerChangeListener<E>>();
@@ -84,10 +87,15 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         return displayImage;
     }
 
+    public OperationsManager getPreprocessing() {
+        return preprocessing;
+    }
+
     @Override
-    public void setImage(E image) {
+    public void setImage(E image, OperationsManager preprocessing) {
         boolean init = image != null && !image.equals(this.sourceImage);
         this.sourceImage = image;
+        this.preprocessing = preprocessing;
         if (init) {
             displayImage = operations.updateAllOperations();
             // cache(operations.updateAllOperations());
@@ -100,8 +108,9 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     public void drawImage(Graphics2D g2d) {
         // Get the clipping rectangle
-        if (!visible || displayImage == null)
+        if (!visible || displayImage == null) {
             return;
+        }
         Rectangle clipBounds = g2d.getClipBounds();
         if (clipBounds == null) {
             clipBounds =
@@ -114,8 +123,9 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
                 new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth() - 1,
                     displayImage.getHeight() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
-            if (rect.isEmpty())
+            if (rect.isEmpty()) {
                 return;
+            }
             g2d.setClip(rect);
         }
 
@@ -251,26 +261,30 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     // }
 
     private int XtoTileX(int x) {
-        if (displayImage == null)
+        if (displayImage == null) {
             return 0;
+        }
         return PlanarImage.XToTileX(x, displayImage.getTileGridXOffset(), displayImage.getTileWidth());
     }
 
     private int YtoTileY(int y) {
-        if (displayImage == null)
+        if (displayImage == null) {
             return 0;
+        }
         return PlanarImage.YToTileY(y, displayImage.getTileGridYOffset(), displayImage.getTileHeight());
     }
 
     private int TileXtoX(int tx) {
-        if (displayImage == null)
+        if (displayImage == null) {
             return 0;
+        }
         return tx * displayImage.getTileWidth() + displayImage.getTileGridXOffset();
     }
 
     private int TileYtoY(int ty) {
-        if (displayImage == null)
+        if (displayImage == null) {
             return 0;
+        }
         return ty * displayImage.getTileHeight() + displayImage.getTileGridYOffset();
     }
 
@@ -290,9 +304,11 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         if (displayImage == null) {
             operations.clearCacheNodes();
         }
-        readIterator =
-            (buildIterator && sourceImage != null && sourceImage.getImage() != null) ? RandomIterFactory.create(
-                sourceImage.getImage(), null) : null;
+        PlanarImage img = null;
+        if (buildIterator && sourceImage != null) {
+            img = sourceImage.getImage(preprocessing);
+        }
+        readIterator = (img == null) ? null : RandomIterFactory.create(img, null);
         fireLayerChanged();
     }
 

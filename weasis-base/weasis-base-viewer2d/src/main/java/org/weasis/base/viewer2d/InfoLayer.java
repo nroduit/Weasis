@@ -17,9 +17,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.RenderedImage;
 import java.util.HashMap;
-
-import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -65,8 +64,9 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
-        if (!visible || image == null)
+        if (!visible || image == null) {
             return;
+        }
 
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
@@ -268,9 +268,10 @@ public class InfoLayer implements AnnotationsLayer {
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
         ImageElement image = view2DPane.getImage();
-        PlanarImage source = image.getImage();
-        if (source == null)
+        RenderedImage source = view2DPane.getSourceImage();
+        if (source == null) {
             return;
+        }
 
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
@@ -418,8 +419,9 @@ public class InfoLayer implements AnnotationsLayer {
             scaleLength /= findGeometricSuite(scaleLength);
             scaleSize = scaleLength / ratio;
             loop++;
-            if (loop > 50)
+            if (loop > 50) {
                 return 0.0;
+            }
         }
         return scaleSize;
     }
@@ -427,8 +429,9 @@ public class InfoLayer implements AnnotationsLayer {
     public double findGeometricSuite(double length) {
         int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
         int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
-        if (firstDigit == 5)
+        if (firstDigit == 5) {
             return 2.5;
+        }
         return 2.0;
 
     }
@@ -461,9 +464,10 @@ public class InfoLayer implements AnnotationsLayer {
         }
         // Trick to keep the value as a return parameter
         unit[0] = ajustUnit;
-        if (ajustScaleLength < 1.0)
+        if (ajustScaleLength < 1.0) {
             return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
                 .fourDecimal(ajustScaleLength);
+        }
         return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength) : DecFormater
             .twoDecimal(ajustScaleLength);
     }

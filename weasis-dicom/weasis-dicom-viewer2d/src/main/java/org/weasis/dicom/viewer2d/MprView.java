@@ -53,7 +53,7 @@ public class MprView extends View2d {
             }
 
             if (series == null) {
-                imageLayer.setImage(null);
+                imageLayer.setImage(null, null);
                 getLayerModel().deleteAllGraphics();
                 closeLens();
             } else {

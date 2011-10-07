@@ -297,7 +297,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                         Object media = series.getMedia(mediaPosition);
                         if (media instanceof ImageElement) {
                             final ImageElement image = (ImageElement) media;
-                            PlanarImage imgPl = image.getImage();
+                            PlanarImage imgPl = image.getImage(null);
                             if (imgPl != null) {
                                 RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
                                 final double scale =

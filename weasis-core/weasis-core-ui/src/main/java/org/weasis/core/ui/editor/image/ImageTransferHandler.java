@@ -48,7 +48,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
             Image2DViewer view2DPane = (Image2DViewer) comp;
             ImageElement img = view2DPane.getImage();
             if (img != null) {
-                PlanarImage imgP = img.getImage();
+                RenderedImage imgP = view2DPane.getSourceImage();
                 if (imgP != null) {
                     float window = img.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()));
                     float level = img.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
@@ -69,6 +69,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     }
 
     // Transferable
+    @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {
             return image;
@@ -76,10 +77,12 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
         return null;
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         return flavor.equals(DataFlavor.imageFlavor);
     }

@@ -127,7 +127,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             initActionWState();
         }
         if (series == null) {
-            imageLayer.setImage(null);
+            imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
         } else {
             defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;

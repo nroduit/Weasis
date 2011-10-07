@@ -339,7 +339,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     if (v.getImageLayer().getDisplayImage() == null) {
                                         v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
                                         // Set image to null for getting correct W/L values
-                                        v.getImageLayer().setImage(null);
+                                        v.getImageLayer().setImage(null, null);
                                         v.setSeries(v.getSeries());
                                     } else {
                                         v.propertyChange(new PropertyChangeEvent(dcm, ActionW.PROGRESSION.cmd(), null,

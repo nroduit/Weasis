@@ -53,6 +53,7 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -70,6 +71,7 @@ import org.weasis.core.api.image.ShutterOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -127,9 +129,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
-        manager.addImageOperationAction(new ShutterOperation());
-        manager.addImageOperationAction(new CropOperation());
         manager.addImageOperationAction(new WindowLevelOperation());
+        manager.addImageOperationAction(new ShutterOperation());
         manager.addImageOperationAction(new OverlayOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
@@ -193,7 +194,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
-
+        // Preprocessing
+        actionsInView.put(ActionW.CROP.cmd(), null);
     }
 
     @Override
@@ -217,20 +219,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
             sortStack();
-
         } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
             // TODO synch with statistics
             actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
         } else if (command.equals(ActionW.PR_STATE.cmd())) {
-            MediaElement m = (MediaElement) evt.getNewValue();
-            actionsInView.put(ActionW.PR_STATE.cmd(), m);
+            // TODO use PR reader for other frame when changing image of the series
+            PresentationStateReader pr = (PresentationStateReader) evt.getNewValue();
+            actionsInView.put(ActionW.PR_STATE.cmd(), pr);
+
             // If no Presentation State use the current image
-            if (m == null) {
-                m = getImage();
+            if (pr == null) {
+                DicomImageElement m = getImage();
                 initActionWState();
-                if (m instanceof DicomImageElement) {
-                    final Rectangle modelArea = getImageBounds((DicomImageElement) m);
+                actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+                if (m != null) {
+                    final Rectangle modelArea = getImageBounds(m);
                     if (!modelArea.equals(getViewModel().getModelArea())) {
                         ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
                             modelArea.height);
@@ -239,7 +243,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 }
                 setShutter(m);
             } else {
-                applyPresentationState(new PresentationStateReader(m));
+                applyPresentationState(pr);
             }
             eventManager.updateComponentsListener(this);
             imageLayer.updateAllImageOperations();
@@ -272,11 +276,35 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 area =
                     area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
                         .getHeight()));
-                if (area.width > 1 && area.height > 1) {
-                    if (!area.equals(getViewModel().getModelArea())) {
-                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
-                        getViewModel().setModelArea(area);
-                    }
+                if (area.width > 1 && area.height > 1 && !area.equals(getViewModel().getModelArea())) {
+                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
+                    getViewModel().setModelArea(area);
+                    OperationsManager manager = new OperationsManager(new ImageOperation() {
+
+                        @Override
+                        public RenderedImage getSourceImage() {
+                            ImageElement image = getImage();
+                            if (image == null) {
+                                return null;
+                            }
+                            return image.getImage(null);
+                        }
+
+                        @Override
+                        public ImageElement getImage() {
+                            return View2d.this.getImage();
+                        }
+
+                        @Override
+                        public Object getActionValue(String action) {
+                            if (action == null) {
+                                return null;
+                            }
+                            return actionsInView.get(action);
+                        }
+                    });
+                    manager.addImageOperationAction(new CropOperation());
+                    actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
                 }
             }
         }
@@ -296,7 +324,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             initActionWState();
         }
         if (series == null) {
-            imageLayer.setImage(null);
+            imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
@@ -530,7 +558,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         DicomImageElement dicom = imageLayer.getSourceImage();
         StringBuffer message = new StringBuffer();
         if (dicom != null && imageLayer.getReadIterator() != null) {
-            PlanarImage image = dicom.getImage();
+            PlanarImage image = dicom.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             Point realPoint =
                 new Point((int) Math.ceil(p.x / dicom.getRescaleX() - 0.5), (int) Math.ceil(p.y / dicom.getRescaleY()
                     - 0.5));
@@ -1040,7 +1068,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                                         @Override
                                                         public void actionPerformed(ActionEvent e) {
                                                             propertyChange(new PropertyChangeEvent(EventManager
-                                                                .getInstance(), ActionW.PR_STATE.cmd(), null, element));
+                                                                .getInstance(), ActionW.PR_STATE.cmd(), null,
+                                                                new PresentationStateReader(element)));
                                                         }
                                                     });
                                                     menu.add(menuItem);
