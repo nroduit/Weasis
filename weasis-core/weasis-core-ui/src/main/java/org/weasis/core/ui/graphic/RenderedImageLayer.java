@@ -82,6 +82,13 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         return sourceImage;
     }
 
+    public RenderedImage getSourceRenderedImage() {
+        if (sourceImage != null) {
+            return sourceImage.getImage(preprocessing);
+        }
+        return null;
+    }
+
     @Override
     public RenderedImage getDisplayImage() {
         return displayImage;
@@ -89,6 +96,11 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
     public OperationsManager getPreprocessing() {
         return preprocessing;
+    }
+
+    public void setPreprocessing(OperationsManager preprocessing) {
+        this.preprocessing = preprocessing;
+        fireImageChanged();
     }
 
     @Override

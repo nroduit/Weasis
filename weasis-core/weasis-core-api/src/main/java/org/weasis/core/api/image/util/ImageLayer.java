@@ -24,6 +24,13 @@ public interface ImageLayer<E extends ImageElement> {
 
     E getSourceImage();
 
+    /**
+     * Returns the source image for display. All preprocessing operations has been applied to this image.
+     * 
+     * @return the source image for display
+     */
+    RenderedImage getSourceRenderedImage();
+
     RenderedImage getDisplayImage();
 
     void setImage(E image, OperationsManager preprocessing);

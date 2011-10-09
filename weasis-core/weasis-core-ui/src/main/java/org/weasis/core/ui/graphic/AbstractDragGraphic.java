@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -501,6 +502,13 @@ public abstract class AbstractDragGraphic implements Graphic {
         return null;
     }
 
+    protected ImageLayer getImageLayer(MouseEvent mouseevent) {
+        if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
+            return ((Image2DViewer) mouseevent.getSource()).getImageLayer();
+        }
+        return null;
+    }
+
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void setShape(Shape newShape, MouseEvent mouseevent) {
@@ -608,16 +616,12 @@ public abstract class AbstractDragGraphic implements Graphic {
     public void updateLabel(Object source, DefaultView2d view2d, Point2D pos) {
 
         boolean releasedEvent = false;
-        ImageElement imageElement = null;
+        ImageLayer layer = view2d == null ? null : view2d.getImageLayer();
 
         if (source instanceof MouseEvent) {
-            imageElement = getImageElement((MouseEvent) source);
             releasedEvent = ((MouseEvent) source).getID() == MouseEvent.MOUSE_RELEASED;
-
-        } else if (source instanceof ImageElement) {
-            imageElement = (ImageElement) source;
-            // When Source is an ImageElement all the measurements are recomputed.
-            releasedEvent = true;
+        } else if (source instanceof Boolean) {
+            releasedEvent = (Boolean) source;
         }
 
         MeasureTool measureToolListener = null;
@@ -647,7 +651,7 @@ public abstract class AbstractDragGraphic implements Graphic {
         // If isMultiSelection is false, it should return all enable computed measurements when
         // quickComputing is enable or when releasedEvent is true
         if (labelVisible || !isMultiSelection) {
-            measList = computeMeasurements(imageElement, releasedEvent);
+            measList = computeMeasurements(layer, releasedEvent);
         }
 
         if (labelVisible && measList != null && measList.size() > 0) {

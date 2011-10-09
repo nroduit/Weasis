@@ -15,7 +15,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -24,9 +24,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(
         ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
 
-    public static final Measurement DISTANCE = new Measurement(Messages.getString("measure.distance"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement ORIENTATION = new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement AZIMUTH = new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement DISTANCE = new Measurement(
+        Messages.getString("measure.distance"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement ORIENTATION = new Measurement(
+        Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement AZIMUTH = new Measurement(
+        Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two parallel line segments
@@ -146,10 +149,10 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
 
-        if (imageElement != null && isShapeValid()) {
-            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+        if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
+            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter();
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(3);
@@ -160,10 +163,12 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                     measVal.add(new MeasureItem(DISTANCE, val, adapter.getUnit()));
                 }
                 if (ORIENTATION.isComputed()) {
-                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptA, ptB), Messages
+                        .getString("measure.deg"))); //$NON-NLS-1$
                 }
                 if (AZIMUTH.isComputed()) {
-                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptA, ptB), Messages
+                        .getString("measure.deg"))); //$NON-NLS-1$
                 }
                 return measVal;
             }

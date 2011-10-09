@@ -24,6 +24,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -34,7 +36,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -227,12 +228,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // TODO use PR reader for other frame when changing image of the series
             PresentationStateReader pr = (PresentationStateReader) evt.getNewValue();
             actionsInView.put(ActionW.PR_STATE.cmd(), pr);
+            actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
+            DicomImageElement m = getImage();
             // If no Presentation State use the current image
             if (pr == null) {
-                DicomImageElement m = getImage();
                 initActionWState();
-                actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
                 if (m != null) {
                     final Rectangle modelArea = getImageBounds(m);
                     if (!modelArea.equals(getViewModel().getModelArea())) {
@@ -243,8 +244,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 }
                 setShutter(m);
             } else {
-                applyPresentationState(pr);
+                applyPresentationState(pr, m);
             }
+            imageLayer.setPreprocessing((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             eventManager.updateComponentsListener(this);
             imageLayer.updateAllImageOperations();
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
@@ -254,23 +256,24 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     }
 
-    private void applyPresentationState(PresentationStateReader reader) {
-        int frame = 0;
-        MediaElement m = reader.getDicom();
-        if (m.getKey() instanceof Integer) {
-            frame = (Integer) m.getKey();
-        }
-        reader.readDisplayArea(frame);
-        setShutter(m);
-        Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
-
+    private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
+        PRManager.applyPresentationState(this, reader, img);
         actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
         actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
+
+        setShutter(reader.getDicom());
+        Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
 
         actionsInView.put("originalPixelSpacing",
             reader.getTagValue(TagW.PixelSpacing.getName(), new double[] { 1.0, 1.0 }));
 
         if (area != null) {
+            Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
+            if (shape != null) {
+                Area trArea = new Area(shape);
+                trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
+                actionsInView.put(TagW.ShutterFinalShape.getName(), trArea);
+            }
             RenderedImage source = getSourceImage();
             if (source != null) {
                 area =
@@ -554,11 +557,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imageLayer) {
-        DicomImageElement dicom = imageLayer.getSourceImage();
+    public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imgLayer) {
+        DicomImageElement dicom = imgLayer.getSourceImage();
         StringBuffer message = new StringBuffer();
-        if (dicom != null && imageLayer.getReadIterator() != null) {
-            PlanarImage image = dicom.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        if (dicom != null && imgLayer.getReadIterator() != null) {
+            RenderedImage image = imgLayer.getSourceRenderedImage();
             Point realPoint =
                 new Point((int) Math.ceil(p.x / dicom.getRescaleX() - 0.5), (int) Math.ceil(p.y / dicom.getRescaleY()
                     - 0.5));
@@ -566,10 +569,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 && realPoint.y < image.getHeight()) {
                 try {
                     int[] c = { 0, 0, 0 };
-                    imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
+                    imgLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
-                        float val = (dicom).pixel2rescale(c[0]);
+                        float val = dicom.pixel2rescale(c[0]);
                         message.append((int) val);
                         if (dicom.getPixelValueUnit() != null) {
                             message.append(" " + dicom.getPixelValueUnit()); //$NON-NLS-1$
@@ -1001,7 +1004,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         if (layer != null) {
                                             Graphic graph = g.deepCopy();
                                             if (graph != null) {
-                                                graph.updateLabel(getImage(), View2d.this);
+                                                graph.updateLabel(true, View2d.this);
                                                 layer.addGraphic(graph);
                                             }
                                         }

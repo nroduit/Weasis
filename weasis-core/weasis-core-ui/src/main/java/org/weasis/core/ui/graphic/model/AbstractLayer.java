@@ -83,6 +83,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public AbstractLayer(LayerModel canvas1, int drawMode) {
         this.drawType = drawMode;
+        level = drawMode;
         this.canvas.add(canvas1);
         graphics = new GraphicList();
         pcl = new PropertyChangeHandler();
@@ -177,8 +178,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         LayerModel layerModel = getShowDrawing();
         if (layerModel != null) {
             GraphicsPane graphicsPane = layerModel.getGraphicsPane();
-            if (graphicsPane != null)
+            if (graphicsPane != null) {
                 return graphicsPane.getAffineTransform();
+            }
         }
         return null;
     }
@@ -248,8 +250,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
-        if (rectangle == null)
+        if (rectangle == null) {
             return rectangle1;
+        }
         return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
     }
 

@@ -77,7 +77,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         });
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null,
+            Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, TitledBorder.TOP, null, //$NON-NLS-1$
             null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -144,7 +145,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
                             DefaultView2d view = (DefaultView2d) v;
                             List<Graphic> list = view.getLayerModel().getAllGraphics();
                             for (Graphic graphic : list) {
-                                graphic.updateLabel(view.getImage(), view);
+                                graphic.updateLabel(true, view);
                             }
                         }
                     }

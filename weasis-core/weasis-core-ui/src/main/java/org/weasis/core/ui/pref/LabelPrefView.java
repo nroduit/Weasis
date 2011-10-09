@@ -158,7 +158,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
                             DefaultView2d view = (DefaultView2d) v;
                             List<Graphic> list = view.getLayerModel().getAllGraphics();
                             for (Graphic graphic : list) {
-                                graphic.updateLabel(view.getImage(), view);
+                                graphic.updateLabel(true, view);
                             }
                         }
                     }

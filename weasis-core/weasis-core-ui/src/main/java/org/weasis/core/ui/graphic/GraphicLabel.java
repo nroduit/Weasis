@@ -94,10 +94,8 @@ public class GraphicLabel implements Cloneable {
 
         if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0) {
             invTransform.translate(0, -labelBounds.getHeight());
-            // invTransform.translate(-labelBounds.getWidth(), -labelBounds.getHeight());
         }
 
-        // invTransform.translate(offsetX, offsetY);
         Area areaBounds = new Area(invTransform.createTransformedShape(labelBounds));
         areaBounds.transform(AffineTransform.getTranslateInstance(offsetX, offsetY));
 
@@ -233,8 +231,7 @@ public class GraphicLabel implements Cloneable {
         g2d.setPaint(oldPaint);
     }
 
-    protected void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
-
+    protected static void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
         Paint oldPaint = g2d.getPaint();
         // TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
         // NOTE : when using TextLayout, export to clipboard doesn't work

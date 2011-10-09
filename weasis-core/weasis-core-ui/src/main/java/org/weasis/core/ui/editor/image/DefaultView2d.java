@@ -354,6 +354,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected void setImage(E img, boolean bestFit) {
         E oldImage = imageLayer.getSourceImage();
         if (img != null && !img.equals(oldImage)) {
+            actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
             final Rectangle modelArea = getImageBounds(img);
             DragLayer layer = getLayerModel().getMeasureLayer();
             synchronized (this) {
@@ -510,7 +511,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Remove the selection of graphics
         getLayerModel().setSelectedGraphics(null);
         // Throws to the tool listener the current graphic selection.
-        getLayerModel().fireGraphicsSelectionChanged(getImage());
+        getLayerModel().fireGraphicsSelectionChanged(imageLayer);
     }
 
     /** paint routine */
@@ -578,7 +579,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 rotationAngle = 360 - rotationAngle;
             }
             Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
+            affineTransform.rotate(Math.toRadians(rotationAngle), imageCanvas.getWidth() / 2.0,
                 imageCanvas.getHeight() / 2.0);
         }
         if (flip != null && flip) {
@@ -1032,7 +1033,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(getImage());
+            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
 
         }
 
@@ -1118,7 +1119,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             // Throws to the tool listener the current graphic selection.
-            getLayerModel().fireGraphicsSelectionChanged(getImage());
+            getLayerModel().fireGraphicsSelectionChanged(imageLayer);
 
             Cursor newCursor = AbstractLayerModel.DEFAULT_CURSOR;
 

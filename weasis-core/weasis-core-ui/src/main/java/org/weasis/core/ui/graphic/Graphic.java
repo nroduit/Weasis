@@ -19,7 +19,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import org.weasis.core.api.gui.util.GUIEntry;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 /**
@@ -77,7 +77,7 @@ public interface Graphic extends GUIEntry, Cloneable {
 
     Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
 
-    List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent);
+    List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent);
 
     List<Measurement> getMeasurementList();
 

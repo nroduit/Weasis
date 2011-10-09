@@ -45,6 +45,7 @@ import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
@@ -256,7 +257,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                                     DefaultView2d view = (DefaultView2d) v;
                                     List<Graphic> list = view.getLayerModel().getAllGraphics();
                                     for (Graphic graphic : list) {
-                                        graphic.updateLabel(view.getImage(), view);
+                                        graphic.updateLabel(true, view);
                                     }
                                 }
                             }
@@ -360,11 +361,11 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
     }
 
-    public void setSelectedGraphic(Graphic graph, ImageElement imageElement) {
+    public void setSelectedGraphic(Graphic graph, ImageLayer layer) {
         List<MeasureItem> measList = null;
 
-        if (graph != null && imageElement != null) {
-            measList = graph.computeMeasurements(imageElement, true);
+        if (graph != null && layer != null) {
+            measList = graph.computeMeasurements(layer, true);
         }
         updateMeasuredItems(measList);
     }
@@ -424,7 +425,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     }
 
     @Override
-    public void handle(List<Graphic> selectedGraphicList, ImageElement img) {
+    public void handle(List<Graphic> selectedGraphicList, ImageLayer layer) {
         Graphic g = null;
         List<AbstractDragGraphic> list = null;
 
@@ -458,7 +459,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         this.selectedGraphic = list;
         if (computeAllMeasures) {
             // if g equals null means graphic is not single or no graphic is selected
-            setSelectedGraphic(g, img);
+            setSelectedGraphic(g, layer);
         }
     }
 

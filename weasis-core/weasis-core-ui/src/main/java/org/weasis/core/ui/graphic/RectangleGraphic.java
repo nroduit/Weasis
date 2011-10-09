@@ -23,7 +23,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -37,18 +37,32 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement PERIMETER = new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_X = new Measurement(Messages.getString("measure.topx"), 3, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(Messages.getString("measure.topy"), 4, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTER_X = new Measurement(Messages.getString("measure.centerx"), 5, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTER_Y = new Measurement(Messages.getString("measure.centery"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(
+        Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement(
+        Messages.getString("measure.topx"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(
+        Messages.getString("measure.topy"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_X = new Measurement(
+        Messages.getString("measure.centerx"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTER_Y = new Measurement(
+        Messages.getString("measure.centery"), 6, true, true, false); //$NON-NLS-1$
     public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 7, true, true, false); //$NON-NLS-1$
-    public static final Measurement HEIGHT = new Measurement(Messages.getString("measure.height"), 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT =
+        new Measurement(Messages.getString("measure.height"), 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(8, paintColor, lineThickness, labelVisible);
+    }
+
+    public RectangleGraphic(Rectangle2D rect, float lineThickness, Color paintColor, boolean labelVisible) {
+        super(8, paintColor, lineThickness, labelVisible);
+        if (rect != null) {
+            setHandlePointList(rect);
+            updateShapeOnDrawing(null);
+        }
     }
 
     @Override
@@ -155,10 +169,10 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
 
-        if (imageElement != null && isShapeValid()) {
-            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+        if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
+            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter();
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
@@ -200,7 +214,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
                     measVal.add(new MeasureItem(PERIMETER, val, adapter.getUnit()));
                 }
 
-                List<MeasureItem> stats = getImageStatistics(imageElement, releaseEvent);
+                List<MeasureItem> stats = getImageStatistics(layer, releaseEvent);
                 if (stats != null) {
                     measVal.addAll(stats);
                 }

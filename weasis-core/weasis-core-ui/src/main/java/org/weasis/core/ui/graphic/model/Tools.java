@@ -20,21 +20,21 @@ import org.weasis.core.ui.Messages;
  * @author Nicolas Roduit
  */
 public enum Tools {
-    CROSSLINES(0, Messages.getString("Tools.cross"), true, ""), //$NON-NLS-1$ //$NON-NLS-2$
+    CROSSLINES(100, Messages.getString("Tools.cross"), true, ""), //$NON-NLS-1$ //$NON-NLS-2$
 
-    NOTE(1, Messages.getString("Tools.Anno"), true, "note_pinned.png"), //$NON-NLS-1$ //$NON-NLS-2$
+    NOTE(200, Messages.getString("Tools.Anno"), true, "note_pinned.png"), //$NON-NLS-1$ //$NON-NLS-2$
 
-    MEASURE(2, Messages.getString("Tools.meas"), true, "measure1D.png"), //$NON-NLS-1$ //$NON-NLS-2$
+    MEASURE(300, Messages.getString("Tools.meas"), true, "measure1D.png"), //$NON-NLS-1$ //$NON-NLS-2$
 
-    OBJECTEXTRACT(4, Messages.getString("Tools.seg"), true, "objectExtract.png"), //$NON-NLS-1$ //$NON-NLS-2$
+    OBJECTEXTRACT(400, Messages.getString("Tools.seg"), true, "objectExtract.png"), //$NON-NLS-1$ //$NON-NLS-2$
 
-    CALIBRATION(8, Messages.getString("Tools.calib"), false, "calibration.png"), //$NON-NLS-1$ //$NON-NLS-2$
+    CALIBRATION(800, Messages.getString("Tools.calib"), false, "calibration.png"), //$NON-NLS-1$ //$NON-NLS-2$
 
-    INFOLAYER(12, "", true, ""), //$NON-NLS-1$ //$NON-NLS-2$
+    INFOLAYER(1500, "", true, ""), //$NON-NLS-1$ //$NON-NLS-2$
 
-    TEMPCLASSIFLAYER(10, "", true, ""), //$NON-NLS-1$ //$NON-NLS-2$
+    TEMPCLASSIFLAYER(1000, "", true, ""), //$NON-NLS-1$ //$NON-NLS-2$
 
-    TEMPDRAGLAYER(11, Messages.getString("Tools.deco"), true, ""); //$NON-NLS-1$ //$NON-NLS-2$
+    TEMPDRAGLAYER(1005, Messages.getString("Tools.deco"), true, ""); //$NON-NLS-1$ //$NON-NLS-2$
 
     // keep TempLayer in last position
     private final int id;
@@ -77,40 +77,6 @@ public enum Tools {
             }
         }
         return Tools.TEMPDRAGLAYER;
-    }
-
-    public static void setLevelToLayers(ArrayList<AbstractLayer> layers) {
-        if (layers != null) {
-            for (int j = layers.size() - 1; j >= 0; j--) {
-                AbstractLayer layer = layers.get(j);
-                switch (layer.getDrawType()) {
-                    case 0:
-                        layer.setLevel(0);
-                        break;
-                    case 1:
-                        layer.setLevel(1);
-                        break;
-                    case 2:
-                        layer.setLevel(2);
-                        break;
-                    case 3:
-                        layer.setLevel(3);
-                        break;
-                    case 4:
-                        layer.setLevel(4);
-                        break;
-                    case 10:
-                        layer.setLevel(10);
-                        break;
-                    case 11:
-                        layer.setLevel(11);
-                        break;
-                    default:
-                        layer.setLevel(12);
-                        break;
-                }
-            }
-        }
     }
 
     public static String getToolName(int id) {

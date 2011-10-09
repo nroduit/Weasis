@@ -23,7 +23,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -81,9 +81,9 @@ public class LineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
-        if (imageElement != null && isShapeValid()) {
-            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
+        if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
+            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter();
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();

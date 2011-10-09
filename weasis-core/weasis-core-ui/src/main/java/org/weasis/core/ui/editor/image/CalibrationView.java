@@ -112,8 +112,9 @@ public class CalibrationView extends JPanel {
 
                 Point2D A = line.getStartPoint();
                 Point2D B = line.getEndPoint();
-                if (A != null && B != null)
+                if (A != null && B != null) {
                     jTextFieldLineWidth.setValue(A.distance(B) * image.getPixelSize());
+                }
 
                 // jTextFieldLineWidth.setValue(line.getSegmentLength(image.getPixelSize(), image.getPixelSize()));
             } else {
@@ -167,8 +168,9 @@ public class CalibrationView extends JPanel {
 
                     Point2D A = line.getStartPoint();
                     Point2D B = line.getEndPoint();
-                    if (A != null && B != null)
+                    if (A != null && B != null) {
                         lineLength = A.distance(B);
+                    }
 
                     if (lineLength == null || lineLength < 1.0) {
                         lineLength = 1.0;
@@ -182,13 +184,18 @@ public class CalibrationView extends JPanel {
                                     if (media instanceof ImageElement) {
                                         ImageElement img = (ImageElement) media;
                                         img.setPixelSize(newRatio);
-                                        updateLabel(img, view2d);
+                                        // updateLabel(img, view2d);
                                     }
                                 }
                             }
                         } else {
                             image.setPixelSize(newRatio);
-                            updateLabel(image, view2d);
+                        }
+                        List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
+                        if (list != null) {
+                            for (Graphic graphic : list) {
+                                graphic.updateLabel(image, view2d);
+                            }
                         }
                         view2d.repaint();
                     }

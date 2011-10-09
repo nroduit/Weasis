@@ -25,7 +25,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -38,7 +38,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
+        Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two line segments
@@ -155,10 +156,10 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageElement imageElement, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
 
-        if (imageElement != null && isShapeValid()) {
-            MeasurementsAdapter adapter = imageElement.getMeasurementAdapter();
+        if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
+            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter();
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(2);
@@ -170,7 +171,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                 }
 
                 if (COMPLEMENTARY_ANGLE.isComputed()) {
-                    measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages
+                        .getString("measure.deg"))); //$NON-NLS-1$
                 }
 
                 return measVal;

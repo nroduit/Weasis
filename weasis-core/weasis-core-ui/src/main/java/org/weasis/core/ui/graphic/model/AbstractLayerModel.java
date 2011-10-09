@@ -32,8 +32,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.LayoutUtil;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -101,8 +101,9 @@ public class AbstractLayerModel implements LayerModel {
             tool = Tools.TEMPDRAGLAYER;
         } else if (newGraphic instanceof AbstractDragGraphic) {
             tool = Tools.MEASURE;
-        } else
+        } else {
             return null;
+        }
 
         newGraphic = ((AbstractDragGraphic) newGraphic).clone();
 
@@ -255,8 +256,9 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public List<AbstractDragGraphic> getSelectedDragableGraphics() {
-        if (selectedGraphicList == null || selectedGraphicList.size() == 0)
+        if (selectedGraphicList == null || selectedGraphicList.size() == 0) {
             return null;
+        }
 
         List<AbstractDragGraphic> selectedDragGraphics = new ArrayList<AbstractDragGraphic>(selectedGraphicList.size());
 
@@ -317,9 +319,9 @@ public class AbstractLayerModel implements LayerModel {
                 List<Graphic> graphList = layer.getGraphicListContainPoint(mouseevent);
                 if (graphList != null) {
                     for (Graphic graph : graphList) {
-                        if (graph.isSelected())
+                        if (graph.isSelected()) {
                             return graph;
-                        else if (firstSelectedGraph == null) {
+                        } else if (firstSelectedGraph == null) {
                             firstSelectedGraph = graph;
                         }
                     }
@@ -485,9 +487,9 @@ public class AbstractLayerModel implements LayerModel {
         }
     }
 
-    public void fireGraphicsSelectionChanged(ImageElement img) {
+    public void fireGraphicsSelectionChanged(ImageLayer layer) {
         for (int i = 0; i < selectedGraphicsListener.size(); i++) {
-            (selectedGraphicsListener.get(i)).handle((List<Graphic>) selectedGraphicList.clone(), img);
+            (selectedGraphicsListener.get(i)).handle((List<Graphic>) selectedGraphicList.clone(), layer);
         }
 
     }
@@ -509,11 +511,13 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public void setActiveLayer(int drawType) {
-        Tools.setLevelToLayers(layers);
         for (int j = layers.size() - 1; j >= 0; j--) {
-            AbstractLayer layerTemp = layers.get(j);
-            if (layerTemp.getDrawType() == drawType) {
-                layerTemp.setLevel(9);
+            AbstractLayer l = layers.get(j);
+            if (l.getDrawType() == drawType) {
+                l.setLevel(100000);
+            } else if (l.getLevel() != drawType) {
+                // reset previous active layer
+                l.setLevel(drawType);
             }
         }
         Collections.sort(layers);
@@ -521,8 +525,9 @@ public class AbstractLayerModel implements LayerModel {
     }
 
     public AbstractLayer getLayer(Tools tool) {
-        if (tool.isLayer())
+        if (tool.isLayer()) {
             return getLayer(tool.getId());
+        }
         return getLayer(Tools.TEMPDRAGLAYER);
     }
 
@@ -530,8 +535,9 @@ public class AbstractLayerModel implements LayerModel {
     public AbstractLayer getLayer(int drawType) {
         for (int j = layers.size() - 1; j >= 0; j--) {
             AbstractLayer layerTemp = layers.get(j);
-            if (layerTemp.getDrawType() == drawType)
+            if (layerTemp.getDrawType() == drawType) {
                 return layerTemp;
+            }
         }
         return getLayer(Tools.TEMPDRAGLAYER);
     }
