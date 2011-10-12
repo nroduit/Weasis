@@ -292,11 +292,19 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     }
                     String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
-                        // Mac does not have native jpeg2000 decoder (J2KImageReaderCodecLib), will use J2KImageReader
-                        // if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
-                        // && wado_tsuid.startsWith("1.2.840.10008.1.2.4.9")) {
-                        // wado_tsuid = TransferSyntax.RLE.getTransferSyntaxUID();
-                        // }
+                        // On Mac and Win 64 some decoders (J2KImageReaderCodecLib) are missing, ask for uncompressed
+                        // syntax for TSUID: 1.2.840.10008.1.2.4.50, 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
+                        // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
+                        // Solaris has all the decoders, but no bundle has been built for Weasis
+                        String osName = AbstractProperties.OPERATING_SYSTEM;
+                        if (!(osName.startsWith("win") && "x86".equals(System.getProperty("os.arch")))
+                            && !osName.startsWith("linux")) {
+                            if (wado_tsuid.startsWith("1.2.840.10008.1.2.4.5")
+                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.7")
+                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.8")) {
+                                wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
+                            }
+                        }
                         request.append("&transferSyntax="); //$NON-NLS-1$
                         request.append(wado_tsuid);
                         if (transcoding.getTransferSyntaxUID() != null) {
