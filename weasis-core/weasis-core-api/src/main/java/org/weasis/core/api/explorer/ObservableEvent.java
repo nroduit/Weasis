@@ -17,7 +17,8 @@ public class ObservableEvent extends PropertyChangeEvent {
     private static final long serialVersionUID = 2727161739305072870L;
 
     public enum BasicAction {
-        Select, Add, Remove, Update, UpdateParent, UpdateIcon, Register, Unregister, Replace
+        Select, Add, Remove, Update, UpdateParent, UpdateIcon, UpdateTools, UpdateToolbars, Register, Unregister,
+        Replace
     };
 
     private final BasicAction actionCommand;

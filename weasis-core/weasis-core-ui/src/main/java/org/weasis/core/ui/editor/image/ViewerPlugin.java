@@ -126,11 +126,12 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     }
 
     public ViewerToolBar getViewerToolBar() {
-        WtoolBar[] bars = getToolBar();
+        List<WtoolBar> bars = getToolBar();
         if (bars != null) {
             for (WtoolBar t : bars) {
-                if (t instanceof ViewerToolBar)
+                if (t instanceof ViewerToolBar) {
                     return (ViewerToolBar) t;
+                }
             }
         }
         return null;

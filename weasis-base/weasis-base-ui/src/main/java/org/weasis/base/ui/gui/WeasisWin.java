@@ -125,16 +125,18 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            if (!closeWindow())
+            if (!closeWindow()) {
                 return;
+            }
         }
         super.processWindowEvent(e);
     }
 
     public boolean closeWindow() {
-        if (busy)
+        if (busy) {
             // TODO add a message, Please wait or kill
             return false;
+        }
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
             int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
@@ -314,6 +316,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         });
                     }
                 }
+            } else if (event.getSource() instanceof ViewerPlugin) {
+                ViewerPlugin plugin = (ViewerPlugin) event.getSource();
+                if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
+                    updateToolbars(null, plugin.getToolBar());
+                }
             }
         }
     }
@@ -337,8 +344,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
         List<MediaSeries> seriesList, boolean removeOldSeries) {
-        if (factory == null || seriesList == null || seriesList.size() == 0)
+        if (factory == null || seriesList == null || seriesList.size() == 0) {
             return;
+        }
         if (factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
@@ -392,8 +400,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     public void registerPlugin(final ViewerPlugin plugin) {
         synchronized (UIManager.VIEWER_PLUGINS) {
-            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin))
+            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin)) {
                 return;
+            }
             UIManager.VIEWER_PLUGINS.add(plugin);
             ContentManager contentManager = UIManager.toolWindowManager.getContentManager();
             if (contentManager.getContentCount() > 0) {
@@ -427,8 +436,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
-        if (plugin == null)
+        if (plugin == null) {
             return;
+        }
         if (selectedPlugin == plugin) {
             plugin.requestFocusInWindow();
             return;
@@ -460,9 +470,14 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         }
 
-        WtoolBar[] toolBar = selectedPlugin.getToolBar();
-        WtoolBar[] oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
+        List<WtoolBar> toolBar = selectedPlugin.getToolBar();
+        List<WtoolBar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
 
+        updateToolbars(oldToolBar, toolBar);
+
+    }
+
+    private void updateToolbars(List<WtoolBar> oldToolBar, List<WtoolBar> toolBar) {
         if (toolBar == null) {
             if (oldToolBar != null) {
                 toolbarContainer.unregisterAll();
@@ -482,7 +497,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 toolbarContainer.repaint();
             }
         }
-
     }
 
     @Override
@@ -724,27 +738,31 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         public Transferable createTransferable(JComponent comp) {
             if (comp instanceof Thumbnail) {
                 MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series)
+                if (t instanceof Series) {
                     return t;
+                }
             }
             return null;
         }
 
         @Override
         public boolean canImport(TransferSupport support) {
-            if (!support.isDrop())
+            if (!support.isDrop()) {
                 return false;
+            }
             if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
                 || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor))
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
                 return true;
+            }
             return false;
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (!canImport(support))
+            if (!canImport(support)) {
                 return false;
+            }
 
             Transferable transferable = support.getTransferable();
 
@@ -804,10 +822,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         private boolean dropFiles(List<File> files, DataExplorerView explorer) {
             // TODO get the current explorer
-            if (files != null)
+            if (files != null) {
                 // LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
                 // DicomModel.loadingExecutor.execute(dicom);
                 return true;
+            }
             return false;
         }
     }

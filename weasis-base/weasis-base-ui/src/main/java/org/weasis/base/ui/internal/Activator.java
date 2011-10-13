@@ -31,7 +31,6 @@ import org.weasis.core.ui.docking.UIManager;
 
 public class Activator implements BundleActivator, ServiceListener {
 
-    // public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static final String dataExplorerViewFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DataExplorerView.class.getName()); //$NON-NLS-1$
     private BundleContext context = null;
@@ -39,8 +38,6 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void start(final BundleContext context) throws Exception {
         this.context = context;
-        // Load the bundle preferences
-        // PREFERENCES.init(context);
 
         // WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().invokeAndWait(new Runnable() {
@@ -110,9 +107,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        // Save all the module preferences
-        // WeasisWin.getInstance().savePreferences();
-        // PREFERENCES.close();
         this.context = null;
     }
 

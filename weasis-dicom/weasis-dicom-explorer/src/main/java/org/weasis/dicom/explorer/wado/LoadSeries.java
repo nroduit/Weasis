@@ -290,6 +290,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     if (transcoding.getTransferSyntaxUID() != null) {
                         dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
                     }
+                    // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
                         // On Mac and Win 64 some decoders (J2KImageReaderCodecLib) are missing, ask for uncompressed
@@ -315,14 +316,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             request.append("&imageQuality="); //$NON-NLS-1$
                             request.append(rate);
                         }
-                        // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     }
-                    // else if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")
-                    // && instance.getTransferSyntaxUID() != null
-                    // && instance.getTransferSyntaxUID().startsWith("1.2.840.10008.1.2.4.9")) {
-                    // request.append("&transferSyntax=1.2.840.10008.1.2.5");
-                    // request.append(wado_tsuid);
-                    // }
                 } else {
                     request.append(instance.getDirectDownloadFile());
                 }

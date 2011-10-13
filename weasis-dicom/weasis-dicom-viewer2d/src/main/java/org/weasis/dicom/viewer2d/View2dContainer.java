@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -55,7 +56,6 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.WtoolBar;
@@ -94,9 +94,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
+    public static final List<WtoolBar> TOOLBARS = Collections.synchronizedList(new ArrayList<WtoolBar>());
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
-    private static WtoolBar[] toolBars;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -476,14 +476,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public synchronized WtoolBar[] getToolBar() {
-        if (toolBars == null) {
-            toolBars = new WtoolBar[2];
-            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(eventManager);
-            toolBars[0] = bar;
-            toolBars[1] = bar.getMeasureToolBar();
-        }
-        return toolBars;
+    public synchronized List<WtoolBar> getToolBar() {
+        return TOOLBARS;
     }
 
     @Override

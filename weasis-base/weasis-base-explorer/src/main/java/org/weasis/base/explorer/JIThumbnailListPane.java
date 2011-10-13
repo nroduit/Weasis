@@ -155,7 +155,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
     }
 
     @Override
-    public WtoolBar[] getToolBar() {
+    public List<WtoolBar> getToolBar() {
         return null;
     }
 

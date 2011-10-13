@@ -78,7 +78,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
     }
 
     @Override
-    public WtoolBar[] getToolBar() {
+    public List<WtoolBar> getToolBar() {
         return null;
     }
 

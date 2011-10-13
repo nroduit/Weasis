@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Action;
@@ -43,7 +44,6 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -57,7 +57,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
-    private static WtoolBar[] toolBars;
+    public static final List<WtoolBar> TOOLBARS = Collections.synchronizedList(new ArrayList<WtoolBar>());
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -301,8 +301,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz))
+        if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz)) {
             return createDefaultView(clazz);
+        }
         try {
             // FIXME use classloader.loadClass or injection
             Class cl = Class.forName(clazz);
@@ -332,21 +333,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public synchronized WtoolBar[] getToolBar() {
-        if (toolBars == null) {
-            toolBars = new WtoolBar[2];
-            ViewerToolBar<ImageElement> bar = new ViewerToolBar<ImageElement>(eventManager);
-            toolBars[0] = bar;
-            toolBars[1] = bar.getMeasureToolBar();
-
-        }
-        return toolBars;
+    public synchronized List<WtoolBar> getToolBar() {
+        return TOOLBARS;
     }
 
     @Override
     public List<Action> getExportActions() {
-        if (selectedImagePane != null)
+        if (selectedImagePane != null) {
             return selectedImagePane.getExportToClipboardAction();
+        }
         return null;
     }
 
