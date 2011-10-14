@@ -277,7 +277,7 @@ public class WeasisLauncher {
                             REMOTE_PREFS.store();
                         }
                         // Clean temp folder.
-                        FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir()); //$NON-NLS-1$
+                        FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir());
                         Runtime.getRuntime().halt(exitStatus);
                     }
                 }
@@ -391,9 +391,8 @@ public class WeasisLauncher {
     }
 
     public static Object getCommandSession(Object commandProcessor) {
-        if (commandProcessor == null) {
+        if (commandProcessor == null)
             return null;
-        }
         Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
@@ -413,9 +412,8 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_close(Object commandSession) {
-        if (commandSession == null) {
+        if (commandSession == null)
             return false;
-        }
         try {
             Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
             nameMethod.invoke(commandSession, null);
@@ -431,9 +429,8 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
-        if (commandSession == null) {
+        if (commandSession == null)
             return false;
-        }
         Class[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
@@ -659,7 +656,7 @@ public class WeasisLauncher {
 
         File basdir;
         if (user == null) {
-            basdir = new File(dir); //$NON-NLS-1$
+            basdir = new File(dir);
         } else {
             basdir = new File(dir + File.separator + "preferences" + File.separator //$NON-NLS-1$
                 + user);
@@ -702,13 +699,10 @@ public class WeasisLauncher {
         Locale.setDefault(new Locale(lang, country, variant));
 
         boolean update = false;
-        boolean forceLook = false;
 
         look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
         if (look == null) {
             look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
-        } else {
-            forceLook = true;
         }
         if (look == null) {
             String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -717,7 +711,6 @@ public class WeasisLauncher {
                 String sys = sys_spec.substring(0, index);
                 String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
                 if (weasisNativeLaf != null) {
-                    forceLook = true;
                     look = weasisNativeLaf;
                 }
             }
@@ -735,8 +728,7 @@ public class WeasisLauncher {
         String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // changing Look and Feel when upgrade version
-        if (LookAndFeels.installSubstanceLookAndFeels()
-            && (look == null || (!forceLook && versionNew != null && !versionNew.equals(versionOld)))) {
+        if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) {
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
@@ -917,19 +909,23 @@ public class WeasisLauncher {
         UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
         laf_exist: if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
-                if (lafs[i].getClassName().equals(look)) { //$NON-NLS-1$
+                if (lafs[i].getClassName().equals(look)) {
                     break laf_exist;
                 }
             }
             look = null;
         }
         if (look == null) {
-            // Try to set Nimbus, concurrent thread issue
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-            for (int i = 0, n = lafs.length; i < n; i++) {
-                if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
-                    look = lafs[i].getClassName();
-                    break;
+            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+                look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            } else {
+                // Try to set Nimbus, concurrent thread issue
+                // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
+                for (int i = 0, n = lafs.length; i < n; i++) {
+                    if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
+                        look = lafs[i].getClassName();
+                        break;
+                    }
                 }
             }
             // Should never happen
