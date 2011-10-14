@@ -331,19 +331,21 @@ public class WeasisLauncher {
                 }
             });
 
-            // FIXME find other solution
-            // boolean uiStarted = false;
-            //
-            // for (Bundle b : m_felix.getBundleContext().getBundles()) {
-            //                if (b.getSymbolicName().equals("weasis-base-ui")) { //$NON-NLS-1$
-            // uiStarted = true;
-            // break;
-            // }
-            // }
-            // TODO Handle Weasis version without ui
-            // if (!uiStarted) {
-            //                throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
-            // }
+            String mainUI = configProps.getProperty("weasis.main.ui", "");
+            mainUI = mainUI.trim();
+            if (!mainUI.equals("")) {
+                boolean uiStarted = false;
+                for (Bundle b : m_felix.getBundleContext().getBundles()) {
+                    if (b.getSymbolicName().equals(mainUI)) { //$NON-NLS-1$
+                        uiStarted = true;
+                        break;
+                    }
+                }
+                if (!uiStarted) {
+                    throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
+                }
+            }
+
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -391,8 +393,9 @@ public class WeasisLauncher {
     }
 
     public static Object getCommandSession(Object commandProcessor) {
-        if (commandProcessor == null)
+        if (commandProcessor == null) {
             return null;
+        }
         Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
@@ -412,8 +415,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_close(Object commandSession) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         try {
             Method nameMethod = commandSession.getClass().getMethod("close", null); //$NON-NLS-1$
             nameMethod.invoke(commandSession, null);
@@ -429,8 +433,9 @@ public class WeasisLauncher {
     }
 
     public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
-        if (commandSession == null)
+        if (commandSession == null) {
             return false;
+        }
         Class[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
