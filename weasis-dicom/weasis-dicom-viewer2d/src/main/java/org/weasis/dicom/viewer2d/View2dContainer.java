@@ -58,6 +58,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -94,7 +95,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
-    public static final List<WtoolBar> TOOLBARS = Collections.synchronizedList(new ArrayList<WtoolBar>());
+    public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
 
@@ -476,7 +477,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public synchronized List<WtoolBar> getToolBar() {
+    public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
 

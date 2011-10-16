@@ -19,6 +19,7 @@ import javax.swing.event.ListSelectionEvent;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
@@ -155,7 +156,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
     }
 
     @Override
-    public List<WtoolBar> getToolBar() {
+    public List<Toolbar> getToolBar() {
         return null;
     }
 

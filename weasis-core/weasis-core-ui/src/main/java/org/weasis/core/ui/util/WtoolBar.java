@@ -28,13 +28,11 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 
-public class WtoolBar extends JPanel {
+public class WtoolBar extends JPanel implements Toolbar {
 
     public enum TYPE {
         main, explorer, tool
     };
-
-    public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
 
     private final TYPE type;
     private final String barName;
@@ -84,6 +82,7 @@ public class WtoolBar extends JPanel {
         addSeparator(SEPARATOR_2x24);
     }
 
+    @Override
     public TYPE getType() {
         return type;
     }
@@ -105,6 +104,7 @@ public class WtoolBar extends JPanel {
     }
 
     /** Adds a new button to this toolbar */
+
     public Component add(AbstractButton button) {
         boolean substanceLaf = javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance"); //$NON-NLS-1$
         if (useCustomUI && !substanceLaf) {
@@ -121,6 +121,7 @@ public class WtoolBar extends JPanel {
     }
 
     /** Adds a new button to this toolbar */
+
     public Component add(JButton button) {
         // this method is here to maintain backward compatibility
         return add((AbstractButton) button);
@@ -147,6 +148,7 @@ public class WtoolBar extends JPanel {
      * <p>
      * Can be overriden to implement custom event handling.
      */
+
     public void installMouseHandler(AbstractButton button) {
         button.addMouseListener(buttonMouseHandler);
     }
@@ -176,11 +178,13 @@ public class WtoolBar extends JPanel {
      * <P>
      * DefaultValue is true
      */
+
     public void setRolloverBorderPainted(boolean painted) {
         this.rolloverBorderPainted = painted;
     }
 
     /** Returns the state of the rolloverBorderPainted property */
+
     public boolean isRolloverBorderPainter() {
         return rolloverBorderPainted;
     }
@@ -193,11 +197,13 @@ public class WtoolBar extends JPanel {
      * Default value is <b>false</b> to accomodate with VLButtonUI which paints itself the button interiors.
      * 
      */
+
     public void setRolloverContentAreaFilled(boolean filled) {
         this.rolloverContentAreaFilled = filled;
     }
 
     /** Returns the value of the rolloverContentAreaFilled property */
+
     public boolean isRolloverContentAreaFilled() {
         return rolloverContentAreaFilled;
     }
@@ -209,11 +215,13 @@ public class WtoolBar extends JPanel {
      * <p>
      * When set to true the installButtonUI() method will be called when a button is added to this toolbar.
      */
+
     public void setUseCustomUI(boolean useCustomUI) {
         this.useCustomUI = useCustomUI;
     }
 
     /** Return the value of the useCustomUI property */
+
     public boolean isUseCustomUI() {
         return useCustomUI;
     }
@@ -223,8 +231,14 @@ public class WtoolBar extends JPanel {
         return "WtoolBar " + getName(); //$NON-NLS-1$
     }
 
+    @Override
     public String getBarName() {
         return barName;
+    }
+
+    @Override
+    public final WtoolBar getComponent() {
+        return this;
     }
 
 }

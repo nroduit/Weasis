@@ -69,7 +69,7 @@ public class PRManager {
                     if (gos != null) {
                         for (GraphicObject go : gos) {
                             boolean isDisp = ("DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits()));
-                            // addGraphicObject(isDisp ? gdisp : gimg, go, isDisp ? 1000 : 1);
+
                         }
                     }
 

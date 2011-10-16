@@ -16,66 +16,66 @@ import javax.media.jai.JAI;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
+import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.gif.GIFImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderCodecLibSpi;
+import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterCodecLibSpi;
+import com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.pnm.PNMImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.raw.RawImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.tiff.TIFFImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi;
+import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageReaderSpi;
+import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi;
+import com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi;
+import com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi;
 import com.sun.media.jai.imageioimpl.ImageReadWriteSpi;
 
 public class Activator implements BundleActivator {
 
+    @Override
     public void start(final BundleContext bundleContext) throws Exception {
         // SPI Issue Resolution
         // Register imageio SPI with the classloader of this bundle
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        registerServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi.class);
+        Class[] jaiCodecs =
+            { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
+                CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class,
+                WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class,
+                CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class,
+                J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
+                GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderCodecLibSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.wbmp.WBMPImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.tiff.TIFFImageReaderSpi.class);
-
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterCodecLibSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.gif.GIFImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.pnm.PNMImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.raw.RawImageWriterSpi.class);
-        registerServiceProvider(registry, com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi.class);
-
+        for (Class c : jaiCodecs) {
+            registerServiceProvider(registry, c);
+        }
         // Register the ImageRead and ImageWrite operation for JAI
         new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
     }
 
+    @Override
     public void stop(BundleContext bundleContext) throws Exception {
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageInputStreamSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.stream.ChannelImageOutputStreamSpi.class);
 
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.png.CLibPNGImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReaderCodecLibSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.wbmp.WBMPImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.tiff.TIFFImageReaderSpi.class);
+        Class[] jaiCodecs =
+            { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
+                CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class,
+                WBMPImageReaderSpi.class, BMPImageReaderSpi.class, RawImageReaderSpi.class, TIFFImageReaderSpi.class,
+                CLibJPEGImageWriterSpi.class, CLibPNGImageWriterSpi.class, J2KImageWriterSpi.class,
+                J2KImageWriterCodecLibSpi.class, WBMPImageWriterSpi.class, BMPImageWriterSpi.class,
+                GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.png.CLibPNGImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageWriterCodecLibSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.gif.GIFImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.pnm.PNMImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.raw.RawImageWriterSpi.class);
-        unRegisterServiceProvider(registry, com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi.class);
+        for (Class c : jaiCodecs) {
+            unRegisterServiceProvider(registry, c);
+        }
 
     }
 

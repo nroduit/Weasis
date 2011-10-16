@@ -110,7 +110,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(filterAction = getFilterAction());
         iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
         iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
-
+        synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(panAction = newPanAction());
 
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();

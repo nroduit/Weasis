@@ -64,7 +64,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private final MeasureToolBar<E> measureToolBar;
 
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager) {
-        super("viewer2dBar", TYPE.main); //$NON-NLS-1$
+        super("Viewer2d Main Bar", TYPE.main); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

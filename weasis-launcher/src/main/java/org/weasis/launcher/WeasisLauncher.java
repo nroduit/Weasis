@@ -65,14 +65,6 @@ public class WeasisLauncher {
      **/
     public static final String SHUTDOWN_HOOK_PROP = "felix.shutdown.hook"; //$NON-NLS-1$
     /**
-     * The property name used to specify an URL to the system property file.
-     **/
-    public static final String SYSTEM_PROPERTIES_PROP = "felix.system.properties"; //$NON-NLS-1$
-    /**
-     * The default name used for the system properties file.
-     **/
-    public static final String SYSTEM_PROPERTIES_FILE_VALUE = "system.properties"; //$NON-NLS-1$
-    /**
      * The property name used to specify an URL to the configuration property file to be used for the created the
      * framework instance.
      **/
@@ -81,6 +73,14 @@ public class WeasisLauncher {
      * The default name used for the configuration properties file.
      **/
     public static final String CONFIG_PROPERTIES_FILE_VALUE = "config.properties"; //$NON-NLS-1$
+    /**
+     * The property name used to specify an URL to the extended property file.
+     **/
+    public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties"; //$NON-NLS-1$
+    /**
+     * The default name used for the extended properties file.
+     **/
+    public static final String EXTENDED_PROPERTIES_FILE_VALUE = "ext-config.properties"; //$NON-NLS-1$
     /**
      * Name of the configuration directory.
      */
@@ -212,10 +212,6 @@ public class WeasisLauncher {
             }
         }
 
-        // TODO use with felix framework 4 (split properties) - and make ext-config for end-user
-        // Load system properties.
-        // WeasisLauncher.loadSystemProperties();
-
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             File basePortableDir = new File(portable);
@@ -236,9 +232,6 @@ public class WeasisLauncher {
             System.err.println("No " + CONFIG_PROPERTIES_FILE_VALUE + " found."); //$NON-NLS-1$ //$NON-NLS-2$
             configProps = new Properties();
         }
-
-        // Copy framework properties from the system properties.
-        WeasisLauncher.copySystemProperties(configProps);
 
         // If there is a passed in bundle auto-deploy directory, then
         // that overwrites anything in the config file.
@@ -462,46 +455,6 @@ public class WeasisLauncher {
 
     /**
      * <p>
-     * Loads the properties in the system property file associated with the framework installation into
-     * <tt>System.setProperty()</tt>. These properties are not directly used by the framework in anyway. By default, the
-     * system property file is located in the <tt>conf/</tt> directory of the Felix installation directory and is called
-     * "<tt>system.properties</tt>". The installation directory of Felix is assumed to be the parent directory of the
-     * <tt>felix.jar</tt> file as found on the system class path property. The precise file from which to load system
-     * properties can be set by initializing the "<tt>felix.system.properties</tt>" system property to an arbitrary URL.
-     * </p>
-     **/
-    public static void loadSystemProperties() {
-        // The system properties file is either specified by a system
-        // property or it is in the same directory as the Felix JAR file.
-        // Try to load it from one of these places.
-
-        // See if the property URL was specified as a property.
-
-        // Read the properties file.
-        Properties props = new Properties();
-        InputStream is = null;
-        try {
-            is = WeasisLauncher.class.getResourceAsStream("/" + SYSTEM_PROPERTIES_FILE_VALUE);
-            props.load(is);
-            is.close();
-        } catch (FileNotFoundException ex) {
-            // Ignore file not found.
-        } catch (Exception ex) {
-            System.err.println("Main: Error loading system properties"); //$NON-NLS-1$
-            System.err.println("Main: " + ex); //$NON-NLS-1$
-            FileUtil.safeClose(is);
-            return;
-        }
-
-        // Perform variable substitution on specified properties.
-        for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            System.setProperty(name, Util.substVars(props.getProperty(name), name, null, null));
-        }
-    }
-
-    /**
-     * <p>
      * Loads the configuration properties in the configuration property file associated with the framework installation;
      * these properties are accessible to the framework and to bundles and are intended for configuration purposes. By
      * default, the configuration property file is located in the <tt>conf/</tt> directory of the Felix installation
@@ -514,6 +467,29 @@ public class WeasisLauncher {
      * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
      **/
     public static Properties loadConfigProperties() {
+        URL propURL = getPropertiesURL(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+        // Read the properties file
+        Properties props = null;
+        if (propURL != null) {
+            props = readProperties(propURL, null);
+        }
+        propURL = getPropertiesURL(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+        if (propURL != null) {
+            // Extended properties, add or override existing properties
+            props = readProperties(propURL, props);
+        }
+        if (props != null) {
+            // Perform variable substitution for system properties.
+            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
+                String name = (String) e.nextElement();
+                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
+            }
+        }
+        return props;
+    }
+
+    public static URL getPropertiesURL(String configProp, String configFile) {
+
         // The config properties file is either specified by a system
         // property or it is in the conf/ directory of the Felix
         // installation directory. Try to load it from one of these
@@ -521,7 +497,7 @@ public class WeasisLauncher {
 
         // See if the property URL was specified as a property.
         URL propURL = null;
-        String custom = System.getProperty(CONFIG_PROPERTIES_PROP);
+        String custom = System.getProperty(configProp);
         if (custom != null) {
             try {
                 propURL = new URL(custom);
@@ -548,29 +524,20 @@ public class WeasisLauncher {
             }
 
             try {
-                propURL = new File(confDir, CONFIG_PROPERTIES_FILE_VALUE).toURL();
+                propURL = new File(confDir, configFile).toURL();
             } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
+                System.err.println("Main: " + ex); //$NON-NLS-1$
                 return null;
             }
         }
-
-        // Read the properties file.
-        Properties props = readProperties(propURL);
-
-        if (props != null) {
-            // Perform variable substitution for system properties.
-            for (Enumeration e = props.propertyNames(); e.hasMoreElements();) {
-                String name = (String) e.nextElement();
-                props.setProperty(name, Util.substVars(props.getProperty(name), name, null, props));
-            }
-        }
-        return props;
+        return propURL;
     }
 
-    public static Properties readProperties(URL propURL) {
+    public static Properties readProperties(URL propURL, Properties props) {
         // Read the properties file.
-        Properties props = new Properties();
+        if (props == null) {
+            props = new Properties();
+        }
         InputStream is = null;
         try {
             // Try to load config.properties.
@@ -578,19 +545,11 @@ public class WeasisLauncher {
             props.load(is);
             is.close();
         } catch (Exception ex) {
+            System.err.println("Cannot read properties file: " + propURL); //$NON-NLS-1$
             FileUtil.safeClose(is);
-            return null;
+            return props;
         }
         return props;
-    }
-
-    public static void copySystemProperties(Properties configProps) {
-        for (Enumeration e = System.getProperties().propertyNames(); e.hasMoreElements();) {
-            String key = (String) e.nextElement();
-            if (key.startsWith("felix.") || key.startsWith("org.osgi.framework.")) { //$NON-NLS-1$ //$NON-NLS-2$
-                configProps.setProperty(key, System.getProperty(key));
-            }
-        }
     }
 
     public static void setSystemSpecification() {
@@ -687,7 +646,7 @@ public class WeasisLauncher {
             try {
                 translation_modules +=
                     translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                modulesi18n = readProperties(new URL(translation_modules));
+                modulesi18n = readProperties(new URL(translation_modules), null);
                 if (modulesi18n != null) {
                     System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
                 }

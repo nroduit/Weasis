@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -93,14 +94,16 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.UriListFlavor;
-import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
+    private static final JMenu menuDisplay = new JMenu("Display");
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
     private static final WeasisWin instance = new WeasisWin();
@@ -470,14 +473,14 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         }
 
-        List<WtoolBar> toolBar = selectedPlugin.getToolBar();
-        List<WtoolBar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
+        List<Toolbar> toolBar = selectedPlugin.getToolBar();
+        List<Toolbar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
 
         updateToolbars(oldToolBar, toolBar);
 
     }
 
-    private void updateToolbars(List<WtoolBar> oldToolBar, List<WtoolBar> toolBar) {
+    private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar) {
         if (toolBar == null) {
             if (oldToolBar != null) {
                 toolbarContainer.unregisterAll();
@@ -490,7 +493,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 if (oldToolBar != null) {
                     toolbarContainer.unregisterAll();
                 }
-                for (WtoolBar t : toolBar) {
+                for (Toolbar t : toolBar) {
                     toolbarContainer.registerToolBar(t);
                 }
                 toolbarContainer.revalidate();
@@ -553,6 +556,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         JMenuBar menuBar = new JMenuBar();
         buildMenuFile();
         menuBar.add(menuFile);
+        buildMenuDisplay();
+        menuBar.add(menuDisplay);
         menuBar.add(menuSelectedPlugin);
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
@@ -598,6 +603,26 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         helpMenuItem.add(aboutMenuItem);
         menuBar.add(helpMenuItem);
         return menuBar;
+    }
+
+    private void buildToolBarSubMenu(final JMenu toolBarMenu) {
+        List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
+        for (final Toolbar bar : bars) {
+            if (!TYPE.main.equals(bar.getType())) {
+                JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getBarName(), bar.getComponent().isEnabled());
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (e.getSource() instanceof JCheckBoxMenuItem) {
+                            bar.getComponent().setEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                            toolbarContainer.showToolbar(bar.getComponent());
+                        }
+                    }
+                });
+                toolBarMenu.add(item);
+            }
+        }
     }
 
     private static void buildImportSubMenu(final JMenu importMenu) {
@@ -651,6 +676,43 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 }
             }
         }
+    }
+
+    private void buildMenuDisplay() {
+        menuDisplay.removeAll();
+        final JMenu toolBarMenu = new JMenu("Tool Bar");
+        JPopupMenu menuImport = toolBarMenu.getPopupMenu();
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
+            toolBarMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (toolBarMenu.isSelected()) {
+                        buildToolBarSubMenu(toolBarMenu);
+                    } else {
+                        toolBarMenu.removeAll();
+                    }
+                }
+            });
+        } else {
+            menuImport.addPopupMenuListener(new PopupMenuListener() {
+
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildToolBarSubMenu(toolBarMenu);
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    toolBarMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
+        menuDisplay.add(toolBarMenu);
     }
 
     private static void buildMenuFile() {

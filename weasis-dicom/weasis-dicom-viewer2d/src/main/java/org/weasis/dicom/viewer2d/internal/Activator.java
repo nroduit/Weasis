@@ -33,6 +33,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -44,7 +45,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static final String TOOLBAR_FILTER = String.format(
-        "(%s=%s)", Constants.OBJECTCLASS, WtoolBar.class.getName()); //$NON-NLS-1$
+        "(%s=%s)", Constants.OBJECTCLASS, Toolbar.class.getName()); //$NON-NLS-1$
 
     private BundleContext context = null;
 
@@ -67,7 +68,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 View2dContainer.TOOLBARS.add(bar);
                 View2dContainer.TOOLBARS.add(bar.getMeasureToolBar());
 
-                ServiceTracker m_tracker = new ServiceTracker(context, WtoolBar.class.getName(), null);
+                ServiceTracker m_tracker = new ServiceTracker(context, Toolbar.class.getName(), null);
                 // Must keep the tracker open, because calling close() will unget service. This is a problem because the
                 // desactivate method is called although the service stay alive in UI.
                 m_tracker.open();

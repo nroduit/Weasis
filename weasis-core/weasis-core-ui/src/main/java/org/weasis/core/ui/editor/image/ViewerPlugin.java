@@ -24,7 +24,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
-import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.ui.util.Toolbar;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
 
@@ -126,9 +126,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     }
 
     public ViewerToolBar getViewerToolBar() {
-        List<WtoolBar> bars = getToolBar();
+        List<Toolbar> bars = getToolBar();
         if (bars != null) {
-            for (WtoolBar t : bars) {
+            for (Toolbar t : bars) {
                 if (t instanceof ViewerToolBar) {
                     return (ViewerToolBar) t;
                 }

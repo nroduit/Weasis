@@ -45,6 +45,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
@@ -57,7 +58,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // initialization with a method.
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
-    public static final List<WtoolBar> TOOLBARS = Collections.synchronizedList(new ArrayList<WtoolBar>());
+    public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -333,7 +334,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public synchronized List<WtoolBar> getToolBar() {
+    public synchronized List<Toolbar> getToolBar() {
         return TOOLBARS;
     }
 

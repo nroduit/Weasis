@@ -27,7 +27,6 @@
 							there is no default export (All packages, except any containing
 							'impl' or 'internal'
 						-->
-						<_exportcontents>com.thoughtworks.xstream.*</_exportcontents>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
 					</instructions>

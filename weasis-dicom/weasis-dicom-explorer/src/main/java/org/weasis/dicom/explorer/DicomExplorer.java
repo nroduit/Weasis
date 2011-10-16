@@ -313,7 +313,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     protected void deactivate(ComponentContext context) {
         this.model.removePropertyChangeListener(this);
-        // TODO need to unregister service ?
     }
 
     private String getLimiteStringSize(String name, int limit) {
