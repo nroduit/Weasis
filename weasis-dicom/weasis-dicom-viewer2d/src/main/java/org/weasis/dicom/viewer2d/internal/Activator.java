@@ -32,7 +32,6 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -62,11 +61,6 @@ public class Activator implements BundleActivator, ServiceListener {
                 dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); //$NON-NLS-1$
                 dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions);
                 context.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
-
-                // Add standard toolbars
-                ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
-                View2dContainer.TOOLBARS.add(bar);
-                View2dContainer.TOOLBARS.add(bar.getMeasureToolBar());
 
                 ServiceTracker m_tracker = new ServiceTracker(context, Toolbar.class.getName(), null);
                 // Must keep the tracker open, because calling close() will unget service. This is a problem because the

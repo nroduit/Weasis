@@ -56,6 +56,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.Toolbar;
@@ -98,6 +99,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     private static PluginTool[] toolPanels;
     private static WtoolBar statusBar = null;
+    private static boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -106,6 +108,13 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public View2dContainer(GridBagLayoutModel layoutModel) {
         super(EventManager.getInstance(), layoutModel, View2dFactory.NAME, View2dFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
+        if (!INI_COMPONENTS) {
+            // Add standard toolbars
+            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
+            TOOLBARS.add(0, bar);
+            TOOLBARS.add(1, bar.getMeasureToolBar());
+            INI_COMPONENTS = true;
+        }
     }
 
     @Override
