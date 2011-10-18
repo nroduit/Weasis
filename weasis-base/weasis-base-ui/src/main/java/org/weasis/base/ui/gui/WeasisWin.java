@@ -323,7 +323,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             } else if (event.getSource() instanceof ViewerPlugin) {
                 ViewerPlugin plugin = (ViewerPlugin) event.getSource();
                 if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
-                    updateToolbars(null, plugin.getToolBar());
+                    updateToolbars(selectedPlugin == null ? null : selectedPlugin.getToolBar(), plugin.getToolBar(), true);
                 }
             }
         }
@@ -477,11 +477,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         List<Toolbar> toolBar = selectedPlugin.getToolBar();
         List<Toolbar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
 
-        updateToolbars(oldToolBar, toolBar);
+        updateToolbars(oldToolBar, toolBar, false);
 
     }
 
-    private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar) {
+    private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar, boolean force) {
         if (toolBar == null) {
             if (oldToolBar != null) {
                 toolbarContainer.unregisterAll();
@@ -490,7 +490,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             toolbarContainer.revalidate();
             toolbarContainer.repaint();
         } else {
-            if (toolBar != oldToolBar) {
+            if (force || toolBar != oldToolBar) {
                 if (oldToolBar != null) {
                     toolbarContainer.unregisterAll();
                 }

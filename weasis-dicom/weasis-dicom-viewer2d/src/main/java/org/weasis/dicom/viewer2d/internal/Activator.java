@@ -144,7 +144,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
-        // Instantiate in the EDT
+        // Instantiate in the EDT (necessary for UI components with Substance)
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
