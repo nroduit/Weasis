@@ -84,6 +84,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -451,23 +452,23 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         selectedPlugin.setSelected(true);
         selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
 
-        PluginTool[] tool = selectedPlugin.getToolPanel();
-        PluginTool[] oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+        List<DockableTool> tool = selectedPlugin.getToolPanel();
+        List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
 
         if (tool == null) {
             if (oldTool != null) {
-                for (PluginTool p : oldTool) {
+                for (DockableTool p : oldTool) {
                     p.closeDockable();
                 }
             }
         } else {
             if (tool != oldTool) {
                 if (oldTool != null) {
-                    for (PluginTool p : oldTool) {
+                    for (DockableTool p : oldTool) {
                         p.closeDockable();
                     }
                 }
-                for (PluginTool p : tool) {
+                for (DockableTool p : tool) {
                     p.registerToolAsDockable();
                 }
             }

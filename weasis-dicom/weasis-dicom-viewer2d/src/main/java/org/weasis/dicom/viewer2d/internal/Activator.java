@@ -24,11 +24,11 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -45,6 +45,8 @@ public class Activator implements BundleActivator, ServiceListener {
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
     private static final String TOOLBAR_FILTER = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, Toolbar.class.getName()); //$NON-NLS-1$
+    private static final String TOOL_FILTER = String.format(
+        "(%s=%s)", Constants.OBJECTCLASS, DockableTool.class.getName()); //$NON-NLS-1$
 
     private BundleContext context = null;
 
@@ -62,21 +64,47 @@ public class Activator implements BundleActivator, ServiceListener {
                 dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions);
                 context.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
 
-                ServiceTracker m_tracker = new ServiceTracker(context, Toolbar.class.getName(), null);
-                // Must keep the tracker open, because calling close() will unget service. This is a problem because the
-                // desactivate method is called although the service stay alive in UI.
-                m_tracker.open();
-                final Object[] services = m_tracker.getServices();
-                for (int i = 0; (services != null) && (i < services.length); i++) {
-                    synchronized (View2dContainer.TOOLBARS) {
-                        if (services[i] instanceof WtoolBar && !View2dContainer.TOOLBARS.contains(services[i])) {
-                            View2dContainer.TOOLBARS.add((WtoolBar) services[i]);
+                try {
+                    ServiceReference[] scrServiceRef = context.getServiceReferences(Toolbar.class.getName(), null);
+                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
+                        synchronized (View2dContainer.TOOLBARS) {
+                            // The container should referenced as a property in the provided service
+                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
+                                Object service = context.getService(scrServiceRef[i]);
+                                if (service instanceof Toolbar && !View2dContainer.TOOLBARS.contains(service)) {
+                                    View2dContainer.TOOLBARS.add((Toolbar) service);
+                                }
+                            }
                         }
                     }
+                } catch (InvalidSyntaxException e1) {
+                    e1.printStackTrace();
                 }
-                // Add all the service listeners
+
+                try {
+                    ServiceReference[] scrServiceRef = context.getServiceReferences(DockableTool.class.getName(), null);
+                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
+                        synchronized (View2dContainer.TOOLS) {
+                            // The container should referenced as a property in the provided service
+                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
+                                Object service = context.getService(scrServiceRef[i]);
+                                if (service instanceof DockableTool && !View2dContainer.TOOLS.contains(service)) {
+                                    View2dContainer.TOOLS.add((DockableTool) service);
+                                    ((DockableTool) service).registerToolAsDockable();
+                                }
+                            }
+                        }
+                    }
+                } catch (InvalidSyntaxException e1) {
+                    e1.printStackTrace();
+                }
+
+                // Register the service for new event, but look with context.getServiceReferences() for services
+                // previously
+                // registered
                 try {
                     context.addServiceListener(Activator.this, TOOLBAR_FILTER);
+                    // context.addServiceListener(Activator.this, TOOL_FILTER);
                 } catch (InvalidSyntaxException e) {
                     e.printStackTrace();
                 }
@@ -124,49 +152,42 @@ public class Activator implements BundleActivator, ServiceListener {
 
                 final ServiceReference m_ref = event.getServiceReference();
                 Object service = context.getService(m_ref);
-                if (service == null) {
-                    return;
-                }
-                if (service instanceof WtoolBar) {
-                    final WtoolBar bar = (WtoolBar) service;
-                    synchronized (View2dContainer.TOOLBARS) {
-                        if (event.getType() == ServiceEvent.REGISTERED) {
-                            if (!View2dContainer.TOOLBARS.contains(bar)) {
-                                View2dContainer.TOOLBARS.add(bar);
-
-                                ImageViewerPlugin<DicomImageElement> view =
-                                    EventManager.getInstance().getSelectedView2dContainer();
-                                if (view instanceof View2dContainer) {
-                                    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                    if (dicomView.getDataExplorerModel() instanceof DicomModel) {
-                                        DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-                                        model.firePropertyChange(new ObservableEvent(
-                                            ObservableEvent.BasicAction.UpdateToolbars, view, null, view));
+                if (service != null) {
+                    if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                        if (service instanceof WtoolBar) {
+                            final WtoolBar bar = (WtoolBar) service;
+                            synchronized (View2dContainer.TOOLBARS) {
+                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                                    if (event.getType() == ServiceEvent.REGISTERED) {
+                                        if (!View2dContainer.TOOLBARS.contains(bar)) {
+                                            View2dContainer.TOOLBARS.add(bar);
+                                            updateToolbarView();
+                                        }
+                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                                        if (View2dContainer.TOOLBARS.contains(bar)) {
+                                            View2dContainer.TOOLBARS.remove(bar);
+                                            updateToolbarView();
+                                        }
                                     }
                                 }
                             }
-                        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                            GuiExecutor.instance().execute(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    if (View2dContainer.TOOLBARS.contains(bar)) {
-                                        View2dContainer.TOOLBARS.remove(bar);
-                                        ImageViewerPlugin<DicomImageElement> view =
-                                            EventManager.getInstance().getSelectedView2dContainer();
-                                        if (view instanceof View2dContainer) {
-                                            DataExplorerView dicomView =
-                                                UIManager.getExplorerplugin(DicomExplorer.NAME);
-                                            if (dicomView.getDataExplorerModel() instanceof DicomModel) {
-                                                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-                                                model.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.UpdateToolbars, view, null, view));
-                                            }
+                        } else if (service instanceof DockableTool) {
+                            final DockableTool tool = (DockableTool) service;
+                            synchronized (View2dContainer.TOOLS) {
+                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                                    if (event.getType() == ServiceEvent.REGISTERED) {
+                                        if (!View2dContainer.TOOLS.contains(tool)) {
+                                            View2dContainer.TOOLS.add(tool);
+                                            tool.registerToolAsDockable();
                                         }
-                                        context.ungetService(m_ref);
+                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                                        if (View2dContainer.TOOLS.contains(tool)) {
+                                            View2dContainer.TOOLS.remove(tool);
+                                            tool.closeDockable();
+                                        }
                                     }
                                 }
-                            });
+                            }
                         }
                     }
                 }
@@ -174,4 +195,15 @@ public class Activator implements BundleActivator, ServiceListener {
         });
     }
 
+    private static void updateToolbarView() {
+        ImageViewerPlugin<DicomImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
+        if (view instanceof View2dContainer) {
+            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+            if (dicomView.getDataExplorerModel() instanceof DicomModel) {
+                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UpdateToolbars, view, null,
+                    view));
+            }
+        }
+    }
 }

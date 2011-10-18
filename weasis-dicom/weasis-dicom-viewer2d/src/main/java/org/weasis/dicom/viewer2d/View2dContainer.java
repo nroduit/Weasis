@@ -50,6 +50,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -97,7 +98,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
-    private static PluginTool[] toolPanels;
+    public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
     private static WtoolBar statusBar = null;
     private static boolean INI_COMPONENTS = false;
 
@@ -109,11 +110,49 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         super(EventManager.getInstance(), layoutModel, View2dFactory.NAME, View2dFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
+            INI_COMPONENTS = true;
             // Add standard toolbars
             ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
-            INI_COMPONENTS = true;
+
+            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+
+                    @Override
+                    public SliderChangeListener[] getActions() {
+
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                    }
+                };
+            tool.setHide(false);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new DisplayTool(DisplayTool.BUTTON_NAME);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+            eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+
+            tool = new MeasureTool(eventManager);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
         }
     }
 
@@ -226,42 +265,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     @Override
-    public PluginTool[] getToolPanel() {
-        if (toolPanels == null) {
-            toolPanels = new PluginTool[4];
-            toolPanels[0] = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
-
-                    @Override
-                    public SliderChangeListener[] getActions() {
-
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                        if (seqAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) seqAction);
-                        }
-                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                        if (zoomAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) zoomAction);
-                        }
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) rotateAction);
-                        }
-                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                    }
-                };
-            toolPanels[0].setHide(false);
-            toolPanels[0].registerToolAsDockable();
-            toolPanels[1] = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-            toolPanels[1].registerToolAsDockable();
-            toolPanels[2] = new DisplayTool(DisplayTool.BUTTON_NAME);
-            toolPanels[2].registerToolAsDockable();
-            toolPanels[3] = new MeasureTool(eventManager);
-            toolPanels[3].registerToolAsDockable();
-            eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
-            // toolPanels[3] = new DrawToolsDockable();
-        }
-        return toolPanels;
+    public List<DockableTool> getToolPanel() {
+        return TOOLS;
     }
 
     @Override

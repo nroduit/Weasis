@@ -44,7 +44,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -678,7 +678,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
 
-        for (PluginTool p : selectedView2dContainer.getToolPanel()) {
+        for (DockableTool p : selectedView2dContainer.getToolPanel()) {
             if (p instanceof GraphicsListener) {
                 defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
             }

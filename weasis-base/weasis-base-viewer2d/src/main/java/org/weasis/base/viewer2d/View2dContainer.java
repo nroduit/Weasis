@@ -39,11 +39,14 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
@@ -56,9 +59,10 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
     // initialization with a method.
-    private static PluginTool[] toolPanels;
-    private static WtoolBar statusBar = null;
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
+    public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
+    private static WtoolBar statusBar = null;
+    private static boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -67,6 +71,50 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public View2dContainer(GridBagLayoutModel layoutModel) {
         super(EventManager.getInstance(), layoutModel, ViewerFactory.NAME, ViewerFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
+        if (!INI_COMPONENTS) {
+            INI_COMPONENTS = true;
+            // Add standard toolbars
+            ViewerToolBar<ImageElement> bar = new ViewerToolBar<ImageElement>(EventManager.getInstance());
+            TOOLBARS.add(0, bar);
+            TOOLBARS.add(1, bar.getMeasureToolBar());
+
+            PluginTool tool = new MiniTool("Mini", null) {
+
+                @Override
+                public SliderChangeListener[] getActions() {
+                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                    if (seqAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) seqAction);
+                    }
+                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                    if (zoomAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) zoomAction);
+                    }
+                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                    if (rotateAction instanceof SliderChangeListener) {
+                        listeners.add((SliderChangeListener) rotateAction);
+                    }
+                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                }
+            };
+            tool.setHide(false);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new ImageTool("Image Tools", null);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+
+            tool = new DisplayTool("Display", null);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+            eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+
+            tool = new MeasureTool(eventManager);
+            tool.registerToolAsDockable();
+            TOOLS.add(tool);
+        }
     }
 
     @Override
@@ -156,39 +204,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public synchronized PluginTool[] getToolPanel() {
-        if (toolPanels == null) {
-            toolPanels = new PluginTool[3];
-            toolPanels[0] = new MiniTool("Mini", null) {
-
-                @Override
-                public SliderChangeListener[] getActions() {
-                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) seqAction);
-                    }
-                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                    if (zoomAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) zoomAction);
-                    }
-                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                    if (rotateAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) rotateAction);
-                    }
-                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                }
-            };
-            toolPanels[0].setHide(false);
-            toolPanels[0].registerToolAsDockable();
-            toolPanels[1] = new ImageTool("Image Tools", null);
-            toolPanels[1].registerToolAsDockable();
-            toolPanels[2] = new DisplayTool("Display", null);
-            toolPanels[2].registerToolAsDockable();
-            eventManager.addSeriesViewerListener((SeriesViewerListener) toolPanels[2]);
-            // toolPanels[3] = new DrawToolsDockable();
-        }
-        return toolPanels;
+    public synchronized List<DockableTool> getToolPanel() {
+        return TOOLS;
     }
 
     @Override
