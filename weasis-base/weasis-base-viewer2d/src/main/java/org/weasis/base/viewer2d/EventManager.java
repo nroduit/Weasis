@@ -194,18 +194,18 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
     }
 
-    /** process the action events. */
-
     @Override
     public void actionPerformed(ActionEvent evt) {
-        String command = evt.getActionCommand();
+        cinePlay(evt.getActionCommand());
+    }
 
-        if (command.equals(ActionW.CINESTART.cmd())) {
-            // turn cining on.
-            moveTroughSliceAction.start();
-        } else if (command.equals(ActionW.CINESTOP.cmd())) {
-            // turn cine off.
-            moveTroughSliceAction.stop();
+    private void cinePlay(String command) {
+        if (command != null) {
+            if (command.equals(ActionW.CINESTART.cmd())) {
+                moveTroughSliceAction.start();
+            } else if (command.equals(ActionW.CINESTOP.cmd())) {
+                moveTroughSliceAction.stop();
+            }
         }
     }
 
@@ -230,7 +230,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
             // value is adjusted by the BoundedRangeModel
             firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
-
         } else if (ResetTools.Rotation.equals(action)) {
             rotateAction.setValue(0);
         } else if (ResetTools.WindowLevel.equals(action)) {

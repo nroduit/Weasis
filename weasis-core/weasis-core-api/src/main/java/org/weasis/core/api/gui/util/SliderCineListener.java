@@ -51,6 +51,8 @@ public abstract class SliderCineListener extends SliderChangeListener {
 
     public abstract void stop();
 
+    public abstract boolean isCining();
+
     public int getSpeed() {
         return (Integer) speedModel.getValue();
     }

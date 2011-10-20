@@ -222,6 +222,11 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             }
 
             @Override
+            public boolean isCining() {
+                return cining;
+            }
+
+            @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 setValue(getValue() + e.getWheelRotation());
             }

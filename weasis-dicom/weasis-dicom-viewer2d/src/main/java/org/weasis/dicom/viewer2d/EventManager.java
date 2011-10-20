@@ -59,6 +59,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -408,6 +409,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 return 0;
             }
 
+            @Override
+            public boolean isCining() {
+                return currentCine != null;
+            }
+
         };
     }
 
@@ -537,6 +543,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     return a;
                 }
             }
+            if (keyEvent == ActionW.CINESTART.getKeyCode()) {
+                if (moveTroughSliceAction.isCining()) {
+                    moveTroughSliceAction.stop();
+                } else {
+                    moveTroughSliceAction.start();
+                }
+                return null;
+            }
         }
 
         return action;
@@ -569,14 +583,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public void actionPerformed(ActionEvent evt) {
-        String command = evt.getActionCommand();
+        cinePlay(evt.getActionCommand());
+    }
 
-        if (command.equals(ActionW.CINESTART.cmd())) {
-            // turn cining on.
-            moveTroughSliceAction.start();
-        } else if (command.equals(ActionW.CINESTOP.cmd())) {
-            // turn cine off.
-            moveTroughSliceAction.stop();
+    private void cinePlay(String command) {
+        if (command != null) {
+            if (command.equals(ActionW.CINESTART.cmd())) {
+                moveTroughSliceAction.start();
+            } else if (command.equals(ActionW.CINESTOP.cmd())) {
+                moveTroughSliceAction.stop();
+            }
         }
     }
 
@@ -827,7 +843,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 zoomAction.getMouseSensivity());
 
             prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(prefNode, CineToolBar.class.getName(), false);
+            for (Toolbar tb : View2dContainer.TOOLBARS) {
+                if (tb instanceof CineToolBar) {
+                    BundlePreferences.putBooleanPreferences(prefNode, CineToolBar.class.getName(),
+                        ((CineToolBar) tb).isEnabled());
+                    break;
+                }
+            }
         }
     }
 

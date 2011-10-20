@@ -37,15 +37,9 @@ public class ActionW {
             Messages.getString("ActionW.rotate"), "rotation", KeyEvent.VK_R, 0, getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     public static final ActionW CINESPEED = new ActionW(Messages.getString("ActionW.speed"), "cinespeed", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW CINESTART = new ActionW(Messages.getString("ActionW.start"), "cinestart", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW CINESTART = new ActionW(
+        Messages.getString("ActionW.start"), "cinestart", KeyEvent.VK_C, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW CINESTOP = new ActionW(Messages.getString("ActionW.stop"), "cinestop", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SKIPBACKWARD = new ActionW(
-        Messages.getString("ActionW.prev"), "skipBackward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SKIPFORWARD =
-        new ActionW(Messages.getString("ActionW.next"), "skipForward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SEEKBACKWARD = new ActionW(
-        Messages.getString("ActionW.fwd"), "seekBackward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW SEEKFORWARD = new ActionW(Messages.getString("ActionW.rew"), "seekForward", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW WINDOW = new ActionW(Messages.getString("ActionW.win"), "window", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LEVEL = new ActionW(Messages.getString("ActionW.level"), "level", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW WINLEVEL =
