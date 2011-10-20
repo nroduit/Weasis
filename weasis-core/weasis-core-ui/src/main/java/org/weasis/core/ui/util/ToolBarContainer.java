@@ -38,7 +38,7 @@ public class ToolBarContainer extends JPanel {
             return;
         }
         TYPE type = toolbar.getType();
-        String name = TYPE.main.equals(type) ? type.name() : toolbar.getBarName();
+        String name = TYPE.main.equals(type) ? type.name() : toolbar.getClass().getName();
         Toolbar oldBar = toolBarsByName.get(name);
         toolBarsByName.put(name, toolbar);
         boolean visible = toolbar.getComponent().isEnabled();
@@ -94,7 +94,7 @@ public class ToolBarContainer extends JPanel {
             return;
         }
         TYPE type = toolbar.getType();
-        String name = TYPE.main.equals(type) ? type.name() : toolbar.getBarName();
+        String name = TYPE.main.equals(type) ? type.name() : toolbar.getClass().getName();
         toolBarsByName.remove(name);
         remove(toolbar.getComponent());
     }

@@ -32,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
 import org.noos.xing.mydoggy.Content;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -68,6 +69,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.viewer2d.internal.Activator;
 
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -115,6 +117,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
+            CineToolBar cineBar = new CineToolBar<DicomImageElement>();
+            TOOLBARS.add(2, cineBar);
+
+            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            if (prefs != null) {
+                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+                cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
+            }
 
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
 

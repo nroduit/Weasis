@@ -826,6 +826,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
+            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+            BundlePreferences.putBooleanPreferences(prefNode, CineToolBar.class.getName(), false);
         }
     }
 
