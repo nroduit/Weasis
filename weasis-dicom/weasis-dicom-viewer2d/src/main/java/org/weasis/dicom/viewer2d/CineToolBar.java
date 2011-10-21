@@ -17,7 +17,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
     private final Logger LOGGER = LoggerFactory.getLogger(CineToolBar.class);
 
     public CineToolBar() {
-        super("Cine Bar", TYPE.tool);
+        super("Cine Toolbar", TYPE.tool);
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
@@ -35,7 +35,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
             add(rwdButton);
 
             final JButton prevButton = new JButton();
-            prevButton.setToolTipText("Previous Image");
+            prevButton.setToolTipText("Cine Previous Image");
             prevButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-prev.png"))); //$NON-NLS-1$
             prevButton.addActionListener(new ActionListener() {
 
@@ -74,7 +74,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
             });
             add(stopButton);
             final JButton nextButton = new JButton();
-            nextButton.setToolTipText("Next Image");
+            nextButton.setToolTipText("Cine Next Image");
             nextButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-next.png"))); //$NON-NLS-1$
             nextButton.addActionListener(new ActionListener() {
 

@@ -89,7 +89,7 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.bundlerepository</artifactId>
-			<version>1.6.4</version>
+			<version>1.6.6</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -101,7 +101,7 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.gogo.command</artifactId>
-			<version>0.10.0</version>
+			<version>0.12.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

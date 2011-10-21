@@ -323,7 +323,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             } else if (event.getSource() instanceof ViewerPlugin) {
                 ViewerPlugin plugin = (ViewerPlugin) event.getSource();
                 if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
-                    updateToolbars(selectedPlugin == null ? null : selectedPlugin.getToolBar(), plugin.getToolBar(), true);
+                    updateToolbars(selectedPlugin == null ? null : selectedPlugin.getToolBar(), plugin.getToolBar(),
+                        true);
                 }
             }
         }
@@ -609,7 +610,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private void buildToolBarSubMenu(final JMenu toolBarMenu) {
         List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
         for (final Toolbar bar : bars) {
-            if (!TYPE.main.equals(bar.getType())) {
+            if (!TYPE.main.equals(bar.getType()) && !TYPE.conditional.equals(bar.getType())) {
                 JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getBarName(), bar.getComponent().isEnabled());
                 item.addActionListener(new ActionListener() {
 

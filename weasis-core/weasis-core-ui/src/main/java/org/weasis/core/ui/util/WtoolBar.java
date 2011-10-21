@@ -31,7 +31,7 @@ import javax.swing.JSeparator;
 public class WtoolBar extends JPanel implements Toolbar {
 
     public enum TYPE {
-        main, explorer, tool
+        main, conditional, explorer, tool
     };
 
     private final TYPE type;

@@ -126,8 +126,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (parent != null || value != null) {
             synchronized (model) {
                 for (MediaSeriesGroup node : model.getSuccessors(parent)) {
-                    if (node.equals(value))
+                    if (node.equals(value)) {
                         return node;
+                    }
                 }
             }
         }
@@ -159,8 +160,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (tree != null) {
                     Tree<MediaSeriesGroup> parent = null;
                     while ((parent = tree.getParent()) != null) {
-                        if (parent.getHead().getTagID().equals(modelNode.getTagElement()))
+                        if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
                             return parent.getHead();
+                        }
                         tree = parent;
                     }
                 }
@@ -218,8 +220,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     @Override
     public void firePropertyChange(final ObservableEvent event) {
         if (propertyChange != null) {
-            if (event == null)
+            if (event == null) {
                 throw new NullPointerException();
+            }
             if (SwingUtilities.isEventDispatchThread()) {
                 propertyChange.firePropertyChange(event);
             } else {
@@ -490,9 +493,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
         final DicomImageElement firstMedia = series.getMedia(0);
-        if (firstMedia == null)
+        if (firstMedia == null) {
             // no image
             return true;
+        }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);
             Object tag2 = firstMedia.getTagValue(tagElement);
@@ -500,8 +504,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (tag == null && tag2 == null) {
                 continue;
             }
-            if (tag != null && !tag.equals(tag2))
+            if (tag != null && !tag.equals(tag2)) {
                 return false;
+            }
         }
         return true;
     }
@@ -596,13 +601,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public void close(String[] argv) throws IOException {
         final String[] usage = { "Remove DICOM files in Dicom Explorer", //$NON-NLS-1$
             "Usage: dicom:close [patient | study | series] [ARGS]", //$NON-NLS-1$
+            "  -a --all Close all patients", //$NON-NLS-1$
             "  -p --patient <args>	Close patient, [arg] is patientUID (PatientID + Patient Birth Date, by default)", //$NON-NLS-1$
             "  -y --study <args>	Close study, [arg] is Study Instance UID", //$NON-NLS-1$
             "  -s --series <args>	Close series, [arg] is Series Instance UID", "  -? --help		show help" }; //$NON-NLS-1$ //$NON-NLS-2$
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -627,6 +633,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         } else {
                             removePatient(patientGroup);
                         }
+                    }
+                } else if (opt.isSet("all")) { //$NON-NLS-1$
+                    for (MediaSeriesGroup patientGroup : model.getSuccessors(rootNode)) {
+                        removePatient(patientGroup);
                     }
                 } else if (opt.isSet("study")) { //$NON-NLS-1$
                     for (String studyUID : args) {

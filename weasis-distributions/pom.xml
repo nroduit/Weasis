@@ -17,8 +17,10 @@
 
 		<felix.framework.version>4.0.1</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
+		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
+		
 		<felix.servlet.version>1.0.0</felix.servlet.version>
-		<felix.bundlerepository.version>1.6.4</felix.bundlerepository.version>
+		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
 		<felix.configadmin.version>1.2.8</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.scr.version>1.6.0</felix.scr.version>
