@@ -20,7 +20,7 @@
 			<distribution>repo</distribution>
 		</license>
 		<license>
-			<!-- WeasisLauncher and AutoProcessor classes is derived from the Apache 
+			<!-- WeasisLauncher and AutoProcessor classes are derived from the Apache 
 				Felix launcher -->
 			<name>Apache 2</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>

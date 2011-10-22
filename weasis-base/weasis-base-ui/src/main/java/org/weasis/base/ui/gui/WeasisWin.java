@@ -593,6 +593,19 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         });
         helpMenuItem.add(webMenuItem);
+        final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("Online Help"));
+        websiteMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    URL url = new URL("http://www.dcm4che.org/confluence/display/WEA/Home"); //$NON-NLS-1$
+                    JMVUtils.OpenInDefaultBrowser(websiteMenuItem, url);
+                } catch (MalformedURLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem = new JMenuItem(Messages.getString("WeasisAboutBox.title")); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 

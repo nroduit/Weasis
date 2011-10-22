@@ -30,6 +30,8 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -136,7 +138,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html");
-
+        StyleSheet ss = ((HTMLEditorKit) txtpnNote.getEditorKit()).getStyleSheet();
+        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
         txtpnNote.setText(String.format(Messages.getString("GeneralSetting.txtpnNote"), getInstalledLanguages())); //$NON-NLS-1$
         add(txtpnNote, gbc_txtpnNote);
         this.add(component1, new GridBagConstraints(3, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
@@ -175,22 +178,33 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     private String getInstalledLanguages() {
-        StringBuffer buffer = new StringBuffer("<BR>English");
+        StringBuffer buffer = new StringBuffer();
         String langs = System.getProperty("weasis.languages", null);
         if (langs != null) {
             String[] items = langs.split(","); //$NON-NLS-1$
-            for (int i = 0, k = 1; i < items.length; i++) {
-                Locale l = toLocale(items[i].trim());
+            for (int i = 0; i < items.length; i++) {
+                String item = items[i].trim();
+                int index = item.indexOf(' ');
+                String autor = null;
+                String lg;
+                if (index > 0) {
+                    lg = item.substring(0, index);
+                    autor = item.substring(index);
+                } else {
+                    lg = item;
+                }
+                Locale l = toLocale(lg);
                 if (l == null) {
                     continue;
                 }
-                if (k % 4 == 0) {
-                    buffer.append(",<BR>");
-                } else {
-                    buffer.append(", ");
-                }
+                buffer.append("<BR>");
                 buffer.append(l.getDisplayName());
-                k++;
+                if (autor != null) {
+                    buffer.append(" - ");
+                    buffer.append("<i>");
+                    buffer.append(autor);
+                    buffer.append("</i>");
+                }
             }
         }
 
@@ -201,19 +215,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
      * <p>
      * Converts a String to a Locale.
      * </p>
-     * <p/>
-     * <p>
-     * This method takes the string format of a locale and creates the locale object from it.
-     * </p>
-     * <p/>
-     * 
-     * <pre>
-     *   LocaleUtils.toLocale("en")         = new Locale("en", "")
-     *   LocaleUtils.toLocale("en_GB")      = new Locale("en", "GB")
-     *   LocaleUtils.toLocale("en_GB_xxx")  = new Locale("en", "GB", "xxx")   (#)
-     * </pre>
-     * <p/>
-     * <p/>
      * <p>
      * This method validates the input strictly. The language code must be lowercase. The country code must be
      * uppercase. The separator must be an underscore. The length must be correct.

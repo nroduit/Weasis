@@ -22,7 +22,6 @@ import org.noos.xing.mydoggy.ToolWindow;
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.noos.xing.mydoggy.ToolWindowType;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.ui.Messages;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
 
@@ -38,8 +37,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     public PluginTool(String id, String toolName, ToolWindowAnchor anchor) {
         this.toolName = toolName;
         this.icon = null;
-        // this.dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement();
-        // TODO works if there is only one instance of a pluginTool class at the same time
+        // Works only if there is only one instance of pluginTool at the same time
         this.dockableUID = id;
         this.dockableWidth = -1;
         this.anchor = anchor;
@@ -48,6 +46,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     protected abstract void changeToolWindowAnchor(ToolWindowAnchor anchor);
 
+    @Override
     public ToolWindow registerToolAsDockable() {
         ToolWindow win = getToolWindow();
         if (win == null) {
@@ -78,6 +77,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         return win;
     }
 
+    @Override
     public Component getToolComponent() {
         return this;
     }
@@ -86,6 +86,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         this.dockableWidth = width;
     }
 
+    @Override
     public String getDockableUID() {
         return dockableUID;
     }
@@ -129,10 +130,12 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         return dockableWidth;
     }
 
+    @Override
     public final ToolWindow getToolWindow() {
         return UIManager.toolWindowManager.getToolWindow(dockableUID);
     }
 
+    @Override
     public void showDockable() {
         GuiExecutor.instance().execute(new Runnable() {
 
@@ -147,6 +150,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         });
     }
 
+    @Override
     public void closeDockable() {
         GuiExecutor.instance().execute(new Runnable() {
 

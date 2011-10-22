@@ -12,7 +12,6 @@ package org.weasis.launcher;
 
 import java.awt.Color;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,9 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -36,7 +34,6 @@ import java.util.ServiceLoader;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -467,16 +464,16 @@ public class WeasisLauncher {
      * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
      **/
     public static Properties loadConfigProperties() {
-        URL propURL = getPropertiesURL(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+        URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
         // Read the properties file
         Properties props = null;
-        if (propURL != null) {
-            props = readProperties(propURL, null);
+        if (propURI != null) {
+            props = readProperties(propURI, null);
         }
-        propURL = getPropertiesURL(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
-        if (propURL != null) {
+        propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+        if (propURI != null) {
             // Extended properties, add or override existing properties
-            props = readProperties(propURL, props);
+            props = readProperties(propURI, props);
         }
         if (props != null) {
             // Perform variable substitution for system properties.
@@ -488,7 +485,7 @@ public class WeasisLauncher {
         return props;
     }
 
-    public static URL getPropertiesURL(String configProp, String configFile) {
+    public static URI getPropertiesURI(String configProp, String configFile) {
 
         // The config properties file is either specified by a system
         // property or it is in the conf/ directory of the Felix
@@ -496,13 +493,13 @@ public class WeasisLauncher {
         // places.
 
         // See if the property URL was specified as a property.
-        URL propURL = null;
+        URI propURL = null;
         String custom = System.getProperty(configProp);
         if (custom != null) {
             try {
-                propURL = new URL(custom);
-            } catch (MalformedURLException ex) {
-                System.err.print("Main: " + ex); //$NON-NLS-1$
+                propURL = new URI(custom);
+            } catch (URISyntaxException e) {
+                System.err.print(configProp + ": " + e); //$NON-NLS-1$
                 return null;
             }
         } else {
@@ -524,16 +521,16 @@ public class WeasisLauncher {
             }
 
             try {
-                propURL = new File(confDir, configFile).toURL();
-            } catch (MalformedURLException ex) {
-                System.err.println("Main: " + ex); //$NON-NLS-1$
+                propURL = new File(confDir, configFile).toURI();
+            } catch (Exception ex) {
+                System.err.print(configFile + ": " + ex); //$NON-NLS-1$
                 return null;
             }
         }
         return propURL;
     }
 
-    public static Properties readProperties(URL propURL, Properties props) {
+    public static Properties readProperties(URI propURI, Properties props) {
         // Read the properties file.
         if (props == null) {
             props = new Properties();
@@ -541,11 +538,11 @@ public class WeasisLauncher {
         InputStream is = null;
         try {
             // Try to load config.properties.
-            is = propURL.openConnection().getInputStream();
+            is = propURI.toURL().openConnection().getInputStream();
             props.load(is);
             is.close();
         } catch (Exception ex) {
-            System.err.println("Cannot read properties file: " + propURL); //$NON-NLS-1$
+            System.err.println("Cannot read properties file: " + propURI); //$NON-NLS-1$
             FileUtil.safeClose(is);
             return props;
         }
@@ -641,17 +638,30 @@ public class WeasisLauncher {
         // Set the locale of the previous launch if exists
         lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
 
-        String translation_modules = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
-        if (translation_modules != null) {
-            try {
-                translation_modules +=
-                    translation_modules.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                modulesi18n = readProperties(new URL(translation_modules), null);
-                if (modulesi18n != null) {
-                    System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
+        URI translation_modules = null;
+        if (portable != null) {
+            File file = new File(portable, "weasis/bundle-i18n/buildNumber.properties");
+            if (file.canRead()) {
+                translation_modules = file.toURI();
+                String path = file.getParentFile().toURI().toString();
+                System.setProperty("weasis.i18n", path); //$NON-NLS-1$
+                System.err.println("i18n path: " + path);
+            }
+        } else {
+            String path = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
+            if (path != null) {
+                path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                try {
+                    translation_modules = new URI(path);
+                } catch (URISyntaxException e) {
+                    System.err.println("Cannot find translation modules: " + e); //$NON-NLS-1$
                 }
-            } catch (MalformedURLException ex) {
-                System.err.print("Cannot find translation modules: " + ex); //$NON-NLS-1$
+            }
+        }
+        if (translation_modules != null) {
+            modulesi18n = readProperties(translation_modules, null);
+            if (modulesi18n != null) {
+                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
             }
         }
         if (lang.equals("en")) { //$NON-NLS-1$
@@ -778,6 +788,9 @@ public class WeasisLauncher {
                 }
             });
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
+            final StringBuffer message = new StringBuffer("<P>");
+            message.append(String.format("Weasis version has changed from %s to %s.", versionOld, versionNew));
+
             EventQueue.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -819,15 +832,13 @@ public class WeasisLauncher {
                     jTextPane1.setBackground(Color.WHITE);
                     StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
                     ss.addRule("p {font-size:12}"); //$NON-NLS-1$
-                    try {
-                        jTextPane1.setPage(WeasisLauncher.class.getResource("/news.html")); //$NON-NLS-1$
-                        jTextPane1.setPreferredSize(new Dimension(630, 375));
-                        JScrollPane sp = new JScrollPane(jTextPane1);
-                        JOptionPane.showMessageDialog(loader.getWindow(), sp,
-                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    message.append("<BR>");
+                    message.append(String.format("See <a href=\"%s\">release notes</a>.",
+                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10431"));
+                    message.append("</P>");
+                    jTextPane1.setText(message.toString());
+                    JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
+                        Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                 }
             });
         }
