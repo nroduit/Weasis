@@ -117,8 +117,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         SliderChangeListener[] actions = getActions();
         for (int i = 0; i < actions.length; i++) {
             JRadioButtonMenuItem radio =
-                new JRadioButtonMenuItem(actions[i].toString(), actions[i].getActionW().getSmallIcon(), actions[i]
-                    .equals(currentAction));
+                new JRadioButtonMenuItem(actions[i].toString(), actions[i].getActionW().getSmallIcon(),
+                    actions[i].equals(currentAction));
             radio.setActionCommand("" + i); //$NON-NLS-1$
             radio.addActionListener(this);
             popupMouseScroll.add(radio);
@@ -128,15 +128,15 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         return popupMouseScroll;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof JRadioButtonMenuItem) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
             if (item.getParent() instanceof JPopupMenu) {
 
                 SliderChangeListener newAction = getAction(e.getActionCommand());
-                if (currentAction == newAction) {
+                if (currentAction == newAction)
                     return;
-                }
                 if (currentAction != null) {
                     currentAction.unregisterSlider(slider);
                 }
@@ -158,9 +158,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         try {
             int index = Integer.parseInt(actionCommand);
             SliderChangeListener[] actions = getActions();
-            if (index >= 0 && index < actions.length) {
+            if (index >= 0 && index < actions.length)
                 return actions[index];
-            }
         } catch (NumberFormatException e) {
         }
         return null;

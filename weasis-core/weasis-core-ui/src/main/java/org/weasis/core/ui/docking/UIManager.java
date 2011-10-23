@@ -39,18 +39,17 @@ public class UIManager {
     public static final AtomicInteger dockableUIGenerator = new AtomicInteger(1);
 
     public static final List<ViewerPlugin> VIEWER_PLUGINS = Collections.synchronizedList(new ArrayList<ViewerPlugin>());
-    public static final List<DataExplorerView> EXPLORER_PLUGINS =
-        Collections.synchronizedList(new ArrayList<DataExplorerView>());
-    public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES =
-        Collections.synchronizedList(new ArrayList<SeriesViewerFactory>());
+    public static final List<DataExplorerView> EXPLORER_PLUGINS = Collections
+        .synchronizedList(new ArrayList<DataExplorerView>());
+    public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES = Collections
+        .synchronizedList(new ArrayList<SeriesViewerFactory>());
 
     public static DataExplorerView getExplorerplugin(String name) {
         if (name != null) {
             synchronized (EXPLORER_PLUGINS) {
                 for (DataExplorerView view : EXPLORER_PLUGINS) {
-                    if (name.equals(view.getUIName())) {
+                    if (name.equals(view.getUIName()))
                         return view;
-                    }
                 }
             }
         }
@@ -66,10 +65,11 @@ public class UIManager {
                 @Override
                 public MyDoggyToolWindowManager call() throws Exception {
                     MyDoggyToolWindowManager winManager =
-                        new MyDoggyToolWindowManager(Locale.getDefault(), MyDoggyToolWindowManager.class
-                            .getClassLoader());
-                    winManager.getResourceManager().setUserBundle(Locale.getDefault(), "/toolWindow", //$NON-NLS-1$
-                        UIManager.class.getClassLoader());
+                        new MyDoggyToolWindowManager(Locale.getDefault(),
+                            MyDoggyToolWindowManager.class.getClassLoader());
+                    // TODO are the two lines below really not useful
+                    //                    winManager.getResourceManager().setUserBundle(Locale.getDefault(), "/toolWindow", //$NON-NLS-1$
+                    // UIManager.class.getClassLoader());
                     // set the size of the splitPane separator
                     for (ToolWindowAnchor anchor : ToolWindowAnchor.values()) {
                         MyDoggyToolWindowBar bar = winManager.getBar(anchor);
@@ -105,9 +105,8 @@ public class UIManager {
         synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
             List<SeriesViewerFactory> plugins = UIManager.SERIES_VIEWER_FACTORIES;
             for (final SeriesViewerFactory factory : plugins) {
-                if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer)) {
+                if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer))
                     return factory;
-                }
             }
         }
         return null;
@@ -163,6 +162,7 @@ public class UIManager {
 
         Collections.sort(plugins, new Comparator<SeriesViewerFactory>() {
 
+            @Override
             public int compare(SeriesViewerFactory s1, SeriesViewerFactory s2) {
                 return (s1.getLevel() < s2.getLevel() ? -1 : (s1.getLevel() == s2.getLevel() ? 0 : 1));
             }
