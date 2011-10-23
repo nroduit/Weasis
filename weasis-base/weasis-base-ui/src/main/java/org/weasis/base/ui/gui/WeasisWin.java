@@ -593,7 +593,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         });
         helpMenuItem.add(webMenuItem);
-        final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("Online Help"));
+        final JMenuItem websiteMenuItem = new JMenuItem("Online Help");
         websiteMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
