@@ -29,8 +29,8 @@ import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -51,7 +51,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private CheckNode drawings;
 
     public DisplayTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.mainTool);
         setDockableWidth(210);
         jbInit();
 

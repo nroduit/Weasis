@@ -75,7 +75,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public DefaultExplorer(final FileTreeModel model) {
-        super(BUTTON_NAME, NAME, ToolWindowAnchor.LEFT);
+        super(BUTTON_NAME, NAME, ToolWindowAnchor.LEFT, PluginTool.TYPE.explorer);
         setDockableWidth(300);
         scan = new JMenu("Import to");
         this.tree = new JTree(model);
@@ -161,8 +161,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (DefaultExplorer.this.clickedPath == null)
+                if (DefaultExplorer.this.clickedPath == null) {
                     return;
+                }
                 if (tree.isExpanded(DefaultExplorer.this.clickedPath)) {
                     tree.collapsePath(DefaultExplorer.this.clickedPath);
                 } else {
@@ -196,17 +197,19 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     public TreeNode getSelectedNode() {
         final TreePath path = tree.getSelectionPath();
-        if (path != null)
+        if (path != null) {
             return (TreeNode) path.getLastPathComponent();
-        else
+        } else {
             return null;
+        }
     }
 
     public File getCurrentDir() {
         final TreePath path = tree.getSelectionPath();
 
-        if (path != null)
+        if (path != null) {
             return ((TreeNode) path.getLastPathComponent()).getFile();
+        }
         return null;
     }
 
@@ -254,8 +257,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             if (oneChild instanceof TreeNode) {
                 final File file = (File) ((TreeNode) oneChild).getUserObject();
 
-                if (file.equals(selectedSubDir))
+                if (file.equals(selectedSubDir)) {
                     return (TreeNode) oneChild;
+                }
             }
         }
         return null;
@@ -285,8 +289,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                     break;
                 }
             }
-        } else if (!dirPath.startsWith(parentFile.getAbsolutePath()))
+        } else if (!dirPath.startsWith(parentFile.getAbsolutePath())) {
             return null;
+        }
 
         final Iterator<String> iter = parsePath(dir).iterator();
 
@@ -316,12 +321,13 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 }
             }
 
-            if (pathNotFound)
+            if (pathNotFound) {
                 // log.info("findNodeForDir NULL");
                 return null;
-            else
+            } else {
                 // log.info("findNodeForDir " + parentNode);
                 return parentNode;
+            }
         }
         return null;
     }
@@ -385,8 +391,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                 final int x = e.getX();
                 final int y = e.getY();
                 final TreePath path = tree.getPathForLocation(x, y);
-                if (path == null)
+                if (path == null) {
                     return;
+                }
 
                 DefaultExplorer.this.popup.removeAll();
                 if (tree.isExpanded(path)) {
@@ -468,9 +475,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     public final void expandPaths(final File selectedDir) {
 
         final TreeNode node = findNodeForDir(selectedDir);
-        if (node == null)
+        if (node == null) {
             // log.debug("expandPaths NULL ");
             return;
+        }
 
         final Vector<TreeNode> vec = new Vector<TreeNode>(1);
         vec.add(node);

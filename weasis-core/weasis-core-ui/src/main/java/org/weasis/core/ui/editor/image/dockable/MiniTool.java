@@ -41,7 +41,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     private final JSliderW slider;
 
     public MiniTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
         setDockableWidth(40);
         currentAction = getActions()[0];
         slider = createSlider(currentAction, getAnchor());
@@ -135,8 +135,9 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
             if (item.getParent() instanceof JPopupMenu) {
 
                 SliderChangeListener newAction = getAction(e.getActionCommand());
-                if (currentAction == newAction)
+                if (currentAction == newAction) {
                     return;
+                }
                 if (currentAction != null) {
                     currentAction.unregisterSlider(slider);
                 }
@@ -158,8 +159,9 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         try {
             int index = Integer.parseInt(actionCommand);
             SliderChangeListener[] actions = getActions();
-            if (index >= 0 && index < actions.length)
+            if (index >= 0 && index < actions.length) {
                 return actions[index];
+            }
         } catch (NumberFormatException e) {
         }
         return null;

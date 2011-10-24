@@ -94,7 +94,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     private List<AbstractDragGraphic> selectedGraphic;
 
     public MeasureTool(ImageViewerEventManager eventManager) {
-        super(BUTTON_NAME, BUTTON_NAME, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, BUTTON_NAME, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
         this.eventManager = eventManager;
         setIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
         setDockableWidth(DockableWidth);

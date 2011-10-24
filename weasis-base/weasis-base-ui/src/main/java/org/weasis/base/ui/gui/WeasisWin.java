@@ -46,6 +46,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
@@ -61,6 +62,7 @@ import org.noos.xing.mydoggy.MultiSplitConstraint;
 import org.noos.xing.mydoggy.MultiSplitContentManagerUI;
 import org.noos.xing.mydoggy.TabbedContentManagerUI;
 import org.noos.xing.mydoggy.TabbedContentUI;
+import org.noos.xing.mydoggy.ToolWindow;
 import org.noos.xing.mydoggy.event.ContentManagerEvent;
 import org.noos.xing.mydoggy.event.ContentManagerUIEvent;
 import org.noos.xing.mydoggy.plaf.ui.content.MyDoggyMultiSplitContentManagerUI;
@@ -640,6 +642,31 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
+    private void buildToolSubMenu(final JMenu toolMenu) {
+        ToolWindow[] tools = UIManager.toolWindowManager.getDockables();
+        if (tools != null) {
+            for (final ToolWindow t : tools) {
+                Component c = t.getComponent();
+                if (c instanceof JScrollPane) {
+                    c = ((JScrollPane) c).getViewport().getView();
+                }
+                if (c instanceof PluginTool && PluginTool.TYPE.tool.equals(((PluginTool) c).getType())) {
+                    JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getTitle(), t.isAvailable());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                t.setAvailable(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                            }
+                        }
+                    });
+                    toolMenu.add(item);
+                }
+            }
+        }
+    }
+
     private static void buildImportSubMenu(final JMenu importMenu) {
         synchronized (UIManager.EXPLORER_PLUGINS) {
             List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
@@ -695,7 +722,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private void buildMenuDisplay() {
         menuDisplay.removeAll();
-        final JMenu toolBarMenu = new JMenu("Tool Bar");
+        final JMenu toolBarMenu = new JMenu("Toolbars");
         JPopupMenu menuImport = toolBarMenu.getPopupMenu();
         // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
         if (AbstractProperties.isMacNativeLookAndFeel()) {
@@ -728,6 +755,40 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             });
         }
         menuDisplay.add(toolBarMenu);
+
+        final JMenu toolMenu = new JMenu("Tools");
+        JPopupMenu menuTool = toolMenu.getPopupMenu();
+        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
+        if (AbstractProperties.isMacNativeLookAndFeel()) {
+            toolMenu.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (toolMenu.isSelected()) {
+                        buildToolSubMenu(toolMenu);
+                    } else {
+                        toolMenu.removeAll();
+                    }
+                }
+            });
+        } else {
+            menuTool.addPopupMenuListener(new PopupMenuListener() {
+
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    buildToolSubMenu(toolMenu);
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    toolMenu.removeAll();
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                }
+            });
+        }
+        menuDisplay.add(toolMenu);
     }
 
     private static void buildMenuFile() {

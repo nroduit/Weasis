@@ -57,7 +57,7 @@ public class ImageTool extends PluginTool {
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public ImageTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
         setDockableWidth(290);
         jbInit();
 
@@ -96,6 +96,7 @@ public class ImageTool extends PluginTool {
         resetButton.setText("Reset");
         resetButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem());
             }

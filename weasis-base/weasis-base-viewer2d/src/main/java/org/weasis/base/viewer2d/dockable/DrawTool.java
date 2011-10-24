@@ -23,7 +23,7 @@ public class DrawTool extends PluginTool {
     public static final String BUTTON_NAME = "Draw";
 
     public DrawTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT);
+        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
         // setTooltips("Measurements, Annotations and ROI");
         JScrollPane jsp = new JScrollPane();
         add(jsp, BorderLayout.CENTER);
