@@ -110,7 +110,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             } else {
                 if (file[i].canRead()) {
-                    if (DicomMediaIO.MIMETYPE.equals(MimeInspector.getMimeType(file[i]))) {
+                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
@@ -155,7 +155,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 }
             } else {
                 if (file[i].canRead()) {
-                    if (DicomMediaIO.MIMETYPE.equals(MimeInspector.getMimeType(file[i]))) {
+                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.readMediaTags()) {
                             files.add(loader);

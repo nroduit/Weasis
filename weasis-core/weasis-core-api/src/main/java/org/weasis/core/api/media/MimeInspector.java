@@ -74,7 +74,31 @@ public class MimeInspector {
         }
     }
 
-    public static String getMimeType(final File file) {
+    public static boolean isMatchingMimeTypeFromMagicNumber(final File file, String mimeType) {
+        if (file == null || mimeType == null || !file.canRead()) {
+            return false;
+        } else if (file.isDirectory()) {
+            return "application/directory".equals(mimeType); //$NON-NLS-1$
+        }
+        MagicMimeEntry me = getMagicMimeEntry(mimeType);
+        if (me != null) {
+            // Otherwise find Mime Type from the magic number in file
+            RandomAccessFile raf = null;
+            try {
+                raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
+                if (mimeType.equals(me.getMatch(raf))) {
+                    return true;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                FileUtil.safeClose(raf);
+            }
+        }
+        return false;
+    }
+
+    public static String getMimeTypeFromMagicNumber(final File file) {
         if (file == null || !file.canRead()) {
             return null;
         } else if (file.isDirectory()) {
@@ -95,43 +119,35 @@ public class MimeInspector {
         return mimeType;
     }
 
-    // public static String[] getMimeTypes(final File file) {
-    // if (file == null || !file.canRead()) {
-    // return null;
-    // }
-    //
-    // // Get the file extension
-    // String fileName = file.getName();
-    //        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
-    // String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
-    //
-    // String mimeType = null;
-    //
-    // // Get Mime Type form the extension if the length > 0 and < 5
-    // if (extension != null && extension.length() > 0 && extension.length() < 5) {
-    // mimeType = mimeTypes.getProperty(extension.toLowerCase());
-    // }
-    // if (mimeType == null) {
-    // if (file.isDirectory()) {
-    //                return new String[] { "application/directory" }; //$NON-NLS-1$
-    // }
-    // // Otherwise find Mime Type from the magic number in file
-    // RandomAccessFile raf = null;
-    // try {
-    //                raf = new RandomAccessFile(file, "r"); //$NON-NLS-1$
-    // mimeType = MimeInspector.getMagicMimeType(raf);
-    // } catch (IOException e) {
-    // e.printStackTrace();
-    // } finally {
-    // FileUtil.safeClose(raf);
-    // }
-    // }
-    //
-    // if (mimeType == null) {
-    // return null;
-    // }
-    // return mimeType.split(",");
-    // }
+    public static String getMimeType(final File file) {
+        if (file == null || !file.canRead()) {
+            return null;
+        }
+
+        // Get the file extension
+        String fileName = file.getName();
+        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
+        String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
+
+        String mimeType = null;
+
+        // Get Mime Type form the extension if the length > 0 and < 5
+        if (extension != null && extension.length() > 0 && extension.length() < 5) {
+            mimeType = mimeTypes.getProperty(extension.toLowerCase());
+            if (mimeType != null) {
+                String[] mimes = mimeType.split(",");
+                // When several Mimes for an extension, try to find from magic number
+                if (mimes.length > 1) {
+                    mimeType = getMimeTypeFromMagicNumber(file);
+                    if (mimeType == null) {
+                        mimeType = mimes[0];
+                    }
+                }
+                return mimeType;
+            }
+        }
+        return getMimeTypeFromMagicNumber(file);
+    }
 
     private static void parse(Reader r) throws IOException {
         BufferedReader br = new BufferedReader(r);
@@ -192,6 +208,17 @@ public class MimeInspector {
             String mtype = me.getMatch(raf);
             if (mtype != null) {
                 return mtype;
+            }
+        }
+        return null;
+    }
+
+    private static MagicMimeEntry getMagicMimeEntry(String mimeType) {
+        if (mimeType != null) {
+            for (MagicMimeEntry m : mMagicMimeEntries) {
+                if (mimeType.equals(m.getMimeType())) {
+                    return m;
+                }
             }
         }
         return null;

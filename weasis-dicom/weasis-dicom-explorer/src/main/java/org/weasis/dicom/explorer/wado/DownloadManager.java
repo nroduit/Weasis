@@ -84,7 +84,7 @@ public class DownloadManager {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 if (FileUtil.writeFile(url, outFile) == -1) {
-                    if ("application/x-gzip".equals(MimeInspector.getMimeType(outFile))) { //$NON-NLS-1$
+                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
                     } else {
                         stream = url.openStream();
