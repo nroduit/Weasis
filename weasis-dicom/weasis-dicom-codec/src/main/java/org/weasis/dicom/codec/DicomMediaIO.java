@@ -1065,7 +1065,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
                 }
 
-                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Frame Display Shutter
+                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Real World Value Mapping
 
                 // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                 // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));

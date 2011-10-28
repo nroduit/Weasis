@@ -25,6 +25,7 @@ public class WindowLevelOperation extends AbstractOperation {
 
     public static final String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
+    @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         ImageElement image = imageOperation.getImage();
         Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
@@ -33,13 +34,15 @@ public class WindowLevelOperation extends AbstractOperation {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else {
+            Boolean padding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
             result =
                 ImageToolkit.getDefaultRenderedImage(image, source, image.getPixelWindow(window),
-                    image.getPixelLevel(level));
+                    image.getPixelLevel(level), padding == null ? true : padding);
         }
         return result;
     }
 
+    @Override
     public String getOperationName() {
         return name;
     }

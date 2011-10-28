@@ -331,7 +331,7 @@ public class ImageToolkit {
     }
 
     public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
-        float level) {
+        float level, boolean pixelPadding) {
         if (image == null || source == null) {
             return null;
         }
@@ -388,6 +388,7 @@ public class ImageToolkit {
                     paddingValue = paddingLimit;
                     paddingLimit = temp;
                 }
+                // Enlarge LUT to pixel padding values
                 if (paddingValue < minValue) {
                     minValue = paddingValue;
                 }
@@ -396,6 +397,7 @@ public class ImageToolkit {
                 }
                 tableLength = (maxValue - minValue + 1);
             }
+
             lut = new byte[1][tableLength];
 
             for (int i = 0; i < tableLength; i++) {
@@ -413,7 +415,7 @@ public class ImageToolkit {
                 lut[0][i] = (byte) value;
             }
 
-            if (paddingValue != null) {
+            if (pixelPadding && paddingValue != null) {
                 // Set padding values to 0 in case they are in the range of the current LUT values
                 int i = paddingValue - minValue;
                 int max = paddingLimit - minValue + 1;
@@ -449,9 +451,14 @@ public class ImageToolkit {
         return result;
     }
 
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
+        float level) {
+        return getDefaultRenderedImage(image, source, window, level, true);
+    }
+
     public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source) {
         float window = image.getPixelWindow(image.getDefaultWindow());
         float level = image.getPixelLevel(image.getDefaultLevel());
-        return getDefaultRenderedImage(image, source, window, level);
+        return getDefaultRenderedImage(image, source, window, level, true);
     }
 }
