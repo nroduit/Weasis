@@ -73,7 +73,6 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ShutterFinalShape = new TagW("Shutter Shape", TagType.Object); //$NON-NLS-1$
     public static final TagW ShutterRGBColor = new TagW("Shutter Color", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
-
     // Do not internationalize WadoTransferSyntaxUID, WadoCompressionRate and DirectDownloadFile because they are
     // defined in wado_query.xsd
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$

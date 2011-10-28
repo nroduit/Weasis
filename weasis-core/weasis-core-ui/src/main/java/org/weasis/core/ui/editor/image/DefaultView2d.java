@@ -186,6 +186,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
+        actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
 
     }
 
@@ -690,13 +691,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 center();
             }
         } else if (command.equals(ActionW.WINDOW.cmd())) {
-            actionsInView.put(ActionW.WINDOW.cmd(), ((Integer) evt.getNewValue()).floatValue());
+            actionsInView.put(command, ((Integer) evt.getNewValue()).floatValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
         } else if (command.equals(ActionW.LEVEL.cmd())) {
-            actionsInView.put(ActionW.LEVEL.cmd(), ((Integer) evt.getNewValue()).floatValue());
+            actionsInView.put(command, ((Integer) evt.getNewValue()).floatValue());
             imageLayer.updateImageOperation(WindowLevelOperation.name);
         } else if (command.equals(ActionW.ROTATION.cmd())) {
-            actionsInView.put(ActionW.ROTATION.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(RotationOperation.name);
             updateAffineTransform();
         } else if (command.equals(ActionW.ZOOM.cmd())) {
@@ -710,7 +711,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         } else if (command.equals(ActionW.LENS.cmd())) {
             Boolean showLens = (Boolean) evt.getNewValue();
-            actionsInView.put(ActionW.LENS.cmd(), showLens);
+            actionsInView.put(command, showLens);
             if (showLens) {
                 if (lens == null) {
                     lens = new ZoomWin(this);
@@ -744,23 +745,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         } else if (command.equals(ActionW.FLIP.cmd())) {
             // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
-            actionsInView.put(ActionW.FLIP.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(FlipOperation.name);
             updateAffineTransform();
         } else if (command.equals(ActionW.LUT.cmd())) {
-            actionsInView.put(ActionW.LUT.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(PseudoColorOperation.name);
         } else if (command.equals(ActionW.INVERSELUT.cmd())) {
-            actionsInView.put(ActionW.INVERSELUT.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(PseudoColorOperation.name);
         } else if (command.equals(ActionW.FILTER.cmd())) {
-            actionsInView.put(ActionW.FILTER.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
         } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
-            actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(ShutterOperation.name);
+        } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
+            actionsInView.put(command, evt.getNewValue());
+            imageLayer.updateImageOperation(WindowLevelOperation.name);
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
-            actionsInView.put(ActionW.PROGRESSION.cmd(), evt.getNewValue());
+            actionsInView.put(command, evt.getNewValue());
             imageLayer.updateAllImageOperations();
         }
         if (lens != null) {
