@@ -1,0 +1,10 @@
+# Ignore the eclipse configuration files
+.classpath
+.project
+.settings/
+
+# Ignore Maven files
+target/
+
+# Other source repository archive directories (protects when importing)
+.svn/
