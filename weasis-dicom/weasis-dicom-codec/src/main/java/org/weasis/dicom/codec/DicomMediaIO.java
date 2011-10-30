@@ -564,6 +564,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     private void computeSUVFactor(DicomObject dicomObject, HashMap<TagW, Object> tagList, int index) {
+        // From vendor neutral code at http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
         String modlality = (String) tagList.get(TagW.Modality);
         if ("PT".equals(modlality)) { //$NON-NLS-1$
             String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage, null);
@@ -589,7 +590,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             Date acquisitionDateTime =
                                 TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
                                     (Date) tagList.get(TagW.AcquisitionTime));
-                            Date scanDate = (Date) tagList.get(TagW.SeriesDate);
+                            Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
                             if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
                                 && halfLife != null && acquisitionDateTime != null
                                 && (injectDateTime != null || (scanDate != null && injectTime != null))) {

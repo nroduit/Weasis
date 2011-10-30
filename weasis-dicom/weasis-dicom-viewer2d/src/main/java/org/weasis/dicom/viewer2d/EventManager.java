@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,10 +53,14 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
@@ -550,10 +555,42 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     moveTroughSliceAction.start();
                 }
                 return null;
+            } else if (keyEvent == KeyEvent.VK_D) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof LineGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
+            } else if (keyEvent == KeyEvent.VK_A) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof AngleToolGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
             }
         }
 
         return action;
+    }
+
+    private void setMeasurement(Object obj) {
+        ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+        if (view != null) {
+            final ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                String cmd = ActionW.MEASURE.cmd();
+                if (!toolBar.isCommandActive(cmd)) {
+                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                }
+            }
+        }
+        measureAction.setSelectedItem(obj);
     }
 
     @Override
