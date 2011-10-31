@@ -12,6 +12,7 @@ package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,13 +33,20 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.model.GraphicsListener;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -50,8 +58,9 @@ import org.weasis.core.ui.graphic.Graphic;
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 
     /** The single instance of this singleton class. */
-
     private static EventManager instance;
+    private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
+        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
 
     private final SliderCineListener moveTroughSliceAction;
     private final SliderChangeListener windowAction;
@@ -69,6 +78,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final ComboItemListener filterAction;
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
+    private final ComboItemListener measureAction;
 
     private final PannerListener panAction;
 
@@ -111,6 +121,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
         iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
+        iniAction(measureAction =
+            newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
 
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
@@ -169,6 +181,76 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 firePropertyChange(action.cmd(), null, selected);
             }
         };
+    }
+
+    @Override
+    public ActionW getActionFromCommand(String command) {
+        ActionW action = super.getActionFromCommand(command);
+
+        if (action == null && command != null) {
+            for (ActionW a : keyEventActions) {
+                if (a.cmd().equals(command)) {
+                    return a;
+                }
+            }
+        }
+
+        return action;
+    }
+
+    @Override
+    public ActionW getActionFromkeyEvent(int keyEvent) {
+        ActionW action = super.getActionFromkeyEvent(keyEvent);
+
+        if (action == null && keyEvent != 0) {
+            for (ActionW a : keyEventActions) {
+                if (a.getKeyCode() == keyEvent) {
+                    return a;
+                }
+            }
+            if (keyEvent == ActionW.CINESTART.getKeyCode()) {
+                if (moveTroughSliceAction.isCining()) {
+                    moveTroughSliceAction.stop();
+                } else {
+                    moveTroughSliceAction.start();
+                }
+                return null;
+            } else if (keyEvent == KeyEvent.VK_D) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof LineGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
+            } else if (keyEvent == KeyEvent.VK_A) {
+                for (Object obj : measureAction.getAllItem()) {
+                    if (obj instanceof AngleToolGraphic) {
+                        setMeasurement(obj);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return action;
+    }
+
+    private void setMeasurement(Object obj) {
+        ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
+        if (view != null) {
+            final ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                String cmd = ActionW.MEASURE.cmd();
+                if (!toolBar.isCommandActive(cmd)) {
+                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                    if (view != null) {
+                        view.setMouseActions(mouseActions);
+                    }
+                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                }
+            }
+        }
+        measureAction.setSelectedItem(obj);
     }
 
     @Override
@@ -263,14 +345,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
-        ImageElement image = defaultView2d.getImage();
-        if (image == null || image.getImage(null) == null) {
+        if (defaultView2d.getSourceImage() == null) {
             enableActions(false);
             return false;
         }
         if (!enabledAction) {
             enableActions(true);
         }
+        ImageElement image = defaultView2d.getImage();
         MediaSeries<ImageElement> series = defaultView2d.getSeries();
         windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
             ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
@@ -292,6 +374,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         inverseStackAction.setSelected((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK.cmd()));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
+
+        for (DockableTool p : selectedView2dContainer.getToolPanel()) {
+            if (p instanceof GraphicsListener) {
+                defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+            }
+        }
+
         return true;
     }
 
