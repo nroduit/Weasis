@@ -187,7 +187,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    // Return the display image without annotations
                     RenderedImage display = selectedImagePane.getImageLayer().getDisplayImage();
+                    // Return the display with all annotations
+                    // display = ViewTransferHandler.createComponentImage(selectedImagePane);
                     ImagePrint print = new ImagePrint(display, 1.0);
                     print.print();
                 }
