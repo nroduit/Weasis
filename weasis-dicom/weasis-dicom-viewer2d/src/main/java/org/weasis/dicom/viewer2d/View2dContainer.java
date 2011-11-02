@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -46,6 +47,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.util.ImagePrint;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -181,6 +183,15 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             menuRoot.setText(View2dFactory.NAME);
 
             JMenuItem menuPrint = new JMenuItem("Print Image"); //$NON-NLS-1$
+            menuPrint.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    RenderedImage display = selectedImagePane.getImageLayer().getDisplayImage();
+                    ImagePrint print = new ImagePrint(display, 1.0);
+                    print.print();
+                }
+            });
             menuRoot.add(menuPrint);
 
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
@@ -291,9 +302,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             MediaSeries<DicomImageElement> series = selectedImagePane.getSeries();
             if (series != null) {
                 DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel)) {
+                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel))
                     return;
-                }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, series));
             }
@@ -472,9 +482,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (isViewType(DefaultView2d.class, clazz)) {
+        if (isViewType(DefaultView2d.class, clazz))
             return createDefaultView(clazz);
-        }
 
         try {
             // FIXME use classloader.loadClass or injection

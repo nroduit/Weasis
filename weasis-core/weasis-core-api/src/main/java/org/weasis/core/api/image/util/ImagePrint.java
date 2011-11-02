@@ -31,7 +31,7 @@ public class ImagePrint implements Printable {
     public void print() {
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(this);
-        // pj.printDialog();
+        pj.printDialog();
         try {
             pj.print();
         } catch (Exception e) {
@@ -41,23 +41,20 @@ public class ImagePrint implements Printable {
 
     @Override
     public int print(Graphics g, PageFormat f, int pageIndex) {
-        if (pageIndex >= 1) {
+        if (pageIndex >= 1)
             return Printable.NO_SUCH_PAGE;
-        }
         Graphics2D g2d = (Graphics2D) g;
         g2d.translate(f.getImageableX(), f.getImageableY());
         if (renderedImage != null) {
             printImage(g2d, renderedImage);
             return Printable.PAGE_EXISTS;
-        } else {
+        } else
             return Printable.NO_SUCH_PAGE;
-        }
     }
 
     public void printImage(Graphics2D g2d, RenderedImage image) {
-        if ((image == null) || (g2d == null)) {
+        if ((image == null) || (g2d == null))
             return;
-        }
         int x = printLoc.x;
         int y = printLoc.y;
         AffineTransform at = AffineTransform.getScaleInstance(scale, scale);
