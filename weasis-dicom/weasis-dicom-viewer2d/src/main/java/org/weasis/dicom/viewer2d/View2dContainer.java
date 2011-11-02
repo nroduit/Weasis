@@ -179,6 +179,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (menuRoot != null) {
             menuRoot.removeAll();
             menuRoot.setText(View2dFactory.NAME);
+
+            JMenuItem menuPrint = new JMenuItem("Print Image"); //$NON-NLS-1$
+            menuRoot.add(menuPrint);
+
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
             if (viewingAction instanceof ComboItemListener) {
                 menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
