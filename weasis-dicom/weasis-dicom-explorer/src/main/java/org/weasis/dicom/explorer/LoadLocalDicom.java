@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
+import java.awt.Point;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -57,20 +60,9 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         this.flatSearch = flatSearch;
     }
 
-    public JProgressBar getProgressBar() {
-        return progressBar;
-    }
-
-    public void setProgressBar(JProgressBar progressBar) {
-        this.progressBar = progressBar;
-        if (progressBar != null) {
-            progressBar.setIndeterminate(true);
-            progressBar.setStringPainted(true);
-        }
-    }
-
     @Override
     protected Boolean doInBackground() throws Exception {
+        AbstractProperties.glassPane.setVisible(true);
         // if (flatSearch) {
         addSelectionAndnotify(files, true);
         // Issue on linux to many files opened
@@ -82,16 +74,16 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
-        if (progressBar != null) {
-            progressBar.setIndeterminate(false);
-        }
+        GhostGlassPane glassPane = AbstractProperties.glassPane;
+        glassPane.setMessage(null, null);
+        glassPane.setVisible(false);
         writeInfo(Messages.getString("LoadLocalDicom.end")); //$NON-NLS-1$
     }
 
     private void writeInfo(String text) {
-        if (progressBar != null) {
-            progressBar.setString(text);
-        }
+        GhostGlassPane glassPane = AbstractProperties.glassPane;
+        glassPane.setMessage(new String[] { text },
+            new Point(glassPane.getX() + 5, glassPane.getY() + glassPane.getHeight() - 5));
         log.info(text);
     }
 
