@@ -82,6 +82,9 @@ public class OperationsManager {
 
     public RenderedImage updateAllOperations() {
         RenderedImage source = imageOperation.getSourceImage();
+        if (operations.size() == 0) {
+            return source;
+        }
         RenderedImage result = null;
         if (source != null && operations.size() > 0) {
             result = operations.get(0).getRenderedImage(source, imageOperation);
