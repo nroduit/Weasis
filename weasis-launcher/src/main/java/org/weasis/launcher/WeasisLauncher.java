@@ -214,12 +214,14 @@ public class WeasisLauncher {
             File basePortableDir = new File(portable);
             String baseURL = ""; //$NON-NLS-1$
             try {
-                baseURL = basePortableDir.toURI().toURL().toString();
+                baseURL = basePortableDir.toURI().toURL().toString() + "weasis";
+                System.setProperty("weasis.codebase.url", baseURL); //$NON-NLS-1$
+                baseURL += "/" + CONFIG_DIRECTORY + "/";
+                System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
+                System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.setProperty("weasis.codebase.url", baseURL + "weasis"); //$NON-NLS-1$ //$NON-NLS-2$
-            System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + "weasis/conf/config.properties"); //$NON-NLS-1$
         }
         // Read configuration properties.
         Properties configProps = WeasisLauncher.loadConfigProperties();
