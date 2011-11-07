@@ -10,21 +10,17 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.Point;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
-import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -46,10 +42,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private final DicomModel dicomModel;
     private final boolean recursive;
     private boolean openPlugin;
-    private final boolean flatSearch;
-    private JProgressBar progressBar = null;
 
-    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel, boolean flatSearch) {
+    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -57,33 +51,24 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         this.files = files;
         this.recursive = recursive;
         this.openPlugin = true;
-        this.flatSearch = flatSearch;
     }
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        AbstractProperties.glassPane.setVisible(true);
-        // if (flatSearch) {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
+            this));
         addSelectionAndnotify(files, true);
-        // Issue on linux to many files opened
-        // } else {
-        // addSelection(files, true);
-        // }
         return true;
     }
 
     @Override
     protected void done() {
-        GhostGlassPane glassPane = AbstractProperties.glassPane;
-        glassPane.setMessage(null, null);
-        glassPane.setVisible(false);
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
+            this));
         writeInfo(Messages.getString("LoadLocalDicom.end")); //$NON-NLS-1$
     }
 
     private void writeInfo(String text) {
-        GhostGlassPane glassPane = AbstractProperties.glassPane;
-        glassPane.setMessage(new String[] { text },
-            new Point(glassPane.getX() + 5, glassPane.getY() + glassPane.getHeight() - 5));
         log.info(text);
     }
 

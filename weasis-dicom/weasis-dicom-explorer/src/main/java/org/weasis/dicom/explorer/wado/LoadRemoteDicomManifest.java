@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingWorker;
 
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
@@ -56,23 +57,28 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
             DownloadPriority val2 = o2.getPriority();
 
             int rep = val1.getPriority().compareTo(val2.getPriority());
-            if (rep != 0)
+            if (rep != 0) {
                 return rep;
+            }
             rep = val1.getPatientName().compareTo(val2.getPatientName());
-            if (rep != 0)
+            if (rep != 0) {
                 return rep;
+            }
             if (val1.getStudyDate() != null && val2.getStudyDate() != null) {
                 // inverse time
                 rep = val2.getStudyDate().compareTo(val1.getStudyDate());
-                if (rep != 0)
+                if (rep != 0) {
                     return rep;
+                }
             }
             rep = val1.getStudyInstanceUID().compareTo(val2.getStudyInstanceUID());
-            if (rep != 0)
+            if (rep != 0) {
                 return rep;
+            }
             rep = val1.getSeriesNumber().compareTo(val2.getSeriesNumber());
-            if (rep != 0)
+            if (rep != 0) {
                 return rep;
+            }
             String s1 = (String) o1.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
             String s2 = (String) o2.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
             return s1.compareTo(s2);
@@ -80,15 +86,17 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
     }
 
     public LoadRemoteDicomManifest(String[] xmlFiles, DataExplorerModel explorerModel) {
-        if (xmlFiles == null || !(explorerModel instanceof DicomModel))
+        if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
         this.xmlFiles = xmlFiles;
         this.dicomModel = (DicomModel) explorerModel;
     }
 
     public LoadRemoteDicomManifest(File[] xmlFiles, DataExplorerModel explorerModel) {
-        if (xmlFiles == null || !(explorerModel instanceof DicomModel))
+        if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+        }
         String[] xmlRef = new String[xmlFiles.length];
         for (int i = 0; i < xmlFiles.length; i++) {
             if (xmlFiles[i] != null) {
@@ -101,6 +109,8 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
+            this));
         for (int i = 0; i < xmlFiles.length; i++) {
             if (xmlFiles[i] != null) {
                 URI uri = null;
@@ -145,6 +155,8 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
+            this));
     }
 
     public static void stopDownloading(DicomSeries series) {
