@@ -540,7 +540,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < files.length; i++) {
                         files[i] = new File(args.get(i));
                     }
-                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, false));
+                    loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                 } else if (opt.isSet("remote")) { //$NON-NLS-1$
                     loadingExecutor.execute(new LoadRemoteDicomURL(args.toArray(new String[args.size()]),
                         DicomModel.this));
@@ -591,7 +591,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                                 files[i] = new File(baseDir, dirs[i]);
                             }
                         }
-                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this, true));
+                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                     }
                 }
             }
@@ -608,7 +608,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$
+        if (opt.isSet("help") || (args.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
             opt.usage();
             return;
         }

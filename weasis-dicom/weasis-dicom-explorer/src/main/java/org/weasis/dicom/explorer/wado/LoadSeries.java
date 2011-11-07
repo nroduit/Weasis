@@ -298,11 +298,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
                         // Solaris has all the decoders, but no bundle has been built for Weasis
                         String osName = AbstractProperties.OPERATING_SYSTEM;
-                        if (!(osName.startsWith("win") && "x86".equals(System.getProperty("os.arch")))
-                            && !osName.startsWith("linux")) {
-                            if (wado_tsuid.startsWith("1.2.840.10008.1.2.4.5")
-                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.7")
-                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.8")) {
+                        if (!(osName.startsWith("win") && "x86".equals(System.getProperty("os.arch"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            && !osName.startsWith("linux")) { //$NON-NLS-1$
+                            if (wado_tsuid.startsWith("1.2.840.10008.1.2.4.5") //$NON-NLS-1$
+                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.7") //$NON-NLS-1$
+                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.8")) { //$NON-NLS-1$
                                 wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
                             }
                         }

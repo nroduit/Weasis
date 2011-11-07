@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
 import org.slf4j.LoggerFactory;
@@ -43,10 +42,8 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private final DicomModel dicomModel;
     private final boolean recursive;
     private boolean openPlugin;
-    private final boolean flatSearch;
-    private JProgressBar progressBar = null;
 
-    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel, boolean flatSearch) {
+    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -54,44 +51,24 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         this.files = files;
         this.recursive = recursive;
         this.openPlugin = true;
-        this.flatSearch = flatSearch;
-    }
-
-    public JProgressBar getProgressBar() {
-        return progressBar;
-    }
-
-    public void setProgressBar(JProgressBar progressBar) {
-        this.progressBar = progressBar;
-        if (progressBar != null) {
-            progressBar.setIndeterminate(true);
-            progressBar.setStringPainted(true);
-        }
     }
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        // if (flatSearch) {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
+            this));
         addSelectionAndnotify(files, true);
-        // Issue on linux to many files opened
-        // } else {
-        // addSelection(files, true);
-        // }
         return true;
     }
 
     @Override
     protected void done() {
-        if (progressBar != null) {
-            progressBar.setIndeterminate(false);
-        }
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
+            this));
         writeInfo(Messages.getString("LoadLocalDicom.end")); //$NON-NLS-1$
     }
 
     private void writeInfo(String text) {
-        if (progressBar != null) {
-            progressBar.setString(text);
-        }
         log.info(text);
     }
 
