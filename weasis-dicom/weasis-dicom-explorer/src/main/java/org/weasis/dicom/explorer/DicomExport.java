@@ -18,11 +18,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.util.FontTools;
 
 public class DicomExport extends AbstractWizardDialog {
 
@@ -37,17 +35,6 @@ public class DicomExport extends AbstractWizardDialog {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
 
-        final JProgressBar info = new JProgressBar();
-        info.setFont(FontTools.getFont10());
-        final GridBagConstraints gridBagConstraints_0 = new GridBagConstraints();
-        gridBagConstraints_0.insets = new Insets(10, 10, 10, 30);
-        gridBagConstraints_0.anchor = GridBagConstraints.WEST;
-        gridBagConstraints_0.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints_0.gridy = 0;
-        gridBagConstraints_0.gridx = 0;
-        gridBagConstraints_0.weightx = 1.0;
-        jPanelButtom.add(info, gridBagConstraints_0);
-
         final JButton exportButton = new JButton();
         exportButton.addActionListener(new ActionListener() {
 
@@ -60,7 +47,7 @@ public class DicomExport extends AbstractWizardDialog {
                 }
                 if (object instanceof ExportDicom) {
                     ExportDicom selectedPage = (ExportDicom) object;
-                    selectedPage.exportDICOM(dicomModel, info);
+                    selectedPage.exportDICOM(dicomModel, null);
                 }
             }
         });

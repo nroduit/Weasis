@@ -116,10 +116,6 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         }
     }
 
-    private synchronized void readLocalProperties() {
-
-    }
-
     public void browseImgFile() {
         String directory = props.getProperty(lastDirKey, "");//$NON-NLS-1$
         JFileChooser fileChooser = new JFileChooser(directory);
