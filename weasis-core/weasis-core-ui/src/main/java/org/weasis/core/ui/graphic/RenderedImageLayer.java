@@ -15,12 +15,7 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 
 import javax.media.jai.PlanarImage;
@@ -82,6 +77,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         return sourceImage;
     }
 
+    @Override
     public RenderedImage getSourceRenderedImage() {
         if (sourceImage != null) {
             return sourceImage.getImage(preprocessing);
@@ -118,6 +114,97 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
     }
 
+    // public void drawImage(Graphics2D g2d) {
+    // // Get the clipping rectangle
+    // if (!visible || displayImage == null) {
+    // return;
+    // }
+    // Rectangle clipBounds = g2d.getClipBounds();
+    // if (clipBounds == null) {
+    // clipBounds =
+    // new Rectangle(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth(),
+    // displayImage.getHeight());
+    // }
+    // Shape clip = g2d.getClip();
+    // if (clip instanceof Rectangle2D) {
+    // Rectangle2D rect =
+    // new Rectangle2D.Double(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth() - 1,
+    // displayImage.getHeight() - 1);
+    // rect = rect.createIntersection((Rectangle2D) clip);
+    // if (rect.isEmpty()) {
+    // return;
+    // }
+    // g2d.setClip(rect);
+    // }
+    //
+    // // final Rectangle vr = computeRect(displayImage.getImage(), clipBounds, translateX, translateY);
+    // // boolean tilesMissing = false;
+    // // for (int y = 0; y < vr.height; y++) {
+    // // for (int x = 0; x < vr.width; x++) {
+    // // final Raster r = displayImage.getTile(vr.x + x, vr.y + y);
+    // // final int x0 = (vr.x + x) * tileWidth;
+    // // final int y0 = (vr.y + y) * tileHeight;
+    // // if (r != null) {
+    // // Raster raster = r;
+    // // if (r.getMinX() != 0 || r.getMinY() != 0) {
+    // // raster = r.createTranslatedChild(0, 0);
+    // // }
+    // // final ColorModel srcCM = displayImage.getColorModel();
+    // // final BufferedImage bi = new BufferedImage(srcCM, (WritableRaster) raster, false, null);
+    // // g2d.drawImage(bi, x0 + translateX, y0 + translateY, null);
+    // // }
+    // // else {
+    // // tilesMissing = true;
+    // // }
+    // // }
+    // // }
+    // // g2d.setClip(clip);
+    // // if (tilesMissing) {
+    // // orderTiles();
+    // // }
+    //
+    // int txmin = XtoTileX(clipBounds.x);
+    // txmin = Math.max(txmin, displayImage.getMinTileX());
+    // txmin = Math.min(txmin, displayImage.getMinTileX() + displayImage.getNumXTiles() - 1);
+    // int txmax = XtoTileX(clipBounds.x + clipBounds.width - 1);
+    // txmax = Math.max(txmax, displayImage.getMinTileX());
+    // txmax = Math.min(txmax, displayImage.getMinTileX() + displayImage.getNumXTiles() - 1);
+    // int tymin = YtoTileY(clipBounds.y);
+    // tymin = Math.max(tymin, displayImage.getMinTileY());
+    // tymin = Math.min(tymin, displayImage.getMinTileY() + displayImage.getNumYTiles() - 1);
+    // int tymax = YtoTileY(clipBounds.y + clipBounds.height - 1);
+    // tymax = Math.max(tymax, displayImage.getMinTileY());
+    // tymax = Math.min(tymax, displayImage.getMinTileY() + displayImage.getNumYTiles() - 1);
+    // final ColorModel cm = displayImage.getColorModel();
+    // final SampleModel sm = displayImage.getSampleModel();
+    // if (sm != null && cm != null) {
+    // // Loop over tiles within the clipping region
+    // for (int tj = tymin; tj <= tymax; tj++) {
+    // for (int ti = txmin; ti <= txmax; ti++) {
+    // int tx = TileXtoX(ti);
+    // int ty = TileYtoY(tj);
+    // Raster tile = null;
+    // try {
+    // tile = displayImage.getTile(ti, tj);
+    // } catch (Exception ex) {
+    // ex.printStackTrace();
+    // }
+    // if (tile != null) {
+    // WritableRaster wr = Raster.createWritableRaster(sm, tile.getDataBuffer(), null);
+    // BufferedImage bi = new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
+    // // AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
+    // // if (_transform != null) {
+    // // at.concatenate(_transform);
+    // // }
+    // g2d.drawImage(bi, tx, ty, null);
+    // }
+    // }
+    // }
+    // }
+    // g2d.setClip(clip);
+    //
+    // }
+
     public void drawImage(Graphics2D g2d) {
         // Get the clipping rectangle
         if (!visible || displayImage == null) {
@@ -141,70 +228,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
             g2d.setClip(rect);
         }
 
-        // final Rectangle vr = computeRect(displayImage.getImage(), clipBounds, translateX, translateY);
-        // boolean tilesMissing = false;
-        // for (int y = 0; y < vr.height; y++) {
-        // for (int x = 0; x < vr.width; x++) {
-        // final Raster r = displayImage.getTile(vr.x + x, vr.y + y);
-        // final int x0 = (vr.x + x) * tileWidth;
-        // final int y0 = (vr.y + y) * tileHeight;
-        // if (r != null) {
-        // Raster raster = r;
-        // if (r.getMinX() != 0 || r.getMinY() != 0) {
-        // raster = r.createTranslatedChild(0, 0);
-        // }
-        // final ColorModel srcCM = displayImage.getColorModel();
-        // final BufferedImage bi = new BufferedImage(srcCM, (WritableRaster) raster, false, null);
-        // g2d.drawImage(bi, x0 + translateX, y0 + translateY, null);
-        // }
-        // else {
-        // tilesMissing = true;
-        // }
-        // }
-        // }
-        // g2d.setClip(clip);
-        // if (tilesMissing) {
-        // orderTiles();
-        // }
-
-        int txmin = XtoTileX(clipBounds.x);
-        txmin = Math.max(txmin, displayImage.getMinTileX());
-        txmin = Math.min(txmin, displayImage.getMinTileX() + displayImage.getNumXTiles() - 1);
-        int txmax = XtoTileX(clipBounds.x + clipBounds.width - 1);
-        txmax = Math.max(txmax, displayImage.getMinTileX());
-        txmax = Math.min(txmax, displayImage.getMinTileX() + displayImage.getNumXTiles() - 1);
-        int tymin = YtoTileY(clipBounds.y);
-        tymin = Math.max(tymin, displayImage.getMinTileY());
-        tymin = Math.min(tymin, displayImage.getMinTileY() + displayImage.getNumYTiles() - 1);
-        int tymax = YtoTileY(clipBounds.y + clipBounds.height - 1);
-        tymax = Math.max(tymax, displayImage.getMinTileY());
-        tymax = Math.min(tymax, displayImage.getMinTileY() + displayImage.getNumYTiles() - 1);
-        final ColorModel cm = displayImage.getColorModel();
-        final SampleModel sm = displayImage.getSampleModel();
-        if (sm != null && cm != null) {
-            // Loop over tiles within the clipping region
-            for (int tj = tymin; tj <= tymax; tj++) {
-                for (int ti = txmin; ti <= txmax; ti++) {
-                    int tx = TileXtoX(ti);
-                    int ty = TileYtoY(tj);
-                    Raster tile = null;
-                    try {
-                        tile = displayImage.getTile(ti, tj);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                    if (tile != null) {
-                        WritableRaster wr = Raster.createWritableRaster(sm, tile.getDataBuffer(), null);
-                        BufferedImage bi = new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
-                        // AffineTransform at = AffineTransform.getTranslateInstance(0, 0);
-                        // if (_transform != null) {
-                        // at.concatenate(_transform);
-                        // }
-                        g2d.drawImage(bi, tx, ty, null);
-                    }
-                }
-            }
-        }
+        g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
         g2d.setClip(clip);
 
     }
