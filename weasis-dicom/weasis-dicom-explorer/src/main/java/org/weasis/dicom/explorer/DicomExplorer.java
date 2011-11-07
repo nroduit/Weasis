@@ -1511,6 +1511,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private JPanel getLoadingPanel() {
         if (panel_4 == null) {
             panel_4 = new JPanel();
+            panel_4.add(globalProgress);
             final JLabel labelNewLabel = new JLabel("Loading...");
             panel_4.add(labelNewLabel);
         }
