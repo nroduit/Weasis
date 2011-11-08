@@ -277,7 +277,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (dicomSeries != null) {
             if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
                 if (dicomSeries instanceof DicomSeries) {
-                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries);
+                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries, this);
                 }
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -298,7 +298,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
                     if (group instanceof DicomSeries) {
-                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
+                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
                     }
                 }
             }
@@ -320,7 +320,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
                         MediaSeriesGroup group = it2.next();
                         if (group instanceof DicomSeries) {
-                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group);
+                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
                         }
                     }
                 }
