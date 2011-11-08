@@ -180,7 +180,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     @Override
     protected void done() {
         if (!isStopped()) {
-            LoadRemoteDicomManifest.currentTasks.remove(this);
+            LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
             Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
@@ -999,19 +999,21 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 if (change) {
                     p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
                     LoadRemoteDicomManifest.loadingQueue.offer(this);
-
-                    for (LoadSeries s : LoadRemoteDicomManifest.currentTasks) {
-                        if (s != this && StateValue.STARTED.equals(s.getState())) {
-                            LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar());
-                            s.cancel(true);
-                            taskResume.setPriority(s.getPriority());
-                            Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
-                            if (thumbnail != null) {
-                                LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
-                                addListenerToThumbnail(thumbnail, taskResume, dicomModel);
+                    synchronized (LoadRemoteDicomManifest.currentTasks) {
+                        for (LoadSeries s : LoadRemoteDicomManifest.currentTasks) {
+                            if (s != this && StateValue.STARTED.equals(s.getState())) {
+                                LoadSeries taskResume =
+                                    new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar());
+                                s.cancel(true);
+                                taskResume.setPriority(s.getPriority());
+                                Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
+                                if (thumbnail != null) {
+                                    LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
+                                    addListenerToThumbnail(thumbnail, taskResume, dicomModel);
+                                }
+                                LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
+                                break;
                             }
-                            LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
-                            break;
                         }
                     }
                 }
