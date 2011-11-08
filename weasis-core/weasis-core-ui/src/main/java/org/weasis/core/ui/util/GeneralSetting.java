@@ -139,7 +139,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html");
         StyleSheet ss = ((HTMLEditorKit) txtpnNote.getEditorKit()).getStyleSheet();
-        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#"
+            + Integer.toHexString((labelLocale.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";margin-right:0;margin-left:0;font-weight:normal;}");
         txtpnNote.setText(String.format(Messages.getString("GeneralSetting.txtpnNote"), getInstalledLanguages())); //$NON-NLS-1$
         add(txtpnNote, gbc_txtpnNote);
         this.add(component1, new GridBagConstraints(3, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
