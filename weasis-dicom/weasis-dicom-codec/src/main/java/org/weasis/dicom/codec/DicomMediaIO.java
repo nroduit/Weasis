@@ -908,13 +908,16 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             image[i] = new DicomImageElement(this, i);
                         }
                     } else {
-                        image = new MediaElement[1];
                         String modality = (String) getTagValue(TagW.Modality);
                         boolean ps =
                             modality != null
                                 && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         if (ps) {
+                            image = new MediaElement[1];
                             image[0] = new DicomSpecialElement(this, null);
+                        } else {
+                            // Corrupted image => should have one frame
+                            image = new MediaElement[0];
                         }
                     }
                 }
