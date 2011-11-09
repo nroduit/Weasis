@@ -100,8 +100,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     public final E getMedia(MEDIA_POSITION position) {
         synchronized (medias) {
             int size = medias.size();
-            if (size == 0)
+            if (size == 0) {
                 return null;
+            }
             int pos = 0;
             if (MEDIA_POSITION.FIRST.equals(position)) {
                 pos = 0;
@@ -117,12 +118,14 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     public final int getImageIndex(E source) {
-        if (source == null)
+        if (source == null) {
             return -1;
+        }
         synchronized (medias) {
             for (int i = 0; i < medias.size(); i++) {
-                if (medias.get(i) == source)
+                if (medias.get(i) == source) {
                     return i;
+                }
             }
         }
         return -1;
@@ -146,8 +149,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public final E getMedia(int index) {
         synchronized (medias) {
-            if (index >= 0 && index < medias.size())
+            if (index >= 0 && index < medias.size()) {
                 return medias.get(index);
+            }
         }
         return null;
     }
@@ -161,6 +165,10 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     public void dispose() {
         synchronized (medias) {
             for (MediaElement media : medias) {
+                if (media instanceof ImageElement) {
+                    // Removing from cache will close the image stream
+                    ((ImageElement) media).removeImageFromCache();
+                }
                 media.dispose();
             }
         }
@@ -200,8 +208,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        if (sequenceDataFlavor.equals(flavor))
+        if (sequenceDataFlavor.equals(flavor)) {
             return this;
+        }
         throw new UnsupportedFlavorException(flavor);
     }
 
@@ -221,8 +230,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     public void firePropertyChange(final ObservableEvent event) {
         if (propertyChange != null) {
-            if (event == null)
+            if (event == null) {
                 throw new NullPointerException();
+            }
             if (SwingUtilities.isEventDispatchThread()) {
                 propertyChange.firePropertyChange(event);
             } else {
@@ -321,8 +331,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             synchronized (medias) {
                 for (int i = 0; i < medias.size(); i++) {
                     Object val2 = medias.get(i).getTagValue(tag);
-                    if (val.equals(val2))
+                    if (val.equals(val2)) {
                         return true;
+                    }
                 }
             }
         }
