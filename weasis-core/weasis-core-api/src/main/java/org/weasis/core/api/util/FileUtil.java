@@ -145,6 +145,17 @@ public class FileUtil {
         return fn;
     }
 
+    public static String getExtension(String fn) {
+        if (fn == null) {
+            return "";
+        }
+        int i = fn.lastIndexOf('.');
+        if (i > 0) {
+            return fn.substring(i);
+        }
+        return "";
+    }
+
     /**
      * @param inputStream
      * @param out

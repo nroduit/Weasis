@@ -161,6 +161,7 @@
 		<xsd:attribute name="WadoTransferSyntaxUID" type="xsd:string"/>
 		<xsd:attribute name="TransferSyntaxUID" type="dicomVrUI"/>
 		<xsd:attribute name="WadoCompressionRate" type="xsd:integer"/>
+		<xsd:attribute name="DirectDownloadThumbnail" type="xsd:string" />
 	</xsd:complexType>
 	<xsd:complexType name="Instance">
 		<xsd:attribute name="SOPInstanceUID" type="dicomVrUI" use="required"/>
