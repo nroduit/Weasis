@@ -907,6 +907,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         for (int i = 0; i < image.length; i++) {
                             image[i] = new DicomImageElement(this, i);
                         }
+                        if (numberOfFrame > 1) {
+                            // IF enhanced DICOM, instance number can be overridden later
+                            // IF simple Multiframe instance number is necessary
+                            for (int i = 0; i < image.length; i++) {
+                                image[i].setTag(TagW.InstanceNumber, i + 1);
+                            }
+                        }
                     } else {
                         String modality = (String) getTagValue(TagW.Modality);
                         boolean ps =
