@@ -78,6 +78,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
     public static final TagW WadoTransferSyntaxUID = new TagW("Wado Transfer Syntax UID", TagType.String); //$NON-NLS-1$
     public static final TagW DirectDownloadFile = new TagW("Direct Download File", TagType.String); //$NON-NLS-1$
+    public static final TagW DirectDownloadThumbnail = new TagW("Direct Download Thumbnail", TagType.String); //$NON-NLS-1$
 
     public static final TagW WadoParameters = new TagW("Wado Parameter", TagType.Object); //$NON-NLS-1$
     public static final TagW WadoInstanceReferenceList = new TagW("List of DICOM instance References", TagType.List); //$NON-NLS-1$
