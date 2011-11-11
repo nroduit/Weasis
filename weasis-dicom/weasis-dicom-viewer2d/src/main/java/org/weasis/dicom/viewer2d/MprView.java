@@ -70,7 +70,7 @@ public class MprView extends View2d {
 
                 defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
                 frameIndex = defaultIndex + tileOffset;
-                actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+                // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
 
                 setImage(series.getMedia(frameIndex), true);
                 Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());

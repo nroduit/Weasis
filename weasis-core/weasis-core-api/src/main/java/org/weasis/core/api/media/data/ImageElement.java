@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -80,38 +79,44 @@ public class ImageElement extends MediaElement<PlanarImage> {
         super(mediaIO, key);
     }
 
-    public void findMinMaxValues(RenderedImage img) throws OutOfMemoryError {
+    protected void findMinMaxValues(RenderedImage img) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
-        if (img != null && minValue == 0 && maxValue == 0) {
-            int datatype = img.getSampleModel().getDataType();
-            if (datatype == DataBuffer.TYPE_BYTE) {
-                this.minValue = 0;
-                this.maxValue = 255;
-            } else {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(img);
-                // ImageToolkit.NOCACHE_HINT to ensure this image won't be stored in tile cache
-                RenderedOp dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-                double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
-                double min = Double.MAX_VALUE;
-                double max = -Double.MAX_VALUE;
-                int numBands = dst.getSampleModel().getNumBands();
-                for (int i = 0; i < numBands; i++) {
-                    min = Math.min(min, extrema[0][i]);
-                    max = Math.max(max, extrema[1][i]);
-                }
-                this.minValue = (int) min;
-                this.maxValue = (int) max;
+
+        if (img != null && minValue == 0.0f && maxValue == 0.0f) {
+
+            // int datatype = img.getSampleModel().getDataType();
+            // if (datatype == DataBuffer.TYPE_BYTE) {
+            // this.minValue = 0f;
+            // this.maxValue = 255f;
+            // } else {
+
+            ParameterBlock pb = new ParameterBlock();
+            pb.addSource(img);
+            // ImageToolkit.NOCACHE_HINT to ensure this image won't be stored in tile cache
+            RenderedOp dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+
+            double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
+            double min = Double.MAX_VALUE;
+            double max = -Double.MAX_VALUE;
+            int numBands = dst.getSampleModel().getNumBands();
+
+            for (int i = 0; i < numBands; i++) {
+                min = Math.min(min, extrema[0][i]);
+                max = Math.max(max, extrema[1][i]);
             }
+
+            this.minValue = Math.round(min);
+            this.maxValue = Math.round(max);
+
+            // }
         }
     }
 
     protected boolean isGrayImage(RenderedImage source) {
         // Binary images have indexColorModel
-        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel) {
+        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel)
             return false;
-        }
         return true;
     }
 
@@ -219,9 +224,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
             PlanarImage img2 = image.getImage();
             if (img != null && img2 != null) {
                 if (getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
-                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
+                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight()))
                     return true;
-                }
             }
         }
         return false;

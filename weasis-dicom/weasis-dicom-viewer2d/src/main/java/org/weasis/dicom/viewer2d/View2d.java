@@ -106,6 +106,7 @@ import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.display.ModalityLutTransformation;
 import org.weasis.dicom.codec.display.OverlayOperation;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -124,6 +125,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
+        manager.addImageOperationAction(new ModalityLutTransformation());
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new ShutterOperation());
         manager.addImageOperationAction(new OverlayOperation());
@@ -184,7 +186,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+        // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+        actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.AUTO);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
@@ -327,7 +330,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else {
             defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
             frameIndex = defaultIndex + tileOffset;
-            actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+            // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+            actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.AUTO);
             setImage(series.getMedia(frameIndex), true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
@@ -343,10 +347,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     protected void setWindowLevel(DicomImageElement img) {
-        if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
-            actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
-            actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
-        } else if (PresetWindowLevel.AUTO.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
+        // if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
+        // if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
+        // actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
+        // actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
+        // }else
+        if (PresetWindowLevel.AUTO.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
             float min = img.getMinValue();
             float max = img.getMaxValue();
             actionsInView.put(ActionW.WINDOW.cmd(), max - min);
