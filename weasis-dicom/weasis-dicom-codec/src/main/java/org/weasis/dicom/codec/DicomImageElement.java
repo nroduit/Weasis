@@ -92,8 +92,9 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getPixelWindow(float window) {
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        if (slope != null)
+        if (slope != null) {
             return window /= slope;
+        }
         return window;
     }
 
@@ -168,8 +169,9 @@ public class DicomImageElement extends ImageElement {
      * @return
      */
     public LookupTableJAI getModalityLookup() {
-        if (modalityLookup != null)
+        if (modalityLookup != null) {
             return modalityLookup;
+        }
 
         boolean signed = isPixelRepresentationSigned();
         Integer bitsStored = (Integer) getTagValue(TagW.BitsStored);
@@ -200,8 +202,9 @@ public class DicomImageElement extends ImageElement {
                 numEntries = ((ByteLookupTable) lookup).getTable()[0].length;
             } else if (lookup instanceof ShortLookupTable) {
                 numEntries = ((ShortLookupTable) lookup).getTable()[0].length;
-            } else
+            } else {
                 return null;
+            }
 
             String photometricInterpretation = getPhotometricInterpretation();
 
@@ -351,18 +354,20 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getDefaultWindow() {
         // Float val = (Float) getTagValue(TagW.WindowWidth);
-        Float[] val = (Float[]) getTagValue(TagW.WindowWidth);
-        if (val == null || val.length == 0)
+        float[] val = (float[]) getTagValue(TagW.WindowWidth);
+        if (val == null || val.length == 0) {
             return super.getDefaultWindow();
+        }
         return val[0];
     }
 
     @Override
     public float getDefaultLevel() {
         // Float val = (Float) getTagValue(TagW.WindowCenter);
-        Float[] val = (Float[]) getTagValue(TagW.WindowCenter);
-        if (val == null || val.length == 0)
+        float[] val = (float[]) getTagValue(TagW.WindowCenter);
+        if (val == null || val.length == 0) {
             return super.getDefaultLevel();
+        }
         return val[0];
     }
 
@@ -388,8 +393,9 @@ public class DicomImageElement extends ImageElement {
         // pixelValue = (hu - intercept value) / rescale slope
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null)
+        if (slope != null || intercept != null) {
             return (hounsfieldValue - (intercept == null ? 0.0f : intercept)) / (slope == null ? 1.0f : slope);
+        }
         return hounsfieldValue;
     }
 
@@ -402,12 +408,13 @@ public class DicomImageElement extends ImageElement {
                 Float sliceTickness = (Float) getTagValue(TagW.SliceThickness);
                 Integer rows = (Integer) getTagValue(TagW.Rows);
                 Integer columns = (Integer) getTagValue(TagW.Columns);
-                if (rows != null && columns != null && rows > 0 && columns > 0)
+                if (rows != null && columns != null && rows > 0 && columns > 0) {
                     // If no sliceTickness: set 0, sliceTickness is only use in IntersectVolume
                     // Multiply rows and columns by getZoomScale() to have square pixel image size
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
                         imgOr[4], imgOr[5] }, pos, spacing, sliceTickness == null ? 0.0 : sliceTickness.doubleValue(),
                         new double[] { rows * getRescaleY(), columns * getRescaleX(), 1 });
+                }
             }
         }
         return null;

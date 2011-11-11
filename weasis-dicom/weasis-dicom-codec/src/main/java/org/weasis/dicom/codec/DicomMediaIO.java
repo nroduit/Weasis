@@ -656,8 +656,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // If multiple values are present, both Attributes shall have the same number of values and shall be
             // considered as pairs. Multiple values indicate that multiple alternative views may be presented
 
-            Float[] windowCenterArray = (Float[]) tagList.get(TagW.WindowCenter);
-            Float[] windowWidthArray = (Float[]) tagList.get(TagW.WindowWidth);
+            float[] windowCenterArray = (float[]) tagList.get(TagW.WindowCenter);
+            float[] windowWidthArray = (float[]) tagList.get(TagW.WindowWidth);
 
             boolean isWindowLevelValid = false;
 
@@ -689,8 +689,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
              * Modality non linear Table
              */
 
-            Float[] windowArray = (Float[]) tagList.get(TagW.WindowWidth);
-            Float[] levelArray = (Float[]) tagList.get(TagW.WindowCenter);
+            float[] windowArray = (float[]) tagList.get(TagW.WindowWidth);
+            float[] levelArray = (float[]) tagList.get(TagW.WindowCenter);
 
             Float window = (windowArray != null && windowArray.length > 0) ? windowArray[0] : null;
             Float level = (levelArray != null && levelArray.length > 0) ? levelArray[0] : null;
@@ -858,10 +858,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return sb.toString();
     }
 
-    public static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
-        if (dicom == null) {
+    public static String[] getStringArrayFromDicomElement(DicomObject dicom, int tag, String[] defaultValue) {
+        DicomElement element = dicom.get(tag);
+        if (element == null || element.isEmpty()) {
             return defaultValue;
         }
+        return element.getStrings(dicom.getSpecificCharacterSet(), false);
+    }
+
+    public static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -877,28 +882,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     }
 
-    private static String[] getStringArrayFromDicomElement(DicomObject dicom, int tag, String[] defaultValue) {
+    public static float[] getFloatArrayFromDicomElement(DicomObject dicom, int tag, float[] defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
+        } else {
+            return element.getFloats(false);
         }
-        return element.getStrings(dicom.getSpecificCharacterSet(), false);
-    }
-
-    private static Float[] getFloatArrayFromDicomElement(DicomObject dicom, int tag, Float[] defaultValue) {
-        DicomElement element = dicom.get(tag);
-        if (element != null && !element.isEmpty()) {
-            float[] fResults = element.getFloats(false);
-
-            if (fResults != null && fResults.length > 0) {
-                List<Float> fResultList = new ArrayList<Float>(fResults.length);
-                for (float result : fResults) {
-                    fResultList.add(result);
-                }
-                return fResultList.toArray(new Float[fResultList.size()]);
-            }
-        }
-        return defaultValue;
     }
 
     public static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {

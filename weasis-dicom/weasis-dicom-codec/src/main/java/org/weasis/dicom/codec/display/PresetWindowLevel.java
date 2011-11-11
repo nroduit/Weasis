@@ -91,8 +91,8 @@ public class PresetWindowLevel {
 
         String modality = (String) image.getTagValue(TagW.Modality);
 
-        Float[] windowCenterDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowCenter);
-        Float[] windowWidthDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowWidth);
+        float[] windowCenterDefaultTagArray = (float[]) image.getTagValue(TagW.WindowCenter);
+        float[] windowWidthDefaultTagArray = (float[]) image.getTagValue(TagW.WindowWidth);
         String[] windowCenterWidthExplanationTagArray = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
         String lutFunction = (String) image.getTagValue(TagW.VOILutFunction);
 
