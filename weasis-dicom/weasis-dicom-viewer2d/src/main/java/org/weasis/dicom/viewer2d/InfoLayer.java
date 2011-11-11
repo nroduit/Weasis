@@ -14,10 +14,15 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.font.TextAttribute;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -173,6 +178,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
         if (image.isReadable() && getDisplayPreferences(LUT)) {
             drawLUT(g2, bound, midfontHeight);
+            drawLUTgraph(g2, bound, midfontHeight);
         }
         // if (getDisplayPreferences(IMAGE_ORIENTATION)) {
         // For image Orientation and compression
@@ -593,6 +599,112 @@ public class InfoLayer implements AnnotationsLayer {
                 g2.draw(rect);
             }
         }
+    }
+
+    public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
+
+        Paint oldPaint = g2d.getPaint();
+        RenderingHints oldRenderingHints = g2d.getRenderingHints();
+        Stroke oldStroke = g2d.getStroke();
+
+        ImageElement image = view2DPane.getImage();
+        float firstLevel = image.getMinValue();
+        float lastLevel = image.getMaxValue();
+        float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
+        float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
+        float minLevel = Math.round(level - window / 2);
+        float maxLevel = Math.round(level + window / 2);
+        boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
+
+        // /////////////////////////////////////////////////////////////////////////////////////
+        ByteLut lutTable = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
+        byte[][] lut = inverseLut ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
+
+        if (lut != null) {
+            System.out.println("Yeah !!");
+        }
+
+        // /////////////////////////////////////////////////////////////////////////////////////
+
+        // To be used when drawing is defined in a CW system knowing graphics2D system is CCW
+        final AffineTransform flipVertical = AffineTransform.getScaleInstance(1, -1);
+
+        // Defined in a CW system
+        final Path2D upArrow = new Path2D.Float();
+        upArrow.moveTo(0, 0);
+        upArrow.lineTo(0, 3);
+        upArrow.lineTo(-3, 3);
+        upArrow.lineTo(0, 10);
+        upArrow.lineTo(3, 3);
+        upArrow.lineTo(0, 3);
+
+        final Path2D rightArrow = (Path2D) upArrow.clone();
+        rightArrow.transform(AffineTransform.getQuadrantRotateInstance(3));
+
+        final float xAxisCoordinateSystemLength = 400;
+        final float yAxisCoordinateSystemLength = 200;
+        final float xOffsetCoordinateSystemOrigin = 5f;
+        final float yOffsetCoordinateSystemOrigin = 5f;
+
+        final Shape upArrowCoordinateSystemPath =
+            AffineTransform.getTranslateInstance(0, yAxisCoordinateSystemLength + 1).createTransformedShape(upArrow);
+        final Shape rightArrowCoordinateSystemPath =
+            AffineTransform.getTranslateInstance(xAxisCoordinateSystemLength + 1, 0).createTransformedShape(rightArrow);
+
+        Path2D coordinateSystemPath = new Path2D.Float();
+        coordinateSystemPath.moveTo(0, -yOffsetCoordinateSystemOrigin);
+        coordinateSystemPath.lineTo(0, yAxisCoordinateSystemLength);
+        coordinateSystemPath.append(upArrowCoordinateSystemPath, false);
+        coordinateSystemPath.moveTo(-xOffsetCoordinateSystemOrigin, 0);
+        coordinateSystemPath.lineTo(xAxisCoordinateSystemLength, 0);
+        coordinateSystemPath.append(rightArrowCoordinateSystemPath, false);
+
+        // Defined in CCW system
+        final AffineTransform coordinateSystemTransform =
+            AffineTransform.getTranslateInstance(xOffsetCoordinateSystemOrigin, coordinateSystemPath.getBounds2D()
+                .getHeight() - yOffsetCoordinateSystemOrigin);
+        coordinateSystemTransform.concatenate(flipVertical);
+        coordinateSystemPath.transform(coordinateSystemTransform);
+
+        // Defined in a CCW system
+        final float lutGraphMargin = 5f;
+        final float lutGraphWidth = (float) coordinateSystemPath.getBounds2D().getWidth() + 2 * lutGraphMargin;
+        final float lutGraphHeight = (float) coordinateSystemPath.getBounds2D().getHeight() + 2 * lutGraphMargin;
+
+        final Path2D lutGraphBoundingRect =
+            new Path2D.Float(new Rectangle2D.Float(0, 0, lutGraphWidth, lutGraphHeight));
+
+        // Translate in the viewPane CCW system
+        final float lutGraphXPos = (viewPaneBound.width - lutGraphWidth) / 2;
+        final float lutGraphYPos = (viewPaneBound.height - lutGraphHeight) / 2;
+
+        final AffineTransform lutGraphViewPaneTranslate =
+            AffineTransform.getTranslateInstance(lutGraphXPos, lutGraphYPos);
+
+        final AffineTransform coordinateSystemViewPaneTranslate =
+            AffineTransform.getTranslateInstance(lutGraphMargin, lutGraphMargin);
+        coordinateSystemViewPaneTranslate.concatenate(lutGraphViewPaneTranslate);
+
+        lutGraphBoundingRect.transform(lutGraphViewPaneTranslate);
+        coordinateSystemPath.transform(coordinateSystemViewPaneTranslate);
+
+        // Handles Background Transparency
+        float alphaReal = 0.0f; // [0.0 ; 1.0]
+        int alphaMask = 0x00FFFFFF | (Math.round(alphaReal * 255) << 24);
+        g2d.setPaint(new Color(Color.GRAY.getRGB() & alphaMask, true));
+        g2d.fill(lutGraphBoundingRect);
+
+        g2d.setPaint(Color.YELLOW);
+        g2d.draw(lutGraphBoundingRect);
+
+        g2d.setPaint(Color.RED);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setStroke(new BasicStroke(1.0F));
+        g2d.draw(coordinateSystemPath);
+
+        g2d.setPaint(oldPaint);
+        g2d.setStroke(oldStroke);
+        g2d.setRenderingHints(oldRenderingHints);
     }
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {

@@ -213,6 +213,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuRoot.add(((ComboItemListener) presetAction).createMenu(Messages
                     .getString("View2dContainer.presets"))); //$NON-NLS-1$
             }
+            ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
+            if (lutShapeAction instanceof ComboItemListener) {
+                menuRoot.add(((ComboItemListener) lutShapeAction).createMenu("LUT_Shape"));
+            }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
                 JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$

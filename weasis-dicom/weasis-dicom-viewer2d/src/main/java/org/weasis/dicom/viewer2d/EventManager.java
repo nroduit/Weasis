@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListDataEvent;
 
 import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.BackingStoreException;
@@ -69,6 +70,7 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
+import org.weasis.dicom.codec.display.LutShape;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -106,6 +108,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ToggleButtonListener drawOnceAction;
 
     private final ComboItemListener presetAction;
+    private final ComboItemListener lutShapeAction;
     private final ComboItemListener lutAction;
     private final ComboItemListener filterAction;
     private final ComboItemListener sortStackAction;
@@ -153,6 +156,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
         iniAction(presetAction = newPresetAction());
+        iniAction(lutShapeAction = newLutShapeAction());
         iniAction(lutAction = newLutAction());
         iniAction(filterAction = newFilterAction());
         iniAction(sortStackAction = newSortStackAction());
@@ -189,6 +193,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         enableActions(false);
         windowAction.getModel().addChangeListener(presetAction);
         levelAction.getModel().addChangeListener(presetAction);
+        lutShapeAction.getModel().addListDataListener(presetAction);
     }
 
     private ComboItemListener newFilterAction() {
@@ -231,23 +236,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     min = (int) image.getMinValue();
                                     max = (int) image.getMaxValue();
                                 }
-                                if (PresetWindowLevel.DEFAULT.equals(presetAction.getSelectedItem())) {
-                                    windowAction.getModel().removeChangeListener(presetAction);
-                                    levelAction.getModel().removeChangeListener(presetAction);
-                                    windowAction.setMinMaxValueWithoutTriggerAction(0, (max - min),
-                                        (int) image.getDefaultWindow());
-                                    levelAction.setMinMaxValueWithoutTriggerAction(min, max,
-                                        (int) image.getDefaultLevel());
-                                    windowAction.getModel().addChangeListener(presetAction);
-                                    levelAction.getModel().addChangeListener(presetAction);
-                                } else if (PresetWindowLevel.AUTO.equals(presetAction.getSelectedItem())) {
-                                    windowAction.getModel().removeChangeListener(presetAction);
-                                    levelAction.getModel().removeChangeListener(presetAction);
-                                    windowAction.setMinMaxValueWithoutTriggerAction(0, max - min, max - min);
-                                    levelAction.setMinMaxValueWithoutTriggerAction(min, max, (max - min) / 2 + min);
-                                    windowAction.getModel().addChangeListener(presetAction);
-                                    levelAction.getModel().addChangeListener(presetAction);
-                                }
+                                // if (PresetWindowLevel.DEFAULT.equals(presetAction.getSelectedItem())) {
+                                // windowAction.getModel().removeChangeListener(presetAction);
+                                // levelAction.getModel().removeChangeListener(presetAction);
+                                // windowAction.setMinMaxValueWithoutTriggerAction(0, (max - min),
+                                // (int) image.getDefaultWindow());
+                                // levelAction.setMinMaxValueWithoutTriggerAction(min, max,
+                                // (int) image.getDefaultLevel());
+                                // windowAction.getModel().addChangeListener(presetAction);
+                                // levelAction.getModel().addChangeListener(presetAction);
+                                // } else if (PresetWindowLevel.AUTO.equals(presetAction.getSelectedItem())) {
+                                // windowAction.getModel().removeChangeListener(presetAction);
+                                // levelAction.getModel().removeChangeListener(presetAction);
+                                // windowAction.setMinMaxValueWithoutTriggerAction(0, max - min, max - min);
+                                // levelAction.setMinMaxValueWithoutTriggerAction(min, max, (max - min) / 2 + min);
+                                // windowAction.getModel().addChangeListener(presetAction);
+                                // levelAction.getModel().addChangeListener(presetAction);
+                                // }
 
                             }
                         }
@@ -423,49 +428,83 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private ComboItemListener newPresetAction() {
-        return new ComboItemListener(ActionW.PRESET, PresetWindowLevel.getPresetCollection("UNKOWN")) { //$NON-NLS-1$
+        //                return new ComboItemListener(ActionW.PRESET, PresetWindowLevel.getPresetCollection("UNKOWN")) { //$NON-NLS-1$
+        return new ComboItemListener(ActionW.PRESET, null) {
 
             @Override
             public void itemStateChanged(Object object) {
-                if (object instanceof PresetWindowLevel) {
-                    windowAction.getModel().removeChangeListener(this);
-                    levelAction.getModel().removeChangeListener(this);
-                    ImageElement img = null;
-                    if (selectedView2dContainer != null) {
-                        img = selectedView2dContainer.getSelectedImagePane().getImage();
-                    }
-                    if (img == null) {
-                        return;
-                    }
-                    PresetWindowLevel preset = (PresetWindowLevel) object;
+                // if (object instanceof PresetWindowLevel) {
+                windowAction.getModel().removeChangeListener(this);
+                levelAction.getModel().removeChangeListener(this);
+                lutShapeAction.getModel().removeListDataListener(this);
 
-                    if (preset.equals(PresetWindowLevel.DEFAULT)) {
-                        windowAction.setValue((int) img.getDefaultWindow());
-                        levelAction.setValue((int) img.getDefaultLevel());
-                    } else if (preset.equals(PresetWindowLevel.AUTO)) {
-                        int min = (int) img.getMinValue();
-                        int max = (int) img.getMaxValue();
-                        windowAction.setValue(max - min);
-                        levelAction.setValue((max - min) / 2 + min);
-                    } else if (!preset.equals(PresetWindowLevel.CUSTOM)) {
-                        windowAction.setValue((int) preset.getWindow());
-                        levelAction.setValue((int) preset.getLevel());
-                    }
+                // ImageElement img = null;
+                // if (selectedView2dContainer != null) {
+                // img = selectedView2dContainer.getSelectedImagePane().getImage();
+                // }
+                // if (img == null)
+                // return;
 
-                    firePropertyChange(action.cmd(), null, preset);
-                    windowAction.getModel().addChangeListener(this);
-                    levelAction.getModel().addChangeListener(this);
-                }
+                PresetWindowLevel preset = (PresetWindowLevel) object;
+
+                windowAction.setValue((int) preset.getWindow());
+                levelAction.setValue((int) preset.getLevel());
+                lutShapeAction.setSelectedItem(preset.getLutShape());
+
+                // if (preset.equals(PresetWindowLevel.DEFAULT)) {
+                // windowAction.setValue((int) img.getDefaultWindow());
+                // levelAction.setValue((int) img.getDefaultLevel());
+                // } else if (preset.equals(PresetWindowLevel.AUTO)) {
+                // int min = (int) img.getMinValue();
+                // int max = (int) img.getMaxValue();
+                // windowAction.setValue(max - min);
+                // levelAction.setValue((max - min) / 2 + min);
+                // } else if (!preset.equals(PresetWindowLevel.CUSTOM)) {
+                // windowAction.setValue((int) preset.getWindow());
+                // levelAction.setValue((int) preset.getLevel());
+                // }
+
+                firePropertyChange(action.cmd(), null, preset);
+
+                windowAction.getModel().addChangeListener(this);
+                levelAction.getModel().addChangeListener(this);
+                lutShapeAction.getModel().addListDataListener(this);
+                // }
             }
 
             @Override
             public void stateChanged(ChangeEvent evt) {
-                model.removeListDataListener(this);
-                model.setSelectedItem(PresetWindowLevel.CUSTOM);
-                model.addListDataListener(this);
-                firePropertyChange(action.cmd(), null, PresetWindowLevel.CUSTOM);
+                // model.removeListDataListener(this);
+                // model.setSelectedItem(PresetWindowLevel.CUSTOM);
+                // firePropertyChange(action.cmd(), null, PresetWindowLevel.CUSTOM);
+                // model.addListDataListener(this);
+                resetPreset();
             }
 
+            @Override
+            public void contentsChanged(ListDataEvent e) {
+                resetPreset();
+            }
+
+            protected void resetPreset() {
+                model.removeListDataListener(this);
+                model.setSelectedItem(null);
+                firePropertyChange(action.cmd(), null, null);
+                model.addListDataListener(this);
+            }
+
+        };
+    }
+
+    private ComboItemListener newLutShapeAction() {
+        return new ComboItemListener(ActionW.LUT_SHAPE, LutShape.getShapeCollection()) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                if (object instanceof LutShape) {
+                    firePropertyChange(action.cmd(), null, object);
+                }
+            }
         };
     }
 
@@ -637,13 +676,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void resetAllActions() {
         firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+
         if (selectedView2dContainer != null) {
             DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
             if (viewPane != null) {
                 viewPane.center();
             }
         }
-        presetAction.setSelectedItem(PresetWindowLevel.DEFAULT);
+
+        // presetAction.setSelectedItem(PresetWindowLevel.DEFAULT);
         flipAction.setSelected(false);
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
@@ -661,8 +702,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         } else if (ResetTools.Rotation.equals(action)) {
             rotateAction.setValue(0);
-        } else if (ResetTools.WindowLevel.equals(action)) {
-            presetAction.setSelectedItem(PresetWindowLevel.DEFAULT);
+            // } else if (ResetTools.WindowLevel.equals(action)) {
+            // presetAction.setSelectedItem(PresetWindowLevel.DEFAULT);
         } else if (ResetTools.Pan.equals(action)) {
             if (selectedView2dContainer != null) {
                 DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
@@ -695,33 +736,48 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (!enabledAction) {
             enableActions(true);
         }
-        ImageElement image = defaultView2d.getImage();
+
+        DicomImageElement image = defaultView2d.getImage();
         MediaSeries<DicomImageElement> series = defaultView2d.getSeries();
         windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
             ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
             ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
-        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
-        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
+
+        // PresetWindowLevel[] presets =
+        // PresetWindowLevel.getPresetCollection((String)series.getTagValue(TagW.Modality));
+        presetAction.setDataList(PresetWindowLevel.getPresetCollection(image));
+        presetAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.PRESET.cmd()));
+
+        lutShapeAction.setDataList(LutShape.getShapeCollection(image));
+        lutShapeAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
+
+        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
+
+        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
+            .cmd()));
+
+        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
+
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
             .getActionValue(ActionW.ZOOM.cmd()))));
+
+        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
+
+        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
+
         showLensAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.LENS.cmd()));
         Double lensZoom = (Double) defaultView2d.getLensActionValue(ActionW.ZOOM.cmd());
         if (lensZoom != null) {
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
         }
-        PresetWindowLevel[] presets = PresetWindowLevel.getPresetCollection((String) series.getTagValue(TagW.Modality));
-        presetAction.setDataList(presets);
-        presetAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.PRESET.cmd()));
+
         moveTroughSliceAction.setMinMaxValue(1, series.size(), defaultView2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagW.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
-        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
-            .cmd()));
-        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
+
         // imageOverlayAction.setSelectedWithoutTriggerAction((Boolean)
         // defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
         // .cmd()));
