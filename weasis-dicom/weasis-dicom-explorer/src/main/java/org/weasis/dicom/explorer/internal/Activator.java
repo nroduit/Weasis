@@ -23,10 +23,12 @@ public class Activator implements BundleActivator {
 
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
+    @Override
     public void start(final BundleContext context) throws Exception {
         PREFERENCES.init(context);
     }
 
+    @Override
     public void stop(BundleContext context) throws Exception {
         // Save preferences
         DicomManager.getInstance().savePreferences();
@@ -34,6 +36,7 @@ public class Activator implements BundleActivator {
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (explorer instanceof DicomExplorer) {
             DicomExplorer dexp = (DicomExplorer) explorer;
+            // Remove image in viewers, in image cache and close the image stream
             ((DicomModel) dexp.getDataExplorerModel()).dispose();
         }
     }
