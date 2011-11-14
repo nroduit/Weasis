@@ -440,6 +440,23 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                    } else {
+                        String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
+                        if (thumURL != null) {
+                            try {
+                                File outFile =
+                                    File.createTempFile("tumb_", FileUtil.getExtension(thumURL),
+                                        AbstractProperties.APP_TEMP_DIR);
+                                int resp = FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
+                                if (resp == -1) {
+                                    file = outFile;
+                                }
+                            } catch (MalformedURLException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                     if (file != null) {
                         final File finalfile = file;
@@ -588,8 +605,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
         HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-
-        httpCon.setDoOutput(true);
         httpCon.setDoInput(true);
         httpCon.setRequestMethod("GET"); //$NON-NLS-1$
         // Set http login (no protection, only convert in base64)
