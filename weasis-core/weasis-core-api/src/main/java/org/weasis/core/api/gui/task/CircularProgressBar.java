@@ -11,6 +11,7 @@
 package org.weasis.core.api.gui.task;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -41,6 +42,9 @@ public class CircularProgressBar extends JProgressBar {
     private void init() {
         this.setOpaque(false);
         this.setSize(30, 30);
+        Dimension dim = new Dimension(30, 30);
+        this.setPreferredSize(dim);
+        this.setMaximumSize(dim);
     }
 
     @Override

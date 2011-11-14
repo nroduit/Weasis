@@ -66,6 +66,7 @@ import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -81,6 +82,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
@@ -121,7 +123,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
 
     private JPanel panel = null;
+    private JPanel panel_4 = null;
     private PatientPane selectedPatient = null;
+    final CircularProgressBar globalProgress = new CircularProgressBar(0, 100);
     private final List<PatientPane> patientPaneList = new ArrayList<PatientPane>();
     private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study =
         new HashMap<MediaSeriesGroup, List<StudyPane>>();
@@ -129,6 +133,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         new HashMap<MediaSeriesGroup, List<SeriesPane>>();
     private final JScrollPane thumnailView = new JScrollPane();
     private final SeriesSelectionModel selectionList = new SeriesSelectionModel();
+    private final ArrayList<SwingWorker<Boolean, String>> loadingTasks = new ArrayList<SwingWorker<Boolean, String>>();
 
     private final DicomModel model;
 
@@ -1428,6 +1433,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             }
                         }
                     }
+                } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {
+                    if (newVal instanceof SwingWorker) {
+                        addTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    }
+                } else if (ObservableEvent.BasicAction.LoadingStop.equals(action)) {
+                    if (newVal instanceof SwingWorker) {
+                        removeTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {
                 if (ObservableEvent.BasicAction.Select.equals(action)) {
@@ -1489,6 +1502,60 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             }
         }
         add(thumnailView, BorderLayout.CENTER);
+        if (loadingTasks.size() > 0) {
+            add(getLoadingPanel(), vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
+        }
+
+    }
+
+    private JPanel getLoadingPanel() {
+        if (panel_4 == null) {
+            panel_4 = new JPanel();
+            final JLabel labelNewLabel = new JLabel("Loading...");
+            panel_4.add(labelNewLabel);
+        }
+        return panel_4;
+    }
+
+    public synchronized void addTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
+        if (!loadingTasks.contains(task)) {
+            loadingTasks.add(task);
+            if (loadingTasks.size() > 0) {
+                GuiExecutor.instance().invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        JPanel loadingPanel = getLoadingPanel();
+                        if (getComponentZOrder(loadingPanel) == -1) {
+                            globalProgress.setIndeterminate(true);
+                            boolean vertical =
+                                ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+                            add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
+                            revalidate();
+                            repaint();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    public synchronized void removeTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
+        if (task != null) {
+            loadingTasks.remove(task);
+            if (loadingTasks.size() == 0) {
+                GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        globalProgress.setIndeterminate(false);
+                        remove(getLoadingPanel());
+                        revalidate();
+                        repaint();
+                    }
+                });
+
+            }
+        }
     }
 
     public static Thumbnail createThumbnail(final Series series, final DicomModel dicomModel, final int thumbnailSize) {
@@ -1626,7 +1693,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     JPanel panel = new JPanel();
                                     panel.setLayout(new BorderLayout());
                                     panel.add(view);
-                                    frame.add(panel);
+                                    frame.getContentPane().add(panel);
                                     frame.setVisible(true);
                                 }
                             });

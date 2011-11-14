@@ -189,7 +189,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             }
         }
         if (files != null) {
-            LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel, false);
+            LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel);
             DicomModel.loadingExecutor.execute(dicom);
         }
     }
