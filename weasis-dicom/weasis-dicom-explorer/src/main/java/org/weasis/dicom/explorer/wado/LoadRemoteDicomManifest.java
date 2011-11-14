@@ -109,8 +109,6 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
         for (int i = 0; i < xmlFiles.length; i++) {
             if (xmlFiles[i] != null) {
                 URI uri = null;
@@ -143,10 +141,7 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
         Runnable[] tasks = loadingQueue.toArray(new Runnable[loadingQueue.size()]);
         for (int i = 0; i < tasks.length; i++) {
-            LoadSeries l = (LoadSeries) tasks[i];
-            if (!currentTasks.contains(l)) {
-                currentTasks.add(l);
-            }
+            addLoadSeries((LoadSeries) tasks[i], dicomModel);
         }
         executor.prestartAllCoreThreads();
 
@@ -155,22 +150,44 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
     }
 
-    public static void stopDownloading(DicomSeries series) {
+    public static synchronized void addLoadSeries(LoadSeries series, DicomModel dicomModel) {
         if (series != null) {
-            for (final LoadSeries loading : LoadRemoteDicomManifest.currentTasks) {
-                if (loading.getDicomSeries() == series) {
-                    LoadRemoteDicomManifest.currentTasks.remove(loading);
-                    LoadRemoteDicomManifest.loadingQueue.remove(loading);
-                    if (StateValue.STARTED.equals(loading.getState())) {
-                        loading.cancel(true);
+            if (dicomModel != null) {
+                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel,
+                    null, series));
+            }
+            if (!currentTasks.contains(series)) {
+                currentTasks.add(series);
+            }
+        }
+    }
+
+    public static synchronized void removeLoadSeries(LoadSeries series, DicomModel dicomModel) {
+        if (series != null) {
+            currentTasks.remove(series);
+            if (dicomModel != null) {
+                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel,
+                    null, series));
+            }
+        }
+    }
+
+    public static void stopDownloading(DicomSeries series, DicomModel dicomModel) {
+        if (series != null) {
+            synchronized (LoadRemoteDicomManifest.currentTasks) {
+                for (final LoadSeries loading : LoadRemoteDicomManifest.currentTasks) {
+                    if (loading.getDicomSeries() == series) {
+                        removeLoadSeries(loading, dicomModel);
+                        LoadRemoteDicomManifest.loadingQueue.remove(loading);
+                        if (StateValue.STARTED.equals(loading.getState())) {
+                            loading.cancel(true);
+                        }
+                        // Ensure to stop downloading
+                        series.setSeriesLoader(null);
+                        break;
                     }
-                    // Ensure to stop downloading
-                    series.setSeriesLoader(null);
-                    break;
                 }
             }
         }
