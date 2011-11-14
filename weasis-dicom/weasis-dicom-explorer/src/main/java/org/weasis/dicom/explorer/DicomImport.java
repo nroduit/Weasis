@@ -18,11 +18,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.util.FontTools;
 
 public class DicomImport extends AbstractWizardDialog {
 
@@ -36,16 +34,30 @@ public class DicomImport extends AbstractWizardDialog {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
 
-        final JProgressBar info = new JProgressBar();
-        info.setFont(FontTools.getFont10());
+        final JButton importandClose = new JButton("Import and Close");
+        importandClose.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                Object object = null;
+                try {
+                    object = jScrollPanePage.getViewport().getComponent(0);
+                } catch (Exception ex) {
+                }
+                if (object instanceof ImportDicom) {
+                    ImportDicom selectedPage = (ImportDicom) object;
+                    selectedPage.importDICOM(dicomModel, null);
+                }
+                cancel();
+            }
+        });
         final GridBagConstraints gridBagConstraints_0 = new GridBagConstraints();
-        gridBagConstraints_0.insets = new Insets(10, 10, 10, 30);
-        gridBagConstraints_0.anchor = GridBagConstraints.WEST;
-        gridBagConstraints_0.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints_0.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints_0.anchor = GridBagConstraints.EAST;
         gridBagConstraints_0.gridy = 0;
         gridBagConstraints_0.gridx = 0;
         gridBagConstraints_0.weightx = 1.0;
-        jPanelButtom.add(info, gridBagConstraints_0);
+        jPanelButtom.add(importandClose, gridBagConstraints_0);
 
         final JButton importButton = new JButton();
         importButton.addActionListener(new ActionListener() {
@@ -59,13 +71,13 @@ public class DicomImport extends AbstractWizardDialog {
                 }
                 if (object instanceof ImportDicom) {
                     ImportDicom selectedPage = (ImportDicom) object;
-                    selectedPage.importDICOM(dicomModel, info);
+                    selectedPage.importDICOM(dicomModel, null);
                 }
             }
         });
         importButton.setText(Messages.getString("DicomImport.imp")); //$NON-NLS-1$
         final GridBagConstraints gridBagConstraints_1 = new GridBagConstraints();
-        gridBagConstraints_1.insets = new Insets(10, 50, 10, 0);
+        gridBagConstraints_1.insets = new Insets(10, 15, 10, 0);
         gridBagConstraints_1.anchor = GridBagConstraints.EAST;
         gridBagConstraints_1.gridy = 0;
         gridBagConstraints_1.gridx = 1;
