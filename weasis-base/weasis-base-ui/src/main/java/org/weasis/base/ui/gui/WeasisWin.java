@@ -756,39 +756,39 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
         menuDisplay.add(toolBarMenu);
 
-        final JMenu toolMenu = new JMenu("Tools");
-        JPopupMenu menuTool = toolMenu.getPopupMenu();
-        // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
-        if (AbstractProperties.isMacNativeLookAndFeel()) {
-            toolMenu.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    if (toolMenu.isSelected()) {
-                        buildToolSubMenu(toolMenu);
-                    } else {
-                        toolMenu.removeAll();
-                    }
-                }
-            });
-        } else {
-            menuTool.addPopupMenuListener(new PopupMenuListener() {
-
-                @Override
-                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                    buildToolSubMenu(toolMenu);
-                }
-
-                @Override
-                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                    toolMenu.removeAll();
-                }
-
-                @Override
-                public void popupMenuCanceled(PopupMenuEvent e) {
-                }
-            });
-        }
-        menuDisplay.add(toolMenu);
+        // final JMenu toolMenu = new JMenu("Tools");
+        // JPopupMenu menuTool = toolMenu.getPopupMenu();
+        // // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
+        // if (AbstractProperties.isMacNativeLookAndFeel()) {
+        // toolMenu.addChangeListener(new ChangeListener() {
+        // @Override
+        // public void stateChanged(ChangeEvent e) {
+        // if (toolMenu.isSelected()) {
+        // buildToolSubMenu(toolMenu);
+        // } else {
+        // toolMenu.removeAll();
+        // }
+        // }
+        // });
+        // } else {
+        // menuTool.addPopupMenuListener(new PopupMenuListener() {
+        //
+        // @Override
+        // public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        // buildToolSubMenu(toolMenu);
+        // }
+        //
+        // @Override
+        // public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        // toolMenu.removeAll();
+        // }
+        //
+        // @Override
+        // public void popupMenuCanceled(PopupMenuEvent e) {
+        // }
+        // });
+        // }
+        // menuDisplay.add(toolMenu);
     }
 
     private static void buildMenuFile() {
