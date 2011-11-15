@@ -10,9 +10,10 @@
  ******************************************************************************/
 package org.weasis.core.api.service;
 
+import java.io.IOException;
 import java.util.Properties;
 
-import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.Base64;
 
 public class WProperties extends Properties {
 
@@ -125,32 +126,30 @@ public class WProperties extends Properties {
         return result;
     }
 
-    // Does not have an accessible Base64 class (the one use by preferences is protected)
+    public void putByteArrayProperty(String key, byte[] value) {
+        if (isValid(key, value)) {
+            try {
+                this.put(key, Base64.encodeBytes(value, Base64.GZIP));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-    // public void putByteArrayProperty(String key, byte[] value) {
-    // if (isValid(key, value)) {
-    // try {
-    // this.put(key, new String(Base64.encodeBase64(value), "utf-8"));
-    // } catch (UnsupportedEncodingException ignore) {
-    // // utf-8 is always available
-    // }
-    // }
-    // }
-    //
-    // public byte[] getByteArrayProperty(String key, byte[] def) {
-    // byte[] result = def;
-    // if (isKeyValid(key)) {
-    // String value = this.getProperty(key);
-    // if (value != null) {
-    // try {
-    // result = Base64.decodeBase64(value.getBytes("utf-8"));
-    // } catch (UnsupportedEncodingException ignore) {
-    // // utf-8 is always available
-    // }
-    // }
-    // }
-    // return result;
-    // }
+    public byte[] getByteArrayProperty(String key, byte[] def) {
+        byte[] result = def;
+        if (isKeyValid(key)) {
+            String value = this.getProperty(key);
+            if (value != null) {
+                try {
+                    result = Base64.decode(value);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return result;
+    }
 
     private boolean isValid(String key, Object value) {
         return key != null && value != null;
