@@ -12,9 +12,7 @@ package org.weasis.dicom.explorer;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +25,6 @@ import java.util.concurrent.Executors;
 
 import javax.swing.SwingUtilities;
 
-import org.noos.xing.mydoggy.plaf.persistence.xml.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
@@ -48,7 +45,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.Base64;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -126,9 +123,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (parent != null || value != null) {
             synchronized (model) {
                 for (MediaSeriesGroup node : model.getSuccessors(parent)) {
-                    if (node.equals(value)) {
+                    if (node.equals(value))
                         return node;
-                    }
                 }
             }
         }
@@ -160,9 +156,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (tree != null) {
                     Tree<MediaSeriesGroup> parent = null;
                     while ((parent = tree.getParent()) != null) {
-                        if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
+                        if (parent.getHead().getTagID().equals(modelNode.getTagElement()))
                             return parent.getHead();
-                        }
                         tree = parent;
                     }
                 }
@@ -220,9 +215,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     @Override
     public void firePropertyChange(final ObservableEvent event) {
         if (propertyChange != null) {
-            if (event == null) {
+            if (event == null)
                 throw new NullPointerException();
-            }
             if (SwingUtilities.isEventDispatchThread()) {
                 propertyChange.firePropertyChange(event);
             } else {
@@ -493,10 +487,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
         final DicomImageElement firstMedia = series.getMedia(0);
-        if (firstMedia == null) {
+        if (firstMedia == null)
             // no image
             return true;
-        }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);
             Object tag2 = firstMedia.getTagValue(tagElement);
@@ -504,9 +497,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (tag == null && tag2 == null) {
                 continue;
             }
-            if (tag != null && !tag.equals(tag2)) {
+            if (tag != null && !tag.equals(tag2))
                 return false;
-            }
         }
         return true;
     }
@@ -555,10 +547,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < xmlFiles.length; i++) {
                         try {
                             File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            if (FileUtil.writeFile(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
-                                new FileOutputStream(tempFile)) == -1) {
-                                xmlFiles[i] = tempFile;
-                            }
+                            Base64.decodeToFile(xmlRef[i], tempFile.getPath());
+                            xmlFiles[i] = tempFile;
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
