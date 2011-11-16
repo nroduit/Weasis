@@ -317,7 +317,7 @@ public class DownloadManager {
             dicomSeries.setTagNoNull(TagW.WadoCompressionRate,
                 getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.DirectDownloadThumbnail,
-                getIntegerTagAttribute(xmler, TagW.DirectDownloadThumbnail.getTagName(), null));
+                getTagAttribute(xmler, TagW.DirectDownloadThumbnail.getTagName(), null));
             model.addHierarchyNode(study, dicomSeries);
         } else {
             WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
