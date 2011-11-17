@@ -445,7 +445,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         if (thumURL != null) {
                             try {
                                 File outFile =
-                                    File.createTempFile("tumb_", FileUtil.getExtension(thumURL),
+                                    File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
                                         AbstractProperties.APP_TEMP_DIR);
                                 int resp = FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
                                 if (resp == -1) {

@@ -27,7 +27,7 @@ public class PresentationStateReader {
 
     public PresentationStateReader(MediaElement dicom) {
         if (dicom == null) {
-            throw new IllegalArgumentException("Dicom parameter cannot be null");
+            throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
         }
         this.dicom = dicom;
         if (dicom.getMediaReader() instanceof DicomMediaIO) {
@@ -173,12 +173,12 @@ public class PresentationStateReader {
                         tags.put(ActionW.CROP.cmd(), new Rectangle(tlhc[0], tlhc[1], brhc[0] - tlhc[0], brhc[1]
                             - tlhc[1]));
                     }
-                    tags.put("presentationMode", presentationMode);
-                    if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) {
+                    tags.put("presentationMode", presentationMode); //$NON-NLS-1$
+                    if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(), 0.0);
-                    } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) {
+                    } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(), dam.getPresentationPixelMagnificationRatio());
-                    } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) {
+                    } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
                         // be
                         // square pixel)
@@ -208,13 +208,13 @@ public class PresentationStateReader {
         }
         String regex;
         if (lfPos == -1) {
-            regex = "\r";
+            regex = "\r"; //$NON-NLS-1$
         } else if (crPos == -1) {
-            regex = "\n";
+            regex = "\n"; //$NON-NLS-1$
         } else if (crPos < lfPos) {
-            regex = "\r\n";
+            regex = "\r\n"; //$NON-NLS-1$
         } else {
-            regex = "\n\r";
+            regex = "\n\r"; //$NON-NLS-1$
         }
         String[] ret = unformatted.split(regex);
         return ret;

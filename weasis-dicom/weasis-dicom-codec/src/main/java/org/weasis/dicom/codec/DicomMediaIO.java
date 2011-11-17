@@ -145,7 +145,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
                 if (stored > 0) {
                     numberOfFrame = getNumImages(false);
-                    String tsuid = dicomObject.getString(Tag.TransferSyntaxUID, "");
+                    String tsuid = dicomObject.getString(Tag.TransferSyntaxUID, ""); //$NON-NLS-1$
                     if (tsuid.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$
                         // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
                         // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
@@ -1105,7 +1105,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         String shutterShape = getStringFromDicomElement(dcmObject, Tag.ShutterShape, null);
         if (shutterShape != null) {
             // RECTANGULAR is legal
-            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) {
+            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) { //$NON-NLS-1$ //$NON-NLS-2$
                 Rectangle2D rect = new Rectangle2D.Double();
                 rect.setFrameFromDiagonal(getIntegerFromDicomElement(dcmObject, Tag.ShutterLeftVerticalEdge, 0),
                     getIntegerFromDicomElement(dcmObject, Tag.ShutterUpperHorizontalEdge, 0),
@@ -1114,7 +1114,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 shape = new Area(rect);
 
             }
-            if (shutterShape.contains("CIRCULAR")) {
+            if (shutterShape.contains("CIRCULAR")) { //$NON-NLS-1$
                 int[] centerOfCircularShutter = dcmObject.getInts(Tag.CenterOfCircularShutter, (int[]) null);
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
                     Ellipse2D ellipse = new Ellipse2D.Double();
@@ -1129,7 +1129,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     }
                 }
             }
-            if (shutterShape.contains("POLYGONAL")) {
+            if (shutterShape.contains("POLYGONAL")) { //$NON-NLS-1$
                 int[] points = dcmObject.getInts(Tag.VerticesOfThePolygonalShutter, (int[]) null);
                 if (points != null) {
                     Polygon polygon = new Polygon();

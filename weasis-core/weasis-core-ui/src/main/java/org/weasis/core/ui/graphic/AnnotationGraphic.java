@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -29,8 +30,10 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     // TODO annotation icon
     public static final Icon ICON = new ImageIcon(AnnotationGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
 
-    public static final Measurement FIRST_POINT_X = new Measurement("Anchor x", 1, true, true, false);
-    public static final Measurement FIRST_POINT_Y = new Measurement("Anchor y", 2, true, true, false);
+    public static final Measurement FIRST_POINT_X = new Measurement(
+        Messages.getString("AnnotationGraphic.anchorx"), 1, true, true, false); //$NON-NLS-1$
+    public static final Measurement FIRST_POINT_Y = new Measurement(
+        Messages.getString("AnnotationGraphic.anchory"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptAnchoir, ptFoot; // Let AB be a simple a line segment
@@ -71,7 +74,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Annotation";
+        return Messages.getString("Tools.Anno"); //$NON-NLS-1$
     }
 
     @Override

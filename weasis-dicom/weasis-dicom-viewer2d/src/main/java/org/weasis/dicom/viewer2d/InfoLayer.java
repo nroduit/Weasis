@@ -332,10 +332,10 @@ public class InfoLayer implements AnnotationsLayer {
             }
             if (rowTop != null && colLeft != null) {
                 if (colLeft.length() < 1) {
-                    colLeft = " ";
+                    colLeft = " "; //$NON-NLS-1$
                 }
                 if (rowTop.length() < 1) {
-                    rowTop = " ";
+                    rowTop = " "; //$NON-NLS-1$
                 }
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
@@ -403,16 +403,16 @@ public class InfoLayer implements AnnotationsLayer {
 
     private String getLossyTransferSyntaxUID(String tsuid) {
         if (tsuid != null) {
-            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) {
+            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) { //$NON-NLS-1$
                 return "JPEG Baseline"; //$NON-NLS-1$
             }
-            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) {
+            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) { //$NON-NLS-1$
                 return "JPEG Extended"; //$NON-NLS-1$
             }
-            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) {
+            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) { //$NON-NLS-1$
                 return "JPEG-LS (Near-Lossless)"; //$NON-NLS-1$
             }
-            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) {
+            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) { //$NON-NLS-1$
                 return "JPEG 2000"; //$NON-NLS-1$
             }
         }

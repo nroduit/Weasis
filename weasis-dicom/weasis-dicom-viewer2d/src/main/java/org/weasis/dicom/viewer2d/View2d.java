@@ -258,7 +258,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setShutter(reader.getDicom());
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
 
-        actionsInView.put("originalPixelSpacing",
+        actionsInView.put("originalPixelSpacing", //$NON-NLS-1$
             reader.getTagValue(TagW.PixelSpacing.getName(), new double[] { 1.0, 1.0 }));
 
         if (area != null) {

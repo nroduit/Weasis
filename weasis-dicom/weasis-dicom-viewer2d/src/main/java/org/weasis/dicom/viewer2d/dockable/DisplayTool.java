@@ -52,8 +52,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public static final String IMAGE = Messages.getString("DisplayTool.image"); //$NON-NLS-1$
     public static final String DICOM_IMAGE_OVERLAY = Messages.getString("DisplayTool.dicom_overlay"); //$NON-NLS-1$
-    public static final String DICOM_PIXEL_PADDING = "Pixel padding";
-    public static final String DICOM_SHUTTER = "Shutter";
+    public static final String DICOM_PIXEL_PADDING = Messages.getString("DisplayTool.pixpad"); //$NON-NLS-1$
+    public static final String DICOM_SHUTTER = Messages.getString("DisplayTool.shutter"); //$NON-NLS-1$
     public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano"); //$NON-NLS-1$
 
     public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
