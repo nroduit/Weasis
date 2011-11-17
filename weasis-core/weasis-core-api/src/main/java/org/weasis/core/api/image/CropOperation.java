@@ -12,7 +12,7 @@ import org.weasis.core.api.gui.util.ActionW;
 
 public class CropOperation extends AbstractOperation {
 
-    public static final String name = Messages.getString("Crop");
+    public static final String name = Messages.getString("CropOperation.name"); //$NON-NLS-1$
 
     @Override
     public String getOperationName() {

@@ -135,7 +135,7 @@ public class MimeInspector {
         if (extension != null && extension.length() > 0 && extension.length() < 5) {
             mimeType = mimeTypes.getProperty(extension.toLowerCase());
             if (mimeType != null) {
-                String[] mimes = mimeType.split(",");
+                String[] mimes = mimeType.split(","); //$NON-NLS-1$
                 // When several Mimes for an extension, try to find from magic number
                 if (mimes.length > 1) {
                     mimeType = getMimeTypeFromMagicNumber(file);

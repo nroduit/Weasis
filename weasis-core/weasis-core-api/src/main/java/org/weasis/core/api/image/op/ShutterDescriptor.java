@@ -24,24 +24,24 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
      * The resource strings that provide the general documentation and specify the parameter list for the "Sample"
      * operation.
      */
-    private static final String[][] resources = { { "GlobalName", "Shutter" },
+    private static final String[][] resources = { { "GlobalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "LocalName", "Shutter" },
+    { "LocalName", "Shutter" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Vendor", "" },
+    { "Vendor", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Description", "Apply an shutter to the image" },
+    { "Description", "Apply an shutter to the image" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "DocURL", "" },
+    { "DocURL", "" }, //$NON-NLS-1$ //$NON-NLS-2$
 
-    { "Version", "1.0" } };
+    { "Version", "1.0" } }; //$NON-NLS-1$ //$NON-NLS-2$
 
-    private static final String[] paramNames = { "roi", "color" };
+    private static final String[] paramNames = { "roi", "color" }; //$NON-NLS-1$ //$NON-NLS-2$
     private static final Class[] paramClasses = { ROIShape.class, int[].class };
     private static final Object[] paramDefaults = { null, null };
 
     public ShutterDescriptor() {
-        super(resources, new String[] { "rendered" }, 1, paramNames, paramClasses, paramDefaults, null);
+        super(resources, new String[] { "rendered" }, 1, paramNames, paramClasses, paramDefaults, null); //$NON-NLS-1$
     }
 
     /**

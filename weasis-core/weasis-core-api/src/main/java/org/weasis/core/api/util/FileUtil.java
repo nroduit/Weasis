@@ -147,13 +147,13 @@ public class FileUtil {
 
     public static String getExtension(String fn) {
         if (fn == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         int i = fn.lastIndexOf('.');
         if (i > 0) {
             return fn.substring(i);
         }
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     /**

@@ -137,11 +137,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_txtpnNote.gridx = 0;
         gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
-        txtpnNote.setContentType("text/html");
+        txtpnNote.setContentType("text/html"); //$NON-NLS-1$
         StyleSheet ss = ((HTMLEditorKit) txtpnNote.getEditorKit()).getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#"
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
             + Integer.toHexString((labelLocale.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin-right:0;margin-left:0;font-weight:normal;}");
+            + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
         txtpnNote.setText(String.format(Messages.getString("GeneralSetting.txtpnNote"), getInstalledLanguages())); //$NON-NLS-1$
         add(txtpnNote, gbc_txtpnNote);
         this.add(component1, new GridBagConstraints(3, 4, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
@@ -181,7 +181,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     private String getInstalledLanguages() {
         StringBuffer buffer = new StringBuffer();
-        String langs = System.getProperty("weasis.languages", null);
+        String langs = System.getProperty("weasis.languages", null); //$NON-NLS-1$
         if (langs != null) {
             String[] items = langs.split(","); //$NON-NLS-1$
             for (int i = 0; i < items.length; i++) {
@@ -199,13 +199,13 @@ public class GeneralSetting extends AbstractItemDialogPage {
                 if (l == null) {
                     continue;
                 }
-                buffer.append("<BR>");
+                buffer.append("<BR>"); //$NON-NLS-1$
                 buffer.append(l.getDisplayName());
                 if (autor != null) {
-                    buffer.append(" - ");
-                    buffer.append("<i>");
+                    buffer.append(" - "); //$NON-NLS-1$
+                    buffer.append("<i>"); //$NON-NLS-1$
                     buffer.append(autor);
-                    buffer.append("</i>");
+                    buffer.append("</i>"); //$NON-NLS-1$
                 }
             }
         }
@@ -246,7 +246,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         }
 
         if (len == 2) {
-            return new Locale(input, "");
+            return new Locale(input, ""); //$NON-NLS-1$
         }
 
         if (input.charAt(2) != '_') {
@@ -255,7 +255,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
         char ch3 = input.charAt(3);
         if (ch3 == '_') {
-            return new Locale(input.substring(0, 2), "", input.substring(4));
+            return new Locale(input.substring(0, 2), "", input.substring(4)); //$NON-NLS-1$
         }
 
         char ch4 = input.charAt(4);
