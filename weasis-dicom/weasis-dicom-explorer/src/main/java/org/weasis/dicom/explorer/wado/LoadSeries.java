@@ -174,6 +174,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     dicomModel));
             }
             LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
+            LoadRemoteDicomManifest.addLoadSeries(taskResume, dicomModel);
+            LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
         }
     }
 
@@ -444,9 +446,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
                         if (thumURL != null) {
                             try {
-                                File outFile =
-                                    File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
-                                        AbstractProperties.APP_TEMP_DIR);
+                                File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
+                                    AbstractProperties.APP_TEMP_DIR);
                                 int resp = FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
                                 if (resp == -1) {
                                     file = outFile;
@@ -1027,6 +1028,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                                 }
                                 LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
+                                LoadRemoteDicomManifest.addLoadSeries(taskResume, dicomModel);
+                                LoadRemoteDicomManifest.removeLoadSeries(s, dicomModel);
                                 break;
                             }
                         }
