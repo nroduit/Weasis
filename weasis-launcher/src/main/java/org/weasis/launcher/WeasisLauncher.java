@@ -214,9 +214,9 @@ public class WeasisLauncher {
             File basePortableDir = new File(portable);
             String baseURL = ""; //$NON-NLS-1$
             try {
-                baseURL = basePortableDir.toURI().toURL().toString() + "weasis";
+                baseURL = basePortableDir.toURI().toURL().toString() + "weasis"; //$NON-NLS-1$
                 System.setProperty("weasis.codebase.url", baseURL); //$NON-NLS-1$
-                baseURL += "/" + CONFIG_DIRECTORY + "/";
+                baseURL += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
                 System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
                 System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
             } catch (Exception e) {
@@ -323,9 +323,9 @@ public class WeasisLauncher {
                 }
             });
 
-            String mainUI = configProps.getProperty("weasis.main.ui", "");
+            String mainUI = configProps.getProperty("weasis.main.ui", ""); //$NON-NLS-1$ //$NON-NLS-2$
             mainUI = mainUI.trim();
-            if (!mainUI.equals("")) {
+            if (!mainUI.equals("")) { //$NON-NLS-1$
                 boolean uiStarted = false;
                 for (Bundle b : m_felix.getBundleContext().getBundles()) {
                     if (b.getSymbolicName().equals(mainUI)) { //$NON-NLS-1$
@@ -642,12 +642,12 @@ public class WeasisLauncher {
 
         URI translation_modules = null;
         if (portable != null) {
-            File file = new File(portable, "weasis/bundle-i18n/buildNumber.properties");
+            File file = new File(portable, "weasis/bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
             if (file.canRead()) {
                 translation_modules = file.toURI();
                 String path = file.getParentFile().toURI().toString();
                 System.setProperty("weasis.i18n", path); //$NON-NLS-1$
-                System.err.println("i18n path: " + path);
+                System.err.println("i18n path: " + path); //$NON-NLS-1$
             }
         } else {
             String path = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
@@ -663,7 +663,7 @@ public class WeasisLauncher {
         if (translation_modules != null) {
             modulesi18n = readProperties(translation_modules, null);
             if (modulesi18n != null) {
-                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", ""));
+                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
         if (lang.equals("en")) { //$NON-NLS-1$
@@ -705,7 +705,7 @@ public class WeasisLauncher {
 
         // changing Look and Feel when upgrade version
         if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
-            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+            if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
@@ -790,8 +790,8 @@ public class WeasisLauncher {
                 }
             });
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            final StringBuffer message = new StringBuffer("<P>");
-            message.append(String.format("Weasis version has changed from %s to %s.", versionOld, versionNew));
+            final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
+            message.append(String.format(Messages.getString("WeasisLauncher.change.version"), versionOld, versionNew)); //$NON-NLS-1$
 
             EventQueue.invokeLater(new Runnable() {
                 @Override
@@ -834,10 +834,11 @@ public class WeasisLauncher {
                     jTextPane1.setBackground(Color.WHITE);
                     StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
                     ss.addRule("p {font-size:12}"); //$NON-NLS-1$
-                    message.append("<BR>");
-                    message.append(String.format("See <a href=\"%s\">release notes</a>.",
-                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10431"));
-                    message.append("</P>");
+                    message.append("<BR>"); //$NON-NLS-1$
+                    String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
+                    message.append(String.format("See <a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
+                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10431")); //$NON-NLS-1$
+                    message.append("</P>"); //$NON-NLS-1$
                     jTextPane1.setText(message.toString());
                     JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
                         Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
@@ -878,7 +879,7 @@ public class WeasisLauncher {
 
     public static String setLookAndFeel(String look) {
         // Workaround in substance 6.3 to work with JAVA 7
-        UIManager.put("ColorChooserUI", BasicColorChooserUI.class.getName());
+        UIManager.put("ColorChooserUI", BasicColorChooserUI.class.getName()); //$NON-NLS-1$
         // Do not display metal LAF in bold, it is ugly
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
@@ -893,7 +894,7 @@ public class WeasisLauncher {
             look = null;
         }
         if (look == null) {
-            if ("Mac OS X".equals(System.getProperty("os.name"))) {
+            if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 // Try to set Nimbus, concurrent thread issue

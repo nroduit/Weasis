@@ -46,7 +46,7 @@ public class CIELab extends ColorSpace {
 
     @Override
     public String getName(int idx) {
-        return String.valueOf("Lab".charAt(idx));
+        return String.valueOf("Lab".charAt(idx)); //$NON-NLS-1$
     }
 
     @Override

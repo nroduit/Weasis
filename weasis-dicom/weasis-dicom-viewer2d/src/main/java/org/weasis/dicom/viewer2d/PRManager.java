@@ -68,7 +68,7 @@ public class PRManager {
                     GraphicObject[] gos = gram.getGraphicObjects();
                     if (gos != null) {
                         for (GraphicObject go : gos) {
-                            boolean isDisp = ("DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits()));
+                            boolean isDisp = ("DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits())); //$NON-NLS-1$
 
                         }
                     }
@@ -81,7 +81,7 @@ public class PRManager {
 
                             float[] anchor = txo.getAnchorPoint();
                             if (anchor != null) {
-                                if ("DISPLAY".equalsIgnoreCase(txo.getAnchorPointAnnotationUnits())) {
+                                if ("DISPLAY".equalsIgnoreCase(txo.getAnchorPointAnnotationUnits())) { //$NON-NLS-1$
 
                                 }
                             } else {
@@ -92,7 +92,7 @@ public class PRManager {
                                         new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
                                             bottomRight[1] - topLeft[1]);
                                     Rectangle2D modelArea = view.getViewModel().getModelArea();
-                                    if ("DISPLAY".equalsIgnoreCase(txo.getBoundingBoxAnnotationUnits())) {
+                                    if ("DISPLAY".equalsIgnoreCase(txo.getBoundingBoxAnnotationUnits())) { //$NON-NLS-1$
                                         double width = area == null ? modelArea.getWidth() : area.getWidth();
                                         double height = area == null ? modelArea.getHeight() : area.getHeight();
                                         if (rotation != 0 || flip) {
@@ -118,7 +118,7 @@ public class PRManager {
                                         }
 
                                     } else {
-                                        if ("MATRIX".equalsIgnoreCase(txo.getBoundingBoxAnnotationUnits())) {
+                                        if ("MATRIX".equalsIgnoreCase(txo.getBoundingBoxAnnotationUnits())) { //$NON-NLS-1$
                                             // TODO implement ?
                                         }
                                         // PIXEL relative

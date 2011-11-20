@@ -34,7 +34,7 @@ public class DicomImport extends AbstractWizardDialog {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
 
-        final JButton importandClose = new JButton("Import and Close");
+        final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
         importandClose.addActionListener(new ActionListener() {
 
             @Override

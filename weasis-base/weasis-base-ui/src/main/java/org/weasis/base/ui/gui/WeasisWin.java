@@ -106,7 +106,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
 
     private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
-    private static final JMenu menuDisplay = new JMenu("Display");
+    private static final JMenu menuDisplay = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
     private static final WeasisWin instance = new WeasisWin();
@@ -595,7 +595,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         });
         helpMenuItem.add(webMenuItem);
-        final JMenuItem websiteMenuItem = new JMenuItem("Online Help");
+        final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online")); //$NON-NLS-1$
         websiteMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -722,7 +722,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private void buildMenuDisplay() {
         menuDisplay.removeAll();
-        final JMenu toolBarMenu = new JMenu("Toolbars");
+        final JMenu toolBarMenu = new JMenu(Messages.getString("WeasisWin.toolbar")); //$NON-NLS-1$
         JPopupMenu menuImport = toolBarMenu.getPopupMenu();
         // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
         if (AbstractProperties.isMacNativeLookAndFeel()) {
