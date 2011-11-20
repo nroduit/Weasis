@@ -836,7 +836,7 @@ public class WeasisLauncher {
                     ss.addRule("p {font-size:12}"); //$NON-NLS-1$
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                    message.append(String.format("See <a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
+                    message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
                         "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10431")); //$NON-NLS-1$
                     message.append("</P>"); //$NON-NLS-1$
                     jTextPane1.setText(message.toString());
