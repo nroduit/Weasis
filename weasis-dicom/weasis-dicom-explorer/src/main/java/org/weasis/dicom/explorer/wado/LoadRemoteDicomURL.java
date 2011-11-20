@@ -18,7 +18,6 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -63,8 +62,6 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
-            this));
         String seriesUID = null;
         for (int i = 0; i < urls.length; i++) {
             if (urls[i] != null) {
@@ -127,8 +124,6 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
-            this));
     }
 
 }
