@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-base-parent</artifactId>
 		<groupId>org.weasis.base</groupId>
-		<version>1.7-SNAPSHOT</version>
+		<version>1.7</version>
 		<relativePath>../weasis-base-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-base-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>Image Viewer [${project.artifactId}]</name>
-	<version>0.5.8-SNAPSHOT</version>
+	<version>0.5.8</version>
 	<properties>
 		<bundle.namespace>org.weasis.base.viewer2d</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
