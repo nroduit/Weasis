@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>1.7</version>
+		<version>1.8-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Data Explorer [${project.artifactId}]</name>
-	<version>0.5.8</version>
+	<version>0.5.9-SNAPSHOT</version>
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
@@ -37,13 +37,13 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>0.5.8</version>
+			<version>0.5.9-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>0.5.8</version>
+			<version>0.5.9-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
