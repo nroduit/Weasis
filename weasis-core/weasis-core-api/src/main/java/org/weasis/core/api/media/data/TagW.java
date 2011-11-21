@@ -50,8 +50,8 @@ public class TagW implements Transferable, Serializable {
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        String, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, Integer, IntegerArray, Float, FloatArray,
-        Double, DoubleArray, Color, Thumbnail, Object, List
+        String, StringArray, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, Integer, IntegerArray, Float,
+        FloatArray, Double, DoubleArray, Color, Thumbnail, Object, List, Array
 
     };
 
@@ -193,13 +193,13 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW VOILUTSequence = new TagW(0x00283010, "VOI LUT Sequence", TagType.Sequence);
     // One or more Items shall be included in this sequence
-    public static final TagW VOILUTsExplanation = new TagW("VOI LUTs Explanation", TagType.String);
-    public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Object);
+    public static final TagW VOILUTsExplanation = new TagW("VOI LUTs Explanation", TagType.StringArray);
+    public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Array);
 
     public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.FloatArray);
     public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.FloatArray);
     public static final TagW WindowCenterWidthExplanation = new TagW(0x00281055, "Window Center & Width Explanation",
-        TagType.String);
+        TagType.StringArray);
     public static final TagW VOILutFunction = new TagW(0x00281056, "VOI LUT Function", TagType.String);
 
     public static final TagW ModalityLUTSequence = new TagW(0x00283000, "Modality LUT Sequence", TagType.Sequence);
