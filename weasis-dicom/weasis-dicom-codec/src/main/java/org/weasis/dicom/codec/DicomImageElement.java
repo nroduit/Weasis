@@ -79,12 +79,14 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     public float getMinValue() {
-        return pixel2rescale(minValue);
+        return Math.min(pixel2rescale(minValue), pixel2rescale(maxValue)); // because slope can be inverted
+        // return pixel2rescale(minValue);
     }
 
     @Override
     public float getMaxValue() {
-        return pixel2rescale(maxValue);
+        return Math.max(pixel2rescale(minValue), pixel2rescale(maxValue)); // because slope can be inverted
+        // return pixel2rescale(maxValue);
     }
 
     // cannot be used like this since modality LUT may be not linear
@@ -173,6 +175,12 @@ public class DicomImageElement extends ImageElement {
             return modalityLookup;
         }
 
+        // In the case where Rescale Slope and Rescale Intercept are used, the output ranges from
+        // (minimum pixel value*Rescale Slope+Rescale Intercept) to
+        // (maximum pixel value*Rescale Slope+Rescale Intercept), where the minimum and maximum pixel values are
+        // determined by BitsStored and Pixel Representation.
+        // Note: This range may be signed even if Pixel Representation is unsigned.
+
         boolean signed = isPixelRepresentationSigned();
         Integer bitsStored = (Integer) getTagValue(TagW.BitsStored);
 
@@ -181,7 +189,15 @@ public class DicomImageElement extends ImageElement {
         Float slope = (Float) getTagValue(TagW.RescaleSlope);
 
         if (lookup == null) {
-            int dataType = 0;
+
+            slope = (slope == null) ? 1.0f : slope;
+            intercept = (intercept == null) ? 0.0f : intercept;
+
+            if ((minValue * slope + intercept) < 0) {
+                signed = true;
+            }
+
+            int dataType = -1;
             if (bitsStored <= 8) {
                 dataType = DataBuffer.TYPE_BYTE;
             } else if (bitsStored <= 16) {
@@ -192,6 +208,9 @@ public class DicomImageElement extends ImageElement {
         }
 
         if (lookup != null) {
+            // In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n
+            // is the third value of LUT Descriptor. This range is always unsigned.
+
             // String lutType = (String) getTagValue(TagW.ModalityLUTType);
             // String explanation = (String) getTagValue(TagW.ModalityLUTExplanation);
 
@@ -269,6 +288,10 @@ public class DicomImageElement extends ImageElement {
 
         return modalityLookup;
     }
+
+    // public LookupTableJAI getVOILookup(Float window, Float level) {
+    // return null;
+    // }
 
     @Override
     protected void findMinMaxValues(RenderedImage img) {
@@ -354,20 +377,18 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getDefaultWindow() {
         // Float val = (Float) getTagValue(TagW.WindowWidth);
-        float[] val = (float[]) getTagValue(TagW.WindowWidth);
-        if (val == null || val.length == 0) {
+        Float[] val = (Float[]) getTagValue(TagW.WindowWidth);
+        if (val == null || val.length == 0)
             return super.getDefaultWindow();
-        }
         return val[0];
     }
 
     @Override
     public float getDefaultLevel() {
         // Float val = (Float) getTagValue(TagW.WindowCenter);
-        float[] val = (float[]) getTagValue(TagW.WindowCenter);
-        if (val == null || val.length == 0) {
+        Float[] val = (Float[]) getTagValue(TagW.WindowCenter);
+        if (val == null || val.length == 0)
             return super.getDefaultLevel();
-        }
         return val[0];
     }
 
@@ -383,7 +404,7 @@ public class DicomImageElement extends ImageElement {
         // return pixelValue;
 
         LookupTableJAI lookup = getModalityLookup();
-        return (lookup != null) ? lookup.lookupFloat(0, (int) pixelValue) : 0f;
+        return (lookup != null) ? lookup.lookup(0, (int) pixelValue) : 0f;
     }
 
     // TODO - change name because rescale term is already used

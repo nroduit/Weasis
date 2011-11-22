@@ -21,9 +21,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
 
 public class PresetWindowLevel {
@@ -35,7 +35,7 @@ public class PresetWindowLevel {
     // public static final PresetWindowLevel AUTO = new PresetWindowLevel(
     //        Messages.getString("PresetWindowLevel.full"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
     public static final PresetWindowLevel AUTO = new PresetWindowLevel(
-        Messages.getString("PresetWindowLevel.full"), null, 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
+        Messages.getString("PresetWindowLevel.full"), null, 0f, 0f); //$NON-NLS-1$ 
 
     // private static final ArrayList<PresetWindowLevel> presetList = getPresetCollection();
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
@@ -85,14 +85,14 @@ public class PresetWindowLevel {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static PresetWindowLevel[] getPresetCollection(ImageElement image) {
+    public static PresetWindowLevel[] getPresetCollection(DicomImageElement image) {
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
         String modality = (String) image.getTagValue(TagW.Modality);
 
-        float[] windowCenterDefaultTagArray = (float[]) image.getTagValue(TagW.WindowCenter);
-        float[] windowWidthDefaultTagArray = (float[]) image.getTagValue(TagW.WindowWidth);
+        Float[] windowCenterDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowCenter);
+        Float[] windowWidthDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowWidth);
         String[] windowCenterWidthExplanationTagArray = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
         String lutFunction = (String) image.getTagValue(TagW.VOILutFunction);
 
@@ -112,7 +112,7 @@ public class PresetWindowLevel {
             }
         }
 
-        Object voiLutSequence = image.getTagValue(TagW.VOILUTSequence);
+        // Object voiLutSequence = image.getTagValue(TagW.VOILUTSequence);
         // if (voiLutSequence != null) {
         // String lutDescriptor = (String) image.getTagValue(TagW.LutDescriptor);
         // String lutExplanation = (String) image.getTagValue(TagW.LutExplanation);

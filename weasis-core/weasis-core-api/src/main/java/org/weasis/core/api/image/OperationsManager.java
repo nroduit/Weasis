@@ -45,6 +45,7 @@ public class OperationsManager {
         return null;
     }
 
+    // NOTE : seems to be useless and does twice the job operations to compare to updateAllOperations
     public RenderedImage getFinalImage() {
         int size = operations.size();
         RenderedImage source = imageOperation.getSourceImage();

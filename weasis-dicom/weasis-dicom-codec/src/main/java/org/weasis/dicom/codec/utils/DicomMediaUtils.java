@@ -35,9 +35,37 @@ public class DicomMediaUtils {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
+     * @return false if either an argument is null or if at least one tag value is empty in the given tagMap
+     */
+    // public static boolean containsRequiredTags(Map<TagW, Object> tagMap, TagW... requiredTags) {
+    // if (tagMap == null || requiredTags == null || requiredTags.length == 0)
+    // return false;
+    //
+    // int countValues = 0;
+    // List<String> missingTagList = null;
+    //
+    // for (TagW tag : requiredTags) {
+    // Object value = tagMap.get(tag);
+    // if (value != null) {
+    // countValues++;
+    // } else {
+    // if (missingTagList == null) {
+    // missingTagList = new ArrayList<String>(requiredTags.length);
+    // }
+    // missingTagList.add(tag.toString());
+    // }
+    // }
+    // if (countValues > 0 && countValues < requiredTags.length) {
+    // LOGGER.debug("Missing Tags \"{}\" in required list \"{}\"", missingTagList, requiredTags);
+    // }
+    // return (countValues != requiredTags.length);
+    // }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
      * @return false if either an argument is null or if at least one tag value is empty in the given dicomObject
      */
-    static boolean containsRequiredAttributes(DicomObject dicomObj, int... requiredTags) {
+    public static boolean containsRequiredAttributes(DicomObject dicomObj, int... requiredTags) {
         if (dicomObj == null || requiredTags == null || requiredTags.length == 0)
             return false;
 
@@ -56,9 +84,9 @@ public class DicomMediaUtils {
             }
         }
         if (countValues > 0 && countValues < requiredTags.length) {
-            LOGGER.info("Missing attributes {} in required Tags {}", missingTagList, requiredTags);
+            LOGGER.debug("Missing attributes \"{}\" in required list \"{}\"", missingTagList, requiredTags);
         }
-        return (countValues != requiredTags.length);
+        return (countValues == requiredTags.length);
     }
 
     /**
@@ -77,9 +105,9 @@ public class DicomMediaUtils {
     public static boolean containsRequiredAttributes(DicomElement sequenceElt, int itemIndex, int... requiredTags) {
         if (sequenceElt == null || sequenceElt.isEmpty()) {
         } else if (sequenceElt.vr() != VR.SQ) {
-            LOGGER.info("Invalid DicomElement argument {} which is not a sequence", sequenceElt.toString());
+            LOGGER.debug("Invalid DicomElement argument \"{}\" which is not a sequence", sequenceElt.toString());
         } else if (sequenceElt.countItems() <= itemIndex) {
-            LOGGER.info("Index {} is out of bound for this sequence {}", itemIndex, sequenceElt.toString());
+            LOGGER.debug("Index \"{}\" is out of bound for this sequence \"{}\"", itemIndex, sequenceElt.toString());
         } else
             return containsRequiredAttributes(sequenceElt.getDicomObject(itemIndex), requiredTags);
 
@@ -183,9 +211,9 @@ public class DicomMediaUtils {
         int[] descriptor = dicomLutObject.getInts(Tag.LUTDescriptor);
 
         if (descriptor == null) {
-            LOGGER.info("Missing LUT Descriptor");
+            LOGGER.debug("Missing LUT Descriptor");
         } else if (descriptor.length != 3) {
-            LOGGER.info("Illegal number of LUT Descriptor values : {}", descriptor.length);
+            LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length);
         } else {
 
             // First value is the number of entries in the lookup table.
@@ -201,7 +229,7 @@ public class DicomMediaUtils {
             if (numBits <= 8) { // LUT entry value range should be [0,255]
                 byte[] bData = dicomLutObject.getBytes(Tag.LUTData); // LUT Data contains the LUT entry values.
 
-                if (bData.length == numEntries << 1) {
+                if (bData.length == (numEntries << 1)) {
                     // Appends when some implementations have encoded 8 bit entries with 16 bits
                     // allocated, padding the high bits;
                     byte[] bDataNew = new byte[numEntries];
@@ -220,18 +248,19 @@ public class DicomMediaUtils {
                 dataLength = sData.length;
                 lookupTable = new ShortLookupTable(offset, sData);
             } else {
-                LOGGER.info("Illegal number of bits for each entry in the LUT Data");
+                LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
             }
 
             if (lookupTable != null) {
                 if (dataLength != numEntries) {
-                    LOGGER.info("LUT Data length {} mismatch number of entries {} in LUT Descriptor ", dataLength,
-                        numEntries);
+                    LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ",
+                        dataLength, numEntries);
                 }
                 if (dataLength > (1 << numBits)) {
-                    LOGGER.info("Illegal LUT Data length {} with resect to the number of bits in LUT descriptor {}",
+                    LOGGER.debug(
+                        "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
                         dataLength, numBits);
-                    lookupTable = null;
+                    // lookupTable = null;
                 }
             }
         }
