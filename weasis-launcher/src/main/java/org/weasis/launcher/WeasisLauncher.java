@@ -186,6 +186,20 @@ public class WeasisLauncher {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setSystemSpecification();
 
+        // Getting VM arguments, workaround for having a fully trusted application with JWS,
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
+        for (int i = 0; i < argv.length; i++) {
+            if (argv[i].startsWith("-VMP") && argv[i].length() > 4) { //$NON-NLS-1$
+                String[] vmarg = argv[i].substring(4).split("=", 2);
+                if (vmarg.length == 2) {
+                    if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) {
+                        vmarg[1] = vmarg[1].substring(1, vmarg[1].length() - 1);
+                    }
+                    System.setProperty(vmarg[0], vmarg[1]);
+                }
+            }
+        }
+
         final List<StringBuffer> commandList = splitCommand(argv);
         // Look for bundle directory and/or cache directory.
         // We support at most one argument, which is the bundle
