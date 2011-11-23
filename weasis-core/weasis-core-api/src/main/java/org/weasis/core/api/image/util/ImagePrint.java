@@ -6,18 +6,20 @@ import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterJob;
 
 public class ImagePrint implements Printable {
     protected RenderedImage renderedImage;
     private Point printLoc;
-    private double scale;
+    private PrintOptions printOptions;
+    //private double scale;
 
-    public ImagePrint(RenderedImage renderedImage, double scale) {
+    ImagePrint(RenderedImage renderedImage, PrintOptions printOptions) {
         this.renderedImage = renderedImage;
         printLoc = new Point(0, 0);
-        this.scale = scale;
+        this.printOptions = printOptions;
     }
 
     public void setPrintLocation(Point d) {
@@ -44,7 +46,14 @@ public class ImagePrint implements Printable {
         if (pageIndex >= 1)
             return Printable.NO_SUCH_PAGE;
         Graphics2D g2d = (Graphics2D) g;
+        
+        Paper paper = new Paper();
+        paper.setSize(5, 5);
+        paper.setImageableArea(0, 0, 5, 5);
+        f.setPaper(paper);
+ 
         g2d.translate(f.getImageableX(), f.getImageableY());
+        
         if (renderedImage != null) {
             printImage(g2d, renderedImage);
             return Printable.PAGE_EXISTS;
@@ -57,7 +66,7 @@ public class ImagePrint implements Printable {
             return;
         int x = printLoc.x;
         int y = printLoc.y;
-        AffineTransform at = AffineTransform.getScaleInstance(scale, scale);
+        AffineTransform at = AffineTransform.getScaleInstance(printOptions.getImageScale(), printOptions.getImageScale());
         at.translate(x, y);
         g2d.drawRenderedImage(image, at);
     }
