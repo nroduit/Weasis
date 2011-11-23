@@ -97,4 +97,5 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         }
         return image;
     }
+
 }

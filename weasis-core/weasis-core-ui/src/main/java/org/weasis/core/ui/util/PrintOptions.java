@@ -1,7 +1,7 @@
 /*
- * @copyright Copyright (c) 2009 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
+ * @copyright Copyright (c) 2009 Animati Sistemas de Informï¿½tica Ltda. (http://www.animati.com.br)
  */
-package org.weasis.core.api.image.util;
+package org.weasis.core.ui.util;
 
 /**
  *
