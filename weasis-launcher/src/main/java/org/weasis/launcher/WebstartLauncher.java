@@ -30,6 +30,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException use) {
         }
+        // TODO can be removed ?
         // Workaround for http://www.dcm4che.org/jira/browse/WEA-30
         if (System.getProperty("javawebstart.version", "").equals("javaws-1.6.0_24")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             // Mode that does not support bundle extension
@@ -60,6 +61,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         launch(argv);
     }
 
+    @Override
     public void newActivation(String[] argv) {
         if (m_tracker != null) {
             if (argv.length > 0) {
