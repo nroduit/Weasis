@@ -109,6 +109,8 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
+            this));
         for (int i = 0; i < xmlFiles.length; i++) {
             if (xmlFiles[i] != null) {
                 URI uri = null;
@@ -150,6 +152,8 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
+            this));
     }
 
     public static synchronized void addLoadSeries(LoadSeries series, DicomModel dicomModel) {
