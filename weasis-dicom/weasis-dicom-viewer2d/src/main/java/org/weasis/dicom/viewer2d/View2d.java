@@ -686,6 +686,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                // Do not add series without medias. BUG WEA-100
+                if (seq == null || seq.size() == 0) {
+                    return false;
+                }
                 if (seq instanceof DicomSeries) {
                     MediaSeriesGroup p1 = model.getParent(seq, DicomModel.patient);
                     MediaSeriesGroup p2 = null;
