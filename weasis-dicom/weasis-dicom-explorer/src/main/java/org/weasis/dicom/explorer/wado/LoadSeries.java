@@ -514,7 +514,15 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
         DicomModel dicomModel, boolean removeOldSeries) {
-        if (factory == null) {
+        if (factory == null && series == null) {
+            return;
+        }
+        int nbImg = 0;
+        for (MediaSeries m : series) {
+            nbImg += m.size();
+        }
+        // Do not add series without medias. BUG WEA-100
+        if (nbImg == 0) {
             return;
         }
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, dicomModel, null,
