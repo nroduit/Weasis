@@ -288,6 +288,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         if (look != null) {
             BundleTools.SYSTEM_PREFERENCES.put("weasis.look", look.getClassName()); //$NON-NLS-1$
         }
+        BundleTools.saveSystemPreferences();
+
         // Restore old laf to avoid display issues.
         final String finalLafClassName = oldUILook.getClassName();
         LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
