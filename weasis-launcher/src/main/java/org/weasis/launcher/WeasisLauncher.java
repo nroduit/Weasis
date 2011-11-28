@@ -15,8 +15,6 @@ import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -565,6 +563,24 @@ public class WeasisLauncher {
         return props;
     }
 
+    private static String getGeneralProperty(String key, String defaultValue, Properties config, Properties local) {
+        return getGeneralProperty(key, key, defaultValue, config, local);
+    }
+
+    private static String getGeneralProperty(String key, String localKey, String defaultValue, Properties config,
+        Properties local) {
+        String value = local.getProperty(localKey, null);
+        if (value == null) {
+            value = System.getProperty(key, null);
+            if (value == null) {
+                value = config.getProperty(key, defaultValue);
+            }
+            // When first launch, set property that can be writed later
+            local.setProperty(localKey, value);
+        }
+        return value;
+    }
+
     public static void setSystemSpecification() {
         // Follows the OSGI specification to use Bundle-NativeCode in the bundle fragment :
         // http://www.osgi.org/Specifications/Reference
@@ -646,13 +662,18 @@ public class WeasisLauncher {
         }
         File common_file = new File(basdir, APP_PROPERTY_FILE);
         Properties s_prop = readProperties(common_file);
+        // General Preferences priority order:
+        // 1) Last value (does not exist for first launch of Weasis in an operating system session).
+        // 2) Java System property
+        // 3) Property defined in weasis/conf/config.properties or in weasis/conf/ext-config.properties (extension of
+        // config)
+        // 4) default value
 
-        // Get locale from system properties otherwise set en_US (only for the first launch of Weasis on a user session)
-        String lang = System.getProperty("weasis.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-        String country = System.getProperty("weasis.country", "US"); //$NON-NLS-1$ //$NON-NLS-2$
-        String variant = System.getProperty("weasis.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
-        // Set the locale of the previous launch if exists
-        lang = s_prop.getProperty("locale.language", lang); //$NON-NLS-1$
+        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+        final String country = getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+
+        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
 
         URI translation_modules = null;
         if (portable != null) {
@@ -661,7 +682,7 @@ public class WeasisLauncher {
                 translation_modules = file.toURI();
                 String path = file.getParentFile().toURI().toString();
                 System.setProperty("weasis.i18n", path); //$NON-NLS-1$
-                System.err.println("i18n path: " + path); //$NON-NLS-1$
+                System.out.println("i18n path: " + path); //$NON-NLS-1$
             }
         } else {
             String path = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
@@ -684,40 +705,28 @@ public class WeasisLauncher {
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         }
-        country = s_prop.getProperty("locale.country", country); //$NON-NLS-1$ 
-        variant = s_prop.getProperty("locale.variant", variant); //$NON-NLS-1$ 
         Locale.setDefault(new Locale(lang, country, variant));
 
-        boolean update = false;
-
-        look = System.getProperty("swing.defaultlaf", null); //$NON-NLS-1$
+        look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
         if (look == null) {
-            look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
-        }
-        if (look == null) {
+            String nativeLook = null;
             String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
             int index = sys_spec.indexOf("-"); //$NON-NLS-1$
             if (index > 0) {
-                String sys = sys_spec.substring(0, index);
-                String weasisNativeLaf = config.getProperty("weasis.look." + sys, null); //$NON-NLS-1$
-                if (weasisNativeLaf != null) {
-                    look = weasisNativeLaf;
+                nativeLook = "weasis.look." + sys_spec.substring(0, index); //$NON-NLS-1$
+                look = System.getProperty(nativeLook, null);
+                if (look == null) {
+                    look = config.getProperty(nativeLook, null);
+                }
+
+            }
+            if (look == null) {
+                look = System.getProperty("weasis.look", null);
+                if (look == null) {
+                    look = config.getProperty(nativeLook, null);
                 }
             }
         }
-
-        Properties common_prop;
-        if (basdir.getPath().equals(dir)) {
-            common_prop = s_prop;
-        } else {
-            common_file = new File(dir, APP_PROPERTY_FILE);
-            common_prop = readProperties(common_file);
-        }
-
-        String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
-        String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
-
-        // changing Look and Feel when upgrade version
         if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
@@ -725,7 +734,6 @@ public class WeasisLauncher {
                 look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
             }
         }
-
         // Set look and feels
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -742,12 +750,26 @@ public class WeasisLauncher {
             System.err.println("WARNING : Unable to set the Look&Feel " + look); //$NON-NLS-1$
             e.printStackTrace();
         }
+        s_prop.put("weasis.look", look);
+
+        Properties common_prop;
+        if (basdir.getPath().equals(dir)) {
+            common_prop = s_prop;
+        } else {
+            FileUtil.storeProperties(common_file, s_prop, null);
+            common_file = new File(dir, APP_PROPERTY_FILE);
+            common_prop = readProperties(common_file);
+        }
+
+        String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
+        String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();
         // Display splash screen
         loader.open();
 
+        boolean update = false;
         if (versionNew != null) {
             // Add also to java properties for the about
             System.setProperty(P_WEASIS_VERSION, versionNew);
@@ -758,17 +780,7 @@ public class WeasisLauncher {
         }
         if (update) {
             common_prop.put("weasis.look", look); //$NON-NLS-1$
-            FileOutputStream fout = null;
-            try {
-                fout = new FileOutputStream(common_file);
-                common_prop.store(fout, null);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FileUtil.safeClose(fout);
-            }
+            FileUtil.storeProperties(common_file, common_prop, null);
         }
 
         boolean cleanCache = Boolean.parseBoolean(config.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$

@@ -96,7 +96,6 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         this.bundleContext = null;
-        BundleTools.saveSystemPreferences();
     }
 
     public static JAI getJAI() {
