@@ -546,4 +546,10 @@ public class InfoLayer implements AnnotationsLayer {
     public void setPixelInfo(String pixelInfo) {
         this.pixelInfo = pixelInfo;
     }
+
+    @Override
+    public AnnotationsLayer getLayerCopy(DefaultView2d view2dPane) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

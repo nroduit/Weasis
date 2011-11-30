@@ -80,6 +80,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
+        displayPreferences.put(MEMORY_BAR, true);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
         DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
@@ -88,6 +89,24 @@ public class InfoLayer implements AnnotationsLayer {
         } else {
             model = null;
         }
+    }
+
+    @Override
+    public AnnotationsLayer getLayerCopy(DefaultView2d view2DPane) {
+        InfoLayer layer = new InfoLayer(view2DPane);
+        HashMap<String, Boolean> prefs = layer.displayPreferences;
+        prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
+        prefs.put(ANONYM_ANNOTATIONS, getDisplayPreferences(ANONYM_ANNOTATIONS));
+        prefs.put(IMAGE_ORIENTATION, getDisplayPreferences(IMAGE_ORIENTATION));
+        prefs.put(SCALE, getDisplayPreferences(SCALE));
+        prefs.put(LUT, getDisplayPreferences(LUT));
+        prefs.put(PIXEL, getDisplayPreferences(PIXEL));
+        prefs.put(WINDOW_LEVEL, getDisplayPreferences(WINDOW_LEVEL));
+        prefs.put(ZOOM, getDisplayPreferences(ZOOM));
+        prefs.put(ROTATION, getDisplayPreferences(ROTATION));
+        prefs.put(FRAME, getDisplayPreferences(FRAME));
+        prefs.put(MEMORY_BAR, getDisplayPreferences(MEMORY_BAR));
+        return layer;
     }
 
     @Override
@@ -382,7 +401,7 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
-        if (series instanceof DicomSeries) {
+        if (getDisplayPreferences(MEMORY_BAR) && series instanceof DicomSeries) {
             DicomSeries s = (DicomSeries) series;
             boolean[] list = s.getImageInMemoryList();
             int length = list.length > 120 ? 120 : list.length;

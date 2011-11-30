@@ -11,7 +11,6 @@ package org.weasis.core.ui.util;
  */
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.image.RenderedImage;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -19,8 +18,9 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.ViewTransferHandler;
 
 /**
  * 
@@ -257,13 +257,11 @@ public class PrintDialog extends javax.swing.JDialog {
         Float imageScale = (float) imageSizeSlider.getValue() / 100;
         PrintOptions printOptions =
             new PrintOptions(annotationsCheckBox.isSelected(), (Integer) fontSizeSpinner.getValue(), imageScale);
-        RenderedImage display = eventManager.getSelectedViewPane().getImageLayer().getDisplayImage();
-        if (annotationsCheckBox.isSelected()) {
-            display = ViewTransferHandler.createComponentImage(eventManager.getSelectedViewPane());
-        }
-        ImagePrint print = new ImagePrint(display, printOptions);
+        ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
+        ImagePrint print = new ImagePrint(exportImage, printOptions);
         print.print();
         doClose(RET_OK);
+
     }// GEN-LAST:event_printButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cancelButtonActionPerformed
