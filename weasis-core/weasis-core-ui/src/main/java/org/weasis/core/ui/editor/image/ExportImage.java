@@ -13,6 +13,8 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.util.HashMap;
 
+import javax.swing.ToolTipManager;
+
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.FlipOperation;
@@ -30,7 +32,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     private final RenderedImageLayer<E> imageLayer;
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
     private final DefaultView2d<E> view2d;
-    private final AnnotationsLayer infoLayer;
     private OperationsManager freezeOperations;
     private Font font;
 
@@ -40,6 +41,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), false);
         this.font = FontTools.getFont10();
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
+        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
+        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.MEMORY_BAR, false);
+
         OperationsManager operations = imageLayer.getOperationsManager();
         operations.addImageOperationAction(new ZoomOperation());
         operations.addImageOperationAction(new RotationOperation());
@@ -52,6 +56,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         actionsInView.put(ZoomWin.FREEZE_CMD, null);
 
         setPreferredSize(new Dimension(1024, 1024));
+        setSeries(view2d.getSeries(), view2d.getFrameIndex());
         imageLayer.setImage(view2d.getImage(), (OperationsManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         setFreezeImage(freezeParentParameters());
@@ -93,6 +98,17 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         super.zoom(viewScale);
         imageLayer.updateImageOperation(ZoomOperation.name);
         updateAffineTransform();
+    }
+
+    @Override
+    public void dispose() {
+        disableMouseAndKeyListener();
+        removeFocusListener(this);
+        ToolTipManager.sharedInstance().unregisterComponent(this);
+        imageLayer.removeLayerChangeListener(this);
+        // Unregister listener;
+        setLayerModel(null);
+        setViewModel(null);
     }
 
     private RenderedImage freezeParentParameters() {
@@ -153,15 +169,14 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size according to the view size
-        g2d.setFont(font);
+        g2d.setFont(FontTools.getFont8());
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
-        AnnotationsLayer infoLayer = view2d.getInfoLayer();
+        g2d.translate(offsetX, offsetY);
         if (infoLayer != null) {
             infoLayer.paint(g2d);
         }
-        g2d.translate(offsetX, offsetY);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
     }

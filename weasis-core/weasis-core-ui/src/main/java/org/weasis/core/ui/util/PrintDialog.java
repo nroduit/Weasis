@@ -260,6 +260,7 @@ public class PrintDialog extends javax.swing.JDialog {
         ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
         ImagePrint print = new ImagePrint(exportImage, printOptions);
         print.print();
+        exportImage.dispose();
         doClose(RET_OK);
 
     }// GEN-LAST:event_printButtonActionPerformed
