@@ -251,15 +251,43 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
         // Get the dicom header
         DicomObject header = getDicomObject();
+        writeMetaData(group, header);
 
+        // Series Group
+        if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
+            // Information for series ToolTips
+            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
+            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+
+            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+                MediaElement[] elements = getMediaElement();
+                if (elements != null) {
+                    for (MediaElement m : elements) {
+                        m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
+                    }
+                }
+            }
+        }
+    }
+
+    public static void writeMetaData(MediaSeriesGroup group, DicomObject header) {
+        if (group == null || header == null) {
+            return;
+        }
+        String unknown = Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
         // Patient Group
         if (TagW.PatientPseudoUID.equals(group.getTagID())) {
             // -------- Mandatory Tags --------
-            group.setTag(TagW.PatientID, getTagValue(TagW.PatientID));
-            group.setTag(TagW.PatientName, getTagValue(TagW.PatientName));
+            group.setTag(TagW.PatientID, header.getString(Tag.PatientID, unknown));
+            String name = header.getString(Tag.PatientName, unknown);
+            if (name.trim().equals("")) { //$NON-NLS-1$
+                name = unknown;
+            }
+            name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
+            group.setTag(TagW.PatientName, name);
             // -------- End of Mandatory Tags --------
 
-            group.setTagNoNull(TagW.PatientBirthDate, getTagValue(TagW.PatientBirthDate));
+            group.setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(header, Tag.PatientBirthDate, null));
             group.setTagNoNull(TagW.PatientBirthTime, getDateFromDicomElement(header, Tag.PatientBirthTime, null));
             // Sex attribute can have the following values: M(male), F(female), or O(other)
             String val = header.getString(Tag.PatientSex, "O"); //$NON-NLS-1$
@@ -297,8 +325,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
             // -------- Mandatory Tags --------
             // SubseriesInstanceUID is the unique identifying tag for this series group
-            group.setTag(TagW.SeriesInstanceUID, getTagValue(TagW.SeriesInstanceUID));
-            group.setTag(TagW.Modality, getTagValue(TagW.Modality));
+            group.setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, unknown));
+            group.setTag(TagW.Modality, header.getString(Tag.Modality, unknown));
             // -------- End of Mandatory Tags --------
 
             group.setTagNoNull(TagW.SeriesDate,
@@ -336,19 +364,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // TODO sequence: define data structure
             group.setTagNoNull(TagW.RequestAttributesSequence, header.get(Tag.RequestAttributesSequence));
 
-            // Information for series ToolTips
-            group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
-            group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
-
-            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-                MediaElement[] elements = getMediaElement();
-                if (elements != null) {
-                    for (MediaElement m : elements) {
-                        m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
-                    }
-                }
-
-            }
         }
     }
 
@@ -646,7 +661,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
+    private static String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -665,7 +680,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return sb.toString();
     }
 
-    private Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
+    private static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -680,7 +695,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return null;
     }
 
-    private Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
+    private static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -689,7 +704,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private Integer getIntegerFromDicomElement(DicomObject dicom, int tag, Integer defaultValue) {
+    private static Integer getIntegerFromDicomElement(DicomObject dicom, int tag, Integer defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -698,7 +713,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private Double getDoubleFromDicomElement(DicomObject dicom, int tag, Double defaultValue) {
+    private static Double getDoubleFromDicomElement(DicomObject dicom, int tag, Double defaultValue) {
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
