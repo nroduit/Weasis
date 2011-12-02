@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 
 import javax.swing.SwingUtilities;
 
-import org.dcm4che2.media.DicomDirReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
@@ -588,20 +587,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         for (int i = 0; i < files.length; i++) {
                             if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
                                 last = null;
-                            } else {
                                 last = dirs[i];
                                 files[i] = new File(baseDir, dirs[i]);
                             }
                         }
                         File dcmDirFile = new File(baseDir, "DICOMDIR");
                         if (dcmDirFile.canRead()) {
-                            DicomDirReader dicomDir;
-                            try {
-                                dicomDir = new DicomDirReader(dcmDirFile);
-                                dicomDir.setShowInactiveRecords(false);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            DicomDirImport dirImport = new DicomDirImport(dcmDirFile, DicomModel.this);
+                            loadingExecutor.execute(new LoadDicomDir(dirImport.readDicomDir(), DicomModel.this));
+
                         } else {
                             // If dicomdir not found
                             loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));

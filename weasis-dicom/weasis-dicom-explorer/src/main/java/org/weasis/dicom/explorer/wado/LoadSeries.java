@@ -59,7 +59,6 @@ import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -78,7 +77,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
-    public static final int CODOWNLOAD_NUMBER = BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_IMAGES_NB, 4);
+
     public static final File DICOM_EXPORT_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
     public static final File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "tmp"); //$NON-NLS-1$
     static {
@@ -96,12 +95,13 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         Downloading, Paused, Complete, Cancelled, Error
     };
 
+    public final int CODOWNLOAD_NUMBER;
     private final DicomModel dicomModel;
     private final Series dicomSeries;
     private final JProgressBar progressBar;
     private DownloadPriority priority = null;
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel) {
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int simultaneousDownload) {
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -121,9 +121,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         });
         this.progressBar = bar[0];
         this.dicomSeries.setSeriesLoader(this);
+        this.CODOWNLOAD_NUMBER = simultaneousDownload;
     }
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar) {
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int simultaneousDownload) {
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -131,6 +132,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.dicomSeries = dicomSeries;
         this.progressBar = progressBar;
         this.dicomSeries.setSeriesLoader(this);
+        this.CODOWNLOAD_NUMBER = simultaneousDownload;
     }
 
     @Override
@@ -161,7 +163,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     @Override
     public void resume() {
         if (isStopped()) {
-            LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar);
+            LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar, CODOWNLOAD_NUMBER);
             DownloadPriority p = this.getPriority();
             p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
             taskResume.setPriority(p);
@@ -1027,7 +1029,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         for (LoadSeries s : LoadRemoteDicomManifest.currentTasks) {
                             if (s != this && StateValue.STARTED.equals(s.getState())) {
                                 LoadSeries taskResume =
-                                    new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar());
+                                    new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
+                                        s.getCODOWNLOAD_NUMBER());
                                 s.cancel(true);
                                 taskResume.setPriority(s.getPriority());
                                 Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
@@ -1045,6 +1048,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
             }
         }
+    }
+
+    public int getCODOWNLOAD_NUMBER() {
+        return CODOWNLOAD_NUMBER;
     }
 
 }

@@ -47,11 +47,13 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
@@ -202,19 +204,13 @@ public class DownloadManager {
         // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
         // the tags located in DICOM object (because original DICOM can contain different values after merging
         // patient or study
-        String unknown = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
-        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), unknown); //$NON-NLS-1$
-        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
-        String name = getTagAttribute(xmler, TagW.PatientName.getTagName(), unknown); //$NON-NLS-1$
-        if (name.trim().equals("")) { //$NON-NLS-1$
-            name = unknown; //$NON-NLS-1$
-        }
-        name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
 
-        String patientPseudoUID =
-            patientID
-                + (birthdate == null
-                    ? "" : TagW.dicomformatDate.format(birthdate).toString() + name.substring(0, name.length() < 5 ? name.length() : 5)); //$NON-NLS-1$
+        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE); //$NON-NLS-1$
+        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
+        String name =
+            DicomMediaIO.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE)); //$NON-NLS-1$
+        String patientPseudoUID = DicomMediaIO.buildPatientPseudoUID(patientID, name, birthdate);
+
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
@@ -362,7 +358,6 @@ public class DownloadManager {
                                 dicomInstances.add(dcmInstance);
                             }
                         }
-
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
@@ -385,7 +380,9 @@ public class DownloadManager {
 
             String modality = (String) dicomSeries.getTagValue(TagW.Modality);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-            final LoadSeries loadSeries = new LoadSeries(dicomSeries, model);
+            final LoadSeries loadSeries =
+                new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                    LoadSeries.CODOWNLOAD_IMAGES_NB, 4));
 
             Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
             DownloadPriority priority =
