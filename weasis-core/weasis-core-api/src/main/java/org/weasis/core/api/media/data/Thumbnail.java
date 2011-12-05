@@ -254,7 +254,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                     y += (thumbnailSize - height) / 2;
                     g2d.drawImage(thumbnail, AffineTransform.getTranslateInstance(x, y), null);
                 }
-                super.paintIcon(c, g2d, x, y);
+                // super.paintIcon(c, g2d, x, y);
                 paintSeriesState(g2d, x, y, width, height);
             }
 
@@ -554,8 +554,12 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             if (series.getFileSize() > 0.0) {
                 g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
             }
-            g2d.translate(thumbnailSize - bar.getWidth() + x - 2, thumbnailSize - bar.getHeight() + y - 2);
+            // Draw in the bottom right corner of thumbnail space;
+            int shiftx = thumbnailSize - bar.getWidth();
+            int shifty = thumbnailSize - bar.getHeight();
+            g2d.translate(shiftx, shifty);
             bar.paint(g2d);
+            g2d.translate(-shiftx, -shifty);
         }
     }
 
@@ -608,8 +612,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             // To avoid concurrency issue
             JProgressBar bar = progressBar;
             Rectangle rect = bar.getBounds();
-            rect.x = thumbnailSize - rect.width - 2;
-            rect.y = thumbnailSize - rect.height - 2;
+            rect.x = thumbnailSize - rect.width;
+            rect.y = thumbnailSize - rect.height;
             if (rect.contains(e.getPoint())) {
                 SeriesImporter loader = series.getSeriesLoader();
                 if (loader != null) {
