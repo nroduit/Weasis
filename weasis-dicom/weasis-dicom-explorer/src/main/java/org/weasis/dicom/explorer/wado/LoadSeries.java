@@ -185,10 +185,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     protected void done() {
         if (!isStopped()) {
             LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
-            Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            final Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
+                if (thumbnail.getThumbnailPath() == null) {
+                    thumbnail.reBuildThumbnail(MediaSeries.MEDIA_POSITION.MIDDLE);
+                }
                 thumbnail.repaint();
+
             }
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
             Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
@@ -448,11 +452,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
                         if (thumURL != null) {
                             try {
-                                File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
-                                    AbstractProperties.APP_TEMP_DIR);
-                                int resp = FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
-                                if (resp == -1) {
-                                    file = outFile;
+                                if (thumURL.startsWith(AbstractProperties.APP_TEMP_DIR.getPath())) {
+                                    file = new File(thumURL);
+                                } else {
+                                    File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
+                                        AbstractProperties.APP_TEMP_DIR);
+                                    int resp =
+                                        FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
+                                    if (resp == -1) {
+                                        file = outFile;
+                                    }
                                 }
                             } catch (MalformedURLException e) {
                                 e.printStackTrace();
