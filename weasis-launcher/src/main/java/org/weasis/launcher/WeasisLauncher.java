@@ -575,7 +575,7 @@ public class WeasisLauncher {
             if (value == null) {
                 value = config.getProperty(key, defaultValue);
             }
-            // When first launch, set property that can be writed later
+            // When first launch, set property that can be written later
             local.setProperty(localKey, value);
         }
         return value;
