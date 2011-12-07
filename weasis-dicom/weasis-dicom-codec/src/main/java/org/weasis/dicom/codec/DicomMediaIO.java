@@ -705,11 +705,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             try {
                 return element.getDate(false);
             } catch (Exception e) {
-                // Value that not respect DICOM standard
-                e.printStackTrace();
+                // Value not valid according to DICOM standard
+                LOGGER.error("Cannot parse date {}", element.toString());
+                return defaultValue;
             }
         }
-        return null;
+
     }
 
     public static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
@@ -720,7 +721,14 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return element.getFloat(false);
+            try {
+                return element.getFloat(false);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            } catch (UnsupportedOperationException e) {
+                return defaultValue;
+            }
+
         }
     }
 
@@ -732,7 +740,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return element.getInt(false);
+            try {
+                return element.getInt(false);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            } catch (UnsupportedOperationException e) {
+                return defaultValue;
+            }
         }
     }
 
@@ -744,7 +758,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (element == null || element.isEmpty()) {
             return defaultValue;
         } else {
-            return element.getDouble(false);
+            try {
+                return element.getDouble(false);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            } catch (UnsupportedOperationException e) {
+                return defaultValue;
+            }
         }
     }
 
