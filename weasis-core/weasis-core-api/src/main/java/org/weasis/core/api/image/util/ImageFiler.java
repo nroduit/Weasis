@@ -114,7 +114,7 @@ public class ImageFiler extends AbstractBufferHandler {
      * @param fichier
      *            le nom du fichier
      */
-    public static boolean writeOptimizedTIFF(File file, PlanarImage source) {
+    public static boolean writeOptimizedTIFF(File file, RenderedImage source) {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
@@ -168,11 +168,11 @@ public class ImageFiler extends AbstractBufferHandler {
         return null;
     }
 
-    public static boolean writeOptimizedTIFF(String fichier, PlanarImage source) throws Exception {
+    public static boolean writeOptimizedTIFF(String fichier, RenderedImage source) throws Exception {
         return writeOptimizedTIFF(new File(fichier), source);
     }
 
-    private static void writeOptimizedTIFF(OutputStream os, PlanarImage source) throws Exception {
+    private static void writeOptimizedTIFF(OutputStream os, RenderedImage source) throws Exception {
         TIFFEncodeParam param = new TIFFEncodeParam();
         param.setWriteTiled(true);
         param.setTileSize(TILESIZE, TILESIZE);
@@ -188,7 +188,7 @@ public class ImageFiler extends AbstractBufferHandler {
         enc.encode(source);
     }
 
-    public static boolean writeTIFF(File file, PlanarImage source) {
+    public static boolean writeTIFF(File file, RenderedImage source) {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
@@ -212,12 +212,12 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    public static boolean writeTIFF(String fichier, PlanarImage source) throws Exception {
+    public static boolean writeTIFF(String fichier, RenderedImage source) throws Exception {
         File file = new File(fichier);
         return writeTIFF(file, source);
     }
 
-    private static void writeTIFF(OutputStream os, PlanarImage source) throws Exception {
+    private static void writeTIFF(OutputStream os, RenderedImage source) throws Exception {
         TIFFEncodeParam param = new TIFFEncodeParam();
         param.setWriteTiled(false);
         if (ImageUtil.isBinary(source.getSampleModel())) {
@@ -227,7 +227,7 @@ public class ImageFiler extends AbstractBufferHandler {
         enc.encode(source);
     }
 
-    public static boolean writePNG(File file, PlanarImage source) {
+    public static boolean writePNG(File file, RenderedImage source) {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
@@ -247,18 +247,18 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    public static boolean writePNG(String fichier, PlanarImage source) throws Exception {
+    public static boolean writePNG(String fichier, RenderedImage source) throws Exception {
         File file = new File(fichier);
         return writePNG(file, source);
     }
 
-    private static void writePNG(OutputStream os, PlanarImage source) throws Exception {
+    private static void writePNG(OutputStream os, RenderedImage source) throws Exception {
         PNGEncodeParam param = new PNGEncodeParam.Palette();
         ImageEncoder enc = ImageCodec.createImageEncoder("PNG", os, param); //$NON-NLS-1$
         enc.encode(source);
     }
 
-    public static boolean writeJPG(File file, PlanarImage source, float quality) {
+    public static boolean writeJPG(File file, RenderedImage source, float quality) {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
