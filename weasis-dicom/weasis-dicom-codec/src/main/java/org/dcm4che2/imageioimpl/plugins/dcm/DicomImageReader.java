@@ -41,6 +41,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.Raster;
+import java.awt.image.RasterFormatException;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
@@ -69,6 +70,7 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.image.OverlayUtils;
+import org.dcm4che2.image.PartialComponentSampleModel;
 import org.dcm4che2.image.VOIUtils;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.ItemParser;
@@ -382,11 +384,27 @@ public class DicomImageReader extends ImageReader {
         }
 
         if ((!compressed) && pmi.endsWith("422")) {
-            return new PartialComponentSampleModel(width, height, 2, 1);
+            return new PartialComponentSampleModel(width, height, 2, 1) {
+                @Override
+                public SampleModel createSubsetSampleModel(int[] bands) {
+                    if (bands.length != 3) {
+                        throw new RasterFormatException("Accept only 3 bands");
+                    }
+                    return this;
+                }
+            };
         }
 
         if ((!compressed) && pmi.endsWith("420")) {
-            return new PartialComponentSampleModel(width, height, 2, 2);
+            return new PartialComponentSampleModel(width, height, 2, 2) {
+                @Override
+                public SampleModel createSubsetSampleModel(int[] bands) {
+                    if (bands.length != 3) {
+                        throw new RasterFormatException("Accept only 3 bands");
+                    }
+                    return this;
+                }
+            };
         }
 
         return new PixelInterleavedSampleModel(dataType, width, height, 3, width * 3, OFFSETS_0_1_2);
@@ -619,8 +637,25 @@ public class DicomImageReader extends ImageReader {
             ImageReadParam param1 = reader.getDefaultReadParam();
             copyReadParam(param, param1);
             bi = reader.readAsRenderedImage(0, param1);
-
             postDecompress();
+
+            // TEST cache compressed images
+            Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("RAW");
+            ImageWriter writer = null;
+            while (iter.hasNext()) {
+                writer = iter.next();
+            }
+            if (writer != null) {
+                File outFile = File.createTempFile("raw_", ".raw", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                ImageOutputStream out = null;
+                out = ImageIO.createImageOutputStream(outFile);
+                writer.setOutput(out);
+                writer.write(null, new IIOImage(bi, null, null), null);
+                // Read image, no need to cache because image would accessible
+                ImageReader rawReader = ImageIO.getImageReader(writer);
+                bi = rawReader.read(0);
+            }
+
         } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
             bi = readYbr400(imageIndex, param);
             if (bi != null) {
@@ -632,6 +667,7 @@ public class DicomImageReader extends ImageReader {
                     while (iter.hasNext()) {
                         ImageWriter w = iter.next();
                         // Other encoder do not write it correctly
+                        // Workaround: overrides createSubsetSampleModel() in constructor of PartialComponentSampleModel
                         if (w.getClass().getName().equals("com.sun.imageio.plugins.jpeg.JPEGImageWriter")) {
                             writer = w;
                             break;
@@ -645,6 +681,7 @@ public class DicomImageReader extends ImageReader {
                         iwp.setCompressionQuality(1.0f);
 
                         writer.write(null, new IIOImage(bi, null, null), iwp);
+                        // Read image, no need to cache because image would accessible
                         bi = ImageIO.read(outFile);
                     }
 
