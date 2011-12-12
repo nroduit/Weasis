@@ -21,6 +21,7 @@ import javax.swing.KeyStroke;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.util.PrintOptions.SCALE;
 
 /**
  * 
@@ -68,28 +69,19 @@ public class PrintDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        orientationRadioButtons = new javax.swing.ButtonGroup();
         printButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        paperSizeLabel = new javax.swing.JLabel();
-        paperSizeComboBox = new javax.swing.JComboBox();
-        imageSizeLabel = new javax.swing.JLabel();
-        imageSizeSlider = new javax.swing.JSlider();
+        customImageSizeLabel = new javax.swing.JLabel();
+        customImageSizeSlider = new javax.swing.JSlider();
         sliderValue = new javax.swing.JLabel();
-        orientationLabel = new javax.swing.JLabel();
-        portraitRadioButton = new javax.swing.JRadioButton();
-        landscapeRadioButton = new javax.swing.JRadioButton();
         positionLabel = new javax.swing.JLabel();
         positionComboBox = new javax.swing.JComboBox();
         annotationsCheckBox = new javax.swing.JCheckBox();
-        fontSizeLabel = new javax.swing.JLabel();
-        fontSizeSpinner = new javax.swing.JSpinner();
+        imageSizeLabel = new javax.swing.JLabel();
+        imageSizeComboBox = new javax.swing.JComboBox();
 
-        jLabel1.setText("jLabel1");
-
+        setMinimumSize(new java.awt.Dimension(480, 300));
         addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
@@ -97,7 +89,6 @@ public class PrintDialog extends javax.swing.JDialog {
 
         printButton.setText("Print");
         printButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 printButtonActionPerformed(evt);
             }
@@ -105,158 +96,128 @@ public class PrintDialog extends javax.swing.JDialog {
 
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        paperSizeLabel.setText("Paper:");
+        customImageSizeLabel.setText("Custom image size:");
 
-        paperSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "A4" }));
-
-        imageSizeLabel.setText("Image size:");
-
-        imageSizeSlider.addChangeListener(new javax.swing.event.ChangeListener() {
-            @Override
+        customImageSizeSlider.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                imageSizeSliderStateChanged(evt);
+                customImageSizeSliderStateChanged(evt);
             }
         });
 
         sliderValue.setText("50%");
-
-        orientationLabel.setText("Orientation:");
-
-        portraitRadioButton.setText("Portrait");
-        orientationRadioButtons.add(portraitRadioButton);
-
-        landscapeRadioButton.setText("Landscape");
-        orientationRadioButtons.add(landscapeRadioButton);
 
         positionLabel.setText("Image position:");
 
         positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Centralized", "Top-left" }));
 
         annotationsCheckBox.setText("Print image with annotations");
+        annotationsCheckBox.setSelected(true);
 
-        fontSizeLabel.setText("Annotations font size:");
+        imageSizeLabel.setText("Image size:");
 
-        fontSizeSpinner.setValue(36);
+        imageSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(SCALE.values()));
+        imageSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                imageSizeComboBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout
-            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(
-                javax.swing.GroupLayout.Alignment.TRAILING,
-                layout
-                    .createSequentialGroup()
-                    .addContainerGap(285, Short.MAX_VALUE)
-                    .addComponent(printButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67,
-                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)
-                    .addContainerGap())
-            .addGroup(
-                layout
-                    .createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(paperSizeLabel)
-                    .addGap(36, 36, 36)
-                    .addComponent(paperSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(329, Short.MAX_VALUE))
-            .addGroup(
-                layout
-                    .createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(
-                        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(imageSizeLabel).addComponent(orientationLabel).addComponent(positionLabel))
-                    .addGap(26, 26, 26)
-                    .addGroup(
-                        layout
-                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(
-                                layout.createSequentialGroup().addComponent(portraitRadioButton)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(landscapeRadioButton))
-                            .addGroup(
-                                layout
-                                    .createSequentialGroup()
-                                    .addComponent(imageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(sliderValue))).addContainerGap(98, Short.MAX_VALUE))
-            .addGroup(
-                layout.createSequentialGroup().addContainerGap().addComponent(annotationsCheckBox)
-                    .addContainerGap(268, Short.MAX_VALUE))
-            .addGroup(
-                layout
-                    .createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(fontSizeLabel)
-                    .addGap(18, 18, 18)
-                    .addComponent(fontSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE,
-                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(272, Short.MAX_VALUE)));
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] { cancelButton, printButton });
-
-        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(
-            layout
-                .createSequentialGroup()
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(
-                    layout
-                        .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(paperSizeLabel)
-                        .addComponent(paperSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imageSizeLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(customImageSizeLabel)
+                            .addComponent(positionLabel))
+                        .addGap(26, 26, 26)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(imageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(customImageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(sliderValue)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(printButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                                .addComponent(cancelButton))))
+                    .addComponent(annotationsCheckBox))
+                .addContainerGap())
+        );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, printButton});
+
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
                 .addGap(18, 18, 18)
-                .addGroup(
-                    layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(orientationLabel).addComponent(portraitRadioButton)
-                        .addComponent(landscapeRadioButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(imageSizeLabel)
+                    .addComponent(imageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(
-                    layout
-                        .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(imageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sliderValue).addComponent(imageSizeLabel))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(customImageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sliderValue)
+                    .addComponent(customImageSizeLabel))
                 .addGap(18, 18, 18)
-                .addGroup(
-                    layout
-                        .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(positionLabel)
-                        .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(positionLabel)
+                    .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(annotationsCheckBox)
-                .addGap(18, 18, 18)
-                .addGroup(
-                    layout
-                        .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(fontSizeLabel)
-                        .addComponent(fontSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE,
-                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(35, 35, 35)
-                .addGroup(
-                    layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(cancelButton)
-                        .addComponent(printButton)).addContainerGap()));
+                .addGap(137, 137, 137))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(223, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(printButton))
+                .addGap(49, 49, 49))
+        );
 
         getRootPane().setDefaultButton(printButton);
+        customImageSizeLabel.setVisible(false);
+        customImageSizeSlider.setVisible(false);
+        sliderValue.setVisible(false);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+private void imageSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imageSizeComboBoxActionPerformed
+    if (imageSizeComboBox.getSelectedItem() != SCALE.Custom) {
+        customImageSizeLabel.setVisible(false);
+        customImageSizeSlider.setVisible(false);
+        sliderValue.setVisible(false);
+    } else {
+        customImageSizeLabel.setVisible(true);
+        customImageSizeSlider.setVisible(true);
+        sliderValue.setVisible(true);
+    }
+}//GEN-LAST:event_imageSizeComboBoxActionPerformed
+
     private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_printButtonActionPerformed
-        Float imageScale = (float) imageSizeSlider.getValue() / 100;
+        Float imageScale = (float) customImageSizeSlider.getValue() / 100;
         PrintOptions printOptions =
-            new PrintOptions(annotationsCheckBox.isSelected(), (Integer) fontSizeSpinner.getValue(), imageScale);
+            new PrintOptions(annotationsCheckBox.isSelected(), imageScale);
+        printOptions.setScale((SCALE) imageSizeComboBox.getSelectedItem());
+        printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
+        if (positionComboBox.getSelectedItem().equals("Centralized")) {
+            printOptions.setCenter(true);
+        } else {
+            printOptions.setCenter(false);
+        }
         ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
         ImagePrint print = new ImagePrint(exportImage, printOptions);
         print.print();
@@ -274,10 +235,10 @@ public class PrintDialog extends javax.swing.JDialog {
         doClose(RET_CANCEL);
     }// GEN-LAST:event_closeDialog
 
-    private void imageSizeSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_imageSizeSliderStateChanged
-        if (!imageSizeSlider.getValueIsAdjusting()) {
+    private void customImageSizeSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_imageSizeSliderStateChanged
+        if (!customImageSizeSlider.getValueIsAdjusting()) {
             // Get new value
-            int value = imageSizeSlider.getValue();
+            int value = customImageSizeSlider.getValue();
             sliderValue.setText(value + "%");
         }
     }// GEN-LAST:event_imageSizeSliderStateChanged
@@ -342,17 +303,10 @@ public class PrintDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox annotationsCheckBox;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JLabel fontSizeLabel;
-    private javax.swing.JSpinner fontSizeSpinner;
+    private javax.swing.JLabel customImageSizeLabel;
+    private javax.swing.JSlider customImageSizeSlider;
+    private javax.swing.JComboBox imageSizeComboBox;
     private javax.swing.JLabel imageSizeLabel;
-    private javax.swing.JSlider imageSizeSlider;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JRadioButton landscapeRadioButton;
-    private javax.swing.JLabel orientationLabel;
-    private javax.swing.ButtonGroup orientationRadioButtons;
-    private javax.swing.JComboBox paperSizeComboBox;
-    private javax.swing.JLabel paperSizeLabel;
-    private javax.swing.JRadioButton portraitRadioButton;
     private javax.swing.JComboBox positionComboBox;
     private javax.swing.JLabel positionLabel;
     private javax.swing.JButton printButton;

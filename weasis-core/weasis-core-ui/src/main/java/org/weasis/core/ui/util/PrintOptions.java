@@ -10,30 +10,37 @@ package org.weasis.core.ui.util;
  */
 public class PrintOptions {
     public enum SCALE {
-        None, ShrinkToPage, FitToPage, Custom
+        None {
+            @Override
+            public String toString() {
+                return "Original";
+            }
+        }, 
+        ShrinkToPage {
+            @Override
+            public String toString() {
+                return "Shrink to Page";
+            }
+        }, 
+        FitToPage {
+            @Override
+            public String toString() {
+                return "Fit to Page";
+            }
+        }, 
+        Custom
     }
 
-    public static final Integer A4_PAPER = 1;
-
-    public static final Integer PORTRAIT = 1;
-    public static final Integer LANDSCAPE = 2;
-
     private Boolean hasAnnotations;
-    private Integer fontSize;
     private Float imageScale;
     private boolean center;
     private SCALE scale;
 
-    public PrintOptions(Boolean hasAnnotations, Integer fontSize, Float imageScale) {
+    public PrintOptions(Boolean hasAnnotations, Float imageScale) {
         this.hasAnnotations = hasAnnotations;
-        this.fontSize = fontSize;
         this.imageScale = imageScale;
         this.center = true;
         this.scale = SCALE.ShrinkToPage;
-    }
-
-    public Integer getFontSize() {
-        return fontSize;
     }
 
     public SCALE getScale() {
@@ -42,10 +49,6 @@ public class PrintOptions {
 
     public void setScale(SCALE scale) {
         this.scale = scale;
-    }
-
-    public void setFontSize(Integer fontSize) {
-        this.fontSize = fontSize;
     }
 
     public Boolean getHasAnnotations() {
