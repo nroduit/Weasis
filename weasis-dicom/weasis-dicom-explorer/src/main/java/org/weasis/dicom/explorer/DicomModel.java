@@ -60,6 +60,7 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
+import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
@@ -587,12 +588,23 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         for (int i = 0; i < files.length; i++) {
                             if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
                                 last = null;
-                            } else {
                                 last = dirs[i];
                                 files[i] = new File(baseDir, dirs[i]);
                             }
                         }
-                        loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+
+                        ArrayList<LoadSeries> loadSeries = null;
+                        File dcmDirFile = new File(baseDir, "DICOMDIR");
+                        if (dcmDirFile.canRead()) {
+                            DicomDirImport dirImport = new DicomDirImport(dcmDirFile, DicomModel.this);
+                            loadSeries = dirImport.readDicomDir();
+                        }
+                        if (loadSeries != null && loadSeries.size() > 0) {
+                            loadingExecutor.execute(new LoadDicomDir(loadSeries, DicomModel.this));
+
+                        } else {
+                            loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
+                        }
                     }
                 }
             }

@@ -141,6 +141,7 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
             }
         }
 
+        // TODO show be in loop above ?
         Runnable[] tasks = loadingQueue.toArray(new Runnable[loadingQueue.size()]);
         for (int i = 0; i < tasks.length; i++) {
             addLoadSeries((LoadSeries) tasks[i], dicomModel);
@@ -174,6 +175,11 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
             if (dicomModel != null) {
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel,
                     null, series));
+            }
+            if (currentTasks.size() == 0) {
+                // When all loadseries are ended, reset to default the number of simultaneous download (series)
+                LoadRemoteDicomManifest.executor.setCorePoolSize(BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                    CODOWNLOAD_SERIES_NB, 3));
             }
         }
     }
