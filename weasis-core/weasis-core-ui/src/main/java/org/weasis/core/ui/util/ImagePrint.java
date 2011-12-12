@@ -24,7 +24,7 @@ public class ImagePrint implements Printable {
     public ImagePrint(RenderedImage renderedImage, PrintOptions printOptions) {
         this.renderedImage = renderedImage;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(false, 12, 1.0F) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(false, 1.0F) : printOptions;
     }
 
     public ImagePrint(ExportImage<ImageElement> exportImage, PrintOptions printOptions) {
@@ -80,6 +80,11 @@ public class ImagePrint implements Printable {
     public void printImage(Graphics2D g2d, ExportImage image, PageFormat f) {
         if ((image == null) || (g2d == null)) {
             return;
+        }
+        if (printOptions.getHasAnnotations()) {
+            image.getInfoLayer().setVisible(true);
+        } else {
+            image.getInfoLayer().setVisible(false);
         }
         RenderedImage img = image.getSourceImage();
         int w = img == null ? image.getWidth() : img.getWidth();
