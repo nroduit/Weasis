@@ -96,14 +96,18 @@ import com.sun.media.imageio.stream.SegmentedImageInputStream;
  */
 public class DicomImageReader extends ImageReader {
 
+    public static final File DICOM_CACHE_DIR = new File(AbstractProperties.APP_TEMP_DIR, "cache"); //$NON-NLS-1$
+    static {
+        try {
+            DICOM_CACHE_DIR.mkdirs();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private static final Logger log = LoggerFactory.getLogger(DicomImageReader.class);
-
     private static final String J2KIMAGE_READER = "com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader";
-
     private static final int[] OFFSETS_0 = { 0 };
-
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
-
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
     private ImageInputStream iis;
@@ -639,27 +643,55 @@ public class DicomImageReader extends ImageReader {
             bi = reader.readAsRenderedImage(0, param1);
             postDecompress();
 
-            // TEST cache compressed images
-            Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("RAW");
-            ImageWriter writer = null;
-            while (iter.hasNext()) {
-                writer = iter.next();
-            }
-            if (writer != null) {
-                File outFile = File.createTempFile("raw_", ".raw", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                ImageOutputStream out = null;
-                out = ImageIO.createImageOutputStream(outFile);
-                writer.setOutput(out);
-                writer.write(null, new IIOImage(bi, null, null), null);
-                // Read image, no need to cache because image would accessible
-                ImageReader rawReader = ImageIO.getImageReader(writer);
-                bi = rawReader.read(0);
-            }
-
+            // // TEST cache compressed images. Reading is slow with pure java raw reader! Issue W/L shifted.
+            // if (reader.getClass().getName().equals("com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader")) {
+            // Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("RAW");
+            // ImageWriter writer = null;
+            // while (iter.hasNext()) {
+            // writer = iter.next();
+            // }
+            // if (writer != null) {
+            //                    File outFile = File.createTempFile("raw_", ".raw", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+            // ImageOutputStream out = null;
+            // out = ImageIO.createImageOutputStream(outFile);
+            // writer.setOutput(out);
+            //
+            // ImageWriteParam iwp = writer.getDefaultWriteParam();
+            // iwp.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
+            // iwp.setTiling(ImageFiler.TILESIZE, ImageFiler.TILESIZE, 0, 0);
+            // writer.write(null, new IIOImage(bi, null, null), iwp);
+            //
+            // // Read image, no need to cache because image would accessible
+            // long[] frameOffsets = new long[frames];
+            // int frameLen = width * height * samples * (allocated >> 3);
+            // frameOffsets[0] = 0;
+            // for (int i = 1; i < frameOffsets.length; i++) {
+            // frameOffsets[i] = frameOffsets[i - 1] + frameLen;
+            // }
+            // Dimension[] imageDimensions = new Dimension[frames];
+            // Arrays.fill(imageDimensions, new Dimension(width, height));
+            // ColorModel cm = ColorModelFactory.createColorModel(ds);
+            // SampleModel sm = cm.createCompatibleSampleModel(width, height);
+            // RawImageInputStream riis =
+            // new RawImageInputStream(ImageIO.createImageInputStream(outFile),
+            // new ImageTypeSpecifier(cm, sm), frameOffsets, imageDimensions);
+            // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+            // // ImageReader readerRaw = ImageIO.getImageReadersByFormatName("RAW").next();
+            // // readerRaw.setInput(riis);
+            // // Tile image while reading to handle large images
+            // ImageLayout layout = new ImageLayout();
+            // layout.setTileWidth(ImageFiler.TILESIZE);
+            // layout.setTileHeight(ImageFiler.TILESIZE);
+            // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+            //                    ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+            //                    pb.setParameter("Input", riis); //$NON-NLS-1$
+            //                    bi = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
+            // }
+            // }
         } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
             bi = readYbr400(imageIndex, param);
             if (bi != null) {
-                File outFile = File.createTempFile("img_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                File outFile = File.createTempFile("img_", ".jpg", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 ImageOutputStream out = null;
                 try {
                     Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");
@@ -681,15 +713,13 @@ public class DicomImageReader extends ImageReader {
                         iwp.setCompressionQuality(1.0f);
 
                         writer.write(null, new IIOImage(bi, null, null), iwp);
-                        // Read image, no need to cache because image would accessible
+                        // Read image. No need to cache the filename because it is contained in the rendered image.
                         bi = ImageIO.read(outFile);
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
-
-                finally {
+                } finally {
                     FileUtil.safeClose(out);
                 }
             }
