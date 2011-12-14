@@ -49,7 +49,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         operations.addImageOperationAction(new RotationOperation());
         operations.addImageOperationAction(new FlipOperation());
 
-        actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
         actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
         actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
         actionsInView.put(ActionW.DRAW.cmd(), true);
@@ -57,6 +56,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
         setPreferredSize(new Dimension(1024, 1024));
         setSeries(view2d.getSeries(), view2d.getFrameIndex());
+        actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
         imageLayer.setImage(view2d.getImage(), (OperationsManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         setFreezeImage(freezeParentParameters());

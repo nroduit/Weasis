@@ -9,6 +9,10 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterJob;
 
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.JComponent;
+
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.PrintOptions.SCALE;
@@ -42,8 +46,10 @@ public class ImagePrint implements Printable {
     }
 
     public void print() {
+        PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(this);
+
         // PageFormat pf = pj.defaultPage();
         // Paper paper = pf.getPaper();
         // pf.setOrientation(PageFormat.PORTRAIT);
@@ -51,11 +57,28 @@ public class ImagePrint implements Printable {
         // paper.setImageableArea(0.5 * 72, 0.5 * 72, 9 * 72, 6 * 72);
         // pf.setPaper(paper);
 
-        pj.printDialog();
-        try {
-            pj.print();
-        } catch (Exception e) {
-            System.out.println(e);
+        if (pj.printDialog(aset)) {
+            try {
+                // PrinterResolution pr = new PrinterResolution(96, 96, ResolutionSyntax.DPI);
+                // aset.add(pr);
+                pj.print(aset);
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }
+    }
+
+    private boolean disableDoubleBuffering(JComponent c) {
+        if (c == null) {
+            return false;
+        }
+        c.setDoubleBuffered(false);
+        return c.isDoubleBuffered();
+    }
+
+    private void restoreDoubleBuffering(JComponent c, boolean wasBuffered) {
+        if (c != null) {
+            c.setDoubleBuffered(wasBuffered);
         }
     }
 
@@ -65,7 +88,6 @@ public class ImagePrint implements Printable {
             return Printable.NO_SUCH_PAGE;
         }
         Graphics2D g2d = (Graphics2D) g;
-
         if (exportImage != null) {
             printImage(g2d, exportImage, f);
             return Printable.PAGE_EXISTS;
@@ -108,7 +130,9 @@ public class ImagePrint implements Printable {
 
         // Set us to the upper left corner
         g2d.translate(f.getImageableX() + x, f.getImageableY() + y);
+        boolean wasBuffered = disableDoubleBuffering(exportImage);
         exportImage.draw(g2d);
+        restoreDoubleBuffering(exportImage, wasBuffered);
     }
 
     public void printImage(Graphics2D g2d, RenderedImage image, PageFormat f) {
