@@ -45,6 +45,7 @@ public class InfoLayer implements AnnotationsLayer {
     private String pixelInfo = "";
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
+    private int border = BORDER;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
@@ -76,7 +77,7 @@ public class InfoLayer implements AnnotationsLayer {
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-        float drawY = bound.height - BORDER;
+        float drawY = bound.height - border;
 
         if (!image.isReadable()) {
             String message = "Cannot read this media!";
@@ -101,9 +102,9 @@ public class InfoLayer implements AnnotationsLayer {
 
         if (getDisplayPreferences(PIXEL)) {
             String str = "Pixel: " + pixelInfo;
-            paintFontOutline(g2, str, BORDER, drawY - 1);
+            paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
-            pixelInfoBound.setBounds(BORDER - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
+            pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
                 (int) fontHeight + 2);
             // g2.draw(pixelInfoBound);
         }
@@ -111,22 +112,22 @@ public class InfoLayer implements AnnotationsLayer {
             paintFontOutline(
                 g2,
                 "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
-                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
+                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
             paintFontOutline(g2, "Zoom: " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100)
-                + " %", BORDER, drawY);
+                + " %", border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", BORDER, drawY);
+            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
             paintFontOutline(g2, "Frame: " + (view2DPane.getFrameIndex() + 1) + " / " + view2DPane.getSeries().size(),
-                BORDER, drawY);
+                border, drawY);
             drawY -= fontHeight;
         }
 
@@ -135,7 +136,7 @@ public class InfoLayer implements AnnotationsLayer {
 
             Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             String str = synchLink != null && synchLink ? "linked" : "unlinked";
-            paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
+            paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
 
         }
 
@@ -288,7 +289,7 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.black);
 
             double posx = bound.width / 2.0 - scaleSizex / 2.0;
-            double posy = bound.height - BORDER;
+            double posy = bound.height - border;
             Line2D line = new Line2D.Double(posx, posy, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
             line.setLine(posx, posy - 15.0, posx, posy);
@@ -355,7 +356,7 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setPaint(Color.black);
 
-            double posx = BORDER + 20;
+            double posx = border + 20;
             double posy = bound.height / 2.0 - scaleSizeY / 2.0;
             Line2D line = new Line2D.Double(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
@@ -551,5 +552,15 @@ public class InfoLayer implements AnnotationsLayer {
     public AnnotationsLayer getLayerCopy(DefaultView2d view2dPane) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public int getBorder() {
+        return border;
+    }
+
+    @Override
+    public void setBorder(int border) {
+        this.border = border;
     }
 }

@@ -2,10 +2,10 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
@@ -33,13 +33,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
     private final DefaultView2d<E> view2d;
     private OperationsManager freezeOperations;
-    private Font font;
 
     public ExportImage(DefaultView2d<E> view2d) {
         super(view2d.eventManager, view2d.getLayerModel(), null);
         this.view2d = view2d;
         this.imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), false);
-        this.font = FontTools.getFont10();
+        setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.MEMORY_BAR, false);
@@ -160,6 +159,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     public void draw(Graphics2D g2d) {
         Stroke oldStroke = g2d.getStroke();
         Paint oldColor = g2d.getPaint();
+        Shape oldClip = g2d.getClip();
+        g2d.setClip(getBounds());
 
         g2d.setBackground(Color.black);
         drawBackground(g2d);
@@ -168,8 +169,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         double offsetY = getViewModel().getModelOffsetY() * viewScale;
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
-        // Set font size according to the view size
-        g2d.setFont(FontTools.getFont8());
+        // g2d.setFont(FontTools.getFont8());
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
@@ -177,6 +177,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         if (infoLayer != null) {
             infoLayer.paint(g2d);
         }
+        g2d.clip(oldClip);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
     }

@@ -40,6 +40,10 @@ public interface AnnotationsLayer extends Layer {
 
     void setPixelInfo(String pixelInfo);
 
+    int getBorder();
+
+    void setBorder(int border);
+
     void paint(Graphics2D g2d);
 
     AnnotationsLayer getLayerCopy(DefaultView2d view2DPane);

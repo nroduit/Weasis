@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.image;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,8 +61,9 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
     }
 
     public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String title, Icon icon) {
-        if (constraints == null)
+        if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
+        }
         this.title = title;
         this.icon = icon;
         this.constraints = constraints;
@@ -87,6 +89,22 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
     public LinkedHashMap<LayoutConstraints, JComponent> getConstraints() {
         return constraints;
+    }
+
+    public Dimension getGridSize() {
+        int lastx = 0;
+        int lasty = 0;
+        Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
+        while (enumVal.hasNext()) {
+            LayoutConstraints key = enumVal.next();
+            if (key.gridx > lastx) {
+                lastx = key.gridx;
+            }
+            if (key.gridy > lasty) {
+                lasty = key.gridy;
+            }
+        }
+        return new Dimension(lastx, lasty);
     }
 
     public void loadXML(InputStream stream) throws IOException, SAXException {
@@ -188,12 +206,14 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals("")) //$NON-NLS-1$
+            if (val.trim().equals("")) {
                 return 0.0;
+            }
             // handle fraction format
             int index = val.indexOf('/');
-            if (index != -1)
+            if (index != -1) {
                 return (double) Integer.parseInt(val.substring(0, index)) / Integer.parseInt(val.substring(index + 1));
+            }
             return Double.parseDouble(val);
         }
 

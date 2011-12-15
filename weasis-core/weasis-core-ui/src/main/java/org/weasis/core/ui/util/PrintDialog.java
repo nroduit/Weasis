@@ -19,8 +19,8 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.PrintOptions.SCALE;
 
 /**
@@ -82,6 +82,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
         setMinimumSize(new java.awt.Dimension(480, 300));
         addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
@@ -89,6 +90,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
         printButton.setText("Print");
         printButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 printButtonActionPerformed(evt);
             }
@@ -96,6 +98,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
@@ -104,6 +107,7 @@ public class PrintDialog extends javax.swing.JDialog {
         customImageSizeLabel.setText("Custom image size:");
 
         customImageSizeSlider.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 customImageSizeSliderStateChanged(evt);
             }
@@ -122,6 +126,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
         imageSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel(SCALE.values()));
         imageSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 imageSizeComboBoxActionPerformed(evt);
             }
@@ -129,63 +134,102 @@ public class PrintDialog extends javax.swing.JDialog {
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imageSizeLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(customImageSizeLabel)
-                            .addComponent(positionLabel))
-                        .addGap(26, 26, 26)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(imageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(customImageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(sliderValue)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(printButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                                .addComponent(cancelButton))))
-                    .addComponent(annotationsCheckBox))
-                .addContainerGap())
-        );
+        layout
+            .setHorizontalGroup(layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(
+                    layout
+                        .createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(
+                            layout
+                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(imageSizeLabel)
+                                .addGroup(
+                                    layout
+                                        .createSequentialGroup()
+                                        .addGroup(
+                                            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(customImageSizeLabel).addComponent(positionLabel))
+                                        .addGap(26, 26, 26)
+                                        .addGroup(
+                                            layout
+                                                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                    javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(imageSizeComboBox,
+                                                    javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                    javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                    javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addGroup(
+                                                    layout
+                                                        .createSequentialGroup()
+                                                        .addGroup(
+                                                            layout
+                                                                .createParallelGroup(
+                                                                    javax.swing.GroupLayout.Alignment.TRAILING)
+                                                                .addGroup(
+                                                                    layout
+                                                                        .createSequentialGroup()
+                                                                        .addComponent(customImageSizeSlider,
+                                                                            javax.swing.GroupLayout.PREFERRED_SIZE,
+                                                                            javax.swing.GroupLayout.DEFAULT_SIZE,
+                                                                            javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addPreferredGap(
+                                                                            javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                        .addComponent(sliderValue)
+                                                                        .addPreferredGap(
+                                                                            javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+                                                                            42, Short.MAX_VALUE))
+                                                                .addGroup(
+                                                                    layout
+                                                                        .createSequentialGroup()
+                                                                        .addComponent(printButton,
+                                                                            javax.swing.GroupLayout.PREFERRED_SIZE, 67,
+                                                                            javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addPreferredGap(
+                                                                            javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                                                        .addComponent(cancelButton))))
+                                .addComponent(annotationsCheckBox)).addContainerGap()));
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, printButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] { cancelButton, printButton });
 
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(imageSizeLabel)
-                    .addComponent(imageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(customImageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sliderValue)
-                    .addComponent(customImageSizeLabel))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(positionLabel)
-                    .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(annotationsCheckBox)
-                .addGap(137, 137, 137))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(223, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(printButton))
-                .addGap(49, 49, 49))
-        );
+        layout.setVerticalGroup(layout
+            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(
+                layout
+                    .createSequentialGroup()
+                    .addGap(18, 18, 18)
+                    .addGroup(
+                        layout
+                            .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(imageSizeLabel)
+                            .addComponent(imageSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(18, 18, 18)
+                    .addGroup(
+                        layout
+                            .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(customImageSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(sliderValue).addComponent(customImageSizeLabel))
+                    .addGap(18, 18, 18)
+                    .addGroup(
+                        layout
+                            .createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(positionLabel)
+                            .addComponent(positionComboBox, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(18, 18, 18).addComponent(annotationsCheckBox).addGap(137, 137, 137))
+            .addGroup(
+                javax.swing.GroupLayout.Alignment.TRAILING,
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap(223, Short.MAX_VALUE)
+                    .addGroup(
+                        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cancelButton).addComponent(printButton)).addGap(49, 49, 49)));
 
         getRootPane().setDefaultButton(printButton);
         customImageSizeLabel.setVisible(false);
@@ -195,22 +239,21 @@ public class PrintDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-private void imageSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imageSizeComboBoxActionPerformed
-    if (imageSizeComboBox.getSelectedItem() != SCALE.Custom) {
-        customImageSizeLabel.setVisible(false);
-        customImageSizeSlider.setVisible(false);
-        sliderValue.setVisible(false);
-    } else {
-        customImageSizeLabel.setVisible(true);
-        customImageSizeSlider.setVisible(true);
-        sliderValue.setVisible(true);
-    }
-}//GEN-LAST:event_imageSizeComboBoxActionPerformed
+    private void imageSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_imageSizeComboBoxActionPerformed
+        if (imageSizeComboBox.getSelectedItem() != SCALE.Custom) {
+            customImageSizeLabel.setVisible(false);
+            customImageSizeSlider.setVisible(false);
+            sliderValue.setVisible(false);
+        } else {
+            customImageSizeLabel.setVisible(true);
+            customImageSizeSlider.setVisible(true);
+            sliderValue.setVisible(true);
+        }
+    }// GEN-LAST:event_imageSizeComboBoxActionPerformed
 
     private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_printButtonActionPerformed
         Float imageScale = (float) customImageSizeSlider.getValue() / 100;
-        PrintOptions printOptions =
-            new PrintOptions(annotationsCheckBox.isSelected(), imageScale);
+        PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected(), imageScale);
         printOptions.setScale((SCALE) imageSizeComboBox.getSelectedItem());
         printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
         if (positionComboBox.getSelectedItem().equals("Centralized")) {
@@ -218,10 +261,21 @@ private void imageSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {/
         } else {
             printOptions.setCenter(false);
         }
-        ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
-        ImagePrint print = new ImagePrint(exportImage, printOptions);
+
+        // One View
+        // ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
+        // ImagePrint print = new ImagePrint(exportImage, printOptions);
+
+        // Several views
+        ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
+        ExportLayout<ImageElement> layout =
+            new ExportLayout<ImageElement>(container.getImagePanels(), container.getLayoutModel());
+        ImagePrint print = new ImagePrint(layout, printOptions);
+
         print.print();
-        exportImage.dispose();
+        layout.dispose();
+        // exportImage.dispose();
+
         doClose(RET_OK);
 
     }// GEN-LAST:event_printButtonActionPerformed
