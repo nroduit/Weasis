@@ -1,20 +1,28 @@
 package org.weasis.dicom.explorer;
 
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.VR;
 import org.dcm4che2.media.DicomDirReader;
 import org.dcm4che2.media.DirectoryRecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -42,7 +50,7 @@ public class DicomDirImport {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
         this.dicomModel = (DicomModel) explorerModel;
-        wadoParameters = new WadoParameters("", false, "", null, null);
+        wadoParameters = new WadoParameters("", true, "", null, null);
         seriesList = new ArrayList<LoadSeries>();
         try {
             reader = new DicomDirReader(dcmDirFile);
@@ -141,7 +149,7 @@ public class DicomDirImport {
                     dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                     dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
                     dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
-                    DicomMediaIO.writeMetaData(dicomSeries, dcmStudy);
+                    DicomMediaIO.writeMetaData(dicomSeries, series);
                     dicomModel.addHierarchyNode(study, dicomSeries);
                 } else {
                     WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
@@ -158,6 +166,11 @@ public class DicomDirImport {
                     dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
                 } else if (dicomInstances.size() > 0) {
                     containsInstance = true;
+                }
+                DicomObject iconInstance = null;
+                DicomElement seq = series.get(Tag.IconImageSequence);
+                if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                    iconInstance = seq.getDicomObject(0);
                 }
                 DicomObject instance = findFirstChildRecord(series);
                 while (instance != null) {
@@ -179,6 +192,12 @@ public class DicomDirImport {
                                         Tag.InstanceNumber, -1));
                                     dcmInstance.setDirectDownloadFile(filename);
                                     dicomInstances.add(dcmInstance);
+                                    if (iconInstance == null) {
+                                        seq = instance.get(Tag.IconImageSequence);
+                                        if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
+                                            iconInstance = seq.getDicomObject(0);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -197,6 +216,9 @@ public class DicomDirImport {
 
                     String modality = (String) dicomSeries.getTagValue(TagW.Modality);
                     boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+                    if (!ps) {
+                        dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
+                    }
                     final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1);
 
                     Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
@@ -210,6 +232,33 @@ public class DicomDirImport {
             }
             series = findNextSiblingRecord(series);
         }
+    }
+
+    private String readDicomDirIcon(DicomObject iconInstance) {
+        if (iconInstance != null) {
+            byte[] pixelData = iconInstance.getBytes(Tag.PixelData);
+            if (pixelData != null) {
+                File thumbnailPath = null;
+                try {
+                    thumbnailPath = File.createTempFile("tumb_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (thumbnailPath != null) {
+                    String tsuid = iconInstance.getString(Tag.TransferSyntaxUID);
+                    int width = iconInstance.getInt(Tag.Columns);
+                    int height = iconInstance.getInt(Tag.Rows);
+                    WritableRaster raster =
+                        WritableRaster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
+                    raster.setDataElements(0, 0, width, height, pixelData);
+                    BufferedImage thumbnail = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+                    if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
+                        return thumbnailPath.getPath();
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private DicomObject findFirstChildRecord(DicomObject dcmObject) {

@@ -271,6 +271,10 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         setIcon(icon);
     }
 
+    public File getThumbnailPath() {
+        return thumbnailPath;
+    }
+
     private PlanarImage loadImage(File path) throws Exception {
         // Imageio issue with native library in multi-thread environment
         // (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
