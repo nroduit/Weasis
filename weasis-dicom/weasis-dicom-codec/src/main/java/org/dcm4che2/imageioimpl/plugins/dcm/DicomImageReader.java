@@ -44,18 +44,24 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
 import javax.media.jai.RenderedOp;
 
 import org.dcm4che2.data.DicomObject;
@@ -63,7 +69,6 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.image.OverlayUtils;
-import org.dcm4che2.image.PartialComponentSampleModel;
 import org.dcm4che2.image.VOIUtils;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.ItemParser;
@@ -74,7 +79,9 @@ import org.dcm4che2.io.StopTagInputHandler;
 import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.ColorModelFactory;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
@@ -616,6 +623,40 @@ public class DicomImageReader extends ImageReader {
             postDecompress();
         } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
             bi = readYbr400(imageIndex, param);
+            if (bi != null) {
+                File outFile = File.createTempFile("img_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                ImageOutputStream out = null;
+                try {
+                    Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");
+                    ImageWriter writer = null;
+                    while (iter.hasNext()) {
+                        ImageWriter w = iter.next();
+                        // Other encoder do not write it correctly
+                        if (w.getClass().getName().equals("com.sun.imageio.plugins.jpeg.JPEGImageWriter")) {
+                            writer = w;
+                            break;
+                        }
+                    }
+                    if (writer != null) {
+                        out = ImageIO.createImageOutputStream(outFile);
+                        writer.setOutput(out);
+                        JPEGImageWriteParam iwp = new JPEGImageWriteParam(null);
+                        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                        iwp.setCompressionQuality(1.0f);
+
+                        writer.write(null, new IIOImage(bi, null, null), iwp);
+                        bi = ImageIO.read(outFile);
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                finally {
+                    FileUtil.safeClose(out);
+                }
+            }
+
         } else {
             bi = reader.readAsRenderedImage(imageIndex, param);
             if (swapByteOrder) {
