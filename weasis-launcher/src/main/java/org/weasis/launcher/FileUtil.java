@@ -12,7 +12,10 @@ package org.weasis.launcher;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 import javax.imageio.stream.ImageInputStream;
 
@@ -40,8 +43,9 @@ public class FileUtil {
     }
 
     public static final void deleteDirectoryContents(final File dir) {
-        if ((dir == null) || !dir.isDirectory())
+        if ((dir == null) || !dir.isDirectory()) {
             return;
+        }
         final File[] files = dir.listFiles();
         if (files != null) {
             for (final File f : files) {
@@ -73,4 +77,19 @@ public class FileUtil {
         return new File(tdir, "weasis"); //$NON-NLS-1$
     }
 
+    public static void storeProperties(File propsFile, Properties props, String comments) {
+        if (props != null && propsFile != null) {
+            FileOutputStream fout = null;
+            try {
+                fout = new FileOutputStream(propsFile);
+                props.store(fout, comments);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                FileUtil.safeClose(fout);
+            }
+        }
+    }
 }

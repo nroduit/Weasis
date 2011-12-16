@@ -119,37 +119,6 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
         }
     }
 
-    public void addSelection(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1) {
-            return;
-        }
-        final ArrayList<DicomMediaIO> files = new ArrayList<DicomMediaIO>();
-        final ArrayList<File> folders = new ArrayList<File>();
-        for (int i = 0; i < file.length; i++) {
-            if (file[i].isDirectory()) {
-                if (firstLevel || recursive) {
-                    folders.add(file[i]);
-                }
-            } else {
-                if (file[i].canRead()) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
-                        DicomMediaIO loader = new DicomMediaIO(file[i]);
-                        if (loader.readMediaTags()) {
-                            files.add(loader);
-                        }
-                    }
-                }
-            }
-        }
-        boolean hasImages = files.size() > 0;
-        if (hasImages) {
-            buildDicomStructure(files, openPlugin & hasImages);
-        }
-        for (int i = 0; i < folders.size(); i++) {
-            addSelection(folders.get(i).listFiles(), false);
-        }
-    }
-
     private Thumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
         Thumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
@@ -244,96 +213,6 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
             dicomReader.reset();
         }
         return thumb;
-    }
-
-    private void buildDicomStructure(ArrayList<DicomMediaIO> seriesList, boolean open) {
-        ArrayList<Series> dicomseriesList = new ArrayList<Series>();
-        seriesList: for (DicomMediaIO dicomReader : seriesList) {
-            String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
-            MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
-            if (patient == null) {
-                patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
-                dicomReader.writeMetaData(patient);
-                dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-                writeInfo(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
-            }
-
-            String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
-            MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
-            if (study == null) {
-                study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
-                dicomReader.writeMetaData(study);
-                dicomModel.addHierarchyNode(patient, study);
-            }
-
-            String seriesUID = (String) dicomReader.getTagValue(TagW.SeriesInstanceUID);
-            Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
-            try {
-                if (dicomSeries == null) {
-                    dicomSeries = dicomReader.buildSeries(seriesUID);
-                    dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
-                    dicomReader.writeMetaData(dicomSeries);
-                    dicomModel.addHierarchyNode(study, dicomSeries);
-                    dicomseriesList.add(dicomSeries);
-                    MediaElement[] medias = dicomReader.getMediaElement();
-                    if (medias != null) {
-                        for (MediaElement media : medias) {
-                            dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
-                            dicomModel.applySplittingRules(dicomSeries, media);
-                        }
-                    }
-                } else {
-                    // Test if SOPInstanceUID already exists
-                    if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
-                        dicomReader.getTagValue(TagW.SOPInstanceUID))) {
-                        continue seriesList;
-                    }
-                    MediaElement[] medias = dicomReader.getMediaElement();
-                    if (medias != null) {
-                        for (MediaElement media : medias) {
-                            dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
-                            if (dicomModel.applySplittingRules(dicomSeries, media)) {
-                                // When the Series is split, build a thumbnail and add it to the dicom explorer
-                                dicomseriesList.add(dicomSeries);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                dicomReader.reset();
-                e.printStackTrace();
-            }
-        }
-
-        for (int i = 0; i < dicomseriesList.size(); i++) {
-            final Series series = dicomseriesList.get(i);
-            // Load image and create thumbnail in this Thread
-            Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
-            if (thumb == null) {
-                thumb = DicomExplorer.createThumbnail(series, dicomModel, Thumbnail.DEFAULT_SIZE);
-                series.setTag(TagW.Thumbnail, thumb);
-            }
-            series.resetLoaders();
-            dicomModel
-                .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel, null, series));
-            Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
-            Object dicomObject = series.getTagValue(TagW.DicomSpecialElement);
-            if (splitNb != null || dicomObject != null) {
-                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null,
-                    series));
-            }
-        }
-
-        if (open && dicomseriesList.size() > 0) {
-            final Series series = dicomseriesList.get(0);
-            SeriesViewerFactory plugin = UIManager.getViewerFactory(series.getMimeType());
-            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                openPlugin = false;
-                ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                list.add(series);
-                LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
-            }
-        }
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {

@@ -18,13 +18,16 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomInstance;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
@@ -62,6 +65,8 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
 
     @Override
     protected Boolean doInBackground() throws Exception {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
+            this));
         String seriesUID = null;
         for (int i = 0; i < urls.length; i++) {
             if (urls[i] != null) {
@@ -70,7 +75,7 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             }
         }
         if (seriesUID != null) {
-            String unknown = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
+            String unknown = DicomMediaIO.NO_VALUE;
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, unknown);
             if (patient == null) {
                 patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, unknown, TagW.PatientName);
@@ -103,7 +108,9 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
             if (dicomInstances.size() > 0) {
                 String modality = (String) dicomSeries.getTagValue(TagW.Modality);
                 boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-                final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel);
+                final LoadSeries loadSeries =
+                    new LoadSeries(dicomSeries, dicomModel, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                        LoadSeries.CODOWNLOAD_IMAGES_NB, 4), true);
                 if (!ps) {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }
@@ -124,6 +131,8 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
 
     @Override
     protected void done() {
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
+            this));
     }
 
 }

@@ -26,6 +26,8 @@ public class Activator implements BundleActivator {
     @Override
     public void start(final BundleContext context) throws Exception {
         PREFERENCES.init(context);
+        String cache = context.getProperty("weasis.portable.dicom.cache");
+        DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
     }
 
     @Override

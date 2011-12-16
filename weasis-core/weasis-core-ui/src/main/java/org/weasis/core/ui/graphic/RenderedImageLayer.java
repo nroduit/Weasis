@@ -228,7 +228,16 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
             g2d.setClip(rect);
         }
 
-        g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
+        try {
+            g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
+        } catch (OutOfMemoryError e1) {
+            System.gc();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException et) {
+            }
+        }
+
         g2d.setClip(clip);
 
     }
