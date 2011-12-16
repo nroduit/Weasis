@@ -61,14 +61,16 @@ public class ImageToolkit {
     public static PlanarImage getImageOp(PlanarImage image, String opName) {
         if (image instanceof RenderedOp) {
             RenderedOp op = (RenderedOp) image;
-            if (op.getOperationName().equalsIgnoreCase(opName))
+            if (op.getOperationName().equalsIgnoreCase(opName)) {
                 return image;
+            }
             while (image.getNumSources() > 0) {
                 try {
                     image = image.getSourceImage(0);
                     op = (RenderedOp) image;
-                    if (op.getOperationName().equalsIgnoreCase(opName))
+                    if (op.getOperationName().equalsIgnoreCase(opName)) {
                         return image;
+                    }
                 } catch (Exception ex) {
                     return null;
                 }
@@ -120,11 +122,12 @@ public class ImageToolkit {
         if (image instanceof RenderedOp) {
             RenderedOp img = (RenderedOp) image;
             Vector sources = img.getSources();
-            if (sources.size() == 0)
+            if (sources.size() == 0) {
                 return getFilePath(img.getParameterBlock().getParameters(), img.getOperationName());
-            else if (sources.size() >= 1) {
-                if (sources.get(0) instanceof PlanarImage)
+            } else if (sources.size() >= 1) {
+                if (sources.get(0) instanceof PlanarImage) {
                     return getFileNameOfSource((PlanarImage) sources.get(0));
+                }
 
             }
         }
@@ -455,15 +458,16 @@ public class ImageToolkit {
 
     public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
         float level, boolean pixelPadding) {
-        if (image == null || source == null) {
+        if (image == null || source == null || window == 0f) {
             return null;
         }
 
         RenderedImage result = null;
         SampleModel sampleModel = source.getSampleModel();
 
-        if (sampleModel == null)
+        if (sampleModel == null) {
             return null;
+        }
 
         int datatype = sampleModel.getDataType();
 

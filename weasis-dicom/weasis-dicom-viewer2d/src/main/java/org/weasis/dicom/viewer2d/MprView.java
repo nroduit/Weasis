@@ -14,7 +14,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 public class MprView extends View2d {

@@ -72,8 +72,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
     protected String pixelSizeCalibrationDescription = null;
     protected String pixelValueUnit = null;
 
-    protected float maxValue;
-    protected float minValue;
+    protected float maxPixelValue;
+    protected float minPixelValue;
 
     public ImageElement(MediaReader<PlanarImage> mediaIO, Object key) {
         super(mediaIO, key);
@@ -83,7 +83,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
-        if (img != null && minValue == 0.0f && maxValue == 0.0f) {
+        if (img != null && minPixelValue == 0.0f && maxPixelValue == 0.0f) {
 
             // int datatype = img.getSampleModel().getDataType();
             // if (datatype == DataBuffer.TYPE_BYTE) {
@@ -106,8 +106,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
                 max = Math.max(max, extrema[1][i]);
             }
 
-            this.minValue = Math.round(min);
-            this.maxValue = Math.round(max);
+            this.minPixelValue = Math.round(min);
+            this.maxPixelValue = Math.round(max);
 
             // }
         }
@@ -129,19 +129,19 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public float getDefaultWindow() {
-        return maxValue - minValue;
+        return maxPixelValue - minPixelValue;
     }
 
     public float getDefaultLevel() {
-        return minValue + (maxValue - minValue) / 2.f;
+        return minPixelValue + (maxPixelValue - minPixelValue) / 2.f;
     }
 
     public float getMaxValue() {
-        return maxValue;
+        return maxPixelValue;
     }
 
     public float getMinValue() {
-        return minValue;
+        return minPixelValue;
     }
 
     public int getRescaleWidth(int width) {

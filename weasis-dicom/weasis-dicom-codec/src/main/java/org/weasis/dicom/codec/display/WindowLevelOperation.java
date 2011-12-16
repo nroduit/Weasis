@@ -11,6 +11,10 @@
 package org.weasis.dicom.codec.display;
 
 import java.awt.image.RenderedImage;
+import java.awt.image.renderable.ParameterBlock;
+
+import javax.media.jai.JAI;
+import javax.media.jai.LookupTableJAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +22,6 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOperation;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
@@ -31,23 +34,21 @@ public class WindowLevelOperation extends AbstractOperation {
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         ImageElement image = (imageOperation != null) ? imageOperation.getImage() : null;
 
-        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
         Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+        LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
 
         if (image == null || source == null) {
             LOGGER.warn("Cannot apply \"{}\" ", name);
         } else if (image instanceof DicomImageElement) {
-            // LookupTableJAI lookup = ((DicomImageElement) image).getVOILookup(window, level);
-            //
-            // if (lookup != null) {
-            // ParameterBlock pb = new ParameterBlock();
-            // pb.addSource(source);
-            // pb.add(lookup);
-            // // Will add tiles in cache tile memory
-            // result = JAI.create("lookup", pb, null);
-            // }
+            LookupTableJAI lookup = ((DicomImageElement) image).getVOILookup(window, level, lutShape);
 
-            result = ImageToolkit.getDefaultRenderedImage(image, source, window, level);
+            if (lookup != null) {
+                ParameterBlock pb = new ParameterBlock();
+                pb.addSource(source);
+                pb.add(lookup);
+                result = JAI.create("lookup", pb, null); // Will add tiles in cache tile memory
+            }
         }
 
         return result;

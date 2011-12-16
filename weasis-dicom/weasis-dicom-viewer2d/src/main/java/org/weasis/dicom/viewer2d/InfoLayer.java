@@ -23,10 +23,13 @@ import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Hashtable;
 
+import javax.media.jai.Histogram;
+import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.vecmath.Vector3d;
 
@@ -48,6 +51,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
+import org.weasis.dicom.codec.display.LutShape;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -569,33 +573,65 @@ public class InfoLayer implements AnnotationsLayer {
 
     public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
 
-        Paint oldPaint = g2d.getPaint();
-        RenderingHints oldRenderingHints = g2d.getRenderingHints();
-        Stroke oldStroke = g2d.getStroke();
-
-        ImageElement image = view2DPane.getImage();
-        float firstLevel = image.getMinValue();
-        float lastLevel = image.getMaxValue();
-        float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
-        float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
-        float minLevel = Math.round(level - window / 2);
-        float maxLevel = Math.round(level + window / 2);
-        boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
-
-        // /////////////////////////////////////////////////////////////////////////////////////
-        ByteLut lutTable = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
-        byte[][] lut = inverseLut ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
-
-        if (lut != null) {
-            System.out.println("Yeah !!");
-        }
+        final Paint oldPaint = g2d.getPaint();
+        final RenderingHints oldRenderingHints = g2d.getRenderingHints();
+        final Stroke oldStroke = g2d.getStroke();
 
         // /////////////////////////////////////////////////////////////////////////////////////
 
-        // To be used when drawing is defined in a CW system knowing graphics2D system is CCW
-        final AffineTransform flipVertical = AffineTransform.getScaleInstance(1, -1);
+        final DicomImageElement image = (DicomImageElement) view2DPane.getImage();
 
-        // Defined in a CW system
+        // Min/Max out Lut pixel values defined as unsigned 8 bits data
+        final int minOutputValue = 0;
+        final int maxOutputValue = 255;
+
+        final float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
+        final float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
+
+        final float lowLevel = Math.round(level - window / 2);
+        final float highLevel = Math.round(level + window / 2);
+
+        int lowInputValue = (int) (image.getMinValue() < lowLevel ? lowLevel : image.getMinValue());
+        int highInputValue = (int) (image.getMaxValue() > highLevel ? highLevel : image.getMaxValue());
+
+        final boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
+
+        LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
+        LookupTableJAI lookup = image.getVOILookup(window, level, lutShape, true);
+        // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
+
+        // System.out.println(lutShape.toString());
+        final byte[] fullRangeVoiLUT = lookup.getByteData(0);
+
+        final int lutInputRange = fullRangeVoiLUT.length - 1;
+        final int minInputValue = lookup.getOffset();
+        final int maxInputValue = minInputValue + lutInputRange;
+
+        lowInputValue = (lowInputValue < minInputValue) ? minInputValue : lowInputValue;
+        highInputValue = (highInputValue > maxInputValue) ? maxInputValue : highInputValue;
+
+        // /////////////////////////////////////////////////////////////////////////////////////
+
+        // Size in pixel of Input/Ouput LUT Range
+        final float xAxisCoordinateSystemRange = 511;
+        final float yAxisCoordinateSystemRange = 255;
+
+        // Offset in pixel for the Left/Down side of the coordinate system
+        boolean isMinInputValueNegative = minInputValue < 0;
+        final float xOffsetCoordinateSystemOrigin = isMinInputValueNegative ? minInputValue : -5f;
+        final float yOffsetCoordinateSystemOrigin = -5f;
+
+        final float xAxisCoordinateSystemMinValue = isMinInputValueNegative ? minInputValue : 0;
+        final float xAxisCoordinateSystemMaxValue =
+            isMinInputValueNegative ? xAxisCoordinateSystemRange + xOffsetCoordinateSystemOrigin
+                : xAxisCoordinateSystemRange;
+
+        // TODO - better to use a scaleTransform instead of scale ratio with many variables!!!
+        final float xAxisRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
+        final float yAxisRescaleRatio = yAxisCoordinateSystemRange / maxOutputValue;
+
+        // /////////////////////////////////////////////////////////////////////////////////////
+        // Coordinate system arrows and lines defined in a CW system
         final Path2D upArrow = new Path2D.Float();
         upArrow.moveTo(0, 0);
         upArrow.lineTo(0, 3);
@@ -607,60 +643,221 @@ public class InfoLayer implements AnnotationsLayer {
         final Path2D rightArrow = (Path2D) upArrow.clone();
         rightArrow.transform(AffineTransform.getQuadrantRotateInstance(3));
 
-        final float xAxisCoordinateSystemLength = 400;
-        final float yAxisCoordinateSystemLength = 200;
-        final float xOffsetCoordinateSystemOrigin = 5f;
-        final float yOffsetCoordinateSystemOrigin = 5f;
-
         final Shape upArrowCoordinateSystemPath =
-            AffineTransform.getTranslateInstance(0, yAxisCoordinateSystemLength + 1).createTransformedShape(upArrow);
+            AffineTransform.getTranslateInstance(0, yAxisCoordinateSystemRange + 1).createTransformedShape(upArrow);
         final Shape rightArrowCoordinateSystemPath =
-            AffineTransform.getTranslateInstance(xAxisCoordinateSystemLength + 1, 0).createTransformedShape(rightArrow);
+            AffineTransform.getTranslateInstance(xAxisCoordinateSystemMaxValue + 1, 0).createTransformedShape(
+                rightArrow);
 
-        Path2D coordinateSystemPath = new Path2D.Float();
-        coordinateSystemPath.moveTo(0, -yOffsetCoordinateSystemOrigin);
-        coordinateSystemPath.lineTo(0, yAxisCoordinateSystemLength);
+        final Path2D coordinateSystemPath = new Path2D.Float();
+        coordinateSystemPath.moveTo(0, yOffsetCoordinateSystemOrigin);
+        coordinateSystemPath.lineTo(0, yAxisCoordinateSystemRange);
         coordinateSystemPath.append(upArrowCoordinateSystemPath, false);
-        coordinateSystemPath.moveTo(-xOffsetCoordinateSystemOrigin, 0);
-        coordinateSystemPath.lineTo(xAxisCoordinateSystemLength, 0);
+        coordinateSystemPath.moveTo(xOffsetCoordinateSystemOrigin, 0);
+        coordinateSystemPath.lineTo(xAxisCoordinateSystemMaxValue, 0);
         coordinateSystemPath.append(rightArrowCoordinateSystemPath, false);
 
-        // Defined in CCW system
-        final AffineTransform coordinateSystemTransform =
-            AffineTransform.getTranslateInstance(xOffsetCoordinateSystemOrigin, coordinateSystemPath.getBounds2D()
-                .getHeight() - yOffsetCoordinateSystemOrigin);
-        coordinateSystemTransform.concatenate(flipVertical);
-        coordinateSystemPath.transform(coordinateSystemTransform);
-
-        // Defined in a CCW system
-        final float lutGraphMargin = 5f;
-        final float lutGraphWidth = (float) coordinateSystemPath.getBounds2D().getWidth() + 2 * lutGraphMargin;
-        final float lutGraphHeight = (float) coordinateSystemPath.getBounds2D().getHeight() + 2 * lutGraphMargin;
+        // /////////////////////////////////////////////////////////////////////////////////
+        // LUT graph bounding rectangle defined in a CCW system
+        final float lutGraphMargin = 30f;
+        final float lutGraphWidth = (float) coordinateSystemPath.getBounds2D().getWidth() + 2f * lutGraphMargin;
+        final float lutGraphHeight = (float) coordinateSystemPath.getBounds2D().getHeight() + 2f * lutGraphMargin;
 
         final Path2D lutGraphBoundingRect =
             new Path2D.Float(new Rectangle2D.Float(0, 0, lutGraphWidth, lutGraphHeight));
 
-        // Translate in the viewPane CCW system
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Selected LUT defined in a CW system with the full range input.
+        // Note : two path are distinct from the inside and ouside range part of lowInput and highInput values
+
+        final Path2D insideRangeLutPath = new Path2D.Float();
+        final Path2D outsideRangeLutPath = new Path2D.Float();
+
+        boolean isOutsideRangeLutPathMoveToDefined = false;
+        boolean isRealValuesLutPathMoveToDefined = false;
+
+        for (int i = 0; i < fullRangeVoiLUT.length; i++) {
+            int xVal = Math.round((minInputValue + i) * xAxisRescaleRatio);
+            int yVal = fullRangeVoiLUT[i] & 0x000000FF; // Mask because byte is signed by default
+            yVal = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yVal) : yVal));
+
+            if (yVal == maxOutputValue || yVal == minOutputValue) {
+                isRealValuesLutPathMoveToDefined = false;
+                isOutsideRangeLutPathMoveToDefined = false;
+            } else {
+                if ((minInputValue + i) < lowInputValue || (minInputValue + i) > highInputValue) {
+                    if (isOutsideRangeLutPathMoveToDefined) {
+                        outsideRangeLutPath.lineTo(xVal, yVal);
+                        isRealValuesLutPathMoveToDefined = false;
+                    } else {
+                        outsideRangeLutPath.moveTo(xVal, yVal);
+                        isOutsideRangeLutPathMoveToDefined = true;
+                    }
+                } else {
+                    if (isRealValuesLutPathMoveToDefined) {
+                        insideRangeLutPath.lineTo(xVal, yVal);
+                        isOutsideRangeLutPathMoveToDefined = false;
+                    } else {
+                        insideRangeLutPath.moveTo(xVal, yVal);
+                        isRealValuesLutPathMoveToDefined = true;
+                    }
+                }
+            }
+        }
+
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Path of Interest defined in a CW system
+
+        final Path2D xAxisMaxOutValueLine = new Path2D.Float();
+        xAxisMaxOutValueLine.moveTo(xAxisCoordinateSystemMinValue, yAxisCoordinateSystemRange);
+        xAxisMaxOutValueLine.lineTo(xAxisCoordinateSystemMaxValue, yAxisCoordinateSystemRange);
+
+        int xLowLevel = Math.round(xAxisRescaleRatio * lowLevel);
+        int xHighLevel = Math.round(xAxisRescaleRatio * highLevel);
+        int xLevel = Math.round(xAxisRescaleRatio * level);
+
+        final Path2D yAxisOnLowLevelLine = new Path2D.Float();
+        yAxisOnLowLevelLine.moveTo(xLowLevel, 0);
+        yAxisOnLowLevelLine.lineTo(xLowLevel, yAxisCoordinateSystemRange);
+
+        final Path2D yAxisOnHighLevelLine = new Path2D.Float();
+        yAxisOnHighLevelLine.moveTo(xHighLevel, 0);
+        yAxisOnHighLevelLine.lineTo(xHighLevel, yAxisCoordinateSystemRange);
+
+        final Path2D yAxisOnLevelLine = new Path2D.Float();
+        yAxisOnLevelLine.moveTo(xLevel, 0);
+        yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
+
+        final Path2D xAxisOnLevelLine = new Path2D.Float();
+        if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
+            int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
+            yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+
+            xAxisOnLevelLine.moveTo(0, yLevel);
+            xAxisOnLevelLine.lineTo(xLevel, yLevel);
+        }
+
+        int xMinVal = lowInputValue;
+        int yMinVal = fullRangeVoiLUT[lowInputValue] & 0x000000FF;
+        yMinVal = inverseLut ? maxOutputValue - yMinVal : yMinVal;
+
+        final Path2D xAxisOnMinValueLine = new Path2D.Float();
+        if (yMinVal != minOutputValue && yMinVal != maxOutputValue) {
+            xAxisOnMinValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMinVal));
+            xAxisOnMinValueLine
+                .lineTo(Math.round(xAxisRescaleRatio * xMinVal), Math.round(yAxisRescaleRatio * yMinVal));
+        }
+
+        final Path2D yAxisOnMinValueLine = new Path2D.Float();
+        // if (xMinVal != xLowLevel && xMinVal != xLevel && xMinVal != xHighLevel) {
+        yAxisOnMinValueLine.moveTo(Math.round(xAxisRescaleRatio * xMinVal), 0);
+        yAxisOnMinValueLine.lineTo(Math.round(xAxisRescaleRatio * xMinVal), Math.round(yAxisRescaleRatio * yMinVal));
+        // }
+
+        int xMaxVal = highInputValue;
+        int yMaxVal = fullRangeVoiLUT[highInputValue] & 0x000000FF;
+        yMaxVal = inverseLut ? maxOutputValue - yMaxVal : yMaxVal;
+
+        final Path2D xAxisOnMaxValueLine = new Path2D.Float();
+        if (yMaxVal != minOutputValue && yMaxVal != maxOutputValue) {
+            xAxisOnMaxValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMaxVal));
+            xAxisOnMaxValueLine
+                .lineTo(Math.round(xAxisRescaleRatio * xMaxVal), Math.round(yAxisRescaleRatio * yMaxVal));
+        }
+        final Path2D yAxisOnMaxValue = new Path2D.Float();
+        // if (xMaxVal != xLowLevel && xMaxVal != xLevel && xMaxVal != xHighLevel) {
+        yAxisOnMaxValue.moveTo(Math.round(xAxisRescaleRatio * xMaxVal), 0);
+        yAxisOnMaxValue.lineTo(Math.round(xAxisRescaleRatio * xMaxVal), Math.round(yAxisRescaleRatio * yMaxVal));
+        // }
+
+        // /////////////////////////////////////////////////////////////////////////////////
+        // ViewPane transform in a CCW system
+
         final float lutGraphXPos = (viewPaneBound.width - lutGraphWidth) / 2;
         final float lutGraphYPos = (viewPaneBound.height - lutGraphHeight) / 2;
 
         final AffineTransform lutGraphViewPaneTranslate =
             AffineTransform.getTranslateInstance(lutGraphXPos, lutGraphYPos);
 
-        final AffineTransform coordinateSystemViewPaneTranslate =
-            AffineTransform.getTranslateInstance(lutGraphMargin, lutGraphMargin);
-        coordinateSystemViewPaneTranslate.concatenate(lutGraphViewPaneTranslate);
+        final AffineTransform coordinateSystemViewPaneTransform =
+            AffineTransform.getTranslateInstance(-xOffsetCoordinateSystemOrigin, coordinateSystemPath.getBounds2D()
+                .getHeight() + yOffsetCoordinateSystemOrigin);
+        coordinateSystemViewPaneTransform.translate(lutGraphMargin, lutGraphMargin);
+        coordinateSystemViewPaneTransform.concatenate(lutGraphViewPaneTranslate);
+
+        final AffineTransform flipVerticalTransform = AffineTransform.getScaleInstance(1, -1);
+        // Note : this flipVertical transform has to be used when drawing is defined in a CW system knowing that
+        // graphics2D coordinate system is CCW
+        coordinateSystemViewPaneTransform.concatenate(flipVerticalTransform);
+
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Transform all path
 
         lutGraphBoundingRect.transform(lutGraphViewPaneTranslate);
-        coordinateSystemPath.transform(coordinateSystemViewPaneTranslate);
 
-        // Handles Background Transparency
-        float alphaReal = 0.0f; // [0.0 ; 1.0]
+        coordinateSystemPath.transform(coordinateSystemViewPaneTransform);
+        xAxisMaxOutValueLine.transform(coordinateSystemViewPaneTransform);
+        insideRangeLutPath.transform(coordinateSystemViewPaneTransform);
+        outsideRangeLutPath.transform(coordinateSystemViewPaneTransform);
+        xAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
+        yAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
+        xAxisOnMaxValueLine.transform(coordinateSystemViewPaneTransform);
+        yAxisOnMaxValue.transform(coordinateSystemViewPaneTransform);
+        yAxisOnLowLevelLine.transform(coordinateSystemViewPaneTransform);
+        yAxisOnHighLevelLine.transform(coordinateSystemViewPaneTransform);
+        yAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+        xAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Draw Background
+
+        float alphaReal = 0.75f; // [0.0 ; 1.0]
         int alphaMask = 0x00FFFFFF | (Math.round(alphaReal * 255) << 24);
         g2d.setPaint(new Color(Color.GRAY.getRGB() & alphaMask, true));
-        g2d.fill(lutGraphBoundingRect);
+        g2d.fill(lutGraphBoundingRect); // Handles background transparency inside bounding rectangle
 
-        g2d.setPaint(Color.YELLOW);
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Draw Histogram
+
+        boolean showHistogram = true;
+        Histogram histogram = showHistogram ? image.getHistogram(view2DPane.getSourceImage()) : null;
+
+        if (histogram != null) {
+
+            boolean logarithmRescale = true;
+
+            final int[] histoData = histogram.getBins(0);
+            double maxHistoCount = logarithmRescale ? Math.log1p(image.getMaxHistoCount()) : image.getMaxHistoCount();
+
+            final float yAxisHistoRescaleRatio = (float) (yAxisCoordinateSystemRange / maxHistoCount);
+            final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);
+
+            assert histogram.getNumBins(0) == lutInputRange;
+
+            final Point2D pt0 = new Point2D.Float();
+            final Point2D pt1 = new Point2D.Float();
+
+            g2d.setPaint(Color.DARK_GRAY);
+            g2d.setStroke(new BasicStroke(1.0F));
+
+            for (int i = 0; i < histogram.getNumBins(0); i++) {
+                double xVal = (minInputValue + i) * xAxisHistoRescaleRatio;
+                double yVal = (logarithmRescale ? Math.log1p(histoData[i]) : histoData[i]) * yAxisHistoRescaleRatio;
+                pt0.setLocation(xVal, 0);
+                pt1.setLocation(xVal, yVal);
+
+                coordinateSystemViewPaneTransform.transform(pt0, pt0);
+                coordinateSystemViewPaneTransform.transform(pt1, pt1);
+
+                g2d.drawLine((int) Math.round(pt0.getX()), (int) Math.round(pt0.getY()), (int) Math.round(pt1.getX()),
+                    (int) Math.round(pt1.getY()));
+            }
+        }
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Draw Path
+
+        g2d.setPaint(Color.ORANGE);
+        g2d.setStroke(new BasicStroke(2.0F));
         g2d.draw(lutGraphBoundingRect);
 
         g2d.setPaint(Color.RED);
@@ -668,6 +865,82 @@ public class InfoLayer implements AnnotationsLayer {
         g2d.setStroke(new BasicStroke(1.0F));
         g2d.draw(coordinateSystemPath);
 
+        g2d.setStroke(new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 5.0f },
+            0.0f));
+        g2d.draw(xAxisMaxOutValueLine);
+
+        g2d.setPaint(Color.BLUE);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setStroke(new BasicStroke(1.0F));
+        g2d.draw(insideRangeLutPath);
+
+        g2d.setStroke(new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5f, new float[] { 5.0f },
+            0.0f));
+        g2d.draw(outsideRangeLutPath);
+
+        g2d.draw(xAxisOnMinValueLine);
+        g2d.draw(yAxisOnMinValueLine);
+        g2d.draw(xAxisOnMaxValueLine);
+        g2d.draw(yAxisOnMaxValue);
+
+        g2d.setPaint(Color.CYAN);
+        g2d.draw(yAxisOnLowLevelLine);
+        g2d.draw(yAxisOnHighLevelLine);
+        // g2d.draw(yAxisOnLevelLine);
+        // g2d.draw(xAxisOnLevelLine);
+
+        // /////////////////////////////////////////////////////////////////////////////////
+        // Draw Strings
+
+        String str = Integer.toString(maxOutputValue);
+        int strWidth = g2d.getFontMetrics().stringWidth(str);
+        float xStrPos = -strWidth - 8;
+        float yStrPos = Math.round(maxOutputValue * yAxisRescaleRatio) - midfontHeight;
+        Point2D ptStr = new Point2D.Float(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        str = Integer.toString(minOutputValue);
+        strWidth = g2d.getFontMetrics().stringWidth(str);
+        xStrPos = -strWidth - 8;
+        yStrPos = Math.round(minOutputValue * yAxisRescaleRatio) - midfontHeight;
+        ptStr.setLocation(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        str = Integer.toString(yMinVal);
+        strWidth = g2d.getFontMetrics().stringWidth(str);
+        xStrPos = -strWidth - 8;
+        yStrPos = Math.round(yAxisRescaleRatio * yMinVal) - midfontHeight;
+        ptStr.setLocation(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        str = Integer.toString(yMaxVal);
+        strWidth = g2d.getFontMetrics().stringWidth(str);
+        xStrPos = -strWidth - 8;
+        yStrPos = Math.round(yAxisRescaleRatio * yMaxVal) - midfontHeight;
+        ptStr.setLocation(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        str = Integer.toString(xMinVal);
+        strWidth = g2d.getFontMetrics().stringWidth(str);
+        xStrPos = Math.round(xAxisRescaleRatio * xMinVal) - strWidth / 2;
+        yStrPos = -midfontHeight - 8;
+        ptStr.setLocation(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        str = Integer.toString(xMaxVal);
+        strWidth = g2d.getFontMetrics().stringWidth(str);
+        xStrPos = Math.round(xAxisRescaleRatio * xMaxVal) - strWidth / 2;
+        yStrPos = -midfontHeight - 8;
+        ptStr.setLocation(xStrPos, yStrPos);
+        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+        paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+
+        // ///////////////////////////////////////////////////////////////////////////////
         g2d.setPaint(oldPaint);
         g2d.setStroke(oldStroke);
         g2d.setRenderingHints(oldRenderingHints);
