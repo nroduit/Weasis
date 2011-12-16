@@ -382,7 +382,7 @@ public class DownloadManager {
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             final LoadSeries loadSeries =
                 new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                    LoadSeries.CODOWNLOAD_IMAGES_NB, 4));
+                    LoadSeries.CODOWNLOAD_IMAGES_NB, 4), true);
 
             Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
             DownloadPriority priority =

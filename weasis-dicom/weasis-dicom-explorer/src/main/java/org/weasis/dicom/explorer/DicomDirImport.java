@@ -214,18 +214,14 @@ public class DicomDirImport {
                         dicomModel.addHierarchyNode(study, dicomSeries);
                     }
 
-                    String modality = (String) dicomSeries.getTagValue(TagW.Modality);
-                    boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
-                    if (!ps) {
-                        dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
-                    }
-                    final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1);
+                    dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
+                    final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, true);
 
-                    Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
                     DownloadPriority priority =
                         new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
                             (String) study.getTagValue(TagW.StudyInstanceUID),
-                            (Date) study.getTagValue(TagW.StudyDate), sn);
+                            (Date) study.getTagValue(TagW.StudyDate),
+                            (Integer) dicomSeries.getTagValue(TagW.SeriesNumber));
                     loadSeries.setPriority(priority);
                     seriesList.add(loadSeries);
                 }
@@ -245,7 +241,6 @@ public class DicomDirImport {
                     e.printStackTrace();
                 }
                 if (thumbnailPath != null) {
-                    String tsuid = iconInstance.getString(Tag.TransferSyntaxUID);
                     int width = iconInstance.getInt(Tag.Columns);
                     int height = iconInstance.getInt(Tag.Rows);
                     WritableRaster raster =

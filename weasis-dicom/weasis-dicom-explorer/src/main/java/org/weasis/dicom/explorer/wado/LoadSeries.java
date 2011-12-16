@@ -100,13 +100,15 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private final Series dicomSeries;
     private final JProgressBar progressBar;
     private DownloadPriority priority = null;
+    private final boolean writeInCache;
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int simultaneousDownload) {
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int simultaneousDownload, boolean writeInCache) {
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
+        this.writeInCache = writeInCache;
         final List<DicomInstance> sopList =
             (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
         // Trick to keep progressBar with a final modifier. The progressBar must be instantiated in EDT (required by
@@ -124,13 +126,15 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.CODOWNLOAD_NUMBER = simultaneousDownload;
     }
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int simultaneousDownload) {
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int simultaneousDownload,
+        boolean writeInCache) {
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
         this.dicomModel = dicomModel;
         this.dicomSeries = dicomSeries;
         this.progressBar = progressBar;
+        this.writeInCache = writeInCache;
         this.dicomSeries.setSeriesLoader(this);
         this.CODOWNLOAD_NUMBER = simultaneousDownload;
     }
@@ -163,7 +167,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     @Override
     public void resume() {
         if (isStopped()) {
-            LoadSeries taskResume = new LoadSeries(dicomSeries, dicomModel, progressBar, CODOWNLOAD_NUMBER);
+            LoadSeries taskResume =
+                new LoadSeries(dicomSeries, dicomModel, progressBar, CODOWNLOAD_NUMBER, writeInCache);
             DownloadPriority p = this.getPriority();
             p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
             taskResume.setPriority(p);
@@ -188,7 +193,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             final Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
-                if (thumbnail.getThumbnailPath() == null) {
+                if (thumbnail.getThumbnailPath() == null
+                    || dicomSeries.getTagValue(TagW.DirectDownloadThumbnail) != null) {
                     thumbnail.reBuildThumbnail(MediaSeries.MEDIA_POSITION.MIDDLE);
                 }
                 thumbnail.repaint();
@@ -810,8 +816,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     return false;
                 }
             }
-
-            if (tempFile == null) {
+            boolean cache = true;
+            if (!writeInCache && getUrl().startsWith("file:")) {
+                cache = false;
+            }
+            if (cache && tempFile == null) {
                 tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
@@ -832,40 +841,43 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 // stateChanged();
             }
             DicomMediaIO dicomReader = null;
-            log.debug("Download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
+            log.debug("Download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                 int[] overrideList = wado.getOverrideDicomTagIDList();
-                int bytesTransferred = 0;
-                if (overrideList == null && wado != null) {
-                    bytesTransferred =
-                        FileUtil.writeFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(
-                            tempFile));
-                } else if (wado != null) {
-                    bytesTransferred =
-                        writFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(tempFile),
-                            overrideList);
-                }
-
-                if (bytesTransferred >= 0) {
-                    log.warn("Download interruption {} ", url); //$NON-NLS-1$
-                    try {
-                        tempFile.delete();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                if (cache) {
+                    int bytesTransferred = 0;
+                    if (overrideList == null && wado != null) {
+                        bytesTransferred =
+                            FileUtil.writeFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(
+                                tempFile));
+                    } else if (wado != null) {
+                        bytesTransferred =
+                            writFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(tempFile),
+                                overrideList);
                     }
-                    return false;
-                }
-                // TODO handle file interruption
-                // else if (bytesTransferred > 0) {
-                // downloaded = bytesTransferred;
-                // }
 
-                File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
-                if (tempFile.renameTo(renameFile)) {
-                    tempFile = renameFile;
-                }
+                    if (bytesTransferred >= 0) {
+                        log.warn("Download interruption {} ", url); //$NON-NLS-1$
+                        try {
+                            tempFile.delete();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        return false;
+                    }
+                    // TODO handle file interruption
+                    // else if (bytesTransferred > 0) {
+                    // downloaded = bytesTransferred;
+                    // }
 
+                    File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
+                    if (tempFile.renameTo(renameFile)) {
+                        tempFile = renameFile;
+                    }
+                } else {
+                    tempFile = new File(url.toURI());
+                }
                 dicomReader = new DicomMediaIO(tempFile);
                 if (dicomReader.readMediaTags()) {
                     if (dicomSeries.size() == 0) {
@@ -1039,7 +1051,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             if (s != this && StateValue.STARTED.equals(s.getState())) {
                                 LoadSeries taskResume =
                                     new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
-                                        s.getCODOWNLOAD_NUMBER());
+                                        s.getCODOWNLOAD_NUMBER(), s.writeInCache);
                                 s.cancel(true);
                                 taskResume.setPriority(s.getPriority());
                                 Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
