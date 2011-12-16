@@ -34,6 +34,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
+import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -215,7 +216,8 @@ public class DicomDirImport {
                     }
 
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
-                    final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, true);
+                    final LoadSeries loadSeries =
+                        new LoadSeries(dicomSeries, dicomModel, 1, DicomManager.getInstance().isPortableDirCache());
 
                     DownloadPriority priority =
                         new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
