@@ -82,6 +82,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public static final String SERIES_SR_MIMETYPE = "sr/dicom"; //$NON-NLS-1$
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
+    public static final String NO_VALUE = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
     public static final Codec CODEC = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
     private static final DicomImageReaderSpi readerSpi = new DicomImageReaderSpi();
     private URI uri;
@@ -274,17 +275,11 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (group == null || header == null) {
             return;
         }
-        String unknown = Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
         // Patient Group
         if (TagW.PatientPseudoUID.equals(group.getTagID())) {
             // -------- Mandatory Tags --------
-            group.setTag(TagW.PatientID, header.getString(Tag.PatientID, unknown));
-            String name = header.getString(Tag.PatientName, unknown);
-            if (name.trim().equals("")) { //$NON-NLS-1$
-                name = unknown;
-            }
-            name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
-            group.setTag(TagW.PatientName, name);
+            group.setTag(TagW.PatientID, header.getString(Tag.PatientID, NO_VALUE));
+            group.setTag(TagW.PatientName, buildPatientName(header.getString(Tag.PatientName)));
             // -------- End of Mandatory Tags --------
 
             group.setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(header, Tag.PatientBirthDate, null));
@@ -325,8 +320,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
             // -------- Mandatory Tags --------
             // SubseriesInstanceUID is the unique identifying tag for this series group
-            group.setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, unknown));
-            group.setTag(TagW.Modality, header.getString(Tag.Modality, unknown));
+            group.setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, NO_VALUE));
+            group.setTag(TagW.Modality, header.getString(Tag.Modality, NO_VALUE));
             // -------- End of Mandatory Tags --------
 
             group.setTagNoNull(TagW.SeriesDate,
@@ -371,24 +366,18 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         if (dicomObject != null && tags.size() == 0) {
             // -------- Mandatory Tags --------
             // Tags for identifying group (Patient, Study, Series)
-            String unknown = Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
-            setTag(TagW.PatientID, dicomObject.getString(Tag.PatientID, unknown));
-            String name = dicomObject.getString(Tag.PatientName, unknown);
-            if (name.trim().equals("")) { //$NON-NLS-1$
-                name = unknown;
-            }
-            name = name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
+
+            String patientID = dicomObject.getString(Tag.PatientID, NO_VALUE);
+            setTag(TagW.PatientID, patientID);
+            String name = buildPatientName(dicomObject.getString(Tag.PatientName));
             setTag(TagW.PatientName, name);
             Date birthdate = getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null);
             setTagNoNull(TagW.PatientBirthDate, birthdate);
-            // Identifier for the patient. Tend to be unique.
-            setTag(
-                TagW.PatientPseudoUID,
-                getTagValue(TagW.PatientID).toString()
-                    + (birthdate == null ? "" : TagW.dicomformatDate.format(birthdate).toString()) + name.substring(0, name.length() < 5 ? name.length() : 5)); //$NON-NLS-1$
-            setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, unknown));
-            setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, unknown));
-            setTag(TagW.Modality, dicomObject.getString(Tag.Modality, unknown));
+            // Global Identifier for the patient.
+            setTag(TagW.PatientPseudoUID, buildPatientPseudoUID(patientID, name, birthdate));
+            setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, NO_VALUE));
+            setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, NO_VALUE));
+            setTag(TagW.Modality, dicomObject.getString(Tag.Modality, NO_VALUE));
             setTag(TagW.InstanceNumber, dicomObject.getInt(Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
             setTag(TagW.SOPInstanceUID,
                 dicomObject.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
@@ -415,6 +404,27 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             }
             computeSUVFactor(dicomObject, tags, 0);
         }
+    }
+
+    public static String buildPatientName(String rawName) {
+        String name = rawName == null ? NO_VALUE : rawName;
+        if (name.trim().equals("")) { //$NON-NLS-1$
+            name = NO_VALUE;
+        }
+        return name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    public static String buildPatientPseudoUID(String patientID, String patientName, Date birthdate) {
+        // Build a global identifier for the patient. Tend to be unique.
+        StringBuffer buffer = new StringBuffer(patientID == null ? NO_VALUE : patientID);
+        if (birthdate != null) {
+            buffer.append(TagW.dicomformatDate.format(birthdate).toString());
+        }
+        if (patientName != null) {
+            buffer.append(patientName.substring(0, patientName.length() < 5 ? patientName.length() : 5));
+        }
+        return buffer.toString();
+
     }
 
     private void writeSharedFunctionalGroupsSequence(DicomObject dicomObject) {
@@ -661,7 +671,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private static String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
+    public static String getStringFromDicomElement(DicomObject dicom, int tag, String defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -680,7 +693,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return sb.toString();
     }
 
-    private static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
+    public static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -695,7 +711,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return null;
     }
 
-    private static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
+    public static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -704,7 +723,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private static Integer getIntegerFromDicomElement(DicomObject dicom, int tag, Integer defaultValue) {
+    public static Integer getIntegerFromDicomElement(DicomObject dicom, int tag, Integer defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
@@ -713,7 +735,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private static Double getDoubleFromDicomElement(DicomObject dicom, int tag, Double defaultValue) {
+    public static Double getDoubleFromDicomElement(DicomObject dicom, int tag, Double defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
