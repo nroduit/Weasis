@@ -468,7 +468,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     /** Fire property change event. */
     protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         propertySupport.firePropertyChange(propertyName, oldValue, newValue);
-
     }
 
     /** Add a property change listener. */
@@ -507,10 +506,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         }
     }
 
-    public void addPropertyChangeListeners(String command, PropertyChangeListener listener) {
-        propertySupport.addPropertyChangeListener(command, listener);
-
-    }
+    // public void addPropertyChangeListeners(String command, PropertyChangeListener listener) {
+    // propertySupport.addPropertyChangeListener(command, listener);
+    // }
 
     public void addPropertyChangeListeners(DefaultView2d<E> viewPane, SynchView synchView) {
         HashMap<ActionW, Boolean> synchActions = synchView.getActions();

@@ -38,7 +38,9 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
 
     @Override
     public void contentsChanged(ListDataEvent e) {
+        // if (model.equals(e.getSource())) {
         itemStateChanged(model.getSelectedItem());
+        // }
     }
 
     @Override
@@ -97,6 +99,10 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
             array[i] = model.getElementAt(i);
         }
         return array;
+    }
+
+    public synchronized Object getFirstItem() {
+        return model.getElementAt(0);
     }
 
     public synchronized Object getSelectedItem() {

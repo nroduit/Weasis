@@ -48,6 +48,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.TransferHandler;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
 import org.noos.xing.mydoggy.Content;
 import org.noos.xing.mydoggy.ContentManager;
@@ -438,6 +440,26 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         return selectedPlugin;
     }
 
+    protected static final MenuListener menuSelectedPluginListener = new MenuListener() {
+
+        @Override
+        public void menuSelected(MenuEvent e) {
+            // Doing this way synchronize the view with current action state
+            if (selectedPlugin != null) {
+                selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
+            }
+            // TODO - may be be better to handle property change by the JMenu model itself
+        }
+
+        @Override
+        public void menuDeselected(MenuEvent e) {
+        }
+
+        @Override
+        public void menuCanceled(MenuEvent e) {
+        }
+    };
+
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
         if (plugin == null) {
             return;
@@ -449,7 +471,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         ViewerPlugin oldPlugin = selectedPlugin;
         selectedPlugin = plugin;
         selectedPlugin.setSelected(true);
-        selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
+        // selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);
 
         List<DockableTool> tool = selectedPlugin.getToolPanel();
         List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
@@ -558,7 +580,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuBar.add(menuFile);
         buildMenuDisplay();
         menuBar.add(menuDisplay);
+
         menuBar.add(menuSelectedPlugin);
+        menuSelectedPlugin.addMenuListener(menuSelectedPluginListener);
+
         final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
         if (helpURL != null) {

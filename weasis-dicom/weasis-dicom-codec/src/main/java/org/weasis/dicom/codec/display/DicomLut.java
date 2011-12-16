@@ -13,8 +13,8 @@ package org.weasis.dicom.codec.display;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.image.VOIUtils;
-import org.weasis.dicom.codec.Messages;
 
+@Deprecated
 public class DicomLut {
 
     public static final String LINEAR = "LINEAR"; //$NON-NLS-1$

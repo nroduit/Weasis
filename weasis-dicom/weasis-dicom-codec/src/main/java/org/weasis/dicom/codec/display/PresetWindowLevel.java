@@ -10,7 +10,11 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.awt.image.ByteLookupTable;
+import java.awt.image.LookupTable;
+import java.awt.image.ShortLookupTable;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +29,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.Messages;
+import org.weasis.dicom.codec.display.LutShape.eType;
 
 public class PresetWindowLevel {
 
@@ -34,25 +39,26 @@ public class PresetWindowLevel {
     //        Messages.getString("PresetWindowLevel.default"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
     // public static final PresetWindowLevel AUTO = new PresetWindowLevel(
     //        Messages.getString("PresetWindowLevel.full"), Messages.getString("PresetWindowLevel.all"), 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final PresetWindowLevel AUTO = new PresetWindowLevel(
-        Messages.getString("PresetWindowLevel.full"), null, 0f, 0f); //$NON-NLS-1$ //$NON-NLS-2$
+    // public static final PresetWindowLevel AUTO = new PresetWindowLevel(
+    //        Messages.getString("PresetWindowLevel.full"), null, 0f, 0f); //$NON-NLS-1$ 
 
     // private static final ArrayList<PresetWindowLevel> presetList = getPresetCollection();
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
 
     private final String name;
-    private final String modality;
-    private final float window;
-    private final float level;
+    // private final String modality;
+    private final Float window;
+    private final Float level;
     private final LutShape shape;
 
-    public PresetWindowLevel(String name, String modality, float window, float level) {
-        this(name, modality, window, level, LutShape.LINEAR_SHAPE);
-    }
+    // public PresetWindowLevel(String name, String modality, float window, float level) {
+    // this(name, modality, window, level, LutShape.LINEAR);
+    // }
 
-    public PresetWindowLevel(String name, String modality, float window, float level, LutShape shape) {
+    // public PresetWindowLevel(String name, String modality, Float window, Float level, LutShape shape) {
+    public PresetWindowLevel(String name, Float window, Float level, LutShape shape) {
         this.name = name;
-        this.modality = modality;
+        // this.modality = modality;
         this.window = window;
         this.level = level;
         this.shape = shape;
@@ -62,15 +68,16 @@ public class PresetWindowLevel {
         return name;
     }
 
-    public String getModality() {
-        return modality;
-    }
+    // @Deprecated
+    // public String getModality() {
+    // return modality;
+    // }
 
-    public float getWindow() {
+    public Float getWindow() {
         return window;
     }
 
-    public float getLevel() {
+    public Float getLevel() {
         return level;
     }
 
@@ -87,43 +94,100 @@ public class PresetWindowLevel {
 
     public static PresetWindowLevel[] getPresetCollection(ImageElement image) {
 
+        if (image == null) {
+            return null;
+        }
+
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
-        String modality = (String) image.getTagValue(TagW.Modality);
+        String dicomTag = " [" + Messages.getString("PresetWindowLevel.dicomTag") + "]";
 
-        float[] windowCenterDefaultTagArray = (float[]) image.getTagValue(TagW.WindowCenter);
-        float[] windowWidthDefaultTagArray = (float[]) image.getTagValue(TagW.WindowWidth);
-        String[] windowCenterWidthExplanationTagArray = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
-        String lutFunction = (String) image.getTagValue(TagW.VOILutFunction);
+        LookupTable[] voiLUTsData = (LookupTable[]) image.getTagValue(TagW.VOILUTsData);
+        String[] voiLUTsExplanation = (String[]) image.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
-        int windowLevelDefaultCount = windowCenterDefaultTagArray != null ? windowCenterDefaultTagArray.length : 0;
+        if (voiLUTsData != null) {
+            String defaultExplanation = "VOI LUT";
 
-        if (windowWidthDefaultTagArray != null) {
-            if (windowWidthDefaultTagArray.length == windowLevelDefaultCount) {
-                for (int i = 0; i < windowLevelDefaultCount; i++) {
-                    String name = (i < windowCenterWidthExplanationTagArray.length) ? //
-                        windowCenterWidthExplanationTagArray[i] : "Defaut " + i;
+            for (int i = 0; i < voiLUTsData.length; i++) {
+                String explanation = defaultExplanation + " " + i;
 
-                    presetList.add(new PresetWindowLevel(name, modality, windowCenterDefaultTagArray[i],
-                        windowWidthDefaultTagArray[i]));
+                if (voiLUTsExplanation != null && i < voiLUTsExplanation.length) {
+                    if (voiLUTsExplanation[i] != null && !voiLUTsExplanation[i].equals("")) {
+                        explanation = voiLUTsExplanation[i];
+                    }
                 }
-            } else {
-                System.err.println("VOI LUT MACRO Attribute Error");
+
+                Object inLut;
+
+                if (voiLUTsData[i] instanceof ByteLookupTable) {
+                    inLut = ((ByteLookupTable) voiLUTsData[i]).getTable()[0];
+                } else if (voiLUTsData[i] instanceof ShortLookupTable) {
+                    inLut = ((ShortLookupTable) voiLUTsData[i]).getTable()[0];
+                } else {
+                    continue;
+                }
+
+                int minValueLookup = voiLUTsData[i].getOffset();
+                int maxValueLookup = voiLUTsData[i].getOffset() + Array.getLength(inLut) - 1;
+
+                minValueLookup = Math.min(minValueLookup, maxValueLookup);
+                maxValueLookup = Math.max(minValueLookup, maxValueLookup);
+
+                float fullDynamicWidth = maxValueLookup - minValueLookup;
+                float fullDynamicCenter = minValueLookup + fullDynamicWidth / 2.f;
+
+                LutShape lutShape = new LutShape(eType.SEQUENCE, explanation + dicomTag, voiLUTsData[i]);
+                presetList.add(new PresetWindowLevel(lutShape.getExplanation(), fullDynamicWidth, fullDynamicCenter,
+                    lutShape));
             }
         }
 
-        Object voiLutSequence = image.getTagValue(TagW.VOILUTSequence);
-        // if (voiLutSequence != null) {
-        // String lutDescriptor = (String) image.getTagValue(TagW.LutDescriptor);
-        // String lutExplanation = (String) image.getTagValue(TagW.LutExplanation);
-        // Float[] lutData = (Float[]) image.getTagValue(TagW.LutData);
-        // }
+        Float[] windowCenterDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowCenter);
+        Float[] windowWidthDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowWidth);
+        // optional attributes
+        String[] windowCenterWidthExplanationTagArray = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
+        String lutFunctionDescriptor = (String) image.getTagValue(TagW.VOILutFunction);
 
-        // presetList.add(CUSTOM);
-        presetList.add(AUTO);
+        LutShape lutShape = LutShape.LINEAR; // Implicitly default
 
-        if (presetListByModality.containsKey(modality)) {
-            presetList.addAll(presetListByModality.get(modality));
+        if (lutFunctionDescriptor != null) {
+            if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) {
+                lutShape = new LutShape(eType.SIGMOID, "SIGMOID" + dicomTag, null);
+            } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) {
+                lutShape = new LutShape(eType.LINEAR, "LINEAR" + dicomTag, null);
+            }
+        }
+
+        if (windowCenterDefaultTagArray != null && windowWidthDefaultTagArray != null) {
+
+            int windowLevelDefaultCount = (windowCenterDefaultTagArray.length == windowWidthDefaultTagArray.length) ? //
+                windowCenterDefaultTagArray.length : 0;
+
+            String defaultExplanation = Messages.getString("PresetWindowLevel.default");
+
+            for (int i = 0; i < windowLevelDefaultCount; i++) {
+                String explanation = defaultExplanation + " " + i;
+
+                if (windowCenterWidthExplanationTagArray != null && i < windowCenterWidthExplanationTagArray.length) {
+                    if (windowCenterWidthExplanationTagArray[i] != null
+                        && !windowCenterWidthExplanationTagArray[i].equals("")) {
+                        explanation = windowCenterWidthExplanationTagArray[i]; // optional attribute
+                    }
+                }
+                presetList.add(new PresetWindowLevel(explanation + dicomTag, windowWidthDefaultTagArray[i],
+                    windowCenterDefaultTagArray[i], lutShape));
+            }
+        }
+
+        String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
+        String imageTag = " [" + Messages.getString("PresetWindowLevel.imageTag") + "]";
+
+        presetList.add(new PresetWindowLevel(fullDynamicExplanation + imageTag, image.getFullDynamicWidth(), image
+            .getFullDynamicCenter(), lutShape));
+
+        String modalityName = (String) image.getTagValue(TagW.Modality);
+        if (presetListByModality.containsKey(modalityName)) {
+            presetList.addAll(presetListByModality.get(modalityName));
         }
 
         return presetList.toArray(new PresetWindowLevel[presetList.size()]);
@@ -147,17 +211,20 @@ public class PresetWindowLevel {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static ArrayList<PresetWindowLevel> getDefaultPresetList() {
-        ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
-        // presetList.add(CUSTOM);
-        // presetList.add(DEFAULT);
-        presetList.add(AUTO);
-        // readPresetConfig(presetList);
-        return presetList;
-    }
+    // private static ArrayList<PresetWindowLevel> getDefaultPresetList() {
+    // ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
+    // // presetList.add(CUSTOM);
+    // // presetList.add(DEFAULT);
+    // // presetList.add(AUTO);
+    // // readPresetConfig(presetList);
+    // return presetList;
+    // }
 
     private static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
+
         Map<String, List<PresetWindowLevel>> presetListByModality = new TreeMap<String, List<PresetWindowLevel>>();
+
+        // String modalityTag = " [" + Messages.getString("PresetWindowLevel.modalityTag") + "]";
 
         XMLStreamReader xmler = null;
         InputStream stream = null;
@@ -186,7 +253,8 @@ public class PresetWindowLevel {
                                             float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
 
                                             PresetWindowLevel preset =
-                                                new PresetWindowLevel(name, modality, window, level);
+                                                new PresetWindowLevel(name, window, level, LutShape.LINEAR);
+                                            // new PresetWindowLevel(name + modalityTag, modality, window, level);
 
                                             List<PresetWindowLevel> presetList = presetListByModality.get(modality);
                                             if (presetList == null) {

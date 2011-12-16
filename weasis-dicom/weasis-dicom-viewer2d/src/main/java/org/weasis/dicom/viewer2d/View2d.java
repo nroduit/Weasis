@@ -187,7 +187,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
-        actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.AUTO);
+        // actionsInView.put(ActionW.PRESET.cmd(), null);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
@@ -205,6 +205,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.PRESET.cmd())) {
             actionsInView.put(ActionW.PRESET.cmd(), evt.getNewValue());
+
+            if (evt.getNewValue() instanceof PresetWindowLevel) {
+                PresetWindowLevel preset = (PresetWindowLevel) evt.getNewValue();
+                actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
+                actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+                actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            }
+        } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
+            actionsInView.put(ActionW.LUT_SHAPE.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
         } else if (command.equals(ActionW.IMAGE_OVERLAY.cmd())) {
             actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), evt.getNewValue());
             imageLayer.updateImageOperation(OverlayOperation.name);
@@ -220,7 +231,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
             // TODO synch with statistics
             actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
+            imageLayer.updateImageOperation(WindowLevelOperation.name); // modality level operation should be changed
         } else if (command.equals(ActionW.PR_STATE.cmd())) {
             // TODO use PR reader for other frame when changing image of the series
             PresentationStateReader pr = (PresentationStateReader) evt.getNewValue();
@@ -328,11 +339,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
-            defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
+            defaultIndex = (defaultIndex < 0) ? 0 : (defaultIndex >= series.size() ? series.size() - 1 : defaultIndex);
             frameIndex = defaultIndex + tileOffset;
-            // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
-            actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.AUTO);
             setImage(series.getMedia(frameIndex), true);
+
+            // useless since done in SetImage before
+            // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+            // actionsInView.put(ActionW.PRESET.cmd(), getImage().getDefaultPreset());
+
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
@@ -347,17 +361,32 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     protected void setWindowLevel(DicomImageElement img) {
-        // if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
+        // TODO - shouldn't be be renamed as setDefautWindowLevel ?
+
+        if (img == null) {
+            return;
+        }
+
+        PresetWindowLevel preset = img.getDefaultPreset();
+
+        if (preset != null) {
+            actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
+            actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+            actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+            actionsInView.put(ActionW.PRESET.cmd(), preset);
+        } else {
+            super.setWindowLevel(img);
+        }
+
         // if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
         // actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
         // actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
-        // }else
-        if (PresetWindowLevel.AUTO.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
-            float min = img.getMinValue();
-            float max = img.getMaxValue();
-            actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-            actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
-        }
+        // } else if (PresetWindowLevel.AUTO.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
+        // float min = img.getMinValue();
+        // float max = img.getMaxValue();
+        // actionsInView.put(ActionW.WINDOW.cmd(), max - min);
+        // actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        // }
     }
 
     protected void sortStack() {
@@ -1026,6 +1055,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
                             .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
                     }
+
                     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                     if (presetAction instanceof ComboItemListener) {
                         popupMenu.add(((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages

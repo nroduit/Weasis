@@ -633,7 +633,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         for (int i = 0; i < voiLUTSequence.countItems(); i++) {
                             DicomObject voiLUTobj = modalityLUTSequence.getDicomObject(i);
                             LookupTable voiLookupTable = DicomMediaUtils.createLut(voiLUTobj);
-
                             if (voiLookupTable != null) {
                                 voiLUTsData.add(voiLookupTable);
                                 voiLUTsExplanation.add(voiLUTobj.getString(Tag.LUTExplanation));
