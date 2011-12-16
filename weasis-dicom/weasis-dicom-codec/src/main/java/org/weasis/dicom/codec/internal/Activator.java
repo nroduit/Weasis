@@ -16,7 +16,6 @@ import java.util.Hashtable;
 
 import javax.imageio.spi.IIORegistry;
 
-import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
@@ -24,6 +23,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 public class Activator implements BundleActivator {
@@ -34,6 +34,7 @@ public class Activator implements BundleActivator {
     private BundleContext bundleContext = null;
 
     // @Override
+    @Override
     public void start(final BundleContext bundleContext) throws Exception {
         this.bundleContext = bundleContext;
         PREFERENCES.init(bundleContext);
@@ -43,9 +44,9 @@ public class Activator implements BundleActivator {
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        registry.registerServiceProvider(new RLEImageReaderSpi());
-        // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi.class);
-        // registry.registerServiceProvider(org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi.class);
+        registry.deregisterServiceProvider(DicomMediaIO.RLEImageReaderSpi);
+        registry.deregisterServiceProvider(DicomMediaIO.DicomImageReaderSpi);
+
         ServiceReference configurationAdminReference =
             bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
         if (configurationAdminReference != null) {
@@ -82,10 +83,13 @@ public class Activator implements BundleActivator {
     }
 
     // @Override
+    @Override
     public void stop(BundleContext bundleContext) throws Exception {
         DicomPrefManager.getInstance().savePreferences();
-        // TODO unregister rle reader
         PREFERENCES.close();
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        registry.registerServiceProvider(DicomMediaIO.RLEImageReaderSpi);
+        registry.registerServiceProvider(DicomMediaIO.DicomImageReaderSpi);
         this.bundleContext = null;
     }
 
