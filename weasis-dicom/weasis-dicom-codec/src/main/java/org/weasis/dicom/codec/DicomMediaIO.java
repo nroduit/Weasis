@@ -176,6 +176,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     @Override
     protected void initImageReader(int imageIndex) throws IOException {
         super.initImageReader(imageIndex);
+        // TODO 1.2.840.10008.1.2.4.95 (DICOM JPIP Referenced Deflate Transfer Syntax)
         if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             setTagNoNull(TagW.PixelDataProviderURL, dicomObject.getString(Tag.PixelDataProviderURL));
             MediaElement[] elements = getMediaElement();
