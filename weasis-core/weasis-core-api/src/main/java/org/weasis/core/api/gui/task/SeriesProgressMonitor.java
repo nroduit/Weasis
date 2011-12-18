@@ -12,14 +12,15 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesProgressMonitor extends FilterInputStream {
-    private final Series series;
-    private int nread = 0;
-    private int size = 0;
+    protected final Series series;
+    protected int nread = 0;
+    protected int size = 0;
 
     public SeriesProgressMonitor(final Series series, InputStream in) {
         super(in);
-        if (series == null)
+        if (series == null) {
             throw new IllegalArgumentException("Series cannot be null!"); //$NON-NLS-1$
+        }
         this.series = series;
         try {
             size = in.available();
@@ -28,12 +29,12 @@ public class SeriesProgressMonitor extends FilterInputStream {
         }
     }
 
-    private boolean isLoadingSeriesCanceled() {
+    protected boolean isLoadingSeriesCanceled() {
         SeriesImporter loader = series.getSeriesLoader();
         return (loader == null || loader.isStopped());
     }
 
-    private void updateSeriesProgression(double addSize) {
+    protected void updateSeriesProgression(double addSize) {
         series.setFileSize(series.getFileSize() + addSize);
         GuiExecutor.instance().execute(new Runnable() {
 

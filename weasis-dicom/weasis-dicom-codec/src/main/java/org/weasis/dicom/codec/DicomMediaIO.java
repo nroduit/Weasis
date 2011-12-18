@@ -84,7 +84,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final String NO_VALUE = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
-    public static final Codec CODEC = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
     public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
     public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
     private URI uri;
@@ -1222,15 +1221,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         dispose();
     }
 
+    public static boolean hasPlatformNativeImageioCodecs() {
+        return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext();
+    }
+
     @Override
     public Codec getCodec() {
-        return CODEC;
+        return BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
     }
 
     @Override
     public String[] getReaderDescription() {
         String[] desc = new String[3];
-        desc[0] = "DICOM Codec: " + CODEC.getCodecName(); //$NON-NLS-1$
+        desc[0] = "DICOM Codec: " + DicomCodec.NAME; //$NON-NLS-1$
         ImageReader imgReader = null;
         try {
             imgReader =

@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+
 public enum TransferSyntax {
     NONE(null, "None", null), //$NON-NLS-1$
 
@@ -73,5 +74,19 @@ public enum TransferSyntax {
         } catch (Exception e) {
         }
         return NONE;
+    }
+
+    public static boolean requiresNativeImageioCodecs(String tsuid) {
+        if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) {
+            try {
+                int val = Integer.parseInt(tsuid.substring(20, 22));
+                if (val >= 51 && val <= 81) {
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 }
