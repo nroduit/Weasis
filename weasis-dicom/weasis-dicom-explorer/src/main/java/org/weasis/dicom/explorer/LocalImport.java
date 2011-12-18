@@ -25,6 +25,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +57,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
+        setBorder(new TitledBorder(null,
+            Messages.getString("LocalImport.imp_files"), TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalImport.imp_files")); //$NON-NLS-1$
+        lblImportAFolder = new JLabel("Path:");
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
@@ -117,7 +120,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
 
     public void browseImgFile() {
-        String directory = props.getProperty(lastDirKey, "");//$NON-NLS-1$
+        String directory = getImportPath();
+        if (directory == null) {
+            directory = props.getProperty(lastDirKey, "");//$NON-NLS-1$
+        }
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fileChooser.setMultiSelectionEnabled(true);
@@ -164,11 +170,19 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void resetoDefaultValues() {
     }
 
+    private String getImportPath() {
+        String path = textField.getText().trim();
+        if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            return path;
+        }
+        return null;
+    }
+
     @Override
     public void importDICOM(DicomModel dicomModel, JProgressBar info) {
         if (files == null) {
-            String path = textField.getText().trim();
-            if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) { //$NON-NLS-1$ //$NON-NLS-2$
+            String path = getImportPath();
+            if (path != null) {
                 File file = new File(path);
                 if (file.canRead()) {
                     files = new File[] { file };
