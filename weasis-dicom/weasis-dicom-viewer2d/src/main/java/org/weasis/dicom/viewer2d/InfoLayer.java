@@ -427,10 +427,10 @@ public class InfoLayer implements AnnotationsLayer {
         if (series.containTagKey(tag)) {
             return series.getTagValue(tag);
         }
-        if (study.containTagKey(tag)) {
+        if (study != null && study.containTagKey(tag)) {
             return study.getTagValue(tag);
         }
-        if (patient.containTagKey(tag)) {
+        if (patient != null && patient.containTagKey(tag)) {
             return patient.getTagValue(tag);
         }
         return null;
