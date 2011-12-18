@@ -34,8 +34,9 @@ public class WadoParameters {
 
     public WadoParameters(String wadoURL, boolean requireOnlySOPInstanceUID, String additionnalParameters,
         String overrideDicomTagsList, String webLogin) {
-        if (wadoURL == null)
+        if (wadoURL == null) {
             throw new IllegalArgumentException("wadoURL cannot be null"); //$NON-NLS-1$
+        }
         this.wadoURL = wadoURL;
         this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(2);
         this.webLogin = webLogin == null ? null : webLogin.trim();
@@ -90,8 +91,9 @@ public class WadoParameters {
         if (overrideDicomTagIDList != null) {
             int tagID = tagElement.getId();
             for (int overTag : overrideDicomTagIDList) {
-                if (tagID == overTag)
+                if (tagID == overTag) {
                     return true;
+                }
             }
         }
         return false;

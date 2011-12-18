@@ -48,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
@@ -307,16 +306,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wado_tsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (wado_tsuid != null && !wado_tsuid.equals("")) { //$NON-NLS-1$
-                        // On Mac and Win 64 some decoders (J2KImageReaderCodecLib) are missing, ask for uncompressed
-                        // syntax for TSUID: 1.2.840.10008.1.2.4.50, 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
+                        // On Mac and Win 64 some decoders (JPEGImageReaderCodecLib) are missing, ask for uncompressed
+                        // syntax for TSUID: 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
                         // Solaris has all the decoders, but no bundle has been built for Weasis
-                        String osName = AbstractProperties.OPERATING_SYSTEM;
-                        if (!(osName.startsWith("win") && "x86".equals(System.getProperty("os.arch"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            && !osName.startsWith("linux")) { //$NON-NLS-1$
-                            if (wado_tsuid.startsWith("1.2.840.10008.1.2.4.5") //$NON-NLS-1$
-                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.7") //$NON-NLS-1$
-                                || wado_tsuid.startsWith("1.2.840.10008.1.2.4.8")) { //$NON-NLS-1$
+                        if (!DicomMediaIO.hasPlatformNativeImageioCodecs()) {
+                            if (TransferSyntax.requiresNativeImageioCodecs(wado_tsuid)) { //$NON-NLS-1$
                                 wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
                             }
                         }
@@ -779,11 +774,26 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             status = Status.Error;
         }
 
-        // Download file.
-        @Override
-        public Boolean call() throws Exception {
+        private String replaceToDefaultTSUID(URL url) {
+            String old = url.toString();
+            StringBuffer buffer = new StringBuffer();
+            int start = old.indexOf("&transferSyntax=");
+            if (start != -1) {
+                int end = old.indexOf("&", start + 16);
+                buffer.append(old.substring(0, start + 16));
+                buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
+                if (end != -1) {
+                    buffer.append(old.substring(end));
+                }
+            } else {
+                buffer.append(old);
+                buffer.append("&transferSyntax=");
+                buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
+            }
+            return buffer.toString();
+        }
 
-            InputStream stream = null;
+        private URLConnection initConnection(URL url) throws IOException {
             URLConnection httpCon = null;
             try {
                 // If there is a proxy, it should be already configured
@@ -805,7 +815,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             } catch (IOException e) {
                 error();
                 log.error("IOException for {}: {} ", url, e.getMessage()); //$NON-NLS-1$
-                return false;
+                return null;
             }
             if (httpCon instanceof HttpURLConnection) {
                 int responseCode = ((HttpURLConnection) httpCon).getResponseCode();
@@ -813,9 +823,22 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 if (responseCode / 100 != 2) {
                     error();
                     log.error("Http Response error {} for {}", responseCode, url); //$NON-NLS-1$
-                    return false;
+                    return null;
                 }
             }
+            return httpCon;
+        }
+
+        // Download file.
+        @Override
+        public Boolean call() throws Exception {
+
+            InputStream stream = null;
+            URLConnection httpCon = initConnection(url);
+            if (httpCon == null) {
+                return false;
+            }
+
             boolean cache = true;
             if (!writeInCache && getUrl().startsWith("file:")) {
                 cache = false;
@@ -841,7 +864,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 // stateChanged();
             }
             DicomMediaIO dicomReader = null;
-            log.debug("Download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$
+            log.debug("Start to download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                 int[] overrideList = wado.getOverrideDicomTagIDList();
@@ -849,15 +872,17 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     int bytesTransferred = 0;
                     if (overrideList == null && wado != null) {
                         bytesTransferred =
-                            FileUtil.writeFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(
-                                tempFile));
+                            FileUtil.writeFile(new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString()
+                                .contains("?requestType=WADO")), new FileOutputStream(tempFile));
                     } else if (wado != null) {
                         bytesTransferred =
-                            writFile(new SeriesProgressMonitor(dicomSeries, stream), new FileOutputStream(tempFile),
-                                overrideList);
+                            writFile(
+                                new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString().contains(
+                                    "?requestType=WADO")), new FileOutputStream(tempFile), overrideList);
                     }
-
-                    if (bytesTransferred >= 0) {
+                    if (bytesTransferred == -1) {
+                        log.info("End of downloading {} ", url); //$NON-NLS-1$
+                    } else if (bytesTransferred >= 0) {
                         log.warn("Download interruption {} ", url); //$NON-NLS-1$
                         try {
                             tempFile.delete();
@@ -865,12 +890,35 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             e.printStackTrace();
                         }
                         return false;
+                    } else if (bytesTransferred == Integer.MIN_VALUE) {
+                        log.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID"); //$NON-NLS-1$
+                        httpCon = initConnection(new URL(replaceToDefaultTSUID(url)));
+                        if (httpCon == null) {
+                            return false;
+                        }
+                        stream = httpCon.getInputStream();
+                        size = -1;
+                        if (overrideList == null && wado != null) {
+                            bytesTransferred =
+                                FileUtil.writeFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
+                                    new FileOutputStream(tempFile));
+                        } else if (wado != null) {
+                            bytesTransferred =
+                                writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
+                                    new FileOutputStream(tempFile), overrideList);
+                        }
+                        if (bytesTransferred == -1) {
+                            log.info("End of downloading {} ", url); //$NON-NLS-1$
+                        } else if (bytesTransferred >= 0) {
+                            log.warn("Download interruption {} ", url); //$NON-NLS-1$
+                            try {
+                                tempFile.delete();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            return false;
+                        }
                     }
-                    // TODO handle file interruption
-                    // else if (bytesTransferred > 0) {
-                    // downloaded = bytesTransferred;
-                    // }
-
                     File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
                     if (tempFile.renameTo(renameFile)) {
                         tempFile = renameFile;
