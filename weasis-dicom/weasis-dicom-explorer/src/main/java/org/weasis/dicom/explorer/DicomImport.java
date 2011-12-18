@@ -99,6 +99,8 @@ public class DicomImport extends AbstractWizardDialog {
     @Override
     protected void initializePages() {
         pagesRoot.add(new DefaultMutableTreeNode(new LocalImport()));
+        pagesRoot.add(new DefaultMutableTreeNode(new DicomDirImport()));
+
         // synchronized (UIManager.PREFERENCES_ENTRY) {
         // List<PageProps> prefs = UIManager.PREFERENCES_ENTRY;
         // for (final PageProps page : prefs) {
