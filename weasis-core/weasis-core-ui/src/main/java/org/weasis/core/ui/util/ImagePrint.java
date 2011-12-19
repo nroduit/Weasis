@@ -117,11 +117,11 @@ public class ImagePrint implements Printable {
         if ((layout == null) || (g2d == null)) {
             return;
         }
-        g2d.setFont(new Font("Dialog", 0, 4));
 
         Dimension dimGrid = layout.layoutModel.getGridSize();
         double placeholderX = f.getImageableWidth() - (dimGrid.width - 1) * 5;
         double placeholderY = f.getImageableHeight() - (dimGrid.height - 1) * 5;
+        
 
         int lastx = 0;
         int lasty = 0;
@@ -150,10 +150,12 @@ public class ImagePrint implements Printable {
             int cw = (int) (w * scaleFactor + 0.5);
             int ch = (int) (h * scaleFactor + 0.5);
             image.setSize(cw, ch);
-
+            
             // Resize in best fit window
             image.zoom(scaleFactor);
             image.center();
+            
+            g2d.setFont(new Font("Dialog", 0, getFontSize(image.getWidth())));
 
             if (key.gridx == 0) {
                 wx = 0.0;
@@ -252,5 +254,20 @@ public class ImagePrint implements Printable {
             }
         }
         return scaleFactor;
+    }
+    
+    private int getFontSize(int imageWidth) {
+        if (imageWidth >= 1 && imageWidth <= 101) {
+            return 2;
+        } else if (imageWidth >= 102 && imageWidth <= 152) {
+            return 3;
+        } else if (imageWidth >= 153 && imageWidth <= 203) {
+            return 4;
+        } else if (imageWidth >= 204 && imageWidth <= 254) {
+            return 5;
+        } else if (imageWidth >= 255 && imageWidth <= 305) {
+            return 6;
+        }
+        return 7;
     }
 }

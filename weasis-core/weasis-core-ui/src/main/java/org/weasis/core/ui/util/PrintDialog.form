@@ -169,6 +169,9 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="imageSizeComboBoxActionPerformed"/>
       </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_ListenersCodePost" type="java.lang.String" value="if (eventManager.getSelectedView2dContainer().getImagePanels().size() &gt; 1) {&#xa;    imageSizeComboBox.setSelectedItem(SCALE.FitToPage);&#xa;    imageSizeComboBox.setEnabled(false);&#xa;}"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>
