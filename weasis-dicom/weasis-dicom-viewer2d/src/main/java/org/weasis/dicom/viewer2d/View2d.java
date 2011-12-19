@@ -106,7 +106,6 @@ import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.display.ModalityLutTransformation;
 import org.weasis.dicom.codec.display.OverlayOperation;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -125,7 +124,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
-        manager.addImageOperationAction(new ModalityLutTransformation());
+        // manager.addImageOperationAction(new ModalityLutTransformation());
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new ShutterOperation());
         manager.addImageOperationAction(new OverlayOperation());

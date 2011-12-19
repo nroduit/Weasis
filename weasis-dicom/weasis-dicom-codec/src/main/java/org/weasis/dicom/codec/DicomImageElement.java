@@ -26,13 +26,13 @@ import javax.media.jai.OpImage;
 import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.dicom.codec.display.LutShape;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
@@ -248,7 +248,9 @@ public class DicomImageElement extends ImageElement {
     // Generally this happen with the calling of getMinValue/getMaxValue which call pixel2rescale function
     // !!! Strange because findMinMaxValue function should have been called before when loading image.
 
-    public LookupTableJAI getModalityLookup() {
+    protected LookupTableJAI getModalityLookup(boolean pixelPadding) {
+        // TODO - handle pixel padding
+
         if (modalityLookup != null) {
             return modalityLookup;
         }
@@ -356,6 +358,14 @@ public class DicomImageElement extends ImageElement {
         return modalityLookup;
     }
 
+    /**
+     * @return a lookupTable for modality transform with pixel padding always set true
+     */
+
+    public LookupTableJAI getModalityLookup() {
+        return getModalityLookup(true);
+    }
+
     public LookupTableJAI getVOILookup(Float window, Float level, LutShape shape) {
         return getVOILookup(window, level, shape, false);
     }
@@ -414,7 +424,7 @@ public class DicomImageElement extends ImageElement {
 
     public Histogram getHistogram(RenderedImage imageSource) {
         if (histogram != null) {
-            return histogram;
+            return histogram; // considered histogram computed only once
         }
 
         if (imageSource == null) {
@@ -426,10 +436,12 @@ public class DicomImageElement extends ImageElement {
         ParameterBlock pb = new ParameterBlock();
         pb.addSource(imageSource);
         pb.add(getModalityLookup());
-        imageSource = JAI.create("lookup", pb, null);
+        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
 
-        pb = new ParameterBlock();
-        pb.addSource(imageSource);
+        pb.removeSources();
+        pb.removeParameters();
+
+        pb.addSource(imageModalityTransformed);
         pb.add(null); // No ROI
         pb.add(1); // Sampling
         pb.add(1); // periods
@@ -439,7 +451,7 @@ public class DicomImageElement extends ImageElement {
 
         RenderedOp op = JAI.create("histogram", pb, ImageToolkit.NOCACHE_HINT);
         histogram = (Histogram) op.getProperty("histogram");
-
+        // also possible to get an histogram image
         maxHistoCount = Integer.MIN_VALUE;
 
         for (int histoCount : histogram.getBins(0)) {
@@ -570,6 +582,35 @@ public class DicomImageElement extends ImageElement {
             // return super.getDefaultLevel();
         }
         return val[0];
+    }
+
+    @Override
+    public RenderedImage getWindowLevelImage(final RenderedImage imageSource, Float window, Float level,
+        LutShape lutShape, Boolean pixelPadding) {
+
+        if (imageSource == null) {
+            return null;
+        }
+
+        window = (window == null) ? getDefaultWindow() : window;
+        level = (level == null) ? getDefaultLevel() : level;
+        lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
+        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+
+        ParameterBlock pb = new ParameterBlock();
+
+        pb.addSource(imageSource);
+        pb.add(getModalityLookup(pixelPadding));
+        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
+
+        pb.removeSources();
+        pb.removeParameters();
+
+        pb.addSource(imageModalityTransformed);
+        pb.add(getVOILookup(window, level, lutShape));
+        final RenderedImage imageVOITransformed = JAI.create("lookup", pb, null);
+
+        return imageVOITransformed;
     }
 
     // TODO - change name because rescale term is already used, must use modality table to do pixel transform

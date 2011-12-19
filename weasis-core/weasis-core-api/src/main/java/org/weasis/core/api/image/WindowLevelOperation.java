@@ -11,10 +11,6 @@
 package org.weasis.core.api.image;
 
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
-import javax.media.jai.LookupTableJAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,24 +25,26 @@ public class WindowLevelOperation extends AbstractOperation {
     public static final String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
     @Override
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        ImageElement image = imageOperation.getImage();
+    public RenderedImage getRenderedImage(RenderedImage imageSource, ImageOperation imageOperation) {
+        ImageElement imageElement = (imageOperation != null) ? imageOperation.getImage() : null;
+        result = imageSource;
 
-        Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
-        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
-        LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
-
-        if (image == null || source == null) {
+        if (imageElement == null || imageSource == null) {
             LOGGER.warn("Cannot apply \"{}\" ", name);
-        } else if (image instanceof DicomImageElement) {
-            LookupTableJAI lookup = ((DicomImageElement) image).getVOILookup(window, level, lutShape);
+        } else {
 
-            if (lookup != null) {
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(source);
-                pb.add(lookup);
-                result = JAI.create("lookup", pb, null); // Will add tiles in cache tile memory
-            }
+            Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+            Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+            LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
+            Boolean pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+
+            result = imageElement.getWindowLevelImage(imageSource, window, level, lutShape, pixelPadding);
+
+            // result =
+            // ImageToolkit.getDefaultRenderedImage(image, source, window, level, padding == null ? true : padding);
+
+            // NOTE : looks better to implement the getRenderedImage(..) method in the ImageElement Object so it can be
+            // easily overridden, to compare to the static generic ImageToolkit.getDefaultRenderedImage(..) method
         }
         return result;
     }

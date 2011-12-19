@@ -18,37 +18,38 @@ import javax.media.jai.LookupTableJAI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOperation;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
 @Deprecated
-public class ModalityLutTransformation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ModalityLutTransformation.class);
+public class WindowLevelOperation extends AbstractOperation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WindowLevelOperation.class);
 
-    public static final String name = "ModalityLutTransformation";
+    public static final String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
     @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-
-        // RenderedImage sourceImage = (imageOperation != null) ? imageOperation.getSourceImage() : null;
         ImageElement image = (imageOperation != null) ? imageOperation.getImage() : null;
-        // SampleModel sampleModel = (source != null) ? source.getSampleModel() : null;
 
-        result = source;
-        // if (image == null || source == null || sampleModel == null) {
+        Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+        LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
+
         if (image == null || source == null) {
             LOGGER.warn("Cannot apply \"{}\" ", name);
         } else if (image instanceof DicomImageElement) {
-            LookupTableJAI lookup = ((DicomImageElement) image).getModalityLookup();
+            LookupTableJAI lookup = ((DicomImageElement) image).getVOILookup(window, level, lutShape);
 
             if (lookup != null) {
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(source);
                 pb.add(lookup);
-                // Will add tiles in cache tile memory
-                result = JAI.create("lookup", pb, null);
+                result = JAI.create("lookup", pb, null); // Will add tiles in cache tile memory
             }
         }
 
@@ -59,4 +60,5 @@ public class ModalityLutTransformation extends AbstractOperation {
     public String getOperationName() {
         return name;
     }
+
 }

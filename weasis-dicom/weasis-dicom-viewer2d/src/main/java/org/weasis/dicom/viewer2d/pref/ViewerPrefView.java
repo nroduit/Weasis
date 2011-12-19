@@ -65,7 +65,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     private final void initGUI() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        setTitle(View2dFactory.NAME); //$NON-NLS-1$
+        setTitle(View2dFactory.NAME);
         labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low"))); //$NON-NLS-1$
         labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid"))); //$NON-NLS-1$
         labels.put(100, new JLabel(Messages.getString("ViewerPrefView.high"))); //$NON-NLS-1$

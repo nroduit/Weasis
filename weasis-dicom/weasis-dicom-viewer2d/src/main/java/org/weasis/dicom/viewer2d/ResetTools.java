@@ -46,6 +46,7 @@ public enum ResetTools {
             final JMenuItem item = new JMenuItem(action.toString());
             item.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     EventManager.getInstance().reset(action);
                 }
