@@ -23,15 +23,11 @@ import org.weasis.core.api.image.AbstractOperation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
+@Deprecated
 public class ModalityLutTransformation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModalityLutTransformation.class);
 
     public static final String name = "ModalityLutTransformation";
-
-    @Override
-    public String getOperationName() {
-        return name;
-    }
 
     @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
@@ -57,5 +53,10 @@ public class ModalityLutTransformation extends AbstractOperation {
         }
 
         return result;
+    }
+
+    @Override
+    public String getOperationName() {
+        return name;
     }
 }

@@ -56,6 +56,7 @@ public class View2dFactory implements SeriesViewerFactory {
         return ""; //$NON-NLS-1$
     }
 
+    @Override
     public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         if (properties != null) {
@@ -133,6 +134,7 @@ public class View2dFactory implements SeriesViewerFactory {
         return false;
     }
 
+    @Override
     public int getLevel() {
         return 5;
     }

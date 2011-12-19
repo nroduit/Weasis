@@ -28,6 +28,7 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -115,17 +116,24 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     protected boolean isGrayImage(RenderedImage source) {
         // Binary images have indexColorModel
-        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel)
+        if (source.getSampleModel().getNumBands() > 1 || source.getColorModel() instanceof IndexColorModel) {
             return false;
+        }
         return true;
     }
 
+    @Deprecated
     public float getPixelWindow(float window) {
         return window;
     }
 
+    @Deprecated
     public float getPixelLevel(float level) {
         return level;
+    }
+
+    public LutShape getDefaultShape() {
+        return LutShape.LINEAR;
     }
 
     public float getDefaultWindow() {
@@ -224,8 +232,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
             PlanarImage img2 = image.getImage();
             if (img != null && img2 != null) {
                 if (getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
-                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight()))
+                    && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
                     return true;
+                }
             }
         }
         return false;
@@ -241,6 +250,34 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
     protected PlanarImage loadImage() throws Exception {
         return mediaIO.getMediaFragment(this);
+    }
+
+    /**
+     * @param imageSource
+     *            is the RenderedImage upon which transformation is done
+     * @param window
+     *            is width from low to high input values around level. If null, getDefaultWindow() value is used
+     * @param level
+     *            is center of window values. If null, getDefaultLevel() value is used
+     * @param lutShape
+     *            defines the shape of applied lookup table transformation. If null getDefaultLutShape() is used
+     * @param pixelPadding
+     *            indicates if some padding values defined in ImageElement should be applied or not. If null, TRUE is
+     *            considered
+     * @return
+     */
+    public RenderedImage getWindowLevelImage(final RenderedImage imageSource, Float window, Float level,
+        LutShape lutShape, Boolean pixelPadding) {
+        if (imageSource == null) {
+            return null;
+        }
+
+        window = (window == null) ? getDefaultWindow() : window;
+        level = (level == null) ? getDefaultLevel() : level;
+        lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
+        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+
+        return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
     }
 
     /**
@@ -353,7 +390,6 @@ public class ImageElement extends MediaElement<PlanarImage> {
             findMinMaxValues(img);
             return img;
         }
-
     }
 
 }

@@ -22,9 +22,11 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOperation;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
+@Deprecated
 public class WindowLevelOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(WindowLevelOperation.class);
 

@@ -64,6 +64,7 @@ import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.ShutterOperation;
+import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -105,10 +106,8 @@ import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.display.ModalityLutTransformation;
 import org.weasis.dicom.codec.display.OverlayOperation;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
-import org.weasis.dicom.codec.display.WindowLevelOperation;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
@@ -125,7 +124,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
-        manager.addImageOperationAction(new ModalityLutTransformation());
+        // manager.addImageOperationAction(new ModalityLutTransformation());
         manager.addImageOperationAction(new WindowLevelOperation());
         manager.addImageOperationAction(new ShutterOperation());
         manager.addImageOperationAction(new OverlayOperation());

@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.dicom.codec.display;
+package org.weasis.core.api.image;
 
 import java.awt.image.LookupTable;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class LutShape {
         this(eType.SEQUENCE, explanantion, lookup);
     }
 
-    protected LutShape(eType type, String explanantion, LookupTable lookup) {
+    public LutShape(eType type, String explanantion, LookupTable lookup) {
         this.functionType = type;
         this.explanation = explanantion;
         this.lookup = lookup;

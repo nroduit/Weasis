@@ -5,7 +5,7 @@ import java.awt.image.LookupTable;
 import java.awt.image.ShortLookupTable;
 import java.lang.reflect.Array;
 
-import org.weasis.dicom.codec.display.LutShape;
+import org.weasis.core.api.image.LutShape;
 
 /**
  * 

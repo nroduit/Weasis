@@ -16,7 +16,7 @@ import org.weasis.core.api.gui.ImageOperation;
 
 public interface ImageOperationAction extends Cloneable {
 
-    RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation);
+    RenderedImage getRenderedImage(RenderedImage imageSource, ImageOperation imageOperation);
 
     RenderedImage getRenderedImageNode();
 

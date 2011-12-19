@@ -25,11 +25,12 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.LutShape.eType;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
-import org.weasis.dicom.codec.display.LutShape.eType;
 
 public class PresetWindowLevel {
 
@@ -136,7 +137,7 @@ public class PresetWindowLevel {
                 float fullDynamicWidth = maxValueLookup - minValueLookup;
                 float fullDynamicCenter = minValueLookup + fullDynamicWidth / 2.f;
 
-                LutShape lutShape = new LutShape(eType.SEQUENCE, explanation + dicomTag, voiLUTsData[i]);
+                LutShape lutShape = new LutShape(explanation + dicomTag, voiLUTsData[i]);
                 presetList.add(new PresetWindowLevel(lutShape.getExplanation(), fullDynamicWidth, fullDynamicCenter,
                     lutShape));
             }

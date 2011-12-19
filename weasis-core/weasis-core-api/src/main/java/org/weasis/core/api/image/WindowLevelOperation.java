@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class WindowLevelOperation extends AbstractOperation {
@@ -26,25 +25,27 @@ public class WindowLevelOperation extends AbstractOperation {
     public static final String name = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
 
     @Override
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        ImageElement image = imageOperation.getImage();
+    public RenderedImage getRenderedImage(RenderedImage imageSource, ImageOperation imageOperation) {
+        ImageElement imageElement = (imageOperation != null) ? imageOperation.getImage() : null;
 
-        Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
-        Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+        result = imageSource;
 
-        if (image == null || window == null || level == null) {
-            result = source;
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
+        if (imageElement == null || imageSource == null) {
+            LOGGER.warn("Cannot apply \"{}\" ", name);
         } else {
-            Boolean padding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+
+            Float window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+            Float level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+            LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
+            Boolean pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+
+            result = imageElement.getWindowLevelImage(imageSource, window, level, lutShape, pixelPadding);
+
             // result =
-            // ImageToolkit.getDefaultRenderedImage(image, source, image.getPixelWindow(window),
-            // image.getPixelLevel(level), padding == null ? true : padding);
-            // result =
-            // ImageToolkit.getDefaultRenderedImage(image, source, image.getPixelWindow(window),
-            // image.getPixelLevel(level));
-            result =
-                ImageToolkit.getDefaultRenderedImage(image, source, window, level, padding == null ? true : padding);
+            // ImageToolkit.getDefaultRenderedImage(image, source, window, level, padding == null ? true : padding);
+
+            // NOTE : looks better to implement the getRenderedImage(..) method in the ImageElement Object so it can be
+            // easily overridden, to compare to the static generic ImageToolkit.getDefaultRenderedImage(..) method
         }
         return result;
     }
