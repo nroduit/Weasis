@@ -42,7 +42,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     private static final String lastDICOMDIR = "lastDicomDir";//$NON-NLS-1$
 
-    private File file;
     private JCheckBox chckbxCache;
     private JLabel lblImportAFolder;
     private JTextField textField;
@@ -100,7 +99,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             public void actionPerformed(ActionEvent e) {
                 File dcmdir = getDcmDirFromMedia();
                 if (dcmdir != null) {
-                    file = dcmdir;
                     String path = dcmdir.getPath();
                     textField.setText(path);
                     Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
@@ -173,8 +171,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             || (selectedFile = fileChooser.getSelectedFile()) == null) {
             return;
         } else {
-            file = selectedFile;
-            String path = file.getPath();
+            String path = selectedFile.getPath();
             textField.setText(path);
             Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
         }
@@ -211,21 +208,20 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     @Override
     public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-        if (file == null) {
-            String path = getImportPath();
-            if (path != null) {
-                File f = new File(path);
-                if (f.canRead()) {
-                    file = f;
-                } else {
-                    try {
-                        f = new File(new URI(path));
-                        if (f.canRead()) {
-                            file = f;
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error("Cannot read {}", path); //$NON-NLS-1$
+        File file = null;
+        String path = getImportPath();
+        if (path != null) {
+            File f = new File(path);
+            if (f.canRead()) {
+                file = f;
+            } else {
+                try {
+                    f = new File(new URI(path));
+                    if (f.canRead()) {
+                        file = f;
                     }
+                } catch (Exception e) {
+                    LOGGER.error("Cannot read {}", path); //$NON-NLS-1$
                 }
             }
         }

@@ -128,12 +128,13 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             || (selectedFiles = fileChooser.getSelectedFiles()) == null || selectedFiles.length == 0) {
             return;
         } else {
-            files = selectedFiles;
+            files = null;
             String lastDir = null;
-            if (files.length == 1) {
-                lastDir = files[0].getPath();
+            if (selectedFiles.length == 1) {
+                lastDir = selectedFiles[0].getPath();
                 textField.setText(lastDir);
             } else {
+                files = selectedFiles;
                 lastDir = files[0].getParent();
                 textField.setText(Messages.getString("LocalImport.multi_dir")); //$NON-NLS-1$
             }
@@ -194,6 +195,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         if (files != null) {
             LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel);
             DicomModel.loadingExecutor.execute(dicom);
+            files = null;
         }
     }
 }
