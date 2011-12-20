@@ -121,10 +121,11 @@ public class ImagePrint implements Printable {
         Dimension dimGrid = layout.layoutModel.getGridSize();
         double placeholderX = f.getImageableWidth() - (dimGrid.width - 1) * 5;
         double placeholderY = f.getImageableHeight() - (dimGrid.height - 1) * 5;
-        
 
         int lastx = 0;
         int lasty = 0;
+        double lastwx = 0.0;
+        double lastwy = 0.0;
         double wx = 0.0;
         double wy = 0.0;
         final LinkedHashMap<LayoutConstraints, JComponent> elements = layout.layoutModel.getConstraints();
@@ -150,27 +151,29 @@ public class ImagePrint implements Printable {
             int cw = (int) (w * scaleFactor + 0.5);
             int ch = (int) (h * scaleFactor + 0.5);
             image.setSize(cw, ch);
-            
+
             // Resize in best fit window
             image.zoom(scaleFactor);
             image.center();
-            
+
             g2d.setFont(new Font("Dialog", 0, getFontSize(image.getWidth())));
 
             if (key.gridx == 0) {
                 wx = 0.0;
             } else if (lastx < key.gridx) {
-                wx += key.weightx;
+                wx += lastwx;
             }
             if (key.gridy == 0) {
                 wy = 0.0;
             } else if (lasty < key.gridy) {
-                wy += key.weighty;
+                wy += lastwy;
             }
             double x = f.getImageableX() + (placeholderX * wx) + (wx == 0.0 ? 0 : key.gridx * 5);
             double y = f.getImageableY() + (placeholderY * wy) + (wy == 0.0 ? 0 : key.gridy * 5);
             lastx = key.gridx;
             lasty = key.gridy;
+            lastwx = key.weightx;
+            lastwy = key.weighty;
 
             // Set us to the upper left corner
             g2d.translate(x, y);
@@ -255,7 +258,7 @@ public class ImagePrint implements Printable {
         }
         return scaleFactor;
     }
-    
+
     private int getFontSize(int imageWidth) {
         if (imageWidth >= 1 && imageWidth <= 101) {
             return 2;

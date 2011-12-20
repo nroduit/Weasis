@@ -68,6 +68,7 @@ public class InfoLayer implements AnnotationsLayer {
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
     private int border = BORDER;
+    private double thickLength = 15.0;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
@@ -134,6 +135,8 @@ public class InfoLayer implements AnnotationsLayer {
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
+        thickLength = Math.min(bound.width, bound.height) / 20.0;
+        thickLength = thickLength > 15.0 ? 15.0 : thickLength < 5.0 ? 5.0 : thickLength;
 
         g2.setPaint(color);
 
@@ -383,12 +386,13 @@ public class InfoLayer implements AnnotationsLayer {
                     g2.setFont(bigFont);
                 }
 
-                paintColorFontOutline(g2, colLeft.substring(0, 1), border + 15, midy + fontHeight / 2.0f, highlight);
+                paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength), midy + fontHeight
+                    / 2.0f, highlight);
 
                 if (colLeft.length() > 1) {
                     g2.setFont(subscriptFont);
-                    paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()), border + 15 + shiftx, midy
-                        + fontHeight / 2.0f, highlight);
+                    paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
+                        (float) (border + thickLength + shiftx), midy + fontHeight / 2.0f, highlight);
                 }
                 g2.setFont(oldFont);
             }
@@ -616,14 +620,16 @@ public class InfoLayer implements AnnotationsLayer {
             double posy = bound.height - border;
             Line2D line = new Line2D.Double(posx, posy, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy - 15.0, posx, posy);
+            line.setLine(posx, posy - thickLength, posx, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx + scaleSizex, posy - 15.0, posx + scaleSizex, posy);
+            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
             int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
+            double midThick = thickLength * 2.0 / 3.0;
+            double smallThick = thickLength / 3.0;
             double divSquare = scaleSizex / divisor;
             for (int i = 1; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - 10.0);
+                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
                 g2d.draw(getOutLine(line));
             }
             if (divSquare > 90) {
@@ -631,7 +637,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - 5.0);
+                        line.setLine(secBar, posy, secBar, posy - smallThick);
                         g2d.draw(getOutLine(line));
                     }
                 }
@@ -640,12 +646,13 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.white);
             line.setLine(posx, posy, posx + scaleSizex, posy);
             g2d.draw(line);
-            line.setLine(posx, posy - 15.0, posx, posy);
+            line.setLine(posx, posy - thickLength, posx, posy);
             g2d.draw(line);
-            line.setLine(posx + scaleSizex, posy - 15.0, posx + scaleSizex, posy);
+            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
             g2d.draw(line);
+
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - 10.0);
+                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
                 g2d.draw(line);
             }
             if (divSquare > 90) {
@@ -653,7 +660,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - 5.0);
+                        line.setLine(secBar, posy, secBar, posy - smallThick);
                         g2d.draw(line);
                     }
                 }
@@ -684,14 +691,16 @@ public class InfoLayer implements AnnotationsLayer {
             double posy = bound.height / 2.0 - scaleSizeY / 2.0;
             Line2D line = new Line2D.Double(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy, posx + 15, posy);
+            line.setLine(posx, posy, posx + thickLength, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy + scaleSizeY, posx + 15, posy + scaleSizeY);
+            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
             int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
             double divSquare = scaleSizeY / divisor;
+            double midThick = thickLength * 2.0 / 3.0;
+            double smallThick = thickLength / 3.0;
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + 10.0, posy + divSquare * i);
+                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
                 g2d.draw(getOutLine(line));
             }
             if (divSquare > 90) {
@@ -699,7 +708,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + 5.0, secBar);
+                        line.setLine(posx, secBar, posx + smallThick, secBar);
                         g2d.draw(getOutLine(line));
                     }
                 }
@@ -708,12 +717,12 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.white);
             line.setLine(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(line);
-            line.setLine(posx, posy, posx + 15, posy);
+            line.setLine(posx, posy, posx + thickLength, posy);
             g2d.draw(line);
-            line.setLine(posx, posy + scaleSizeY, posx + 15, posy + scaleSizeY);
+            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
             g2d.draw(line);
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + 10.0, posy + divSquare * i);
+                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
                 g2d.draw(line);
             }
             if (divSquare > 90) {
@@ -721,7 +730,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + 5.0, secBar);
+                        line.setLine(posx, secBar, posx + smallThick, secBar);
                         g2d.draw(line);
                     }
                 }

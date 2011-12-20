@@ -35,7 +35,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
             viewList.add(export);
         }
         grid = new JPanel();
-        // For having a black background with any Look and Feel
+        // For having a white background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
         grid.setBackground(Color.WHITE);
