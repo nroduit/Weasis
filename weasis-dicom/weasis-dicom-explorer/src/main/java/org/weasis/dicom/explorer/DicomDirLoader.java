@@ -29,6 +29,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.dicom.codec.ColorModelFactory;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
@@ -169,6 +170,8 @@ public class DicomDirLoader {
                     containsInstance = true;
                 }
                 DicomObject iconInstance = null;
+                // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It may or may not
+                // correspond to one of the images of the Series.
                 DicomElement seq = series.get(Tag.IconImageSequence);
                 if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
                     iconInstance = seq.getDicomObject(0);
@@ -194,6 +197,8 @@ public class DicomDirLoader {
                                     dcmInstance.setDirectDownloadFile(filename);
                                     dicomInstances.add(dcmInstance);
                                     if (iconInstance == null) {
+                                        // Icon Image Sequence (0088,0200). This Icon Image is representative of the
+                                        // Image. Only a single Item is permitted in this Sequence.
                                         seq = instance.get(Tag.IconImageSequence);
                                         if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
                                             iconInstance = seq.getDicomObject(0);
@@ -243,12 +248,19 @@ public class DicomDirLoader {
                     e.printStackTrace();
                 }
                 if (thumbnailPath != null) {
+                    /*
+                     * DICOM 11_03pu.pdf - F7 Only monochrome and palette color images shall be used. Samples per Pixel
+                     * (0028,0002) shall have a Value of 1, Photometric Interpretation (0028,0004) shall have a Value of
+                     * either MONOCHROME 1, MONOCHROME 2 or PALETTE COLOR, Planar Configuration (0028,0006) shall not be
+                     * present
+                     */
                     int width = iconInstance.getInt(Tag.Columns);
                     int height = iconInstance.getInt(Tag.Rows);
                     WritableRaster raster =
                         WritableRaster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
                     raster.setDataElements(0, 0, width, height, pixelData);
-                    BufferedImage thumbnail = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+                    BufferedImage thumbnail =
+                        new BufferedImage(ColorModelFactory.createColorModel(iconInstance), raster, false, null);
                     if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
                         return thumbnailPath.getPath();
                     }
