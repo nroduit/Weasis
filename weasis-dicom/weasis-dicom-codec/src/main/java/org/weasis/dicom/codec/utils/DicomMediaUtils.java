@@ -11,11 +11,10 @@
 
 package org.weasis.dicom.codec.utils;
 
-import java.awt.image.ByteLookupTable;
-import java.awt.image.LookupTable;
-import java.awt.image.ShortLookupTable;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.media.jai.LookupTableJAI;
 
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
@@ -66,8 +65,9 @@ public class DicomMediaUtils {
      * @return false if either an argument is null or if at least one tag value is empty in the given dicomObject
      */
     public static boolean containsRequiredAttributes(DicomObject dicomObj, int... requiredTags) {
-        if (dicomObj == null || requiredTags == null || requiredTags.length == 0)
+        if (dicomObj == null || requiredTags == null || requiredTags.length == 0) {
             return false;
+        }
 
         int countValues = 0;
         List<String> missingTagList = null;
@@ -108,8 +108,9 @@ public class DicomMediaUtils {
             LOGGER.debug("Invalid DicomElement argument \"{}\" which is not a sequence", sequenceElt.toString());
         } else if (sequenceElt.countItems() <= itemIndex) {
             LOGGER.debug("Index \"{}\" is out of bound for this sequence \"{}\"", itemIndex, sequenceElt.toString());
-        } else
+        } else {
             return containsRequiredAttributes(sequenceElt.getDicomObject(itemIndex), requiredTags);
+        }
 
         return false;
     }
@@ -197,15 +198,16 @@ public class DicomMediaUtils {
      * 
      * @param dicomLutObject
      *            defines LUT data dicom structure
-     * @return LookupTable object if Data Element and Descriptors are consistent
+     * @return LookupTableJAI object if Data Element and Descriptors are consistent
      * 
      * @see - Dicom Standard 2011 - PS 3.3 § C.11 LOOK UP TABLES AND PRESENTATION STATES
      */
-    public static LookupTable createLut(DicomObject dicomLutObject) {
-        if (dicomLutObject == null || dicomLutObject.isEmpty())
+    public static LookupTableJAI createLut(DicomObject dicomLutObject) {
+        if (dicomLutObject == null || dicomLutObject.isEmpty()) {
             return null;
+        }
 
-        LookupTable lookupTable = null;
+        LookupTableJAI lookupTable = null;
 
         // Three values of the LUT Descriptor describe the format of the LUT Data in the corresponding Data Element
         int[] descriptor = dicomLutObject.getInts(Tag.LUTDescriptor);
@@ -240,13 +242,15 @@ public class DicomMediaUtils {
                     bData = bDataNew;
                 }
                 dataLength = bData.length;
-                lookupTable = new ByteLookupTable(offset, bData);
+                // lookupTable = new ByteLookupTable(offset, bData);
+                lookupTable = new LookupTableJAI(bData, offset);
 
-            } else if (numBits <= 16) { // LUT entry value range should be [0,65535]
+            } else if (numBits <= 16) { // LUT entry value range is [0,65535]
                 short[] sData = dicomLutObject.getShorts(Tag.LUTData); // LUT Data contains the LUT entry values.
 
                 dataLength = sData.length;
-                lookupTable = new ShortLookupTable(offset, sData);
+                // lookupTable = new ShortLookupTable(offset, sData);
+                lookupTable = new LookupTableJAI(sData, offset, true); // assuming data is DataBuffer.TYPE_USHORT
             } else {
                 LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
             }
@@ -266,4 +270,69 @@ public class DicomMediaUtils {
         }
         return lookupTable;
     }
+    // public static LookupTable createLut(DicomObject dicomLutObject) {
+    // if (dicomLutObject == null || dicomLutObject.isEmpty())
+    // return null;
+    //
+    // LookupTable lookupTable = null;
+    //
+    // // Three values of the LUT Descriptor describe the format of the LUT Data in the corresponding Data Element
+    // int[] descriptor = dicomLutObject.getInts(Tag.LUTDescriptor);
+    //
+    // if (descriptor == null) {
+    // LOGGER.debug("Missing LUT Descriptor");
+    // } else if (descriptor.length != 3) {
+    // LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length);
+    // } else {
+    //
+    // // First value is the number of entries in the lookup table.
+    // // When this value is 0 the number of table entries is equal to 0x10000 (<=> 65536) .
+    // int numEntries = (descriptor[0] == 0) ? 0x10000 : descriptor[0];
+    // // Second value is the first input value mapped.
+    // int offset = descriptor[1];
+    // // Third value specifies the number of bits for each entry in the LUT Data.
+    // int numBits = descriptor[2];
+    //
+    // int dataLength = 0; // number of entry values in the LUT Data.
+    //
+    // if (numBits <= 8) { // LUT entry value range should be [0,255]
+    // byte[] bData = dicomLutObject.getBytes(Tag.LUTData); // LUT Data contains the LUT entry values.
+    //
+    // if (bData.length == (numEntries << 1)) {
+    // // Appends when some implementations have encoded 8 bit entries with 16 bits
+    // // allocated, padding the high bits;
+    // byte[] bDataNew = new byte[numEntries];
+    // int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
+    // for (int i = 0; i < numEntries; i++) {
+    // bDataNew[i] = bData[i << 2 + byteShift];
+    // }
+    // bData = bDataNew;
+    // }
+    // dataLength = bData.length;
+    // lookupTable = new ByteLookupTable(offset, bData);
+    //
+    // } else if (numBits <= 16) { // LUT entry value range should be [0,65535]
+    // short[] sData = dicomLutObject.getShorts(Tag.LUTData); // LUT Data contains the LUT entry values.
+    //
+    // dataLength = sData.length;
+    // lookupTable = new ShortLookupTable(offset, sData);
+    // } else {
+    // LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
+    // }
+    //
+    // if (lookupTable != null) {
+    // if (dataLength != numEntries) {
+    // LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ",
+    // dataLength, numEntries);
+    // }
+    // if (dataLength > (1 << numBits)) {
+    // LOGGER.debug(
+    // "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
+    // dataLength, numBits);
+    // // lookupTable = null;
+    // }
+    // }
+    // }
+    // return lookupTable;
+    // }
 }

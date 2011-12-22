@@ -10,10 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.awt.image.ByteLookupTable;
-import java.awt.image.LookupTable;
+import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
-import java.awt.image.ShortLookupTable;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -205,6 +203,14 @@ public class DicomImageElement extends ImageElement {
         return (String) getTagValue(TagW.PhotometricInterpretation);
     }
 
+    public boolean isPhotometricInterpretationMonochrome() {
+        String photometricInterpretation = getPhotometricInterpretation();
+
+        return (photometricInterpretation != null && //
+        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2"
+            .equalsIgnoreCase(photometricInterpretation)));
+    }
+
     /**
      * 
      * Pixel Padding Value is used to pad grayscale images (those with a Photometric Interpretation of MONOCHROME1 or
@@ -250,7 +256,7 @@ public class DicomImageElement extends ImageElement {
     // !!! Strange because findMinMaxValue function should have been called before when loading image.
 
     protected LookupTableJAI getModalityLookup(boolean pixelPadding) {
-        // TODO - handle pixel padding
+        // TODO - handle pixel padding input argument
 
         if (modalityLookup != null) {
             return modalityLookup;
@@ -262,12 +268,13 @@ public class DicomImageElement extends ImageElement {
         // determined by BitsStored and Pixel Representation.
         // Note: This range may be signed even if Pixel Representation is unsigned.
 
-        boolean signed = isPixelRepresentationSigned();
+        boolean isSigned = isPixelRepresentationSigned();
         Integer bitsStored = getBitsStored();
 
-        LookupTable lookup = (LookupTable) getTagValue(TagW.ModalityLUTData);
+        // LookupTable lookup = (LookupTable) getTagValue(TagW.ModalityLUTData);
+        modalityLookup = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
 
-        if (lookup == null && bitsStored != null) {
+        if (modalityLookup == null && bitsStored != null) {
 
             Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
             Float slope = (Float) getTagValue(TagW.RescaleSlope);
@@ -275,94 +282,93 @@ public class DicomImageElement extends ImageElement {
             slope = (slope == null) ? 1.0f : slope;
             intercept = (intercept == null) ? 0.0f : intercept;
 
-            signed = (minPixelValue * slope + intercept) < 0 ? true : signed;
+            isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
 
-            lookup =
+            modalityLookup =
                 DicomImageUtils.createRescaleRampLut(intercept, slope, (int) minPixelValue, (int) maxPixelValue,
-                    bitsStored, signed, false);
+                    bitsStored, isSigned, false);
         }
 
-        if (lookup != null) {
+        if (modalityLookup != null) {
             // In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n
             // is the third value of LUT Descriptor. This range is always unsigned.
 
             // String lutType = (String) getTagValue(TagW.ModalityLUTType);
             // String explanation = (String) getTagValue(TagW.ModalityLUTExplanation);
 
-            Object inLut;
+            Integer paddingValue = getPaddingValue();
+            Integer paddingLimit = getPaddingLimit();
 
-            if (lookup instanceof ByteLookupTable) {
-                inLut = ((ByteLookupTable) lookup).getTable()[0];
-            } else if (lookup instanceof ShortLookupTable) {
-                inLut = ((ShortLookupTable) lookup).getTable()[0];
-            } else {
-                return null;
-            }
+            if ((modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) && isPhotometricInterpretationMonochrome()
+                && (paddingValue != null)) {
 
-            Object outLut = inLut;
+                int lutOffset = modalityLookup.getOffset();
+                int numEntries = modalityLookup.getNumEntries();
 
-            int lutOffset = lookup.getOffset();
-            int numEntries = Array.getLength(inLut);
+                int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+                int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
 
-            String photometricInterpretation = getPhotometricInterpretation();
+                int numPaddingValues = paddingValueMax - paddingValueMin;
+                int lutPaddingStartIndex = paddingValueMin - lutOffset;
+                int outLutStartIndex = 0;
+                int numNewValues = 0;
 
-            if (photometricInterpretation != null && //
-                ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || //
-                "MONOCHROME2".equalsIgnoreCase(photometricInterpretation))) {
+                // Test if modality lookupTable takes pixel padding values into account and if not resize it
 
-                Integer paddingValue = getPaddingValue();
-                Integer paddingLimit = getPaddingLimit();
+                if (paddingValueMin < lutOffset) {
+                    // add padding value range to the start of the lookup shifting right all existing elements
+                    // by numPaddingValues
+                    numNewValues = lutOffset - paddingValueMin;
+                    lutOffset = paddingValueMin;
+                    outLutStartIndex = numNewValues;
+                    lutPaddingStartIndex = 0;
 
-                if (paddingValue != null) {
-                    int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
-                    int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
+                } else if (paddingValueMax > (numEntries + lutOffset)) {
+                    // add padding value range to the end of the lookup
+                    numNewValues = paddingValueMax - (numEntries + lutOffset);
+                    lutPaddingStartIndex =
+                        (numPaddingValues > numNewValues) ? numEntries + numNewValues - numPaddingValues : numEntries;
+                }
 
-                    int numPaddingValues = paddingValueMax - paddingValueMin;
-                    int lutPaddingStartIndex = paddingValueMin - lutOffset;
-                    int outLutStartIndex = 0;
-                    int numNewValues = 0;
+                Object inLut = null;
 
-                    // Test if modality lookupTable takes pixel padding values into account and if not resize it
+                if (modalityLookup.getDataType() == DataBuffer.TYPE_BYTE) {
+                    inLut = modalityLookup.getByteData(0);
+                } else if (modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+                    inLut = modalityLookup.getShortData(0);
+                }
 
-                    if (paddingValueMin < lutOffset) {
-                        // add padding value range to the start of the lookup shifting right all existing elements
-                        // by numPaddingValues
-                        numNewValues = lutOffset - paddingValueMin;
-                        lutOffset = paddingValueMin;
-                        outLutStartIndex = numNewValues;
-                        lutPaddingStartIndex = 0;
+                Object outLut = inLut;
 
-                    } else if (paddingValueMax > (numEntries + lutOffset)) {
-                        // add padding value range to the end of the lookup
-                        numNewValues = paddingValueMax - (numEntries + lutOffset);
-                        lutPaddingStartIndex =
-                            (numPaddingValues > numNewValues) ? numEntries + numNewValues - numPaddingValues
-                                : numEntries;
-                    }
-
+                if (numNewValues > 0) {
                     int outLutSize = numEntries + numNewValues;
-                    outLut = (lookup instanceof ByteLookupTable) ? new byte[outLutSize] : new short[outLutSize];
+                    outLut = Array.newInstance(inLut.getClass(), outLutSize);
                     System.arraycopy(inLut, 0, outLut, outLutStartIndex, numEntries);
 
                     numPaddingValues = (numPaddingValues < numNewValues) ? numNewValues : numPaddingValues;
 
-                    // Set padding values to 0 or unchanged
-                    Arrays.fill((Object[]) outLut, lutPaddingStartIndex, numPaddingValues, 0);
-                    // TODO - add the ability to disable padding by keeping values same as original
-
-                    // for (int i = lutPaddingStartIndex; i < lutPaddingStartIndex + numPaddingValues; i++) {
-                    // Array.set(outLut, i, 0);
-                    // Array.set(outLut, i, lutPaddingStartIndex-lutOffset);
-                    // }
+                    if (modalityLookup.getDataType() == DataBuffer.TYPE_BYTE) {
+                        modalityLookup = new LookupTableJAI((byte[]) outLut, lutOffset);
+                    } else if (modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+                        modalityLookup = new LookupTableJAI((short[]) outLut, lutOffset, !isSigned);
+                    }
                 }
-            }
 
-            if (lookup instanceof ByteLookupTable) {
-                modalityLookup = new LookupTableJAI((byte[]) outLut, lutOffset);
-            } else if (lookup instanceof ShortLookupTable) {
-                modalityLookup = new LookupTableJAI((short[]) outLut, lutOffset, !signed);
-            }
+                // Set padding values to minPixelValue or maxPixelValue
+                int fillValue = (Integer) (isPhotometricInterpretationInverse() ? //
+                    Array.get(outLut, (int) (maxPixelValue - lutOffset)) : //
+                    Array.get(outLut, (int) (minPixelValue - lutOffset)));
 
+                Arrays.fill((Object[]) outLut, lutPaddingStartIndex, numPaddingValues, fillValue);
+
+                // TODO - add the ability to disable padding by keeping values same as original
+
+                // for (int i = lutPaddingStartIndex; i < lutPaddingStartIndex + numPaddingValues; i++) {
+                // Array.set(outLut, i, 0);
+                // Array.set(outLut, i, lutPaddingStartIndex-lutOffset);
+                // }
+
+            }
         }
 
         return modalityLookup;
@@ -402,13 +408,14 @@ public class DicomImageElement extends ImageElement {
         int minValue = (int) (fillLutOutside ? getMinAllocatedValue() : getMinValue());
         int maxValue = (int) (fillLutOutside ? getMaxAllocatedValue() : getMaxValue());
 
-        LookupTable lookup =
-            DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false, inverseLut);
+        return DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false, inverseLut);
 
-        assert (lookup instanceof ByteLookupTable);
+        // assert (lookup instanceof ByteLookupTable);
 
-        return (lookup instanceof ByteLookupTable) ? new LookupTableJAI(((ByteLookupTable) lookup).getTable(),
-            lookup.getOffset()) : null;
+        // return (lookup instanceof ByteLookupTable) ? new LookupTableJAI(((ByteLookupTable) lookup).getTable(),
+        // lookup.getOffset()) : null;
+        // return (lookup instanceof ByteLookupTable)
+        // ? new LookupTableJAI(((ByteLookupTable) lookup).getTable(), minValue) : null;
     }
 
     /**

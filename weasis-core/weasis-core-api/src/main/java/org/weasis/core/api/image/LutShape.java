@@ -10,11 +10,12 @@
  ******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.LookupTable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import javax.media.jai.LookupTableJAI;
 
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -51,13 +52,13 @@ public class LutShape {
 
     volatile protected eType functionType;
     volatile protected String explanation;
-    volatile protected LookupTable lookup;
+    volatile protected LookupTableJAI lookup;
 
-    public LutShape(String explanantion, LookupTable lookup) {
+    public LutShape(String explanantion, LookupTableJAI lookup) {
         this(eType.SEQUENCE, explanantion, lookup);
     }
 
-    public LutShape(eType type, String explanantion, LookupTable lookup) {
+    public LutShape(eType type, String explanantion, LookupTableJAI lookup) {
         this.functionType = type;
         this.explanation = explanantion;
         this.lookup = lookup;
@@ -71,7 +72,7 @@ public class LutShape {
         return functionType;
     }
 
-    public LookupTable getLookup() {
+    public LookupTableJAI getLookup() {
         return lookup;
     }
 
@@ -99,7 +100,7 @@ public class LutShape {
         ArrayList<LutShape> lutShapeList = new ArrayList<LutShape>();
 
         if (image != null) {
-            LookupTable[] voiLUTsData = (LookupTable[]) image.getTagValue(TagW.VOILUTsData);
+            LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) image.getTagValue(TagW.VOILUTsData);
             String[] voiLUTsExplanation = (String[]) image.getTagValue(TagW.VOILUTsExplanation);
 
             if (voiLUTsData != null) {

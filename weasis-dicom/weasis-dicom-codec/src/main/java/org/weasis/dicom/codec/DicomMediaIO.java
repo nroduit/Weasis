@@ -15,7 +15,6 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
-import java.awt.image.LookupTable;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.BufferedOutputStream;
@@ -36,6 +35,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import javax.media.jai.JAI;
+import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.NullDescriptor;
 
@@ -607,7 +607,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             DicomElement voiLUTSequence = (DicomElement) tagList.get(TagW.VOILUTSequence);
 
             if (DicomMediaUtils.containsRequiredVOILUTSequenceAttributes(voiLUTSequence)) {
-                LookupTable[] voiLUTsData = new LookupTable[voiLUTSequence.countItems()];
+                LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.countItems()];
                 String[] voiLUTsExplanation = new String[voiLUTSequence.countItems()];
 
                 for (int i = 0; i < voiLUTSequence.countItems(); i++) {

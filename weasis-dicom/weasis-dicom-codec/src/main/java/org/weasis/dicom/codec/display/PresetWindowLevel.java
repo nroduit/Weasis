@@ -10,9 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
-import java.awt.image.ByteLookupTable;
-import java.awt.image.LookupTable;
-import java.awt.image.ShortLookupTable;
+import java.awt.image.DataBuffer;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -20,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.media.jai.LookupTableJAI;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -103,7 +102,7 @@ public class PresetWindowLevel {
 
         String dicomTag = " [" + Messages.getString("PresetWindowLevel.dicomTag") + "]";
 
-        LookupTable[] voiLUTsData = (LookupTable[]) image.getTagValue(TagW.VOILUTsData);
+        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) image.getTagValue(TagW.VOILUTsData);
         String[] voiLUTsExplanation = (String[]) image.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
@@ -120,10 +119,18 @@ public class PresetWindowLevel {
 
                 Object inLut;
 
-                if (voiLUTsData[i] instanceof ByteLookupTable) {
-                    inLut = ((ByteLookupTable) voiLUTsData[i]).getTable()[0];
-                } else if (voiLUTsData[i] instanceof ShortLookupTable) {
-                    inLut = ((ShortLookupTable) voiLUTsData[i]).getTable()[0];
+                // if (voiLUTsData[i] instanceof ByteLookupTable) {
+                // inLut = ((ByteLookupTable) voiLUTsData[i]).getTable()[0];
+                // } else if (voiLUTsData[i] instanceof ShortLookupTable) {
+                // inLut = ((ShortLookupTable) voiLUTsData[i]).getTable()[0];
+                // } else {
+                // continue;
+                // }
+
+                if (voiLUTsData[i].getDataType() == DataBuffer.TYPE_BYTE) {
+                    inLut = voiLUTsData[i].getByteData(0);
+                } else if (voiLUTsData[i].getDataType() <= DataBuffer.TYPE_SHORT) {
+                    inLut = voiLUTsData[i].getShortData(0);
                 } else {
                     continue;
                 }

@@ -1,9 +1,9 @@
 package org.weasis.dicom.codec.utils;
 
-import java.awt.image.ByteLookupTable;
-import java.awt.image.LookupTable;
-import java.awt.image.ShortLookupTable;
+import java.awt.image.DataBuffer;
 import java.lang.reflect.Array;
+
+import javax.media.jai.LookupTableJAI;
 
 import org.weasis.core.api.image.LutShape;
 
@@ -33,14 +33,14 @@ public class DicomImageUtils {
      * @param minValue
      * @param maxValue
      * @param bitsStored
-     * @param signed
+     * @param isSigned
      * @param inverse
      * 
-     * @return a LookupTable for data between minValue and maxValue according to all given parameters <br>
+     * @return a LookupTableJAI for data between minValue and maxValue according to all given parameters <br>
      */
 
-    public static LookupTable createWindowLevelLut(LutShape lutShape, float window, float level, int minValue,
-        int maxValue, int bitsStored, boolean signed, boolean inverse) {
+    public static LookupTableJAI createWindowLevelLut(LutShape lutShape, float window, float level, int minValue,
+        int maxValue, int bitsStored, boolean isSigned, boolean inverse) {
 
         if (lutShape == null) {
             return null;
@@ -50,8 +50,8 @@ public class DicomImageUtils {
         window = (window < 1f) ? 1f : window;
 
         int outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        float minOutValue = signed ? -(maxOutValue + 1) : 0;
+        float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
         float minInValue = Math.min(maxValue, minValue);
         float maxInValue = Math.max(maxValue, minValue);
@@ -61,12 +61,13 @@ public class DicomImageUtils {
 
         switch (lutShape.getFunctionType()) {
             case LINEAR:
-                setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                setWindowLevelLinearLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
 
+                // TODO - do this test below
+                // setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                 // Object outLut2 = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
                 // setWindowLevelLinearLut(window, level, minInValue, outLut2, minOutValue, maxOutValue, inverse);
                 // compareDataLuts(outLut, outLut2);
-
                 break;
             case SIGMOID:
                 setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
@@ -85,20 +86,20 @@ public class DicomImageUtils {
                 return null;
         }
 
-        return (outLut instanceof byte[]) ? new ByteLookupTable((int) minInValue, (byte[]) outLut) : //
-            new ShortLookupTable((int) minInValue, (short[]) outLut);
+        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, (int) minInValue) : //
+            new LookupTableJAI((short[]) outLut, (int) minInValue, isSigned);
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static LookupTable createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
-        int bitsStored, boolean signed, boolean inverse) {
+    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
+        int bitsStored, boolean isSigned, boolean inverse) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
 
         int outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        float minOutValue = signed ? -(maxOutValue + 1) : 0;
+        float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
         float minInValue = Math.min(maxValue, minValue);
         float maxInValue = Math.max(maxValue, minValue);
@@ -119,8 +120,10 @@ public class DicomImageUtils {
             }
         }
 
-        return (outLut instanceof byte[]) ? new ByteLookupTable((int) minInValue, (byte[]) outLut) : //
-            new ShortLookupTable((int) minInValue, (short[]) outLut);
+        int offset = (int) minInValue;
+
+        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, offset) : //
+            new LookupTableJAI((short[]) outLut, offset, !isSigned);
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,20 +253,23 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * @return a normalized LookupTable based upon given lutSequence <br>
+     * @return a normalized LookupTableJAI based upon given lutSequence <br>
      */
 
-    protected static void setWindowLevelSequenceLut(float window, float level, LookupTable lutSequence,
+    // TODO - wrong method !! Should do an X-Axis based normalized interpolation and not Y-axis as actually
+    protected static void setWindowLevelSequenceLut(float window, float level, LookupTableJAI lutSequence,
         float minInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
 
-        // TODO - wrong method !! Do an axis based normalized interpolation
+        if (lutSequence == null) {
+            return;
+        }
 
         Object inLut;
 
-        if (lutSequence instanceof ByteLookupTable) {
-            inLut = ((ByteLookupTable) lutSequence).getTable()[0];
-        } else if (lutSequence instanceof ShortLookupTable) {
-            inLut = ((ShortLookupTable) lutSequence).getTable()[0];
+        if (lutSequence.getDataType() == DataBuffer.TYPE_BYTE) {
+            inLut = lutSequence.getByteData(0);
+        } else if (lutSequence.getDataType() <= DataBuffer.TYPE_SHORT) {
+            inLut = lutSequence.getShortData(0);
         } else {
             return;
         }

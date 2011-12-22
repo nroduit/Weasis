@@ -729,19 +729,25 @@ public class InfoLayer implements AnnotationsLayer {
         yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
 
         final Path2D xAxisOnLevelLine = new Path2D.Float();
-        if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
-            int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
-            yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+        int yLevel = lookup.lookup(0, (int) level) & 0x000000FF;
+        yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+        xAxisOnLevelLine.moveTo(0, yLevel);
+        xAxisOnLevelLine.lineTo(xLevel, yLevel);
 
-            xAxisOnLevelLine.moveTo(0, yLevel);
-            xAxisOnLevelLine.lineTo(xLevel, yLevel);
-        }
-
-        int xMinVal = lowInputValue;
-        int yMinVal = fullRangeVoiLUT[lowInputValue] & 0x000000FF;
-        yMinVal = inverseLut ? maxOutputValue - yMinVal : yMinVal;
+        // if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
+        // int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
+        // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+        //
+        // xAxisOnLevelLine.moveTo(0, yLevel);
+        // xAxisOnLevelLine.lineTo(xLevel, yLevel);
+        // }
 
         final Path2D xAxisOnMinValueLine = new Path2D.Float();
+        int xMinVal = lowInputValue;
+        // int yMinVal = fullRangeVoiLUT[lowInputValue] & 0x000000FF;
+        int yMinVal = lookup.lookup(0, lowInputValue) & 0x000000FF;
+        yMinVal = inverseLut ? maxOutputValue - yMinVal : yMinVal;
+
         if (yMinVal != minOutputValue && yMinVal != maxOutputValue) {
             xAxisOnMinValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMinVal));
             xAxisOnMinValueLine
@@ -755,7 +761,8 @@ public class InfoLayer implements AnnotationsLayer {
         // }
 
         int xMaxVal = highInputValue;
-        int yMaxVal = fullRangeVoiLUT[highInputValue] & 0x000000FF;
+        // int yMaxVal = fullRangeVoiLUT[highInputValue] & 0x000000FF;
+        int yMaxVal = lookup.lookup(0, highInputValue) & 0x000000FF;
         yMaxVal = inverseLut ? maxOutputValue - yMaxVal : yMaxVal;
 
         final Path2D xAxisOnMaxValueLine = new Path2D.Float();
