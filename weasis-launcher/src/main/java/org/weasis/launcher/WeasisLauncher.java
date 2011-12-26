@@ -37,7 +37,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.basic.BasicColorChooserUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -903,8 +902,6 @@ public class WeasisLauncher {
      */
 
     public static String setLookAndFeel(String look) {
-        // Workaround in substance 6.3 to work with JAVA 7
-        UIManager.put("ColorChooserUI", BasicColorChooserUI.class.getName()); //$NON-NLS-1$
         // Do not display metal LAF in bold, it is ugly
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
