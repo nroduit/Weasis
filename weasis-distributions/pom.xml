@@ -15,7 +15,7 @@
 
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<felix.framework.version>4.0.1</felix.framework.version>
+		<felix.framework.version>4.0.2</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
 		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
 		
