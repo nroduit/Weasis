@@ -1,6 +1,13 @@
-/*
- * @copyright Copyright (c) 2009 Animati Sistemas de Inform�tica Ltda. (http://www.animati.com.br)
- */
+/*******************************************************************************
+ * Copyright (c) 2011 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit, Marcelo Porto  - initial API and implementation
+ ******************************************************************************/
 package org.weasis.core.ui.util;
 
 /**
@@ -10,33 +17,32 @@ package org.weasis.core.ui.util;
  */
 public class PrintOptions {
     public enum SCALE {
-        None {
-            @Override
-            public String toString() {
-                return "Original";
-            }
-        }, 
         ShrinkToPage {
             @Override
             public String toString() {
                 return "Shrink to Page";
             }
-        }, 
+        },
         FitToPage {
             @Override
             public String toString() {
                 return "Fit to Page";
             }
-        }, 
-        Custom
+        },
+        Custom {
+            @Override
+            public String toString() {
+                return "Custom";
+            }
+        }
     }
 
     private Boolean hasAnnotations;
-    private Float imageScale;
+    private double imageScale;
     private boolean center;
     private SCALE scale;
 
-    public PrintOptions(Boolean hasAnnotations, Float imageScale) {
+    public PrintOptions(Boolean hasAnnotations, double imageScale) {
         this.hasAnnotations = hasAnnotations;
         this.imageScale = imageScale;
         this.center = true;
@@ -59,7 +65,7 @@ public class PrintOptions {
         this.hasAnnotations = hasAnnotations;
     }
 
-    public Float getImageScale() {
+    public double getImageScale() {
         return imageScale;
     }
 

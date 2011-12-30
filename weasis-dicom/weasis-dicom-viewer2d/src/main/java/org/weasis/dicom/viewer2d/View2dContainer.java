@@ -10,10 +10,9 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -28,7 +27,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -45,9 +43,11 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -58,16 +58,12 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.ViewTransferHandler;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
-import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
@@ -75,7 +71,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.LocalImport;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.internal.Activator;
@@ -188,32 +183,30 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (menuRoot != null) {
             menuRoot.removeAll();
             menuRoot.setText(View2dFactory.NAME);
-            
+
             JMenu printMenu = new JMenu("Print Image");
-            JMenuItem menuStandardPrint = new JMenuItem("Standard Print"); //$NON-NLS-1$
+            JMenuItem menuStandardPrint = new JMenuItem("Standard Print");
+            final String title = menuStandardPrint.getText();
             menuStandardPrint.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    // Return the display image without annotations
-                    PrintDialog dialog = new PrintDialog(new JFrame(), true, eventManager);
-                    // Return the display with all annotations
-                    //display = ViewTransferHandler.createComponentImage(selectedImagePane);
-                    //ImagePrint print = new ImagePrint(display, 0.3);
-                    //print.print();
-                }
-            });
-            
-            JMenuItem menuDicomPrint = new JMenuItem("DICOM Print"); //$NON-NLS-1$
-            menuDicomPrint.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    
+                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
+                    JMVUtils.showCenterScreen(dialog, parent);
                 }
             });
             printMenu.add(menuStandardPrint);
-            printMenu.add(menuDicomPrint);
+
+            // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
+            // menuDicomPrint.addActionListener(new ActionListener() {
+            //
+            // @Override
+            // public void actionPerformed(ActionEvent e) {
+            //
+            // }
+            // });
+            // printMenu.add(menuDicomPrint);
             menuRoot.add(printMenu);
 
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
@@ -324,8 +317,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             MediaSeries<DicomImageElement> series = selectedImagePane.getSeries();
             if (series != null) {
                 DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel))
+                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel)) {
                     return;
+                }
                 DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, series));
             }
@@ -504,8 +498,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public JComponent createUIcomponent(String clazz) {
-        if (isViewType(DefaultView2d.class, clazz))
+        if (isViewType(DefaultView2d.class, clazz)) {
             return createDefaultView(clazz);
+        }
 
         try {
             // FIXME use classloader.loadClass or injection

@@ -1,8 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
+
 package org.weasis.core.ui.util;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -35,10 +45,10 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
             viewList.add(export);
         }
         grid = new JPanel();
-        // For having a white background with any Look and Feel
+        // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
         });
-        grid.setBackground(Color.WHITE);
+        grid.setBackground(Color.BLACK);
         this.layoutModel = layoutModel;
         try {
             this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
@@ -66,15 +76,8 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
             elements.put(e, v);
             grid.add(v, e);
             index++;
-
         }
         grid.revalidate();
-    }
-
-    public void draw(Graphics2D g2d) {
-        for (ExportImage<E> v : viewList) {
-            v.draw(g2d);
-        }
     }
 
     public void dispose() {

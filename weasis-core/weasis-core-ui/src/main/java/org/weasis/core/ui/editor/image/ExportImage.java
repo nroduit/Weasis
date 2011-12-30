@@ -1,102 +1,105 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
-import java.util.HashMap;
 
 import javax.swing.ToolTipManager;
 
-import org.weasis.core.api.gui.ImageOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.ImageOperationAction;
 import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.RotationOperation;
-import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
-    private final RenderedImageLayer<E> imageLayer;
-    private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
     private final DefaultView2d<E> view2d;
-    private OperationsManager freezeOperations;
 
     public ExportImage(DefaultView2d<E> view2d) {
         super(view2d.eventManager, view2d.getLayerModel(), null);
         this.view2d = view2d;
-        this.imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), false);
+        // No need to have random pixel iterator
+        this.imageLayer.setBuildIterator(false);
         setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
+        // For exporting view, remove Pixel value, Preloading bar
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.MEMORY_BAR, false);
 
+        // Copy image operations from view2d
         OperationsManager operations = imageLayer.getOperationsManager();
-        operations.addImageOperationAction(new ZoomOperation());
-        operations.addImageOperationAction(new RotationOperation());
-        operations.addImageOperationAction(new FlipOperation());
-
-        actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
-        actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
-        actionsInView.put(ActionW.DRAW.cmd(), true);
-        actionsInView.put(ZoomWin.FREEZE_CMD, null);
+        for (ImageOperationAction op : view2d.getImageLayer().getOperationsManager().getOperations()) {
+            try {
+                operations.addImageOperationAction((ImageOperationAction) op.clone());
+            } catch (CloneNotSupportedException e) {
+                LOGGER.error("Cannot clone image operation: {}", op.getOperationName());
+            }
+        }
+        // Copy the current values of image operations
+        view2d.copyActionWState(actionsInView);
 
         setPreferredSize(new Dimension(1024, 1024));
+        ViewModel model = view2d.getViewModel();
+        Rectangle2D canvas =
+            new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()), view2d.modelToViewLength(model
+                .getModelOffsetY()), view2d.getWidth(), view2d.getHeight());
+        Rectangle2D mArea = view2d.getViewModel().getModelArea();
+        Rectangle2D viewFullImg =
+            new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea
+                .getHeight()));
+        Rectangle2D.intersect(canvas, viewFullImg, viewFullImg);
+        actionsInView.put("origin.image.bound", viewFullImg);
+        actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd()));
+        Point2D p =
+            new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
+                * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
+        actionsInView.put("origin.center", p);
+
         setSeries(view2d.getSeries(), view2d.getFrameIndex());
-        actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
-        imageLayer.setImage(view2d.getImage(), (OperationsManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
-        getViewModel().setModelArea(view2d.getViewModel().getModelArea());
-        setFreezeImage(freezeParentParameters());
-
+        // imageLayer.setImage(view2d.getImage(), (OperationsManager)
+        // view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
+        // getViewModel().setModelArea(view2d.getViewModel().getModelArea());
     }
 
-    private void setFreezeImage(RenderedImage image) {
-        actionsInView.put(ZoomWin.FREEZE_CMD, image);
-        if (image == null) {
-            freezeActionsInView.clear();
-            freezeOperations = null;
-        }
-        imageLayer.updateAllImageOperations();
-    }
+    // @Override
+    // public void zoom(double viewScale) {
+    // if (viewScale == 0.0) {
+    // final double viewportWidth = getWidth() - 1;
+    // final double viewportHeight = getHeight() - 1;
+    // final Rectangle2D modelArea = getViewModel().getModelArea();
+    // viewScale = Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
+    // }
+    // super.zoom(viewScale);
+    // // imageLayer.updateImageOperation(ZoomOperation.name);
+    // // updateAffineTransform();
+    // }
 
     @Override
-    public E getImage() {
-        return imageLayer.getSourceImage();
-    }
+    protected void setWindowLevel(ImageElement img) {
 
-    @Override
-    public RenderedImage getSourceImage() {
-        RenderedImage img = (RenderedImage) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (img == null) {
-            // return the image before the zoom operation from the parent view
-            return view2d.getImageLayer().getOperationsManager().getSourceImage(ZoomOperation.name);
-        }
-        return img;
-    }
-
-    @Override
-    public void zoom(double viewScale) {
-        if (viewScale == 0.0) {
-            final double viewportWidth = getWidth() - 1;
-            final double viewportHeight = getHeight() - 1;
-            final Rectangle2D modelArea = getViewModel().getModelArea();
-            viewScale = Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
-        }
-        super.zoom(viewScale);
-        imageLayer.updateImageOperation(ZoomOperation.name);
-        updateAffineTransform();
     }
 
     @Override
@@ -105,47 +108,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         removeFocusListener(this);
         ToolTipManager.sharedInstance().unregisterComponent(this);
         imageLayer.removeLayerChangeListener(this);
-        // Unregister listener;
+        // Unregister listener in GraphicsPane;
         setLayerModel(null);
         setViewModel(null);
-    }
-
-    private RenderedImage freezeParentParameters() {
-        OperationsManager pManager = view2d.getImageLayer().getOperationsManager();
-        freezeActionsInView.clear();
-        view2d.copyActionWState(freezeActionsInView);
-
-        freezeOperations = new OperationsManager(new ImageOperation() {
-
-            @Override
-            public RenderedImage getSourceImage() {
-                return view2d.getSourceImage();
-            }
-
-            @Override
-            public ImageElement getImage() {
-                return view2d.getImage();
-            }
-
-            @Override
-            public Object getActionValue(String action) {
-                if (action == null) {
-                    return null;
-                }
-                return freezeActionsInView.get(action);
-            }
-        });
-        for (ImageOperationAction op : pManager.getOperations()) {
-            try {
-                if (!ZoomOperation.name.equals(op.getOperationName())) {
-                    ImageOperationAction operation = (ImageOperationAction) op.clone();
-                    freezeOperations.addImageOperationAction(operation);
-                }
-            } catch (CloneNotSupportedException e) {
-                e.printStackTrace();
-            }
-        }
-        return freezeOperations.updateAllOperations();
     }
 
     @Override
@@ -162,76 +127,26 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         Shape oldClip = g2d.getClip();
         g2d.setClip(getBounds());
 
-        g2d.setBackground(Color.black);
-        drawBackground(g2d);
         double viewScale = getViewModel().getViewScale();
         double offsetX = getViewModel().getModelOffsetX() * viewScale;
         double offsetY = getViewModel().getModelOffsetY() * viewScale;
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
-        // g2d.setFont(FontTools.getFont8());
+        // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
+        Font defaultFont = MeasureTool.viewSetting.getFont();
+        g2d.setFont(defaultFont);
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
         g2d.translate(offsetX, offsetY);
         if (infoLayer != null) {
+            // Set font size according to the view size
+            g2d.setFont(new Font("Dialog", 0, getFontSize()));
             infoLayer.paint(g2d);
         }
         g2d.clip(oldClip);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
-    }
-
-    @Override
-    public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(g2d, transform, inverseTransform);
-        }
-    }
-
-    private void drawBackground(Graphics2D g2d) {
-        g2d.clearRect(0, 0, getWidth(), getHeight());
-    }
-
-    @Override
-    protected void updateAffineTransform() {
-        double viewScale = getViewModel().getViewScale();
-        affineTransform.setToScale(viewScale, viewScale);
-
-        // Get Rotation and flip from parent (it does not make sens to have different geometric position)
-        Boolean flip = (Boolean) view2d.getActionValue(ActionW.FLIP.cmd());
-        Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
-        if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
-                rotationAngle = 360 - rotationAngle;
-            }
-            Rectangle2D imageCanvas = getViewModel().getModelArea();
-            affineTransform.rotate(rotationAngle * Math.PI / 180.0, imageCanvas.getWidth() / 2.0,
-                imageCanvas.getHeight() / 2.0);
-        }
-        if (flip != null && flip) {
-            // Using only one allows to enable or disable flip with the rotation action
-
-            // case FlipMode.TOP_BOTTOM:
-            // at = new AffineTransform(new double[] {1.0,0.0,0.0,-1.0});
-            // at.translate(0.0, -imageHt);
-            // break;
-            // case FlipMode.LEFT_RIGHT :
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,1.0});
-            // at.translate(-imageWid, 0.0);
-            // break;
-            // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
-            // at.translate(-imageWid, -imageHt);
-            affineTransform.scale(-1.0, 1.0);
-            affineTransform.translate(-getViewModel().getModelArea().getWidth(), 0.0);
-        }
-
-        try {
-            inverseTransform.setTransform(affineTransform.createInverse());
-        } catch (NoninvertibleTransformException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -244,5 +159,21 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     public void enableMouseAndKeyListener(MouseActions mouseActions) {
         // TODO Auto-generated method stub
 
+    }
+
+    private int getFontSize() {
+        int imageWidth = getWidth();
+        if (imageWidth >= 1 && imageWidth <= 101) {
+            return 2;
+        } else if (imageWidth >= 102 && imageWidth <= 152) {
+            return 3;
+        } else if (imageWidth >= 153 && imageWidth <= 203) {
+            return 4;
+        } else if (imageWidth >= 204 && imageWidth <= 254) {
+            return 5;
+        } else if (imageWidth >= 255 && imageWidth <= 305) {
+            return 6;
+        }
+        return 7;
     }
 }

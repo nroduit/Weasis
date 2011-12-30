@@ -1,11 +1,24 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *     Marcelo Porto 
+ ******************************************************************************/
+
 package org.weasis.core.ui.util;
 
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -28,24 +41,24 @@ public class ImagePrint implements Printable {
     private PrintOptions printOptions;
     private Object printable;
 
-    // private double scale;
-
     public ImagePrint(RenderedImage renderedImage, PrintOptions printOptions) {
         this.printable = renderedImage;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions == null ? new PrintOptions(false, 1.0F) : printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
     }
 
     public ImagePrint(ExportImage<ImageElement> exportImage, PrintOptions printOptions) {
         this.printable = exportImage;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
+        ;
     }
 
     public ImagePrint(ExportLayout<ImageElement> layout, PrintOptions printOptions) {
         this.printable = layout;
         printLoc = new Point(0, 0);
-        this.printOptions = printOptions;
+        this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
+        ;
     }
 
     public void setPrintLocation(Point d) {
@@ -117,17 +130,15 @@ public class ImagePrint implements Printable {
         if ((layout == null) || (g2d == null)) {
             return;
         }
-
         Dimension dimGrid = layout.layoutModel.getGridSize();
-        double placeholderX = f.getImageableWidth() - (dimGrid.width - 1) * 5;
-        double placeholderY = f.getImageableHeight() - (dimGrid.height - 1) * 5;
+        double placeholderX = f.getImageableWidth() - dimGrid.width * 5;
+        double placeholderY = f.getImageableHeight() - dimGrid.height * 5;
 
         int lastx = 0;
-        int lasty = 0;
         double lastwx = 0.0;
-        double lastwy = 0.0;
+        double[] lastwy = new double[dimGrid.width + 1];
         double wx = 0.0;
-        double wy = 0.0;
+
         final LinkedHashMap<LayoutConstraints, JComponent> elements = layout.layoutModel.getConstraints();
         Iterator<Entry<LayoutConstraints, JComponent>> enumVal = elements.entrySet().iterator();
         while (enumVal.hasNext()) {
@@ -139,41 +150,62 @@ public class ImagePrint implements Printable {
             } else {
                 image.getInfoLayer().setVisible(false);
             }
+            double padX = 0.0;
+            double padY = 0.0;
+            Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound");
+            Point2D originCenter = (Point2D) image.getActionValue("origin.center");
+            Double originZoom = (Double) image.getActionValue("origin.zoom");
             RenderedImage img = image.getSourceImage();
-            int w = img == null ? image.getWidth() : img.getWidth();
-            int h = img == null ? image.getHeight() : img.getHeight();
+            if (img != null && originCenter != null && originZoom != null) {
+                boolean bestfit = originZoom <= 0.0;
+                double canvasWidth;
+                double canvasHeight;
+                if (bestfit || originSize == null) {
+                    canvasWidth = img.getWidth();
+                    canvasHeight = img.getHeight();
+                } else {
+                    canvasWidth = originSize.getWidth() / originZoom;
+                    canvasHeight = originSize.getHeight() / originZoom;
+                }
+                double scaleCanvas =
+                    Math.min(placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
 
-            double scaleFactor = Math.min(placeholderX * key.weightx / w, placeholderY * key.weighty / h);
-            if (scaleFactor > 1.0) {
-                scaleFactor = 1.0;
+                // Set the print area in pixel
+                double cw = canvasWidth * scaleCanvas;
+                double ch = canvasHeight * scaleCanvas;
+                image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
+
+                if (printOptions.isCenter()) {
+                    padX = (placeholderX * key.weightx - cw) * 0.5;
+                    padY = (placeholderY * key.weighty - ch) * 0.5;
+                } else {
+                    padX = 0.0;
+                    padY = 0.0;
+                }
+
+                double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
+                // Resize in best fit window
+                image.zoom(scaleFactor);
+                if (bestfit) {
+                    image.center();
+                } else {
+                    image.setCenter(originCenter.getX(), originCenter.getY());
+                }
             }
-            // Set the print area in pixel
-            int cw = (int) (w * scaleFactor + 0.5);
-            int ch = (int) (h * scaleFactor + 0.5);
-            image.setSize(cw, ch);
-
-            // Resize in best fit window
-            image.zoom(scaleFactor);
-            image.center();
-
-            g2d.setFont(new Font("Dialog", 0, getFontSize(image.getWidth())));
 
             if (key.gridx == 0) {
                 wx = 0.0;
             } else if (lastx < key.gridx) {
                 wx += lastwx;
             }
-            if (key.gridy == 0) {
-                wy = 0.0;
-            } else if (lasty < key.gridy) {
-                wy += lastwy;
-            }
-            double x = f.getImageableX() + (placeholderX * wx) + (wx == 0.0 ? 0 : key.gridx * 5);
-            double y = f.getImageableY() + (placeholderY * wy) + (wy == 0.0 ? 0 : key.gridy * 5);
+            double wy = lastwy[key.gridx];
+            double x = printLoc.x + f.getImageableX() + (placeholderX * wx) + (wx == 0.0 ? 0 : key.gridx * 5) + padX;
+            double y = printLoc.y + f.getImageableY() + (placeholderY * wy) + (wy == 0.0 ? 0 : key.gridy * 5) + padY;
             lastx = key.gridx;
-            lasty = key.gridy;
             lastwx = key.weightx;
-            lastwy = key.weighty;
+            for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
+                lastwy[i] += key.weighty;
+            }
 
             // Set us to the upper left corner
             g2d.translate(x, y);
@@ -259,18 +291,4 @@ public class ImagePrint implements Printable {
         return scaleFactor;
     }
 
-    private int getFontSize(int imageWidth) {
-        if (imageWidth >= 1 && imageWidth <= 101) {
-            return 2;
-        } else if (imageWidth >= 102 && imageWidth <= 152) {
-            return 3;
-        } else if (imageWidth >= 153 && imageWidth <= 203) {
-            return 4;
-        } else if (imageWidth >= 204 && imageWidth <= 254) {
-            return 5;
-        } else if (imageWidth >= 255 && imageWidth <= 305) {
-            return 6;
-        }
-        return 7;
-    }
 }
