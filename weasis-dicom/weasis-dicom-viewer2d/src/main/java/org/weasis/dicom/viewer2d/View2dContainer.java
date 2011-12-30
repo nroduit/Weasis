@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -42,9 +43,11 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -61,6 +64,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -179,6 +183,32 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (menuRoot != null) {
             menuRoot.removeAll();
             menuRoot.setText(View2dFactory.NAME);
+
+            JMenu printMenu = new JMenu("Print Image");
+            JMenuItem menuStandardPrint = new JMenuItem("Standard Print");
+            final String title = menuStandardPrint.getText();
+            menuStandardPrint.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
+                    JMVUtils.showCenterScreen(dialog, parent);
+                }
+            });
+            printMenu.add(menuStandardPrint);
+
+            // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
+            // menuDicomPrint.addActionListener(new ActionListener() {
+            //
+            // @Override
+            // public void actionPerformed(ActionEvent e) {
+            //
+            // }
+            // });
+            // printMenu.add(menuDicomPrint);
+            menuRoot.add(printMenu);
+
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
             if (viewingAction instanceof ComboItemListener) {
                 menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages

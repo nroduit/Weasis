@@ -19,6 +19,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.SwingUtilities;
 
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
 
@@ -29,12 +30,6 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 (SingleInstanceService) ServiceManager.lookup("javax.jnlp.SingleInstanceService"); //$NON-NLS-1$
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException use) {
-        }
-        // TODO can be removed ?
-        // Workaround for http://www.dcm4che.org/jira/browse/WEA-30
-        if (System.getProperty("javawebstart.version", "").equals("javaws-1.6.0_24")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            // Mode that does not support bundle extension
-            System.setProperty("felix.extensions.enabled", "false"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15
@@ -62,22 +57,45 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     }
 
     @Override
-    public void newActivation(String[] argv) {
+    public void newActivation(final String[] argv) {
+        synchronized (this) {
+            int loop = 0;
+            boolean runLoop = true;
+            while (runLoop && !frameworkLoaded) {
+                try {
+                    Thread.sleep(500);
+                    loop++;
+                    // System.out.println(String.format("Wait to launch new instance: %.1f s", loop * 0.5));
+                    if (loop > 100) {
+                        throw new InterruptedException();
+                    }
+                } catch (InterruptedException e) {
+                    runLoop = false;
+                }
+            }
+        }
         if (m_tracker != null) {
             if (argv.length > 0) {
-                m_tracker.open();
-                Object commandSession = getCommandSession(m_tracker.getService());
-                List<StringBuffer> commandList = splitCommand(argv);
-                if (commandSession != null) {
-                    // Set the main window visible and to the front
-                    commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$
-                    // execute the commands from main argv
-                    for (StringBuffer command : commandList) {
-                        commandSession_execute(commandSession, command);
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        m_tracker.open();
+                        Object commandSession = getCommandSession(m_tracker.getService());
+                        if (commandSession != null) {
+                            List<StringBuffer> commandList = splitCommand(argv);
+                            // Set the main window visible and to the front
+                            commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$
+                            // execute the commands from main argv
+                            for (StringBuffer command : commandList) {
+                                commandSession_execute(commandSession, command);
+                            }
+                            commandSession_close(commandSession);
+                        }
+
+                        m_tracker.close();
                     }
-                    commandSession_close(commandSession);
-                }
-                m_tracker.close();
+                });
             }
         }
     }
