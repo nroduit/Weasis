@@ -13,6 +13,13 @@
 package org.weasis.launcher;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,7 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
+import java.util.jar.Pack200.Unpacker;
+import java.util.zip.GZIPInputStream;
 
+import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -70,6 +82,8 @@ public class AutoProcessor {
      * The property name prefix for the launcher's auto-start property.
      **/
     public static final String AUTO_START_PROP = "felix.auto.start"; //$NON-NLS-1$
+
+    public static final String PACK200_COMPRESSION = ".pack.gz"; //$NON-NLS-1$
 
     /**
      * Used to instigate auto-deploy directory process and auto-install/auto-start configuration property processing
@@ -161,7 +175,7 @@ public class AutoProcessor {
                     // If the bundle is not already installed, then install it
                     // if the 'install' action is present.
                     if ((b == null) && actionList.contains(AUTO_DEPLOY_INSTALL_VALUE)) {
-                        b = context.installBundle(((File) jarList.get(i)).toURI().toString());
+                        b = installBundle(context, ((File) jarList.get(i)).toURI().toString());
                     }
                     // If the bundle is already installed, then update it
                     // if the 'update' action is present.
@@ -180,7 +194,7 @@ public class AutoProcessor {
                         }
                     }
 
-                } catch (BundleException ex) {
+                } catch (Exception ex) {
                     System.err.println("Auto-deploy install: " + ex //$NON-NLS-1$
                         + ((ex.getCause() != null) ? " - " + ex.getCause() : "")); //$NON-NLS-1$ //$NON-NLS-2$
                 }
@@ -283,7 +297,8 @@ public class AutoProcessor {
                 String bundleName = location.substring(location.lastIndexOf("/") + 1, location.length()); //$NON-NLS-1$
                 try {
                     webStartLoader.writeLabel(WebStartLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
-                    Bundle b = context.installBundle(location, null);
+                    Bundle b = installBundle(context, location);
+
                     bundleIter++;
                     webStartLoader.setValue(bundleIter);
                     sl.setBundleStartLevel(b, startLevel);
@@ -336,7 +351,7 @@ public class AutoProcessor {
                 for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
                     // Installing twice just returns the same bundle.
                     try {
-                        Bundle b = context.installBundle(location, null);
+                        Bundle b = installBundle(context, location);
                         if (b != null) {
                             b.start();
                         }
@@ -394,5 +409,61 @@ public class AutoProcessor {
 
     private static boolean isFragment(Bundle bundle) {
         return bundle.getHeaders().get(Constants.FRAGMENT_HOST) != null;
+    }
+
+    private static Bundle installBundle(BundleContext context, String location) throws Exception {
+        boolean pack = location.endsWith(PACK200_COMPRESSION);
+        if (pack) {
+            // Remove the pack classifier from the location path
+            location = location.substring(0, location.length() - 8);
+            pack = context.getBundle(location) == null;
+        }
+
+        if (pack) {
+
+            final URL url = new URL((URL) null, location + PACK200_COMPRESSION, null);
+
+            // URLConnection conn = url.openConnection();
+            // InputStream is = conn.getInputStream();
+            // Unpacker unpacker = Pack200.newUnpacker();
+            // File tmpFile = File.createTempFile("tmpPack200", ".jar");
+            // JarOutputStream origJarStream = new JarOutputStream(new FileOutputStream(tmpFile));
+            // unpacker.unpack(new GZIPInputStream(is), origJarStream);
+            // origJarStream.close();
+
+            final PipedInputStream in = new PipedInputStream();
+            final PipedOutputStream out = new PipedOutputStream(in);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    JarOutputStream jarStream = null;
+                    try {
+                        URLConnection conn = url.openConnection();
+                        // Support for http proxy authentication.
+                        String auth = System.getProperty("http.proxyAuth", null);
+                        if ((auth != null) && (auth.length() > 0)) {
+                            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) {
+                                String base64 = Util.base64Encode(auth);
+                                conn.setRequestProperty("Proxy-Authorization", "Basic " + base64);
+                            }
+                        }
+                        InputStream is = conn.getInputStream();
+                        Unpacker unpacker = Pack200.newUnpacker();
+                        jarStream = new JarOutputStream(out);
+                        unpacker.unpack(new GZIPInputStream(is), jarStream);
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        FileUtil.safeClose(jarStream);
+                    }
+                }
+            }).start();
+
+            return context.installBundle(location, in);
+
+        }
+        return context.installBundle(location, null);
     }
 }
