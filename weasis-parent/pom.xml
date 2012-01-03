@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<!--
-		Shared parent. Define the settings common to all projects using Weasis
-	-->
+	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
 	<version>1.9-SNAPSHOT</version>
@@ -44,7 +43,6 @@
 	</dependencyManagement>
 	<build>
 		<plugins>
-
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -73,16 +71,13 @@
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
 							<Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-							<!--
-								Using <_exportcontents> requires to configure <Export-Package>,
-								there is no default export (All packages, except any containing
-								'impl' or 'internal'
-							-->
+							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export 
+								(All packages, except any containing 'impl' or 'internal' -->
 							<_removeheaders>
 								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Build-Jdk,Created-By
 							</_removeheaders>
 							<_nouses>true</_nouses>
-							<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
+							<Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
 							<Embed-Directory>lib</Embed-Directory>
 							<Embed-StripGroup>true</Embed-StripGroup>
 						</instructions>

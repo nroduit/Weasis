@@ -8,8 +8,8 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<version>1.1.2-SNAPSHOT</version>
 	<properties>
-		<!-- dollar property to avoid replacing some variables when filtering resources 
-			files (ex. ${user.home} in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
+			in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -18,7 +18,7 @@
 		<felix.framework.version>4.0.2</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
 		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
-		
+
 		<felix.servlet.version>1.0.0</felix.servlet.version>
 		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
 		<felix.configadmin.version>1.2.8</felix.configadmin.version>
@@ -37,7 +37,7 @@
 		<substance.version>7.0.0</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-<!-- 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
+		<!-- <weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>
@@ -280,22 +280,39 @@
 							<goal>run</goal>
 						</goals>
 						<configuration>
-							<tasks>
+							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex"
-									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
 									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
-									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
-									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
-							</tasks>
+							</target>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-
+			<plugin>
+				<groupId>org.openxdata.plugins</groupId>
+				<artifactId>maven-pack200-plugin</artifactId>
+				<version>1.0.1</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>packFiles</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<archiveDirectory>${tmp.bundle.dir}</archiveDirectory>
+					<includes>
+						<include>**/*.jar</include>
+					</includes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -324,9 +341,8 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" 
-					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
-					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
+					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -386,8 +402,7 @@
 									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
 									<icon>etc/weasis.ico</icon>
-									<!-- Setting it to . will change the current dir to the same directory 
-										as the executable -->
+									<!-- Setting it to . will change the current dir to the same directory as the executable -->
 									<cmdLine>$dicom:get --portable</cmdLine>
 									<chdir>.</chdir>
 									<classPath>

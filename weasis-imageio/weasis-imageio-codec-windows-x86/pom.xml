@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
@@ -25,6 +26,8 @@
 							processor=x86; osname=win32</Bundle-NativeCode>
 						<Fragment-Host>weasis-imageio-codec;bundle-version="0.7.0"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
+						<!-- Do not inline native libs -->
+						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
 						<Specification-Version>1.2-b04</Specification-Version>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
@@ -26,10 +27,10 @@
 						<Service-Component>OSGI-INF/ImageioCodec.xml</Service-Component>
 						<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export 
 							(All packages, except any containing 'impl' or 'internal' -->
-						<_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents>
+						<!-- <_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents> -->
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<!-- Do not add  com.sun.media.jai => problem to initialize JAI class -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
+						<!-- Do not add com.sun.media.jai => problem to initialize JAI class -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</Export-Package>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
 						<Specification-Version>1.2-b04</Specification-Version>
