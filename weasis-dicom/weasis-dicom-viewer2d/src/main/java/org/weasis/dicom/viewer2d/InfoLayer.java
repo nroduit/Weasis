@@ -67,6 +67,8 @@ public class InfoLayer implements AnnotationsLayer {
     private String pixelInfo = ""; //$NON-NLS-1$
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
+    private int border = BORDER;
+    private double thickLength = 15.0;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
@@ -80,6 +82,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
+        displayPreferences.put(MEMORY_BAR, true);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
         DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
@@ -88,6 +91,34 @@ public class InfoLayer implements AnnotationsLayer {
         } else {
             model = null;
         }
+    }
+
+    @Override
+    public AnnotationsLayer getLayerCopy(DefaultView2d view2DPane) {
+        InfoLayer layer = new InfoLayer(view2DPane);
+        HashMap<String, Boolean> prefs = layer.displayPreferences;
+        prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
+        prefs.put(ANONYM_ANNOTATIONS, getDisplayPreferences(ANONYM_ANNOTATIONS));
+        prefs.put(IMAGE_ORIENTATION, getDisplayPreferences(IMAGE_ORIENTATION));
+        prefs.put(SCALE, getDisplayPreferences(SCALE));
+        prefs.put(LUT, getDisplayPreferences(LUT));
+        prefs.put(PIXEL, getDisplayPreferences(PIXEL));
+        prefs.put(WINDOW_LEVEL, getDisplayPreferences(WINDOW_LEVEL));
+        prefs.put(ZOOM, getDisplayPreferences(ZOOM));
+        prefs.put(ROTATION, getDisplayPreferences(ROTATION));
+        prefs.put(FRAME, getDisplayPreferences(FRAME));
+        prefs.put(MEMORY_BAR, getDisplayPreferences(MEMORY_BAR));
+        return layer;
+    }
+
+    @Override
+    public int getBorder() {
+        return border;
+    }
+
+    @Override
+    public void setBorder(int border) {
+        this.border = border;
     }
 
     @Override
@@ -104,12 +135,14 @@ public class InfoLayer implements AnnotationsLayer {
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
+        thickLength = Math.min(bound.width, bound.height) / 20.0;
+        thickLength = thickLength > 15.0 ? 15.0 : thickLength < 5.0 ? 5.0 : thickLength;
 
         g2.setPaint(color);
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-        float drawY = bound.height - BORDER;
+        float drawY = bound.height - border;
         DicomImageElement dcm = null;
         if (image instanceof DicomImageElement) {
             dcm = (DicomImageElement) image;
@@ -150,7 +183,7 @@ public class InfoLayer implements AnnotationsLayer {
                 Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
                 paintColorFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.lossy") + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + Messages.getString("InfoLayer.percent_symb")), BORDER, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.lossy") + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 drawY -= fontHeight;
             }
         }
@@ -158,9 +191,9 @@ public class InfoLayer implements AnnotationsLayer {
 
         if (getDisplayPreferences(PIXEL)) {
             String str = Messages.getString("InfoLayer.pixel") + pixelInfo; //$NON-NLS-1$
-            paintFontOutline(g2, str, BORDER, drawY - 1);
+            paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
-            pixelInfoBound.setBounds(BORDER - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
+            pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
                 (int) fontHeight + 2);
             // g2.draw(pixelInfoBound);
         }
@@ -168,20 +201,20 @@ public class InfoLayer implements AnnotationsLayer {
             paintFontOutline(
                 g2,
                 Messages.getString("InfoLayer.win") + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$
-                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), BORDER, drawY);
+                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
             paintFontOutline(
                 g2,
                 Messages.getString("InfoLayer.zoom") + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100) //$NON-NLS-1$
-                    + Messages.getString("InfoLayer.percent_symb"), BORDER, drawY); //$NON-NLS-1$
+                    + Messages.getString("InfoLayer.percent_symb"), border, drawY); //$NON-NLS-1$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
             paintFontOutline(
                 g2,
-                Messages.getString("InfoLayer.angle") + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + Messages.getString("InfoLayer.angle_symb"), BORDER, drawY); //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("InfoLayer.angle") + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
             drawY -= fontHeight;
         }
 
@@ -195,7 +228,7 @@ public class InfoLayer implements AnnotationsLayer {
             }
             paintFontOutline(g2,
                 Messages.getString("InfoLayer.frame") + instance + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$ //$NON-NLS-2$
-                    + view2DPane.getSeries().size(), BORDER, drawY);
+                    + view2DPane.getSeries().size(), border, drawY);
             drawY -= fontHeight;
 
             Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -203,7 +236,7 @@ public class InfoLayer implements AnnotationsLayer {
                 drawY -= 13;
                 int pColor = (int) (510 * imgProgression);
                 g2.setPaint(new Color(510 - pColor > 255 ? 255 : 510 - pColor, pColor > 255 ? 255 : pColor, 0));
-                g2.fillOval(BORDER, (int) drawY, 13, 13);
+                g2.fillOval(border, (int) drawY, 13, 13);
                 drawY -= 2;
             }
         }
@@ -220,7 +253,7 @@ public class InfoLayer implements AnnotationsLayer {
                 if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
-                        paintFontOutline(g2, infos[j].getFormattedText(value), BORDER, drawY);
+                        paintFontOutline(g2, infos[j].getFormattedText(value), border, drawY);
                         drawY += fontHeight;
                     }
                 }
@@ -233,25 +266,25 @@ public class InfoLayer implements AnnotationsLayer {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
-                        paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
+                        paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
                         drawY += fontHeight;
                     }
                 }
             }
             corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
-            drawY = bound.height - BORDER;
+            drawY = bound.height - border;
             infos = corner.getInfos();
             for (int j = infos.length - 1; j >= 0; j--) {
                 if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
-                        paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
+                        paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
                         drawY -= fontHeight;
                     }
                 }
             }
-            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - BORDER, (int) (drawY - 5));
+            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY - 5));
             drawY -= 8;
 
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
@@ -353,17 +386,18 @@ public class InfoLayer implements AnnotationsLayer {
                     g2.setFont(bigFont);
                 }
 
-                paintColorFontOutline(g2, colLeft.substring(0, 1), BORDER + 15, midy + fontHeight / 2.0f, highlight);
+                paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength), midy + fontHeight
+                    / 2.0f, highlight);
 
                 if (colLeft.length() > 1) {
                     g2.setFont(subscriptFont);
-                    paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()), BORDER + 15 + shiftx, midy
-                        + fontHeight / 2.0f, highlight);
+                    paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
+                        (float) (border + thickLength + shiftx), midy + fontHeight / 2.0f, highlight);
                 }
                 g2.setFont(oldFont);
             }
 
-            paintFontOutline(g2, orientation.toString(), BORDER, bound.height - BORDER);
+            paintFontOutline(g2, orientation.toString(), border, bound.height - border);
 
         }
     }
@@ -382,7 +416,7 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
-        if (series instanceof DicomSeries) {
+        if (getDisplayPreferences(MEMORY_BAR) && series instanceof DicomSeries) {
             DicomSeries s = (DicomSeries) series;
             boolean[] list = s.getImageInMemoryList();
             int length = list.length > 120 ? 120 : list.length;
@@ -583,17 +617,19 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.black);
 
             double posx = bound.width / 2.0 - scaleSizex / 2.0;
-            double posy = bound.height - BORDER;
+            double posy = bound.height - border;
             Line2D line = new Line2D.Double(posx, posy, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy - 15.0, posx, posy);
+            line.setLine(posx, posy - thickLength, posx, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx + scaleSizex, posy - 15.0, posx + scaleSizex, posy);
+            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
             int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
+            double midThick = thickLength * 2.0 / 3.0;
+            double smallThick = thickLength / 3.0;
             double divSquare = scaleSizex / divisor;
             for (int i = 1; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - 10.0);
+                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
                 g2d.draw(getOutLine(line));
             }
             if (divSquare > 90) {
@@ -601,7 +637,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - 5.0);
+                        line.setLine(secBar, posy, secBar, posy - smallThick);
                         g2d.draw(getOutLine(line));
                     }
                 }
@@ -610,12 +646,13 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.white);
             line.setLine(posx, posy, posx + scaleSizex, posy);
             g2d.draw(line);
-            line.setLine(posx, posy - 15.0, posx, posy);
+            line.setLine(posx, posy - thickLength, posx, posy);
             g2d.draw(line);
-            line.setLine(posx + scaleSizex, posy - 15.0, posx + scaleSizex, posy);
+            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
             g2d.draw(line);
+
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - 10.0);
+                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
                 g2d.draw(line);
             }
             if (divSquare > 90) {
@@ -623,7 +660,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - 5.0);
+                        line.setLine(secBar, posy, secBar, posy - smallThick);
                         g2d.draw(line);
                     }
                 }
@@ -650,18 +687,20 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setPaint(Color.black);
 
-            double posx = BORDER;
+            double posx = border;
             double posy = bound.height / 2.0 - scaleSizeY / 2.0;
             Line2D line = new Line2D.Double(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy, posx + 15, posy);
+            line.setLine(posx, posy, posx + thickLength, posy);
             g2d.draw(getOutLine(line));
-            line.setLine(posx, posy + scaleSizeY, posx + 15, posy + scaleSizeY);
+            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
             int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
             double divSquare = scaleSizeY / divisor;
+            double midThick = thickLength * 2.0 / 3.0;
+            double smallThick = thickLength / 3.0;
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + 10.0, posy + divSquare * i);
+                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
                 g2d.draw(getOutLine(line));
             }
             if (divSquare > 90) {
@@ -669,7 +708,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + 5.0, secBar);
+                        line.setLine(posx, secBar, posx + smallThick, secBar);
                         g2d.draw(getOutLine(line));
                     }
                 }
@@ -678,12 +717,12 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.white);
             line.setLine(posx, posy, posx, posy + scaleSizeY);
             g2d.draw(line);
-            line.setLine(posx, posy, posx + 15, posy);
+            line.setLine(posx, posy, posx + thickLength, posy);
             g2d.draw(line);
-            line.setLine(posx, posy + scaleSizeY, posx + 15, posy + scaleSizeY);
+            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
             g2d.draw(line);
             for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + 10.0, posy + divSquare * i);
+                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
                 g2d.draw(line);
             }
             if (divSquare > 90) {
@@ -691,7 +730,7 @@ public class InfoLayer implements AnnotationsLayer {
                 for (int i = 0; i < divisor; i++) {
                     for (int k = 1; k < 10; k++) {
                         double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + 5.0, secBar);
+                        line.setLine(posx, secBar, posx + smallThick, secBar);
                         g2d.draw(line);
                     }
                 }

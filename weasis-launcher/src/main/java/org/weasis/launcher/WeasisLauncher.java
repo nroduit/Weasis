@@ -37,7 +37,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.basic.BasicColorChooserUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -82,8 +81,9 @@ public class WeasisLauncher {
     public static final String CONFIG_DIRECTORY = "conf"; //$NON-NLS-1$
 
     private static HostActivator m_activator = null;
-    private static Felix m_felix = null;
-    static ServiceTracker m_tracker = null;
+    static volatile Felix m_felix = null;
+    static volatile ServiceTracker m_tracker = null;
+    static volatile boolean frameworkLoaded = false;
 
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
@@ -321,6 +321,7 @@ public class WeasisLauncher {
 
                 @Override
                 public void run() {
+                    m_tracker.open();
                     Object commandSession = getCommandSession(m_tracker.getService());
                     if (commandSession != null) {
                         // execute the commands from main argv
@@ -339,7 +340,7 @@ public class WeasisLauncher {
             if (!mainUI.equals("")) { //$NON-NLS-1$
                 boolean uiStarted = false;
                 for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                    if (b.getSymbolicName().equals(mainUI)) { //$NON-NLS-1$
+                    if (b.getSymbolicName().equals(mainUI) && b.getState() == Bundle.ACTIVE) { //$NON-NLS-1$
                         uiStarted = true;
                         break;
                     }
@@ -348,7 +349,7 @@ public class WeasisLauncher {
                     throw new Exception("Main User Interface bundle cannot be started"); //$NON-NLS-1$
                 }
             }
-
+            frameworkLoaded = true;
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -360,12 +361,6 @@ public class WeasisLauncher {
         } finally {
             Runtime.getRuntime().halt(exitStatus);
         }
-    }
-
-    public Bundle[] getInstalledBundles() {
-        // Use the system bundle activator to gain external
-        // access to the set of installed bundles.
-        return m_activator.getBundles();
     }
 
     public static List<StringBuffer> splitCommand(String[] args) {
@@ -903,8 +898,6 @@ public class WeasisLauncher {
      */
 
     public static String setLookAndFeel(String look) {
-        // Workaround in substance 6.3 to work with JAVA 7
-        UIManager.put("ColorChooserUI", BasicColorChooserUI.class.getName()); //$NON-NLS-1$
         // Do not display metal LAF in bold, it is ugly
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF

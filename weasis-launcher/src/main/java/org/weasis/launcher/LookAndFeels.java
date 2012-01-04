@@ -19,7 +19,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 public final class LookAndFeels {
 
     private static final transient String[] NAMES = { "Substance Autumn", "Substance BusinessBlackSteel", //$NON-NLS-1$ //$NON-NLS-2$
-        "Substance BusinessBlueSteel", "Substance Business", "Substance ChallengerDeep (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance BusinessBlueSteel", "Substance Business", "Substance Cerulean", "Substance ChallengerDeep (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         "Substance CremeCoffee", "Substance Creme", "Substance DustCoffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance EmeraldDusk (dark)", "Substance Gemini", "Substance GraphiteAqua", "Substance GraphiteGlass (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance MistAqua", "Substance MistSilver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -30,6 +30,7 @@ public final class LookAndFeels {
         "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCeruleanLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceChallengerDeepLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel", //$NON-NLS-1$
@@ -84,8 +85,9 @@ public final class LookAndFeels {
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof LookAndFeelInfo))
+            if (!(obj instanceof LookAndFeelInfo)) {
                 return false;
+            }
             LookAndFeelInfo other = (LookAndFeelInfo) obj;
             return getClassName().equals(other.getClassName());
         }

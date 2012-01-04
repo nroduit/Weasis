@@ -15,7 +15,7 @@
 
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<felix.framework.version>4.0.1</felix.framework.version>
+		<felix.framework.version>4.0.2</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
 		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
 		
@@ -34,7 +34,7 @@
 		<weasis.dicom.version>0.5.9-SNAPSHOT</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>6.3.1</substance.version>
+		<substance.version>7.0.0</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 <!-- 		<weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->

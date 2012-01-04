@@ -67,6 +67,14 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
     }
 
+    public boolean isBuildIterator() {
+        return buildIterator;
+    }
+
+    public void setBuildIterator(boolean buildIterator) {
+        this.buildIterator = buildIterator;
+    }
+
     @Override
     public RandomIter getReadIterator() {
         return readIterator;
