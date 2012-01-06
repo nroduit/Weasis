@@ -79,8 +79,8 @@ public class DicomImageUtils {
                 setWindowLevelExponentialLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
                 break;
             case SEQUENCE:
-                setWindowLevelSequenceLut(window, level, lutShape.getLookup(), minInValue, outLut, minOutValue,
-                    maxOutValue, inverse);
+                setWindowLevelSequenceLut(window, level, lutShape.getLookup(), minInValue, maxInValue, outLut,
+                    minOutValue, maxOutValue, inverse);
                 break;
             default:
                 return null;
@@ -115,7 +115,7 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
@@ -154,7 +154,7 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
@@ -176,7 +176,7 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
@@ -199,7 +199,7 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
@@ -222,7 +222,7 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
@@ -245,10 +245,23 @@ public class DicomImageUtils {
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
-            } else {
+            } else if (outLut instanceof short[]) {
                 Array.set(outLut, i, (short) value);
             }
         }
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private static Object getLutDataArray(LookupTableJAI lookup) {
+        Object lutDataArray = null;
+        if (lookup != null) {
+            if (lookup.getDataType() == DataBuffer.TYPE_BYTE) {
+                lutDataArray = lookup.getByteData(0);
+            } else if (lookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+                lutDataArray = lookup.getShortData(0);
+            }
+        }
+        return lutDataArray;
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -256,8 +269,81 @@ public class DicomImageUtils {
      * @return a normalized LookupTableJAI based upon given lutSequence <br>
      */
 
-    // TODO - wrong method !! Should do an X-Axis based normalized interpolation and not Y-axis as actually
-    protected static void setWindowLevelSequenceLut(float window, float level, LookupTableJAI lutSequence,
+    // TODO should use DataBuffer Interface instead of LookupTableJAI object
+
+    private static void setWindowLevelSequenceLut(float window, float level, LookupTableJAI lookupSequence,
+        float minInValue, float maxInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
+
+        Object inLutDataArray = getLutDataArray(lookupSequence);
+
+        if (inLutDataArray == null) {
+            return;
+        }
+
+        float lowLevel = level - window / 2f;
+        float highLevel = level + window / 2f;
+
+        // TODO should use dataTypeSize for lookupSequence instead of computing min/max and doing a normalization
+        // int minOutLookupValue = Integer.MAX_VALUE;
+        // int maxOutLookupValue = Integer.MIN_VALUE;
+        //
+        // for (int index = 0; index < Array.getLength(inLutDataArray); index++) {
+        // int currentVal = Array.getInt(inLutDataArray, index);
+        //
+        // if (currentVal < minOutLookupValue) {
+        // minOutLookupValue = currentVal;
+        // }
+        // if (currentVal > maxOutLookupValue) {
+        // maxOutLookupValue = currentVal;
+        // }
+        // }
+
+        // TODO assert maxInValue equals maxOutLookupValue
+        int lookupRangeSize = Array.getLength(inLutDataArray) - 1;
+
+        float widthRescaleRatio = lookupRangeSize / window;
+        float outRescaleRatio = maxOutValue / maxInValue;
+
+        for (int i = 0; i < Array.getLength(outLut); i++) {
+            int value;
+            float inValueRescaled;
+
+            if ((i + minInValue) <= lowLevel) {
+                inValueRescaled = 0;
+            } else if ((i + minInValue) > highLevel) {
+                inValueRescaled = lookupRangeSize;
+            } else {
+                inValueRescaled = (i + minInValue - lowLevel) * widthRescaleRatio;
+            }
+
+            int inValueRoundDown = Math.max(0, (int) Math.floor(inValueRescaled));
+            int inValueRoundUp = Math.min(lookupRangeSize, (int) Math.ceil(inValueRescaled));
+
+            int valueDown = Array.getInt(inLutDataArray, inValueRoundDown);
+            int valueUp = Array.getInt(inLutDataArray, inValueRoundUp);
+
+            // Linear Interpolation of the output value with respect to the rescale ratio
+            value =
+                (inValueRoundUp == inValueRoundDown) ? valueDown : //
+                    Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
+                        / (inValueRoundUp - inValueRoundDown));
+
+            value = Math.round(value * outRescaleRatio);
+            // }
+
+            value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
+            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+
+            if (outLut instanceof byte[]) {
+                Array.set(outLut, i, (byte) value);
+            } else if (outLut instanceof short[]) {
+                Array.set(outLut, i, (short) value);
+            }
+        }
+    }
+
+    @Deprecated
+    protected static void setWindowLevelSequenceLutOld(float window, float level, LookupTableJAI lutSequence,
         float minInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
 
         if (lutSequence == null) {

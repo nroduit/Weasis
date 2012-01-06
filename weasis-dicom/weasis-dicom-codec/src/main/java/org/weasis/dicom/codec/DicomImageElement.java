@@ -15,7 +15,10 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.media.jai.Histogram;
 import javax.media.jai.JAI;
@@ -38,7 +41,8 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 public class DicomImageElement extends ImageElement {
 
     volatile private LookupTableJAI modalityLookup = null;
-    volatile private List<PresetWindowLevel> presetList = null;
+    volatile private List<PresetWindowLevel> windowingPresetCollection = null;
+    volatile private Collection<LutShape> lutShapeCollection = null;
 
     volatile private Histogram histogram = null;
     volatile private int maxHistoCount = Integer.MIN_VALUE;
@@ -409,13 +413,6 @@ public class DicomImageElement extends ImageElement {
         int maxValue = (int) (fillLutOutside ? getMaxAllocatedValue() : getMaxValue());
 
         return DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false, inverseLut);
-
-        // assert (lookup instanceof ByteLookupTable);
-
-        // return (lookup instanceof ByteLookupTable) ? new LookupTableJAI(((ByteLookupTable) lookup).getTable(),
-        // lookup.getOffset()) : null;
-        // return (lookup instanceof ByteLookupTable)
-        // ? new LookupTableJAI(((ByteLookupTable) lookup).getTable(), minValue) : null;
     }
 
     /**
@@ -427,10 +424,25 @@ public class DicomImageElement extends ImageElement {
     }
 
     public List<PresetWindowLevel> getPresetList() {
-        if (presetList == null) {
-            presetList = Arrays.asList(PresetWindowLevel.getPresetCollection(this));
+        if (windowingPresetCollection == null) {
+            windowingPresetCollection = Arrays.asList(PresetWindowLevel.getPresetCollection(this));
         }
-        return presetList;
+        return windowingPresetCollection;
+    }
+
+    public Collection<LutShape> getLutShapeCollection() {
+        if (lutShapeCollection != null) {
+            return lutShapeCollection;
+        }
+
+        Set<LutShape> lutShapeSet = new LinkedHashSet<LutShape>();
+        for (PresetWindowLevel preset : getPresetList()) {
+            lutShapeSet.add(preset.getLutShape());
+        }
+
+        lutShapeCollection = Arrays.asList(LutShape.getFullShapeArray(lutShapeSet));
+
+        return lutShapeCollection;
     }
 
     /**
@@ -616,15 +628,19 @@ public class DicomImageElement extends ImageElement {
 
         ParameterBlock pb = new ParameterBlock();
 
+        LookupTableJAI modalityLookup = getModalityLookup(pixelPadding);
+
         pb.addSource(imageSource);
-        pb.add(getModalityLookup(pixelPadding));
+        pb.add(modalityLookup);
         final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
 
         pb.removeSources();
         pb.removeParameters();
 
+        LookupTableJAI voiLookup = getVOILookup(window, level, lutShape);
+
         pb.addSource(imageModalityTransformed);
-        pb.add(getVOILookup(window, level, lutShape));
+        pb.add(voiLookup);
         final RenderedImage imageVOITransformed = JAI.create("lookup", pb, null);
 
         return imageVOITransformed;

@@ -89,14 +89,16 @@ public class LutShape {
     public static LutShape[] getFullShapeArray(Collection<LutShape> lutShape) {
         Set<LutShape> lutShapeSet = new LinkedHashSet<LutShape>(lutShape);
         for (LutShape shape : DEFAULT_LUT_SHAPE_LIST) {
-            if (!lutShapeSet.contains(shape)) {
-                lutShapeSet.add(shape);
-            }
+            lutShapeSet.add(shape);
         }
         return lutShapeSet.toArray(new LutShape[lutShapeSet.size()]);
     }
 
     public static LutShape[] getShapeCollection(ImageElement image) {
+        if (image == null) {
+            return null;
+        }
+
         ArrayList<LutShape> lutShapeList = new ArrayList<LutShape>();
 
         if (image != null) {
