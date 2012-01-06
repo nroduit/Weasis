@@ -652,13 +652,11 @@ public class InfoLayer implements AnnotationsLayer {
 
         // Offset in pixel for the Left/Down side of the coordinate system
         boolean isMinInputValueNegative = minInputValue < 0;
-        final float xOffsetCoordinateSystemOrigin = isMinInputValueNegative ? minInputValue : -5f;
+        final float xOffsetCoordinateSystemOrigin = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : -5f;
         final float yOffsetCoordinateSystemOrigin = -5f;
 
-        final float xAxisCoordinateSystemMinValue = isMinInputValueNegative ? minInputValue : 0;
-        final float xAxisCoordinateSystemMaxValue =
-            isMinInputValueNegative ? xAxisCoordinateSystemRange + xOffsetCoordinateSystemOrigin
-                : xAxisCoordinateSystemRange;
+        final float xAxisCoordinateSystemMinValue = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : 0;
+        final float xAxisCoordinateSystemMaxValue = xAxisCoordinateSystemRange + xOffsetCoordinateSystemOrigin;
 
         // TODO - better to use a scaleTransform instead of scale ratio with many variables!!!
         final float xAxisRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
@@ -715,28 +713,28 @@ public class InfoLayer implements AnnotationsLayer {
             int yVal = fullRangeVoiLUT[i] & 0x000000FF; // Mask because byte is signed by default
             yVal = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yVal) : yVal));
 
-            if (yVal == maxOutputValue || yVal == minOutputValue) {
-                isRealValuesLutPathMoveToDefined = false;
-                isOutsideRangeLutPathMoveToDefined = false;
-            } else {
-                if ((minInputValue + i) < lowInputValue || (minInputValue + i) > highInputValue) {
-                    if (isOutsideRangeLutPathMoveToDefined) {
-                        outsideRangeLutPath.lineTo(xVal, yVal);
-                        isRealValuesLutPathMoveToDefined = false;
-                    } else {
-                        outsideRangeLutPath.moveTo(xVal, yVal);
-                        isOutsideRangeLutPathMoveToDefined = true;
-                    }
+            // if (yVal == maxOutputValue || yVal == minOutputValue) {
+            // isRealValuesLutPathMoveToDefined = false;
+            // isOutsideRangeLutPathMoveToDefined = false;
+            // } else {
+            if ((minInputValue + i) < lowInputValue || (minInputValue + i) > highInputValue) {
+                if (isOutsideRangeLutPathMoveToDefined) {
+                    outsideRangeLutPath.lineTo(xVal, yVal);
+                    isRealValuesLutPathMoveToDefined = false;
                 } else {
-                    if (isRealValuesLutPathMoveToDefined) {
-                        insideRangeLutPath.lineTo(xVal, yVal);
-                        isOutsideRangeLutPathMoveToDefined = false;
-                    } else {
-                        insideRangeLutPath.moveTo(xVal, yVal);
-                        isRealValuesLutPathMoveToDefined = true;
-                    }
+                    outsideRangeLutPath.moveTo(xVal, yVal);
+                    isOutsideRangeLutPathMoveToDefined = true;
+                }
+            } else {
+                if (isRealValuesLutPathMoveToDefined) {
+                    insideRangeLutPath.lineTo(xVal, yVal);
+                    isOutsideRangeLutPathMoveToDefined = false;
+                } else {
+                    insideRangeLutPath.moveTo(xVal, yVal);
+                    isRealValuesLutPathMoveToDefined = true;
                 }
             }
+            // }
         }
 
         // /////////////////////////////////////////////////////////////////////////////////
@@ -751,22 +749,24 @@ public class InfoLayer implements AnnotationsLayer {
         int xLevel = Math.round(xAxisRescaleRatio * level);
 
         final Path2D yAxisOnLowLevelLine = new Path2D.Float();
-        yAxisOnLowLevelLine.moveTo(xLowLevel, 0);
-        yAxisOnLowLevelLine.lineTo(xLowLevel, yAxisCoordinateSystemRange);
-
+        if (lowLevel >= lowInputValue) {
+            yAxisOnLowLevelLine.moveTo(xLowLevel, 0);
+            yAxisOnLowLevelLine.lineTo(xLowLevel, yAxisCoordinateSystemRange);
+        }
         final Path2D yAxisOnHighLevelLine = new Path2D.Float();
-        yAxisOnHighLevelLine.moveTo(xHighLevel, 0);
-        yAxisOnHighLevelLine.lineTo(xHighLevel, yAxisCoordinateSystemRange);
-
-        final Path2D yAxisOnLevelLine = new Path2D.Float();
-        yAxisOnLevelLine.moveTo(xLevel, 0);
-        yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
-
-        final Path2D xAxisOnLevelLine = new Path2D.Float();
-        int yLevel = lookup.lookup(0, (int) level) & 0x000000FF;
-        yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
-        xAxisOnLevelLine.moveTo(0, yLevel);
-        xAxisOnLevelLine.lineTo(xLevel, yLevel);
+        if (highLevel <= highInputValue) {
+            yAxisOnHighLevelLine.moveTo(xHighLevel, 0);
+            yAxisOnHighLevelLine.lineTo(xHighLevel, yAxisCoordinateSystemRange);
+        }
+        // final Path2D yAxisOnLevelLine = new Path2D.Float();
+        // yAxisOnLevelLine.moveTo(xLevel, 0);
+        // yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
+        //
+        // final Path2D xAxisOnLevelLine = new Path2D.Float();
+        // int yLevel = lookup.lookup(0, (int) level) & 0x000000FF;
+        // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+        // xAxisOnLevelLine.moveTo(0, yLevel);
+        // xAxisOnLevelLine.lineTo(xLevel, yLevel);
 
         // if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
         // int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
@@ -846,8 +846,8 @@ public class InfoLayer implements AnnotationsLayer {
         yAxisOnMaxValue.transform(coordinateSystemViewPaneTransform);
         yAxisOnLowLevelLine.transform(coordinateSystemViewPaneTransform);
         yAxisOnHighLevelLine.transform(coordinateSystemViewPaneTransform);
-        yAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
-        xAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+        // yAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+        // xAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
 
         // /////////////////////////////////////////////////////////////////////////////////
         // Draw Background
@@ -879,11 +879,13 @@ public class InfoLayer implements AnnotationsLayer {
             final Point2D pt1 = new Point2D.Float();
 
             g2d.setPaint(Color.DARK_GRAY);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setStroke(new BasicStroke(1.0F));
 
             for (int i = 0; i < histogram.getNumBins(0); i++) {
                 double xVal = (minInputValue + i) * xAxisHistoRescaleRatio;
-                double yVal = (logarithmRescale ? Math.log1p(histoData[i]) : histoData[i]) * yAxisHistoRescaleRatio;
+                double yVal =
+                    (logarithmRescale ? Math.log1p(histoData[i]) : (double) histoData[i]) * yAxisHistoRescaleRatio;
                 pt0.setLocation(xVal, 0);
                 pt1.setLocation(xVal, yVal);
 

@@ -19,9 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.BoundedRangeModel;
 
@@ -39,7 +37,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.MediaElement;
@@ -769,20 +766,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (defaultView2d == null) {
             return false;
         }
+
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
         if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
             return false;
         }
+
         if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }
-        // System.out.println(v.getId() + ": udpate");
-        // selectedView2dContainer.setSelectedImagePane(v);
+
         clearAllPropertyChangeListeners();
         if (defaultView2d.getSourceImage() == null) {
             enableActions(false);
             return false;
         }
+
         if (!enabledAction) {
             enableActions(true);
         }
@@ -790,31 +789,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         DicomImageElement image = defaultView2d.getImage();
         MediaSeries<DicomImageElement> series = defaultView2d.getSeries();
 
-        // windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
-        // ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
             ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
             ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
 
-        // PresetWindowLevel[] presets =
-        // PresetWindowLevel.getPresetCollection((String)series.getTagValue(TagW.Modality));
-        // presetAction.setDataList(PresetWindowLevel.getPresetCollection(image));
         presetAction.setDataList(image.getPresetList().toArray());
-
-        // Object firstPreset = presetAction.getFirstItem();
-        // presetAction.setSelectedItemWithoutTriggerAction(firstPreset);
-
         presetAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.PRESET.cmd()));
 
-        Set<LutShape> lutShapeSet = new LinkedHashSet<LutShape>();
-        for (PresetWindowLevel preset : PresetWindowLevel.getPresetCollection(image)) {
-            if (!lutShapeSet.contains(preset.getLutShape())) {
-                lutShapeSet.add(preset.getLutShape());
-            }
-        }
-
-        lutShapeAction.setDataList(LutShape.getFullShapeArray(lutShapeSet));
+        lutShapeAction.setDataList(image.getLutShapeCollection().toArray());
         lutShapeAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
 
         lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
