@@ -187,8 +187,9 @@ public class JMVUtils {
     }
 
     public static String[] getColumnNames(TableModel model) {
-        if (model == null)
+        if (model == null) {
             return new String[0];
+        }
         String[] names = new String[model.getColumnCount()];
         for (int i = 0; i < names.length; i++) {
             names[i] = model.getColumnName(i);
@@ -222,8 +223,9 @@ public class JMVUtils {
     public static void addChangeListener(JSlider slider, ChangeListener listener) {
         ChangeListener[] listeners = slider.getChangeListeners();
         for (int i = 0; i < listeners.length; i++) {
-            if (listener == listeners[i])
+            if (listener == listeners[i]) {
                 return;
+            }
         }
         slider.addChangeListener(listener);
     }
@@ -313,30 +315,33 @@ public class JMVUtils {
 
     public static Dimension getSmallIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) //$NON-NLS-1$
+        if (look.equalsIgnoreCase("CDE/Motif")) {
             return new Dimension(38, 34);
-        else if (look.startsWith("GTK")) //$NON-NLS-1$
+        } else if (look.startsWith("GTK")) {
             return new Dimension(28, 28);
-        else
+        } else {
             return new Dimension(22, 22);
+        }
     }
 
     public static Dimension getBigIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) //$NON-NLS-1$
+        if (look.equalsIgnoreCase("CDE/Motif")) {
             return new Dimension(46, 42);
-        else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) //$NON-NLS-1$ //$NON-NLS-2$
+        } else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) {
             return new Dimension(36, 36);
-        else
+        } else {
             return new Dimension(34, 34);
+        }
     }
 
     public static Dimension getBigIconToogleButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) //$NON-NLS-1$ //$NON-NLS-2$
+        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) {
             return new Dimension(36, 36);
-        else
+        } else {
             return new Dimension(30, 30);
+        }
     }
 
     public static JButton createHelpButton(boolean small) {
@@ -377,14 +382,16 @@ public class JMVUtils {
     }
 
     public static String getValueRGBasText(Color color) {
-        if (color == null)
+        if (color == null) {
             return ""; //$NON-NLS-1$
+        }
         return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     public static String getValueRGBasText2(Color color) {
-        if (color == null)
+        if (color == null) {
             return ""; //$NON-NLS-1$
+        }
         return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
@@ -421,8 +428,9 @@ public class JMVUtils {
     }
 
     public static int getMaxLength(Rectangle bounds) {
-        if (bounds.width < bounds.height)
+        if (bounds.width < bounds.height) {
             return bounds.height;
+        }
         return bounds.width;
     }
 
@@ -496,4 +504,5 @@ public class JMVUtils {
             }
         };
     }
+
 }

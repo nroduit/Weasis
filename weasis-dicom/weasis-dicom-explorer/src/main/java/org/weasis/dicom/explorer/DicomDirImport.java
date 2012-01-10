@@ -93,7 +93,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_button.gridy = 0;
         add(btnSearch, gbc_button);
 
-        btncdrom = new JButton("Detect CD-ROM", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))); //$NON-NLS-1$
+        btncdrom = new JButton("Detect CD-ROM", new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png"))); //$NON-NLS-1$
         btncdrom.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

@@ -648,13 +648,13 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     @Override
-    public Action getOpenExportDialogAction() {
+    public List<Action> getOpenExportDialogAction() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Action getOpenImportDialogAction() {
+    public List<Action> getOpenImportDialogAction() {
         // TODO Auto-generated method stub
         return null;
     }

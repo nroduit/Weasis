@@ -138,4 +138,6 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     }
 
     public abstract List<Action> getExportActions();
+
+    public abstract List<Action> getPrintActions();
 }

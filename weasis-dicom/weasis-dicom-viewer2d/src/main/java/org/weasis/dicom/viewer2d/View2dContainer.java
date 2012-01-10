@@ -184,30 +184,24 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             menuRoot.removeAll();
             menuRoot.setText(View2dFactory.NAME);
 
-            JMenu printMenu = new JMenu("Print Image");
-            JMenuItem menuStandardPrint = new JMenuItem("Standard Print");
-            final String title = menuStandardPrint.getText();
-            menuStandardPrint.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
-                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
-                    JMVUtils.showCenterScreen(dialog, parent);
+            List<Action> actions = getPrintActions();
+            if (actions != null) {
+                JMenu printMenu = new JMenu("Print");
+                for (Action action : actions) {
+                    JMenuItem item = new JMenuItem(action);
+                    printMenu.add(item);
                 }
-            });
-            printMenu.add(menuStandardPrint);
-
-            // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
-            // menuDicomPrint.addActionListener(new ActionListener() {
-            //
-            // @Override
-            // public void actionPerformed(ActionEvent e) {
-            //
-            // }
-            // });
-            // printMenu.add(menuDicomPrint);
-            menuRoot.add(printMenu);
+                // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
+                // menuDicomPrint.addActionListener(new ActionListener() {
+                //
+                // @Override
+                // public void actionPerformed(ActionEvent e) {
+                //
+                // }
+                // });
+                // printMenu.add(menuDicomPrint);
+                menuRoot.add(printMenu);
+            }
 
             ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
             if (viewingAction instanceof ComboItemListener) {
@@ -597,6 +591,25 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             }
             actions.add(importAll);
         }
+        return actions;
+    }
+
+    @Override
+    public List<Action> getPrintActions() {
+        ArrayList<Action> actions = new ArrayList<Action>(1);
+        final String title = "Print 2D viewer layout";
+        AbstractAction printStd =
+            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$//$NON-NLS-2$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
+                    JMVUtils.showCenterScreen(dialog, parent);
+                }
+            };
+        actions.add(printStd);
+
         return actions;
     }
 }

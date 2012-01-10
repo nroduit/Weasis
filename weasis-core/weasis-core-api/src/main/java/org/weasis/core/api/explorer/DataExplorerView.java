@@ -11,6 +11,7 @@
 package org.weasis.core.api.explorer;
 
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import javax.swing.Action;
 
@@ -24,7 +25,7 @@ public interface DataExplorerView extends PropertyChangeListener, GUIEntry {
 
     DataExplorerModel getDataExplorerModel();
 
-    Action getOpenImportDialogAction();
+    List<Action> getOpenImportDialogAction();
 
-    Action getOpenExportDialogAction();
+    List<Action> getOpenExportDialogAction();
 }
