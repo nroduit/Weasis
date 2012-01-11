@@ -788,27 +788,30 @@ public class WeasisLauncher {
         final File file = common_file;
         // Test if it is the first time launch
         if (versionOld == null) {
-            EventQueue.invokeLater(new Runnable() {
+            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+            if (Boolean.valueOf(val)) {
+                EventQueue.invokeLater(new Runnable() {
 
-                @Override
-                public void run() {
-                    Object[] options =
-                        { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
+                    @Override
+                    public void run() {
+                        Object[] options =
+                            { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                    int response =
-                        JOptionPane.showOptionDialog(
-                            loader.getWindow(),
-                            Messages.getString("WeasisLauncher.msg"), //$NON-NLS-1$
-                            Messages.getString("WeasisLauncher.first"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
-                            null, options, null);
-                    if (response == 1) {
-                        // delete the properties file to ask again
-                        file.delete();
-                        System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
-                        System.exit(-1);
+                        int response =
+                            JOptionPane.showOptionDialog(
+                                loader.getWindow(),
+                                Messages.getString("WeasisLauncher.msg"), //$NON-NLS-1$
+                                Messages.getString("WeasisLauncher.first"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
+                                null, options, null);
+                        if (response == 1) {
+                            // delete the properties file to ask again
+                            file.delete();
+                            System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
+                            System.exit(-1);
+                        }
                     }
-                }
-            });
+                });
+            }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
             message.append(String.format(Messages.getString("WeasisLauncher.change.version"), versionOld, versionNew)); //$NON-NLS-1$
