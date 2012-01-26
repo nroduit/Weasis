@@ -20,16 +20,21 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
 
+    private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
 
     public DicomImport(final DicomModel dicomModel) {
         super(null,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
+        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), PreferencesPageFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -101,10 +106,22 @@ public class DicomImport extends AbstractWizardDialog {
         pagesRoot.add(new DefaultMutableTreeNode(new LocalImport()));
         pagesRoot.add(new DefaultMutableTreeNode(new DicomDirImport()));
 
-        // synchronized (UIManager.PREFERENCES_ENTRY) {
-        // List<PageProps> prefs = UIManager.PREFERENCES_ENTRY;
-        // for (final PageProps page : prefs) {
-        // pagesRoot.add(new DefaultMutableTreeNode(page));
+        try {
+            prefs_tracker.open();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        // final Object[] servicesPref = prefs_tracker.getServices();
+        // ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        // for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
+        // if (servicesPref[i] instanceof PreferencesPageFactory) {
+        // AbstractItemDialogPage page =
+        // ((PreferencesPageFactory) servicesPref[i]).createPreferencesPage(properties);
+        // if (page != null) {
+        // list.add(page);
+        // }
         // }
         // }
         iniTree();
