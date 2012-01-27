@@ -161,16 +161,16 @@ public class DicomImageWriter extends ImageWriter {
         if (numSamples == 4) {
             numSamples = 3;
         }
-        dobj.putInt(Tag.SamplesPerPixel, VR.IS, numSamples);
+        dobj.putInt(Tag.SamplesPerPixel, VR.US, numSamples);
         int bits = image.getColorModel().getComponentSize(0);
         int allocated = 8;
         if (bits > 8) {
             allocated = 16;
         }
-        dobj.putInt(Tag.BitsStored, VR.IS, bits);
-        dobj.putInt(Tag.BitsAllocated, VR.IS, allocated);
-        dobj.putInt(Tag.Columns, VR.IS, image.getWidth());
-        dobj.putInt(Tag.Rows, VR.IS, image.getHeight());
+        dobj.putInt(Tag.BitsStored, VR.US, bits);
+        dobj.putInt(Tag.BitsAllocated, VR.US, allocated);
+        dobj.putInt(Tag.Columns, VR.US, image.getWidth());
+        dobj.putInt(Tag.Rows, VR.US, image.getHeight());
     }
 
     /** Writes the image, including the DICOM metadata. */
@@ -231,7 +231,11 @@ public class DicomImageWriter extends ImageWriter {
         Object output = getOutput();
         dos = new DicomOutputStream((ImageOutputStream) output);
         dos.setAutoFinish(false);
+        if (dmeta.isFileMetaInfoIncluded()) {
         dos.writeDicomFile(dobj);
+        } else {
+            dos.writeDataset(dobj, dobj.getString(Tag.TransferSyntaxUID));
+        }
 
         setupWriter(metadata);
 
