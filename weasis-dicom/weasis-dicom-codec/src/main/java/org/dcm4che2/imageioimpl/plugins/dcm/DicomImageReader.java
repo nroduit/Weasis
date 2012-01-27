@@ -39,6 +39,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferUShort;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.Raster;
 import java.awt.image.RasterFormatException;
@@ -67,6 +68,7 @@ import javax.media.jai.RenderedOp;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.UID;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.image.OverlayUtils;
@@ -124,6 +126,8 @@ public class DicomImageReader extends ImageReader {
 
     private int allocated;
 
+    private int stored;
+
     private int dataType;
 
     private int samples;
@@ -143,6 +147,8 @@ public class DicomImageReader extends ImageReader {
     private int pixelDataLen;
 
     protected boolean compressed;
+
+    private boolean clampPixelValues;
 
     private DicomStreamMetaData streamMetaData;
 
@@ -244,7 +250,7 @@ public class DicomImageReader extends ImageReader {
      * currently it merely returns null.
      */
     @Override
-    public IIOMetadata getImageMetadata(int imageIndex) {
+    public IIOMetadata getImageMetadata(int imageIndex) throws IOException {
         return null;
     }
 
@@ -284,6 +290,7 @@ public class DicomImageReader extends ImageReader {
         height = ds.getInt(Tag.Rows);
         frames = ds.getInt(Tag.NumberOfFrames);
         allocated = ds.getInt(Tag.BitsAllocated, 8);
+        stored = ds.getInt(Tag.BitsStored, allocated);
         samples = ds.getInt(Tag.SamplesPerPixel, 1);
         banded = ds.getInt(Tag.PlanarConfiguration) != 0;
         // dataType = allocated <= 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_USHORT;
@@ -313,6 +320,7 @@ public class DicomImageReader extends ImageReader {
                 ImageReaderFactory f = ImageReaderFactory.getInstance();
                 log.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
                 f.adjustDatasetForTransferSyntax(ds, tsuid);
+                clampPixelValues = allocated == 16 && stored < 12 && UID.JPEGExtended24.equals(tsuid);
             }
         } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
             if (frames == 0) {
@@ -356,7 +364,7 @@ public class DicomImageReader extends ImageReader {
 
     private void initRawImageReader() {
         long[] frameOffsets = new long[frames];
-        int frameLen = width * height * samples * (allocated >> 3);
+        int frameLen = calculateFrameLength();
         frameOffsets[0] = pixelDataPos;
         for (int i = 1; i < frameOffsets.length; i++) {
             frameOffsets[i] = frameOffsets[i - 1] + frameLen;
@@ -368,6 +376,48 @@ public class DicomImageReader extends ImageReader {
         riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
         reader = ImageIO.getImageReadersByFormatName("RAW").next();
         reader.setInput(riis);
+    }
+
+    public int calculateFrameLength() {
+        if (pmi.endsWith("422") || pmi.endsWith("420")) {
+            int calcWidth = width;
+            int calcHeight = height;
+            int extraRowSamples = 0;
+            int extraColSamples = 0;
+            if (pmi.endsWith("422")) {
+
+                if (width % 2 != 0) {
+                    // odd number of columns
+                    calcWidth--;
+                    extraColSamples = 3;
+                }
+                return (calcWidth * calcHeight * 2 + calcHeight * extraColSamples) * (allocated >> 3);
+            }
+
+            if (pmi.endsWith("420")) {
+                calcHeight = calcHeight / 2;
+                if (width % 2 != 0) {
+                    // odd number of columns
+                    calcWidth--;
+                    extraColSamples = 4;
+                }
+                if (height % 2 != 0) {
+                    // odd number of rows
+                    extraRowSamples = 2;
+                }
+
+                int length =
+                    (calcWidth * calcHeight * 3 + calcWidth * extraRowSamples + calcHeight * extraColSamples)
+                        * (allocated >> 3);
+
+                if (width % 2 != 0 && height % 2 != 0) {
+                    length = length + 3;
+                }
+
+                return length;
+            }
+        }
+        return width * height * samples * (allocated >> 3);
     }
 
     /** Create an image type specifier for the entire image */
@@ -387,7 +437,7 @@ public class DicomImageReader extends ImageReader {
             return new BandedSampleModel(dataType, width, height, width, OFFSETS_0_1_2, OFFSETS_0_0_0);
         }
 
-        if ((!compressed) && pmi.endsWith("422")) {
+        if (pmi.endsWith("422")) {
             return new PartialComponentSampleModel(width, height, 2, 1) {
                 @Override
                 public SampleModel createSubsetSampleModel(int[] bands) {
@@ -430,6 +480,11 @@ public class DicomImageReader extends ImageReader {
             return OverlayUtils.getOverlayWidth(ds, imageIndex);
         }
         return width;
+    }
+
+    public String getTransferSyntaxUID() throws IOException {
+        readMetaData();
+        return tsuid;
     }
 
     /**
@@ -476,7 +531,11 @@ public class DicomImageReader extends ImageReader {
         if (compressed) {
             ImageReadParam param1 = reader.getDefaultReadParam();
             copyReadParam(param, param1);
-            return decompressRaster(imageIndex, param1);
+            Raster raster = decompressRaster(imageIndex, param1);
+            if (clampPixelValues) {
+                clampPixelValues(raster);
+            }
+            return raster;
         }
         if (pmi.endsWith("422") || pmi.endsWith("420")) {
             log.debug("Using a 422/420 partial component image reader.");
@@ -489,10 +548,11 @@ public class DicomImageReader extends ImageReader {
             WritableRaster wr = Raster.createWritableRaster(sm, new Point());
             DataBufferByte dbb = (DataBufferByte) wr.getDataBuffer();
             byte[] data = dbb.getData();
-            log.debug("Seeking to " + (pixelDataPos + imageIndex * data.length) + " and reading " + data.length
+            int frameLength = calculateFrameLength();
+            log.debug("Seeking to " + (pixelDataPos + imageIndex * frameLength) + " and reading " + data.length
                 + " bytes.");
-            iis.seek(pixelDataPos + imageIndex * data.length);
-            iis.read(data);
+            iis.seek(pixelDataPos + imageIndex * frameLength);
+            iis.read(data, 0, frameLength);
             if (swapByteOrder) {
                 ByteUtils.toggleShortEndian(data);
             }
@@ -505,12 +565,22 @@ public class DicomImageReader extends ImageReader {
         return raster;
     }
 
+    private void clampPixelValues(Raster raster) {
+        int maxVal = -1 >>> (32 - stored);
+        short[] data = ((DataBufferUShort) raster.getDataBuffer()).getData();
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] > maxVal) {
+                data[i] = (short) maxVal;
+            }
+        }
+    }
+
     /**
      * Reads the provided image as a buffered image. It is possible to read image overlays by providing the 0x60000000
      * number associated with the overlay. Otherwise, the imageIndex must be in the range 0..numberOfFrames-1, or 0 for
      * a single frame image. Overlays can be read from PR objects or other types of objects in addition to image
-     * objects. param can be used to sepecify GSPS to apply to the image, or to override the default window level
-     * values, or to return the raw image.
+     * objects. param can be used to specify GSPS to apply to the image, or to override the default window level values,
+     * or to return the raw image.
      */
     @Override
     public BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
@@ -528,6 +598,9 @@ public class DicomImageReader extends ImageReader {
             ImageReadParam param1 = reader.getDefaultReadParam();
             copyReadParam(param, param1);
             bi = reader.read(0, param1);
+            if (clampPixelValues) {
+                clampPixelValues(bi.getRaster());
+            }
             postDecompress();
             if (paletteColor && bi.getColorModel().getNumComponents() == 1) {
                 bi = new BufferedImage(ColorModelFactory.createColorModel(ds), bi.getRaster(), false, null);
@@ -817,12 +890,44 @@ public class DicomImageReader extends ImageReader {
             return itemParser.readFrame(siis, imageIndex);
         }
 
-        int frameLen = width * height * samples * (allocated >> 3);
+        int frameLen = calculateFrameLength();
         byte[] ret = new byte[frameLen];
         long offset = pixelDataPos + imageIndex * (long) frameLen;
         iis.seek(offset);
         iis.read(ret);
         return ret;
+    }
+
+    /**
+     * Before read image stream, seek the right frame position first. Note this method is called ONLY if you want to
+     * read the data directly from ImageInputStream from yourself.
+     * 
+     * @param imageIndex
+     * @param param
+     * @return The length of image data that will be read from stream
+     */
+    private int seekFrameBeforeForReadStream(int imageIndex, ImageReadParam param) throws IOException {
+        initImageReader(imageIndex);
+        if (compressed) {
+            return itemParser.seekImageFrameBeforeReadStream(siis, imageIndex);
+        }
+        int frameLen = calculateFrameLength();
+        long offset = pixelDataPos + imageIndex * (long) frameLen;
+        iis.seek(offset);
+        return frameLen;
+    }
+
+    /**
+     * Get the ImageInputStream to read.
+     * 
+     * @return
+     */
+    public ImageInputStream getImageInputStream(int imageIndex, ImageReadParam param) throws IOException {
+        seekFrameBeforeForReadStream(imageIndex, param);
+        if (compressed) {
+            return siis;
+        }
+        return iis;
     }
 
     protected void copyReadParam(ImageReadParam src, ImageReadParam dst) {
