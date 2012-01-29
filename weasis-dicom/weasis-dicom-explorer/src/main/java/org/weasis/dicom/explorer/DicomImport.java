@@ -21,7 +21,6 @@ import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.osgi.util.tracker.ServiceTracker;
-import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.dicom.explorer.internal.Activator;
 
@@ -34,7 +33,7 @@ public class DicomImport extends AbstractWizardDialog {
         super(null,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), PreferencesPageFactory.class.getName(), null);
+        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomImportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -113,17 +112,15 @@ public class DicomImport extends AbstractWizardDialog {
             ex.printStackTrace();
         }
 
-        // final Object[] servicesPref = prefs_tracker.getServices();
-        // ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
-        // for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
-        // if (servicesPref[i] instanceof PreferencesPageFactory) {
-        // AbstractItemDialogPage page =
-        // ((PreferencesPageFactory) servicesPref[i]).createPreferencesPage(properties);
-        // if (page != null) {
-        // list.add(page);
-        // }
-        // }
-        // }
+        final Object[] servicesPref = prefs_tracker.getServices();
+        for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
+            if (servicesPref[i] instanceof DicomImportFactory) {
+                ImportDicom page = ((DicomImportFactory) servicesPref[i]).createDicomImportPage(null);
+                if (page != null) {
+                    pagesRoot.add(new DefaultMutableTreeNode(page));
+                }
+            }
+        }
         iniTree();
     }
 

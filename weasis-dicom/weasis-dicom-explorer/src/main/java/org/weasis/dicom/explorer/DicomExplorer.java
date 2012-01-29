@@ -269,18 +269,26 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private final JPanel panel_2 = new JPanel();
     private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt")); //$NON-NLS-1$
     private final JPanel panel_3 = new JPanel();
-    private final JButton btnExport = new JButton(Messages.getString("DicomExplorer.export")); //$NON-NLS-1$
-    private final JButton btnImport = new JButton(Messages.getString("DicomExplorer.import")); //$NON-NLS-1$
 
-    private final AbstractAction exportAction = new AbstractAction(
-        Messages.getString("DicomExplorer.from") + DicomExplorer.NAME) { //$NON-NLS-1$
+    private final AbstractAction importAction = new AbstractAction(BUTTON_NAME) {
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DicomExport dialog = new DicomExport(model);
-                JMVUtils.showCenterScreen(dialog);
-            }
-        };
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DicomImport dialog = new DicomImport(model);
+            JMVUtils.showCenterScreen(dialog);
+        }
+    };
+    private final AbstractAction exportAction = new AbstractAction(BUTTON_NAME) {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DicomExport dialog = new DicomExport(model);
+            JMVUtils.showCenterScreen(dialog);
+        }
+    };
+
+    private final JButton btnExport = new JButton(exportAction);
+    private final JButton btnImport = new JButton(importAction);
 
     public DicomExplorer() {
         this(null);
@@ -1055,17 +1063,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             flowLayout.setHgap(10);
             flowLayout.setAlignment(FlowLayout.LEFT);
             panel_2.add(panel_3, gbc_panel_3);
-            btnImport.addActionListener(new ActionListener() {
 
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DicomImport dialog = new DicomImport(model);
-                    JMVUtils.showCenterScreen(dialog);
-                }
-            });
-
+            btnImport.setText(Messages.getString("DicomExplorer.import"));//$NON-NLS-1$
             panel_3.add(btnImport);
-            btnExport.setEnabled(false);
+            btnExport.setText(Messages.getString("DicomExplorer.export"));//$NON-NLS-1$
             panel_3.add(btnExport);
 
             final JPanel palenSlider1 = new JPanel();
@@ -1962,22 +1963,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        // TODO preference to allow dicom export
-        // return exportAction;
-        return null;
+        ArrayList<Action> actions = new ArrayList<Action>(1);
+        actions.add(importAction);
+        return actions;
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
-        ArrayList<Action> actions = new ArrayList<Action>(1);
-        AbstractAction importAction = new AbstractAction(Messages.getString("DicomExplorer.to") + DicomExplorer.NAME) { //$NON-NLS-1$
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DicomImport dialog = new DicomImport(model);
-                    JMVUtils.showCenterScreen(dialog);
-                }
-            };
+        ArrayList<Action> actions = new ArrayList<Action>(2);
         actions.add(importAction);
         AbstractAction importCDAction =
             new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$
