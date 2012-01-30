@@ -15,6 +15,8 @@
 
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
+		<pack200.ext></pack200.ext>
+
 		<felix.framework.version>4.0.2</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
 		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
@@ -268,6 +270,7 @@
 					</execution>
 				</executions>
 			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
@@ -294,25 +297,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.openxdata.plugins</groupId>
-				<artifactId>maven-pack200-plugin</artifactId>
-				<version>1.0.1</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>packFiles</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<archiveDirectory>${tmp.bundle.dir}</archiveDirectory>
-					<includes>
-						<include>**/*.jar</include>
-					</includes>
-				</configuration>
-			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -339,6 +324,67 @@
 	</build>
 	<profiles>
 		<profile>
+			<id>pack200</id>
+			<properties>
+				<pack200.ext>.pack.gz</pack200.ext>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<!-- normalize jar before signing -->
+						<groupId>org.openxdata.plugins</groupId>
+						<artifactId>maven-pack200-plugin</artifactId>
+						<version>1.0.1</version>
+						<executions>
+							<execution>
+								<id>sign</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>packFiles</goal>
+								</goals>
+								<configuration>
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
+										are normalized -->
+									<signed>jarsigner.alias</signed>
+									<normalizeOnly>true</normalizeOnly>
+									<archiveDirectory>${tmp.dir}</archiveDirectory>
+									<includes>
+										<include>**/*.jar</include>
+									</includes>
+									<excludes>
+										<exclude>**/*-windows-*.jar</exclude>
+										<exclude>**/*-linux-*.jar</exclude>
+										<exclude>**/*-macosx-*.jar</exclude>
+										<exclude>**/*-solaris-*.jar</exclude>
+									</excludes>
+								</configuration>
+							</execution>
+							<execution>
+								<id>pack</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>packFiles</goal>
+								</goals>
+								<configuration>
+									<archiveDirectory>${tmp.dir}</archiveDirectory>
+									<includes>
+										<include>**/*.jar</include>
+									</includes>
+									<excludes>
+										<exclude>**/*.original.jar</exclude>
+										<exclude>**/*-windows-*.jar</exclude>
+										<exclude>**/*-linux-*.jar</exclude>
+										<exclude>**/*-macosx-*.jar</exclude>
+										<exclude>**/*-solaris-*.jar</exclude>
+									</excludes>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>jar.signer</id>
 			<activation>
 				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
@@ -362,6 +408,7 @@
 									<goal>sign</goal>
 								</goals>
 								<configuration>
+									<removeExistingSignatures>true</removeExistingSignatures>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
 									<includes>
 										<include>**/*.jar</include>
