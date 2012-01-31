@@ -307,6 +307,26 @@ public class ItemParser implements StreamSegmentMapper {
         return data;
     }
 
+    /**
+     * seekFrame to right frame in order for ImageInputStream to read
+     * 
+     * @param siis
+     * @param frame
+     * @return
+     * @throws IOException
+     */
+    public int seekImageFrameBeforeReadStream(SegmentedImageInputStream siis, int frame) throws IOException {
+        Item item = getFirstItemOfFrame(frame);
+        int frameSize = item.length;
+        int firstItemOfNextFrameIndex =
+            frame + 1 < numberOfFrames ? items.indexOf(getFirstItemOfFrame(frame + 1)) : getNumberOfDataFragments();
+        for (int i = items.indexOf(item) + 1; i < firstItemOfNextFrameIndex; i++) {
+            frameSize += items.get(i).length;
+        }
+        seekFrame(siis, frame);
+        return frameSize;
+    }
+
     public void seekFooter() throws IOException {
         iis.seek(last().nextItemPos());
         dis.readHeader();

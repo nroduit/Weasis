@@ -40,6 +40,7 @@ import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
+import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
@@ -47,7 +48,6 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
-import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -520,10 +520,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // Bug fix: http://www.dcm4che.org/jira/browse/DCM-460
             boolean signed = dicomObject.getInt(Tag.PixelRepresentation) != 0;
             setTagNoNull(TagW.PixelPaddingValue,
-            // TODO change the method from org.dcm4che2.image.LookupTable 2.0.25
-                getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, stored));
+                LookupTable.getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, stored));
             setTagNoNull(TagW.PixelPaddingRangeLimit,
-                getIntPixelValue(dicomObject, Tag.PixelPaddingRangeLimit, signed, stored));
+                LookupTable.getIntPixelValue(dicomObject, Tag.PixelPaddingRangeLimit, signed, stored));
 
             setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
         }
@@ -767,26 +766,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 return defaultValue;
             }
         }
-    }
-
-    public static Integer getIntPixelValue(DicomObject ds, int tag, boolean signed, int stored) {
-        DicomElement de = ds.get(tag);
-        if (de == null) {
-            return null;
-        }
-        VR vr = de.vr();
-        if (vr == VR.OB || vr == VR.OW) {
-            int ret = ByteUtils.bytesLE2ushort(de.getBytes(), 0);
-            if (signed) {
-                if ((ret & (1 << (stored - 1))) != 0) {
-                    int andmask = (1 << stored) - 1;
-                    int ormask = ~andmask;
-                    ret |= ormask;
-                }
-            }
-            return ret;
-        }
-        return de.getInt(false);
     }
 
     // public boolean readMediaTags(ImageInputStream iis) {

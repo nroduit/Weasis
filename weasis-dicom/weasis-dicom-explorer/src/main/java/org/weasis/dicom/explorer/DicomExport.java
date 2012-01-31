@@ -20,17 +20,21 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
 
+    private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
 
     public DicomExport(final DicomModel dicomModel) {
         super(null,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-
+        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomExportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -75,12 +79,26 @@ public class DicomExport extends AbstractWizardDialog {
     @Override
     protected void initializePages() {
         pagesRoot.add(new DefaultMutableTreeNode(new LocalExport()));
-        // synchronized (UIManager.PREFERENCES_ENTRY) {
-        // List<PageProps> prefs = UIManager.PREFERENCES_ENTRY;
-        // for (final PageProps page : prefs) {
-        // pagesRoot.add(new DefaultMutableTreeNode(page));
-        // }
-        // }
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
+            pagesRoot.add(new DefaultMutableTreeNode(new LocalDicomExport()));
+        }
+
+        try {
+            prefs_tracker.open();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        final Object[] servicesPref = prefs_tracker.getServices();
+        for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
+            if (servicesPref[i] instanceof DicomExportFactory) {
+                ExportDicom page = ((DicomExportFactory) servicesPref[i]).createDicomExportPage(null);
+                if (page != null) {
+                    pagesRoot.add(new DefaultMutableTreeNode(page));
+                }
+            }
+        }
         iniTree();
     }
 
