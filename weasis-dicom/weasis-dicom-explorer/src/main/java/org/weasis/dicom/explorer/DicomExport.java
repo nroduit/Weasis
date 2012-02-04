@@ -22,7 +22,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
@@ -78,10 +77,9 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport()));
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
-            pagesRoot.add(new DefaultMutableTreeNode(new LocalDicomExport()));
-        }
+        //    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
+        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel)));
+        // }
 
         try {
             prefs_tracker.open();

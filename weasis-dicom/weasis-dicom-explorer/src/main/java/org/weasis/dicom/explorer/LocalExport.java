@@ -10,9 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -24,6 +23,7 @@ import java.util.Iterator;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
@@ -42,61 +42,48 @@ import org.weasis.dicom.codec.DicomSeries;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
+    private final DicomModel dicomModel;
     private JLabel lblImportAFolder;
     private JTextField textField;
     private JButton button;
     private File outputFolder;
+    private JPanel panel;
+    private final ExportTree exportTree;
 
-    public LocalExport() {
+    public LocalExport(DicomModel dicomModel) {
+        this.dicomModel = dicomModel;
+        this.exportTree = new ExportTree(dicomModel);
         setTitle(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         initGUI();
         initialize(true);
     }
 
     public void initGUI() {
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        setLayout(gridBagLayout);
+        setLayout(new BorderLayout());
+        panel = new JPanel();
+        FlowLayout flowLayout = (FlowLayout) panel.getLayout();
+        flowLayout.setAlignment(FlowLayout.LEFT);
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp")); //$NON-NLS-1$
-        GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
-        gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
-        gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
-        gbc_lblImportAFolder.gridx = 0;
-        gbc_lblImportAFolder.gridy = 0;
-        add(lblImportAFolder, gbc_lblImportAFolder);
+        lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp"));
+        panel.add(lblImportAFolder);
 
         textField = new JTextField();
-        GridBagConstraints gbc_textField = new GridBagConstraints();
-        gbc_textField.anchor = GridBagConstraints.WEST;
-        gbc_textField.insets = new Insets(5, 2, 0, 0);
-        gbc_textField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_textField.gridx = 1;
-        gbc_textField.gridy = 0;
         // textField.setColumns(10);
         JMVUtils.setPreferredWidth(textField, 375, 375);
-        add(textField, gbc_textField);
+        panel.add(textField);
 
         button = new JButton(" ... "); //$NON-NLS-1$
         button.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 browseImgFile();
             }
         });
-        GridBagConstraints gbc_button = new GridBagConstraints();
-        gbc_button.anchor = GridBagConstraints.WEST;
-        gbc_button.insets = new Insets(5, 5, 0, 5);
-        gbc_button.gridx = 2;
-        gbc_button.gridy = 0;
-        add(button, gbc_button);
+        panel.add(button);
 
-        final JLabel label = new JLabel();
-        final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
-        gridBagConstraints_4.weighty = 1.0;
-        gridBagConstraints_4.weightx = 1.0;
-        gridBagConstraints_4.gridy = 4;
-        gridBagConstraints_4.gridx = 2;
-        add(label, gridBagConstraints_4);
+        add(panel, BorderLayout.NORTH);
+        add(exportTree, BorderLayout.CENTER);
     }
 
     protected void initialize(boolean afirst) {
