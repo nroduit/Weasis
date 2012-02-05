@@ -10,13 +10,13 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 
-import javax.swing.JCheckBox;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,51 +25,76 @@ import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.util.CheckNode;
-import org.weasis.core.ui.util.TreeLayer;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 
 public class ExportTree extends JScrollPane {
 
-    private final JCheckBox applyAllViews = new JCheckBox("Select All", true);
-    private final TreeLayer tree = new TreeLayer();
+    private final CheckboxTree tree = new CheckboxTree();
     private final DicomModel dicomModel;
-    private CheckNode image;
-    private CheckNode dicomInfo;
-    private CheckNode drawings;
 
     public ExportTree(DicomModel dicomModel) {
         this.dicomModel = dicomModel;
-        jbInit();
-
-    }
-
-    private void jbInit() {
         iniTree();
+
     }
 
     public void iniTree() {
-
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("root"); //$NON-NLS-1$
+        tree.getCheckingModel().setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
 
         synchronized (dicomModel) {
             for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(TreeModel.rootNode).iterator(); iterator
                 .hasNext();) {
                 MediaSeriesGroup pt = iterator.next();
-                CheckNode patientNode = new CheckNode(pt, true, false, true);
+                DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
                 Collection<MediaSeriesGroup> studies = dicomModel.getChildren(pt);
                 for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
                     MediaSeriesGroup study = iterator2.next();
-                    CheckNode studyNode = new CheckNode(study, true, true, true);
+                    DefaultMutableTreeNode studyNode = new DefaultMutableTreeNode(study, true);
                     Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
                     for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                         Object item = it.next();
                         if (item instanceof DicomSeries) {
                             DicomSeries series = (DicomSeries) item;
-                            CheckNode seriesNode = new CheckNode(series, true, true, false);
+                            DefaultMutableTreeNode seriesNode = new DefaultMutableTreeNode(series, true) {
+                                @Override
+                                public String toString() {
+                                    DicomSeries s = (DicomSeries) getUserObject();
+                                    Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
+                                    StringBuffer buffer = new StringBuffer();
+                                    if (val != null) {
+                                        buffer.append("[");
+                                        buffer.append(val);
+                                        buffer.append("] ");
+                                    }
+                                    String desc = (String) s.getTagValue(TagW.SeriesDescription);
+                                    if (desc != null) {
+                                        buffer.append(desc);
+                                    }
+                                    return buffer.toString();
+                                }
+                            };
                             for (DicomImageElement dicom : series.getMedias()) {
-                                // writeFile(dicom);
+                                seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
+                                    @Override
+                                    public String toString() {
+                                        DicomImageElement d = (DicomImageElement) getUserObject();
+                                        Integer val = (Integer) d.getTagValue(TagW.InstanceNumber);
+                                        StringBuffer buffer = new StringBuffer();
+                                        if (val != null) {
+                                            buffer.append("[");
+                                            buffer.append(val);
+                                            buffer.append("] ");
+                                        }
+                                        String desc = (String) d.getTagValue(TagW.SOPInstanceUID);
+                                        if (desc != null) {
+                                            buffer.append(desc);
+                                        }
+                                        return buffer.toString();
+                                    }
+                                });
                             }
                             studyNode.add(seriesNode);
                         }
@@ -81,52 +106,25 @@ public class ExportTree extends JScrollPane {
         }
 
         DefaultTreeModel model = new DefaultTreeModel(root, false);
-        tree.constructTree(model);
-        tree.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                TreeLayer layer = (TreeLayer) e.getSource();
-                TreePath path = layer.getPathForLocation(e.getX(), e.getY());
-                if (path != null) {
-                    Object node = path.getLastPathComponent();
-                    if (node instanceof CheckNode) {
-                        CheckNode checkNode = (CheckNode) node;
-                        checkNode.setSelected(!checkNode.isSelected());
-                        if (checkNode.isUpdateChildren() && checkNode.getChildCount() > 0) {
-                            TreeLayer.fireToChildren(checkNode.children(), checkNode.isSelected());
-                        }
-                        if (checkNode.isUpdateParent()) {
-                            TreeLayer.fireParentChecked(checkNode);
-                        }
-                        tree.upadateNode(checkNode);
-                        changeLayerSelection(checkNode);
-                    }
-                }
-            }
-        });
-
-        expandTree(tree, root);
+        tree.setModel(model);
+        expandTree(tree, root, 3);
         setViewportView(tree);
     }
 
-    public void changeLayerSelection(CheckNode userObject) {
-
+    public CheckboxTree getTree() {
+        return tree;
     }
 
-    public void expandAllTree() {
-        tree.expandRow(4);
-    }
+    public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
+        if (maxDeep > 1) {
+            for (Enumeration children = start.children(); children.hasMoreElements();) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
+                if (!dtm.isLeaf()) {
+                    TreePath tp = new TreePath(dtm.getPath());
+                    tree.expandPath(tp);
 
-    private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-        for (Enumeration children = start.children(); children.hasMoreElements();) {
-            DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-            if (!dtm.isLeaf()) {
-                //
-                TreePath tp = new TreePath(dtm.getPath());
-                tree.expandPath(tp);
-                //
-                expandTree(tree, dtm);
+                    expandTree(tree, dtm, maxDeep - 1);
+                }
             }
         }
         return;

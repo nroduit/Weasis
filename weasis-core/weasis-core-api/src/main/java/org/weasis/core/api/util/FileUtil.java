@@ -26,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.imageio.stream.ImageInputStream;
@@ -38,6 +39,20 @@ import org.weasis.core.api.Messages;
 public class FileUtil {
     private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
     private static final DecimalFormat df = new DecimalFormat("#.##"); //$NON-NLS-1$
+    private final static int[] illegalChars = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34, 42, 47, 58, 60, 62, 63, 92, 124 };
+
+    public static String getValidFileName(String fileName) {
+        StringBuilder cleanName = new StringBuilder();
+        for (int i = 0; i < fileName.length(); i++) {
+            char c = fileName.charAt(i);
+            if (!(Arrays.binarySearch(illegalChars, c) >= 0 || (c < '\u0020') // ctrls
+            || (c > '\u007e' && c < '\u00a0'))) { // ctrls
+                cleanName.append(c);
+            }
+        }
+        return cleanName.toString();
+    }
 
     public static void safeClose(final Closeable object) {
         try {
@@ -187,7 +202,7 @@ public class FileUtil {
      *         interruption
      */
     public static int writeFile(InputStream inputStream, OutputStream out) {
-        if (inputStream == null && out == null) {
+        if (inputStream == null || out == null) {
             return 0;
         }
         try {
@@ -224,7 +239,7 @@ public class FileUtil {
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {
-        if (inputStream == null && out == null) {
+        if (inputStream == null || out == null) {
             return false;
         }
         try {
@@ -242,7 +257,7 @@ public class FileUtil {
     }
 
     public static boolean nioWriteFile(InputStream in, OutputStream out, final int bufferSize) {
-        if (in == null && out == null) {
+        if (in == null || out == null) {
             return false;
         }
         try {
@@ -263,6 +278,27 @@ public class FileUtil {
             FileUtil.safeClose(in);
             FileUtil.safeClose(out);
         }
+    }
+
+    public static boolean nioCopyFile(File source, File destination) {
+        if (source == null || destination == null) {
+            return false;
+        }
+        FileChannel in = null;
+        FileChannel out = null;
+        try {
+            in = new FileInputStream(source).getChannel();
+            out = new FileOutputStream(destination).getChannel();
+            in.transferTo(0, in.size(), out);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            FileUtil.safeClose(in);
+            FileUtil.safeClose(out);
+        }
+
     }
 
     public static Properties readProperties(File propsFile, Properties props) {

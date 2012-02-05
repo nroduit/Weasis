@@ -594,7 +594,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         }
 
                         ArrayList<LoadSeries> loadSeries = null;
-                        File dcmDirFile = new File(baseDir, "DICOMDIR");
+                        File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
                         if (dcmDirFile.canRead()) {
                             DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this);
                             loadSeries = dirImport.readDicomDir();

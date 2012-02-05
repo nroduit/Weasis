@@ -303,8 +303,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // -------- End of Mandatory Tags --------
 
             group.setTagNoNull(TagW.StudyID, header.getString(Tag.StudyID));
-            group.setTagNoNull(TagW.StudyDate, getDateFromDicomElement(header, Tag.StudyDate, null));
             group.setTagNoNull(TagW.StudyTime, getDateFromDicomElement(header, Tag.StudyTime, null));
+            // Merge date and time, used in display
+            group.setTagNoNull(
+                TagW.StudyDate,
+                TagW.dateTime(getDateFromDicomElement(header, Tag.StudyDate, null),
+                    (Date) group.getTagValue(TagW.StudyTime)));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
             group.setTagNoNull(TagW.AccessionNumber, header.getString(Tag.AccessionNumber));

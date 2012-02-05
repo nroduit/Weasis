@@ -16,23 +16,29 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
 
     private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
+    private final ExportTree exportTree;
 
     public DicomExport(final DicomModel dicomModel) {
         super(null,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
+        this.exportTree = new ExportTree(dicomModel);
         prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomExportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
@@ -50,7 +56,11 @@ public class DicomExport extends AbstractWizardDialog {
                 }
                 if (object instanceof ExportDicom) {
                     ExportDicom selectedPage = (ExportDicom) object;
-                    selectedPage.exportDICOM(dicomModel, null);
+                    try {
+                        selectedPage.exportDICOM(exportTree, null);
+                    } catch (IOException e1) {
+                        LOGGER.error("DICOM export failed", e1.getMessage());
+                    }
                 }
             }
         });
@@ -78,7 +88,7 @@ public class DicomExport extends AbstractWizardDialog {
     @Override
     protected void initializePages() {
         //    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel)));
+        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, exportTree)));
         // }
 
         try {
@@ -112,5 +122,6 @@ public class DicomExport extends AbstractWizardDialog {
     }
 
     private void initGUI() {
+        showPageFirstPage();
     }
 }

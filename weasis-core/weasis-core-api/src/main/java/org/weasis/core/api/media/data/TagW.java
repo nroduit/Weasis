@@ -15,6 +15,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -34,9 +35,10 @@ public class TagW implements Transferable, Serializable {
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
     // TODO date format in general settings
     public static final long MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
-    public static final SimpleDateFormat formatDate = new SimpleDateFormat("dd-MM-yyyy"); //$NON-NLS-1$
-    public static final SimpleDateFormat formatTime = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
-    public static final SimpleDateFormat formatDateTime = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss"); //$NON-NLS-1$
+    public static final DateFormat DATE_FORMATTER = DateFormat.getDateInstance(DateFormat.MEDIUM);
+    public static final DateFormat TIME_FORMATTER = new SimpleDateFormat("HH:mm:ss.SSSSSS"); //$NON-NLS-1$
+    public static final DateFormat DATETIME_FORMATTER = DateFormat.getDateTimeInstance(DateFormat.MEDIUM,
+        DateFormat.MEDIUM);
 
     public static final SimpleDateFormat dicomformatDate = new SimpleDateFormat("yyyyMMdd"); //$NON-NLS-1$
     public static final SimpleDateFormat dicomformatTime = new SimpleDateFormat("HHmmss"); //$NON-NLS-1$
@@ -333,11 +335,11 @@ public class TagW implements Transferable, Serializable {
         if (TagType.String.equals(type)) {
             str = value.toString();
         } else if (TagType.Date.equals(type)) {
-            str = formatDate.format((Date) value);
+            str = DATE_FORMATTER.format((Date) value);
         } else if (TagType.Time.equals(type)) {
-            str = formatTime.format((Date) value);
+            str = TIME_FORMATTER.format((Date) value);
         } else if (TagType.DateTime.equals(type)) {
-            str = formatDateTime.format((Date) value);
+            str = DATETIME_FORMATTER.format((Date) value);
         } else if (TagType.Period.equals(type)) {
             // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
             // For ex: DICOM (0010,1010) = 031Y
@@ -477,7 +479,7 @@ public class TagW implements Transferable, Serializable {
     public static Date getDateTime(String dateTime) {
         if (dateTime != null) {
             try {
-                return formatDateTime.parse(dateTime);
+                return DATETIME_FORMATTER.parse(dateTime);
             } catch (Exception e) {
             }
         }
@@ -487,7 +489,7 @@ public class TagW implements Transferable, Serializable {
     public static Date getDate(String date) {
         if (date != null) {
             try {
-                return formatDate.parse(date);
+                return DATE_FORMATTER.parse(date);
             } catch (Exception e) {
             }
         }
@@ -551,7 +553,7 @@ public class TagW implements Transferable, Serializable {
 
     public static String formatDate(Date date) {
         if (date != null) {
-            return formatDate.format(date);
+            return DATE_FORMATTER.format(date);
         }
         return ""; //$NON-NLS-1$
     }

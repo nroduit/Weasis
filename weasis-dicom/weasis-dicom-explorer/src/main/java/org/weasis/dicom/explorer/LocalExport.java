@@ -12,47 +12,64 @@ package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JTextField;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.io.DicomInputStream;
-import org.weasis.core.api.explorer.model.TreeModel;
+import org.dcm4che2.io.StopTagInputHandler;
+import org.dcm4che2.media.ApplicationProfile;
+import org.dcm4che2.media.DicomDirWriter;
+import org.dcm4che2.media.FileSetInformation;
+import org.dcm4che2.media.StdGenJPEGApplicationProfile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalExport.class);
 
+    private static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
+    private static final String[] EXPORT_FORMAT = { "DICOM", "JPEG", "PNG", "TIFF" };
     private final DicomModel dicomModel;
     private JLabel lblImportAFolder;
-    private JTextField textField;
-    private JButton button;
     private File outputFolder;
     private JPanel panel;
     private final ExportTree exportTree;
+    private final ApplicationProfile dicomStruct = new StdGenJPEGApplicationProfile();
 
-    public LocalExport(DicomModel dicomModel) {
+    private JComboBox comboBoxImgFormat;
+    private JCheckBox chckbxDicomdir;
+    private JButton btnNewButton;
+
+    public LocalExport(DicomModel dicomModel, ExportTree exportTree) {
         this.dicomModel = dicomModel;
-        this.exportTree = new ExportTree(dicomModel);
+        this.exportTree = exportTree;
         setTitle(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         initGUI();
         initialize(true);
@@ -67,22 +84,26 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp"));
         panel.add(lblImportAFolder);
 
-        textField = new JTextField();
-        // textField.setColumns(10);
-        JMVUtils.setPreferredWidth(textField, 375, 375);
-        panel.add(textField);
-
-        button = new JButton(" ... "); //$NON-NLS-1$
-        button.addActionListener(new ActionListener() {
-
+        comboBoxImgFormat = new JComboBox();
+        comboBoxImgFormat.addItemListener(new ItemListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                browseImgFile();
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    chckbxDicomdir.setEnabled(EXPORT_FORMAT[0].equals(e.getItem()));
+                }
             }
         });
-        panel.add(button);
+
+        comboBoxImgFormat.setModel(new DefaultComboBoxModel(EXPORT_FORMAT));
+        panel.add(comboBoxImgFormat);
+
+        chckbxDicomdir = new JCheckBox("DICOMDIR");
+        panel.add(chckbxDicomdir);
 
         add(panel, BorderLayout.NORTH);
+
+        btnNewButton = new JButton("Options");
+        panel.add(btnNewButton);
         add(exportTree, BorderLayout.CENTER);
     }
 
@@ -93,22 +114,18 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     public void browseImgFile() {
-        String directory = ""; //$NON-NLS-1$
-        if (outputFolder != null) {
-            directory = outputFolder.isDirectory() ? outputFolder.getPath() : outputFolder.getParent();
-        }
+        String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DIR, "");//$NON-NLS-1$
 
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
-        // FileFormatFilter.setImageDecodeFilters(fileChooser);
-        File selectedFiles = null;
-        if (fileChooser.showOpenDialog(this) != 0 || (selectedFiles = fileChooser.getSelectedFile()) == null) {
+        File folder = null;
+        if (fileChooser.showOpenDialog(this) != 0 || (folder = fileChooser.getSelectedFile()) == null) {
             outputFolder = null;
             return;
         } else {
-            outputFolder = selectedFiles;
-            textField.setText(selectedFiles.getPath());
+            outputFolder = folder;
+            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DIR, folder.getPath());
         }
     }
 
@@ -133,27 +150,142 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     @Override
-    public void exportDICOM(DicomModel dicomModel, JProgressBar info) {
+    public void exportDICOM(ExportTree tree, JProgressBar info) throws IOException {
+        browseImgFile();
         if (outputFolder != null) {
-            synchronized (dicomModel) {
-                for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(TreeModel.rootNode).iterator(); iterator
-                    .hasNext();) {
-                    MediaSeriesGroup pt = iterator.next();
-                    Collection<MediaSeriesGroup> studies = dicomModel.getChildren(pt);
-                    for (Iterator<MediaSeriesGroup> iterator2 = studies.iterator(); iterator2.hasNext();) {
-                        MediaSeriesGroup study = iterator2.next();
-                        Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(study);
-                        for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                            Object item = it.next();
-                            if (item instanceof DicomSeries) {
-                                DicomSeries series = (DicomSeries) item;
-                                for (DicomImageElement dicom : series.getMedias()) {
-                                    writeFile(dicom);
-                                }
-                            }
+            File exportDir = outputFolder.getCanonicalFile();
+            String format = (String) comboBoxImgFormat.getSelectedItem();
+
+            if (EXPORT_FORMAT[0].equals(format)) {
+                writeDicom(exportDir, tree);
+            } else {
+                writeOther(exportDir, tree, format);
+            }
+        }
+    }
+
+    private void writeOther(File exportDir, ExportTree tree, String format) {
+
+        synchronized (tree) {
+            TreePath[] paths = tree.getTree().getCheckingPaths();
+            for (TreePath treePath : paths) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+
+                if (node.getUserObject() instanceof DicomImageElement) {
+                    DicomImageElement img = (DicomImageElement) node.getUserObject();
+                    TreeNode[] objects = node.getPath();
+                    StringBuffer buffer = new StringBuffer();
+                    if (objects.length > 2) {
+                        for (int i = 1; i < objects.length - 1; i++) {
+                            buffer.append(FileUtil.getValidFileName(objects[i].toString()));
+                            buffer.append(File.separator);
+                        }
+                    }
+
+                    File destinationDir = new File(exportDir, buffer.toString());
+                    destinationDir.mkdirs();
+
+                    RenderedImage image = img.getImage(null);
+
+                    if (EXPORT_FORMAT[1].equals(format)) {
+                        if (image != null) {
+                            image = ImageToolkit.getDefaultRenderedImage(img, image);
+                        }
+                        if (image != null) {
+                            ImageFiler.writeJPG(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
+                                + ".jpg"), image, 0.8f);
+                        } else {
+                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
+                        }
+                    }
+                    if (EXPORT_FORMAT[2].equals(format)) {
+                        if (image != null) {
+                            image = ImageToolkit.getDefaultRenderedImage(img, image);
+                        }
+                        if (image != null) {
+                            ImageFiler.writePNG(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
+                                + ".png"), image);
+                        } else {
+                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
+                        }
+                    }
+                    if (EXPORT_FORMAT[3].equals(format)) {
+                        if (image != null) {
+                            // image = ImageToolkit.getDefaultRenderedImage(img, image);
+                        }
+                        if (image != null) {
+                            ImageFiler.writeTIFF(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
+                                + ".tif"), image);
+                        } else {
+                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
                         }
                     }
                 }
+            }
+        }
+
+    }
+
+    private void writeDicom(File exportDir, ExportTree tree) throws IOException {
+        DicomDirWriter writer = null;
+        try {
+            if (chckbxDicomdir.isSelected()) {
+                File dcmdirFile = new File(exportDir, "DICOMDIR");
+                if (dcmdirFile.createNewFile()) {
+                    FileSetInformation fsinfo = new FileSetInformation();
+                    fsinfo.init();
+                    writer = new DicomDirWriter(dcmdirFile, fsinfo);
+                } else {
+                    writer = new DicomDirWriter(dcmdirFile);
+                }
+            }
+
+            synchronized (tree) {
+                TreePath[] paths = tree.getTree().getCheckingPaths();
+                for (TreePath treePath : paths) {
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+
+                    if (node.getUserObject() instanceof DicomImageElement) {
+                        DicomImageElement img = (DicomImageElement) node.getUserObject();
+                        TreeNode[] objects = node.getPath();
+                        StringBuffer buffer = new StringBuffer();
+                        if (objects.length > 2) {
+                            for (int i = 1; i < objects.length - 1; i++) {
+                                buffer.append(FileUtil.getValidFileName(objects[i].toString()));
+                                buffer.append(File.separator);
+                            }
+                        }
+
+                        File destinationDir = new File(exportDir, buffer.toString());
+                        destinationDir.mkdirs();
+                        File destinationFile = new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID));
+                        if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
+                            if (writer != null) {
+                                DicomInputStream in = new DicomInputStream(destinationFile);
+                                in.setHandler(new StopTagInputHandler(Tag.PixelData));
+                                DicomObject dcmobj = in.readDicomObject();
+                                DicomObject patrec = dicomStruct.makePatientDirectoryRecord(dcmobj);
+                                DicomObject styrec = dicomStruct.makeStudyDirectoryRecord(dcmobj);
+                                DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
+                                DicomObject instrec =
+                                    dicomStruct.makeInstanceDirectoryRecord(dcmobj, writer.toFileID(destinationFile));
+                                DicomObject rec = writer.addPatientRecord(patrec);
+                                rec = writer.addStudyRecord(rec, styrec);
+                                rec = writer.addSeriesRecord(rec, serrec);
+                                String iuid = dcmobj.getString(Tag.MediaStorageSOPInstanceUID);
+                                if (writer.findInstanceRecord(rec, iuid) == null) {
+                                    writer.addChildRecord(rec, instrec);
+                                }
+                            }
+                        } else {
+                            LOGGER.error("Cannot export DICOM file: ", img.getFile());
+                        }
+                    }
+                }
+            }
+        } finally {
+            if (writer != null) {
+                writer.close();
             }
         }
     }

@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,8 +30,9 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     }
 
     public MediaSeriesGroupNode(TagW tagID, Object identifier, TagW displayTag) {
-        if (tagID == null || identifier == null)
+        if (tagID == null || identifier == null) {
             throw new IllegalArgumentException("tagID or identifier cannot be null"); //$NON-NLS-1$
+        }
         this.displayTag = displayTag == null ? tagID : displayTag;
         this.tags = new HashMap<TagW, Object>();
         this.tagID = tagID;
@@ -52,9 +52,8 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public String toString() {
         Object val = tags.get(displayTag);
-        // TODO handle date format in Local settings
         if (val instanceof Date) {
-            val = new SimpleDateFormat("dd/MM/yyyy").format(val); //$NON-NLS-1$
+            val = TagW.DATETIME_FORMATTER.format(val);
         }
         return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") + displayTag.getName() : val.toString(); //$NON-NLS-1$
     }
@@ -62,10 +61,12 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public boolean equals(Object obj) {
         Object value1 = tags.get(tagID);
-        if (value1 == obj)
+        if (value1 == obj) {
             return true;
-        if (value1 == null)
+        }
+        if (value1 == null) {
             return false;
+        }
         if (obj instanceof MediaSeriesGroupNode) {
             Object value2 = ((MediaSeriesGroupNode) obj).tags.get(tagID);
             return value1.equals(value2);
@@ -76,11 +77,13 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public int hashCode() {
         Object val = tags.get(tagID);
-        if (val instanceof Integer)
+        if (val instanceof Integer) {
             return (Integer) val;
+        }
         // Should never happens, but it does very rarely ?
-        if (val == null)
+        if (val == null) {
             return super.hashCode();
+        }
         return val.hashCode();
     }
 
@@ -108,8 +111,9 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         Iterator<TagW> enumVal = tags.keySet().iterator();
         while (enumVal.hasNext()) {
             TagW e = enumVal.next();
-            if (e.getId() == id)
+            if (e.getId() == id) {
                 return e;
+            }
         }
         return null;
     }
