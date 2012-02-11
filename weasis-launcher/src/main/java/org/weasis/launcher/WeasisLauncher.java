@@ -45,6 +45,7 @@ import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
+import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class WeasisLauncher {
@@ -781,9 +782,16 @@ public class WeasisLauncher {
         boolean cleanCache = Boolean.parseBoolean(config.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
         // Save if not exist or could not be read
         if (cleanCache && versionNew != null) {
-            if (!versionNew.equals(versionOld)) {
-                System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
-                config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+            try {
+                Version vOld = new Version(versionOld.replaceFirst("-", "."));
+                Version vNew = new Version(versionNew.replaceFirst("-", "."));
+                if (vNew.getMinor() != vOld.getMinor() || vNew.getMajor() != vOld.getMajor()) {
+                    System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
+                    config
+                        .setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+                }
+            } catch (Exception e) {
+                System.err.println("Cannot read Weasis version!"); //$NON-NLS-1$
             }
         }
         final File file = common_file;
@@ -837,6 +845,7 @@ public class WeasisLauncher {
                                         String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
                                         Runtime.getRuntime().exec(cmd);
                                     } catch (IOException e1) {
+                                        System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
                                         e1.printStackTrace();
                                     }
                                 } else if (Desktop.isDesktopSupported()) {
@@ -845,10 +854,8 @@ public class WeasisLauncher {
                                         try {
                                             desktop.browse(e.getURL().toURI());
 
-                                        } catch (IOException ex) {
-                                            ex.printStackTrace();
-                                        } catch (URISyntaxException ex2) {
-                                            ex2.printStackTrace();
+                                        } catch (Exception ex) {
+                                            System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
                                         }
                                     }
                                 }
@@ -941,7 +948,6 @@ public class WeasisLauncher {
 
             } catch (Exception e) {
                 System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
-                e.printStackTrace();
             }
         }
         return look;
