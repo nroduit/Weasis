@@ -308,14 +308,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (selected) {
             eventManager.setSelectedView2dContainer(this);
 
-            MediaSeries<DicomImageElement> series = selectedImagePane.getSeries();
-            if (series != null) {
-                DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                if (dicomView == null || !(dicomView.getDataExplorerModel() instanceof DicomModel)) {
-                    return;
-                }
-                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-                model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, series));
+            // Send event to select the related patient in Dicom Explorer.
+            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+            if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
+                dicomView.getDataExplorerModel().firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
             }
 
         } else {

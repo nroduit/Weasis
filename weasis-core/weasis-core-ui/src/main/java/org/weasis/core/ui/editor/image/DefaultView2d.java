@@ -852,7 +852,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
         } else {
-            ActionW action = eventManager.getActionFromkeyEvent(e.getKeyCode());
+            ActionW action = eventManager.getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
             if (action != null) {
                 changeLeftMouseAction(action.cmd());
             }

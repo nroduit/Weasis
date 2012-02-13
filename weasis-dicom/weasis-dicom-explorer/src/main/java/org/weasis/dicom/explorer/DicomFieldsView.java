@@ -178,7 +178,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
-        if (event.getEventType().equals(EVENT.SELECT) || event.getEventType().equals(EVENT.LAYOUT)) {
+        EVENT type = event.getEventType();
+        if (EVENT.SELECT.equals(type) || EVENT.LAYOUT.equals(type) || EVENT.ANONYM.equals(type)) {
             currentMedia = event.getMediaElement();
             currentSeries = event.getSeries();
             if (event.getSeriesViewer() instanceof ImageViewerPlugin) {

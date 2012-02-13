@@ -10,14 +10,20 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d.dockable;
 
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -41,8 +47,6 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.Tools;
-import org.weasis.core.ui.util.CheckNode;
-import org.weasis.core.ui.util.TreeLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
@@ -59,67 +63,157 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
 
     private final JCheckBox applyAllViews = new JCheckBox(Messages.getString("DisplayTool.btn_apply_all"), true); //$NON-NLS-1$
-    private final TreeLayer tree = new TreeLayer();
-    private CheckNode image;
-    private CheckNode dicomInfo;
-    private CheckNode drawings;
+    private final CheckboxTree tree;
+    private boolean initPathSelection;
+    private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+
+    private DefaultMutableTreeNode image;
+    private DefaultMutableTreeNode dicomInfo;
+    private DefaultMutableTreeNode drawings;
+    private TreePath rootPath;
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.mainTool);
         setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
-        jbInit();
 
-    }
-
-    private void jbInit() {
+        tree = new CheckboxTree();
+        initPathSelection = false;
         setLayout(new BorderLayout(0, 0));
         iniTree();
+
     }
 
     public void iniTree() {
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("root"); //$NON-NLS-1$
-        root.add(image = new CheckNode(IMAGE, true));
-        image.add(new CheckNode(DICOM_IMAGE_OVERLAY, true));
-        image.add(new CheckNode(DICOM_SHUTTER, true));
-        image.add(new CheckNode(DICOM_PIXEL_PADDING, true));
-        dicomInfo = new CheckNode(DICOM_ANNOTATIONS, true);
-        dicomInfo.add(new CheckNode(AnnotationsLayer.ANNOTATIONS, true));
-        dicomInfo.add(new AnonymCheckNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.SCALE, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.LUT, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.IMAGE_ORIENTATION, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.WINDOW_LEVEL, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.ZOOM, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.ROTATION, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.FRAME, true));
-        dicomInfo.add(new CheckNode(AnnotationsLayer.PIXEL, true));
-        root.add(dicomInfo);
-        drawings = new CheckNode(ActionW.DRAW, true);
-        drawings.add(new CheckNode(Tools.MEASURE, true));
-        drawings.add(new CheckNode(Tools.CROSSLINES, true));
-        root.add(drawings);
+        tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
-        DefaultTreeModel model = new DefaultTreeModel(root, false);
-        tree.constructTree(model);
-        tree.addMouseListener(new MouseAdapter() {
+        image = new DefaultMutableTreeNode(IMAGE, true);
+        image.add(new DefaultMutableTreeNode(DICOM_IMAGE_OVERLAY, false));
+        image.add(new DefaultMutableTreeNode(DICOM_SHUTTER, false));
+        image.add(new DefaultMutableTreeNode(DICOM_PIXEL_PADDING, false));
+        rootNode.add(image);
+        dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANNOTATIONS, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ANONYM_ANNOTATIONS, false));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.SCALE, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.LUT, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.IMAGE_ORIENTATION, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.WINDOW_LEVEL, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ZOOM, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ROTATION, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.FRAME, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.PIXEL, true));
+        rootNode.add(dicomInfo);
+        drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
+        drawings.add(new DefaultMutableTreeNode(Tools.MEASURE, true));
+        drawings.add(new DefaultMutableTreeNode(Tools.CROSSLINES, true));
+        rootNode.add(drawings);
+
+        DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
+        tree.setModel(model);
+        rootPath = new TreePath(rootNode.getPath());
+        tree.addCheckingPath(rootPath);
+
+        tree.setShowsRootHandles(true);
+        tree.setRootVisible(false);
+        tree.setExpandsSelectedPaths(true);
+        DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
+        renderer.setOpenIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setLeafIcon(null);
+        tree.setCellRenderer(renderer);
+        tree.addTreeCheckingListener(new TreeCheckingListener() {
 
             @Override
-            public void mouseReleased(MouseEvent e) {
-                TreeLayer layer = (TreeLayer) e.getSource();
-                TreePath path = layer.getPathForLocation(e.getX(), e.getY());
-                if (path != null) {
-                    Object node = path.getLastPathComponent();
-                    if (node instanceof CheckNode) {
-                        CheckNode checkNode = (CheckNode) node;
-                        checkNode.setSelected(!checkNode.isSelected());
-                        if (checkNode.isUpdateChildren() && checkNode.getChildCount() > 0) {
-                            TreeLayer.fireToChildren(checkNode.children(), checkNode.isSelected());
-                        } else if (checkNode.isUpdateParent()) {
-                            TreeLayer.fireParentChecked(checkNode);
+            public void valueChanged(TreeCheckingEvent e) {
+                if (!initPathSelection) {
+                    TreePath path = e.getPath();
+                    Object source = e.getSource();
+                    boolean selected = e.isCheckedPath();
+                    Object selObject = path.getLastPathComponent();
+                    Object parent = null;
+                    if (path.getParentPath() != null) {
+                        parent = path.getParentPath().getLastPathComponent();
+                    }
+
+                    ImageViewerPlugin<DicomImageElement> container =
+                        EventManager.getInstance().getSelectedView2dContainer();
+                    ArrayList<DefaultView2d<DicomImageElement>> views = null;
+                    if (container != null) {
+                        if (applyAllViews.isSelected()) {
+                            views = container.getImagePanels();
+                        } else {
+                            views = new ArrayList<DefaultView2d<DicomImageElement>>(1);
+                            views.add(container.getSelectedImagePane());
                         }
-                        tree.upadateNode(checkNode);
-                        changeLayerSelection(checkNode);
+                    }
+                    if (views != null) {
+                        if (rootNode.equals(parent)) {
+                            if (image.equals(selObject)) {
+                                for (DefaultView2d<DicomImageElement> v : views) {
+                                    if (selected != v.getImageLayer().isVisible()) {
+                                        v.getImageLayer().setVisible(selected);
+                                        v.repaint();
+                                    }
+                                }
+                            } else if (dicomInfo.equals(selObject)) {
+                                for (DefaultView2d<DicomImageElement> v : views) {
+                                    if (selected != v.getInfoLayer().isVisible()) {
+                                        v.getInfoLayer().setVisible(selected);
+                                        v.repaint();
+                                    }
+                                }
+                            } else if (drawings.equals(selObject)) {
+                                for (DefaultView2d<DicomImageElement> v : views) {
+                                    v.setDrawingsVisibility(selected);
+                                }
+                            }
+                        } else if (image.equals(parent)) {
+                            if (selObject != null) {
+                                if (DICOM_IMAGE_OVERLAY.equals(selObject.toString())) {
+                                    sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
+                                } else if (DICOM_SHUTTER.equals(selObject.toString())) {
+                                    sendPropertyChangeEvent(views, ActionW.IMAGE_SCHUTTER.cmd(), selected);
+                                } else if (DICOM_PIXEL_PADDING.equals(selObject.toString())) {
+                                    sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
+                                }
+                            }
+                        } else if (dicomInfo.equals(parent)) {
+                            if (selObject != null) {
+                                for (DefaultView2d<DicomImageElement> v : views) {
+                                    AnnotationsLayer layer = v.getInfoLayer();
+                                    if (layer != null) {
+                                        if (layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
+                                            v.repaint();
+                                        }
+                                    }
+                                }
+                                if (AnnotationsLayer.ANONYM_ANNOTATIONS.equals(selObject.toString())) {
+                                    // Send message to listeners, only selected view
+                                    DefaultView2d<DicomImageElement> v = container.getSelectedImagePane();
+                                    Series series = (Series) v.getSeries();
+                                    EventManager.getInstance().fireSeriesViewerListeners(
+                                        new SeriesViewerEvent(container, series, series.getMedia(v.getFrameIndex()),
+                                            EVENT.ANONYM));
+
+                                }
+                            }
+                        } else if (drawings.equals(parent)) {
+                            if (selObject instanceof DefaultMutableTreeNode) {
+                                if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Tools) {
+                                    Tools tool = (Tools) ((DefaultMutableTreeNode) selObject).getUserObject();
+                                    for (DefaultView2d<DicomImageElement> v : views) {
+                                        AbstractLayer layer = v.getLayerModel().getLayer(tool);
+                                        if (layer != null) {
+                                            if (layer.isVisible() != selected) {
+                                                layer.setVisible(selected);
+                                                v.repaint();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -131,73 +225,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         add(panel, BorderLayout.NORTH);
         panel.add(applyAllViews);
 
-        expandTree(tree, root);
-        JScrollPane scrollPane = new JScrollPane(tree);
-        add(scrollPane, BorderLayout.CENTER);
-    }
-
-    public void changeLayerSelection(CheckNode userObject) {
-        String selection = userObject.toString();
-        boolean selected = userObject.isSelected();
-
-        ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
-        ArrayList<DefaultView2d<DicomImageElement>> views = null;
-        if (container != null) {
-            if (applyAllViews.isSelected()) {
-                views = container.getImagePanels();
-            } else {
-                views = new ArrayList<DefaultView2d<DicomImageElement>>(1);
-                views.add(container.getSelectedImagePane());
-            }
-        }
-        if (IMAGE.equals(selection) && views != null) {
-            for (DefaultView2d<DicomImageElement> v : views) {
-                if (selected != v.getImageLayer().isVisible()) {
-                    v.getImageLayer().setVisible(selected);
-                    v.repaint();
-                }
-            }
-        } else if (DICOM_IMAGE_OVERLAY.equals(selection)) {
-            sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
-        } else if (DICOM_SHUTTER.equals(selection)) {
-            sendPropertyChangeEvent(views, ActionW.IMAGE_SCHUTTER.cmd(), selected);
-        } else if (DICOM_PIXEL_PADDING.equals(selection)) {
-            sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
-        } else if (DICOM_ANNOTATIONS.equals(selection) && views != null) {
-            for (DefaultView2d<DicomImageElement> v : views) {
-                if (selected != v.getInfoLayer().isVisible()) {
-                    v.getInfoLayer().setVisible(selected);
-                    v.repaint();
-                }
-            }
-
-        } else if (dicomInfo.equals(userObject.getParent()) && views != null) {
-            for (DefaultView2d<DicomImageElement> v : views) {
-                AnnotationsLayer layer = v.getInfoLayer();
-                if (layer != null) {
-                    if (layer.setDisplayPreferencesValue(selection, selected)) {
-                        v.repaint();
-                    }
-                }
-            }
-        } else if (ActionW.DRAW.toString().equals(selection) && views != null) {
-            for (DefaultView2d<DicomImageElement> v : views) {
-                v.setDrawingsVisibility(selected);
-            }
-        } else if (drawings.equals(userObject.getParent()) && views != null) {
-            if (userObject.getUserObject() instanceof Tools) {
-                Tools tool = (Tools) userObject.getUserObject();
-                for (DefaultView2d<DicomImageElement> v : views) {
-                    AbstractLayer layer = v.getLayerModel().getLayer(tool);
-                    if (layer != null) {
-                        if (layer.isVisible() != selected) {
-                            layer.setVisible(selected);
-                            v.repaint();
-                        }
-                    }
-                }
-            }
-        }
+        expandTree(tree, rootNode);
+        add(new JScrollPane(tree), BorderLayout.CENTER);
     }
 
     private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
@@ -211,47 +240,72 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     private void iniDicomView(DefaultView2d view, String cmd, int index) {
         TreeNode treeNode = image.getChildAt(index);
-        if (treeNode instanceof CheckNode) {
-            CheckNode item = (CheckNode) treeNode;
+        if (treeNode != null) {
             Boolean val = (Boolean) view.getActionValue(cmd);
-            item.setSelected(val == null ? false : val);
+            initPathSelection(getTreePath(treeNode), val == null ? false : val);
+        }
+    }
+
+    private void initPathSelection(TreePath path, boolean selected) {
+        if (selected) {
+            tree.addCheckingPath(path);
+        } else {
+            tree.removeCheckingPath(path);
         }
     }
 
     public void iniTreeValues(DefaultView2d view) {
         if (view != null) {
-            image.setSelected(view.getImageLayer().isVisible());
+            initPathSelection = true;
+            // Image node
+            initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
             iniDicomView(view, ActionW.IMAGE_OVERLAY.cmd(), 0);
             iniDicomView(view, ActionW.IMAGE_SCHUTTER.cmd(), 1);
             iniDicomView(view, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
-            tree.upadateNode(image);
+
+            // Annotations node
             AnnotationsLayer layer = view.getInfoLayer();
             if (layer != null) {
-                dicomInfo.setSelected(layer.isVisible());
+                initPathSelection(getTreePath(dicomInfo), layer.isVisible());
                 Enumeration en = dicomInfo.children();
                 while (en.hasMoreElements()) {
                     Object node = en.nextElement();
-                    if (node instanceof CheckNode) {
-                        CheckNode checkNode = (CheckNode) node;
-                        checkNode.setSelected(layer.getDisplayPreferences(node.toString()));
+                    if (node instanceof TreeNode) {
+                        TreeNode checkNode = (TreeNode) node;
+                        initPathSelection(getTreePath(checkNode), layer.getDisplayPreferences(node.toString()));
                     }
                 }
-                tree.upadateNode(dicomInfo);
             }
+
+            // Drawings node
             Boolean draw = (Boolean) view.getActionValue(ActionW.DRAW.cmd());
-            drawings.setSelected(draw == null ? true : draw);
+            initPathSelection(getTreePath(drawings), draw == null ? true : draw);
             Enumeration en = drawings.children();
             while (en.hasMoreElements()) {
                 Object node = en.nextElement();
-                if (node instanceof CheckNode && ((CheckNode) node).getUserObject() instanceof Tools) {
-                    CheckNode checkNode = (CheckNode) node;
-                    AbstractLayer l = view.getLayerModel().getLayer((Tools) ((CheckNode) node).getUserObject());
+                if (node instanceof DefaultMutableTreeNode
+                    && ((DefaultMutableTreeNode) node).getUserObject() instanceof Tools) {
+                    DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
+                    AbstractLayer l = view.getLayerModel().getLayer((Tools) checkNode.getUserObject());
                     if (layer != null) {
-                        checkNode.setSelected(l.isVisible());
+                        initPathSelection(getTreePath(checkNode), l.isVisible());
                     }
                 }
             }
+            initPathSelection = false;
         }
+    }
+
+    private static TreePath getTreePath(TreeNode node) {
+        List<TreeNode> list = new ArrayList<TreeNode>();
+        list.add(node);
+        TreeNode parent = node;
+        while (parent.getParent() != null) {
+            parent = parent.getParent();
+            list.add(parent);
+        }
+        Collections.reverse(list);
+        return new TreePath(list.toArray(new TreeNode[list.size()]));
     }
 
     @Override
@@ -271,7 +325,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
-        if (event.getEventType().equals(EVENT.SELECT) && event.getSeriesViewer() instanceof View2dContainer) {
+        if (event.getEventType().equals(EVENT.SELECT_VIEW) && event.getSeriesViewer() instanceof View2dContainer) {
             iniTreeValues(((View2dContainer) event.getSeriesViewer()).getSelectedImagePane());
         }
     }
@@ -290,30 +344,4 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         return;
     }
 
-    static class AnonymCheckNode extends CheckNode {
-
-        public AnonymCheckNode(Object object, boolean selected) {
-            this(object, selected, false, false);
-        }
-
-        public AnonymCheckNode(Object object, boolean selected, boolean updateParent, boolean updateChildren) {
-            super(object, selected, updateParent, updateChildren);
-        }
-
-        @Override
-        public void setSelected(boolean newValue) {
-            boolean diff = newValue != isSelected();
-            if (diff) {
-                super.setSelected(newValue);
-                DefaultView2d<DicomImageElement> selectedImagePane =
-                    EventManager.getInstance().getSelectedView2dContainer().getSelectedImagePane();
-                if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {
-                    Series series = (Series) selectedImagePane.getSeries();
-                    EventManager.getInstance().fireSeriesViewerListeners(
-                        new SeriesViewerEvent(EventManager.getInstance().getSelectedView2dContainer(), series, series
-                            .getMedia(selectedImagePane.getFrameIndex()), EVENT.LAYOUT));
-                }
-            }
-        }
-    }
 }

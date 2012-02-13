@@ -64,6 +64,7 @@ public class Activator implements BundleActivator, ServiceListener {
         // Save preferences
         MeasureTool.viewSetting.savePreferences(PREFERENCES.getDefaultPreferences());
         PREFERENCES.close();
+        Activator.bundleContext = null;
     }
 
     @Override

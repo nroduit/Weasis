@@ -199,34 +199,36 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    public ActionW getActionFromkeyEvent(int keyEvent) {
-        ActionW action = super.getActionFromkeyEvent(keyEvent);
+    public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
+        ActionW action = super.getActionFromkeyEvent(keyEvent, modifier);
 
         if (action == null && keyEvent != 0) {
             for (ActionW a : keyEventActions) {
-                if (a.getKeyCode() == keyEvent) {
+                if (a.getKeyCode() == keyEvent && a.getModifier() == modifier) {
                     return a;
                 }
             }
-            if (keyEvent == ActionW.CINESTART.getKeyCode()) {
+            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier) {
                 if (moveTroughSliceAction.isCining()) {
                     moveTroughSliceAction.stop();
                 } else {
                     moveTroughSliceAction.start();
                 }
-                return null;
-            } else if (keyEvent == KeyEvent.VK_D) {
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof LineGraphic) {
-                        setMeasurement(obj);
-                        break;
+            } else if (modifier == 0) {
+                // No modifier, otherwise it will conflict with other shortcuts like ctrl+a and ctrl+d
+                if (keyEvent == KeyEvent.VK_D) {
+                    for (Object obj : measureAction.getAllItem()) {
+                        if (obj instanceof LineGraphic) {
+                            setMeasurement(obj);
+                            break;
+                        }
                     }
-                }
-            } else if (keyEvent == KeyEvent.VK_A) {
-                for (Object obj : measureAction.getAllItem()) {
-                    if (obj instanceof AngleToolGraphic) {
-                        setMeasurement(obj);
-                        break;
+                } else if (keyEvent == KeyEvent.VK_A) {
+                    for (Object obj : measureAction.getAllItem()) {
+                        if (obj instanceof AngleToolGraphic) {
+                            setMeasurement(obj);
+                            break;
+                        }
                     }
                 }
             }

@@ -120,8 +120,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel,
         String pluginName, Icon icon, String tooltips) {
         super(pluginName, icon, tooltips);
-        if (eventManager == null)
+        if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+        }
         this.eventManager = eventManager;
         view2ds = new ArrayList<DefaultView2d<E>>();
         components = new ArrayList<JComponent>();
@@ -173,8 +174,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             for (Object element : ((ComboItemListener) layout).getAllItem()) {
                 if (element instanceof GridBagLayoutModel) {
                     if ((layoutModel.getIcon() != null && ((GridBagLayoutModel) element).getIcon() == layoutModel
-                        .getIcon()) || layoutModel.toString().equals(element.toString()))
+                        .getIcon()) || layoutModel.toString().equals(element.toString())) {
                         return (GridBagLayoutModel) element;
+                    }
                 }
             }
         }
@@ -343,13 +345,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             defaultView2d.setSelected(true);
             this.selectedImagePane = defaultView2d;
             eventManager.updateComponentsListener(defaultView2d);
-
         }
         if (defaultView2d != null && defaultView2d.getSeries() instanceof Series) {
             Series series = (Series) selectedImagePane.getSeries();
             eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, series, series.getMedia(defaultView2d
                 .getFrameIndex()), EVENT.SELECT));
         }
+        eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
     }
 
     public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
@@ -401,8 +403,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     /** Return the image in the image display panel. */
 
     public E getImage(int i) {
-        if (i >= 0 && i < view2ds.size())
+        if (i >= 0 && i < view2ds.size()) {
             return view2ds.get(i).getImage();
+        }
         return null;
     }
 
@@ -414,16 +417,18 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public DefaultView2d<E> getNextSelectedImagePane() {
         for (int i = 0; i < view2ds.size() - 1; i++) {
-            if (view2ds.get(i) == selectedImagePane)
+            if (view2ds.get(i) == selectedImagePane) {
                 return view2ds.get(i + 1);
+            }
         }
         return selectedImagePane;
     }
 
     public boolean isContainingView(DefaultView2d<E> view2DPane) {
         for (DefaultView2d<E> v : view2ds) {
-            if (v == view2DPane)
+            if (v == view2DPane) {
                 return true;
+            }
         }
         return false;
     }
@@ -486,15 +491,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public GridBagLayoutModel getBestDefaultViewLayout(int size) {
-        if (size <= 1)
+        if (size <= 1) {
             return VIEWS_1x1;
+        }
         ActionState layout = eventManager.getAction(ActionW.LAYOUT);
         if (layout instanceof ComboItemListener) {
             Object[] list = ((ComboItemListener) layout).getAllItem();
             for (Object m : list) {
                 if (m instanceof GridBagLayoutModel) {
-                    if (getViewTypeNumber((GridBagLayoutModel) m, view2dClass) >= size)
+                    if (getViewTypeNumber((GridBagLayoutModel) m, view2dClass) >= size) {
                         return (GridBagLayoutModel) m;
+                    }
                 }
             }
         }
@@ -719,11 +726,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 if (c != null) {
                     Rectangle rect = c.getBounds();
                     if ((Math.abs(rect.x - p.x) <= LayoutConstraints.SPACE || Math.abs(rect.x + rect.width - p.x) <= LayoutConstraints.SPACE)
-                        && (p.y >= rect.y && p.y <= rect.y + rect.height))
+                        && (p.y >= rect.y && p.y <= rect.y + rect.height)) {
                         return Cursor.E_RESIZE_CURSOR;
-                    else if ((Math.abs(rect.y - p.y) <= LayoutConstraints.SPACE || Math.abs(rect.y + rect.height - p.y) <= LayoutConstraints.SPACE)
-                        && (p.x >= rect.x && p.x <= rect.x + rect.width))
+                    } else if ((Math.abs(rect.y - p.y) <= LayoutConstraints.SPACE || Math.abs(rect.y + rect.height
+                        - p.y) <= LayoutConstraints.SPACE)
+                        && (p.x >= rect.x && p.x <= rect.x + rect.width)) {
                         return Cursor.S_RESIZE_CURSOR;
+                    }
                 }
 
             }
@@ -738,8 +747,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         private final JComponent component;
 
         public DragLayoutElement(LayoutConstraints constraints, JComponent component) {
-            if (constraints == null || component == null)
+            if (constraints == null || component == null) {
                 throw new IllegalArgumentException("Arguments cannot be null"); //$NON-NLS-1$
+            }
             this.constraints = constraints;
             this.originalConstraints = (LayoutConstraints) constraints.clone();
             this.component = component;

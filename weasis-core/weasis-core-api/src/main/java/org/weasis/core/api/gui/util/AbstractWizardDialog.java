@@ -24,10 +24,15 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.Messages;
 
@@ -40,7 +45,7 @@ public abstract class AbstractWizardDialog extends JDialog {
     private final BorderLayout borderLayout3 = new BorderLayout();
     protected final JButton jButtonClose = new JButton();
     private final BorderLayout borderLayout2 = new BorderLayout();
-    protected final TreeSelection tree = new TreeSelection();
+    protected final JTree tree = new JTree();
     protected JPanel jPanelButtom = new JPanel();
     private final JPanel jPanelMain = new JPanel();
     protected JScrollPane jScrollPanePage = new JScrollPane();
@@ -72,17 +77,16 @@ public abstract class AbstractWizardDialog extends JDialog {
         jButtonClose.setText(Messages.getString("AbstractWizardDialog.close")); //$NON-NLS-1$
 
         jPanelRootPanel.setLayout(borderLayout3);
-        // jScrollPanePage.getViewport().setBackground(new Color(147, 182, 210));
-        jScrollPanePage.setAutoscrolls(false);
         jPanelButtom.setLayout(gridBagLayout1);
-        this.getContentPane().add(jPanelRootPanel, null);
-        jPanelRootPanel.add(jPanelMain, BorderLayout.CENTER);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jScrollPane1, jPanelMain);
+        jPanelRootPanel.add(splitPane, BorderLayout.CENTER);
         jPanelMain.add(jScrollPanePage, BorderLayout.CENTER);
         jPanelRootPanel.add(jPanelButtom, BorderLayout.SOUTH);
         jPanelButtom.add(jButtonClose, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(10, 10, 10, 15), 0, 0));
-        jPanelRootPanel.add(jScrollPane1, java.awt.BorderLayout.WEST);
-        jScrollPane1.getViewport().add(tree);
+        jScrollPane1.setViewportView(tree);
+
+        this.getContentPane().add(jPanelRootPanel, null);
     }
 
     // Overridden so we can exit when window is closed
@@ -147,7 +151,15 @@ public abstract class AbstractWizardDialog extends JDialog {
             }
         }
         DefaultTreeModel model = new DefaultTreeModel(pagesRoot, false);
-        tree.constructTree(model);
+        tree.setModel(model);
+        tree.setShowsRootHandles(true);
+        tree.setRootVisible(false);
+        tree.setExpandsSelectedPaths(true);
+        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+        renderer.setOpenIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setLeafIcon(null);
+        tree.setCellRenderer(renderer);
         tree.addTreeSelectionListener(new TreeSelectionListener() {
 
             @Override
@@ -161,9 +173,25 @@ public abstract class AbstractWizardDialog extends JDialog {
                 }
             }
         });
-        Dimension dim = tree.getPreferredSize().getSize();
-        dim.width += 5;
-        jScrollPane1.setPreferredSize(dim);
+        // Dimension dim = tree.getPreferredSize().getSize();
+        // dim.width += 5;
+        // jScrollPane1.setPreferredSize(dim);
+
+        expandTree(tree, (MutableTreeNode) model.getRoot());
+    }
+
+    private static void expandTree(JTree tree, MutableTreeNode start) {
+        for (Enumeration children = start.children(); children.hasMoreElements();) {
+            DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
+            if (!dtm.isLeaf()) {
+                //
+                TreePath tp = new TreePath(dtm.getPath());
+                tree.expandPath(tp);
+                //
+                expandTree(tree, dtm);
+            }
+        }
+        return;
     }
 
     public void closeAllPages() {
