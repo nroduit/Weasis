@@ -926,6 +926,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 } else {
                     tempFile = new File(url.toURI());
                 }
+                // Ensure the stream is closed if image is not written in cache
+                FileUtil.safeClose(stream);
+
                 dicomReader = new DicomMediaIO(tempFile);
                 if (dicomReader.readMediaTags()) {
                     if (dicomSeries.size() == 0) {

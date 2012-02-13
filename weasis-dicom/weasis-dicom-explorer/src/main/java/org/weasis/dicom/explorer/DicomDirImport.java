@@ -18,6 +18,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -253,12 +256,15 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         } else {
             drives = new File("/media").listFiles();
         }
+        List<File> dvs = Arrays.asList(drives);
+        Collections.reverse(dvs);
         String[] dicomdir = { "DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir." };
-        for (int i = 0; i < drives.length; i++) {
+
+        for (File drive : dvs) {
             // Detect read-only media
-            if (drives[i].canRead() && !drives[i].canWrite() && !drives[i].isHidden()) {
+            if (drive.canRead() && !drive.canWrite() && !drive.isHidden()) {
                 for (int j = 0; j < dicomdir.length; j++) {
-                    File f = new File(drives[i], dicomdir[j]);
+                    File f = new File(drive, dicomdir[j]);
                     if (f.canRead()) {
                         return f;
                     }

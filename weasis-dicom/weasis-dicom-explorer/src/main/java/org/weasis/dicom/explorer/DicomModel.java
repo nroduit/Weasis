@@ -97,7 +97,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         splittingRules.put(Modality.Default, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID });
         splittingRules.put(Modality.CT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
             TagW.ImageOrientationPlane, TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
-        splittingRules.put(Modality.PT, splittingRules.get(Modality.CT));
+        splittingRules.put(Modality.PT, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
+            TagW.GantryDetectorTilt, TagW.ConvolutionKernel });
         splittingRules.put(Modality.MR, new TagW[] { TagW.ImageType, TagW.ContrastBolusAgent, TagW.SOPClassUID,
             TagW.ImageOrientationPlane, TagW.ScanningSequence, TagW.SequenceVariant, TagW.ScanOptions,
             TagW.RepetitionTime, TagW.EchoTime, TagW.InversionTime, TagW.FlipAngle });
@@ -457,11 +458,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (rules == null) {
                         rules = splittingRules.get(Modality.Default);
                     }
-
+                    // If similar add to the original series
                     if (isSimilar(rules, initialSeries, media)) {
                         initialSeries.addMedia(media);
                         return false;
                     }
+                    // else try to find a similar previous split series
                     MediaSeriesGroup study = getParent(initialSeries, DicomModel.study);
                     int k = 1;
                     while (true) {
@@ -477,6 +479,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         }
                         k++;
                     }
+                    // no matching series exists, so split series
                     splitSeries(dicomReader, initialSeries, media);
                     return true;
                 }
