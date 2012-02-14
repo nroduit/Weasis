@@ -19,8 +19,8 @@ import javax.swing.KeyStroke;
 
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.AbstractUIAction;
-import org.weasis.core.ui.util.PreferenceDialog;
 
 public class OpenPreferencesAction extends AbstractUIAction {
 

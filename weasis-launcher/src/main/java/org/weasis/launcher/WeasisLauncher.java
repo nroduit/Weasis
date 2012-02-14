@@ -688,6 +688,8 @@ public class WeasisLauncher {
         getGeneralProperty("org.apache.sling.commons.log.file", "", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.file.number", "5", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty(
+            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3} {5}", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
 
         URI translation_modules = null;
         if (portable != null) {

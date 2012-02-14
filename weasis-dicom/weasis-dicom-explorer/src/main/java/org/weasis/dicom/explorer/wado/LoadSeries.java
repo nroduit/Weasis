@@ -121,6 +121,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
         });
         this.progressBar = bar[0];
+        Boolean cache = (Boolean) dicomSeries.getTagValue(TagW.ReadFromDicomdir);
+        if (cache != null && cache) {
+            progressBar.setVisible(false);
+        }
         this.dicomSeries.setSeriesLoader(this);
         this.CODOWNLOAD_NUMBER = simultaneousDownload;
     }

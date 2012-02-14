@@ -51,7 +51,7 @@ import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.core.ui.graphic.model.MainLayerModel;
-import org.weasis.core.ui.util.ZoomSetting;
+import org.weasis.core.ui.pref.ZoomSetting;
 
 // TODO: Auto-generated Javadoc
 /**

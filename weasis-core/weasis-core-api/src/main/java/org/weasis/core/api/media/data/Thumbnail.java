@@ -554,12 +554,14 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             if (series.getFileSize() > 0.0) {
                 g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
             }
-            // Draw in the bottom right corner of thumbnail space;
-            int shiftx = thumbnailSize - bar.getWidth();
-            int shifty = thumbnailSize - bar.getHeight();
-            g2d.translate(shiftx, shifty);
-            bar.paint(g2d);
-            g2d.translate(-shiftx, -shifty);
+            if (progressBar.isVisible()) {
+                // Draw in the bottom right corner of thumbnail space;
+                int shiftx = thumbnailSize - bar.getWidth();
+                int shifty = thumbnailSize - bar.getHeight();
+                g2d.translate(shiftx, shifty);
+                bar.paint(g2d);
+                g2d.translate(-shiftx, -shifty);
+            }
         }
     }
 

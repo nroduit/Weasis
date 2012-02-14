@@ -48,7 +48,7 @@ import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.ThreePointsCircleGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.util.ViewSetting;
+import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class MeasureToolBar<E extends ImageElement> extends WtoolBar {

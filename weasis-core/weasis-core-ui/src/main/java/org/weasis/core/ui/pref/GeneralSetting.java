@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.core.ui.util;
+package org.weasis.core.ui.pref;
 
 import java.awt.Component;
 import java.awt.Dialog;
@@ -28,6 +28,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
@@ -41,9 +42,11 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.service.BundleTools.LEVEL;
 import org.weasis.core.ui.Messages;
 
 public class GeneralSetting extends AbstractItemDialogPage {
@@ -64,17 +67,24 @@ public class GeneralSetting extends AbstractItemDialogPage {
         Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
     private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
-    private final JCheckBox chckbxFileLog = new JCheckBox("Files logging");
-    private final JButton btnOptions = new JButton("Options");
+    private final JCheckBox chckbxFileLog = new JCheckBox("Rolling log File");
     private final JPanel panel = new JPanel();
     private final JLabel lblLogLevel = new JLabel("Log level:");
     private final JComboBox comboBoxLogLevel = new JComboBox(LEVEL.values());
-    private final Component horizontalStrut = Box.createHorizontalStrut(20);
+    private final Component horizontalStrut = Box.createHorizontalStrut(10);
+    private final JLabel labelNumber = new JLabel("Number:");
+    private final JSpinner spinner = new JSpinner();
+    private final JLabel labelSize = new JLabel("Size (in MB):");
+    private final JSpinner spinner_1 = new JSpinner();
+    private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
+    private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
 
     public GeneralSetting() {
         setTitle(pageName);
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {
+            JMVUtils.setNumberModel(spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
+            JMVUtils.setNumberModel(spinner_1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1);
             jbInit();
             initialize(true);
         } catch (Exception e) {
@@ -171,8 +181,27 @@ public class GeneralSetting extends AbstractItemDialogPage {
         panel.add(lblLogLevel);
         panel.add(comboBoxLogLevel);
         panel.add(horizontalStrut);
+        chckbxFileLog.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean rolling = chckbxFileLog.isSelected();
+                spinner.setEnabled(rolling);
+                spinner_1.setEnabled(rolling);
+            }
+        });
         panel.add(chckbxFileLog);
-        panel.add(btnOptions);
+
+        panel.add(horizontalStrut_1);
+
+        panel.add(labelNumber);
+
+        panel.add(spinner);
+
+        panel.add(horizontalStrut_2);
+
+        panel.add(labelSize);
+
+        panel.add(spinner_1);
         this.add(component1, new GridBagConstraints(3, 5, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
             GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
         this.add(jLabelMLook, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
@@ -181,13 +210,32 @@ public class GeneralSetting extends AbstractItemDialogPage {
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
     }
 
+    private static int getIntPreferences(String key, int defaultvalue, String removedSuffix) {
+        if (key != null) {
+            String s = BundleTools.SYSTEM_PREFERENCES.getProperty(key);
+            if (s != null) {
+                if (removedSuffix != null) {
+                    int index = s.lastIndexOf(removedSuffix);
+                    if (index > 0) {
+                        s = s.substring(0, index);
+                    }
+                }
+                try {
+                    return Integer.parseInt(s);
+                } catch (NumberFormatException ignore) {
+                }
+            }
+        }
+        return defaultvalue;
+    }
+
     protected void initialize(boolean afirst) {
         chckbxConfirmClosing.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
             "weasis.confirm.closing", true));//$NON-NLS-1$
 
-        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(BundleTools.SYSTEM_PREFERENCES.getProperty(
-            BundleTools.LOG_LEVEL, "INFO")));//$NON-NLS-1$
-        String fileLogger = BundleTools.SYSTEM_PREFERENCES.getProperty(BundleTools.LOG_FILE, "");//$NON-NLS-1$s
+        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_LEVEL,
+            "INFO")));//$NON-NLS-1$
+        String fileLogger = BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_FILE, "");//$NON-NLS-1$s
         chckbxFileLog.setSelected(!("".equals(fileLogger.trim())));
 
         String className = null;
@@ -321,12 +369,22 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.putBooleanProperty("weasis.confirm.closing", chckbxConfirmClosing.isSelected()); //$NON-NLS-1$
 
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
-        BundleTools.SYSTEM_PREFERENCES.setProperty("org.apache.sling.commons.log.level", level.toString()); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
         String logFile =
             chckbxFileLog.isSelected() ? AbstractProperties.WEASIS_PATH + File.separator + "log" + File.separator
                 + "default.log" : "";
-        BundleTools.SYSTEM_PREFERENCES.setProperty("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
-        BundleTools.createOrUpdateLogger("default.log", new String[] { "org" }, level.toString(), logFile, null, null);
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
+        String fileNb = null;
+        String fileSize = null;
+        if (chckbxFileLog.isSelected()) {
+            fileNb = spinner.getValue().toString();
+            fileSize = spinner_1.getValue().toString() + "MB";
+            BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
+            BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
+        }
+
+        AuditLog.createOrUpdateLogger("default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb,
+            fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {

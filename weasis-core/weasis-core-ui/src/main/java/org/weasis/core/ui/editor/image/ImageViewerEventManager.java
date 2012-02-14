@@ -42,7 +42,7 @@ import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.util.ZoomSetting;
+import org.weasis.core.ui.pref.ZoomSetting;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> {
     public static final int ZOOM_SLIDER_MIN = -100;

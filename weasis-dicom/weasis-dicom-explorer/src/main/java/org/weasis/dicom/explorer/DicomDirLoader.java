@@ -221,6 +221,7 @@ public class DicomDirLoader {
                     }
 
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
+                    dicomSeries.setTag(TagW.ReadFromDicomdir, true);
                     final LoadSeries loadSeries =
                         new LoadSeries(dicomSeries, dicomModel, 1, DicomManager.getInstance().isPortableDirCache());
 

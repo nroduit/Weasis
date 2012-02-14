@@ -75,11 +75,11 @@ import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.Measurement;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.util.PreferenceDialog;
+import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.ui.util.TableNumberRenderer;
-import org.weasis.core.ui.util.ViewSetting;
 
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
