@@ -325,6 +325,13 @@
 	<profiles>
 		<profile>
 			<id>pack200</id>
+			<repositories>
+				<repository>
+					<id>weasis</id>
+					<name>Public Repositories</name>
+					<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+				</repository>
+			</repositories>
 			<properties>
 				<pack200.ext>.pack.gz</pack200.ext>
 			</properties>
@@ -332,9 +339,9 @@
 				<plugins>
 					<plugin>
 						<!-- normalize jar before signing -->
-						<groupId>org.openxdata.plugins</groupId>
+						<groupId>org.weasis.maven</groupId>
 						<artifactId>maven-pack200-plugin</artifactId>
-						<version>1.0.1</version>
+						<version>1.0.2</version>
 						<executions>
 							<execution>
 								<id>sign</id>
@@ -345,7 +352,7 @@
 								<configuration>
 									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
 										are normalized -->
-									<signed>jarsigner.alias</signed>
+									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
 									<includes>
