@@ -272,7 +272,11 @@ public class AutoProcessor {
         Bundle[] bundles = context.getBundles();
         for (int i = 0; i < bundles.length; i++) {
             String bundleName = getBundleNameFromLocation(bundles[i].getLocation());
-            installedBundleMap.put(bundleName, bundles[i]);
+            if (!"System Bundle".equals(bundleName)) {
+                installedBundleMap.put(bundleName, bundles[i]);
+                // Ensure old bundles won't be active
+                sl.setBundleStartLevel(bundles[i], Integer.MAX_VALUE);
+            }
         }
 
         int bundleIter = 0;
@@ -306,6 +310,7 @@ public class AutoProcessor {
                     Bundle b = installedBundleMap.get(bundleName);
                     if (b == null) {
                         b = installBundle(context, location);
+                        installedBundleMap.put(bundleName, b);
                     }
                     sl.setBundleStartLevel(b, startLevel);
                     loadTranslationBundle(context, b, installedBundleMap);
@@ -388,6 +393,7 @@ public class AutoProcessor {
                             Bundle b2 = installedBundleMap.get(bundleName);
                             if (b2 == null) {
                                 b2 = context.installBundle(translation_modules, null);
+                                installedBundleMap.put(bundleName, b);
                             }
                             if (b2 != null && !value.equals(b2.getVersion().getQualifier())) {
                                 if (b2.getLocation().startsWith(baseURL)) {
@@ -397,6 +403,8 @@ public class AutoProcessor {
                                     try {
                                         b2.uninstall();
                                         context.installBundle(translation_modules, null);
+                                        b2 = context.installBundle(translation_modules, null);
+                                        installedBundleMap.put(bundleName, b);
                                     } catch (Exception exc) {
                                         System.err.println("Cannot install translation pack: " + translation_modules); //$NON-NLS-1$
                                     }

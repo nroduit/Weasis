@@ -6,8 +6,9 @@
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.1.2-SNAPSHOT</version>
+	<version>1.1.2-beta21</version>
 	<properties>
+		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
 			in config.properties) -->
 		<dollar>$</dollar>
@@ -28,12 +29,12 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.1.2</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.9-SNAPSHOT</weasis.launcher.version>
-		<weasis.core.version>0.5.9-SNAPSHOT</weasis.core.version>
-		<weasis.imageio.version>0.7.7-SNAPSHOT</weasis.imageio.version>
-		<weasis.jmc.version>0.5.9-SNAPSHOT</weasis.jmc.version>
-		<weasis.base.version>0.5.9-SNAPSHOT</weasis.base.version>
-		<weasis.dicom.version>0.5.9-SNAPSHOT</weasis.dicom.version>
+		<weasis.launcher.version>0.5.9${qualifier}</weasis.launcher.version>
+		<weasis.core.version>0.5.9${qualifier}</weasis.core.version>
+		<weasis.imageio.version>0.7.7${qualifier}</weasis.imageio.version>
+		<weasis.jmc.version>0.5.9${qualifier}</weasis.jmc.version>
+		<weasis.base.version>0.5.9${qualifier}</weasis.base.version>
+		<weasis.dicom.version>0.5.9${qualifier}</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>7.0.0</substance.version>
@@ -325,13 +326,6 @@
 	<profiles>
 		<profile>
 			<id>pack200</id>
-			<repositories>
-				<repository>
-					<id>weasis</id>
-					<name>Public Repositories</name>
-					<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
-				</repository>
-			</repositories>
 			<properties>
 				<pack200.ext>.pack.gz</pack200.ext>
 			</properties>
