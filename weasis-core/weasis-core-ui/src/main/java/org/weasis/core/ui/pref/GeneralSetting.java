@@ -184,9 +184,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         chckbxFileLog.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                boolean rolling = chckbxFileLog.isSelected();
-                spinner.setEnabled(rolling);
-                spinner_1.setEnabled(rolling);
+                checkRolingLog();
             }
         });
         panel.add(chckbxFileLog);
@@ -208,6 +206,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
             GridBagConstraints.NONE, new Insets(7, 10, 5, 5), 0, 0));
         this.add(jComboBoxlnf, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
+    }
+
+    private void checkRolingLog() {
+        boolean rolling = chckbxFileLog.isSelected();
+        spinner.setEnabled(rolling);
+        spinner_1.setEnabled(rolling);
     }
 
     private static int getIntPreferences(String key, int defaultvalue, String removedSuffix) {
@@ -237,6 +241,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             "INFO")));//$NON-NLS-1$
         String fileLogger = BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_FILE, "");//$NON-NLS-1$s
         chckbxFileLog.setSelected(!("".equals(fileLogger.trim())));
+        checkRolingLog();
 
         String className = null;
         LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
