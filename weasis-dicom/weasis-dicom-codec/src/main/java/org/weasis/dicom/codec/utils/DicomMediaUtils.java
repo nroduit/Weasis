@@ -250,7 +250,7 @@ public class DicomMediaUtils {
 
                 dataLength = sData.length;
                 // lookupTable = new ShortLookupTable(offset, sData);
-                lookupTable = new LookupTableJAI(sData, offset, true); // assuming data is DataBuffer.TYPE_USHORT
+                lookupTable = new LookupTableJAI(sData, offset, true); // assuming data is always DataBuffer.TYPE_USHORT
             } else {
                 LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
             }
