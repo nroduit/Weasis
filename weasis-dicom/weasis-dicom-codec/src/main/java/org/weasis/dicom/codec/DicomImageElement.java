@@ -254,7 +254,7 @@ public class DicomImageElement extends ImageElement {
     // same modality LUT attributes, either same slope/rescale pair or same table.
     // A synchronized weakHashMap could be fine...
 
-    // TODO - Also it seems that sometimes min/max values have not been computed when this method is called.
+    // FIXME - Also it seems that sometimes min/max values have not been computed when this method is called.
     // Generally this happen with the calling of getMinValue/getMaxValue which call pixel2rescale function
     // !!! Strange because findMinMaxValue function should have been called before when loading image.
 
@@ -304,15 +304,18 @@ public class DicomImageElement extends ImageElement {
             if ((modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) && isPhotometricInterpretationMonochrome()
                 && (paddingValue != null)) {
 
+                final boolean isDataTypeByte = modalityLookup.getDataType() == DataBuffer.TYPE_BYTE;
+                // if FALSE DataBuffer Type is supposed to be either TYPE_SHORT or TYPE_USHORT
+
                 int lutOffset = modalityLookup.getOffset();
                 int numEntries = modalityLookup.getNumEntries();
 
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
 
-                int numPaddingValues = paddingValueMax - paddingValueMin;
-                int lutPaddingStartIndex = paddingValueMin - lutOffset;
-                int outLutStartIndex = 0;
+                int numPaddingValues = paddingValueMax - paddingValueMin + 1;
+                int paddingValuesStartIndex = paddingValueMin - lutOffset;
+                int outLutValuesStartIndex = 0;
                 int numNewValues = 0;
 
                 // Test if modality lookupTable takes pixel padding values into account and if not resize it
@@ -322,21 +325,21 @@ public class DicomImageElement extends ImageElement {
                     // by numPaddingValues
                     numNewValues = lutOffset - paddingValueMin;
                     lutOffset = paddingValueMin;
-                    outLutStartIndex = numNewValues;
-                    lutPaddingStartIndex = 0;
+                    outLutValuesStartIndex = numNewValues;
+                    paddingValuesStartIndex = 0;
 
                 } else if (paddingValueMax > (numEntries + lutOffset)) {
                     // add padding value range to the end of the lookup
                     numNewValues = paddingValueMax - (numEntries + lutOffset);
-                    lutPaddingStartIndex =
+                    paddingValuesStartIndex =
                         (numPaddingValues > numNewValues) ? numEntries + numNewValues - numPaddingValues : numEntries;
                 }
 
                 Object inLut = null;
 
-                if (modalityLookup.getDataType() == DataBuffer.TYPE_BYTE) {
+                if (isDataTypeByte) {
                     inLut = modalityLookup.getByteData(0);
-                } else if (modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+                } else {
                     inLut = modalityLookup.getShortData(0);
                 }
 
@@ -344,24 +347,43 @@ public class DicomImageElement extends ImageElement {
 
                 if (numNewValues > 0) {
                     int outLutSize = numEntries + numNewValues;
-                    outLut = Array.newInstance(inLut.getClass(), outLutSize);
-                    System.arraycopy(inLut, 0, outLut, outLutStartIndex, numEntries);
+                    // outLut = Array.newInstance(inLut.getClass(), outLutSize);
+                    // if (inLut instanceof byte[]) {
+                    // outLut = new byte[outLutSize] ;
+                    // } else if (inLut instanceof short[]) {
+                    // outLut = new short[outLutSize] ;
+                    // }
+
+                    outLut = (bitsStored <= 8) ? new byte[outLutSize] : new short[outLutSize];
+                    System.arraycopy(inLut, 0, outLut, outLutValuesStartIndex, numEntries);
 
                     numPaddingValues = (numPaddingValues < numNewValues) ? numNewValues : numPaddingValues;
 
-                    if (modalityLookup.getDataType() == DataBuffer.TYPE_BYTE) {
+                    if (isDataTypeByte) {
                         modalityLookup = new LookupTableJAI((byte[]) outLut, lutOffset);
-                    } else if (modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+                    } else {
                         modalityLookup = new LookupTableJAI((short[]) outLut, lutOffset, !isSigned);
                     }
                 }
 
                 // Set padding values to minPixelValue or maxPixelValue
-                int fillValue = (Integer) (isPhotometricInterpretationInverse() ? //
-                    Array.get(outLut, (int) (maxPixelValue - lutOffset)) : //
-                    Array.get(outLut, (int) (minPixelValue - lutOffset)));
+                // int fillValue = (Integer) (isPhotometricInterpretationInverse() ? //
+                // Array.get(outLut, (int) (maxPixelValue - lutOffset)) : //
+                // Array.get(outLut, (int) (minPixelValue - lutOffset)));
+                //
+                // Arrays.fill((Object[]) outLut, lutPaddingStartIndex, numPaddingValues, fillValue);
 
-                Arrays.fill((Object[]) outLut, lutPaddingStartIndex, numPaddingValues, fillValue);
+                int indexMinPixelValue = (int) (minPixelValue - lutOffset);
+                int indexMaxPixelValue = (int) (maxPixelValue - lutOffset);
+                int fillValueIndex = isPhotometricInterpretationInverse() ? indexMaxPixelValue : indexMinPixelValue;
+
+                if (isDataTypeByte) {
+                    byte fillValue = Array.getByte(outLut, fillValueIndex);
+                    Arrays.fill((byte[]) outLut, paddingValuesStartIndex, numPaddingValues, fillValue);
+                } else {
+                    short fillValue = Array.getShort(outLut, fillValueIndex);
+                    Arrays.fill((short[]) outLut, paddingValuesStartIndex, numPaddingValues, fillValue);
+                }
 
                 // TODO - add the ability to disable padding by keeping values same as original
 
@@ -656,7 +678,18 @@ public class DicomImageElement extends ImageElement {
         // return pixelValue;
 
         LookupTableJAI lookup = getModalityLookup();
-        return (lookup != null) ? lookup.lookupFloat(0, (int) pixelValue) : 0f;
+
+        // assert pixel value is inside bound array
+        if (lookup != null) {
+            int minValue = lookup.getOffset();
+            int maxValue = lookup.getOffset() + lookup.getNumEntries() - 1;
+            // System.out.println("min : " + minValue + " max : " + maxValue + " pixelValue : " + pixelValue);
+            if (pixelValue >= minValue && pixelValue <= maxValue) {
+                return lookup.lookup(0, (int) pixelValue);
+            }
+            // System.out.println("what the frack !!!");
+        }
+        return 0f;
     }
 
     // TODO - change name because rescale term is already used

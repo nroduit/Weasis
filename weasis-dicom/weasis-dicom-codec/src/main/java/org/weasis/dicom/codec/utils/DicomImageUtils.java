@@ -298,11 +298,13 @@ public class DicomImageUtils {
         // }
         // }
 
-        // TODO assert maxInValue equals maxOutLookupValue
         int lookupRangeSize = Array.getLength(inLutDataArray) - 1;
 
         float widthRescaleRatio = lookupRangeSize / window;
         float outRescaleRatio = maxOutValue / maxInValue;
+
+        // TODO assert maxInValue equals maxOutLookupValue
+        // float maxOutLookupValue = (inLutDataArray instanceof byte[]) ? 255 : 65535;
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value;
