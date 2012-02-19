@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -551,66 +550,54 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             Integer bitsStored = (Integer) tagList.get(TagW.BitsStored);
 
-            // Keep only valid Modality LUT Transformation Tags
-
-            // Note : Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values
+            // NOTE : Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values
             // shall be present but not both (@see Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module)
 
             DicomElement modalityLUTSequence = (DicomElement) tagList.get(TagW.ModalityLUTSequence);
 
-            if (modalityLUTSequence != null) {
-                LookupTable modalityLUTData = null;
+            if (DicomMediaUtils.containsRequiredModalityLUTSequenceAttributes(modalityLUTSequence)) {
+                DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
 
-                if (!modalityLUTSequence.isEmpty()) {
+                setTagNoNull(tagList, TagW.ModalityLUTData, DicomMediaUtils.createLut(modalityLUTobj));
+                setTagNoNull(tagList, TagW.ModalityLUTType,
+                    getStringFromDicomElement(modalityLUTobj, Tag.ModalityLUTType, null));
+                setTagNoNull(tagList, TagW.ModalityLUTExplanation, // Optional Tag
+                    getStringFromDicomElement(modalityLUTobj, Tag.LUTExplanation, null));
+            }
+
+            if (LOGGER.isDebugEnabled()) {
+
+                // The output range of the Modality LUT Module depends on whether or not Rescale Slope and Rescale
+                // Intercept or the Modality LUT Sequence are used.
+
+                // In the case where Rescale Slope and Rescale Intercept are used, the output ranges from
+                // (minimum pixel value*Rescale Slope+Rescale Intercept) to
+                // (maximum pixel value*Rescale Slope+Rescale Intercept),
+                // where the minimum and maximum pixel values are determined by Bits Stored and Pixel Representation.
+
+                // In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n
+                // is the third value of LUT Descriptor. This range is always unsigned.
+                // The third value specifies the number of bits for each entry in the LUT Data. It shall take the value
+                // 8 or 16. The LUT Data shall be stored in a format equivalent to 8 bits allocated when the number
+                // of bits for each entry is 8, and 16 bits allocated when the number of bits for each entry is 16
+
+                if (tagList.get(TagW.ModalityLUTData) != null) {
                     if (tagList.get(TagW.RescaleIntercept) != null) {
-                        LOGGER.info("Modality LUT Sequence shall not be present if Rescale Intercept is present");
+                        LOGGER.info("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
                     }
-                    if (!DicomMediaUtils.containsRequiredModalityLUTSequenceAttributes(modalityLUTSequence)) {
-                        LOGGER.info("Modality LUT Sequence has not consitent attributes");
-                    } else {
-                        DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
-                        modalityLUTData = DicomMediaUtils.createLut(modalityLUTobj);
-
-                        if (modalityLUTData != null) {
-                            tagList.put(TagW.ModalityLUTData, modalityLUTData);
-                            // Adds optional Tags if present
-                            tagList.put(TagW.ModalityLUTExplanation, modalityLUTobj.getString(Tag.LUTExplanation));
-                            tagList.put(TagW.ModalityLUTType, modalityLUTobj.getString(Tag.ModalityLUTType));
-                        }
+                    if (tagList.get(TagW.ModalityLUTType) == null) {
+                        LOGGER.info("Modality Type is required if Modality LUT Sequence is present. ");
                     }
-                }
-
-                if (modalityLUTData == null) {
-                    tagList.remove(TagW.ModalityLUTSequence);
+                } else if (tagList.get(TagW.RescaleIntercept) != null) {
+                    if (tagList.get(TagW.RescaleSlope) == null) {
+                        LOGGER.info("Modality Rescale Slope is required if Rescale Intercept is present.");
+                    } else if (tagList.get(TagW.RescaleType) == null) {
+                        LOGGER.info("Modality Rescale Type is required if Rescale Intercept is present.");
+                    }
                 } else {
-                    tagList.remove(TagW.RescaleIntercept);
-                    tagList.remove(TagW.RescaleSlope);
-                    tagList.remove(TagW.RescaleType);
-                }
-            }
-
-            if (tagList.get(TagW.ModalityLUTSequence) == null) {
-                boolean isRescaleValid = false;
-
-                if (tagList.get(TagW.RescaleIntercept) == null) {
                     LOGGER.info("Modality Rescale Intercept is required if Modality LUT Sequence is not present. ");
-                } else if (tagList.get(TagW.RescaleSlope) == null) {
-                    LOGGER.info("Modality Rescale Slope is required if Rescale Intercept is present.");
-                } else if (tagList.get(TagW.RescaleType) == null) {
-                    LOGGER.info("Modality Rescale Type is required if Rescale Intercept is present.");
-                } else {
-                    isRescaleValid = true;
-                }
-
-                if (!isRescaleValid) {
-                    LOGGER.info("Modality LUT Rescale and Slope attributes are not consitent");
-                    tagList.remove(TagW.RescaleIntercept);
-                    tagList.remove(TagW.RescaleSlope);
-                    tagList.remove(TagW.RescaleType);
                 }
             }
-
-            // Keep only valid VOI LUT Transformation Tags
 
             // NOTE : If any VOI LUT Table is included by an Image, a Window Width and Window Center or the VOI LUT
             // Table, but not both, may be applied to the Image for display. Inclusion of both indicates that multiple
@@ -622,61 +609,37 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.countItems()];
                 String[] voiLUTsExplanation = new String[voiLUTSequence.countItems()];
 
-                if (!voiLUTSequence.isEmpty()) {
-                    if (!DicomMediaUtils.containsRequiredVOILUTSequenceAttributes(voiLUTSequence)) {
-                        LOGGER.info("VOI LUT Sequence has not consitent attributes ");
-                    } else {
-                        voiLUTsData = new ArrayList<LookupTable>(voiLUTSequence.countItems());
-                        voiLUTsExplanation = new ArrayList<String>(voiLUTSequence.countItems());
+                for (int i = 0; i < voiLUTSequence.countItems(); i++) {
+                    DicomObject voiLUTobj = voiLUTSequence.getDicomObject(i);
 
-                        for (int i = 0; i < voiLUTSequence.countItems(); i++) {
-                            DicomObject voiLUTobj = modalityLUTSequence.getDicomObject(i);
-                            LookupTable voiLookupTable = DicomMediaUtils.createLut(voiLUTobj);
-                            if (voiLookupTable != null) {
-                                voiLUTsData.add(voiLookupTable);
-                                voiLUTsExplanation.add(voiLUTobj.getString(Tag.LUTExplanation));
-                            }
-                        }
-                    }
+                    voiLUTsData[i] = DicomMediaUtils.createLut(voiLUTobj);
+                    voiLUTsExplanation[i] = getStringFromDicomElement(voiLUTobj, Tag.LUTExplanation, null);
                 }
 
-                if (voiLUTsData != null && voiLUTsData.size() > 0) {
-                    tagList.put(TagW.VOILUTsData, voiLUTsData.toArray(new LookupTable[voiLUTsData.size()]));
-                    // Adds optional Tags if present
-                    tagList.put(TagW.VOILUTsExplanation,
-                        voiLUTsExplanation.toArray(new String[voiLUTsExplanation.size()]));
-                } else {
-                    // Remove unnecessary Tags
-                    tagList.remove(TagW.VOILUTSequence);
+                setTag(tagList, TagW.VOILUTsData, voiLUTsData);
+                setTag(tagList, TagW.VOILUTsExplanation, voiLUTsExplanation); // Optional Tag
+            }
+
+            if (LOGGER.isDebugEnabled()) {
+                // If multiple items are present in VOI LUT Sequence, only one may be applied to the
+                // Image for display. Multiple items indicate that multiple alternative views may be presented.
+
+                // If multiple Window center and window width values are present, both Attributes shall have the same
+                // number of values and shall be considered as pairs. Multiple values indicate that multiple alternative
+                // views may be presented
+
+                Float[] windowCenterDefaultTagArray = (Float[]) tagList.get(TagW.WindowCenter);
+                Float[] windowWidthDefaultTagArray = (Float[]) tagList.get(TagW.WindowWidth);
+
+                if (windowCenterDefaultTagArray == null && windowWidthDefaultTagArray != null) {
+                    LOGGER.debug("VOI Window Center is required if Window Width is present");
+                } else if (windowWidthDefaultTagArray == null && windowCenterDefaultTagArray != null) {
+                    LOGGER.debug("VOI Window Width is required if Window Center is present");
+                } else if (windowCenterDefaultTagArray != null && windowWidthDefaultTagArray != null
+                    && windowWidthDefaultTagArray.length != windowCenterDefaultTagArray.length) {
+                    LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} // {}",
+                        windowCenterDefaultTagArray, windowWidthDefaultTagArray);
                 }
-            }
-
-            // If multiple values are present, both Attributes shall have the same number of values and shall be
-            // considered as pairs. Multiple values indicate that multiple alternative views may be presented
-
-            float[] windowCenterArray = (float[]) tagList.get(TagW.WindowCenter);
-            float[] windowWidthArray = (float[]) tagList.get(TagW.WindowWidth);
-
-            boolean isWindowLevelValid = false;
-
-            if (windowCenterArray == null && windowWidthArray != null) {
-                LOGGER.info("VOI Window Center is required if Window Width is present");
-            } else if (windowWidthArray == null && windowCenterArray != null) {
-                LOGGER.info("VOI Window Width is required if Window Center is present");
-            } else if (windowCenterArray != null && windowWidthArray != null
-                && windowWidthArray.length != windowCenterArray.length) {
-                LOGGER.info("VOI Window Center and Width attributes have different number of values : {} // {}",
-                    windowCenterArray.length, windowWidthArray.length);
-            } else {
-                isWindowLevelValid = true;
-            }
-
-            if (!isWindowLevelValid) {
-                LOGGER.info("VOI Window/Level attributes are not consitent ");
-                tagList.remove(TagW.WindowCenter);
-                tagList.remove(TagW.WindowWidth);
-                tagList.remove(TagW.WindowCenterWidthExplanation);
-                tagList.remove(TagW.VOILutFunction);
             }
 
             // Keep DICOM min and max pixel values only if they are consistent
@@ -687,8 +650,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
              * Modality non linear Table
              */
 
-            float[] windowArray = (float[]) tagList.get(TagW.WindowWidth);
-            float[] levelArray = (float[]) tagList.get(TagW.WindowCenter);
+            Float[] windowArray = (Float[]) tagList.get(TagW.WindowWidth);
+            Float[] levelArray = (Float[]) tagList.get(TagW.WindowCenter);
 
             Float window = (windowArray != null && windowArray.length > 0) ? windowArray[0] : null;
             Float level = (levelArray != null && levelArray.length > 0) ? levelArray[0] : null;
@@ -865,6 +828,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
+        if (dicom == null) {
+            return defaultValue;
+        }
         DicomElement element = dicom.get(tag);
         if (element == null || element.isEmpty()) {
             return defaultValue;
