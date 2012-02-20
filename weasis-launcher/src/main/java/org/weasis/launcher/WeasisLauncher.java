@@ -279,7 +279,11 @@ public class WeasisLauncher {
                     } finally {
                         // After all bundles has been stopped, we can copy the preferences
                         if (REMOTE_PREFS != null) {
-                            REMOTE_PREFS.store();
+                            try {
+                                REMOTE_PREFS.store();
+                            } catch (Exception e) {
+                                System.out.println("Cannot store preferences remotely: " + e.getMessage());
+                            }
                         }
                         // Clean temp folder.
                         FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir());
@@ -645,7 +649,11 @@ public class WeasisLauncher {
             }
         }
         if (REMOTE_PREFS != null) {
-            REMOTE_PREFS.read();
+            try {
+                REMOTE_PREFS.read();
+            } catch (Exception e) {
+                System.out.println("Cannot read preferences remotely: " + e.getMessage());
+            }
         }
 
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$

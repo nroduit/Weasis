@@ -149,11 +149,12 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
-                        dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
                 }
-
+                if (medias.length > 0) {
+                    dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+                }
                 // Load image and create thumbnail in this Thread
                 Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (t == null) {
@@ -188,10 +189,10 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                 MediaElement[] medias = dicomReader.getMediaElement();
                 if (medias != null) {
                     for (MediaElement media : medias) {
-                        dicomSeries.setFileSize(dicomSeries.getFileSize() + media.getLength());
                         dicomModel.applySplittingRules(dicomSeries, media);
                     }
                     if (medias.length > 0) {
+                        dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
                         // Refresh the number of images on the thumbnail
                         Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                         if (t != null) {

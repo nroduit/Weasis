@@ -9,9 +9,9 @@ public abstract class RemotePreferences {
         this.localPrefsDir = preferencesDirectory;
     }
 
-    public abstract void read();
+    public abstract void read() throws Exception;
 
-    public abstract void store();
+    public abstract void store() throws Exception;
 
     public final String getUser() {
         return user;
