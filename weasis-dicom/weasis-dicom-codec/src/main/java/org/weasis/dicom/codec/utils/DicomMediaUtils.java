@@ -228,29 +228,34 @@ public class DicomMediaUtils {
 
             int dataLength = 0; // number of entry values in the LUT Data.
 
-            if (numBits <= 8) { // LUT entry value range should be [0,255]
-                byte[] bData = dicomLutObject.getBytes(Tag.LUTData); // LUT Data contains the LUT entry values.
+            // LUT Data contains the LUT entry values, assuming data is always unsigned data
+            final byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
-                if (bData.length == (numEntries << 1)) {
-                    // Appends when some implementations have encoded 8 bit entries with 16 bits
-                    // allocated, padding the high bits;
+            if (numBits <= 8) { // LUT Data should be stored in 8 bits allocated format
+
+                dataLength = bData.length;
+                lookupTable = new LookupTableJAI(bData, offset); // LUT entry value range should be [0,255]
+
+            } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
+
+                if (numEntries <= 256 && (bData.length == (numEntries << 1))) {
+                    // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
+
                     byte[] bDataNew = new byte[numEntries];
                     int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
                     for (int i = 0; i < numEntries; i++) {
-                        bDataNew[i] = bData[i << 2 + byteShift];
+                        bDataNew[i] = bData[(i << 1) + byteShift];
                     }
-                    bData = bDataNew;
+
+                    dataLength = bDataNew.length;
+                    lookupTable = new LookupTableJAI(bDataNew, offset);
+
+                } else {
+                    short[] sData = dicomLutObject.getShorts(Tag.LUTData);
+
+                    dataLength = sData.length;
+                    lookupTable = new LookupTableJAI(sData, offset, true);
                 }
-                dataLength = bData.length;
-                // lookupTable = new ByteLookupTable(offset, bData);
-                lookupTable = new LookupTableJAI(bData, offset);
-
-            } else if (numBits <= 16) { // LUT entry value range is [0,65535]
-                short[] sData = dicomLutObject.getShorts(Tag.LUTData); // LUT Data contains the LUT entry values.
-
-                dataLength = sData.length;
-                // lookupTable = new ShortLookupTable(offset, sData);
-                lookupTable = new LookupTableJAI(sData, offset, true); // assuming data is always DataBuffer.TYPE_USHORT
             } else {
                 LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
             }
