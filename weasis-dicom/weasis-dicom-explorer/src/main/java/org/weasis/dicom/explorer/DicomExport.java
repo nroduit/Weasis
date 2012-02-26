@@ -82,7 +82,7 @@ public class DicomExport extends AbstractWizardDialog {
 
         initializePages();
         pack();
-        initGUI();
+        showPageFirstPage();
     }
 
     @Override
@@ -121,7 +121,4 @@ public class DicomExport extends AbstractWizardDialog {
         super.dispose();
     }
 
-    private void initGUI() {
-        showPageFirstPage();
-    }
 }

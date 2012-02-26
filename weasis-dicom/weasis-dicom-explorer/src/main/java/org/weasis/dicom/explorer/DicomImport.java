@@ -30,7 +30,8 @@ public class DicomImport extends AbstractWizardDialog {
     private final DicomModel dicomModel;
 
     public DicomImport(final DicomModel dicomModel) {
-        super(null, Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
+        super(null,
+            Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomImportFactory.class.getName(), null);
         jPanelButtom.removeAll();
@@ -96,7 +97,7 @@ public class DicomImport extends AbstractWizardDialog {
 
         initializePages();
         pack();
-        initGUI();
+        showPageFirstPage();
     }
 
     @Override
@@ -134,7 +135,4 @@ public class DicomImport extends AbstractWizardDialog {
         super.dispose();
     }
 
-    private void initGUI() {
-        showPageFirstPage();
-    }
 }

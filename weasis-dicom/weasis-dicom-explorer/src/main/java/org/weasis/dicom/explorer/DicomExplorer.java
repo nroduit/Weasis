@@ -275,6 +275,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         @Override
         public void actionPerformed(ActionEvent e) {
             DicomImport dialog = new DicomImport(model);
+            dialog.showPage(BUTTON_NAME);
             JMVUtils.showCenterScreen(dialog);
         }
     };
@@ -283,6 +284,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         @Override
         public void actionPerformed(ActionEvent e) {
             DicomExport dialog = new DicomExport(model);
+            dialog.showPage(BUTTON_NAME);
             JMVUtils.showCenterScreen(dialog);
         }
     };
@@ -1987,8 +1989,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
                         if (response == 0) {
                             DicomImport dialog = new DicomImport(model);
+                            dialog.showPage(Messages.getString("DicomDirImport.dicomdir"));
                             JMVUtils.showCenterScreen(dialog);
-                            // TODO select DICOMDIR
                         }
                     } else {
                         DicomDirImport.loadDicomDir(file, model);

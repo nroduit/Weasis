@@ -565,29 +565,26 @@ public class WeasisLauncher {
 
     private static String getGeneralProperty(String key, String defaultValue, Properties bundleProp, Properties local,
         boolean overrideBundleProp) {
-        String val = getGeneralProperty(key, key, defaultValue, bundleProp, local);
-        if (val != null) {
-            bundleProp.setProperty(key, val);
-        }
-        return val;
+        return getGeneralProperty(key, key, defaultValue, bundleProp, local, overrideBundleProp);
     }
 
-    private static String getGeneralProperty(String key, String defaultValue, Properties config, Properties local) {
-        return getGeneralProperty(key, key, defaultValue, config, local);
-    }
-
-    private static String getGeneralProperty(String key, String localKey, String defaultValue, Properties config,
-        Properties local) {
+    private static String getGeneralProperty(String key, String localKey, String defaultValue, Properties bundleProp,
+        Properties local, boolean overrideBundleProp) {
         String value = local.getProperty(localKey, null);
+        String defaultVal = System.getProperty(key, null);
+        if (defaultVal == null) {
+            defaultVal = bundleProp.getProperty(key, defaultValue);
+        }
+        // Set the default value in bundleContext
+        bundleProp.setProperty("def." + key, defaultVal);
         if (value == null) {
-            value = System.getProperty(key, null);
-            if (value == null) {
-                value = config.getProperty(key, defaultValue);
-            }
-            if (value != null) {
+            if (defaultVal != null) {
                 // When first launch, set property that can be written later
-                local.setProperty(localKey, value);
+                local.setProperty(localKey, defaultVal);
             }
+        }
+        if (overrideBundleProp && value != null) {
+            bundleProp.setProperty(key, value);
         }
         return value;
     }
@@ -684,12 +681,12 @@ public class WeasisLauncher {
         // config)
         // 4) default value
 
-        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
-        final String country = getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
-        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String country = getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
 
-        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("weasis.export.dicom", "false", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -732,32 +729,42 @@ public class WeasisLauncher {
         }
         Locale.setDefault(new Locale(lang, country, variant));
 
-        look = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
-        if (look == null) {
-            String nativeLook = null;
-            String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
-            int index = sys_spec.indexOf("-"); //$NON-NLS-1$
-            if (index > 0) {
-                nativeLook = "weasis.look." + sys_spec.substring(0, index); //$NON-NLS-1$
-                look = System.getProperty(nativeLook, null);
-                if (look == null) {
-                    look = config.getProperty(nativeLook, null);
-                }
-
-            }
+        String nativeLook = null;
+        String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
+        int index = sys_spec.indexOf("-"); //$NON-NLS-1$
+        if (index > 0) {
+            nativeLook = "weasis.look." + sys_spec.substring(0, index); //$NON-NLS-1$
+            look = System.getProperty(nativeLook, null);
             if (look == null) {
-                look = System.getProperty("weasis.look", null);
-                if (look == null) {
-                    look = config.getProperty(nativeLook, null);
-                }
+                look = config.getProperty(nativeLook, null);
+            }
+
+        }
+        if (look == null) {
+            look = System.getProperty("weasis.look", null);
+            if (look == null) {
+                look = config.getProperty(nativeLook, null);
             }
         }
+
+        String localLook = s_prop.getProperty("weasis.look", null); //$NON-NLS-1$
+        // installSubstanceLookAndFeels must be the first condition to install substance if necessary
         if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
                 look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel"; //$NON-NLS-1$
             }
+        }
+        // Set the default value for L&F
+        if (look == null) {
+            look = getAvailableLookAndFeel(look);
+        }
+        config.setProperty("def.weasis.look", look);
+
+        // If look is in local prefs, use it
+        if (localLook != null) {
+            look = localLook;
         }
         // Set look and feels
         try {
@@ -826,7 +833,7 @@ public class WeasisLauncher {
         final File file = common_file;
         // Test if it is the first time launch
         if (versionOld == null) {
-            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop); //$NON-NLS-1$ //$NON-NLS-2$
+            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
                 EventQueue.invokeLater(new Runnable() {
 
@@ -942,43 +949,48 @@ public class WeasisLauncher {
         UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
         UIManager.put("Slider.paintValue", Boolean.FALSE); //$NON-NLS-1$
+
+        String laf = getAvailableLookAndFeel(look);
+        try {
+            UIManager.setLookAndFeel(laf);
+        } catch (Exception e) {
+            System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
+            laf = UIManager.getSystemLookAndFeelClassName();
+        }
+
+        return laf;
+    }
+
+    public static String getAvailableLookAndFeel(String look) {
         UIManager.LookAndFeelInfo lafs[] = UIManager.getInstalledLookAndFeels();
-        laf_exist: if (look != null) {
+        String laf = null;
+        if (look != null) {
             for (int i = 0, n = lafs.length; i < n; i++) {
                 if (lafs[i].getClassName().equals(look)) {
-                    break laf_exist;
+                    laf = look;
+                    break;
                 }
             }
-            look = null;
         }
-        if (look == null) {
+        if (laf == null) {
             if ("Mac OS X".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                look = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+                laf = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 // Try to set Nimbus, concurrent thread issue
                 // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
                 for (int i = 0, n = lafs.length; i < n; i++) {
                     if (lafs[i].getName().equals("Nimbus")) { //$NON-NLS-1$
-                        look = lafs[i].getClassName();
+                        laf = lafs[i].getClassName();
                         break;
                     }
                 }
             }
             // Should never happen
-            if (look == null) {
-                look = UIManager.getSystemLookAndFeelClassName();
+            if (laf == null) {
+                laf = UIManager.getSystemLookAndFeelClassName();
             }
 
         }
-
-        if (look != null) {
-            try {
-                UIManager.setLookAndFeel(look);
-
-            } catch (Exception e) {
-                System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
-            }
-        }
-        return look;
+        return laf;
     }
 }

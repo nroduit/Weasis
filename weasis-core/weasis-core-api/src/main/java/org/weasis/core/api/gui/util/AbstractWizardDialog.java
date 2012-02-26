@@ -31,7 +31,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.Messages;
@@ -106,6 +105,38 @@ public abstract class AbstractWizardDialog extends JDialog {
         }
     }
 
+    public void showPage(String title) {
+        if (!selectPage(title, pagesRoot)) {
+            showPageFirstPage();
+        }
+    }
+
+    private boolean selectPage(String title, DefaultMutableTreeNode root) {
+        if (title != null) {
+            for (Enumeration children = root.children(); children.hasMoreElements();) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
+                Object object = dtm.getUserObject();
+                if (object instanceof PageProps) {
+                    PageProps page = (PageProps) object;
+                    if (page.getTitle().equals(title)) {
+                        TreePath tp = new TreePath(dtm.getPath());
+                        if (!dtm.isLeaf()) {
+                            tree.expandPath(tp);
+                        }
+                        tree.setSelectionPath(tp);
+                        return true;
+                    }
+                }
+                if (dtm.getChildCount() > 0) {
+                    if (selectPage(title, dtm)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public AbstractItemDialogPage getCurrentPage() {
         Object object = null;
         try {
@@ -177,18 +208,19 @@ public abstract class AbstractWizardDialog extends JDialog {
         // dim.width += 5;
         // jScrollPane1.setPreferredSize(dim);
 
-        expandTree(tree, (MutableTreeNode) model.getRoot());
+        expandTree(tree, pagesRoot, 2);
     }
 
-    private static void expandTree(JTree tree, MutableTreeNode start) {
-        for (Enumeration children = start.children(); children.hasMoreElements();) {
-            DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-            if (!dtm.isLeaf()) {
-                //
-                TreePath tp = new TreePath(dtm.getPath());
-                tree.expandPath(tp);
-                //
-                expandTree(tree, dtm);
+    public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
+        if (maxDeep > 1) {
+            for (Enumeration children = start.children(); children.hasMoreElements();) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
+                if (!dtm.isLeaf()) {
+                    TreePath tp = new TreePath(dtm.getPath());
+                    tree.expandPath(tp);
+
+                    expandTree(tree, dtm, maxDeep - 1);
+                }
             }
         }
         return;

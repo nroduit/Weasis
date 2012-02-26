@@ -54,12 +54,12 @@ public class WadoPrefView extends AbstractItemDialogPage {
     private JLabel lblCompression;
 
     public WadoPrefView() {
+        super(Messages.getString("WadoPrefView.wado")); //$NON-NLS-1$
         initGUI();
     }
 
     private void initGUI() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        setTitle(Messages.getString("WadoPrefView.wado")); //$NON-NLS-1$
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         lblCompression = new JLabel(Messages.getString("WadoPrefView.compr")); //$NON-NLS-1$
         add(panel);

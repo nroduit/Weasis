@@ -169,7 +169,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
     };
 
     public ModalityPrefView() {
-        setTitle(Messages.getString("ModalityPrefView.annotations")); //$NON-NLS-1$
+        super(Messages.getString("ModalityPrefView.annotations")); //$NON-NLS-1$
         initNorthPanel();
         initGUI();
         jListPosition.setListData(new Vector(tagList.values()));
@@ -339,8 +339,9 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             loadDefaultModalityDisplayPreferences();
         }
         for (int i = 0; i < infos.length; i++) {
-            if (infos[i].getModality().equals(mod))
+            if (infos[i].getModality().equals(mod)) {
                 return infos[i];
+            }
         }
         return infos[0];
     }

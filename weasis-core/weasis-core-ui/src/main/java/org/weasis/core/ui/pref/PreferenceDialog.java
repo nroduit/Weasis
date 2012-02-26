@@ -15,7 +15,6 @@ import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -37,7 +36,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
         prefs_tracker = new ServiceTracker(Activator.getBundleContext(), PreferencesPageFactory.class.getName(), null);
         initializePages();
         pack();
-        initGUI();
+        showPageFirstPage();
     }
 
     @Override
@@ -90,25 +89,4 @@ public class PreferenceDialog extends AbstractWizardDialog {
         prefs_tracker.close();
     }
 
-    private void initGUI() {
-        showPageFirstPage();
-    }
-
-    public void showPage(String pageName) {
-        if (pageName != null) {
-            Enumeration children = pagesRoot.children();
-            int index = 0;
-            while (children.hasMoreElements()) {
-                DefaultMutableTreeNode page = (DefaultMutableTreeNode) children.nextElement();
-                Object object = page.getUserObject();
-                if (object instanceof AbstractItemDialogPage
-                    && pageName.equals(((AbstractItemDialogPage) object).getTitle())) {
-                    tree.setSelectionRow(index);
-                    tree.expandRow(index);
-                    break;
-                }
-                index++;
-            }
-        }
-    }
 }

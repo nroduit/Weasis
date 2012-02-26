@@ -40,12 +40,12 @@ public class DicomPrefView extends AbstractItemDialogPage {
     private JComboBox comboBox;
 
     public DicomPrefView() {
+        super("DICOM"); //$NON-NLS-1$
         initGUI();
     }
 
     private void initGUI() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        setTitle("DICOM"); //$NON-NLS-1$
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         add(panel);
         GridBagLayout gbl_panel = new GridBagLayout();

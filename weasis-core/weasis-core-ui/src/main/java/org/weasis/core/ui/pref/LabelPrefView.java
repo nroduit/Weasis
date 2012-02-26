@@ -57,12 +57,12 @@ public class LabelPrefView extends AbstractItemDialogPage {
     private final Component verticalStrut = Box.createVerticalStrut(20);
 
     public LabelPrefView(ViewSetting viewSetting) {
+        super(Messages.getString("LabelPrefView.font")); //$NON-NLS-1$
         if (viewSetting == null) {
             throw new IllegalArgumentException("ViewSetting cannot be null"); //$NON-NLS-1$
         }
         this.viewSetting = viewSetting;
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        setTitle(Messages.getString("LabelPrefView.font")); //$NON-NLS-1$
         try {
             JMVUtils.setList(jComboName,
                 Messages.getString("LabelPrefView.default"), GraphicsEnvironment.getLocalGraphicsEnvironment() //$NON-NLS-1$

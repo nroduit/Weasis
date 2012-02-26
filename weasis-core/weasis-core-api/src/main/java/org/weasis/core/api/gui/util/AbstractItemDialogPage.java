@@ -18,10 +18,11 @@ import javax.swing.JPanel;
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps {
     protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
     private final String key;
-    private String title;
+    private final String title;
     private java.util.List<PageProps> subPageList;
 
-    public AbstractItemDialogPage() {
+    public AbstractItemDialogPage(String title) {
+        this.title = title == null ? "item" : title;
         key = String.valueOf(keyGenerator.incrementAndGet());
     }
 
@@ -47,10 +48,6 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public void addSubPage(PageProps subPage) {
         if (subPageList == null) {
             subPageList = new ArrayList<PageProps>();
@@ -59,23 +56,26 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     }
 
     public void removeSubPage(PageProps subPage) {
-        if (subPageList == null)
+        if (subPageList == null) {
             return;
+        }
         subPageList.remove(subPage);
     }
 
     @Override
     public PageProps[] getSubPages() {
-        if (subPageList == null)
+        if (subPageList == null) {
             return null;
+        }
         final PageProps[] subPages = new PageProps[subPageList.size()];
         subPageList.toArray(subPages);
         return subPages;
     }
 
     public void resetAllSubPagesToDefaultValues() {
-        if (subPageList == null)
+        if (subPageList == null) {
             return;
+        }
         for (PageProps subPage : subPageList) {
             subPage.resetoDefaultValues();
         }

@@ -45,7 +45,6 @@ public class OpenPreferencesAction extends AbstractUIAction {
     public void actionPerformed(ActionEvent e) {
         PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance());
         JMVUtils.showCenterScreen(dialog);
-        dialog.showPageFirstPage();
 
     }
 }

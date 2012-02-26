@@ -68,9 +68,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private JButton btnNewButton;
 
     public LocalExport(DicomModel dicomModel, ExportTree exportTree) {
+        super(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = exportTree;
-        setTitle(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         initGUI();
         initialize(true);
     }

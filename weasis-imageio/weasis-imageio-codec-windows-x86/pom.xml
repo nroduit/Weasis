@@ -23,7 +23,7 @@
 				<configuration>
 					<instructions>
 						<Bundle-NativeCode>lib/clib_jiio.dll;lib/clib_jiio_sse2.dll;lib/clib_jiio_util.dll;
-							processor=x86; osname=win32</Bundle-NativeCode>
+							processor=x86; osname=win32; osname="windows server 2008 r2"</Bundle-NativeCode>
 						<Fragment-Host>weasis-imageio-codec;bundle-version="0.7.0"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->

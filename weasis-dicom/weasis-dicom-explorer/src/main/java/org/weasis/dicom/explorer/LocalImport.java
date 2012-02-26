@@ -44,7 +44,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     private File[] files;
 
     public LocalImport() {
-        setTitle(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
+        super(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
         initGUI();
         initialize(true);
     }

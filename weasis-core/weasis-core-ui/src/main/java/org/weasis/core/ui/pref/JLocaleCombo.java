@@ -51,6 +51,26 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
         addItemListener(this);
     }
 
+    public void selectLocale(String language, String country, String variant) {
+        Object item = getSelectedItem();
+        if (item instanceof JLocale) {
+            Locale l = ((JLocale) item).getLocale();
+            if (l.getLanguage().equals(language) && l.getCountry().equals(country) && l.getVariant().equals(variant)) {
+                return;
+            }
+        }
+
+        for (int i = 0; i < getItemCount(); i++) {
+            Locale l = ((JLocale) getItemAt(i)).getLocale();
+            if (l.getLanguage().equals(language) && l.getCountry().equals(country) && l.getVariant().equals(variant)) {
+                setSelectedIndex(i);
+                break;
+            }
+        }
+
+    }
+
+    @Override
     public void itemStateChanged(ItemEvent iEvt) {
         if (iEvt.getStateChange() == ItemEvent.SELECTED) {
             Object item = getSelectedItem();
