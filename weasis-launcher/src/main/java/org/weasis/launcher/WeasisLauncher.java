@@ -578,6 +578,7 @@ public class WeasisLauncher {
         // Set the default value in bundleContext
         bundleProp.setProperty("def." + key, defaultVal);
         if (value == null) {
+            value = defaultVal;
             if (defaultVal != null) {
                 // When first launch, set property that can be written later
                 local.setProperty(localKey, defaultVal);
