@@ -12,8 +12,12 @@ package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,6 +25,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
 
+import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -39,9 +45,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.VR;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 import org.dcm4che2.media.ApplicationProfile;
@@ -54,15 +62,17 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalExport.class);
 
-    private static final String DICOM = "DICOM";
     private static final char[] HEX_DIGIT = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
         'E', 'F' };
 
@@ -257,8 +267,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private void writeOther(File exportDir, ExportTree tree, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
+        boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         int jpegQuality = JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"));
+
         synchronized (tree) {
             TreePath[] paths = tree.getTree().getCheckingPaths();
             for (TreePath treePath : paths) {
@@ -266,13 +278,23 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                 if (node.getUserObject() instanceof DicomImageElement) {
                     DicomImageElement img = (DicomImageElement) node.getUserObject();
-                    TreeNode[] objects = node.getPath();
+                    String iuid = (String) img.getTagValue(TagW.SOPInstanceUID);
                     StringBuffer buffer = new StringBuffer();
-                    if (objects.length > 2) {
-                        for (int i = 1; i < objects.length - 1; i++) {
-                            buffer.append(FileUtil.getValidFileName(objects[i].toString()));
-                            buffer.append(File.separator);
+                    if (keepNames) {
+                        TreeNode[] objects = node.getPath();
+                        if (objects.length > 2) {
+                            for (int i = 1; i < objects.length - 1; i++) {
+                                buffer.append(FileUtil.getValidFileName(objects[i].toString()));
+                                buffer.append(File.separator);
+                            }
                         }
+                    } else {
+                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
+                        buffer.append(File.separator);
+                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+                        buffer.append(File.separator);
+                        buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+                        iuid = makeFileIDs(iuid);
                     }
 
                     File destinationDir = new File(exportDir, buffer.toString());
@@ -285,8 +307,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = ImageToolkit.getDefaultRenderedImage(img, image);
                         }
                         if (image != null) {
-                            ImageFiler.writeJPG(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
-                                + ".jpg"), image, jpegQuality / 100.0f);
+                            ImageFiler.writeJPG(new File(destinationDir, iuid + ".jpg"), image, jpegQuality / 100.0f);
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
                         }
@@ -296,8 +317,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = ImageToolkit.getDefaultRenderedImage(img, image);
                         }
                         if (image != null) {
-                            ImageFiler.writePNG(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
-                                + ".png"), image);
+                            ImageFiler.writePNG(new File(destinationDir, iuid + ".png"), image);
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
                         }
@@ -308,8 +328,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             if (!more8bits) {
                                 image = ImageToolkit.getDefaultRenderedImage(img, image);
                             }
-                            ImageFiler.writeTIFF(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)
-                                + ".tif"), image);
+                            ImageFiler.writeTIFF(new File(destinationDir, iuid + ".tif"), image);
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile());
                         }
@@ -321,10 +340,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     private void writeDicom(File exportDir, ExportTree tree) throws IOException {
+        Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
+        boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
+        boolean writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
+
         DicomDirWriter writer = null;
         try {
-            boolean writeDicomdir =
-                Boolean.valueOf(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
+
             if (writeDicomdir) {
                 File dcmdirFile = new File(exportDir, "DICOMDIR");
                 if (dcmdirFile.createNewFile()) {
@@ -343,18 +365,30 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                     if (node.getUserObject() instanceof DicomImageElement) {
                         DicomImageElement img = (DicomImageElement) node.getUserObject();
-                        TreeNode[] objects = node.getPath();
-                        StringBuffer buffer = new StringBuffer();
-                        if (objects.length > 2) {
-                            for (int i = 1; i < objects.length - 1; i++) {
-                                buffer.append(FileUtil.getValidFileName(objects[i].toString()));
-                                buffer.append(File.separator);
-                            }
-                        }
+                        String iuid = (String) img.getTagValue(TagW.SOPInstanceUID);
 
+                        StringBuffer buffer = new StringBuffer();
+                        // Cannot keep folders names with DICOMDIR (could be not valid)
+                        if (keepNames && !writeDicomdir) {
+                            TreeNode[] objects = node.getPath();
+                            if (objects.length > 2) {
+                                for (int i = 1; i < objects.length - 1; i++) {
+                                    buffer.append(FileUtil.getValidFileName(objects[i].toString()));
+                                    buffer.append(File.separator);
+                                }
+                            }
+                        } else {
+                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
+                            buffer.append(File.separator);
+                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+                            buffer.append(File.separator);
+                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+                            iuid = makeFileIDs(iuid);
+                        }
                         File destinationDir = new File(exportDir, buffer.toString());
-                        destinationDir.mkdirs();
-                        File destinationFile = new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID));
+                        boolean newSeries = destinationDir.mkdirs();
+
+                        File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
                             if (writer != null) {
                                 DicomInputStream in = new DicomInputStream(destinationFile);
@@ -363,13 +397,26 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DicomObject patrec = dicomStruct.makePatientDirectoryRecord(dcmobj);
                                 DicomObject styrec = dicomStruct.makeStudyDirectoryRecord(dcmobj);
                                 DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
+
+                                // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It
+                                // may or may not correspond to one of the images of the Series.
+                                if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
+                                    DicomImageElement midImage =
+                                        ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
+                                            .getMedia(MEDIA_POSITION.MIDDLE);
+                                    DicomObject seq = mkIconItem(midImage);
+                                    if (seq != null) {
+                                        serrec.putNestedDicomObject(Tag.IconImageSequence, seq);
+                                    }
+                                }
+
                                 DicomObject instrec =
                                     dicomStruct.makeInstanceDirectoryRecord(dcmobj, writer.toFileID(destinationFile));
                                 DicomObject rec = writer.addPatientRecord(patrec);
                                 rec = writer.addStudyRecord(rec, styrec);
                                 rec = writer.addSeriesRecord(rec, serrec);
-                                String iuid = dcmobj.getString(Tag.MediaStorageSOPInstanceUID);
-                                if (writer.findInstanceRecord(rec, iuid) == null) {
+                                String miuid = dcmobj.getString(Tag.MediaStorageSOPInstanceUID);
+                                if (writer.findInstanceRecord(rec, miuid) == null) {
                                     writer.addChildRecord(rec, instrec);
                                 }
                             }
@@ -410,14 +457,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return true;
     }
 
-    private String toFilePath(String[] fileIDs, int n) {
-        StringBuffer sb = new StringBuffer(fileIDs[0]);
-        for (int i = 1; i < n; ++i) {
-            sb.append(File.separatorChar).append(fileIDs[i]);
-        }
-        return sb.toString();
-    }
-
     private static String toHex(int val) {
         char[] ch8 = new char[8];
         for (int i = 8; --i >= 0; val >>= 4) {
@@ -427,8 +466,89 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return String.valueOf(ch8);
     }
 
-    private static String[] makeFileIDs(String pid, String suid, String seruid, String iuid) {
-        return new String[] { toHex(pid.hashCode()), toHex(suid.hashCode()), toHex(seruid.hashCode()),
-            toHex(iuid.hashCode()), };
+    private static String makeFileIDs(String uid) {
+        return toHex(uid.hashCode());
+    }
+
+    private DicomObject mkIconItem(DicomImageElement image) {
+        if (image == null) {
+            return null;
+        }
+        BufferedImage thumbnail = null;
+        PlanarImage imgPl = image.getImage(null);
+        if (imgPl != null) {
+            RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
+            final double scale = Math.min(128 / (double) img.getHeight(), 128 / (double) img.getWidth());
+            final PlanarImage thumb =
+                scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale, Thumbnail.DownScaleQualityHints)
+                    .getRendering() : PlanarImage.wrapRenderedImage(img);
+            thumbnail = thumb.getAsBufferedImage();
+        }
+        if (thumbnail == null) {
+            return null;
+        }
+        int w = thumbnail.getWidth();
+        int h = thumbnail.getHeight();
+
+        String pmi = (String) image.getTagValue(TagW.PhotometricInterpretation);
+        BufferedImage bi = thumbnail;
+        if ("RGB".equals(pmi)) {
+            bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
+            pmi = "PALETTE COLOR";
+        }
+
+        byte[] iconPixelData = new byte[w * h];
+        DicomObject iconItem = new BasicDicomObject();
+
+        if ("PALETTE COLOR".equals(pmi)) {
+            IndexColorModel cm = (IndexColorModel) bi.getColorModel();
+            int[] lutDesc = { cm.getMapSize(), 0, 8 };
+            byte[] r = new byte[lutDesc[0]];
+            byte[] g = new byte[lutDesc[0]];
+            byte[] b = new byte[lutDesc[0]];
+            cm.getReds(r);
+            cm.getGreens(g);
+            cm.getBlues(b);
+            iconItem.putInts(Tag.RedPaletteColorLookupTableDescriptor, VR.US, lutDesc);
+            iconItem.putInts(Tag.GreenPaletteColorLookupTableDescriptor, VR.US, lutDesc);
+            iconItem.putInts(Tag.BluePaletteColorLookupTableDescriptor, VR.US, lutDesc);
+            iconItem.putBytes(Tag.RedPaletteColorLookupTableData, VR.OW, r, false);
+            iconItem.putBytes(Tag.GreenPaletteColorLookupTableData, VR.OW, g, false);
+            iconItem.putBytes(Tag.BluePaletteColorLookupTableData, VR.OW, b, false);
+
+            Raster raster = bi.getRaster();
+            for (int y = 0, i = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x, ++i) {
+                    iconPixelData[i] = (byte) raster.getSample(x, y, 0);
+                }
+            }
+        } else {
+            pmi = "MONOCHROME2";
+            for (int y = 0, i = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x, ++i) {
+                    iconPixelData[i] = (byte) bi.getRGB(x, y);
+                }
+            }
+        }
+        iconItem.putString(Tag.PhotometricInterpretation, VR.CS, pmi);
+        iconItem.putInt(Tag.Rows, VR.US, h);
+        iconItem.putInt(Tag.Columns, VR.US, w);
+        iconItem.putInt(Tag.SamplesPerPixel, VR.US, 1);
+        iconItem.putInt(Tag.BitsAllocated, VR.US, 8);
+        iconItem.putInt(Tag.BitsStored, VR.US, 8);
+        iconItem.putInt(Tag.HighBit, VR.US, 7);
+        iconItem.putBytes(Tag.PixelData, VR.OW, iconPixelData);
+        return iconItem;
+    }
+
+    private BufferedImage convertBI(BufferedImage src, int imageType) {
+        BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
+        Graphics2D big = dst.createGraphics();
+        try {
+            big.drawImage(src, 0, 0, null);
+        } finally {
+            big.dispose();
+        }
+        return dst;
     }
 }
