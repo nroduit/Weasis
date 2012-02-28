@@ -434,6 +434,17 @@ public class JMVUtils {
         return bounds.width;
     }
 
+    public static int getIntValueFromString(String value, int defaultValue) {
+        int result = defaultValue;
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        return result;
+    }
+
     public static boolean textHasContent(String aText) {
         return (aText != null) && (!aText.trim().equals("")); //$NON-NLS-1$
     }

@@ -591,6 +591,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         for (int i = 0; i < files.length; i++) {
                             if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
                                 last = null;
+                            } else {
                                 last = dirs[i];
                                 files[i] = new File(baseDir, dirs[i]);
                             }

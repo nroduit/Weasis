@@ -486,10 +486,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 for (SeriesPane series : studyPane.getSeriesPaneList()) {
                     series.updateSize(thumbnailSize);
                 }
+                studyPane.doLayout();
             }
         }
         patientContainer.revalidate();
         patientContainer.repaint();
+
     }
 
     private SeriesPane getSeriesPane(MediaSeriesGroup series) {
@@ -797,6 +799,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 if (studyPane.getComponentCount() > 0) {
                     addPane(studyPane);
                 }
+                studyPane.doLayout();
             }
             this.revalidate();
         }
@@ -811,6 +814,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     if (studyPane.getComponentCount() > 0) {
                         addPane(studyPane);
                     }
+                    studyPane.doLayout();
                 }
                 this.revalidate();
             }
@@ -1267,6 +1271,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     studyPane.showAllSeries();
                     studyPane.refreshLayout();
                     selectedPatient.addPane(studyPane);
+                    studyPane.doLayout();
                 }
             }
             selectedPatient.revalidate();
