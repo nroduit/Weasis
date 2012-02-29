@@ -571,14 +571,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             helpMenuItem.add(helpContentMenuItem);
         }
 
-        final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.release")); //$NON-NLS-1$
+        final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
         webMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    URL url =
-                        new URL(
-                            "http://www.dcm4che.org/jira/browse/WEA#selectedTab=com.atlassian.jira.plugin.system.project%3Achangelog-panel"); //$NON-NLS-1$
+                    URL url = new URL("http://www.dcm4che.org/confluence/display/WEA/Keyboard+and+Mouse+Shortcuts"); //$NON-NLS-1$
                     JMVUtils.OpenInDefaultBrowser(webMenuItem, url);
                 } catch (MalformedURLException e1) {
                     e1.printStackTrace();
