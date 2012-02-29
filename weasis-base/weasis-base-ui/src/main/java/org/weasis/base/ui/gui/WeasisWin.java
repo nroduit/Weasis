@@ -535,21 +535,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 bound = bound.union(b);
             }
         }
+        log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         setMaximizedBounds(bound);
-        setLocation(bound.x, bound.y);
         // set a valid size, insets of screen is often non consistent
-        setSize(bound.width - 100, bound.height - 100);
-
+        setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
         setVisible(true);
 
-        // Let time to paint
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException e) {
-        }
-        // Must be execute after setVisible() to work on Linux
-        setExtendedState(Frame.MAXIMIZED_BOTH);
+        setExtendedState((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH ? JFrame.NORMAL
+            : JFrame.MAXIMIZED_BOTH);
         log.info("End of loading the GUI..."); //$NON-NLS-1$
+
     }
 
     private JMenuBar createMenuBar() {

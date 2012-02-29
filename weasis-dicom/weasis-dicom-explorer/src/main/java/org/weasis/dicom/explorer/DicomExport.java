@@ -11,6 +11,7 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -34,8 +35,8 @@ public class DicomExport extends AbstractWizardDialog {
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
 
-    public DicomExport(final DicomModel dicomModel) {
-        super(null,
+    public DicomExport(Frame parent, final DicomModel dicomModel) {
+        super(parent,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(dicomModel);
@@ -87,9 +88,7 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        //    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
         pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, exportTree)));
-        // }
 
         try {
             prefs_tracker.open();

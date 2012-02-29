@@ -96,6 +96,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -274,7 +275,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            DicomImport dialog = new DicomImport(model);
+            DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
             dialog.showPage(BUTTON_NAME);
             JMVUtils.showCenterScreen(dialog);
         }
@@ -283,9 +284,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            DicomExport dialog = new DicomExport(model);
-            dialog.showPage(BUTTON_NAME);
-            JMVUtils.showCenterScreen(dialog);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
+                DicomExport dialog = new DicomExport(WinUtil.getParentFrame(DicomExplorer.this), model);
+                dialog.showPage(BUTTON_NAME);
+                JMVUtils.showCenterScreen(dialog);
+            } else {
+                JOptionPane.showMessageDialog((Component) e.getSource(), "This feature is not enabled");
+            }
         }
     };
 
@@ -1993,7 +1998,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
-                            DicomImport dialog = new DicomImport(model);
+                            DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
                             dialog.showPage(Messages.getString("DicomDirImport.dicomdir"));
                             JMVUtils.showCenterScreen(dialog);
                         }

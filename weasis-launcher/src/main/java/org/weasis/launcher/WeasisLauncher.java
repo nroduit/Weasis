@@ -564,12 +564,12 @@ public class WeasisLauncher {
     }
 
     private static String getGeneralProperty(String key, String defaultValue, Properties bundleProp, Properties local,
-        boolean overrideBundleProp) {
-        return getGeneralProperty(key, key, defaultValue, bundleProp, local, overrideBundleProp);
+        boolean overrideBundleProp, boolean storeInLocalPref) {
+        return getGeneralProperty(key, key, defaultValue, bundleProp, local, overrideBundleProp, storeInLocalPref);
     }
 
     private static String getGeneralProperty(String key, String localKey, String defaultValue, Properties bundleProp,
-        Properties local, boolean overrideBundleProp) {
+        Properties local, boolean overrideBundleProp, boolean storeInLocalPref) {
         String value = local.getProperty(localKey, null);
         String defaultVal = System.getProperty(key, null);
         if (defaultVal == null) {
@@ -579,7 +579,7 @@ public class WeasisLauncher {
         bundleProp.setProperty("def." + key, defaultVal);
         if (value == null) {
             value = defaultVal;
-            if (defaultVal != null) {
+            if (storeInLocalPref && defaultVal != null) {
                 // When first launch, set property that can be written later
                 local.setProperty(localKey, defaultVal);
             }
@@ -682,21 +682,22 @@ public class WeasisLauncher {
         // config)
         // 4) default value
 
-        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
-        final String country = getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
-        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        final String country =
+            getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
 
-        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
-        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
-        getGeneralProperty("org.apache.sling.commons.log.file", "", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file", "", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.number", "5", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("org.apache.sling.commons.log.file.size", "10MB", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty(
-            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3} {5}", config, s_prop, true); //$NON-NLS-1$ //$NON-NLS-2$
+            "org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3} {5}", config, s_prop, true, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         URI translation_modules = null;
         if (portable != null) {
@@ -834,7 +835,7 @@ public class WeasisLauncher {
         final File file = common_file;
         // Test if it is the first time launch
         if (versionOld == null) {
-            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false); //$NON-NLS-1$ //$NON-NLS-2$
+            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
                 EventQueue.invokeLater(new Runnable() {
 

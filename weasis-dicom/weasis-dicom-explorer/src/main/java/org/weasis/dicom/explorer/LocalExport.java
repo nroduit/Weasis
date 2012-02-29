@@ -13,6 +13,7 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -81,8 +82,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
     private static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
     private static final String HEIGHT_BITS = "exp.8bis";//$NON-NLS-1$
+    private static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
 
     public static final String[] EXPORT_FORMAT = { "DICOM", "JPEG", "PNG", "TIFF" };
+
     private final DicomModel dicomModel;
     private JLabel lblImportAFolder;
     private File outputFolder;
@@ -137,23 +140,27 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (EXPORT_FORMAT[0].equals(seltected)) {
             final JCheckBox box1 =
                 new JCheckBox("Include DICOMDIR", Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true")));
-
+            final JCheckBox box2 =
+                new JCheckBox("DICOM CD folders", Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false")));
+            box2.setEnabled(box1.isSelected());
             boxKeepNames.setEnabled(!box1.isSelected());
             box1.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     boxKeepNames.setEnabled(!box1.isSelected());
+                    box2.setEnabled(box1.isSelected());
                 }
             });
 
-            Object[] options = { box1, boxKeepNames };
+            Object[] options = { box1, box2, boxKeepNames };
             int response =
                 JOptionPane.showOptionDialog(this, options, "Image Export Options", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(INC_DICOMDIR, String.valueOf(box1.isSelected()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
+                pref.setProperty(CD_COMPATIBLE, String.valueOf(box2.isSelected()));
             }
         } else if (EXPORT_FORMAT[1].equals(seltected)) {
             final JSlider slider =
@@ -343,6 +350,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         boolean writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
+        boolean cdCompatible = Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false"));//$NON-NLS-1$
 
         DicomDirWriter writer = null;
         try {
@@ -378,6 +386,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 }
                             }
                         } else {
+                            if (cdCompatible) {
+                                buffer.append("DICOM");
+                                buffer.append(File.separator);
+                            }
                             buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
                             buffer.append(File.separator);
                             buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
@@ -492,7 +504,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         String pmi = (String) image.getTagValue(TagW.PhotometricInterpretation);
         BufferedImage bi = thumbnail;
-        if ("RGB".equals(pmi)) {
+        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.CS_GRAY) {
             bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
             pmi = "PALETTE COLOR";
         }

@@ -11,6 +11,7 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -29,8 +30,8 @@ public class DicomImport extends AbstractWizardDialog {
     private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
 
-    public DicomImport(final DicomModel dicomModel) {
-        super(null,
+    public DicomImport(Frame parent, final DicomModel dicomModel) {
+        super(parent,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomImportFactory.class.getName(), null);

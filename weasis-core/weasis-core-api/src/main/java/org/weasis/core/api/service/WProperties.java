@@ -13,6 +13,7 @@ package org.weasis.core.api.service;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.util.Base64;
 
 public class WProperties extends Properties {
@@ -88,6 +89,16 @@ public class WProperties extends Properties {
         if (isValid(key, value)) {
             this.put(key, String.valueOf(value));
         }
+    }
+
+    // Look for properties unmodifiable in the interface (not stored in weasis.properties)
+    @Override
+    public String getProperty(String key) {
+        String value = super.getProperty(key);
+        if (value == null) {
+            value = Activator.getBundleContext().getProperty(key);
+        }
+        return value;
     }
 
     public float getFloatProperty(String key, float def) {
