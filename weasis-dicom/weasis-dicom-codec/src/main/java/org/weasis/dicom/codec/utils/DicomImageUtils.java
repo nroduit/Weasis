@@ -274,11 +274,16 @@ public class DicomImageUtils {
     private static void setWindowLevelSequenceLut(float window, float level, LookupTableJAI lookupSequence,
         float minInValue, float maxInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
 
-        Object inLutDataArray = getLutDataArray(lookupSequence);
+        final Object inLutDataArray = getLutDataArray(lookupSequence);
 
         if (inLutDataArray == null) {
             return;
         }
+
+        // Use this mask to get positive value assuming inLutData is always unsigned
+        final int lutDataValueMask =
+            (inLutDataArray instanceof byte[] ? 0x000000FF : (inLutDataArray instanceof short[] ? 0x0000FFFF
+                : 0xFFFFFFFF));
 
         float lowLevel = level - window / 2f;
         float highLevel = level + window / 2f;
@@ -301,7 +306,7 @@ public class DicomImageUtils {
         int lookupRangeSize = Array.getLength(inLutDataArray) - 1;
 
         float widthRescaleRatio = lookupRangeSize / window;
-        float outRescaleRatio = maxOutValue / maxInValue;
+        float outRescaleRatio = maxOutValue / (maxInValue - minInValue);
 
         // TODO assert maxInValue equals maxOutLookupValue
         // float maxOutLookupValue = (inLutDataArray instanceof byte[]) ? 255 : 65535;
@@ -321,8 +326,8 @@ public class DicomImageUtils {
             int inValueRoundDown = Math.max(0, (int) Math.floor(inValueRescaled));
             int inValueRoundUp = Math.min(lookupRangeSize, (int) Math.ceil(inValueRescaled));
 
-            int valueDown = Array.getInt(inLutDataArray, inValueRoundDown);
-            int valueUp = Array.getInt(inLutDataArray, inValueRoundUp);
+            int valueDown = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundDown);
+            int valueUp = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundUp);
 
             // Linear Interpolation of the output value with respect to the rescale ratio
             value =

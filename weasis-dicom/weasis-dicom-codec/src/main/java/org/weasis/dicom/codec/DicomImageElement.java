@@ -679,7 +679,7 @@ public class DicomImageElement extends ImageElement {
 
         LookupTableJAI lookup = getModalityLookup();
 
-        // assert pixel value is inside bound array
+        // TODO assert pixel value is inside bound array
         if (lookup != null) {
             int minValue = lookup.getOffset();
             int maxValue = lookup.getOffset() + lookup.getNumEntries() - 1;

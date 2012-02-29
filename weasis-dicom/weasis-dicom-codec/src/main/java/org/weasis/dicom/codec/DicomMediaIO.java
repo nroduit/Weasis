@@ -24,9 +24,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -166,12 +168,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         return false;
                     }
                 }
-            } catch (IOException ex) {
-                ex.printStackTrace();
+
+                writeInstanceTags();
+
+            } catch (Throwable t) {
+                LOGGER.warn("", t);
                 close();
                 return false;
             }
-            writeInstanceTags();
+            // writeInstanceTags();
         }
         return true;
     }
@@ -545,23 +550,29 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    private static void validateDicomImageValues(HashMap<TagW, Object> tagList) {
-        if (tagList != null) {
+    private static void validateDicomImageValues(HashMap<TagW, Object> dicomTagMap) {
+        if (dicomTagMap != null) {
 
-            Integer bitsStored = (Integer) tagList.get(TagW.BitsStored);
+            Integer bitsStored = (Integer) dicomTagMap.get(TagW.BitsStored);
+
+            Integer pixelRepresentation = (Integer) dicomTagMap.get(TagW.PixelRepresentation);
+            boolean isPixelRepresentationSigned = (pixelRepresentation != null && pixelRepresentation != 0);
 
             // NOTE : Either a Modality LUT Sequence containing a single Item or Rescale Slope and Intercept values
             // shall be present but not both (@see Dicom Standard 2011 - PS 3.3 § C.11.1 Modality LUT Module)
 
-            DicomElement modalityLUTSequence = (DicomElement) tagList.get(TagW.ModalityLUTSequence);
+            DicomElement modalityLUTSequence = (DicomElement) dicomTagMap.get(TagW.ModalityLUTSequence);
 
             if (DicomMediaUtils.containsRequiredModalityLUTSequenceAttributes(modalityLUTSequence)) {
                 DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
 
-                setTagNoNull(tagList, TagW.ModalityLUTData, DicomMediaUtils.createLut(modalityLUTobj));
-                setTagNoNull(tagList, TagW.ModalityLUTType,
+                // TODO - should not create modality LUT here and prefer to do it in DicomImageElement Factory
+
+                setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
+                    DicomMediaUtils.createLut(modalityLUTobj, isPixelRepresentationSigned));
+                setTagNoNull(dicomTagMap, TagW.ModalityLUTType,
                     getStringFromDicomElement(modalityLUTobj, Tag.ModalityLUTType, null));
-                setTagNoNull(tagList, TagW.ModalityLUTExplanation, // Optional Tag
+                setTagNoNull(dicomTagMap, TagW.ModalityLUTExplanation, // Optional Tag
                     getStringFromDicomElement(modalityLUTobj, Tag.LUTExplanation, null));
             }
 
@@ -581,17 +592,17 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 // 8 or 16. The LUT Data shall be stored in a format equivalent to 8 bits allocated when the number
                 // of bits for each entry is 8, and 16 bits allocated when the number of bits for each entry is 16
 
-                if (tagList.get(TagW.ModalityLUTData) != null) {
-                    if (tagList.get(TagW.RescaleIntercept) != null) {
+                if (dicomTagMap.get(TagW.ModalityLUTData) != null) {
+                    if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
                         LOGGER.info("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
                     }
-                    if (tagList.get(TagW.ModalityLUTType) == null) {
+                    if (dicomTagMap.get(TagW.ModalityLUTType) == null) {
                         LOGGER.info("Modality Type is required if Modality LUT Sequence is present. ");
                     }
-                } else if (tagList.get(TagW.RescaleIntercept) != null) {
-                    if (tagList.get(TagW.RescaleSlope) == null) {
+                } else if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
+                    if (dicomTagMap.get(TagW.RescaleSlope) == null) {
                         LOGGER.info("Modality Rescale Slope is required if Rescale Intercept is present.");
-                    } else if (tagList.get(TagW.RescaleType) == null) {
+                    } else if (dicomTagMap.get(TagW.RescaleType) == null) {
                         LOGGER.info("Modality Rescale Type is required if Rescale Intercept is present.");
                     }
                 } else {
@@ -603,21 +614,54 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // Table, but not both, may be applied to the Image for display. Inclusion of both indicates that multiple
             // alternative views may be presented. (@see Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module)
 
-            DicomElement voiLUTSequence = (DicomElement) tagList.get(TagW.VOILUTSequence);
+            DicomElement voiLUTSequence = (DicomElement) dicomTagMap.get(TagW.VOILUTSequence);
 
             if (DicomMediaUtils.containsRequiredVOILUTSequenceAttributes(voiLUTSequence)) {
                 LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.countItems()];
                 String[] voiLUTsExplanation = new String[voiLUTSequence.countItems()];
 
+                boolean isOutModalityLutSigned = isPixelRepresentationSigned;
+
+                // TODO - remove code below if VOI LUT is created in DicomImageElement Factory as described in next TODO
+
+                // Evaluate outModality min value if signed
+                LookupTableJAI modalityLookup = (LookupTableJAI) dicomTagMap.get(TagW.ModalityLUTData);
+
+                Integer smallestPixelValue = (Integer) dicomTagMap.get(TagW.SmallestImagePixelValue);
+                float minPixelValue = (smallestPixelValue == null) ? 0.0f : smallestPixelValue.floatValue();
+
+                if (modalityLookup == null) {
+
+                    Float intercept = (Float) dicomTagMap.get(TagW.RescaleIntercept);
+                    Float slope = (Float) dicomTagMap.get(TagW.RescaleSlope);
+
+                    slope = (slope == null) ? 1.0f : slope;
+                    intercept = (intercept == null) ? 0.0f : intercept;
+
+                    if ((minPixelValue * slope + intercept) < 0) {
+                        isOutModalityLutSigned = true;
+                    }
+                } else {
+                    int minInLutValue = modalityLookup.getOffset();
+                    int maxInLutValue = modalityLookup.getOffset() + modalityLookup.getNumEntries() - 1;
+
+                    if (minPixelValue >= minInLutValue && minPixelValue <= maxInLutValue
+                        && modalityLookup.lookup(0, (int) minPixelValue) < 0) {
+                        isOutModalityLutSigned = true;
+                    }
+                }
+
+                // TODO - should not create VOI LUT here and prefer to do it in DicomImageElement Factory
+
                 for (int i = 0; i < voiLUTSequence.countItems(); i++) {
                     DicomObject voiLUTobj = voiLUTSequence.getDicomObject(i);
 
-                    voiLUTsData[i] = DicomMediaUtils.createLut(voiLUTobj);
+                    voiLUTsData[i] = DicomMediaUtils.createLut(voiLUTobj, isOutModalityLutSigned);
                     voiLUTsExplanation[i] = getStringFromDicomElement(voiLUTobj, Tag.LUTExplanation, null);
                 }
 
-                setTag(tagList, TagW.VOILUTsData, voiLUTsData);
-                setTag(tagList, TagW.VOILUTsExplanation, voiLUTsExplanation); // Optional Tag
+                setTag(dicomTagMap, TagW.VOILUTsData, voiLUTsData);
+                setTag(dicomTagMap, TagW.VOILUTsExplanation, voiLUTsExplanation); // Optional Tag
             }
 
             if (LOGGER.isDebugEnabled()) {
@@ -628,8 +672,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 // number of values and shall be considered as pairs. Multiple values indicate that multiple alternative
                 // views may be presented
 
-                Float[] windowCenterDefaultTagArray = (Float[]) tagList.get(TagW.WindowCenter);
-                Float[] windowWidthDefaultTagArray = (Float[]) tagList.get(TagW.WindowWidth);
+                Float[] windowCenterDefaultTagArray = (Float[]) dicomTagMap.get(TagW.WindowCenter);
+                Float[] windowWidthDefaultTagArray = (Float[]) dicomTagMap.get(TagW.WindowWidth);
 
                 if (windowCenterDefaultTagArray == null && windowWidthDefaultTagArray != null) {
                     LOGGER.debug("VOI Window Center is required if Window Width is present");
@@ -650,27 +694,27 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
              * Modality non linear Table
              */
 
-            Float[] windowArray = (Float[]) tagList.get(TagW.WindowWidth);
-            Float[] levelArray = (Float[]) tagList.get(TagW.WindowCenter);
+            Float[] windowArray = (Float[]) dicomTagMap.get(TagW.WindowWidth);
+            Float[] levelArray = (Float[]) dicomTagMap.get(TagW.WindowCenter);
 
             Float window = (windowArray != null && windowArray.length > 0) ? windowArray[0] : null;
             Float level = (levelArray != null && levelArray.length > 0) ? levelArray[0] : null;
 
             if (window != null && level != null) {
-                Integer minValue = (Integer) tagList.get(TagW.SmallestImagePixelValue);
-                Integer maxValue = (Integer) tagList.get(TagW.LargestImagePixelValue);
+                Integer minValue = (Integer) dicomTagMap.get(TagW.SmallestImagePixelValue);
+                Integer maxValue = (Integer) dicomTagMap.get(TagW.LargestImagePixelValue);
 
                 if (minValue != null && maxValue != null) {
-                    float min = pixel2rescale(tagList, minValue.floatValue());
-                    float max = pixel2rescale(tagList, maxValue.floatValue());
+                    float min = pixel2rescale(dicomTagMap, minValue.floatValue());
+                    float max = pixel2rescale(dicomTagMap, maxValue.floatValue());
                     // Empirical test
                     float low = level - window / 4.0f;
                     float high = level + window / 4.0f;
                     if (low < min || high > max) {
                         // Min and Max seems to be not consistent
                         // Remove them, it will search in min and max in pixel data
-                        tagList.remove(TagW.SmallestImagePixelValue);
-                        tagList.remove(TagW.LargestImagePixelValue);
+                        dicomTagMap.remove(TagW.SmallestImagePixelValue);
+                        dicomTagMap.remove(TagW.LargestImagePixelValue);
                     }
                 }
 
@@ -678,8 +722,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 if (bitsStored != null) {
                     if (window > (1 << bitsStored)) {
                         // Remove w/l values that are not consistent to the bits stored
-                        tagList.remove(TagW.WindowCenter);
-                        tagList.remove(TagW.WindowWidth);
+                        dicomTagMap.remove(TagW.WindowCenter);
+                        dicomTagMap.remove(TagW.WindowWidth);
                     }
                 }
             }
@@ -828,31 +872,35 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public static Date getDateFromDicomElement(DicomObject dicom, int tag, Date defaultValue) {
-        if (dicom == null) {
-            return defaultValue;
-        }
-        DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty()) {
-            return defaultValue;
-        } else {
+        DicomElement element = (dicom != null) ? dicom.get(tag) : null;
+
+        if (element != null && !element.isEmpty()) {
             try {
                 return element.getDate(false);
             } catch (Exception e) {
                 // Value not valid according to DICOM standard
                 LOGGER.error("Cannot parse date {}", element.toString());
-                return defaultValue;
             }
         }
-
+        return defaultValue;
     }
 
-    public static float[] getFloatArrayFromDicomElement(DicomObject dicom, int tag, float[] defaultValue) {
-        DicomElement element = dicom.get(tag);
-        if (element == null || element.isEmpty()) {
-            return defaultValue;
-        } else {
-            return element.getFloats(false);
+    public static Float[] getFloatArrayFromDicomElement(DicomObject dicom, int tag, Float[] defaultValue) {
+        DicomElement element = (dicom != null) ? dicom.get(tag) : null;
+
+        if (element != null && !element.isEmpty()) {
+            float[] fResults = element.getFloats(false);
+
+            if (fResults != null && fResults.length > 0) {
+                List<Float> fResultList = new ArrayList<Float>(fResults.length);
+                for (float result : fResults) {
+                    fResultList.add(result);
+
+                }
+                return fResultList.toArray(new Float[fResultList.size()]);
+            }
         }
+        return defaultValue;
     }
 
     public static Float getFloatFromDicomElement(DicomObject dicom, int tag, Float defaultValue) {
@@ -1222,13 +1270,13 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
                     // Overrides Modality LUT Transformation attributes only if sequence is consistent
                     if (DicomMediaUtils.containsRequiredModalityLUTRescaleAttributes(pixelValueTransformation)) {
-                        setTag(tagList, TagW.RescaleSlope,
+                        setTagNoNull(tagList, TagW.RescaleSlope,
                             getFloatFromDicomElement(pixelValueTransformation, Tag.RescaleSlope, null));
-                        setTag(tagList, TagW.RescaleIntercept,
+                        setTagNoNull(tagList, TagW.RescaleIntercept,
                             getFloatFromDicomElement(pixelValueTransformation, Tag.RescaleIntercept, null));
-                        setTag(tagList, TagW.RescaleType,
+                        setTagNoNull(tagList, TagW.RescaleType,
                             getStringFromDicomElement(pixelValueTransformation, Tag.RescaleType, null));
-                        setTag(tagList, TagW.ModalityLUTSequence, null); // must be identity transformation
+                        setTagNoNull(tagList, TagW.ModalityLUTSequence, null); // must be identity transformation
                     } else {
                         LOGGER.info("Ignore {} with unconsistent attributes",
                             TagUtils.toString(Tag.PixelValueTransformationSequence));
@@ -1249,15 +1297,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
                     // Overrides VOI LUT Transformation attributes only if sequence is consistent
                     if (DicomMediaUtils.containsRequiredVOILUTAttributes(frameVOILUTSequence)) {
-                        setTag(tagList, TagW.WindowWidth,
+                        setTagNoNull(tagList, TagW.WindowWidth,
                             getFloatArrayFromDicomElement(frameVOILUTSequence, Tag.WindowWidth, null));
-                        setTag(tagList, TagW.WindowCenter,
+                        setTagNoNull(tagList, TagW.WindowCenter,
                             getFloatArrayFromDicomElement(frameVOILUTSequence, Tag.WindowCenter, null));
-                        setTag(tagList, TagW.WindowCenterWidthExplanation,
+                        setTagNoNull(tagList, TagW.WindowCenterWidthExplanation,
                             getStringArrayFromDicomElement(frameVOILUTSequence, Tag.WindowCenterWidthExplanation, null));
-                        setTag(tagList, TagW.VOILutFunction,
+                        setTagNoNull(tagList, TagW.VOILutFunction,
                             getStringFromDicomElement(frameVOILUTSequence, Tag.VOILUTFunction, null));
-                        setTag(TagW.VOILUTSequence, frameVOILUTSequence.get(Tag.VOILUTSequence));
+                        setTagNoNull(TagW.VOILUTSequence, frameVOILUTSequence.get(Tag.VOILUTSequence));
                     } else {
                         LOGGER.info("Ignore {} with unconsistent attributes",
                             TagUtils.toString(Tag.FrameVOILUTSequence));
