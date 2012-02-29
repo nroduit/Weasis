@@ -31,12 +31,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyledDocument;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
@@ -102,23 +98,21 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jPanelAbout.setLayout(gridBagLayout1);
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
-        StyledDocument doc = jTextPane1.getStyledDocument();
-        JMVUtils.addStylesToDocument(doc, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
 
-        try {
-            Style regular = doc.getStyle("regular"); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "\n", regular); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "Weasis v" + AbstractProperties.WEASIS_VERSION + "\n", doc //$NON-NLS-1$ //$NON-NLS-2$
-                .getStyle("title")); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "\n", regular); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "Copyright © 2009-2011, \n", regular); //$NON-NLS-1$
-            doc.insertString(doc.getLength(), "Weasis Team\n", regular); //$NON-NLS-1$
-        } catch (BadLocationException ble) {
-        }
+        jTextPane1.setBackground(Color.WHITE);
+        jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
+        final StringBuffer message = new StringBuffer("<div align=\"center\"><H2>Weasis "); //$NON-NLS-1$
+        message.append(AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
+        message.append("</H2>"); //$NON-NLS-1$
 
-        // jTextPane1.setPage(buffer.toString());
-        // jTextPane1.setFont(FontTools.getFont10());
-        // jTextPane1.setOpaque(false);
+        String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
+        message.append(String.format("<a href=\"%s\">" + rn + "</a>", //$NON-NLS-1$ //$NON-NLS-2$
+            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10435")); //$NON-NLS-1$
+        message.append("<BR>"); //$NON-NLS-1$
+        message.append("Copyright © 2009-2011,"); //$NON-NLS-1$
+        message.append("<BR>"); //$NON-NLS-1$
+        message.append("Weasis Team</div>"); //$NON-NLS-1$
+        jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
         jLabel1.setIcon(new ImageIcon(getClass().getResource("/about.png"))); //$NON-NLS-1$
         jPanel3.setLayout(borderLayout3);
@@ -154,6 +148,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
     }
 
     // Close the dialog on a button event
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == jButtonclose) {
             cancel();

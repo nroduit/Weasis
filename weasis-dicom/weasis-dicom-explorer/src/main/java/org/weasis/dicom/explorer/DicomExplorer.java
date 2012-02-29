@@ -289,7 +289,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 dialog.showPage(BUTTON_NAME);
                 JMVUtils.showCenterScreen(dialog);
             } else {
-                JOptionPane.showMessageDialog((Component) e.getSource(), Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
+                JOptionPane.showMessageDialog((Component) e.getSource(),
+                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
             }
         }
     };
@@ -385,7 +386,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         patient2study.remove(patient);
                         // throw a new event for removing the patient
                         model.removePatient(patient);
-                        return;
+                        break;
                     }
                     study2series.remove(study);
                     PatientPane patientPane = getPatientPane(patient);
@@ -395,7 +396,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         patientPane.revalidate();
                         patientPane.repaint();
                     }
-                    break;
+                    return;
                 }
             }
         }
@@ -414,7 +415,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         study2series.remove(study);
                         // throw a new event for removing the patient
                         model.removeStudy(study);
-                        return;
+                        break;
                     }
                     se.removeAll();
 

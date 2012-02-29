@@ -613,16 +613,18 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         if (progressBar != null) {
             // To avoid concurrency issue
             JProgressBar bar = progressBar;
-            Rectangle rect = bar.getBounds();
-            rect.x = thumbnailSize - rect.width;
-            rect.y = thumbnailSize - rect.height;
-            if (rect.contains(e.getPoint())) {
-                SeriesImporter loader = series.getSeriesLoader();
-                if (loader != null) {
-                    if (loader.isStopped()) {
-                        loader.resume();
-                    } else {
-                        loader.stop();
+            if (bar.isVisible()) {
+                Rectangle rect = bar.getBounds();
+                rect.x = thumbnailSize - rect.width;
+                rect.y = thumbnailSize - rect.height;
+                if (rect.contains(e.getPoint())) {
+                    SeriesImporter loader = series.getSeriesLoader();
+                    if (loader != null) {
+                        if (loader.isStopped()) {
+                            loader.resume();
+                        } else {
+                            loader.stop();
+                        }
                     }
                 }
             }
