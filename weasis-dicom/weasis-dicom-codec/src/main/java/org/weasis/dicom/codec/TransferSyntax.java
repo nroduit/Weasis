@@ -77,7 +77,7 @@ public enum TransferSyntax {
     }
 
     public static boolean requiresNativeImageioCodecs(String tsuid) {
-        if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) {
+        if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
             try {
                 int val = Integer.parseInt(tsuid.substring(20, 22));
                 if (val >= 51 && val <= 81) {

@@ -55,7 +55,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         setBorder(new TitledBorder(null,
             Messages.getString("LocalImport.imp_files"), TitledBorder.LEADING, TitledBorder.TOP, null, null));//$NON-NLS-1$
 
-        lblImportAFolder = new JLabel("Path:");
+        lblImportAFolder = new JLabel(Messages.getString("LocalImport.path")); //$NON-NLS-1$
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);

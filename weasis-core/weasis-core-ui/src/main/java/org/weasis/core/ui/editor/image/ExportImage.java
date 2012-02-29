@@ -47,7 +47,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
         // For exporting view, remove Pixel value, Preloading bar
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
-        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.MEMORY_BAR, false);
+        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
 
         // Copy image operations from view2d
         OperationsManager operations = imageLayer.getOperationsManager();
@@ -55,7 +55,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
             try {
                 operations.addImageOperationAction((ImageOperationAction) op.clone());
             } catch (CloneNotSupportedException e) {
-                LOGGER.error("Cannot clone image operation: {}", op.getOperationName());
+                LOGGER.error("Cannot clone image operation: {}", op.getOperationName()); //$NON-NLS-1$
             }
         }
         // Copy the current values of image operations
@@ -71,12 +71,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
             new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()), view2d.modelToViewLength(mArea
                 .getHeight()));
         Rectangle2D.intersect(canvas, viewFullImg, viewFullImg);
-        actionsInView.put("origin.image.bound", viewFullImg);
-        actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd()));
+        actionsInView.put("origin.image.bound", viewFullImg); //$NON-NLS-1$
+        actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd())); //$NON-NLS-1$
         Point2D p =
             new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
                 * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
-        actionsInView.put("origin.center", p);
+        actionsInView.put("origin.center", p); //$NON-NLS-1$
 
         setSeries(view2d.getSeries(), view2d.getFrameIndex());
 
@@ -148,7 +148,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         g2d.translate(offsetX, offsetY);
         if (infoLayer != null) {
             // Set font size according to the view size
-            g2d.setFont(new Font("Dialog", 0, getFontSize()));
+            g2d.setFont(new Font("Dialog", 0, getFontSize())); //$NON-NLS-1$
             infoLayer.paint(g2d);
         }
         g2d.clip(oldClip);

@@ -710,7 +710,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 return element.getDate(false);
             } catch (Exception e) {
                 // Value not valid according to DICOM standard
-                LOGGER.error("Cannot parse date {}", element.toString());
+                LOGGER.error("Cannot parse date {}", element.toString()); //$NON-NLS-1$
                 return defaultValue;
             }
         }
@@ -1205,7 +1205,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     }
 
     public static boolean hasPlatformNativeImageioCodecs() {
-        return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext();
+        return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
     }
 
     @Override

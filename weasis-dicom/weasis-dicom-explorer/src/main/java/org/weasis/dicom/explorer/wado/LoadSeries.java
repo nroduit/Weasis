@@ -781,9 +781,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         private String replaceToDefaultTSUID(URL url) {
             String old = url.toString();
             StringBuffer buffer = new StringBuffer();
-            int start = old.indexOf("&transferSyntax=");
+            int start = old.indexOf("&transferSyntax="); //$NON-NLS-1$
             if (start != -1) {
-                int end = old.indexOf("&", start + 16);
+                int end = old.indexOf("&", start + 16); //$NON-NLS-1$
                 buffer.append(old.substring(0, start + 16));
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
                 if (end != -1) {
@@ -791,7 +791,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 }
             } else {
                 buffer.append(old);
-                buffer.append("&transferSyntax=");
+                buffer.append("&transferSyntax="); //$NON-NLS-1$
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
             }
             return buffer.toString();
@@ -844,7 +844,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
 
             boolean cache = true;
-            if (!writeInCache && getUrl().startsWith("file:")) {
+            if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
                 cache = false;
             }
             if (cache && tempFile == null) {
@@ -868,7 +868,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 // stateChanged();
             }
             DicomMediaIO dicomReader = null;
-            log.debug("Start to download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$
+            log.debug("Start to download DICOM instance {} to {}.", url, cache ? tempFile.getName() : "null"); //$NON-NLS-1$ //$NON-NLS-2$
             if (dicomSeries != null) {
                 final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
                 int[] overrideList = wado.getOverrideDicomTagIDList();
@@ -877,12 +877,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     if (overrideList == null && wado != null) {
                         bytesTransferred =
                             FileUtil.writeFile(new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString()
-                                .contains("?requestType=WADO")), new FileOutputStream(tempFile));
+                                .contains("?requestType=WADO")), new FileOutputStream(tempFile)); //$NON-NLS-1$
                     } else if (wado != null) {
                         bytesTransferred =
                             writFile(
                                 new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString().contains(
-                                    "?requestType=WADO")), new FileOutputStream(tempFile), overrideList);
+                                    "?requestType=WADO")), new FileOutputStream(tempFile), overrideList); //$NON-NLS-1$
                     }
                     if (bytesTransferred == -1) {
                         log.info("End of downloading {} ", url); //$NON-NLS-1$

@@ -65,9 +65,9 @@ public class ExportTree extends JScrollPane {
                                     Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
                                     StringBuffer buffer = new StringBuffer();
                                     if (val != null) {
-                                        buffer.append("[");
+                                        buffer.append("["); //$NON-NLS-1$
                                         buffer.append(val);
-                                        buffer.append("] ");
+                                        buffer.append("] "); //$NON-NLS-1$
                                     }
                                     String desc = (String) s.getTagValue(TagW.SeriesDescription);
                                     if (desc != null) {
@@ -84,9 +84,9 @@ public class ExportTree extends JScrollPane {
                                         Integer val = (Integer) d.getTagValue(TagW.InstanceNumber);
                                         StringBuffer buffer = new StringBuffer();
                                         if (val != null) {
-                                            buffer.append("[");
+                                            buffer.append("["); //$NON-NLS-1$
                                             buffer.append(val);
-                                            buffer.append("] ");
+                                            buffer.append("] "); //$NON-NLS-1$
                                         }
                                         String desc = (String) d.getTagValue(TagW.SOPInstanceUID);
                                         if (desc != null) {

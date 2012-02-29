@@ -152,9 +152,9 @@ public class ImagePrint implements Printable {
             }
             double padX = 0.0;
             double padY = 0.0;
-            Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound");
-            Point2D originCenter = (Point2D) image.getActionValue("origin.center");
-            Double originZoom = (Double) image.getActionValue("origin.zoom");
+            Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
+            Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+            Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
             RenderedImage img = image.getSourceImage();
             if (img != null && originCenter != null && originZoom != null) {
                 boolean bestfit = originZoom <= 0.0;

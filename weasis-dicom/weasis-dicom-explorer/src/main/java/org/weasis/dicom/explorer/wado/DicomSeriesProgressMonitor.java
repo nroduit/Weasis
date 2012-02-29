@@ -41,7 +41,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             return;
         }
         int byteOffset = 0;
-        if (b.length > 132 && new String(b, 128, 4).equals("DICM")) {
+        if (b.length > 132 && new String(b, 128, 4).equals("DICM")) { //$NON-NLS-1$
             byteOffset = 132;
         } else {
             InterruptedIOException exc = new InterruptedIOException("Not a DICOM file"); //$NON-NLS-1$

@@ -82,7 +82,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
-        displayPreferences.put(MEMORY_BAR, true);
+        displayPreferences.put(PRELOADING_BAR, true);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
         DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
@@ -107,7 +107,7 @@ public class InfoLayer implements AnnotationsLayer {
         prefs.put(ZOOM, getDisplayPreferences(ZOOM));
         prefs.put(ROTATION, getDisplayPreferences(ROTATION));
         prefs.put(FRAME, getDisplayPreferences(FRAME));
-        prefs.put(MEMORY_BAR, getDisplayPreferences(MEMORY_BAR));
+        prefs.put(PRELOADING_BAR, getDisplayPreferences(PRELOADING_BAR));
         return layer;
     }
 
@@ -416,7 +416,7 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
-        if (getDisplayPreferences(MEMORY_BAR) && series instanceof DicomSeries) {
+        if (getDisplayPreferences(PRELOADING_BAR) && series instanceof DicomSeries) {
             DicomSeries s = (DicomSeries) series;
             boolean[] list = s.getImageInMemoryList();
             int length = list.length > 120 ? 120 : list.length;

@@ -206,7 +206,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
 
         private double getDoubleValue(String val) {
-            if (val.trim().equals("")) {
+            if (val.trim().equals("")) { //$NON-NLS-1$
                 return 0.0;
             }
             // handle fraction format

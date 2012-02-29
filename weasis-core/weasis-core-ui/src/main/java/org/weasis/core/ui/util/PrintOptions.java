@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.util;
 
+import org.weasis.core.ui.Messages;
+
 /**
  * 
  * @author Marcelo Porto (marcelo@animati.com.br)
@@ -20,19 +22,19 @@ public class PrintOptions {
         ShrinkToPage {
             @Override
             public String toString() {
-                return "Shrink to Page";
+                return Messages.getString("PrintOptions.shrink"); //$NON-NLS-1$
             }
         },
         FitToPage {
             @Override
             public String toString() {
-                return "Fit to Page";
+                return Messages.getString("PrintOptions.fit"); //$NON-NLS-1$
             }
         },
         Custom {
             @Override
             public String toString() {
-                return "Custom";
+                return Messages.getString("PrintOptions.custom"); //$NON-NLS-1$
             }
         }
     }

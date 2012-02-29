@@ -39,7 +39,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
     public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
         Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement REFLEX_ANGLE = new Measurement("Reflex Angle", 3, true, true, false);
+    public static final Measurement REFLEX_ANGLE = new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     Point2D ptA, ptO, ptB; // Let AOB be the triangle that represents the measured angle, O being the intersection point

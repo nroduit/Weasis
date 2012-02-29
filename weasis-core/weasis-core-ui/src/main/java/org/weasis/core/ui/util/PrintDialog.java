@@ -19,13 +19,16 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
 
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
+import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -72,7 +75,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().setLayout(gridBagLayout);
         imageSizeLabel = new javax.swing.JLabel();
 
-        imageSizeLabel.setText("Image size:");
+        imageSizeLabel.setText(Messages.getString("PrintDialog.img_size")); //$NON-NLS-1$
         GridBagConstraints gbc_imageSizeLabel = new GridBagConstraints();
         gbc_imageSizeLabel.anchor = GridBagConstraints.EAST;
         gbc_imageSizeLabel.insets = new Insets(15, 15, 10, 5);
@@ -95,7 +98,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(imageSizeComboBox, gbc_imageSizeComboBox);
         customImageSizeLabel = new javax.swing.JLabel();
 
-        customImageSizeLabel.setText("Custom image size (%):");
+        customImageSizeLabel.setText(Messages.getString("PrintDialog.zoom")); //$NON-NLS-1$
         GridBagConstraints gbc_customImageSizeLabel = new GridBagConstraints();
         gbc_customImageSizeLabel.anchor = GridBagConstraints.EAST;
         gbc_customImageSizeLabel.insets = new Insets(0, 15, 10, 5);
@@ -113,7 +116,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(spinner, gbc_spinner);
         positionLabel = new javax.swing.JLabel();
 
-        positionLabel.setText("Image position:");
+        positionLabel.setText(Messages.getString("PrintDialog.pos")); //$NON-NLS-1$
         GridBagConstraints gbc_positionLabel = new GridBagConstraints();
         gbc_positionLabel.anchor = GridBagConstraints.EAST;
         gbc_positionLabel.insets = new Insets(0, 15, 10, 5);
@@ -122,7 +125,8 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(positionLabel, gbc_positionLabel);
         positionComboBox = new javax.swing.JComboBox();
 
-        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Centralized", "Top-left" }));
+        positionComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] {
+            Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
         GridBagConstraints gbc_positionComboBox = new GridBagConstraints();
         gbc_positionComboBox.anchor = GridBagConstraints.WEST;
         gbc_positionComboBox.insets = new Insets(0, 0, 10, 5);
@@ -131,7 +135,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(positionComboBox, gbc_positionComboBox);
         annotationsCheckBox = new javax.swing.JCheckBox();
 
-        annotationsCheckBox.setText("Print image with annotations");
+        annotationsCheckBox.setText(Messages.getString("PrintDialog.annotate")); //$NON-NLS-1$
         annotationsCheckBox.setSelected(true);
         GridBagConstraints gbc_annotationsCheckBox = new GridBagConstraints();
         gbc_annotationsCheckBox.anchor = GridBagConstraints.WEST;
@@ -142,7 +146,7 @@ public class PrintDialog extends javax.swing.JDialog {
         getContentPane().add(annotationsCheckBox, gbc_annotationsCheckBox);
         cancelButton = new javax.swing.JButton();
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(Messages.getString("PrintDialog.cancel")); //$NON-NLS-1$
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -152,7 +156,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
         printButton = new javax.swing.JButton();
 
-        printButton.setText("Print");
+        printButton.setText(Messages.getString("PrintDialog.print")); //$NON-NLS-1$
         printButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -161,7 +165,7 @@ public class PrintDialog extends javax.swing.JDialog {
         });
 
         if (layout) {
-            chckbxNewCheckBox = new JCheckBox("Print only the selected view");
+            chckbxNewCheckBox = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
             chckbxNewCheckBox.addActionListener(new ActionListener() {
 
                 @Override
@@ -219,7 +223,7 @@ public class PrintDialog extends javax.swing.JDialog {
         PrintOptions printOptions = new PrintOptions(annotationsCheckBox.isSelected(), imageScale);
         printOptions.setScale((SCALE) imageSizeComboBox.getSelectedItem());
         printOptions.setHasAnnotations(annotationsCheckBox.isSelected());
-        if (positionComboBox.getSelectedItem().equals("Centralized")) {
+        if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
             printOptions.setCenter(true);
         } else {
             printOptions.setCenter(false);
@@ -227,8 +231,22 @@ public class PrintDialog extends javax.swing.JDialog {
 
         ImageViewerPlugin container = eventManager.getSelectedView2dContainer();
         // TODO make printable component
-        if (container.getLayoutModel().getUIName().equals("DICOM information")) {
-            JOptionPane.showMessageDialog(this, "Cannot print image in the current layout.", "Error",
+        boolean isPrintable = true;
+        Iterator<LayoutConstraints> enumVal = container.getLayoutModel().getConstraints().keySet().iterator();
+        while (enumVal.hasNext()) {
+            try {
+                String type = enumVal.next().getType();
+                if (!"org.weasis.core.ui.editor.image.DefaultView2d".equals(type)) { //$NON-NLS-1$
+                    isPrintable = false;
+                    break;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (!isPrintable) {
+            JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);
             doClose();
             return;

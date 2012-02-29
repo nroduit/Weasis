@@ -189,9 +189,9 @@ public class WeasisLauncher {
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
         for (int i = 0; i < argv.length; i++) {
             if (argv[i].startsWith("-VMP") && argv[i].length() > 4) { //$NON-NLS-1$
-                String[] vmarg = argv[i].substring(4).split("=", 2);
+                String[] vmarg = argv[i].substring(4).split("=", 2); //$NON-NLS-1$
                 if (vmarg.length == 2) {
-                    if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) {
+                    if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
                         vmarg[1] = vmarg[1].substring(1, vmarg[1].length() - 1);
                         System.setProperty(vmarg[0], vmarg[1]);
                     }
@@ -282,7 +282,7 @@ public class WeasisLauncher {
                             try {
                                 REMOTE_PREFS.store();
                             } catch (Exception e) {
-                                System.out.println("Cannot store preferences remotely: " + e.getMessage());
+                                System.out.println("Cannot store preferences remotely: " + e.getMessage()); //$NON-NLS-1$
                             }
                         }
                         // Clean temp folder.
@@ -576,7 +576,7 @@ public class WeasisLauncher {
             defaultVal = bundleProp.getProperty(key, defaultValue);
         }
         // Set the default value in bundleContext
-        bundleProp.setProperty("def." + key, defaultVal);
+        bundleProp.setProperty("def." + key, defaultVal); //$NON-NLS-1$
         if (value == null) {
             value = defaultVal;
             if (storeInLocalPref && defaultVal != null) {
@@ -650,7 +650,7 @@ public class WeasisLauncher {
             try {
                 REMOTE_PREFS.read();
             } catch (Exception e) {
-                System.out.println("Cannot read preferences remotely: " + e.getMessage());
+                System.out.println("Cannot read preferences remotely: " + e.getMessage()); //$NON-NLS-1$
             }
         }
 
@@ -682,10 +682,10 @@ public class WeasisLauncher {
         // config)
         // 4) default value
 
-        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         final String country =
-            getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
-        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+            getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
@@ -743,7 +743,7 @@ public class WeasisLauncher {
 
         }
         if (look == null) {
-            look = System.getProperty("weasis.look", null);
+            look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
                 look = config.getProperty(nativeLook, null);
             }
@@ -762,7 +762,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = getAvailableLookAndFeel(look);
         }
-        config.setProperty("def.weasis.look", look);
+        config.setProperty("def.weasis.look", look); //$NON-NLS-1$
 
         // If look is in local prefs, use it
         if (localLook != null) {
@@ -784,7 +784,7 @@ public class WeasisLauncher {
             System.err.println("WARNING : Unable to set the Look&Feel " + look); //$NON-NLS-1$
             e.printStackTrace();
         }
-        s_prop.put("weasis.look", look);
+        s_prop.put("weasis.look", look); //$NON-NLS-1$
 
         Properties common_prop;
         if (basdir.getPath().equals(dir)) {
@@ -821,8 +821,8 @@ public class WeasisLauncher {
         // Save if not exist or could not be read
         if (cleanCache && versionNew != null) {
             try {
-                Version vOld = new Version(versionOld.replaceFirst("-", "."));
-                Version vNew = new Version(versionNew.replaceFirst("-", "."));
+                Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
+                Version vNew = new Version(versionNew.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
                 if (vNew.getMinor() != vOld.getMinor() || vNew.getMajor() != vOld.getMajor()) {
                     System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
                     config

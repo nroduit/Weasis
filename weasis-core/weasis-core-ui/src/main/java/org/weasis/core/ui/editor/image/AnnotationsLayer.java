@@ -28,7 +28,7 @@ public interface AnnotationsLayer extends Layer {
     String ROTATION = Messages.getString("AnnotationsLayer.rot"); //$NON-NLS-1$
     String FRAME = Messages.getString("AnnotationsLayer.fr"); //$NON-NLS-1$
     String PIXEL = Messages.getString("AnnotationsLayer.pix"); //$NON-NLS-1$
-    String MEMORY_BAR = "Memory Bar";
+    String PRELOADING_BAR = Messages.getString("AnnotationsLayer.preload_bar"); //$NON-NLS-1$
 
     boolean getDisplayPreferences(String item);
 

@@ -33,7 +33,7 @@ public class Activator implements BundleActivator {
     public void start(final BundleContext context) throws Exception {
         bundleContext = context;
         PREFERENCES.init(context);
-        String cache = context.getProperty("weasis.portable.dicom.cache");
+        String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
         DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
         FileUtil.readProperties(
             new File(PREFERENCES.getDataFolder(), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE);//$NON-NLS-1$

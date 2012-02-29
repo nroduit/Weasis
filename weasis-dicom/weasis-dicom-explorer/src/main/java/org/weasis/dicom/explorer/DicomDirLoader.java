@@ -52,7 +52,7 @@ public class DicomDirLoader {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
         this.dicomModel = (DicomModel) explorerModel;
-        wadoParameters = new WadoParameters("", true, "", null, null);
+        wadoParameters = new WadoParameters("", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
         seriesList = new ArrayList<LoadSeries>();
         try {
             reader = new DicomDirReader(dcmDirFile);
@@ -67,7 +67,7 @@ public class DicomDirLoader {
         try {
             dcmPatient = reader.findFirstRootRecord();
         } catch (IOException e1) {
-            LOGGER.error("Cannot find Patient in DICOMDIR !");
+            LOGGER.error("Cannot find Patient in DICOMDIR !"); //$NON-NLS-1$
         }
 
         MediaSeriesGroup patient = null;
@@ -275,7 +275,7 @@ public class DicomDirLoader {
         try {
             return reader.findFirstChildRecord(dcmObject);
         } catch (IOException e) {
-            LOGGER.error("Cannot read first DICOMDIR entry!", e.getMessage());
+            LOGGER.error("Cannot read first DICOMDIR entry!", e.getMessage()); //$NON-NLS-1$
         }
         return null;
     }
@@ -284,7 +284,7 @@ public class DicomDirLoader {
         try {
             return reader.findNextSiblingRecord(dcmObject);
         } catch (IOException e) {
-            LOGGER.error("Cannot read next DICOMDIR entry!", e.getMessage());
+            LOGGER.error("Cannot read next DICOMDIR entry!", e.getMessage()); //$NON-NLS-1$
         }
         return null;
     }

@@ -289,7 +289,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 dialog.showPage(BUTTON_NAME);
                 JMVUtils.showCenterScreen(dialog);
             } else {
-                JOptionPane.showMessageDialog((Component) e.getSource(), "This feature is not enabled");
+                JOptionPane.showMessageDialog((Component) e.getSource(), Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
             }
         }
     };
@@ -1984,7 +1984,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         ArrayList<Action> actions = new ArrayList<Action>(2);
         actions.add(importAction);
         AbstractAction importCDAction =
-            new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$
+            new AbstractAction("DICOM CD", new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png"))) { //$NON-NLS-1$ //$NON-NLS-2$
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1999,7 +1999,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
                         if (response == 0) {
                             DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
-                            dialog.showPage(Messages.getString("DicomDirImport.dicomdir"));
+                            dialog.showPage(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
                             JMVUtils.showCenterScreen(dialog);
                         }
                     } else {

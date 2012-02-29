@@ -210,7 +210,7 @@ public class AutoProcessor {
                         try {
                             b.uninstall();
                         } catch (BundleException ex) {
-                            printError(ex, "Auto-deploy uninstall: ");
+                            printError(ex, "Auto-deploy uninstall: "); //$NON-NLS-1$
                         }
                     }
                 }
@@ -224,7 +224,7 @@ public class AutoProcessor {
                         ((Bundle) startBundleList.get(i)).start();
 
                     } catch (BundleException ex) {
-                        printError(ex, "Auto-deploy start: ");
+                        printError(ex, "Auto-deploy start: "); //$NON-NLS-1$
                     }
                 }
             }
@@ -272,7 +272,7 @@ public class AutoProcessor {
         Bundle[] bundles = context.getBundles();
         for (int i = 0; i < bundles.length; i++) {
             String bundleName = getBundleNameFromLocation(bundles[i].getLocation());
-            if (!"System Bundle".equals(bundleName)) {
+            if (!"System Bundle".equals(bundleName)) { //$NON-NLS-1$
                 installedBundleMap.put(bundleName, bundles[i]);
                 // Ensure old bundles won't be active
                 sl.setBundleStartLevel(bundles[i], Integer.MAX_VALUE);
@@ -319,7 +319,7 @@ public class AutoProcessor {
                     if (bundleName.contains(arch)) {
                         System.err.println("Cannot install native plug-in: " + bundleName); //$NON-NLS-1$
                     } else {
-                        printError(ex, "Auto-properties install: " + location);
+                        printError(ex, "Auto-properties install: " + location); //$NON-NLS-1$
                         if (ex.getCause() != null) {
                             ex.printStackTrace();
                         }
@@ -349,7 +349,7 @@ public class AutoProcessor {
                             b.start();
                         }
                     } catch (Exception ex) {
-                        printError(ex, "Auto-properties start: " + location);
+                        printError(ex, "Auto-properties start: " + location); //$NON-NLS-1$
                     }
                 }
             }
@@ -358,9 +358,9 @@ public class AutoProcessor {
 
     private static String getBundleNameFromLocation(String location) {
         if (location != null) {
-            int index = location.lastIndexOf("/");
+            int index = location.lastIndexOf("/"); //$NON-NLS-1$
             String name = index >= 0 ? location.substring(index + 1) : location; //$NON-NLS-1$
-            index = name.lastIndexOf(".jar");
+            index = name.lastIndexOf(".jar"); //$NON-NLS-1$
             return index >= 0 ? name.substring(0, index) : name; //$NON-NLS-1$
         }
         return null;
@@ -500,11 +500,11 @@ public class AutoProcessor {
                     try {
                         URLConnection conn = url.openConnection();
                         // Support for http proxy authentication.
-                        String auth = System.getProperty("http.proxyAuth", null);
+                        String auth = System.getProperty("http.proxyAuth", null); //$NON-NLS-1$
                         if ((auth != null) && (auth.length() > 0)) {
-                            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) {
+                            if ("http".equals(url.getProtocol()) || "https".equals(url.getProtocol())) { //$NON-NLS-1$ //$NON-NLS-2$
                                 String base64 = Util.base64Encode(auth);
-                                conn.setRequestProperty("Proxy-Authorization", "Basic " + base64);
+                                conn.setRequestProperty("Proxy-Authorization", "Basic " + base64); //$NON-NLS-1$ //$NON-NLS-2$
                             }
                         }
                         InputStream is = conn.getInputStream();

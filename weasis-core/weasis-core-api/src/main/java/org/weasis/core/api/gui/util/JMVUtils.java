@@ -24,14 +24,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -105,15 +100,6 @@ public class JMVUtils {
         return nbTiles;
     }
 
-    public static ArrayList convertHashtableToArrayList(Hashtable list) {
-        ArrayList list2 = new ArrayList(list.size());
-        Enumeration enumVal = list.elements();
-        while (enumVal.hasMoreElements()) {
-            list2.add(enumVal.nextElement());
-        }
-        return list2;
-    }
-
     public static void setPreferredWidth(JComponent component, int width, int minWidth) {
         Dimension dim = component.getPreferredSize();
         dim.width = width;
@@ -135,16 +121,6 @@ public class JMVUtils {
         dim.height = 50;
         component.setMinimumSize(dim);
     }
-
-    // public static void setPreferredWidth(JSlider component, int width) {
-    // Dimension dim = component.getPreferredSize();
-    // dim.width = width;
-    // String look = UIManager.getLookAndFeel().getName();
-    // if (look.startsWith("GTK")) {
-    // dim.height += 20; // pour corriger les problï¿½mes d'affichage en mode ou les valeurs sont dï¿½sactivï¿½es
-    // }
-    // component.setPreferredSize(dim);
-    // }
 
     public static void showCenterScreen(Window window) {
         try {
@@ -315,9 +291,9 @@ public class JMVUtils {
 
     public static Dimension getSmallIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) {
+        if (look.equalsIgnoreCase("CDE/Motif")) { //$NON-NLS-1$
             return new Dimension(38, 34);
-        } else if (look.startsWith("GTK")) {
+        } else if (look.startsWith("GTK")) { //$NON-NLS-1$
             return new Dimension(28, 28);
         } else {
             return new Dimension(22, 22);
@@ -326,9 +302,9 @@ public class JMVUtils {
 
     public static Dimension getBigIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("CDE/Motif")) {
+        if (look.equalsIgnoreCase("CDE/Motif")) { //$NON-NLS-1$
             return new Dimension(46, 42);
-        } else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) {
+        } else if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         } else {
             return new Dimension(34, 34);
@@ -337,23 +313,11 @@ public class JMVUtils {
 
     public static Dimension getBigIconToogleButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) {
+        if (look.equalsIgnoreCase("Mac OS X Aqua") || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
             return new Dimension(36, 36);
         } else {
             return new Dimension(30, 30);
         }
-    }
-
-    public static JButton createHelpButton(boolean small) {
-        JButton jButtonHelp;
-        if (small) {
-            jButtonHelp = new JButton(new ImageIcon(JMVUtils.class.getResource("/com/jmvision/icon16/help2.png"))); //$NON-NLS-1$
-            jButtonHelp.setPreferredSize(getSmallIconButtonSize());
-        } else {
-            jButtonHelp = new JButton(new ImageIcon(JMVUtils.class.getResource("/com/jmvision/icon24/help2.png"))); //$NON-NLS-1$
-            jButtonHelp.setPreferredSize(getBigIconButtonSize());
-        }
-        return jButtonHelp;
     }
 
     public static void addStylesToDocument(StyledDocument doc, Color textColor) {
@@ -393,38 +357,6 @@ public class JMVUtils {
             return ""; //$NON-NLS-1$
         }
         return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    public static Color getLogoBlue() {
-        return new Color(108, 138, 157);
-    }
-
-    public static Color getLogoBlue50() {
-        return new Color(181, 196, 206);
-    }
-
-    public static Color getLogoBlue25() {
-        return new Color(218, 226, 230);
-    }
-
-    public static Color getLogoBlue15() {
-        return new Color(233, 238, 240);
-    }
-
-    public static Color getLogoOrange() {
-        return new Color(218, 124, 0);
-    }
-
-    public static Color getLogoOrange50() {
-        return new Color(236, 189, 127);
-    }
-
-    public static Color getLogoOrange25() {
-        return new Color(246, 222, 191);
-    }
-
-    public static Color getLogoOrange15() {
-        return new Color(249, 235, 217);
     }
 
     public static int getMaxLength(Rectangle bounds) {

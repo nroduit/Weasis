@@ -68,14 +68,14 @@ public class GeneralSetting extends AbstractItemDialogPage {
         Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
 
     private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
-    private final JCheckBox chckbxFileLog = new JCheckBox("Rolling log");
+    private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log")); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
-    private final JLabel lblLogLevel = new JLabel("Log level:");
+    private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level")); //$NON-NLS-1$
     private final JComboBox comboBoxLogLevel = new JComboBox(LEVEL.values());
     private final Component horizontalStrut = Box.createHorizontalStrut(10);
-    private final JLabel labelNumber = new JLabel("File number:");
+    private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb")); //$NON-NLS-1$
     private final JSpinner spinner = new JSpinner();
-    private final JLabel labelSize = new JLabel("Size (in MB):");
+    private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size")); //$NON-NLS-1$
     private final JSpinner spinner_1 = new JSpinner();
     private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
@@ -85,7 +85,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {
             JMVUtils.setNumberModel(spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
-            JMVUtils.setNumberModel(spinner_1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1);
+            JMVUtils.setNumberModel(spinner_1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1); //$NON-NLS-1$
             jbInit();
             initialize(true);
         } catch (Exception e) {
@@ -265,15 +265,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
         comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL,
             ctx.getProperty("def." + AuditLog.LOG_LEVEL))));//$NON-NLS-1$
         String fileLogger = prfs.getProperty(AuditLog.LOG_FILE, ctx.getProperty("def." + AuditLog.LOG_FILE));//$NON-NLS-1$s
-        chckbxFileLog.setSelected(!("".equals(fileLogger.trim())));
+        chckbxFileLog.setSelected(!("".equals(fileLogger.trim()))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
-        spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
+        spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
         checkRolingLog();
 
-        comboBox.selectLocale(prfs.getProperty("locale.language"), prfs.getProperty("locale.country"),
-            prfs.getProperty("locale.variant"));
+        comboBox.selectLocale(prfs.getProperty("locale.language"), prfs.getProperty("locale.country"), //$NON-NLS-1$ //$NON-NLS-2$
+            prfs.getProperty("locale.variant")); //$NON-NLS-1$
 
-        String className = prfs.getProperty("weasis.look");
+        String className = prfs.getProperty("weasis.look"); //$NON-NLS-1$
         if (className == null) {
             LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
             if (currentLAF != null) {
@@ -411,19 +411,19 @@ public class GeneralSetting extends AbstractItemDialogPage {
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
         String logFile =
-            chckbxFileLog.isSelected() ? AbstractProperties.WEASIS_PATH + File.separator + "log" + File.separator
-                + "default.log" : "";
+            chckbxFileLog.isSelected() ? AbstractProperties.WEASIS_PATH + File.separator + "log" + File.separator //$NON-NLS-1$
+                + "default.log" : ""; //$NON-NLS-1$ //$NON-NLS-2$
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
         String fileNb = null;
         String fileSize = null;
         if (chckbxFileLog.isSelected()) {
             fileNb = spinner.getValue().toString();
-            fileSize = spinner_1.getValue().toString() + "MB";
+            fileSize = spinner_1.getValue().toString() + "MB"; //$NON-NLS-1$
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
 
-        AuditLog.createOrUpdateLogger("default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb,
+        AuditLog.createOrUpdateLogger("default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
             fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
@@ -462,20 +462,20 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleContext ctx = Activator.getBundleContext();
 
         BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(BundleTools.CONFIRM_CLOSE,
-            Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE)));
+            Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE))); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, ctx.getProperty("def." + AuditLog.LOG_LEVEL));
-        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, ctx.getProperty("def." + AuditLog.LOG_FILE));
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, ctx.getProperty("def." + AuditLog.LOG_LEVEL)); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, ctx.getProperty("def." + AuditLog.LOG_FILE)); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER,
-            ctx.getProperty("def." + AuditLog.LOG_FILE_NUMBER));
+            ctx.getProperty("def." + AuditLog.LOG_FILE_NUMBER)); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE,
-            ctx.getProperty("def." + AuditLog.LOG_FILE_SIZE));
+            ctx.getProperty("def." + AuditLog.LOG_FILE_SIZE)); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.put("locale.language", ctx.getProperty("def.weasis.language")); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.put("locale.country", ctx.getProperty("def.weasis.country")); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.put("locale.variant", ctx.getProperty("def.weasis.variant")); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.put("locale.language", ctx.getProperty("def.weasis.language")); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.put("locale.country", ctx.getProperty("def.weasis.country")); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.put("locale.variant", ctx.getProperty("def.weasis.variant")); //$NON-NLS-1$ //$NON-NLS-2$
 
-        BundleTools.SYSTEM_PREFERENCES.put("weasis.look", ctx.getProperty("def.weasis.look")); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.put("weasis.look", ctx.getProperty("def.weasis.look")); //$NON-NLS-1$ //$NON-NLS-2$
 
     }
 

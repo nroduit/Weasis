@@ -60,7 +60,7 @@ public class DicomExport extends AbstractWizardDialog {
                     try {
                         selectedPage.exportDICOM(exportTree, null);
                     } catch (IOException e1) {
-                        LOGGER.error("DICOM export failed", e1.getMessage());
+                        LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
                     }
                 }
             }

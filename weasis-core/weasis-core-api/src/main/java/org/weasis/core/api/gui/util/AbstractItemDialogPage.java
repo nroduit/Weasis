@@ -22,7 +22,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     private java.util.List<PageProps> subPageList;
 
     public AbstractItemDialogPage(String title) {
-        this.title = title == null ? "item" : title;
+        this.title = title == null ? "item" : title; //$NON-NLS-1$
         key = String.valueOf(keyGenerator.incrementAndGet());
     }
 

@@ -186,7 +186,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             List<Action> actions = getPrintActions();
             if (actions != null) {
-                JMenu printMenu = new JMenu("Print");
+                JMenu printMenu = new JMenu(Messages.getString("View2dContainer.print")); //$NON-NLS-1$
                 for (Action action : actions) {
                     JMenuItem item = new JMenuItem(action);
                     printMenu.add(item);
@@ -594,7 +594,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<Action>(1);
-        final String title = "Print 2D viewer layout";
+        final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$//$NON-NLS-2$
 

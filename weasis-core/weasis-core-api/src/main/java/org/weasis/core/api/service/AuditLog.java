@@ -17,12 +17,12 @@ public class AuditLog {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
-    public static final String LOG_LEVEL = "org.apache.sling.commons.log.level";
-    public static final String LOG_FILE = "org.apache.sling.commons.log.file";
-    public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number";
-    public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size";
-    public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern";
-    public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names";
+    public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$
+    public static final String LOG_FILE = "org.apache.sling.commons.log.file"; //$NON-NLS-1$
+    public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number"; //$NON-NLS-1$
+    public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size"; //$NON-NLS-1$
+    public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern"; //$NON-NLS-1$
+    public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names"; //$NON-NLS-1$
 
     public enum LEVEL {
         DEBUG, INFO, WARN, ERROR, FATAL;
@@ -57,11 +57,11 @@ public class AuditLog {
                         try {
                             Dictionary<String, Object> loggingProperties;
                             Configuration logConfiguration =
-                                getLogConfiguration(confAdmin, "(" + loggerKey + "=" + loggerVal[0] + ")");
+                                getLogConfiguration(confAdmin, "(" + loggerKey + "=" + loggerVal[0] + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                             if (logConfiguration == null) {
                                 logConfiguration =
                                     confAdmin.createFactoryConfiguration(
-                                        "org.apache.sling.commons.log.LogManager.factory.config", null);
+                                        "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                                 loggingProperties = new Hashtable<String, Object>();
                                 loggingProperties.put(LOG_LOGGERS, loggerVal);
                                 // add this property to give us something unique to re-find this configuration
@@ -69,7 +69,7 @@ public class AuditLog {
                             } else {
                                 loggingProperties = logConfiguration.getProperties();
                             }
-                            loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level);
+                            loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level); //$NON-NLS-1$
                             if (logFile != null) {
                                 loggingProperties.put(LOG_FILE, logFile);
                             }
