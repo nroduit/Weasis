@@ -27,11 +27,6 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-launcher</url>
-	</scm>
 	<profiles>
 		<profile>
 			<id>jarsign</id>

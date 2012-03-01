@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-framework</artifactId>
@@ -14,10 +15,23 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk</url>
+		<connection>scm:git:git@github.com:nroduit/Weasis.git</connection>
+		<developerConnection>scm:git:ssh://git@weasis.repositoryhosting.com/weasis/weasis-dev.git</developerConnection>
+		<url>https://github.com/nroduit/Weasis</url>
 	</scm>
+	<repositories>
+		<repository>
+			<id>weasis</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+		</repository>
+	</repositories>
+	<!-- Maven server for deploying releases -->
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
+		</repository>
+	</distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
@@ -35,7 +49,7 @@
 		<module>weasis-parent</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
-<!--		<module>weasis-imageioext</module>-->
+		<!-- <module>weasis-imageioext</module> -->
 		<module>weasis-base</module>
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>

@@ -12,11 +12,6 @@
 		<version>1.9-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
-	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-core</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-core</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-core</url>
-	</scm>
 	<modules>
 		<module>weasis-core-parent</module>
 		<module>weasis-core-api</module>

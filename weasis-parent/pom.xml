@@ -15,13 +15,9 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-parent</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-parent</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-parent</url>
-	</scm>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<repositories>
 		<repository>

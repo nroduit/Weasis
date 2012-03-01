@@ -12,11 +12,6 @@
 		<version>1.9-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
-	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-dicom</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_framework/trunk/weasis-dicom</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_framework/trunk/weasis-dicom</url>
-	</scm>
 	<modules>
 		<module>weasis-dicom-parent</module>
 		<module>weasis-dicom-codec</module>
