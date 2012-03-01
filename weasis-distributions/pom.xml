@@ -6,9 +6,9 @@
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.1.2</version>
+	<version>1.1.3-beta</version>
 	<properties>
-		<qualifier></qualifier>
+		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
 			in config.properties) -->
 		<dollar>$</dollar>
@@ -29,15 +29,14 @@
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<sling.commons.log.version>2.1.2</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.9${qualifier}</weasis.launcher.version>
-		<weasis.core.version>0.5.9${qualifier}</weasis.core.version>
-		<weasis.imageio.version>0.7.7${qualifier}</weasis.imageio.version>
-		<weasis.jmc.version>0.5.9${qualifier}</weasis.jmc.version>
-		<weasis.base.version>0.5.9${qualifier}</weasis.base.version>
-		<weasis.dicom.version>0.5.9${qualifier}</weasis.dicom.version>
+		<weasis.launcher.version>0.5.10${qualifier}</weasis.launcher.version>
+		<weasis.core.version>0.5.10${qualifier}</weasis.core.version>
+		<weasis.imageio.version>0.7.8${qualifier}</weasis.imageio.version>
+		<weasis.base.version>0.5.10${qualifier}</weasis.base.version>
+		<weasis.dicom.version>0.5.10${qualifier}</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>7.0.0</substance.version>
+		<substance.version>7.1.0</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<!-- <weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
