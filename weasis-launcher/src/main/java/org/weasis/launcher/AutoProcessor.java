@@ -330,6 +330,21 @@ public class AutoProcessor {
                 }
             }
         }
+
+        // Get again (for uninstalled)
+        bundles = context.getBundles();
+        for (int i = 0; i < bundles.length; i++) {
+            try {
+                // Remove snapshot version to prevent bundle conflicts
+                if (sl.getBundleStartLevel(bundles[i]) == Integer.MAX_VALUE
+                    && bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) {
+                    bundles[i].uninstall();
+                    System.out.println("Uninstall SNAPSHOT: " + bundles[i].getLocation()); //$NON-NLS-1$
+                }
+            } catch (Exception e) {
+                System.err.println("Cannot uninstall SNAPSHOT: " + bundles[i].getLocation()); //$NON-NLS-1$
+            }
+        }
         webStartLoader.writeLabel(Messages.getString("AutoProcessor.start")); //$NON-NLS-1$
         // Now loop through the auto-start bundles and start them.
         for (Iterator i = configMap.keySet().iterator(); i.hasNext();) {
