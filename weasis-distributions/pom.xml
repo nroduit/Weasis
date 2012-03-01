@@ -37,7 +37,7 @@
 		<weasis.dicom.version>0.5.9${qualifier}</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
-		<substance.version>7.0.0</substance.version>
+		<substance.version>7.1.2</substance.version>
 		<jai.version>1.1.4-b03</jai.version>
 		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
 		<!-- <weasis.imageioext.kakadu.native.version>6.4.0</weasis.imageioext.kakadu.native.version> -->
@@ -50,6 +50,12 @@
 			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>weasis</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+		</pluginRepository>
+	</pluginRepositories>
 	<build>
 		<plugins>
 			<plugin>
