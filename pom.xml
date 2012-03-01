@@ -16,7 +16,7 @@
 	</licenses>
 	<scm>
 		<connection>scm:git:git@github.com:nroduit/Weasis.git</connection>
-		<developerConnection>scm:git:ssh://git@weasis.repositoryhosting.com/weasis/weasis-dev.git</developerConnection>
+		<developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git</developerConnection>
 		<url>https://github.com/nroduit/Weasis</url>
 	</scm>
 	<repositories>
