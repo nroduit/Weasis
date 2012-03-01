@@ -9,8 +9,7 @@
 	<version>1.1.3-beta</version>
 	<properties>
 		<qualifier>-SNAPSHOT</qualifier>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
-			in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -49,6 +48,12 @@
 			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>weasis</id>
+			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+		</pluginRepository>
+	</pluginRepositories>
 	<build>
 		<plugins>
 			<plugin>
@@ -285,11 +290,9 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${basedir}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${basedir}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
-									name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -343,8 +346,7 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
-										are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -387,8 +389,8 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
-					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
