@@ -105,9 +105,11 @@ public abstract class AbstractBufferHandler {
         setPath(s);
         if (!handleOpenDocument(s)) {
             File f = new File(s);
-            JOptionPane.showMessageDialog(getParentComponent(), String.format(Messages
-                .getString("AbstractBufferHandler.unable_open"), f.getName()) + addOpenMessage, //$NON-NLS-1$
-                Messages.getString("AbstractBufferHandler.open"), 0); //$NON-NLS-1$
+            JOptionPane
+                .showMessageDialog(
+                    getParentComponent(),
+                    String.format(Messages.getString("AbstractBufferHandler.unable_open"), f.getName()) + "\n" + addOpenMessage, //$NON-NLS-1$ //$NON-NLS-2$
+                    Messages.getString("AbstractBufferHandler.open"), 0); //$NON-NLS-1$
             setPath(null);
             addOpenMessage = ""; //$NON-NLS-1$
             return false;
@@ -157,9 +159,9 @@ public abstract class AbstractBufferHandler {
         file = new File(filename);
         if (file.exists()) {
             int i =
-                JOptionPane.showConfirmDialog(getParentComponent(), String.format(Messages
-                    .getString("AbstractBufferHandler.exist"), file.getName()), Messages //$NON-NLS-1$
-                    .getString("AbstractBufferHandler.save_as"), 0); //$NON-NLS-1$
+                JOptionPane.showConfirmDialog(getParentComponent(),
+                    String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), Messages //$NON-NLS-1$
+                        .getString("AbstractBufferHandler.save_as"), 0); //$NON-NLS-1$
             if (i != 0) {
                 return false;
             }

@@ -75,7 +75,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         int active = actions.getActiveButtons();
         mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
         mouseLeft
-            .setToolTipText(Messages.getString("ViewerToolBar.change") + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$
+            .setToolTipText(Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         add(mouseLeft);
         if (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)) {
             add(mouseMiddle = buildMouseButton(actions, MouseActions.MIDDLE));

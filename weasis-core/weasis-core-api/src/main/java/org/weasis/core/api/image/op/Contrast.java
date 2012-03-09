@@ -39,13 +39,14 @@ public class Contrast extends JPanel {
     private JSlider jSliderContrast = new JSlider(-127, 127, 0);
     private JSlider jSliderLum = new JSlider(-127, 127, 0);
     private JSlider jSliderGamma = new JSlider(1, 200, 100);
-    private TitledBorder title1 = new TitledBorder("Contrast : 0"); //$NON-NLS-1$
-    private TitledBorder title2 = new TitledBorder("Luminosity : 0"); //$NON-NLS-1$
-    private TitledBorder title3 = new TitledBorder("Gamma : 1"); //$NON-NLS-1$
+    private TitledBorder title1 = new TitledBorder(Messages.getString("Contrast.contrast")); //$NON-NLS-1$
+    private TitledBorder title2 = new TitledBorder(Messages.getString("Contrast.lum")); //$NON-NLS-1$
+    private TitledBorder title3 = new TitledBorder(Messages.getString("Contrast.gamma")); //$NON-NLS-1$
     private JButton jButtonReset = new JButton();
 
     private ChangeListener sliderListener = new ChangeListener() {
 
+        @Override
         public void stateChanged(ChangeEvent e) {
             updateValues();
         }
@@ -97,6 +98,7 @@ public class Contrast extends JPanel {
         jButtonReset.setText(Messages.getString("Contrast.reset")); //$NON-NLS-1$
         jButtonReset.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 reset();
             }

@@ -272,7 +272,11 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             ImageElement image = (ImageElement) media;
             RenderedImage img = image.getImage();
             if (img != null) {
-                toolTips.append(Messages.getString("Series.img_size") + img.getWidth() + "x" + img.getHeight()); //$NON-NLS-1$ //$NON-NLS-2$
+                toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
+                toolTips.append(' ');
+                toolTips.append(img.getWidth());
+                toolTips.append('x');
+                toolTips.append(img.getHeight());
             }
         }
         // TODO for other medias
@@ -283,6 +287,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     protected void addToolTipsElement(StringBuffer toolTips, String title, TagW tag) {
         Object tagValue = getTagValue(tag);
         toolTips.append(title);
+        toolTips.append(' ');
         toolTips.append(tagValue == null ? "" : tagValue); //$NON-NLS-1$
         toolTips.append("<br>"); //$NON-NLS-1$
     }

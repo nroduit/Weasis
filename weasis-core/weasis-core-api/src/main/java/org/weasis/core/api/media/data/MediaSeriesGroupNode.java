@@ -55,7 +55,8 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         if (val instanceof Date) {
             val = TagW.DATETIME_FORMATTER.format(val);
         }
-        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") + displayTag.getName() : val.toString(); //$NON-NLS-1$
+        return val == null
+            ? Messages.getString("MediaSeriesGroupNode.no_val") + " " + displayTag.getName() : val.toString(); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Override

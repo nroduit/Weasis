@@ -102,14 +102,21 @@ public class DicomSeries extends Series<DicomImageElement> {
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
         String date = TagW.formatDate((Date) getTagValue(TagW.SeriesDate));
-        toolTips.append(Messages.getString("DicomSeries.date") + (date == null ? "" : date) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
+        toolTips.append(' ');
+        toolTips.append(date == null ? "" : date); //$NON-NLS-1$
+        toolTips.append("<br>"); //$NON-NLS-1$ 
         if (getFileSize() > 0.0) {
-            toolTips.append(Messages.getString("DicomSeries.size") + FileUtil.formatSize(getFileSize()) + "<br>"); //$NON-NLS-1$//$NON-NLS-2$
+            toolTips.append(Messages.getString("DicomSeries.size")); //$NON-NLS-1$
+            toolTips.append(' ');
+            toolTips.append(FileUtil.formatSize(getFileSize())); //$NON-NLS-1$
+            toolTips.append("<br>"); //$NON-NLS-1$ 
         }
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }
 
+    @Override
     public String getMimeType() {
         String modality = (String) getTagValue(TagW.Modality);
         if ("PR".equals(modality)) { //$NON-NLS-1$

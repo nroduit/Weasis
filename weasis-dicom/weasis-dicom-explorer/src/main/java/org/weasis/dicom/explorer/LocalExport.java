@@ -134,14 +134,17 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     protected void showExportingOptions() {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         final JCheckBox boxKeepNames =
-            new JCheckBox(Messages.getString("LocalExport.keep_dir"), Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"))); //$NON-NLS-1$ //$NON-NLS-2$
+            new JCheckBox(
+                Messages.getString("LocalExport.keep_dir"), Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"))); //$NON-NLS-1$ //$NON-NLS-2$
 
         Object seltected = comboBoxImgFormat.getSelectedItem();
         if (EXPORT_FORMAT[0].equals(seltected)) {
             final JCheckBox box1 =
-                new JCheckBox(Messages.getString("LocalExport.inc_dicomdir"), Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"))); //$NON-NLS-1$ //$NON-NLS-2$
+                new JCheckBox(
+                    Messages.getString("LocalExport.inc_dicomdir"), Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"))); //$NON-NLS-1$ //$NON-NLS-2$
             final JCheckBox box2 =
-                new JCheckBox(Messages.getString("LocalExport.cd_folders"), Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false"))); //$NON-NLS-1$ //$NON-NLS-2$
+                new JCheckBox(
+                    Messages.getString("LocalExport.cd_folders"), Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false"))); //$NON-NLS-1$ //$NON-NLS-2$
             box2.setEnabled(box1.isSelected());
             boxKeepNames.setEnabled(!box1.isSelected());
             box1.addActionListener(new ActionListener() {
@@ -155,7 +158,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { box1, box2, boxKeepNames };
             int response =
-                JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
+                JOptionPane.showOptionDialog(this, options,
+                    Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
                     JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(INC_DICOMDIR, String.valueOf(box1.isSelected()));
@@ -168,7 +172,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
-            palenSlider1.setBorder(new TitledBorder(Messages.getString("LocalExport.jpeg_quality") + slider.getValue())); //$NON-NLS-1$
+            palenSlider1.setBorder(new TitledBorder(
+                Messages.getString("LocalExport.jpeg_quality") + " " + slider.getValue())); //$NON-NLS-1$
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(false);
@@ -187,7 +192,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             Object[] options = { palenSlider1, boxKeepNames };
             int response =
-                JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
+                JOptionPane.showOptionDialog(this, options,
+                    Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
                     JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
@@ -196,17 +202,20 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[2].equals(seltected)) {
             Object[] options = { boxKeepNames };
             int response =
-                JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
+                JOptionPane.showOptionDialog(this, options,
+                    Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
                     JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
         } else if (EXPORT_FORMAT[3].equals(seltected)) {
             final JCheckBox box1 =
-                new JCheckBox(Messages.getString("LocalExport.tiff_sup_8bits"), Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"))); //$NON-NLS-1$ //$NON-NLS-2$
+                new JCheckBox(
+                    Messages.getString("LocalExport.tiff_sup_8bits"), Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false"))); //$NON-NLS-1$ //$NON-NLS-2$
             Object[] options = { box1, boxKeepNames };
             int response =
-                JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
+                JOptionPane.showOptionDialog(this, options,
+                    Messages.getString("LocalExport.export_message"), JOptionPane.OK_CANCEL_OPTION, //$NON-NLS-1$
                     JOptionPane.PLAIN_MESSAGE, null, null, null);
             if (response == JOptionPane.OK_OPTION) {
                 pref.setProperty(HEIGHT_BITS, String.valueOf(box1.isSelected()));

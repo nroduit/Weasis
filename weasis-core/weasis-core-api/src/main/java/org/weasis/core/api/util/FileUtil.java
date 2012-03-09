@@ -226,16 +226,25 @@ public class FileUtil {
     }
 
     public static String formatSize(double size) {
+        StringBuffer buf = new StringBuffer();
         if (size >= GB) {
-            return df.format(size / GB) + Messages.getString("FileUtil.gb"); //$NON-NLS-1$
+            buf.append(df.format(size / GB));
+            buf.append(' ');
+            buf.append(Messages.getString("FileUtil.gb")); //$NON-NLS-1$
+        } else if (size >= MB) {
+            buf.append(df.format(size / MB));
+            buf.append(' ');
+            buf.append(Messages.getString("FileUtil.mb")); //$NON-NLS-1$
+        } else if (size >= KB) {
+            buf.append(df.format(size / KB));
+            buf.append(' ');
+            buf.append(Messages.getString("FileUtil.kb")); //$NON-NLS-1$
+        } else {
+            buf.append((int) size);
+            buf.append(' ');
+            buf.append(Messages.getString("FileUtil.bytes"));//$NON-NLS-1$ 
         }
-        if (size >= MB) {
-            return df.format(size / MB) + Messages.getString("FileUtil.mb"); //$NON-NLS-1$
-        }
-        if (size >= KB) {
-            return df.format(size / KB) + Messages.getString("FileUtil.kb"); //$NON-NLS-1$
-        }
-        return (int) size + Messages.getString("FileUtil.bytes"); //$NON-NLS-1$ //$NON-NLS-2$
+        return buf.toString();
     }
 
     public static boolean nioWriteFile(FileInputStream inputStream, FileOutputStream out) {

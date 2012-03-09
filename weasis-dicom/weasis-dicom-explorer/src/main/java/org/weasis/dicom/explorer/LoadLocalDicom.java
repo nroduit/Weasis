@@ -127,7 +127,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + patient); //$NON-NLS-1$
+            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + " " + patient); //$NON-NLS-1$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);

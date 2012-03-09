@@ -196,7 +196,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public String getPixelInfo(Point p, RenderedImageLayer<E> imageLayer) {
         ImageElement imageElement = imageLayer.getSourceImage();
-        StringBuffer message = new StringBuffer();
+        StringBuffer message = new StringBuffer(" ");
         if (imageElement != null && imageLayer.getReadIterator() != null) {
             PlanarImage image =
                 imageElement.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
