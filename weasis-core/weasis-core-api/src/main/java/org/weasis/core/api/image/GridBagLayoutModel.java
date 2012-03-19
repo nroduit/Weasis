@@ -37,11 +37,13 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
     private String title;
     private final Icon icon;
+    private final String id;
 
     private final LinkedHashMap<LayoutConstraints, JComponent> constraints;
 
-    public GridBagLayoutModel(String title, int rows, int cols, String defaultClass, Icon icon) {
+    public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass, Icon icon) {
         this.title = title;
+        this.id = id;
         this.icon = icon;
         if (cols < 1) {
             cols = 1;
@@ -60,17 +62,20 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
     }
 
-    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String title, Icon icon) {
+    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String id, String title,
+        Icon icon) {
         if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
         }
         this.title = title;
+        this.id = id;
         this.icon = icon;
         this.constraints = constraints;
     }
 
-    public GridBagLayoutModel(InputStream stream, String title, Icon icon) {
+    public GridBagLayoutModel(InputStream stream, String id, String title, Icon icon) {
         this.title = title;
+        this.id = id;
         this.icon = icon;
         this.constraints = new LinkedHashMap<LayoutConstraints, JComponent>();
         try {
@@ -80,6 +85,10 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         } catch (SAXException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getId() {
+        return id;
     }
 
     @Override
@@ -246,6 +255,6 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         while (enumVal.hasNext()) {
             map.put((LayoutConstraints) enumVal.next().clone(), null);
         }
-        return new GridBagLayoutModel(map, title, icon);
+        return new GridBagLayoutModel(map, id, title, icon);
     }
 }
