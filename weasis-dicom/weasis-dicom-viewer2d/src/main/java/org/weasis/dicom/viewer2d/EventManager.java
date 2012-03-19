@@ -82,7 +82,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom", "wl", "move", "scroll" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -896,7 +896,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final String[] usage =
             {
                 "Change the zoom value of the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
-                "Usage: dicom:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+                "Usage: dcmview2d:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
                 "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 is the best fit in window value)", //$NON-NLS-1$
                 "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
                 "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
@@ -939,7 +939,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final String[] usage =
             {
                 "Change the window/level values of the selected image", //$NON-NLS-1$
-                "Usage: dicom:wl -- [window integer value] [level integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+                "Usage: dcmview2d:wl -- [window integer value] [level integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
                 "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
@@ -967,9 +967,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void move(String[] argv) throws IOException {
-        final String[] usage = { "Change the pan value of the selected image", //$NON-NLS-1$
-            "Usage: dicom:move -- [x integer value] [y integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final String[] usage =
+            {
+                "Change the pan value of the selected image", //$NON-NLS-1$
+                "Usage: dcmview2d:move -- [x integer value] [y integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+                "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
@@ -996,7 +998,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void scroll(String[] argv) throws IOException {
         final String[] usage = { "Scroll into the images of the selected series", //$NON-NLS-1$
-            "Usage: dicom:scroll [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+            "Usage: dcmview2d:scroll [set | increase | decrease] [VALUE]", //$NON-NLS-1$
             "  -s --set [integer value]  set a new value from 0 to series size less one", //$NON-NLS-1$
             "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
             "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
@@ -1031,4 +1033,43 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         });
     }
 
+    public void layout(String[] argv) throws IOException {
+        final String[] usage = { "Select a split-screen layout", //$NON-NLS-1$
+            "Usage: dcmview2d:layout [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+            "  -n --number [integer value]  select the best matching number of views", //$NON-NLS-1$
+            "  -i --id  select the layout from its identifier", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    if (opt.isSet("number")) { //$NON-NLS-1$
+                        if (selectedView2dContainer != null) {
+                            GridBagLayoutModel val =
+                                selectedView2dContainer.getBestDefaultViewLayout(Integer.parseInt(args.get(0)));
+                            layoutAction.setSelectedItem(val);
+                        }
+                    } else if (opt.isSet("id")) { //$NON-NLS-1$
+                        if (selectedView2dContainer != null) {
+                            GridBagLayoutModel val = selectedView2dContainer.getViewLayout(args.get(0));
+                            if (val != null) {
+                                layoutAction.setSelectedItem(val);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
 }
