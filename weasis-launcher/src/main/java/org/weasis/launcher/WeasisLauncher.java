@@ -725,7 +725,7 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
-        if (lang.equals("en")) { //$NON-NLS-1$
+        if (lang.equals("en") && country.equals("US")) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         }
