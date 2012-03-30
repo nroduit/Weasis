@@ -23,7 +23,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
 public class Activator implements BundleActivator {
@@ -44,8 +44,8 @@ public class Activator implements BundleActivator {
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        registry.registerServiceProvider(DicomMediaIO.RLEImageReaderSpi);
-        registry.registerServiceProvider(DicomMediaIO.DicomImageReaderSpi);
+        registry.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
+        registry.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
 
         ServiceReference configurationAdminReference =
             bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
@@ -88,8 +88,8 @@ public class Activator implements BundleActivator {
         DicomPrefManager.getInstance().savePreferences();
         PREFERENCES.close();
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        registry.deregisterServiceProvider(DicomMediaIO.RLEImageReaderSpi);
-        registry.deregisterServiceProvider(DicomMediaIO.DicomImageReaderSpi);
+        registry.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
+        registry.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
         this.bundleContext = null;
     }
 

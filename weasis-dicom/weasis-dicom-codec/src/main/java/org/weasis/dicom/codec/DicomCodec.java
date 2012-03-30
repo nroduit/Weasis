@@ -13,11 +13,17 @@ package org.weasis.dicom.codec;
 import java.net.URI;
 import java.util.Hashtable;
 
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
+import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi;
+import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
 public class DicomCodec implements Codec {
+    public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
+    public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
+    public static final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
 
     public static final String NAME = "dcm4che 2.0.26 (modified)"; //$NON-NLS-1$
 

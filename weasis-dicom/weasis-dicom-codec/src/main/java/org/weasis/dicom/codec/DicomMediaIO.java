@@ -44,8 +44,6 @@ import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
-import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi;
-import org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
 import org.slf4j.Logger;
@@ -84,8 +82,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final String NO_VALUE = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
-    public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
-    public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
+
     private URI uri;
     private DicomObject dicomObject = null;
     private int numberOfFrame;
@@ -98,7 +95,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private ImageReader jpipReader;
 
     public DicomMediaIO(URI uri) {
-        super(DicomImageReaderSpi);
+        super(DicomCodec.DicomImageReaderSpi);
         this.uri = uri;
         numberOfFrame = 0;
         this.tags = new HashMap<TagW, Object>();
