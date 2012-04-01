@@ -96,7 +96,9 @@ public final class JIThumbnailCache {
                         scale < 1.0 ? scale > 0.005 ? SubsampleAverageDescriptor.create(img, scale, scale,
                             Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null : PlanarImage
                             .wrapRenderedImage(img).getAsBufferedImage();
-                    diskObject.dispose();
+
+                    // DO not close the stream
+                    // diskObject.dispose();
 
                     GuiExecutor.instance().execute(new Runnable() {
 

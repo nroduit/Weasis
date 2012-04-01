@@ -32,8 +32,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class LoadLocalDicom extends SwingWorker<Boolean, String> {
 
@@ -176,9 +176,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
                     if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;
-                        ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                        list.add(dicomSeries);
-                        LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
+                        ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
                     }
                 }
             } else {

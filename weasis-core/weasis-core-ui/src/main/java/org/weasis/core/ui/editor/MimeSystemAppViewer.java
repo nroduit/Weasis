@@ -19,13 +19,14 @@ import javax.swing.JMenu;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
-public abstract class MimeSystemAppViewer implements SeriesViewer {
+public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
 
@@ -34,12 +35,12 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
     }
 
     @Override
-    public List<MediaSeries> getOpenSeries() {
+    public List<MediaSeries<MediaElement>> getOpenSeries() {
         return null;
     }
 
     public static void startAssociatedProgramFromLinux(File file) {
-        if (file != null) {
+        if (file != null && file.canRead()) {
             try {
                 String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //$NON-NLS-1$
                 Runtime.getRuntime().exec(cmd);
@@ -49,17 +50,19 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
         }
     }
 
-    public static void startAssociatedProgramFromWinCMD(String file) {
-        try {
-            Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
-        } catch (IOException e) {
-            LOGGER.error("Cannot open {} with the default system application", file); //$NON-NLS-1$
-            e.printStackTrace();
+    public static void startAssociatedProgramFromWinCMD(File file) {
+        if (file != null && file.canRead()) {
+            try {
+                Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
+            } catch (IOException e) {
+                LOGGER.error("Cannot open {} with the default system application", file); //$NON-NLS-1$
+                e.printStackTrace();
+            }
         }
     }
 
     public static void startAssociatedProgramFromDesktop(final Desktop desktop, File file) {
-        if (file != null) {
+        if (file != null && file.canRead()) {
             try {
                 desktop.open(file);
             } catch (IOException e1) {
@@ -69,7 +72,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer {
     }
 
     @Override
-    public void removeSeries(MediaSeries sequence) {
+    public void removeSeries(MediaSeries<MediaElement> sequence) {
 
     }
 

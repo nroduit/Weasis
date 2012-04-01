@@ -104,6 +104,7 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.WrapLayout;
@@ -1615,9 +1616,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     if (explorer instanceof DicomExplorer) {
                         ((DicomExplorer) explorer).getSelectionList().clear();
                     }
-                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                    list.add(series);
-                    LoadSeries.openSequenceInDefaultPlugin(list, dicomModel);
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(series, dicomModel, true, true);
                 }
             }
 
@@ -1670,7 +1669,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 selList.clear();
-                                LoadSeries.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true);
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
+                                    true);
                             }
                         });
                         popupMenu.add(item4);
@@ -1684,7 +1684,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 selList.clear();
-                                LoadSeries.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false);
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
+                                    false);
                             }
                         });
                         popupMenu.add(item4);
@@ -1968,7 +1969,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     if (selList.size() == 0) {
                         selList.add(series);
                     }
-                    LoadSeries.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel);
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
+                        true, true);
                 }
             }
         };

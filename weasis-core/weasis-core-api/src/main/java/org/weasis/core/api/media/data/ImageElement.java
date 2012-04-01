@@ -322,10 +322,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
         // TODO find a clue to not dispose the display image
         // Or do nothing, let the soft reference mechanism do its job
 
-        // Close image reader and image stream
-        // if (mediaIO != null) {
-        // mediaIO.close();
-        // }
+        // Close image reader and image stream, but it should be already closed
+        if (mediaIO != null) {
+            mediaIO.close();
+        }
+
         // // Unload image from memory
         // PlanarImage temp = mCache.remove(this);
         // if (temp != null) {

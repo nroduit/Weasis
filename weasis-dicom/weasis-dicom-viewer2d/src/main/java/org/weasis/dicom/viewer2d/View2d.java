@@ -76,6 +76,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -115,7 +116,6 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
-import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private final Dimension oldSize;
@@ -714,9 +714,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         SeriesViewerFactory plugin =
                             UIManager.getViewerFactory(eventManager.getSelectedView2dContainer());
                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                            list.add(seq);
-                            LoadSeries.openSequenceInPlugin(plugin, list, model, true);
+                            ViewerPluginBuilder.openSequenceInPlugin(plugin, seq, model, true, true);
 
                         }
                         return false;
@@ -727,9 +725,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         return false;
                     }
                 } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
-                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                    list.add(seq);
-                    LoadSeries.openSequenceInDefaultPlugin(list, model);
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
                     return true;
                 }
             } catch (Exception e) {

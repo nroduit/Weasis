@@ -26,6 +26,7 @@ import javax.media.jai.PlanarImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.LayoutUtil;
@@ -36,6 +37,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 
 public class ImageElementIO implements MediaReader<PlanarImage> {
@@ -50,8 +52,9 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     private final Codec codec;
 
     public ImageElementIO(URI media, String mimeType, Codec codec) {
-        if (media == null)
+        if (media == null) {
             throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
+        }
         this.uri = media;
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
         this.codec = codec;
@@ -119,8 +122,9 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     @Override
     public MediaElement[] getMediaElement() {
         MediaElement element = getSingleImage();
-        if (element != null)
+        if (element != null) {
             return new MediaElement[] { element };
+        }
         return null;
     }
 
@@ -130,14 +134,22 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
             @Override
             public String getMimeType() {
-                // TODO Auto-generated method stub
+                for (ImageElement img : medias) {
+                    return img.getMimeType();
+                }
                 return null;
             }
 
             @Override
             public void addMedia(MediaElement media) {
-                // TODO Auto-generated method stub
-
+                if (media instanceof ImageElement) {
+                    medias.add((ImageElement) media);
+                    DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                    if (model != null) {
+                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                            new SeriesEvent(SeriesEvent.Action.AddImage, this, medias.size() - 1)));
+                    }
+                }
             }
         };
         series.add(getSingleImage());
@@ -191,8 +203,9 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     public ImageReader getDefaultReader(String mimeType) {
         if (mimeType != null) {
             Iterator readers = ImageIO.getImageReadersByMIMEType(mimeType);
-            if (readers.hasNext())
+            if (readers.hasNext()) {
                 return (ImageReader) readers.next();
+            }
         }
         return null;
     }

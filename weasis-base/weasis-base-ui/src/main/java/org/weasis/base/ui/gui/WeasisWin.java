@@ -263,7 +263,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         DataExplorerModel model = builder.getModel();
                         List<MediaSeries> series = builder.getSeries();
 
-                        if (builder.isCompareEntryToBuildNewViewer() && model.getTreeModelNodeForNewPlugin() != null) {
+                        if (series != null && builder.isCompareEntryToBuildNewViewer()
+                            && model.getTreeModelNodeForNewPlugin() != null) {
                             TreeModel treeModel = (TreeModel) model;
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);

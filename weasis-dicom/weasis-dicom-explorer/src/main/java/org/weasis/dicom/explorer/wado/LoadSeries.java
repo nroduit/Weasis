@@ -528,46 +528,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(series, dicomModel));
     }
 
-    public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
-        DicomModel dicomModel, boolean removeOldSeries) {
-        if (factory == null && series == null) {
-            return;
-        }
-        int nbImg = 0;
-        for (MediaSeries m : series) {
-            nbImg += m.size();
-        }
-        // Do not add series without medias. BUG WEA-100
-        if (nbImg == 0) {
-            return;
-        }
-        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, dicomModel, null,
-            new ViewerPluginBuilder(factory, series, dicomModel, true, removeOldSeries)));
-
-    }
-
-    public static void openSequenceInDefaultPlugin(List<MediaSeries> series, DicomModel dicomModel) {
-        ArrayList<String> mimes = new ArrayList<String>();
-        for (MediaSeries s : series) {
-            String mime = s.getMimeType();
-            if (mime != null && !mimes.contains(mime)) {
-                mimes.add(mime);
-            }
-        }
-        for (String mime : mimes) {
-            SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
-            if (plugin != null) {
-                ArrayList<MediaSeries> seriesList = new ArrayList<MediaSeries>();
-                for (MediaSeries s : series) {
-                    if (mime.equals(s.getMimeType())) {
-                        seriesList.add(s);
-                    }
-                }
-                openSequenceInPlugin(plugin, seriesList, dicomModel, true);
-            }
-        }
-    }
-
     public Series getDicomSeries() {
         return dicomSeries;
     }
@@ -1007,9 +967,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         SeriesViewerFactory plugin =
                                             UIManager.getViewerFactory(dicomSeries.getMimeType());
                                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                                            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
-                                            list.add(dicomSeries);
-                                            LoadSeries.openSequenceInPlugin(plugin, list, dicomModel, true);
+                                            ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel,
+                                                true, true);
                                         }
                                     }
                                 }

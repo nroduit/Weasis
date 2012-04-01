@@ -1035,7 +1035,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void layout(String[] argv) throws IOException {
         final String[] usage = { "Select a split-screen layout", //$NON-NLS-1$
-            "Usage: dcmview2d:layout [set | increase | decrease] [VALUE]", //$NON-NLS-1$
+            "Usage: dcmview2d:layout [nubmer | id] [VALUE]", //$NON-NLS-1$
             "  -n --number [integer value]  select the best matching number of views", //$NON-NLS-1$
             "  -i --id  select the layout from its identifier", //$NON-NLS-1$
             "  -? --help       show help" }; //$NON-NLS-1$ 

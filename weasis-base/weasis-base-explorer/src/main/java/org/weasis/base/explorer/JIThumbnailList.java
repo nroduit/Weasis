@@ -32,6 +32,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
 public final class JIThumbnailList extends JList implements JIObservable {
@@ -133,8 +134,9 @@ public final class JIThumbnailList extends JList implements JIObservable {
     }
 
     public boolean isEditing() {
-        if (this.editingIndex > -1)
+        if (this.editingIndex > -1) {
             return true;
+        }
         return false;
     }
 
@@ -154,8 +156,9 @@ public final class JIThumbnailList extends JList implements JIObservable {
                 final int prevIndex = locationToIndex(loc);
                 final Rectangle prevR = getCellBounds(prevIndex, prevIndex);
 
-                if ((prevR == null) || (prevR.y >= r.y))
+                if ((prevR == null) || (prevR.y >= r.y)) {
                     return 0;
+                }
                 return prevR.height;
             }
         }
@@ -169,14 +172,16 @@ public final class JIThumbnailList extends JList implements JIObservable {
         // }
         // Get item index
         final int index = locationToIndex(evt.getPoint());
-        if (index < 0)
+        if (index < 0) {
             return "";
+        }
 
         // Get item
         final Object item = getModel().getElementAt(index);
 
-        if (((MediaElement) item).getName() == null)
+        if (((MediaElement) item).getName() == null) {
             return null;
+        }
 
         return "<html>" + ((MediaElement) item).getName() + "<br> Size: "
             + intGroupFormat.format(((MediaElement) item).getLength() / 1024L) + " KB<br>" + "Date: "
@@ -306,15 +311,17 @@ public final class JIThumbnailList extends JList implements JIObservable {
         this.jMenuItemOpenWith.setText("Open With");
 
         final int index = getSelectedIndex();
-        if (index == -1)
+        if (index == -1) {
             return;
+        }
 
         final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
         imageList.setCurrentIndex(index);
 
         final MediaElement media = imageList.get(index);
-        if (media == null)
+        if (media == null) {
             return;
+        }
 
         final String mimeType = media.getMimeType();
 
@@ -358,25 +365,19 @@ public final class JIThumbnailList extends JList implements JIObservable {
                             @Override
                             public void run() {
                                 final int index = getSelectedIndex();
-                                if (index < 0)
+                                if (index < 0) {
                                     return;
+                                }
                                 final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
                                 imageList.setCurrentIndex(index);
 
                                 final MediaElement media = imageList.get(index);
-                                if (media == null)
+                                if (media == null) {
                                     return;
-
-                                final String mimeType = media.getMimeType();
-
-                                synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-                                    for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
-                                        if (factory.canReadMimeType(mimeType)) {
-                                            openMedia(factory, media);
-                                            break;
-                                        }
-                                    }
                                 }
+                                MediaSeries series = media.getMediaReader().getMediaSeries();
+                                ViewerPluginBuilder.openSequenceInDefaultPlugin(series,
+                                    ViewerPluginBuilder.DefaultDataModel, true, true);
                             }
                         };
                         SwingUtilities.invokeLater(runnable);
@@ -436,8 +437,9 @@ public final class JIThumbnailList extends JList implements JIObservable {
         final Object obj = super.getSelectedValue();
         int cnt = 0;
         for (final Object o : objs) {
-            if (o.equals(obj))
+            if (o.equals(obj)) {
                 return cnt;
+            }
             cnt++;
         }
         return cnt - 1;
@@ -480,19 +482,11 @@ public final class JIThumbnailList extends JList implements JIObservable {
                 imageList.setCurrentIndex(indexSel);
 
                 final MediaElement media = imageList.get(indexSel);
-                if (media == null)
+                if (media == null) {
                     return;
-
-                final String mimeType = media.getMimeType();
-                synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-                    List<SeriesViewerFactory> viewerPlugins = UIManager.SERIES_VIEWER_FACTORIES;
-                    for (final SeriesViewerFactory factory : viewerPlugins) {
-                        if (factory.canReadMimeType(mimeType)) {
-                            openMedia(factory, media);
-                            break;
-                        }
-                    }
                 }
+                MediaSeries series = media.getMediaReader().getMediaSeries();
+                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, model, true, true);
                 e.consume();
             }
         }
@@ -598,8 +592,9 @@ public final class JIThumbnailList extends JList implements JIObservable {
     public void notifyObservers(final Object arg) {
 
         synchronized (this) {
-            if (!this.changed)
+            if (!this.changed) {
                 return;
+            }
             clearChanged();
         }
 

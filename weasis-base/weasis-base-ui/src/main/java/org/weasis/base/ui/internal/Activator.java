@@ -28,6 +28,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class Activator implements BundleActivator, ServiceListener {
 
@@ -70,6 +71,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
+                // Register default model
+                ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWin.getInstance());
+
                 ServiceTracker m_tracker = new ServiceTracker(context, DataExplorerView.class.getName(), null);
                 // Must keep the tracker open, because calling close() will unget service. This is a problem because the
                 // desactivate method is called although the service stay alive in UI.
@@ -107,6 +111,8 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
+        // UnRegister default model
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWin.getInstance());
         this.context = null;
     }
 

@@ -306,6 +306,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
                 studyGroup));
+            Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
+            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                MediaSeriesGroup group = it.next();
+                if (group instanceof DicomSeries) {
+                    ((DicomSeries) group).dispose();
+                }
+            }
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
             removeHierarchyNode(patientGroup, studyGroup);
             LOGGER.info("Remove Study: {}", studyGroup); //$NON-NLS-1$
@@ -329,6 +336,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, DicomModel.this, null,
                 patientGroup));
+            Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
+            for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
+                MediaSeriesGroup studyGroup = it.next();
+                Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
+                for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
+                    MediaSeriesGroup group = it2.next();
+                    if (group instanceof DicomSeries) {
+                        ((DicomSeries) group).dispose();
+                    }
+                }
+            }
             removeHierarchyNode(rootNode, patientGroup);
             LOGGER.info("Remove Patient: {}", patientGroup); //$NON-NLS-1$
         }

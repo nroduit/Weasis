@@ -52,7 +52,7 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
                     // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
                     FileExtractor extractor = (FileExtractor) series;
                     File file = extractor.getExtractFile();
-                    startAssociatedProgramFromWinCMD(file.getAbsolutePath());
+                    startAssociatedProgramFromWinCMD(file);
                 } else if (Desktop.isDesktopSupported()) {
                     final Desktop desktop = Desktop.getDesktop();
                     if (desktop.isSupported(Desktop.Action.OPEN)) {

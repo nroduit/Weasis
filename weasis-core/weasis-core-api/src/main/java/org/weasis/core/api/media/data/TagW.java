@@ -91,6 +91,8 @@ public class TagW implements Transferable, Serializable {
     public static final TagW SuvFactor = new TagW("SUV Factor", TagType.DoubleArray); //$NON-NLS-1$
 
     public static final TagW RootElement = new TagW("Root Element", TagType.String); //$NON-NLS-1$
+    public static final TagW FilePath = new TagW("File Path", TagType.String); //$NON-NLS-1$
+    public static final TagW FileName = new TagW("File Name", TagType.String); //$NON-NLS-1$
     public static final TagW CurrentFolder = new TagW(Messages.getString("TagElement.cur_dir"), TagType.String); //$NON-NLS-1$
 
     /**
