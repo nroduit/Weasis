@@ -210,7 +210,7 @@ public class ViewerPluginBuilder {
         if (file != null && file.canRead()) {
             String mimeType = MimeInspector.getMimeType(file);
             if (mimeType != null) {
-                Codec codec = BundleTools.getCodec(mimeType, null);
+                Codec codec = BundleTools.getCodec(mimeType, "dcm4che");
                 if (codec != null) {
                     return codec.getMediaIO(file.toURI(), mimeType, null);
                 }

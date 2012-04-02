@@ -364,20 +364,23 @@ public final class JIThumbnailList extends JList implements JIObservable {
 
                             @Override
                             public void run() {
-                                final int index = getSelectedIndex();
-                                if (index < 0) {
-                                    return;
-                                }
+                                // final int index = getSelectedIndex();
+                                // if (index < 0) {
+                                // return;
+                                // }
                                 final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
-                                imageList.setCurrentIndex(index);
+                                // imageList.setCurrentIndex(index);
 
-                                final MediaElement media = imageList.get(index);
-                                if (media == null) {
-                                    return;
+                                for (MediaElement mediaElement : imageList) {
+                                    ViewerPluginBuilder.openSequenceInDefaultPlugin(mediaElement.getFile());
                                 }
-                                MediaSeries series = media.getMediaReader().getMediaSeries();
-                                ViewerPluginBuilder.openSequenceInDefaultPlugin(series,
-                                    ViewerPluginBuilder.DefaultDataModel, true, true);
+                                // final MediaElement media = imageList.get(index);
+                                // if (media == null) {
+                                // return;
+                                // }
+                                // MediaSeries series = media.getMediaReader().getMediaSeries();
+                                // ViewerPluginBuilder.openSequenceInDefaultPlugin(series,
+                                // ViewerPluginBuilder.DefaultDataModel, true, true);
                             }
                         };
                         SwingUtilities.invokeLater(runnable);

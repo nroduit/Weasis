@@ -20,6 +20,7 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class JIListModel extends AbstractListModel implements JIFileModel {
 
@@ -141,7 +142,7 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
             // "Loading ... " + (int) (100 * (((double) i) / (double) fileNum) + 1) + "%");
 
             if (!file.isDirectory()) {
-                MediaReader media = getMedia(file);
+                MediaReader media = ViewerPluginBuilder.getMedia(file);
                 if (media != null) {
                     MediaElement preview = media.getPreview();
                     // JIThumbnailService.getInstance().getDiskObject(dObj);

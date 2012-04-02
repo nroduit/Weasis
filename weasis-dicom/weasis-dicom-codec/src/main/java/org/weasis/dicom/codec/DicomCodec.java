@@ -25,7 +25,7 @@ public class DicomCodec implements Codec {
     public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
     public static final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
 
-    public static final String NAME = "dcm4che 2.0.26 (modified)"; //$NON-NLS-1$
+    public static final String NAME = "dcm4che"; //$NON-NLS-1$
 
     @Override
     public String[] getReaderMIMETypes() {
