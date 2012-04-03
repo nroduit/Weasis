@@ -368,10 +368,10 @@ public final class JIThumbnailList extends JList implements JIObservable {
                                 // if (index < 0) {
                                 // return;
                                 // }
-                                final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
+                                // final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
                                 // imageList.setCurrentIndex(index);
 
-                                for (MediaElement mediaElement : imageList) {
+                                for (MediaElement mediaElement : getSelectedValues()) {
                                     ViewerPluginBuilder.openSequenceInDefaultPlugin(mediaElement.getFile());
                                 }
                                 // final MediaElement media = imageList.get(index);
