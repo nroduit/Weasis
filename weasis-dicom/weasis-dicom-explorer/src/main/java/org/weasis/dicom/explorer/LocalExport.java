@@ -189,7 +189,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                     if (EXPORT_FORMAT[1].equals(format)) {
                         if (image != null) {
-                            image = ImageToolkit.getDefaultRenderedImage(img, image);
+                            // image = ImageToolkit.getDefaultRenderedImage(img, image);
+                            image = img.getRenderedImage(image);
                         }
                         if (image != null) {
                             ImageFiler.writeJPG(new File(destinationDir, (String) img.getTagValue(TagW.SOPInstanceUID)

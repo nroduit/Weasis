@@ -122,18 +122,20 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return true;
     }
 
-    @Deprecated
     public float getPixelWindow(float window) {
         return window;
     }
 
-    @Deprecated
     public float getPixelLevel(float level) {
         return level;
     }
 
     public LutShape getDefaultShape() {
         return LutShape.LINEAR;
+    }
+
+    public boolean getDefaultPixelPadding() {
+        return true;
     }
 
     public float getDefaultWindow() {
@@ -266,7 +268,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
      *            considered
      * @return
      */
-    public RenderedImage getWindowLevelImage(final RenderedImage imageSource, Float window, Float level,
+
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
         LutShape lutShape, Boolean pixelPadding) {
         if (imageSource == null) {
             return null;
@@ -278,6 +281,14 @@ public class ImageElement extends MediaElement<PlanarImage> {
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;
 
         return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+    }
+
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level) {
+        return getRenderedImage(imageSource, window, level, getDefaultShape(), getDefaultPixelPadding());
+    }
+
+    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
+        return getRenderedImage(imageSource, getDefaultWindow(), getDefaultLevel(), getDefaultShape(), true);
     }
 
     /**

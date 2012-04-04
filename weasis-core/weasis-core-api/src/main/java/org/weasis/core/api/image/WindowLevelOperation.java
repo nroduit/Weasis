@@ -38,7 +38,7 @@ public class WindowLevelOperation extends AbstractOperation {
             LutShape lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
             Boolean pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
 
-            result = imageElement.getWindowLevelImage(imageSource, window, level, lutShape, pixelPadding);
+            result = imageElement.getRenderedImage(imageSource, window, level, lutShape, pixelPadding);
 
             // result =
             // ImageToolkit.getDefaultRenderedImage(image, source, window, level, padding == null ? true : padding);

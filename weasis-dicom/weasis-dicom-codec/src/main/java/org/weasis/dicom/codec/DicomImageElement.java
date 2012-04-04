@@ -613,29 +613,42 @@ public class DicomImageElement extends ImageElement {
     }
 
     @Override
+    public LutShape getDefaultShape() {
+        PresetWindowLevel defaultPreset = getDefaultPreset();
+        return (defaultPreset != null) ? defaultPreset.getLutShape() : super.getDefaultShape();
+    }
+
+    @Override
     public float getDefaultWindow() {
         // Float val = (Float) getTagValue(TagW.WindowWidth);
-        Float[] val = (Float[]) getTagValue(TagW.WindowWidth);
-        if (val == null || val.length == 0) {
-            return getFullDynamicWidth();
-            // return super.getDefaultWindow();
-        }
-        return val[0];
+        // Float[] val = (Float[]) getTagValue(TagW.WindowWidth);
+        // if (val == null || val.length == 0) {
+        // return getFullDynamicWidth();
+        // // return super.getDefaultWindow();
+        // }
+        // return val[0];
+
+        PresetWindowLevel defaultPreset = getDefaultPreset();
+        return (defaultPreset != null) ? defaultPreset.getWindow() : super.getDefaultWindow();
     }
 
     @Override
     public float getDefaultLevel() {
         // Float val = (Float) getTagValue(TagW.WindowCenter);
-        Float[] val = (Float[]) getTagValue(TagW.WindowCenter);
-        if (val == null || val.length == 0) {
-            return getFullDynamicCenter();
-            // return super.getDefaultLevel();
-        }
-        return val[0];
+        // Float[] val = (Float[]) getTagValue(TagW.WindowCenter);
+        // if (val == null || val.length == 0) {
+        // return getFullDynamicCenter();
+        // // return super.getDefaultLevel();
+        // }
+        // return val[0];
+
+        PresetWindowLevel defaultPreset = getDefaultPreset();
+        return (defaultPreset != null) ? defaultPreset.getLevel() : super.getDefaultLevel();
+
     }
 
     @Override
-    public RenderedImage getWindowLevelImage(final RenderedImage imageSource, Float window, Float level,
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
         LutShape lutShape, Boolean pixelPadding) {
 
         if (imageSource == null) {
@@ -645,7 +658,7 @@ public class DicomImageElement extends ImageElement {
         window = (window == null) ? getDefaultWindow() : window;
         level = (level == null) ? getDefaultLevel() : level;
         lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
-        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+        pixelPadding = (pixelPadding == null) ? getDefaultPixelPadding() : pixelPadding;
 
         ParameterBlock pb = new ParameterBlock();
 

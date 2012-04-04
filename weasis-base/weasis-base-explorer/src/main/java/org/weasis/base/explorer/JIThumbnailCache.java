@@ -13,7 +13,6 @@ import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.Icon;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnail;
 
@@ -84,7 +83,8 @@ public final class JIThumbnailCache {
                 @Override
                 public void run() {
                     // final BufferedImage tIcon = JIUtility.createThumbnailRetry(diskObject);
-                    RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null));
+                    // RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null));
+                    RenderedImage img = diskObject.getRenderedImage(diskObject.getImage(null));
                     if (img == null) {
                         return;
                     }

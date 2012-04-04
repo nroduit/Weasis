@@ -21,7 +21,6 @@ import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
@@ -46,13 +45,15 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
 
         if (comp instanceof Image2DViewer) {
             Image2DViewer view2DPane = (Image2DViewer) comp;
-            ImageElement img = view2DPane.getImage();
-            if (img != null) {
-                RenderedImage imgP = view2DPane.getSourceImage();
-                if (imgP != null) {
-                    float window = img.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()));
-                    float level = img.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
-                    RenderedImage result = ImageToolkit.getDefaultRenderedImage(img, imgP, window, level);
+            ImageElement imageElement = view2DPane.getImage();
+            if (imageElement != null) {
+                RenderedImage imageSource = view2DPane.getSourceImage();
+                if (imageSource != null) {
+                     float window = imageElement.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()));
+                     float level = imageElement.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
+                    // RenderedImage result = ImageToolkit.getDefaultRenderedImage(imageElement, imageSource, window, level);
+                    RenderedImage result = imageElement.getRenderedImage(imageSource, window, level);
+
                     if (result instanceof PlanarImage) {
                         image = ((PlanarImage) result).getAsBufferedImage();
                         return this;
