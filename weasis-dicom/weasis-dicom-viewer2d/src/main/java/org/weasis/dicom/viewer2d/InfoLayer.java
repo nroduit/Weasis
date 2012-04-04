@@ -871,9 +871,10 @@ public class InfoLayer implements AnnotationsLayer {
             double maxHistoCount = logarithmRescale ? Math.log1p(image.getMaxHistoCount()) : image.getMaxHistoCount();
 
             final float yAxisHistoRescaleRatio = (float) (yAxisCoordinateSystemRange / maxHistoCount);
-            final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);
+            // final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);
+            final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
 
-            assert histogram.getNumBins(0) == lutInputRange;
+            // assert histogram.getNumBins(0) == lutInputRange;
 
             final Point2D pt0 = new Point2D.Float();
             final Point2D pt1 = new Point2D.Float();
@@ -882,7 +883,8 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setStroke(new BasicStroke(1.0F));
 
-            for (int i = 0; i < histogram.getNumBins(0); i++) {
+            // for (int i = 0; i < histogram.getNumBins(0); i++) {
+            for (int i = 0; i < lutInputRange; i++) {
                 double xVal = (minInputValue + i) * xAxisHistoRescaleRatio;
                 double yVal =
                     (logarithmRescale ? Math.log1p(histoData[i]) : (double) histoData[i]) * yAxisHistoRescaleRatio;

@@ -165,10 +165,11 @@ public class DicomImageElement extends ImageElement {
 
         int bitsStored = (Integer) getTagValue(TagW.BitsStored);
         boolean signed = isPixelRepresentationSigned();
-        int outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        // int outRangeSize = (1 << bitsStored) - 1;
+        float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : ((1 << bitsStored) - 1);
 
-        if (maxPixelValue >= maxOutValue) {
+        // if (maxPixelValue >= maxOutValue) {
+        if (maxPixelValue > maxOutValue) {
             bitsStored = (bitsStored > 8) ? bitsStored = 16 : 8;
             // TODO - Do it better
         }

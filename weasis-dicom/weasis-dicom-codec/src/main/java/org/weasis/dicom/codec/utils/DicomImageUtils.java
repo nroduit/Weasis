@@ -306,7 +306,8 @@ public class DicomImageUtils {
         int lookupRangeSize = Array.getLength(inLutDataArray) - 1;
 
         float widthRescaleRatio = lookupRangeSize / window;
-        float outRescaleRatio = maxOutValue / (maxInValue - minInValue);
+        // float outRescaleRatio = maxOutValue / (maxInValue - minInValue);
+        float outRescaleRatio = maxOutValue / (inLutDataArray instanceof byte[] ? 255 : 65535);
 
         // TODO assert maxInValue equals maxOutLookupValue
         // float maxOutLookupValue = (inLutDataArray instanceof byte[]) ? 255 : 65535;
@@ -329,7 +330,7 @@ public class DicomImageUtils {
             int valueDown = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundDown);
             int valueUp = lutDataValueMask & Array.getInt(inLutDataArray, inValueRoundUp);
 
-            // Linear Interpolation of the output value with respect to the rescale ratio
+            // Linear Interpolation of the output value with respect to the rescaled ratio
             value =
                 (inValueRoundUp == inValueRoundDown) ? valueDown : //
                     Math.round(valueDown + (inValueRescaled - inValueRoundDown) * (valueUp - valueDown)
