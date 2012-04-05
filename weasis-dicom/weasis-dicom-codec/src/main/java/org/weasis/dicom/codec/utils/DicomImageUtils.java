@@ -280,7 +280,7 @@ public class DicomImageUtils {
             return;
         }
 
-        // Use this mask to get positive value assuming inLutData is always unsigned
+        // Use this mask to get positive value assuming inLutData value is always unsigned
         final int lutDataValueMask =
             (inLutDataArray instanceof byte[] ? 0x000000FF : (inLutDataArray instanceof short[] ? 0x0000FFFF
                 : 0xFFFFFFFF));
@@ -288,29 +288,29 @@ public class DicomImageUtils {
         float lowLevel = level - window / 2f;
         float highLevel = level + window / 2f;
 
-        // TODO should use dataTypeSize for lookupSequence instead of computing min/max and doing a normalization
-        // int minOutLookupValue = Integer.MAX_VALUE;
-        // int maxOutLookupValue = Integer.MIN_VALUE;
-        //
-        // for (int index = 0; index < Array.getLength(inLutDataArray); index++) {
-        // int currentVal = Array.getInt(inLutDataArray, index);
-        //
-        // if (currentVal < minOutLookupValue) {
-        // minOutLookupValue = currentVal;
-        // }
-        // if (currentVal > maxOutLookupValue) {
-        // maxOutLookupValue = currentVal;
-        // }
-        // }
-
         int lookupRangeSize = Array.getLength(inLutDataArray) - 1;
 
-        float widthRescaleRatio = lookupRangeSize / window;
-        // float outRescaleRatio = maxOutValue / (maxInValue - minInValue);
-        float outRescaleRatio = maxOutValue / (inLutDataArray instanceof byte[] ? 255 : 65535);
+        // Assuming lookupSequence is continuous, values at both ends should reflect maxima and minima
+        // This assumption avoid computing min/max by scaning the full table
+        int minLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, 0);
+        int maxLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, lookupRangeSize);
+        int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
 
-        // TODO assert maxInValue equals maxOutLookupValue
-        // float maxOutLookupValue = (inLutDataArray instanceof byte[]) ? 255 : 65535;
+        // int minLookupValue = Integer.MAX_VALUE;
+        // int maxLookupValue = Integer.MIN_VALUE;
+        // for (int index = 0; index < Array.getLength(inLutDataArray); index++) {
+        // int currentVal = lutDataValueMask & Array.getInt(inLutDataArray, index);
+        //
+        // if (currentVal < minLookupValue) {
+        // minLookupValue = currentVal;
+        // }
+        // if (currentVal > maxLookupValue) {
+        // maxLookupValue = currentVal;
+        // }
+        // }
+
+        float widthRescaleRatio = lookupRangeSize / window;
+        float outRescaleRatio = maxOutValue / lookupValueRange;
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
             int value;
