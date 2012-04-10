@@ -193,8 +193,8 @@ public class WeasisLauncher {
                 if (vmarg.length == 2) {
                     if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
                         vmarg[1] = vmarg[1].substring(1, vmarg[1].length() - 1);
-                        System.setProperty(vmarg[0], vmarg[1]);
                     }
+                    System.setProperty(vmarg[0], vmarg[1]);
                 }
             }
         }

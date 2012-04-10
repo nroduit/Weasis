@@ -14,15 +14,28 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
 
 public class BundleTools {
+    public static final Map<String, String> SESSION_TAGS = new HashMap<String, String>(3);
+    static {
+        for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
+            Entry<Object, Object> element = iter.next();
+            String tag = element.getKey().toString();
+            if (tag.startsWith("TG-")) {
+                SESSION_TAGS.put(tag.substring(3), element.getValue().toString());
+            }
+        }
+    }
     public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
-
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
     static {

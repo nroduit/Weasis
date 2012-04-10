@@ -11,9 +11,12 @@
 package org.weasis.dicom.codec.wado;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 
 public class WadoParameters {
 
@@ -38,7 +41,14 @@ public class WadoParameters {
             throw new IllegalArgumentException("wadoURL cannot be null"); //$NON-NLS-1$
         }
         this.wadoURL = wadoURL;
-        this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(2);
+        this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(3);
+        // Add possible session tags
+        if (BundleTools.SESSION_TAGS.size() > 0) {
+            for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS.entrySet().iterator(); iter.hasNext();) {
+                Entry<String, String> element = iter.next();
+                addHttpTag(element.getKey(), element.getValue());
+            }
+        }
         this.webLogin = webLogin == null ? null : webLogin.trim();
         this.requireOnlySOPInstanceUID = requireOnlySOPInstanceUID;
         this.additionnalParameters = additionnalParameters == null ? "" : additionnalParameters; //$NON-NLS-1$

@@ -20,9 +20,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.XMLConstants;
@@ -77,6 +80,15 @@ public class DownloadManager {
             String path = uri.getPath();
 
             URL url = uri.toURL();
+            URLConnection httpCon = url.openConnection();
+            if (BundleTools.SESSION_TAGS.size() > 0) {
+                for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS.entrySet().iterator(); iter
+                    .hasNext();) {
+                    Entry<String, String> element = iter.next();
+                    httpCon.setRequestProperty(element.getKey(), element.getValue());
+                }
+            }
+
             LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = GzipManager.gzipUncompressToStream(url);
