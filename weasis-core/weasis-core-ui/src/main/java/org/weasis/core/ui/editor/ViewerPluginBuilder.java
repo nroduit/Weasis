@@ -10,82 +10,23 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 
 public class ViewerPluginBuilder {
-    public static final DataExplorerModel DefaultDataModel = new DataExplorerModel() {
-        private PropertyChangeSupport propertyChange = null;
-
-        @Override
-        public void addPropertyChangeListener(PropertyChangeListener propertychangelistener) {
-            if (propertyChange == null) {
-                propertyChange = new PropertyChangeSupport(this);
-            }
-            propertyChange.addPropertyChangeListener(propertychangelistener);
-        }
-
-        @Override
-        public void removePropertyChangeListener(PropertyChangeListener propertychangelistener) {
-            if (propertyChange != null) {
-                propertyChange.removePropertyChangeListener(propertychangelistener);
-            }
-        }
-
-        @Override
-        public void firePropertyChange(final ObservableEvent event) {
-            if (propertyChange != null) {
-                if (event == null) {
-                    throw new NullPointerException();
-                }
-                if (SwingUtilities.isEventDispatchThread()) {
-                    propertyChange.firePropertyChange(event);
-                } else {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            propertyChange.firePropertyChange(event);
-                        }
-                    });
-                }
-            }
-        }
-
-        @Override
-        public TreeModelNode getTreeModelNodeForNewPlugin() {
-            return null;
-        }
-
-        @Override
-        public List<Codec> getCodecPlugins() {
-            return BundleTools.CODEC_PLUGINS;
-        }
-
-        @Override
-        public boolean applySplittingRules(Series original, MediaElement media) {
-            return false;
-        }
-
-    };
-
+    public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
     private final SeriesViewerFactory factory;
     private final List<MediaSeries> series;
     private final DataExplorerModel model;
@@ -202,7 +143,11 @@ public class ViewerPluginBuilder {
     public static void openSequenceInDefaultPlugin(File file) {
         MediaReader reader = getMedia(file);
         if (reader != null) {
-            openSequenceInDefaultPlugin(reader.getMediaSeries(), null, true, true);
+            MediaSeries s = reader.getMediaSeries();
+            if (!(reader instanceof DefaultMimeIO)) {
+                DefaultDataModel.addHierarchyNode(DefaultDataModel.rootNode, s);
+            }
+            openSequenceInDefaultPlugin(s, DefaultDataModel, true, true);
         }
     }
 

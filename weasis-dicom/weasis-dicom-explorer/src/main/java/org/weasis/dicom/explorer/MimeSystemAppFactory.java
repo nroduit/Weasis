@@ -20,7 +20,6 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -34,7 +33,6 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     public static final String NAME = "default system application"; //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
     public static final MimeSystemAppViewer mimeSystemViewer = new MimeSystemAppViewer() {
-        private final String dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement(); //$NON-NLS-1$;
 
         @Override
         public String getPluginName() {
@@ -68,7 +66,7 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
         @Override
         public String getDockableUID() {
-            return dockableUID;
+            return null;
         }
     };
 
