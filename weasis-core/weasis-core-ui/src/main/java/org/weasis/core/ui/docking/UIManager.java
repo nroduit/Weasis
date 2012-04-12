@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.noos.xing.mydoggy.Content;
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.noos.xing.mydoggy.ToolWindowManagerDescriptor;
 import org.noos.xing.mydoggy.ToolWindowType;
@@ -48,8 +49,9 @@ public class UIManager {
         if (name != null) {
             synchronized (EXPLORER_PLUGINS) {
                 for (DataExplorerView view : EXPLORER_PLUGINS) {
-                    if (name.equals(view.getUIName()))
+                    if (name.equals(view.getUIName())) {
                         return view;
+                    }
                 }
             }
         }
@@ -105,8 +107,9 @@ public class UIManager {
         synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
             List<SeriesViewerFactory> plugins = UIManager.SERIES_VIEWER_FACTORIES;
             for (final SeriesViewerFactory factory : plugins) {
-                if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer))
+                if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer)) {
                     return factory;
+                }
             }
         }
         return null;
@@ -169,5 +172,37 @@ public class UIManager {
         });
 
         return plugins;
+    }
+
+    public static void closeSeriesViewerType(Class<? extends SeriesViewer> clazz) {
+        final List<SeriesViewer> pluginsToRemove = new ArrayList<SeriesViewer>();
+        synchronized (UIManager.VIEWER_PLUGINS) {
+            for (final SeriesViewer plugin : UIManager.VIEWER_PLUGINS) {
+                if (clazz.isInstance(plugin)) {
+                    // Do not close Series directly, it can produce deadlock.
+                    pluginsToRemove.add(plugin);
+                }
+            }
+        }
+        closeSeriesViewer(pluginsToRemove);
+    }
+
+    public static void closeSeriesViewer(final List<? extends SeriesViewer> pluginsToRemove) {
+        if (pluginsToRemove != null) {
+            GuiExecutor.instance().execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    for (final SeriesViewer viewerPlugin : pluginsToRemove) {
+                        viewerPlugin.close();
+                        Content content =
+                            UIManager.toolWindowManager.getContentManager().getContent(viewerPlugin.getDockableUID());
+                        if (content != null) {
+                            UIManager.toolWindowManager.getContentManager().removeContent(content);
+                        }
+                    }
+                }
+            });
+        }
     }
 }

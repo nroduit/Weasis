@@ -74,7 +74,6 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GhostGlassPane;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -302,21 +301,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                 }
                             }
                         }
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                for (final ViewerPlugin viewerPlugin : pluginsToRemove) {
-                                    viewerPlugin.close();
-                                    Content content =
-                                        UIManager.toolWindowManager.getContentManager().getContent(
-                                            viewerPlugin.getDockableUID());
-                                    if (content != null) {
-                                        UIManager.toolWindowManager.getContentManager().removeContent(content);
-                                    }
-                                }
-                            }
-                        });
+                        UIManager.closeSeriesViewer(pluginsToRemove);
                     }
                 }
             } else if (event.getSource() instanceof ViewerPlugin) {

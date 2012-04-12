@@ -10,13 +10,10 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d.internal;
 
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 
 import org.apache.felix.service.command.CommandProcessor;
-import org.noos.xing.mydoggy.Content;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -31,7 +28,6 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -117,29 +113,7 @@ public class Activator implements BundleActivator, ServiceListener {
         // Save preferences
         EventManager.getInstance().savePreferences();
         PREFERENCES.close();
-        final List<ViewerPlugin> pluginsToRemove = new ArrayList<ViewerPlugin>();
-        synchronized (UIManager.VIEWER_PLUGINS) {
-            for (final ViewerPlugin plugin : UIManager.VIEWER_PLUGINS) {
-                if (plugin instanceof View2dContainer) {
-                    // Do not close Series directly, it can produce deadlock.
-                    pluginsToRemove.add(plugin);
-                }
-            }
-        }
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                for (final ViewerPlugin viewerPlugin : pluginsToRemove) {
-                    viewerPlugin.close();
-                    Content content =
-                        UIManager.toolWindowManager.getContentManager().getContent(viewerPlugin.getDockableUID());
-                    if (content != null) {
-                        UIManager.toolWindowManager.getContentManager().removeContent(content);
-                    }
-                }
-            }
-        });
+        UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 
     @Override
