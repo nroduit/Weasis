@@ -364,7 +364,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
             if (group != null) {
                 viewer.setGroupID(group);
-                viewer.setPluginName(group.toString());
+                String title = group.toString();
+                if (title.length() > 30) {
+                    viewer.setToolTipText(title);
+                    title = title.substring(0, 30);
+                    title = title.concat("...");
+                }
+                viewer.setPluginName(title);
             }
             registerPlugin(viewer);
             viewer.setSelectedAndGetFocus();

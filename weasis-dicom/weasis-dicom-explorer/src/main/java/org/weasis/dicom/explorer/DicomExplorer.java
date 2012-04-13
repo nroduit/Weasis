@@ -343,20 +343,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         return selectionList;
     }
 
-    // offset is the percentage of thumb size (to be removed)
-    // private String getLimitedStringSize(String name, int offset) {
-    // FontMetrics fm = studyButton.getFontMetrics(studyButton.getFont());
-    // int width = fm.stringWidth(name);
-    // if (width > Thumbnail.MAX_SIZE) {
-    // double length = name.length();
-    // int index = (int) (length * ((double) Thumbnail.MAX_SIZE / width) - 5);
-    // if (index < 0) {
-    // return name;
-    // }
-    // name = name.substring(0, index) + "...";
-    // }
-    // return name;
-    // }
     private void removePatientPane(MediaSeriesGroup patient) {
         for (int i = 0; i < patientPaneList.size(); i++) {
             PatientPane p = patientPaneList.get(i);

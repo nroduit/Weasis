@@ -130,36 +130,41 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public MediaSeries<ImageElement> getMediaSeries() {
-        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.CurrentFolder, this.toString(), null) {
+        MediaSeries<ImageElement> series =
+            new Series<ImageElement>(TagW.SubseriesInstanceUID, uri == null ? "unknown" : uri.toString(), TagW.FileName) {
 
-            @Override
-            public String getMimeType() {
-                for (ImageElement img : medias) {
-                    return img.getMimeType();
+                @Override
+                public String getMimeType() {
+                    for (ImageElement img : medias) {
+                        return img.getMimeType();
+                    }
+                    return null;
                 }
-                return null;
-            }
 
-            @Override
-            public void addMedia(MediaElement media) {
-                if (media instanceof ImageElement) {
-                    medias.add((ImageElement) media);
-                    DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                    if (model != null) {
-                        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                            new SeriesEvent(SeriesEvent.Action.AddImage, this, medias.size() - 1)));
+                @Override
+                public void addMedia(MediaElement media) {
+                    if (media instanceof ImageElement) {
+                        medias.add((ImageElement) media);
+                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                        if (model != null) {
+                            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
+                                new SeriesEvent(SeriesEvent.Action.AddImage, this, medias.size() - 1)));
+                        }
                     }
                 }
-            }
-        };
-        series.add(getSingleImage());
+            };
+
+        ImageElement img = getSingleImage();
+        if (img != null) {
+            series.add(getSingleImage());
+            series.setTag(TagW.FileName, img.getName());
+        }
         return series;
     }
 
     @Override
     public int getMediaElementNumber() {
-        // TODO Auto-generated method stub
-        return 0;
+        return 1;
     }
 
     private ImageElement getSingleImage() {
@@ -212,7 +217,10 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public Object getTagValue(TagW tag) {
-        // TODO Auto-generated method stub
+        MediaElement element = getSingleImage();
+        if (element != null) {
+            return element.getTagValue(tag);
+        }
         return null;
     }
 

@@ -89,18 +89,22 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
     @Override
     public MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode) {
         if (null != node && modelNode != null) {
-            // synchronized (model) {
-            // Tree<MediaSeriesGroup> tree = model.getTree(node);
-            // if (tree != null) {
-            // Tree<MediaSeriesGroup> parent = null;
-            // while ((parent = tree.getParent()) != null) {
-            // if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
-            // return parent.getHead();
-            // }
-            // tree = parent;
-            // }
-            // }
-            // }
+            if (node.getTagID().equals(modelNode.getTagElement())) {
+                return node;
+            }
+            synchronized (model) {
+                Tree<MediaSeriesGroup> tree = model.getTree(node);
+                if (tree != null) {
+
+                    Tree<MediaSeriesGroup> parent = null;
+                    while ((parent = tree.getParent()) != null) {
+                        if (parent.getHead().getTagID().equals(modelNode.getTagElement())) {
+                            return parent.getHead();
+                        }
+                        tree = parent;
+                    }
+                }
+            }
         }
         return null;
     }
@@ -115,6 +119,7 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
+        model.clear();
     }
 
     @Override
@@ -223,7 +228,7 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
     @Override
     public TreeModelNode getTreeModelNodeForNewPlugin() {
-        return file;
+        return series;
     }
 
 }

@@ -157,6 +157,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     @Override
     public MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode) {
         if (null != node && modelNode != null) {
+            if (node.getTagID().equals(modelNode.getTagElement())) {
+                return node;
+            }
             synchronized (model) {
                 Tree<MediaSeriesGroup> tree = model.getTree(node);
                 if (tree != null) {
@@ -191,6 +194,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
+        model.clear();
     }
 
     @Override

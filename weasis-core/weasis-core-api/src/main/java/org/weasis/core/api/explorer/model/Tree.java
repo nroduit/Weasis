@@ -106,6 +106,12 @@ public class Tree<T> {
         return printTree(0);
     }
 
+    public void clear() {
+        locate.clear();
+        leafs.clear();
+        locate.put(head, this);
+    }
+
     private String printTree(int increment) {
         char[] value = new char[increment];
         for (int i = 0; i < value.length; i++) {

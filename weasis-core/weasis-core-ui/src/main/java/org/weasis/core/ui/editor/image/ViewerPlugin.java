@@ -95,6 +95,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         return tooltips;
     }
 
+    @Override
     public String getDockableUID() {
         return dockableUID;
     }

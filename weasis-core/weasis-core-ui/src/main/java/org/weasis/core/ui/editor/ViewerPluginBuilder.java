@@ -11,17 +11,22 @@
 package org.weasis.core.ui.editor;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 
@@ -143,10 +148,7 @@ public class ViewerPluginBuilder {
     public static void openSequenceInDefaultPlugin(File file) {
         MediaReader reader = getMedia(file);
         if (reader != null) {
-            MediaSeries s = reader.getMediaSeries();
-            if (!(reader instanceof DefaultMimeIO)) {
-                DefaultDataModel.addHierarchyNode(DefaultDataModel.rootNode, s);
-            }
+            MediaSeries s = buildDicomStructure(reader);
             openSequenceInDefaultPlugin(s, DefaultDataModel, true, true);
         }
     }
@@ -163,5 +165,55 @@ public class ViewerPluginBuilder {
             return new DefaultMimeIO(file.toURI(), null);
         }
         return null;
+    }
+
+    private static MediaSeries buildDicomStructure(MediaReader reader) {
+        if (reader instanceof DefaultMimeIO) {
+            return reader.getMediaSeries();
+        }
+        MediaSeries series = null;
+        // Require to read the header
+        MediaElement[] medias = reader.getMediaElement();
+        String seriesUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
+        if (seriesUID == null) {
+            for (MediaElement media : medias) {
+                URI uri = media.getMediaURI();
+                if (uri != null) {
+                    media.setTag(TagW.SeriesInstanceUID, uri.toString());
+                    media.setTag(TagW.SOPInstanceUID, uri.toString());
+                }
+            }
+            seriesUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
+        }
+        if (seriesUID != null) {
+            MediaSeriesGroup group = DefaultDataModel.getHierarchyNode(TreeModel.rootNode, seriesUID);
+            if (group instanceof Series) {
+                series = (Series) group;
+            }
+        }
+        try {
+
+            if (series == null) {
+                series = reader.getMediaSeries();
+                series.setTag(TagW.ExplorerModel, DefaultDataModel);
+                DefaultDataModel.addHierarchyNode(DefaultDataModel.rootNode, series);
+            } else {
+                // Test if SOPInstanceUID already exists
+                if (series instanceof Series
+                    && ((Series) series).hasMediaContains(TagW.SOPInstanceUID, reader.getTagValue(TagW.SOPInstanceUID))) {
+                    return series;
+                }
+                if (medias != null) {
+                    for (MediaElement media : medias) {
+                        series.addMedia(media);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            reader.reset();
+        }
+        return series;
     }
 }
