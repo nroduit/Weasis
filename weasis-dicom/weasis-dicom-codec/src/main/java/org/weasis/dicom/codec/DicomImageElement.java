@@ -177,24 +177,34 @@ public class DicomImageElement extends ImageElement {
         return bitsStored;
     }
 
+    public int getBitsAllocated() {
+        int bitsAllocated = (Integer) getTagValue(TagW.BitsAllocated);
+        bitsAllocated = Math.max(getBitsStored(), bitsAllocated);
+        bitsAllocated = (bitsAllocated <= 8) ? 8 : ((bitsAllocated <= 16) ? 16 : ((bitsAllocated <= 32) ? 32 : 0));
+        return bitsAllocated;
+    }
+
     public int getMinAllocatedValue() {
         boolean signed = isModalityLutOutSigned();
-        int bitsStored = getBitsStored();
+        // int bitsStored = getBitsStored();
+        int bitsAllocated = getBitsAllocated();
 
-        int maxValue = signed ? (1 << (bitsStored - 1)) - 1 : ((1 << bitsStored) - 1);
+        int maxValue = signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
         return (signed ? -(maxValue + 1) : 0);
     }
 
     public int getMaxAllocatedValue() {
         boolean signed = isModalityLutOutSigned();
-        int bitsStored = getBitsStored();
+        // int bitsStored = getBitsStored();
+        int bitsAllocated = getBitsAllocated();
 
-        return (signed ? (1 << (bitsStored - 1)) - 1 : ((1 << bitsStored) - 1));
+        return (signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1));
     }
 
     public int getAllocatedOutRangeSize() {
-        int bitsStored = getBitsStored();
-        return (1 << bitsStored) - 1;
+        // int bitsStored = getBitsStored();
+        int bitsAllocated = getBitsAllocated();
+        return (1 << bitsAllocated) - 1;
     }
 
     /**

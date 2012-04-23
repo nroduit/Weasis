@@ -49,8 +49,14 @@ public class DicomImageUtils {
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
         window = (window < 1f) ? 1f : window;
 
-        int outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        // int outRangeSize = (1 << bitsStored) - 1;
+        // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+
+        // TODO - use bitsAllocated as a parameter instead of extrapolated one
+        int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
+        int outRangeSize = (1 << bitsAllocated) - 1;
+        float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
         float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
         float minInValue = Math.min(maxValue, minValue);
@@ -96,9 +102,14 @@ public class DicomImageUtils {
         int bitsStored, boolean isSigned, boolean inverse) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
+        // int outRangeSize = (1 << bitsStored) - 1;
+        // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
-        int outRangeSize = (1 << bitsStored) - 1;
-        float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+        // TODO - use bitsAllocated as a parameter instead of extrapolated one
+        int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
+        int outRangeSize = (1 << bitsAllocated) - 1;
+        float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
         float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
         float minInValue = Math.min(maxValue, minValue);
