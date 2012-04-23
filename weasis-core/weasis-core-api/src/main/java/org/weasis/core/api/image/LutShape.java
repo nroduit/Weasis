@@ -37,7 +37,7 @@ public class LutShape {
      * Other LUT function have their own custom application implementation
      */
     public enum eType {
-        SEQUENCE, LINEAR, SIGMOID, LOG, LOG_INV
+        SEQUENCE, LINEAR, SIGMOID, LOG, LOG_INV;
     }
 
     static final protected ArrayList<LutShape> DEFAULT_LUT_SHAPE_LIST;
@@ -134,15 +134,27 @@ public class LutShape {
                 return false;
             }
             if (functionType.equals(eType.SEQUENCE)) {
-                if ((lookup != null && !lookup.equals(shape.lookup))
-                    || (shape.lookup != null && !shape.lookup.equals(lookup))) {
+                // if ((lookup != null && !lookup.equals(shape.lookup))
+                // || (shape.lookup != null && !shape.lookup.equals(lookup))) {
+                // return false;
+                // }
+                if (lookup == null || shape.lookup == null && !lookup.equals(shape.lookup)) {
                     return false;
                 }
-
-                // TODO lookup should never be null in sequence type, do it better !!!
+                // Note: lookup should never be null in sequence type !!
             }
             return true;
         }
         return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        if (functionType.equals(eType.SEQUENCE)) {
+            if (lookup != null) {
+                return lookup.hashCode();
+            }
+        }
+        return functionType.hashCode();
     }
 }

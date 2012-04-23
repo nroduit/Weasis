@@ -111,9 +111,9 @@ public class PresetWindowLevel {
 
         if (lutFunctionDescriptor != null) {
             if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) {
-                defaultLutShape = new LutShape(eType.SIGMOID, "SIGMOID" + dicomTag, null);
+                defaultLutShape = new LutShape(eType.SIGMOID, "Sigmoid" + dicomTag, null);
             } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) {
-                defaultLutShape = new LutShape(eType.LINEAR, "LINEAR" + dicomTag, null);
+                defaultLutShape = new LutShape(eType.LINEAR, "Linear" + dicomTag, null);
             }
         }
 
