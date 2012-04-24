@@ -32,23 +32,30 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         this.action = action;
         enable = true;
         itemList = new ArrayList<ComboBoxModelAdapter>();
-        model = new DefaultComboBoxModel(objects);
+        model = (objects != null) ? new DefaultComboBoxModel(objects) : new DefaultComboBoxModel();
         model.addListDataListener(this);
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
+        // if (model.equals(e.getSource())) {
         itemStateChanged(model.getSelectedItem());
+        // }
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
     }
 
+    @Override
     public void stateChanged(ChangeEvent evt) {
     }
 
+    @Override
     public void enableAction(boolean enabled) {
         this.enable = enabled;
         for (ComboBoxModelAdapter c : itemList) {
@@ -61,6 +68,7 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         return action.getTitle();
     }
 
+    @Override
     public ActionW getActionW() {
         return action;
     }
@@ -91,6 +99,10 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
             array[i] = model.getElementAt(i);
         }
         return array;
+    }
+
+    public synchronized Object getFirstItem() {
+        return model.getElementAt(0);
     }
 
     public synchronized Object getSelectedItem() {

@@ -14,7 +14,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 public class MprView extends View2d {
@@ -70,7 +69,7 @@ public class MprView extends View2d {
 
                 defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
                 frameIndex = defaultIndex + tileOffset;
-                actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+                // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
 
                 setImage(series.getMedia(frameIndex), true);
                 Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());

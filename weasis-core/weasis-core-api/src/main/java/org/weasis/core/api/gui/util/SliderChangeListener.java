@@ -26,7 +26,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.util.FontTools;
 
 public abstract class SliderChangeListener extends MouseActionAdapter implements ChangeListener, ActionState {
@@ -59,6 +58,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         this(action, min, max, value, true);
     }
 
+    @Override
     public void enableAction(boolean enabled) {
         this.enable = enabled;
         for (JSlider slider : sliders) {
@@ -87,9 +87,10 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
 
     public synchronized void setMinMaxValueWithoutTriggerAction(int min, int max, int value) {
         // Adjust the value to min and max to avoid the model to change the min and the max
-        value = value > max ? max : value < min ? min : value;
+        value = (value > max) ? max : ((value < min) ? min : value);
         triggerAction = false;
         model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
+        // System.out.println(SwingUtilities.isEventDispatchThread());
         triggerAction = true;
         for (int i = 0; i < sliders.size(); i++) {
             JSliderW s = sliders.get(i);
@@ -102,6 +103,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         return triggerAction;
     }
 
+    @Override
     public ActionW getActionW() {
         return action;
     }
@@ -139,6 +141,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         return getValue() + ""; //$NON-NLS-1$
     }
 
+    @Override
     public void stateChanged(ChangeEvent evt) {
         boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
         if (triggerAction && ajusting) {

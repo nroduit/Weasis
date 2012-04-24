@@ -30,6 +30,9 @@ import org.weasis.core.api.gui.InfoViewListPanel;
  * 
  * @version $Rev$ $Date$
  */
+
+// TODO - should be in some kind of weasis-dicom package and not in weasis-core
+
 public class TagW implements Transferable, Serializable {
     public static final AtomicInteger AppID = new AtomicInteger(1);
     private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
@@ -48,9 +51,9 @@ public class TagW implements Transferable, Serializable {
     };
 
     public enum TagType {
-        // Peridod is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        String, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, Integer, IntegerArray, Float, FloatArray,
-        Double, DoubleArray, Color, Thumbnail, Object, List
+        // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
+        String, StringArray, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, Integer, IntegerArray, Float,
+        FloatArray, Double, DoubleArray, Color, Thumbnail, Object, List, Array
 
     };
 
@@ -75,6 +78,12 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ShutterFinalShape = new TagW("Shutter Shape", TagType.Object); //$NON-NLS-1$
     public static final TagW ShutterRGBColor = new TagW("Shutter Color", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
+
+    // public static final TagW ModalityLUTable = new TagW("Modality Lookup Tables", TagType.Object);
+    // public static final TagW VOILUTables = new TagW("VOI Lookup Tables", TagType.Object);
+    // public static final TagW PresentationLUT = new TagW("Presentation LUT", TagType.Object);
+    // public static final TagW PseudoColorLUT = new TagW("PseudoColor LUT", TagType.Object);
+
     // Do not internationalize WadoTransferSyntaxUID, WadoCompressionRate and DirectDownloadFile because they are
     // defined in wado_query.xsd
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.Integer); //$NON-NLS-1$
@@ -186,11 +195,39 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PixelAspectRatio = new TagW(0x00280034, "Pixel Aspect Ratio", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
         "Pixel Spacing Calibration Description", TagType.String); //$NON-NLS-1$
-    public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.Float); //$NON-NLS-1$
-    public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.Float); //$NON-NLS-1$
+
+    public static final TagW VOILUTSequence = new TagW(0x00283010, "VOI LUT Sequence", TagType.Sequence);
+    // One or more Items shall be included in this sequence
+    public static final TagW VOILUTsExplanation = new TagW("VOI LUTs Explanation", TagType.StringArray);
+    public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Array);
+
+    public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.FloatArray);
+    public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.FloatArray);
+    public static final TagW WindowCenterWidthExplanation = new TagW(0x00281055, "Window Center & Width Explanation",
+        TagType.StringArray);
+    public static final TagW VOILutFunction = new TagW(0x00281056, "VOI LUT Function", TagType.String);
+
+    public static final TagW ModalityLUTSequence = new TagW(0x00283000, "Modality LUT Sequence", TagType.Sequence);
+    // Only a single Item shall be included in this sequence
+    public static final TagW ModalityLUTExplanation = new TagW("Modality LUT Explanation", TagType.String);
+    public static final TagW ModalityLUTType = new TagW("Modality LUT Type", TagType.String);
+    public static final TagW ModalityLUTData = new TagW("Modality LUT Data", TagType.Object);
+
+    // public static final TagW LutDescriptor = new TagW(0x00283002, "LUT Descriptor", TagType.IntegerArray);
+    // public static final TagW LutExplanation = new TagW(0x00283003, "LUT Explanation", TagType.IntegerArray);
+    // public static final TagW ModalityLUTType = new TagW(0x00283004, "Modality LUT Type", TagType.String);
+    // public static final TagW LutData = new TagW(0x00283006, "LUT Data", TagType.IntegerArray);
+
     public static final TagW RescaleSlope = new TagW(0x00281053, "Rescale Slope", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleIntercept = new TagW(0x00281052, "Rescale Intercept", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
+
+    // public static final TagW FrameVOILUTSequence = new TagW(0x00289132, "Frame VOI LUT Sequence", TagType.Sequence);
+    // public static final TagW PixelValueTransformationSequence = new TagW(0x00289145,
+    // "Pixel Value Transformation Sequence", TagType.Sequence);
+    // public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence",
+    // TagType.Sequence);
+
     public static final TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
 
     public static final TagW SmallestImagePixelValue = new TagW(0x00280106, "Smallest ImagePixel Value", TagType.Float); //$NON-NLS-1$
@@ -237,7 +274,7 @@ public class TagW implements Transferable, Serializable {
         "Request Attributes Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public static final TagW PurposeOfReferenceCodeSequence = new TagW(0x0040A170,
         "Purpose Of Reference Code Sequence", TagType.Sequence); //$NON-NLS-1$
-    ;
+
     public static final TagW Units = new TagW(0x00541001, "Units", TagType.String); //$NON-NLS-1$
 
     public static final TagW MIMETypeOfEncapsulatedDocument = new TagW(0x00420012,

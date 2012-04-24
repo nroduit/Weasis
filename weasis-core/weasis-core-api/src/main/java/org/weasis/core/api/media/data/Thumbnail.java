@@ -73,7 +73,6 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
@@ -303,7 +302,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                             final ImageElement image = (ImageElement) media;
                             PlanarImage imgPl = image.getImage(null);
                             if (imgPl != null) {
-                                RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
+                                // RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
+                                RenderedImage img = image.getRenderedImage(imgPl);
                                 final double scale =
                                     Math.min(MAX_SIZE / (double) img.getHeight(), MAX_SIZE / (double) img.getWidth());
                                 final PlanarImage thumb =
