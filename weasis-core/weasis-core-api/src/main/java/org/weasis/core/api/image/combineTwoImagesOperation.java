@@ -36,10 +36,12 @@ public class combineTwoImagesOperation extends AbstractOperation {
 
     public static final String name = "CombineImage"; //$NON-NLS-1$
 
+    @Override
     public String getOperationName() {
         return name;
     }
 
+    @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         RenderedImage source2 = (RenderedImage) imageOperation.getActionValue(name);
         if (source2 == null) {
@@ -72,6 +74,29 @@ public class combineTwoImagesOperation extends AbstractOperation {
         pb.addSource(formatIfBinary(sourceDown));
         pb.addSource(alpha1);
         pb.add(formatIfBinary(sourceUp));
+        pb.add(null);
+        pb.add(false);
+        pb.add(CompositeDescriptor.NO_DESTINATION_ALPHA);
+
+        return JAI.create("composite", pb, null); //$NON-NLS-1$
+    }
+
+    public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, PlanarImage alpha1) {
+        ParameterBlock pb = new ParameterBlock();
+        if (sourceDown.getSampleModel().getNumBands() < sourceUp.getSampleModel().getNumBands()) {
+            sourceDown = convertBinaryToColor(sourceDown);
+        } else if (sourceUp.getSampleModel().getNumBands() < sourceDown.getSampleModel().getNumBands()) {
+            sourceUp = convertBinaryToColor(sourceUp);
+        }
+        if (sourceDown.getWidth() < sourceUp.getWidth() || sourceDown.getHeight() < sourceUp.getHeight()) {
+            sourceUp =
+                CropDescriptor.create(sourceUp, 0.0f, 0.0f, (float) sourceDown.getWidth(),
+                    (float) sourceDown.getHeight(), null);
+        }
+
+        pb.addSource(formatIfBinary(sourceDown));
+        pb.addSource(formatIfBinary(sourceUp));
+        pb.add(formatIfBinary(alpha1));
         pb.add(null);
         pb.add(false);
         pb.add(CompositeDescriptor.NO_DESTINATION_ALPHA);

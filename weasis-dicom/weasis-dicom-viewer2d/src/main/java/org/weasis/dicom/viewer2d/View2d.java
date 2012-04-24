@@ -125,10 +125,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
         manager.addImageOperationAction(new WindowLevelOperation());
-        manager.addImageOperationAction(new ShutterOperation());
         manager.addImageOperationAction(new OverlayOperation());
         manager.addImageOperationAction(new FilterOperation());
         manager.addImageOperationAction(new PseudoColorOperation());
+        manager.addImageOperationAction(new ShutterOperation());
         // Zoom and Rotation must be the last operations for the lens
         manager.addImageOperationAction(new ZoomOperation());
         manager.addImageOperationAction(new RotationOperation());
@@ -184,7 +184,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        //TODO ?
+        // TODO ?
         // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
         // actionsInView.put(ActionW.PRESET.cmd(), null);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);

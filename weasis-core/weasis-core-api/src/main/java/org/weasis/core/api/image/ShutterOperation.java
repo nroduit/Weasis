@@ -43,6 +43,11 @@ public class ShutterOperation extends AbstractOperation {
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else if (shutter && (area = (Area) imageOperation.getActionValue(TagW.ShutterFinalShape.getName())) != null) {
             result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(imageOperation), null);
+            // result =
+            // combineTwoImagesOperation.combineTwoImages(
+            // source,
+            // ImageFiler.getEmptyImage(getShutterColor(imageOperation, source), source.getWidth(),
+            // source.getHeight()), new ROIShape(area).getAsImage());
         } else {
             result = source;
         }
@@ -53,7 +58,7 @@ public class ShutterOperation extends AbstractOperation {
     private int[] getShutterColor(ImageOperation imageOperation) {
         int[] color = (int[]) imageOperation.getActionValue(TagW.ShutterRGBColor.getName());
         if (color != null) {
-            // TODO convert LAB to RGB
+            // TODO convert LAB to RGB, and inversion when LUT is inverted
             // CIELab.getInstance().toRGB(color);
         }
 
@@ -66,11 +71,27 @@ public class ShutterOperation extends AbstractOperation {
             // 0000H (black) up to a maximum of FFFFH
             // (white).
             Integer val = (Integer) imageOperation.getActionValue(TagW.ShutterPSValue.getName());
-            if (val != null) {
-                color = new int[] { val >> 8 };
-            }
+            color = val == null ? new int[] { 0 } : new int[] { val >> 8 };
         }
         // color = new int[] { 1300 };
+        // Boolean invLut = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
+        // if (invLut != null && invLut) {
+        // for (int i = 0; i < color.length; i++) {
+        // color[i] = 255 - color[i];
+        // }
+        // }
+        // Byte[] bandValues;
+        // if (source.getSampleModel().getNumBands() == 3) {
+        // if (color == null || color.length < 3) {
+        // color = new int[3];
+        // }
+        // bandValues = new Byte[] { (byte) color[0], (byte) color[1], (byte) color[2] };
+        // } else {
+        // if (color == null || color.length < 1) {
+        // color = new int[1];
+        // }
+        // bandValues = new Byte[] { (byte) color[0] };
+        // }
         return color;
     }
 }
