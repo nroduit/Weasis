@@ -366,10 +366,7 @@ public class ImageFiler extends AbstractBufferHandler {
     }
 
     public static PlanarImage getEmptyImage(Color color, float width, float height) {
-        Byte[] bandValues = new Byte[3];
-        bandValues[0] = (byte) color.getRed();
-        bandValues[1] = (byte) color.getGreen();
-        bandValues[2] = (byte) color.getBlue();
+        Byte[] bandValues = { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
         return getEmptyImage(bandValues, width, height);
     }
 

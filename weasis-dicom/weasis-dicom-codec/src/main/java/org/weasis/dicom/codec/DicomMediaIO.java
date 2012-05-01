@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
@@ -48,6 +49,7 @@ import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.iod.module.pr.DisplayShutterModule;
 import org.dcm4che2.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -410,10 +412,16 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             Area shape = buildShutterArea(dicomObject);
             if (shape != null) {
                 setTagNoNull(TagW.ShutterFinalShape, shape);
-                setTagNoNull(TagW.ShutterPSValue,
-                    getIntegerFromDicomElement(dicomObject, Tag.ShutterPresentationValue, null));
-                setTagNoNull(TagW.ShutterRGBColor,
-                    dicomObject.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+                Integer psVal = getIntegerFromDicomElement(dicomObject, Tag.ShutterPresentationValue, null);
+                setTagNoNull(TagW.ShutterPSValue, psVal);
+                float[] rgb =
+                    DisplayShutterModule.convertToFloatLab(dicomObject.getInts(Tag.ShutterPresentationColorCIELabValue,
+                        (int[]) null));
+                Color color =
+                    rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb,
+                        (int[]) null);
+                setTagNoNull(TagW.ShutterRGBColor, color);
+
             }
             computeSUVFactor(dicomObject, tags, 0);
         }
@@ -1355,10 +1363,15 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     Area shape = buildShutterArea(frame);
                     if (shape != null) {
                         setTagNoNull(tagList, TagW.ShutterFinalShape, shape);
-                        setTagNoNull(tagList, TagW.ShutterPSValue,
-                            getIntegerFromDicomElement(frame, Tag.ShutterPresentationValue, null));
-                        setTagNoNull(tagList, TagW.ShutterRGBColor,
-                            frame.getInts(Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+                        Integer psVal = getIntegerFromDicomElement(frame, Tag.ShutterPresentationValue, null);
+                        setTagNoNull(tagList, TagW.ShutterPSValue, psVal);
+                        float[] rgb =
+                            DisplayShutterModule.convertToFloatLab(frame.getInts(
+                                Tag.ShutterPresentationColorCIELabValue, (int[]) null));
+                        Color color =
+                            rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb,
+                                (int[]) null);
+                        setTagNoNull(tagList, TagW.ShutterRGBColor, color);
                     }
                 }
             }

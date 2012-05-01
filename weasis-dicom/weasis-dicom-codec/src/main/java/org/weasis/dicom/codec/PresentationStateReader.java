@@ -225,7 +225,7 @@ public class PresentationStateReader {
      * 
      * @return String representation of the colour.
      */
-    public static Color toRGB(int pGray, float[] labColour, int[] rgbColour) {
+    public static Color getRGBColor(int pGray, float[] labColour, int[] rgbColour) {
         int r, g, b;
         if (labColour != null) {
             if (LAB == null) {

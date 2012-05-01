@@ -10,16 +10,25 @@
  ******************************************************************************/
 package org.weasis.core.api.image;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Area;
+import java.awt.image.DataBuffer;
+import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
 
+import javax.media.jai.PlanarImage;
 import javax.media.jai.ROIShape;
+import javax.media.jai.TiledImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.op.ShutterDescriptor;
+import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
@@ -42,12 +51,15 @@ public class ShutterOperation extends AbstractOperation {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else if (shutter && (area = (Area) imageOperation.getActionValue(TagW.ShutterFinalShape.getName())) != null) {
-            result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(imageOperation), null);
-            // result =
-            // combineTwoImagesOperation.combineTwoImages(
-            // source,
-            // ImageFiler.getEmptyImage(getShutterColor(imageOperation, source), source.getWidth(),
-            // source.getHeight()), new ROIShape(area).getAsImage());
+            Byte[] color = getShutterColor(imageOperation);
+            if (isBlack(color)) {
+                result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(imageOperation), null);
+            } else {
+                result =
+                    combineTwoImagesOperation.combineTwoImages(source,
+                        ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight()),
+                        getAsImage(area, source));
+            }
         } else {
             result = source;
         }
@@ -55,43 +67,42 @@ public class ShutterOperation extends AbstractOperation {
         return result;
     }
 
-    private int[] getShutterColor(ImageOperation imageOperation) {
-        int[] color = (int[]) imageOperation.getActionValue(TagW.ShutterRGBColor.getName());
-        if (color != null) {
-            // TODO convert LAB to RGB, and inversion when LUT is inverted
-            // CIELab.getInstance().toRGB(color);
+    private boolean isBlack(Byte[] color) {
+        for (Byte i : color) {
+            if (i != 0) {
+                return false;
+            }
         }
+        return true;
+    }
 
+    private Byte[] getShutterColor(ImageOperation imageOperation) {
+        Color color = (Color) imageOperation.getActionValue(TagW.ShutterRGBColor.getName());
         if (color == null) {
-            // A single gray unsigned value used to
-            // replace those parts of the image occluded
-            // by the shutter, when rendered on a
-            // monochrome display. The units are
-            // specified in P-Values, from a minimum of
-            // 0000H (black) up to a maximum of FFFFH
-            // (white).
+            /*
+             * A single gray unsigned value used to replace those parts of the image occluded by the shutter, when
+             * rendered on a monochrome display. The units are specified in P-Values, from a minimum of 0000H (black) up
+             * to a maximum of FFFFH (white).
+             */
             Integer val = (Integer) imageOperation.getActionValue(TagW.ShutterPSValue.getName());
-            color = val == null ? new int[] { 0 } : new int[] { val >> 8 };
+            return val == null ? new Byte[] { 0 } : new Byte[] { (byte) (val >> 8) };
+        } else {
+            Byte[] bandValues = { (byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue() };
+            return bandValues;
         }
-        // color = new int[] { 1300 };
-        // Boolean invLut = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
-        // if (invLut != null && invLut) {
-        // for (int i = 0; i < color.length; i++) {
-        // color[i] = 255 - color[i];
-        // }
-        // }
-        // Byte[] bandValues;
-        // if (source.getSampleModel().getNumBands() == 3) {
-        // if (color == null || color.length < 3) {
-        // color = new int[3];
-        // }
-        // bandValues = new Byte[] { (byte) color[0], (byte) color[1], (byte) color[2] };
-        // } else {
-        // if (color == null || color.length < 1) {
-        // color = new int[1];
-        // }
-        // bandValues = new Byte[] { (byte) color[0] };
-        // }
-        return color;
+    }
+
+    private PlanarImage getAsImage(Area shape, RenderedImage source) {
+        SampleModel sm =
+            new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE, source.getWidth(), source.getHeight(), 1);
+        TiledImage ti =
+            new TiledImage(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight(),
+                source.getTileGridXOffset(), source.getTileGridYOffset(), sm, PlanarImage.createColorModel(sm));
+        Graphics2D g2d = ti.createGraphics();
+        // Write the Shape into the TiledImageGraphics.
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.fill(shape);
+        g2d.dispose();
+        return ti;
     }
 }

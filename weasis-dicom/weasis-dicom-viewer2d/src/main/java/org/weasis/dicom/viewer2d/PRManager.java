@@ -62,7 +62,7 @@ public class PRManager {
                     DragLayer layer = new DragLayer(view.getLayerModel(), 1300 + glm.getGraphicLayerOrder());
                     view.getLayerModel().addLayer(layer);
                     Color rgb =
-                        PresentationStateReader.toRGB(glm.getGraphicLayerRecommendedDisplayGrayscaleValue(),
+                        PresentationStateReader.getRGBColor(glm.getGraphicLayerRecommendedDisplayGrayscaleValue(),
                             glm.getFloatLab(), glm.getGraphicLayerRecommendedDisplayRGBValue());
 
                     GraphicObject[] gos = gram.getGraphicObjects();
