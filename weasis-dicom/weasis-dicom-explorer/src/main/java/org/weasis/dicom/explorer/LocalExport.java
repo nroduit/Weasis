@@ -39,6 +39,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSlider;
+import javax.swing.SwingWorker;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -59,6 +60,7 @@ import org.dcm4che2.media.FileSetInformation;
 import org.dcm4che2.media.StdGenJPEGApplicationProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -267,17 +269,33 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     @Override
-    public void exportDICOM(ExportTree tree, JProgressBar info) throws IOException {
+    public void exportDICOM(final ExportTree tree, JProgressBar info) throws IOException {
         browseImgFile();
         if (outputFolder != null) {
-            File exportDir = outputFolder.getCanonicalFile();
-            String format = (String) comboBoxImgFormat.getSelectedItem();
+            final File exportDir = outputFolder.getCanonicalFile();
+            final String format = (String) comboBoxImgFormat.getSelectedItem();
+            SwingWorker<Boolean, String> task = new SwingWorker<Boolean, String>() {
 
-            if (EXPORT_FORMAT[0].equals(format)) {
-                writeDicom(exportDir, tree);
-            } else {
-                writeOther(exportDir, tree, format);
-            }
+                @Override
+                protected Boolean doInBackground() throws Exception {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
+                        dicomModel, null, this));
+                    if (EXPORT_FORMAT[0].equals(format)) {
+                        writeDicom(exportDir, tree);
+                    } else {
+                        writeOther(exportDir, tree, format);
+                    }
+                    return true;
+                }
+
+                @Override
+                protected void done() {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop,
+                        dicomModel, null, this));
+                }
+
+            };
+            task.execute();
         }
     }
 

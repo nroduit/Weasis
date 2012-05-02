@@ -45,29 +45,34 @@ public class DicomExport extends AbstractWizardDialog {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
 
+        final JButton exportandClose = new JButton("Export and Close");
+        exportandClose.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                exportSelection(true);
+
+            }
+        });
+        final GridBagConstraints gridBagConstraints_0 = new GridBagConstraints();
+        gridBagConstraints_0.insets = new Insets(10, 15, 10, 0);
+        gridBagConstraints_0.anchor = GridBagConstraints.EAST;
+        gridBagConstraints_0.gridy = 0;
+        gridBagConstraints_0.gridx = 0;
+        gridBagConstraints_0.weightx = 1.0;
+        jPanelButtom.add(exportandClose, gridBagConstraints_0);
+
         final JButton exportButton = new JButton();
         exportButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(final ActionEvent e) {
-                Object object = null;
-                try {
-                    object = jScrollPanePage.getViewport().getComponent(0);
-                } catch (Exception ex) {
-                }
-                if (object instanceof ExportDicom) {
-                    ExportDicom selectedPage = (ExportDicom) object;
-                    try {
-                        selectedPage.exportDICOM(exportTree, null);
-                    } catch (IOException e1) {
-                        LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
-                    }
-                }
+                exportSelection(false);
             }
         });
         exportButton.setText(Messages.getString("DicomExport.exp")); //$NON-NLS-1$
         final GridBagConstraints gridBagConstraints_1 = new GridBagConstraints();
-        gridBagConstraints_1.insets = new Insets(10, 50, 10, 0);
+        gridBagConstraints_1.insets = new Insets(10, 15, 10, 0);
         gridBagConstraints_1.anchor = GridBagConstraints.EAST;
         gridBagConstraints_1.gridy = 0;
         gridBagConstraints_1.gridx = 1;
@@ -107,6 +112,25 @@ public class DicomExport extends AbstractWizardDialog {
             }
         }
         iniTree();
+    }
+
+    private void exportSelection(boolean closeWin) {
+        Object object = null;
+        try {
+            object = jScrollPanePage.getViewport().getComponent(0);
+        } catch (Exception ex) {
+        }
+        if (object instanceof ExportDicom) {
+            final ExportDicom selectedPage = (ExportDicom) object;
+            if (closeWin) {
+                cancel();
+            }
+            try {
+                selectedPage.exportDICOM(exportTree, null);
+            } catch (IOException e1) {
+                LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
+            }
+        }
     }
 
     @Override

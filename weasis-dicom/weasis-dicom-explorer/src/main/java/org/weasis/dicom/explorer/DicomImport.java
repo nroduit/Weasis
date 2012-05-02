@@ -44,15 +44,7 @@ public class DicomImport extends AbstractWizardDialog {
 
             @Override
             public void actionPerformed(final ActionEvent e) {
-                Object object = null;
-                try {
-                    object = jScrollPanePage.getViewport().getComponent(0);
-                } catch (Exception ex) {
-                }
-                if (object instanceof ImportDicom) {
-                    ImportDicom selectedPage = (ImportDicom) object;
-                    selectedPage.importDICOM(dicomModel, null);
-                }
+                importSelection();
                 cancel();
             }
         });
@@ -69,15 +61,7 @@ public class DicomImport extends AbstractWizardDialog {
 
             @Override
             public void actionPerformed(final ActionEvent e) {
-                Object object = null;
-                try {
-                    object = jScrollPanePage.getViewport().getComponent(0);
-                } catch (Exception ex) {
-                }
-                if (object instanceof ImportDicom) {
-                    ImportDicom selectedPage = (ImportDicom) object;
-                    selectedPage.importDICOM(dicomModel, null);
-                }
+                importSelection();
             }
         });
         importButton.setText(Messages.getString("DicomImport.imp")); //$NON-NLS-1$
@@ -123,6 +107,18 @@ public class DicomImport extends AbstractWizardDialog {
             }
         }
         iniTree();
+    }
+
+    private void importSelection() {
+        Object object = null;
+        try {
+            object = jScrollPanePage.getViewport().getComponent(0);
+        } catch (Exception ex) {
+        }
+        if (object instanceof ImportDicom) {
+            ImportDicom selectedPage = (ImportDicom) object;
+            selectedPage.importDICOM(dicomModel, null);
+        }
     }
 
     @Override
