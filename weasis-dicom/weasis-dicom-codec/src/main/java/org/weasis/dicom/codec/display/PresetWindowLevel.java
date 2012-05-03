@@ -97,7 +97,8 @@ public class PresetWindowLevel {
             return null;
         }
 
-        String dicomTag = " [" + Messages.getString("PresetWindowLevel.dicomTag") + "]";
+//        String dicomTag = " [" + Messages.getString("PresetWindowLevel.dicomTag") + "]";
+        String dicomTag = " [" + "Dicom" + "]";
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
@@ -122,7 +123,9 @@ public class PresetWindowLevel {
             int windowLevelDefaultCount = (windowCenterDefaultTagArray.length == windowWidthDefaultTagArray.length) ? //
                 windowCenterDefaultTagArray.length : 0;
 
-            String defaultExplanation = Messages.getString("PresetWindowLevel.default");
+            // String defaultExplanation = Messages.getString("PresetWindowLevel.default");
+            // NOTE : PresetWindowLevel.default properties should not be used anymore et should be replaced!!
+            String defaultExplanation = "Default";
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
                 String explanation = defaultExplanation + " " + i;
@@ -178,8 +181,11 @@ public class PresetWindowLevel {
             }
         }
 
-        String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
-        String imageTag = " [" + Messages.getString("PresetWindowLevel.imageTag") + "]";
+        // String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
+        // NOTE : PresetWindowLevel.full properties should not be used anymore et should be replaced!!
+        String fullDynamicExplanation = "Auto Level";
+        // String imageTag = " [" + Messages.getString("PresetWindowLevel.imageTag") + "]";
+        String imageTag = " [" + "Image" + "]";
 
         presetList.add(new PresetWindowLevel(fullDynamicExplanation + imageTag, image.getFullDynamicWidth(), image
             .getFullDynamicCenter(), defaultLutShape));
@@ -223,8 +229,6 @@ public class PresetWindowLevel {
 
         Map<String, List<PresetWindowLevel>> presetListByModality = new TreeMap<String, List<PresetWindowLevel>>();
 
-        // String modalityTag = " [" + Messages.getString("PresetWindowLevel.modalityTag") + "]";
-
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
@@ -253,7 +257,6 @@ public class PresetWindowLevel {
 
                                             PresetWindowLevel preset =
                                                 new PresetWindowLevel(name, window, level, LutShape.LINEAR);
-                                            // new PresetWindowLevel(name + modalityTag, modality, window, level);
 
                                             List<PresetWindowLevel> presetList = presetListByModality.get(modality);
                                             if (presetList == null) {
