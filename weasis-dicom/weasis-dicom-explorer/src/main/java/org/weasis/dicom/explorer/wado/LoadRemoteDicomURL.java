@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.SwingWorker;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -31,13 +29,16 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExplorerTask;
+import org.weasis.dicom.explorer.Messages;
 
-public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
+public class LoadRemoteDicomURL extends ExplorerTask {
 
     private final URL[] urls;
     private final DicomModel dicomModel;
 
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -56,6 +57,7 @@ public class LoadRemoteDicomURL extends SwingWorker<Boolean, String> {
     }
 
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

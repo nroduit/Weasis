@@ -39,7 +39,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSlider;
-import javax.swing.SwingWorker;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -274,7 +273,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
             final String format = (String) comboBoxImgFormat.getSelectedItem();
-            SwingWorker<Boolean, String> task = new SwingWorker<Boolean, String>() {
+            ExplorerTask task = new ExplorerTask("Exporting...") {
 
                 @Override
                 protected Boolean doInBackground() throws Exception {

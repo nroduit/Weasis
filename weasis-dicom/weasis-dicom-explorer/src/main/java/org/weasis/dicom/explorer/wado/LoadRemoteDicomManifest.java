@@ -23,16 +23,16 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.SwingWorker;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExplorerTask;
+import org.weasis.dicom.explorer.Messages;
 
-public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
+public class LoadRemoteDicomManifest extends ExplorerTask {
 
     public static final String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
     public static final BlockingQueue<Runnable> loadingQueue = new PriorityBlockingQueue<Runnable>(10,
@@ -86,6 +86,7 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
     }
 
     public LoadRemoteDicomManifest(String[] xmlFiles, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -94,6 +95,7 @@ public class LoadRemoteDicomManifest extends SwingWorker<Boolean, String> {
     }
 
     public LoadRemoteDicomManifest(File[] xmlFiles, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

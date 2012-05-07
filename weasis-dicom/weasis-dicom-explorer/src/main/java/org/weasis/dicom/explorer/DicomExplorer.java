@@ -68,7 +68,6 @@ import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -138,7 +137,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         new HashMap<MediaSeriesGroup, List<SeriesPane>>();
     private final JScrollPane thumnailView = new JScrollPane();
     private final SeriesSelectionModel selectionList = new SeriesSelectionModel();
-    private final ArrayList<SwingWorker<Boolean, String>> loadingTasks = new ArrayList<SwingWorker<Boolean, String>>();
+    private final ArrayList<ExplorerTask> tasks = new ArrayList<ExplorerTask>();
 
     private final DicomModel model;
 
@@ -1431,12 +1430,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {
-                    if (newVal instanceof SwingWorker) {
-                        addTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    if (newVal instanceof ExplorerTask) {
+                        addTaskToGlobalProgression((ExplorerTask) newVal);
                     }
                 } else if (ObservableEvent.BasicAction.LoadingStop.equals(action)) {
-                    if (newVal instanceof SwingWorker) {
-                        removeTaskToGlobalProgression((SwingWorker<Boolean, String>) newVal);
+                    if (newVal instanceof ExplorerTask) {
+                        removeTaskToGlobalProgression((ExplorerTask) newVal);
                     }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {
@@ -1498,7 +1497,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             }
         }
         add(thumnailView, BorderLayout.CENTER);
-        if (loadingTasks.size() > 0) {
+        if (tasks.size() > 0) {
             add(getLoadingPanel(), vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
         }
 
@@ -1508,20 +1507,23 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         if (panel_4 == null) {
             panel_4 = new JPanel();
             panel_4.add(globalProgress);
-            final JLabel labelNewLabel = new JLabel(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
-            panel_4.add(labelNewLabel);
+            panel_4.add(new JLabel());
         }
         return panel_4;
     }
 
-    public synchronized void addTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
-        if (!loadingTasks.contains(task)) {
-            loadingTasks.add(task);
-            if (loadingTasks.size() > 0) {
+    public synchronized void addTaskToGlobalProgression(final ExplorerTask task) {
+        if (!tasks.contains(task)) {
+            tasks.add(task);
+            if (tasks.size() > 0) {
                 GuiExecutor.instance().invokeAndWait(new Runnable() {
                     @Override
                     public void run() {
                         JPanel loadingPanel = getLoadingPanel();
+                        Component label = loadingPanel.getComponent(1);
+                        if (label instanceof JLabel) {
+                            ((JLabel) label).setText(task.getMessage());
+                        }
                         if (getComponentZOrder(loadingPanel) == -1) {
                             globalProgress.setIndeterminate(true);
                             boolean vertical =
@@ -1536,10 +1538,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
     }
 
-    public synchronized void removeTaskToGlobalProgression(SwingWorker<Boolean, String> task) {
+    public synchronized void removeTaskToGlobalProgression(ExplorerTask task) {
         if (task != null) {
-            loadingTasks.remove(task);
-            if (loadingTasks.size() == 0) {
+            tasks.remove(task);
+            if (tasks.size() == 0) {
                 GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                     @Override

@@ -12,19 +12,18 @@ package org.weasis.dicom.explorer;
 
 import java.util.ArrayList;
 
-import javax.swing.SwingWorker;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-public class LoadDicomDir extends SwingWorker<Boolean, String> {
+public class LoadDicomDir extends ExplorerTask {
 
     private final ArrayList<LoadSeries> seriesList;
     private final DicomModel dicomModel;
 
     public LoadDicomDir(ArrayList<LoadSeries> seriesList, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (seriesList == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

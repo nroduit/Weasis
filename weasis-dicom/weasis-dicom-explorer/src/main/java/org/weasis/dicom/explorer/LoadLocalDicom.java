@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.swing.SwingWorker;
-
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -35,7 +33,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomMediaIO;
 
-public class LoadLocalDicom extends SwingWorker<Boolean, String> {
+public class LoadLocalDicom extends ExplorerTask {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadLocalDicom.class);
     private final File[] files;
@@ -44,6 +42,7 @@ public class LoadLocalDicom extends SwingWorker<Boolean, String> {
     private boolean openPlugin;
 
     public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
+        super(Messages.getString("DicomExplorer.loading"));
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
