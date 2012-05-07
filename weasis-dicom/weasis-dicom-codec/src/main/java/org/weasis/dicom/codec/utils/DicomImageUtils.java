@@ -65,31 +65,35 @@ public class DicomImageUtils {
         int numEntries = (int) (maxInValue - minInValue + 1);
         Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
 
-        switch (lutShape.getFunctionType()) {
-            case LINEAR:
-                setWindowLevelLinearLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+        if (lutShape.getFunctionType() != null) {
 
-                // TODO - do this test below
-                // setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
-                // Object outLut2 = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-                // setWindowLevelLinearLut(window, level, minInValue, outLut2, minOutValue, maxOutValue, inverse);
-                // compareDataLuts(outLut, outLut2);
-                break;
-            case SIGMOID:
-                setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
-                break;
-            case LOG:
-                setWindowLevelLogarithmicLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
-                break;
-            case LOG_INV:
-                setWindowLevelExponentialLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
-                break;
-            case SEQUENCE:
-                setWindowLevelSequenceLut(window, level, lutShape.getLookup(), minInValue, maxInValue, outLut,
-                    minOutValue, maxOutValue, inverse);
-                break;
-            default:
-                return null;
+            switch (lutShape.getFunctionType()) {
+                case LINEAR:
+                    setWindowLevelLinearLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+
+                    // TODO - do this test below
+                    // setWindowLevelLinearLutLegacy(window, level, minInValue, outLut, minOutValue, maxOutValue,
+                    // inverse);
+                    // Object outLut2 = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
+                    // setWindowLevelLinearLut(window, level, minInValue, outLut2, minOutValue, maxOutValue, inverse);
+                    // compareDataLuts(outLut, outLut2);
+                    break;
+                case SIGMOID:
+                    setWindowLevelSigmoidLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    break;
+                case LOG:
+                    setWindowLevelLogarithmicLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    break;
+                case LOG_INV:
+                    setWindowLevelExponentialLut(window, level, minInValue, outLut, minOutValue, maxOutValue, inverse);
+                    break;
+
+                default:
+                    return null;
+            }
+        } else {
+            setWindowLevelSequenceLut(window, level, lutShape.getLookup(), minInValue, maxInValue, outLut, minOutValue,
+                maxOutValue, inverse);
         }
 
         return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, (int) minInValue) : //

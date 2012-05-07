@@ -119,7 +119,15 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         model.addListDataListener(this);
     }
 
+    public synchronized void setDataListWithoutTriggerAction(Object[] objects) {
+        setDataList(objects, false);
+    }
+
     public synchronized void setDataList(Object[] objects) {
+        setDataList(objects, true);
+    }
+
+    protected synchronized void setDataList(Object[] objects, boolean doTriggerAction) {
         if (objects != null && objects.length > 0) {
             Object oldSelection = model.getSelectedItem();
             model.removeListDataListener(this);
@@ -128,7 +136,7 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
 
             for (Object object : objects) {
                 model.addElement(object);
-                if (object == oldSelection) {
+                if (object.equals(oldSelection)) {
                     oldSelectionStillExist = true;
                 }
             }
@@ -137,14 +145,24 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
                 c.setModel(model);
             }
 
-            model.addListDataListener(this);
+            model.setSelectedItem(null);
+
+            if (doTriggerAction) {
+                model.addListDataListener(this);
+            }
+
             if (oldSelection != null && oldSelectionStillExist) {
                 model.setSelectedItem(oldSelection);
-            } else if (objects[0] == model.getSelectedItem()) {
-                itemStateChanged(model.getSelectedItem());
+                // } else if (objects[0] == model.getSelectedItem()) {
+                // itemStateChanged(model.getSelectedItem());
             } else {
                 model.setSelectedItem(objects[0]);
             }
+
+            if (!doTriggerAction) {
+                model.addListDataListener(this);
+            }
+
         }
     }
 

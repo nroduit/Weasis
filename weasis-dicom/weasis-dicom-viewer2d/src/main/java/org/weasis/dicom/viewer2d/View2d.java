@@ -186,7 +186,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super.initActionWState();
         // TODO ?
         // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
-        // actionsInView.put(ActionW.PRESET.cmd(), null);
+        actionsInView.put(ActionW.PRESET.cmd(), null);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
@@ -260,7 +260,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             zoom(val == null ? 1.0 : val);
             center();
         }
-
     }
 
     private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
@@ -360,7 +359,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     protected void setWindowLevel(DicomImageElement img) {
-        // TODO - shouldn't be be renamed as setDefautWindowLevel ?
+        // TODO - should be be renamed as setDefautWindowLevel ?
 
         if (img == null) {
             return;
@@ -369,10 +368,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         PresetWindowLevel preset = img.getDefaultPreset();
 
         if (preset != null) {
+            actionsInView.put(ActionW.PRESET.cmd(), preset);
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
+
             actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
-            actionsInView.put(ActionW.PRESET.cmd(), preset);
         } else {
             super.setWindowLevel(img);
         }
