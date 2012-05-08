@@ -295,7 +295,9 @@ public class DicomImageElement extends ImageElement {
             slope = (slope == null) ? 1.0f : slope;
             intercept = (intercept == null) ? 0.0f : intercept;
 
-            isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
+            if (bitsStored > 8) {
+                isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
+            }
 
             modalityLookup =
                 DicomImageUtils.createRescaleRampLut(intercept, slope, (int) minPixelValue, (int) maxPixelValue,

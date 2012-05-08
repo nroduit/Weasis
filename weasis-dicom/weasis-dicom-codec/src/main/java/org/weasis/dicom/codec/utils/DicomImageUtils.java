@@ -307,22 +307,22 @@ public class DicomImageUtils {
 
         // Assuming lookupSequence is continuous, values at both ends should reflect maxima and minima
         // This assumption avoid computing min/max by scaning the full table
-        int minLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, 0);
-        int maxLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, lookupRangeSize);
-        int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
+        // int minLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, 0);
+        // int maxLookupValue = lutDataValueMask & Array.getInt(inLutDataArray, lookupRangeSize);
+        // int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
 
-        // int minLookupValue = Integer.MAX_VALUE;
-        // int maxLookupValue = Integer.MIN_VALUE;
-        // for (int index = 0; index < Array.getLength(inLutDataArray); index++) {
-        // int currentVal = lutDataValueMask & Array.getInt(inLutDataArray, index);
-        //
-        // if (currentVal < minLookupValue) {
-        // minLookupValue = currentVal;
-        // }
-        // if (currentVal > maxLookupValue) {
-        // maxLookupValue = currentVal;
-        // }
-        // }
+        int minLookupValue = Integer.MAX_VALUE;
+        int maxLookupValue = Integer.MIN_VALUE;
+        for (int i = 0; i < Array.getLength(inLutDataArray); i++) {
+            int val = lutDataValueMask & Array.getInt(inLutDataArray, i);
+            if (val < minLookupValue) {
+                minLookupValue = val;
+            }
+            if (val > maxLookupValue) {
+                maxLookupValue = val;
+            }
+        }
+        int lookupValueRange = Math.abs(maxLookupValue - minLookupValue);
 
         float widthRescaleRatio = lookupRangeSize / window;
         float outRescaleRatio = maxOutValue / lookupValueRange;
