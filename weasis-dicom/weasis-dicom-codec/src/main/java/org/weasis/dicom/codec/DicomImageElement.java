@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.media.jai.Histogram;
 import javax.media.jai.JAI;
@@ -466,12 +465,11 @@ public class DicomImageElement extends ImageElement {
             return lutShapeCollection;
         }
 
-        Set<LutShape> lutShapeSet = new LinkedHashSet<LutShape>();
+        lutShapeCollection = new LinkedHashSet<LutShape>();
         for (PresetWindowLevel preset : getPresetList()) {
-            lutShapeSet.add(preset.getLutShape());
+            lutShapeCollection.add(preset.getLutShape());
         }
-
-        lutShapeCollection = Arrays.asList(LutShape.getFullShapeArray(lutShapeSet));
+        lutShapeCollection.addAll(LutShape.DEFAULT_FACTORY_FUNCTIONS);
 
         return lutShapeCollection;
     }

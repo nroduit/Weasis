@@ -600,7 +600,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         ArrayList<Action> actions = new ArrayList<Action>(1);
         final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
-            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$//$NON-NLS-2$
+            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
 
                 @Override
                 public void actionPerformed(ActionEvent e) {

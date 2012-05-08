@@ -11,150 +11,118 @@
 package org.weasis.core.api.image;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import javax.media.jai.LookupTableJAI;
 
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
-
 /**
  * @author btja
- * @version $Rev$ $Date$
  */
 
-public class LutShape {
+public final class LutShape {
 
-    public static LutShape LINEAR = new LutShape(eType.LINEAR, "Linear", null);
-    public static LutShape SIGMOID = new LutShape(eType.SIGMOID, "Sigmoid", null);
-    public static LutShape LOG = new LutShape(eType.LOG, "Logarithmic", null);
-    public static LutShape LOG_INV = new LutShape(eType.LOG_INV, "Logarithmic Inv", null);
+    public static final LutShape LINEAR = new LutShape(eFunction.LINEAR);
+    public static final LutShape SIGMOID = new LutShape(eFunction.SIGMOID);
+    public static final LutShape LOG = new LutShape(eFunction.LOG);
+    public static final LutShape LOG_INV = new LutShape(eFunction.LOG_INV);
 
     /**
-     * SEQUENCE stands for a provided lookup table data LINEAR and SIGMOID descriptors are DICOM standard LUT function
-     * Other LUT function have their own custom application implementation
+     * LINEAR and SIGMOID descriptors are defined as DICOM standard LUT function <br>
+     * Other LUT functions have their own custom implementation
      */
-    public enum eType {
-        SEQUENCE, LINEAR, SIGMOID, LOG, LOG_INV;
+    public enum eFunction {
+        LINEAR("Linear"), //
+        SIGMOID("Sigmoid"), //
+        LOG("Logarithmic"), //
+        LOG_INV("Logarithmic Inv");
+
+        final String explanation;
+
+        private eFunction(String explanation) {
+            this.explanation = explanation;
+        }
+
+        @Override
+        public String toString() {
+            return explanation;
+        }
     }
 
-    static final protected ArrayList<LutShape> DEFAULT_LUT_SHAPE_LIST;
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    static final public ArrayList<LutShape> DEFAULT_FACTORY_FUNCTIONS;
 
     static {
-        DEFAULT_LUT_SHAPE_LIST = new ArrayList<LutShape>();
-        DEFAULT_LUT_SHAPE_LIST.add(LutShape.LINEAR);
-        DEFAULT_LUT_SHAPE_LIST.add(LutShape.SIGMOID);
-        DEFAULT_LUT_SHAPE_LIST.add(LutShape.LOG);
-        DEFAULT_LUT_SHAPE_LIST.add(LutShape.LOG_INV);
+        DEFAULT_FACTORY_FUNCTIONS = new ArrayList<LutShape>();
+
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LINEAR);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
     }
 
-    volatile protected eType functionType;
-    volatile protected String explanation;
-    volatile protected LookupTableJAI lookup;
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public LutShape(String explanantion, LookupTableJAI lookup) {
-        this(eType.SEQUENCE, explanantion, lookup);
-    }
+    /**
+     * A LutShape can be either a predefined function or a custom shape with a provided lookup table. <br>
+     * That is a LutShape can be defined as a function or by a lookup but not both
+     */
+    protected final eFunction function;
+    protected final String explanantion;
+    protected final LookupTableJAI lookup;
 
-    public LutShape(eType type, String explanantion, LookupTableJAI lookup) {
-        this.functionType = type;
-        this.explanation = explanantion;
+    public LutShape(LookupTableJAI lookup, String explanantion) {
+        if (lookup == null) {
+            throw new IllegalArgumentException();
+        }
+        this.function = null;
+        this.explanantion = explanantion;
         this.lookup = lookup;
     }
 
-    public String getExplanation() {
-        return explanation;
+    public LutShape(eFunction function) {
+        this(function, function.toString());
     }
 
-    public eType getFunctionType() {
-        return functionType;
+    public LutShape(eFunction function, String explanantion) {
+        if (function == null) {
+            throw new IllegalArgumentException();
+        }
+        this.function = function;
+        this.explanantion = explanantion;
+        this.lookup = null;
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public eFunction getFunctionType() {
+        return function;
     }
 
     public LookupTableJAI getLookup() {
         return lookup;
     }
 
-    public static LutShape getShape(String lutFunctionDescriptor) {
-        if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) {
-            return LutShape.SIGMOID;
-        } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) {
-            return LutShape.LINEAR;
-        } else {
-            return null;
-        }
-    }
-
-    public static LutShape[] getFullShapeArray(Collection<LutShape> lutShape) {
-        Set<LutShape> lutShapeSet = new LinkedHashSet<LutShape>(lutShape);
-        for (LutShape shape : DEFAULT_LUT_SHAPE_LIST) {
-            lutShapeSet.add(shape);
-        }
-        return lutShapeSet.toArray(new LutShape[lutShapeSet.size()]);
-    }
-
-    public static LutShape[] getShapeCollection(ImageElement image) {
-        if (image == null) {
-            return null;
-        }
-
-        ArrayList<LutShape> lutShapeList = new ArrayList<LutShape>();
-
-        if (image != null) {
-            LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) image.getTagValue(TagW.VOILUTsData);
-            String[] voiLUTsExplanation = (String[]) image.getTagValue(TagW.VOILUTsExplanation);
-
-            if (voiLUTsData != null) {
-                String defaultExplanation = "VOI LUT";
-                String dicomTag = " [" + "DICOM" + "]";
-
-                for (int i = 0; i < voiLUTsData.length; i++) {
-                    String explanation = (voiLUTsExplanation != null && i < voiLUTsExplanation.length) ? //
-                        voiLUTsExplanation[i] : defaultExplanation;
-                    lutShapeList.add(new LutShape(eType.SEQUENCE, explanation + dicomTag, voiLUTsData[i]));
-                }
-            }
-        }
-        lutShapeList.addAll(DEFAULT_LUT_SHAPE_LIST);
-
-        return lutShapeList.toArray(new LutShape[lutShapeList.size()]);
-    }
-
     @Override
     public String toString() {
-        return explanation;
+        return explanantion;
     }
 
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * LutShape objects are defined either by a factory function or by a custom LUT. They can be equal even if they have
+     * different explanation property
+     */
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof LutShape) {
             LutShape shape = (LutShape) obj;
-            if (!functionType.equals(shape.functionType)) {
-                return false;
-            }
-            if (functionType.equals(eType.SEQUENCE)) {
-                // if ((lookup != null && !lookup.equals(shape.lookup))
-                // || (shape.lookup != null && !shape.lookup.equals(lookup))) {
-                // return false;
-                // }
-                if (lookup == null || shape.lookup == null && !lookup.equals(shape.lookup)) {
-                    return false;
-                }
-                // Note: lookup should never be null in sequence type !!
-            }
-            return true;
+            return (function != null) ? function.equals(shape.function) : lookup.equals(shape.lookup);
         }
         return super.equals(obj);
     }
 
     @Override
     public int hashCode() {
-        if (functionType.equals(eType.SEQUENCE)) {
-            if (lookup != null) {
-                return lookup.hashCode();
-            }
-        }
-        return functionType.hashCode();
+        return (function != null) ? function.hashCode() : lookup.hashCode();
     }
 }
