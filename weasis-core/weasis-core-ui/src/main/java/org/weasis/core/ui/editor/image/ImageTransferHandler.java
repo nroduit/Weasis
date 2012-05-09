@@ -21,6 +21,7 @@ import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
@@ -49,10 +50,15 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
             if (imageElement != null) {
                 RenderedImage imageSource = view2DPane.getSourceImage();
                 if (imageSource != null) {
-                     float window = imageElement.getPixelWindow((Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()));
-                     float level = imageElement.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
-                    // RenderedImage result = ImageToolkit.getDefaultRenderedImage(imageElement, imageSource, window, level);
-                    RenderedImage result = imageElement.getRenderedImage(imageSource, window, level);
+                    // float window = imageElement.getPixelWindow((Float)
+                    // view2DPane.getActionValue(ActionW.WINDOW.cmd()));
+                    // float level = imageElement.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
+                    Float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
+                    Float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
+                    LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
+                    Boolean pixelPadding = (Boolean) view2DPane.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+                    RenderedImage result =
+                        imageElement.getRenderedImage(imageSource, window, level, lutShape, pixelPadding);
 
                     if (result instanceof PlanarImage) {
                         image = ((PlanarImage) result).getAsBufferedImage();

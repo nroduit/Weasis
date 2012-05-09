@@ -147,10 +147,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     @Override
     protected void setWindowLevel(ImageElement img) {
-        float min = img.getMinValue();
-        float max = img.getMaxValue();
-        actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-        actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
+        super.setWindowLevel(img);
     }
 
     protected void sortStack() {

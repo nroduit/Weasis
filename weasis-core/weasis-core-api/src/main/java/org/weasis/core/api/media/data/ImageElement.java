@@ -41,9 +41,10 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * Logger for this class
      */
     private static final Logger logger = LoggerFactory.getLogger(ImageElement.class);
-    // Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
-    // thread)
-    // (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
+    /*
+     * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
+     * thread) (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
+     */
     public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(1);
 
     private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
@@ -136,10 +137,6 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return LutShape.LINEAR;
     }
 
-    public boolean getDefaultPixelPadding() {
-        return true;
-    }
-
     public float getDefaultWindow() {
         return maxPixelValue - minPixelValue;
     }
@@ -187,10 +184,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public void setPixelSize(double pixelSizeX, double pixelSizeY) {
-        // Image is always displayed with a 1/1 aspect ratio, otherwise it becomes very
-        // difficult (even impossible) to handle measurement tools.
-        // When the ratio is not 1/1, the image is stretched. The smallest ratio keeps
-        // the pixel size and the largest one is downscaled
+        /*
+         * Image is always displayed with a 1/1 aspect ratio, otherwise it becomes very difficult (even impossible) to
+         * handle measurement tools. When the ratio is not 1/1, the image is stretched. The smallest ratio keeps the
+         * pixel size and the largest one is downscaled.
+         */
         this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
         this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
     }
@@ -286,11 +284,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level) {
-        return getRenderedImage(imageSource, window, level, getDefaultShape(), getDefaultPixelPadding());
+        return getRenderedImage(imageSource, window, level, null, null);
     }
 
     public RenderedImage getRenderedImage(final RenderedImage imageSource) {
-        return getRenderedImage(imageSource, getDefaultWindow(), getDefaultLevel(), getDefaultShape(), true);
+        return getRenderedImage(imageSource, null, null, null, null);
     }
 
     /**

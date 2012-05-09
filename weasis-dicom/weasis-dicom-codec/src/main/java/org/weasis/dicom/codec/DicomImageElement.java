@@ -560,6 +560,7 @@ public class DicomImageElement extends ImageElement {
                     int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                     int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
                     if (minPixelValue != 0.0f || maxPixelValue != 0.0f) {
+                        // TODO Is that useful ?
                         if ((paddingValueMin <= minPixelValue && minPixelValue <= paddingValueMax)
                             || (paddingValueMin <= maxPixelValue && maxPixelValue <= paddingValueMax)) {
                             // possible confusing Min/Max image values regarding to padding Min/Max range in order to
@@ -660,7 +661,7 @@ public class DicomImageElement extends ImageElement {
         window = (window == null) ? getDefaultWindow() : window;
         level = (level == null) ? getDefaultLevel() : level;
         lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
-        pixelPadding = (pixelPadding == null) ? getDefaultPixelPadding() : pixelPadding;
+        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
 
         ParameterBlock pb = new ParameterBlock();
 

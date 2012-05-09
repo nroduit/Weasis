@@ -39,12 +39,6 @@ public class WindowLevelOperation extends AbstractOperation {
             Boolean pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
 
             result = imageElement.getRenderedImage(imageSource, window, level, lutShape, pixelPadding);
-
-            // result =
-            // ImageToolkit.getDefaultRenderedImage(image, source, window, level, padding == null ? true : padding);
-
-            // NOTE : looks better to implement the getRenderedImage(..) method in the ImageElement Object so it can be
-            // easily overridden, to compare to the static generic ImageToolkit.getDefaultRenderedImage(..) method
         }
         return result;
     }

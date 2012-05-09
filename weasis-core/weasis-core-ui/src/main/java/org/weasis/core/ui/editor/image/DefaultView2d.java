@@ -617,14 +617,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void setWindowLevel(E img) {
         if (img != null) {
-            // float min = img.getMinValue();
-            // float max = img.getMaxValue();
-
             actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
-
-            // actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-            // actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
         }
     }
 
