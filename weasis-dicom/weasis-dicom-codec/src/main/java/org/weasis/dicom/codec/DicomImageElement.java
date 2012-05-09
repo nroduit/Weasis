@@ -13,6 +13,7 @@ package org.weasis.dicom.codec;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
+import java.lang.ref.Reference;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,14 +33,31 @@ import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
+import org.weasis.dicom.codec.utils.LutParameters;
 
 public class DicomImageElement extends ImageElement {
 
-    volatile private LookupTableJAI modalityLookup = null;
+    private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache =
+        new SoftHashMap<LutParameters, LookupTableJAI>() {
+
+            public Reference<? extends LookupTableJAI> getReference(LutParameters key) {
+                return hash.get(key);
+            }
+
+            @Override
+            public void removeElement(Reference<? extends LookupTableJAI> soft) {
+                LutParameters key = reverseLookup.remove(soft);
+                if (key != null) {
+                    hash.remove(key);
+                }
+            }
+        };
+
     volatile private List<PresetWindowLevel> windowingPresetCollection = null;
     volatile private Collection<LutShape> lutShapeCollection = null;
 
@@ -61,10 +79,11 @@ public class DicomImageElement extends ImageElement {
                 pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
             if (val != null && val[0] > 0.0 && val[1] > 0.0) {
-                // Pixel Spacing = Row Spacing \ Column Spacing => (Y,X)
-                // The first value is the row spacing in mm, that is the spacing between the centers of adjacent rows,
-                // or vertical spacing.
-                // Pixel Spacing must be always positive, but some DICOMs have negative values
+                /*
+                 * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that
+                 * is the spacing between the centers of adjacent rows, or vertical spacing. Pixel Spacing must be
+                 * always positive, but some DICOMs have negative values
+                 */
                 setPixelSize(val[1], val[0]);
                 pixelSpacingUnit = Unit.MILLIMETER;
             } else if (val == null) {
@@ -145,8 +164,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     public boolean isPhotometricInterpretationInverse() {
-        String photometricInterpretation = getPhotometricInterpretation();
-        return (photometricInterpretation != null && "MONOCHROME1".equalsIgnoreCase(photometricInterpretation));
+        return "MONOCHROME1".equalsIgnoreCase(getPhotometricInterpretation());
     }
 
     /**
@@ -270,7 +288,21 @@ public class DicomImageElement extends ImageElement {
 
     protected LookupTableJAI getModalityLookup(boolean pixelPadding) {
         // TODO - handle pixel padding input argument
+        boolean isSigned = isPixelRepresentationSigned();
+        int bitsStored = getBitsStored();
+        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
 
+        slope = (slope == null) ? 1.0f : slope;
+        intercept = (intercept == null) ? 0.0f : intercept;
+
+        if (bitsStored > 8) {
+            isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
+        }
+
+        LutParameters lutparams =
+            new LutParameters(intercept, slope, (int) minPixelValue, (int) maxPixelValue, bitsStored, isSigned, false);
+        LookupTableJAI modalityLookup = LUT_Cache.get(lutparams);
         if (modalityLookup != null) {
             return modalityLookup;
         }
@@ -281,27 +313,11 @@ public class DicomImageElement extends ImageElement {
         // determined by BitsStored and Pixel Representation.
         // Note: This range may be signed even if Pixel Representation is unsigned.
 
-        boolean isSigned = isPixelRepresentationSigned();
-        Integer bitsStored = getBitsStored();
-
         // LookupTable lookup = (LookupTable) getTagValue(TagW.ModalityLUTData);
         modalityLookup = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
 
-        if (modalityLookup == null && bitsStored != null) {
-
-            Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-            Float slope = (Float) getTagValue(TagW.RescaleSlope);
-
-            slope = (slope == null) ? 1.0f : slope;
-            intercept = (intercept == null) ? 0.0f : intercept;
-
-            if (bitsStored > 8) {
-                isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
-            }
-
-            modalityLookup =
-                DicomImageUtils.createRescaleRampLut(intercept, slope, (int) minPixelValue, (int) maxPixelValue,
-                    bitsStored, isSigned, false);
+        if (modalityLookup == null) {
+            modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
         }
 
         if (modalityLookup != null) {
@@ -406,7 +422,7 @@ public class DicomImageElement extends ImageElement {
 
             }
         }
-
+        LUT_Cache.put(lutparams, modalityLookup);
         return modalityLookup;
     }
 
@@ -537,21 +553,12 @@ public class DicomImageElement extends ImageElement {
             minPixelValue = (min == null) ? 0.0f : min.floatValue();
             maxPixelValue = (max == null) ? 0.0f : max.floatValue();
 
-            String photometricInterpretation = getPhotometricInterpretation();
-
-            if (photometricInterpretation != null && //
-                ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || //
-                "MONOCHROME2".equalsIgnoreCase(photometricInterpretation))) {
-
+            if (isPhotometricInterpretationMonochrome()) {
                 Integer paddingValue = getPaddingValue();
-                Integer paddingLimit = getPaddingLimit();
-
-                // TODO to be validated
                 if (paddingValue != null) {
-
+                    Integer paddingLimit = getPaddingLimit();
                     int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                     int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
-
                     if (minPixelValue != 0.0f || maxPixelValue != 0.0f) {
                         if ((paddingValueMin <= minPixelValue && minPixelValue <= paddingValueMax)
                             || (paddingValueMin <= maxPixelValue && maxPixelValue <= paddingValueMax)) {
@@ -663,11 +670,8 @@ public class DicomImageElement extends ImageElement {
         pb.add(modalityLookup);
         final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
 
-        pb.removeSources();
-        pb.removeParameters();
-
         LookupTableJAI voiLookup = getVOILookup(window, level, lutShape);
-
+        pb = new ParameterBlock();
         pb.addSource(imageModalityTransformed);
         pb.add(voiLookup);
         final RenderedImage imageVOITransformed = JAI.create("lookup", pb, null);
@@ -698,7 +702,7 @@ public class DicomImageElement extends ImageElement {
             }
             // System.out.println("what the frack !!!");
         }
-        return 0f;
+        return pixelValue;
     }
 
     // TODO - change name because rescale term is already used

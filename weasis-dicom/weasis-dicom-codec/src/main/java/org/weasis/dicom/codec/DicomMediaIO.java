@@ -597,19 +597,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
                 if (dicomTagMap.get(TagW.ModalityLUTData) != null) {
                     if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
-                        LOGGER.info("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
+                        LOGGER.debug("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
                     }
                     if (dicomTagMap.get(TagW.ModalityLUTType) == null) {
-                        LOGGER.info("Modality Type is required if Modality LUT Sequence is present. ");
+                        LOGGER.debug("Modality Type is required if Modality LUT Sequence is present. ");
                     }
                 } else if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
                     if (dicomTagMap.get(TagW.RescaleSlope) == null) {
-                        LOGGER.info("Modality Rescale Slope is required if Rescale Intercept is present.");
+                        LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present.");
                     } else if (dicomTagMap.get(TagW.RescaleType) == null) {
-                        LOGGER.info("Modality Rescale Type is required if Rescale Intercept is present.");
+                        LOGGER.debug("Modality Rescale Type is required if Rescale Intercept is present.");
                     }
                 } else {
-                    LOGGER.info("Modality Rescale Intercept is required if Modality LUT Sequence is not present. ");
+                    LOGGER.debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. ");
                 }
             }
 
