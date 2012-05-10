@@ -14,7 +14,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.ref.Reference;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -306,9 +305,10 @@ public class DicomImageElement extends ImageElement {
         if (bitsStored > 8) {
             isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
         }
-
+        Integer paddingValue = getPaddingValue();
+        Integer paddingLimit = getPaddingLimit();
         LutParameters lutparams =
-            new LutParameters(intercept, slope, (int) minPixelValue, (int) maxPixelValue, bitsStored, isSigned, false);
+            new LutParameters(intercept, slope, pixelPadding, paddingValue, paddingLimit, bitsStored, isSigned, false);
         modalityLookup = LUT_Cache.get(lutparams);
         if (modalityLookup != null) {
             // TODO handle pixel padding
@@ -325,14 +325,11 @@ public class DicomImageElement extends ImageElement {
             modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
         }
 
-        if (modalityLookup != null) {
+        if (modalityLookup == null && pixelPadding) {
             // In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1 where n
             // is the third value of LUT Descriptor. This range is always unsigned.
             // String lutType = (String) getTagValue(TagW.ModalityLUTType);
             // String explanation = (String) getTagValue(TagW.ModalityLUTExplanation);
-
-            Integer paddingValue = getPaddingValue();
-            Integer paddingLimit = getPaddingLimit();
 
             if ((modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) && isPhotometricInterpretationMonochrome()
                 && (paddingValue != null)) {
@@ -378,26 +375,38 @@ public class DicomImageElement extends ImageElement {
 
                 Object outLut = inLut;
 
-                if (numNewValues > 0) {
-                    int outLutSize = numEntries + numNewValues;
-                    // outLut = Array.newInstance(inLut.getClass(), outLutSize);
-                    // if (inLut instanceof byte[]) {
-                    // outLut = new byte[outLutSize] ;
-                    // } else if (inLut instanceof short[]) {
-                    // outLut = new short[outLutSize] ;
-                    // }
+                // if (numNewValues > 0) {
+                // int outLutSize = numEntries + numNewValues;
+                // outLut = Array.newInstance(inLut.getClass(), outLutSize);
+                // if (inLut instanceof byte[]) {
+                // outLut = new byte[outLutSize] ;
+                // } else if (inLut instanceof short[]) {
+                // outLut = new short[outLutSize] ;
+                // }
 
-                    outLut = (bitsStored <= 8) ? new byte[outLutSize] : new short[outLutSize];
-                    System.arraycopy(inLut, 0, outLut, outLutValuesStartIndex, numEntries);
+                // outLut = (bitsStored <= 8) ? new byte[outLutSize] : new short[outLutSize];
+                // System.arraycopy(inLut, 0, outLut, outLutValuesStartIndex, numEntries);
 
-                    numPaddingValues = (numPaddingValues < numNewValues) ? numNewValues : numPaddingValues;
+                numPaddingValues = (numPaddingValues < numNewValues) ? numNewValues : numPaddingValues;
+                int fillVal =
+                    isSigned ? isPhotometricInterpretationInverse() ? (1 << (bitsStored - 1)) - 1
+                        : -(1 << (bitsStored - 1)) - 1 : isPhotometricInterpretationInverse() ? (1 << bitsStored) - 1
+                        : 0;
 
-                    if (isDataTypeByte) {
-                        modalityLookup = new LookupTableJAI((byte[]) outLut, lutOffset);
-                    } else {
-                        modalityLookup = new LookupTableJAI((short[]) outLut, lutOffset, !isSigned);
-                    }
+                if (isDataTypeByte) {
+                    Arrays.fill((byte[]) outLut, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues,
+                        (byte) 0);
+                } else {
+                    Arrays.fill((short[]) outLut, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues,
+                        (short) fillVal);
                 }
+
+                // if (isDataTypeByte) {
+                // modalityLookup = new LookupTableJAI((byte[]) outLut, lutOffset);
+                // } else {
+                // modalityLookup = new LookupTableJAI((short[]) outLut, lutOffset, !isSigned);
+                // }
+                // }
 
                 // Set padding values to minPixelValue or maxPixelValue
                 // int fillValue = (Integer) (isPhotometricInterpretationInverse() ? //
@@ -406,17 +415,17 @@ public class DicomImageElement extends ImageElement {
                 //
                 // Arrays.fill((Object[]) outLut, lutPaddingStartIndex, numPaddingValues, fillValue);
 
-                int indexMinPixelValue = (int) (minPixelValue - lutOffset);
-                int indexMaxPixelValue = (int) (maxPixelValue - lutOffset);
-                int fillValueIndex = isPhotometricInterpretationInverse() ? indexMaxPixelValue : indexMinPixelValue;
-
-                if (isDataTypeByte) {
-                    byte fillValue = Array.getByte(outLut, fillValueIndex);
-                    Arrays.fill((byte[]) outLut, paddingValuesStartIndex, numPaddingValues, fillValue);
-                } else {
-                    short fillValue = Array.getShort(outLut, fillValueIndex);
-                    Arrays.fill((short[]) outLut, paddingValuesStartIndex, numPaddingValues, fillValue);
-                }
+                // int indexMinPixelValue = (int) (minPixelValue - lutOffset);
+                // int indexMaxPixelValue = (int) (maxPixelValue - lutOffset);
+                // int fillValueIndex = isPhotometricInterpretationInverse() ? indexMaxPixelValue : indexMinPixelValue;
+                //
+                // if (isDataTypeByte) {
+                // byte fillValue = Array.getByte(outLut, fillValueIndex);
+                // Arrays.fill((byte[]) outLut, paddingValuesStartIndex, numPaddingValues, fillValue);
+                // } else {
+                // short fillValue = Array.getShort(outLut, fillValueIndex);
+                // Arrays.fill((short[]) outLut, paddingValuesStartIndex, numPaddingValues, (short) 0);
+                // }
 
                 // TODO - add the ability to disable padding by keeping values same as original
 

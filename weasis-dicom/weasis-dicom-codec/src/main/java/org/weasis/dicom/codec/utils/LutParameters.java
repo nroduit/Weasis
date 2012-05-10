@@ -3,28 +3,31 @@ package org.weasis.dicom.codec.utils;
 public class LutParameters {
     private final float intercept;
     private final float slope;
-    private final int minValue;
-    private final int maxValue;
+    private final Integer paddingMinValue;
+    private final Integer paddingMaxValue;
     private final int bitsStored;
     private final boolean signed;
     private final boolean inverse;
+    private final boolean applyPadding;
 
-    public LutParameters(float intercept, float slope, int minValue, int maxValue, int bitsStored, boolean signed,
-        boolean inverse) {
+    public LutParameters(float intercept, float slope, boolean applyPadding, Integer paddingMinValue,
+        Integer paddingMaxValue, int bitsStored, boolean signed, boolean inverse) {
         this.intercept = intercept;
         this.slope = slope;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
+        this.paddingMinValue = paddingMinValue;
+        this.paddingMaxValue = paddingMaxValue;
         this.bitsStored = bitsStored;
         this.signed = signed;
         this.inverse = inverse;
+        this.applyPadding = applyPadding;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof LutParameters) {
             LutParameters p = (LutParameters) obj;
-            return p.intercept == intercept && p.slope == slope && p.minValue == minValue && p.maxValue == maxValue
+            return p.intercept == intercept && p.slope == slope && p.applyPadding == applyPadding
+                && p.paddingMinValue == paddingMinValue && p.paddingMaxValue == paddingMaxValue
                 && p.bitsStored == bitsStored && p.signed == signed && p.inverse == inverse;
         }
         return false;
@@ -32,8 +35,16 @@ public class LutParameters {
 
     @Override
     public int hashCode() {
-        return (signed ? 2 : 3) + (inverse ? 4 : 5) + bitsStored * 7 + minValue * 13 + maxValue * 19
-            + Float.floatToIntBits(intercept) * 25 + Float.floatToIntBits(intercept) * 31;
+        int hash =
+            (signed ? 2 : 3) + (inverse ? 4 : 5) + (inverse ? 6 : 7) + bitsStored * 9 + Float.floatToIntBits(intercept)
+                * 25 + Float.floatToIntBits(intercept) * 31;
+        if (paddingMinValue != null) {
+            hash += paddingMinValue * 13;
+        }
+        if (paddingMaxValue != null) {
+            hash += paddingMaxValue * 19;
+        }
+        return hash;
     }
 
     public float getIntercept() {
@@ -44,12 +55,12 @@ public class LutParameters {
         return slope;
     }
 
-    public int getMinValue() {
-        return minValue;
+    public Integer getPaddingMinValue() {
+        return paddingMinValue;
     }
 
-    public int getMaxValue() {
-        return maxValue;
+    public Integer getPaddingMaxValue() {
+        return paddingMaxValue;
     }
 
     public int getBitsStored() {

@@ -103,12 +103,12 @@ public class DicomImageUtils {
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static LookupTableJAI createRescaleRampLut(LutParameters LutParams) {
-        return createRescaleRampLut(LutParams.getIntercept(), LutParams.getSlope(), LutParams.getMinValue(),
-            LutParams.getMaxValue(), LutParams.getBitsStored(), LutParams.isSigned(), LutParams.isInverse());
+        return createRescaleRampLut(LutParams.getIntercept(), LutParams.getSlope(), LutParams.getBitsStored(),
+            LutParams.isSigned(), LutParams.isInverse());
     }
 
-    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
-        int bitsStored, boolean isSigned, boolean inverse) {
+    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
+        boolean inverse) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
         // int outRangeSize = (1 << bitsStored) - 1;
@@ -121,14 +121,15 @@ public class DicomImageUtils {
         float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
         float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
-        float minInValue = Math.min(maxValue, minValue);
-        float maxInValue = Math.max(maxValue, minValue);
+        // float minInValue = Math.min(maxValue, minValue);
+        // float maxInValue = Math.max(maxValue, minValue);
 
-        int numEntries = (int) (maxInValue - minInValue + 1);
+        // int numEntries = (int) (maxInValue - minInValue + 1);
+        int numEntries = 1 << bitsStored;
         Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
 
         for (int i = 0; i < numEntries; i++) {
-            int value = Math.round((i + minInValue) * slope + intercept);
+            int value = Math.round(i * slope + intercept);
 
             value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
             value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
@@ -140,10 +141,8 @@ public class DicomImageUtils {
             }
         }
 
-        int offset = (int) minInValue;
-
-        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, offset) : //
-            new LookupTableJAI((short[]) outLut, offset, !isSigned);
+        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, 0) : //
+            new LookupTableJAI((short[]) outLut, 0, !isSigned);
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
