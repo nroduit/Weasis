@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BoundedRangeModel;
+import javax.swing.DefaultComboBoxModel;
 
 import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.BackingStoreException;
@@ -207,6 +208,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         public void propertyChange(PropertyChangeEvent evt) {
             if (ActionW.WINDOW.cmd().equals(evt.getPropertyName()) || ActionW.LEVEL.cmd().equals(evt.getPropertyName())
                 || ActionW.LUT_SHAPE.cmd().equals(evt.getPropertyName())) {
+                int w = windowAction.getValue();
+                int l = levelAction.getValue();
+                DefaultComboBoxModel dataModel = presetAction.getModel();
+                for (int i = 0; i < dataModel.getSize(); i++) {
+                    Object object = dataModel.getElementAt(i);
+                    if (object instanceof PresetWindowLevel) {
+                        PresetWindowLevel p = (PresetWindowLevel) object;
+                        if (p.getLutShape() == lutShapeAction.getSelectedItem() && p.getLevel() != null
+                            && p.getWindow() != null) {
+                            if (p.getLevel().intValue() == l && p.getWindow().intValue() == w) {
+                                presetAction.setSelectedItem(p);
+                                return;
+                            }
+                        }
+                    }
+
+                }
                 presetAction.setSelectedItem(null);
             }
         }

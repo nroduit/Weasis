@@ -288,6 +288,13 @@ public class DicomImageElement extends ImageElement {
 
     protected LookupTableJAI getModalityLookup(boolean pixelPadding) {
         // TODO - handle pixel padding input argument
+
+        LookupTableJAI modalityLookup = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
+        if (modalityLookup != null) {
+            // TODO handle pixel padding
+            return modalityLookup;
+        }
+
         boolean isSigned = isPixelRepresentationSigned();
         int bitsStored = getBitsStored();
         Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
@@ -302,8 +309,9 @@ public class DicomImageElement extends ImageElement {
 
         LutParameters lutparams =
             new LutParameters(intercept, slope, (int) minPixelValue, (int) maxPixelValue, bitsStored, isSigned, false);
-        LookupTableJAI modalityLookup = LUT_Cache.get(lutparams);
+        modalityLookup = LUT_Cache.get(lutparams);
         if (modalityLookup != null) {
+            // TODO handle pixel padding
             return modalityLookup;
         }
 
@@ -312,9 +320,6 @@ public class DicomImageElement extends ImageElement {
         // (maximum pixel value*Rescale Slope+Rescale Intercept), where the minimum and maximum pixel values are
         // determined by BitsStored and Pixel Representation.
         // Note: This range may be signed even if Pixel Representation is unsigned.
-
-        // LookupTable lookup = (LookupTable) getTagValue(TagW.ModalityLUTData);
-        modalityLookup = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
 
         if (modalityLookup == null) {
             modalityLookup = DicomImageUtils.createRescaleRampLut(lutparams);
