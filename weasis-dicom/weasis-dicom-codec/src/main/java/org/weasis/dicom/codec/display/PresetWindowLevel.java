@@ -39,7 +39,6 @@ public class PresetWindowLevel {
     private final Float level;
     private final LutShape shape;
 
-  
     public PresetWindowLevel(String name, Float window, Float level, LutShape shape) {
 
         if (name == null || window == null || level == null || shape == null) {
@@ -56,8 +55,6 @@ public class PresetWindowLevel {
     public String getName() {
         return name;
     }
-
-
 
     public Float getWindow() {
         return window;
@@ -167,6 +164,14 @@ public class PresetWindowLevel {
 
                 minValueLookup = Math.min(minValueLookup, maxValueLookup);
                 maxValueLookup = Math.max(minValueLookup, maxValueLookup);
+                int minAllocatedValue = image.getMinAllocatedValue();
+                if (minValueLookup < minAllocatedValue) {
+                    minValueLookup = minAllocatedValue;
+                }
+                int maxAllocatedValue = image.getMaxAllocatedValue();
+                if (maxValueLookup > maxAllocatedValue) {
+                    maxValueLookup = maxAllocatedValue;
+                }
 
                 float fullDynamicWidth = maxValueLookup - minValueLookup;
                 float fullDynamicCenter = minValueLookup + fullDynamicWidth / 2f;
@@ -194,7 +199,6 @@ public class PresetWindowLevel {
 
         return presetList.toArray(new PresetWindowLevel[presetList.size()]);
     }
-
 
     private static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
 
