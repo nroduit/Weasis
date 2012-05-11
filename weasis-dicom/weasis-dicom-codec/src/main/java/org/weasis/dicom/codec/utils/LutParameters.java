@@ -75,4 +75,8 @@ public class LutParameters {
         return inverse;
     }
 
+    public boolean isApplyPadding() {
+        return applyPadding;
+    }
+
 }

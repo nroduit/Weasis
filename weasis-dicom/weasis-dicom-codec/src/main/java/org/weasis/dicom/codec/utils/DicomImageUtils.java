@@ -102,13 +102,12 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static LookupTableJAI createRescaleRampLut(LutParameters LutParams) {
-        return createRescaleRampLut(LutParams.getIntercept(), LutParams.getSlope(), LutParams.getBitsStored(),
-            LutParams.isSigned(), LutParams.isInverse());
-    }
-
-    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
-        boolean inverse) {
+    public static LookupTableJAI createRescaleRampLut(LutParameters params) {
+        float intercept = params.getIntercept();
+        float slope = params.getSlope();
+        int bitsStored = params.getBitsStored();
+        boolean isSigned = params.isSigned();
+        boolean inverse = params.isInverse();
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
         // int outRangeSize = (1 << bitsStored) - 1;

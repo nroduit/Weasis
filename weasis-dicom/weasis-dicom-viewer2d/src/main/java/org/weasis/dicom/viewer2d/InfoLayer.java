@@ -631,7 +631,7 @@ public class InfoLayer implements AnnotationsLayer {
         final boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
 
         LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
-        LookupTableJAI lookup = image.getVOILookup(window, level, lutShape, true);
+        LookupTableJAI lookup = image.getVOILookup(window, level, lutShape, true, true);
         // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
 
         // System.out.println(lutShape.toString());
