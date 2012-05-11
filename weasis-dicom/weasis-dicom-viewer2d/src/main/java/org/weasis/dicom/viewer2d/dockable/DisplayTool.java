@@ -173,7 +173,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                 if (DICOM_IMAGE_OVERLAY.equals(selObject.toString())) {
                                     sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
                                 } else if (DICOM_SHUTTER.equals(selObject.toString())) {
-                                    sendPropertyChangeEvent(views, ActionW.IMAGE_SCHUTTER.cmd(), selected);
+                                    sendPropertyChangeEvent(views, ActionW.IMAGE_SHUTTER.cmd(), selected);
                                 } else if (DICOM_PIXEL_PADDING.equals(selObject.toString())) {
                                     sendPropertyChangeEvent(views, ActionW.IMAGE_PIX_PADDING.cmd(), selected);
                                 }
@@ -260,7 +260,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             // Image node
             initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
             iniDicomView(view, ActionW.IMAGE_OVERLAY.cmd(), 0);
-            iniDicomView(view, ActionW.IMAGE_SCHUTTER.cmd(), 1);
+            iniDicomView(view, ActionW.IMAGE_SHUTTER.cmd(), 1);
             iniDicomView(view, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
 
             // Annotations node

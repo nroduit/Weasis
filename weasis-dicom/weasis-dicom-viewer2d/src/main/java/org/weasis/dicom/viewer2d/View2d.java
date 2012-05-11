@@ -227,11 +227,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
             sortStack();
-        } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
-            // TODO synch with statistics
-            actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (command.equals(ActionW.PR_STATE.cmd())) {
+        }
+        // IMAGE_PIX_PADDING is already handled in DefaultView2D
+        // else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
+        // TODO synch with statistics
+        // actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), evt.getNewValue());
+        // imageLayer.updateImageOperation(WindowLevelOperation.name);
+        // }
+        else if (command.equals(ActionW.PR_STATE.cmd())) {
             // TODO use PR reader for other frame when changing image of the series
             PresentationStateReader pr = (PresentationStateReader) evt.getNewValue();
             actionsInView.put(ActionW.PR_STATE.cmd(), pr);

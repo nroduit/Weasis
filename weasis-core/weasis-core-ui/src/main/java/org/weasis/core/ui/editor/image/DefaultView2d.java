@@ -185,7 +185,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.FILTER.cmd(), KernelData.NONE);
         actionsInView.put(ActionW.DRAW.cmd(), true);
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
-        actionsInView.put(ActionW.IMAGE_SCHUTTER.cmd(), true);
+        actionsInView.put(ActionW.IMAGE_SHUTTER.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
 
     }
@@ -755,7 +755,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (command.equals(ActionW.FILTER.cmd())) {
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
-        } else if (command.equals(ActionW.IMAGE_SCHUTTER.cmd())) {
+        } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(ShutterOperation.name);
         } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {

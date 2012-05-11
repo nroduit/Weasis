@@ -200,6 +200,16 @@ public class DicomImageElement extends ImageElement {
         return bitsAllocated;
     }
 
+    public float getRescaleIntercept() {
+        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
+        return (intercept == null) ? 0.0f : intercept.floatValue();
+    }
+
+    public float getRescaleSlope() {
+        Float slope = (Float) getTagValue(TagW.RescaleSlope);
+        return (slope == null) ? 1.0f : slope.floatValue();
+    }
+
     public int getMinAllocatedValue() {
         boolean signed = isModalityLutOutSigned();
         // int bitsStored = getBitsStored();
@@ -286,7 +296,6 @@ public class DicomImageElement extends ImageElement {
     // !!! Strange because findMinMaxValue function should have been called before when loading image.
 
     protected LookupTableJAI getModalityLookup(boolean pixelPadding) {
-        // TODO - handle pixel padding input argument
 
         LookupTableJAI modalityLookup = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
         if (modalityLookup != null) {
@@ -296,22 +305,22 @@ public class DicomImageElement extends ImageElement {
 
         boolean isSigned = isPixelRepresentationSigned();
         int bitsStored = getBitsStored();
-        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        Float slope = (Float) getTagValue(TagW.RescaleSlope);
-
-        slope = (slope == null) ? 1.0f : slope;
-        intercept = (intercept == null) ? 0.0f : intercept;
+        float intercept = getRescaleIntercept();
+        float slope = getRescaleSlope();
 
         if (bitsStored > 8) {
             isSigned = (minPixelValue * slope + intercept) < 0 ? true : isSigned;
         }
+
         Integer paddingValue = getPaddingValue();
         Integer paddingLimit = getPaddingLimit();
+
         LutParameters lutparams =
             new LutParameters(intercept, slope, pixelPadding, paddingValue, paddingLimit, bitsStored, isSigned, false);
+
         modalityLookup = LUT_Cache.get(lutparams);
+
         if (modalityLookup != null) {
-            // TODO handle pixel padding
             return modalityLookup;
         }
 
@@ -327,6 +336,7 @@ public class DicomImageElement extends ImageElement {
 
         if (modalityLookup != null && pixelPadding && paddingValue != null && isPhotometricInterpretationMonochrome()
             && modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+
             int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
             int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
 
@@ -339,7 +349,7 @@ public class DicomImageElement extends ImageElement {
             final boolean isDataTypeByte = modalityLookup.getDataType() == DataBuffer.TYPE_BYTE;
 
             int lutOffset = modalityLookup.getOffset();
-            int numEntries = modalityLookup.getNumEntries();
+            // int numEntries = modalityLookup.getNumEntries();
 
             int numPaddingValues = paddingValueMax - paddingValueMin + 1;
             int paddingValuesStartIndex = paddingValueMin - lutOffset;

@@ -102,36 +102,96 @@ public class DicomImageUtils {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // public static LookupTableJAI createRescaleRampLut(LutParameters params) {
+    // float intercept = params.getIntercept();
+    // float slope = params.getSlope();
+    // int bitsStored = params.getBitsStored();
+    // boolean isSigned = params.isSigned();
+    // boolean inverse = params.isInverse();
+    //
+    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
+    // // int outRangeSize = (1 << bitsStored) - 1;
+    // // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
+    // // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+    //
+    // // TODO - use bitsAllocated as a parameter instead of extrapolated one
+    // int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
+    // int outRangeSize = (1 << bitsAllocated) - 1;
+    // float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
+    // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+    //
+    // // float minInValue = Math.min(maxValue, minValue);
+    // // float maxInValue = Math.max(maxValue, minValue);
+    //
+    // // int numEntries = (int) (maxInValue - minInValue + 1);
+    // int numEntries = 1 << bitsStored;
+    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
+    //
+    // for (int i = 0; i < numEntries; i++) {
+    // int value = Math.round(i * slope + intercept);
+    //
+    // value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
+    // value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+    //
+    // if (outLut instanceof byte[]) {
+    // Array.set(outLut, i, (byte) value);
+    // } else if (outLut instanceof short[]) {
+    // Array.set(outLut, i, (short) value);
+    // }
+    // }
+    //
+    // return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, 0) : //
+    // new LookupTableJAI((short[]) outLut, 0, !isSigned);
+    // }
+
+    /**
+     * @return LookupTable with full range of possible input entries according to bitStored.<br>
+     *         Note that isSigned is relevant for both input and output values
+     */
+
     public static LookupTableJAI createRescaleRampLut(LutParameters params) {
-        float intercept = params.getIntercept();
-        float slope = params.getSlope();
-        int bitsStored = params.getBitsStored();
-        boolean isSigned = params.isSigned();
-        boolean inverse = params.isInverse();
+        return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(),
+            params.isSigned(), params.isInverse());
+    }
+
+    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
+        boolean inverse) {
+
+        return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned,
+            inverse);
+    }
+
+    public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
+        int bitsStored, boolean isSigned, boolean inverse) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-        // int outRangeSize = (1 << bitsStored) - 1;
-        // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
-        // TODO - use bitsAllocated as a parameter instead of extrapolated one
         int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
         int outRangeSize = (1 << bitsAllocated) - 1;
-        float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
-        float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+        int maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
+        int minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
-        // float minInValue = Math.min(maxValue, minValue);
-        // float maxInValue = Math.max(maxValue, minValue);
+        int maxInputRangeSize = (1 << bitsStored) - 1;
+        int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : maxInputRangeSize;
+        int minInValue = isSigned ? -(maxInValue + 1) : 0;
 
-        // int numEntries = (int) (maxInValue - minInValue + 1);
-        int numEntries = 1 << bitsStored;
-        Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
+        if (maxValue < minValue) {
+            int tmpMaxValue = minValue;
+            minValue = maxValue;
+            maxValue = tmpMaxValue;
+        }
+
+        minInValue = Math.max(minInValue, minValue);
+        maxInValue = Math.min(maxInValue, maxValue);
+
+        int numEntries = maxInValue - minInValue + 1;
+        Object outLut = (bitsAllocated == 8) ? new byte[numEntries] : new short[numEntries];
 
         for (int i = 0; i < numEntries; i++) {
-            int value = Math.round(i * slope + intercept);
+            int value = Math.round((i + minInValue) * slope + intercept);
 
-            value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
+            value = ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
+            value = (inverse ? (maxOutValue + minOutValue - value) : value);
 
             if (outLut instanceof byte[]) {
                 Array.set(outLut, i, (byte) value);
@@ -140,8 +200,8 @@ public class DicomImageUtils {
             }
         }
 
-        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, 0) : //
-            new LookupTableJAI((short[]) outLut, 0, !isSigned);
+        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, minInValue) : //
+            new LookupTableJAI((short[]) outLut, minInValue, !isSigned);
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////

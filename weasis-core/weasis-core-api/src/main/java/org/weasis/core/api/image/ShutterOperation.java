@@ -35,7 +35,7 @@ import org.weasis.core.api.media.data.TagW;
 public class ShutterOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShutterOperation.class);
 
-    public static final String name = ActionW.IMAGE_SCHUTTER.getTitle();
+    public static final String name = ActionW.IMAGE_SHUTTER.getTitle();
 
     @Override
     public String getOperationName() {
@@ -44,7 +44,7 @@ public class ShutterOperation extends AbstractOperation {
 
     @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Boolean shutter = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_SCHUTTER.cmd());
+        Boolean shutter = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_SHUTTER.cmd());
         ImageElement image = imageOperation.getImage();
         Area area = null;
         if (shutter == null || image == null) {
