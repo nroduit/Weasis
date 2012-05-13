@@ -370,7 +370,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
             setShutter(img);
-            setWindowLevel(img);
+            setDefautWindowLevel(img);
             Rectangle2D area = getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
                 ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
@@ -615,7 +615,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected void setWindowLevel(E img) {
+    protected void setDefautWindowLevel(E img) {
         if (img != null) {
             actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());

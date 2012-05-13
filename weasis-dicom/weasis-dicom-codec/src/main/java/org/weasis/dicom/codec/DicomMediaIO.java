@@ -50,6 +50,7 @@ import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.iod.module.pr.DisplayShutterModule;
+import org.dcm4che2.util.ByteUtils;
 import org.dcm4che2.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +93,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
     private URI uri;
     private DicomObject dicomObject = null;
     private int numberOfFrame;
-    private int stored;
+    private int bitsStored;
     private final HashMap<TagW, Object> tags;
     private MediaElement[] image = null;
     private ImageInputStream imageStream = null;
@@ -147,8 +148,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     return false;
                 }
 
-                stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
-                if (stored > 0) {
+                bitsStored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
+                if (bitsStored > 0) {
                     numberOfFrame = getNumImages(false);
                     String tsuid = dicomObject.getString(Tag.TransferSyntaxUID, ""); //$NON-NLS-1$
                     if (tsuid.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$
@@ -468,6 +469,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     private void writeOnlyinstance(DicomObject dicomObject) {
         if (dicomObject != null && tags != null) {
+            boolean signed = dicomObject.getInt(Tag.PixelRepresentation) != 0;
             // Instance tags
             setTagNoNull(TagW.ImageType, getStringFromDicomElement(dicomObject, Tag.ImageType, null));
             setTagNoNull(TagW.ImageComments, dicomObject.getString(Tag.ImageComments));
@@ -519,9 +521,9 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTagNoNull(TagW.Units, dicomObject.getString(Tag.Units));
 
             setTagNoNull(TagW.SmallestImagePixelValue,
-                getIntegerFromDicomElement(dicomObject, Tag.SmallestImagePixelValue, null));
+                getIntPixelValue(dicomObject, Tag.SmallestImagePixelValue, signed, bitsStored));
             setTagNoNull(TagW.LargestImagePixelValue,
-                getIntegerFromDicomElement(dicomObject, Tag.LargestImagePixelValue, null));
+                getIntPixelValue(dicomObject, Tag.LargestImagePixelValue, signed, bitsStored));
             setTagNoNull(TagW.NumberOfFrames, getIntegerFromDicomElement(dicomObject, Tag.NumberOfFrames, null));
             setTagNoNull(TagW.OverlayRows, getIntegerFromDicomElement(dicomObject, Tag.OverlayRows, null));
 
@@ -536,27 +538,54 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
             setTagNoNull(TagW.Rows, getIntegerFromDicomElement(dicomObject, Tag.Rows, null));
             setTagNoNull(TagW.Columns, getIntegerFromDicomElement(dicomObject, Tag.Columns, null));
-            setTagNoNull(TagW.BitsAllocated, getIntegerFromDicomElement(dicomObject, Tag.BitsAllocated, null));
+
+            int bitsAllocated = getIntegerFromDicomElement(dicomObject, Tag.BitsAllocated, 8);
+            bitsAllocated = (bitsAllocated <= 8) ? 8 : ((bitsAllocated <= 16) ? 16 : 32);
+            setTagNoNull(TagW.BitsAllocated, bitsAllocated);
             setTagNoNull(TagW.BitsStored,
                 getIntegerFromDicomElement(dicomObject, Tag.BitsStored, (Integer) getTagValue(TagW.BitsAllocated)));
-            setTagNoNull(TagW.PixelRepresentation,
-                getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, null));
+            setTagNoNull(TagW.PixelRepresentation, getIntegerFromDicomElement(dicomObject, Tag.PixelRepresentation, 0));
 
-            // Bug fix: http://www.dcm4che.org/jira/browse/DCM-460
-            boolean signed = dicomObject.getInt(Tag.PixelRepresentation) != 0;
             setTagNoNull(TagW.PixelPaddingValue,
-                org.dcm4che2.image.LookupTable.getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, stored));
-            setTagNoNull(TagW.PixelPaddingRangeLimit, org.dcm4che2.image.LookupTable.getIntPixelValue(dicomObject,
-                Tag.PixelPaddingRangeLimit, signed, stored));
+                getIntPixelValue(dicomObject, Tag.PixelPaddingValue, signed, bitsStored));
+            setTagNoNull(TagW.PixelPaddingRangeLimit,
+                getIntPixelValue(dicomObject, Tag.PixelPaddingRangeLimit, signed, bitsStored));
 
             setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, dicomObject.getString(Tag.MIMETypeOfEncapsulatedDocument));
         }
     }
 
+    public static Integer getIntPixelValue(DicomObject ds, int tag, boolean signed, int stored) {
+        DicomElement de = ds.get(tag);
+        if (de == null) {
+            return null;
+        }
+        int result;
+        VR vr = de.vr();
+        // Bug fix: http://www.dcm4che.org/jira/browse/DCM-460
+        if (vr == VR.OB || vr == VR.OW) {
+            result = ByteUtils.bytesLE2ushort(de.getBytes(), 0);
+            if (signed) {
+                if ((result & (1 << (stored - 1))) != 0) {
+                    int andmask = (1 << stored) - 1;
+                    int ormask = ~andmask;
+                    result |= ormask;
+                }
+            }
+        } else if ((!signed && vr != VR.US) || (signed && vr != VR.SS)) {
+            vr = signed ? VR.SS : VR.US;
+            result = vr.toInt(de.getBytes(), de.bigEndian());
+        } else {
+            result = de.getInt(false);
+        }
+        // Unsigned Short (0 to 65535) and Signed Short (-32768 to +32767)
+        int minInValue = signed ? -(1 << (stored - 1)) : 0;
+        int maxInValue = signed ? (1 << (stored - 1)) - 1 : (1 << stored) - 1;
+        return result < minInValue ? minInValue : result > maxInValue ? maxInValue : result;
+    }
+
     private static void validateDicomImageValues(HashMap<TagW, Object> dicomTagMap) {
         if (dicomTagMap != null) {
-
-            Integer bitsStored = (Integer) dicomTagMap.get(TagW.BitsStored);
 
             Integer pixelRepresentation = (Integer) dicomTagMap.get(TagW.PixelRepresentation);
             boolean isPixelRepresentationSigned = (pixelRepresentation != null && pixelRepresentation != 0);
@@ -688,59 +717,23 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         windowCenterDefaultTagArray, windowWidthDefaultTagArray);
                 }
             }
-
-            // Keep DICOM min and max pixel values only if they are consistent
-
-            /*
-             * ???? Is it relevant since default value can be either non linear LUT or W/L value(s) ??? also
-             * pixel2rescale is actually computed from rescaled intercept and slope values but in fact it can be a
-             * Modality non linear Table
-             */
-
-            Float[] windowArray = (Float[]) dicomTagMap.get(TagW.WindowWidth);
-            Float[] levelArray = (Float[]) dicomTagMap.get(TagW.WindowCenter);
-
-            Float window = (windowArray != null && windowArray.length > 0) ? windowArray[0] : null;
-            Float level = (levelArray != null && levelArray.length > 0) ? levelArray[0] : null;
-
-            if (window != null && level != null) {
-                Integer minValue = (Integer) dicomTagMap.get(TagW.SmallestImagePixelValue);
-                Integer maxValue = (Integer) dicomTagMap.get(TagW.LargestImagePixelValue);
-
-                if (minValue != null && maxValue != null) {
-                    float min = pixel2rescale(dicomTagMap, minValue.floatValue());
-                    float max = pixel2rescale(dicomTagMap, maxValue.floatValue());
-                    // Empirical test
-                    float low = level - window / 4.0f;
-                    float high = level + window / 4.0f;
-                    if (low < min || high > max) {
-                        // Min and Max seems to be not consistent
-                        // Remove them, it will search in min and max in pixel data
-                        dicomTagMap.remove(TagW.SmallestImagePixelValue);
-                        dicomTagMap.remove(TagW.LargestImagePixelValue);
-                    }
-                }
-
-                // Integer bitsStored = (Integer) tagList.get(TagW.BitsStored);
-                if (bitsStored != null) {
-                    if (window > (1 << bitsStored)) {
-                        // Remove w/l values that are not consistent to the bits stored
-                        dicomTagMap.remove(TagW.WindowCenter);
-                        dicomTagMap.remove(TagW.WindowWidth);
-                    }
-                }
-            }
         }
     }
 
     private static float pixel2rescale(HashMap<TagW, Object> tagList, float pixelValue) {
         if (tagList != null) {
-            // Hounsfield units: hu
-            // hu = pixelValue * rescale slope + intercept value
-            Float slope = (Float) tagList.get(TagW.RescaleSlope);
-            Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
-            if (slope != null || intercept != null) {
-                return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+            LookupTableJAI lookup = (LookupTableJAI) tagList.get(TagW.ModalityLUTData);
+            if (lookup != null) {
+                if (pixelValue >= lookup.getOffset() && pixelValue <= lookup.getOffset() + lookup.getNumEntries() - 1) {
+                    return lookup.lookup(0, (int) pixelValue);
+                }
+            } else {
+                // value = pixelValue * rescale slope + intercept value
+                Float slope = (Float) tagList.get(TagW.RescaleSlope);
+                Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
+                if (slope != null || intercept != null) {
+                    return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+                }
             }
         }
         return pixelValue;
@@ -769,6 +762,28 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { //$NON-NLS-1$ //$NON-NLS-2$
                 double suvFactor = 0.0;
                 String units = dicomObject.getString(Tag.Units);
+                // DICOM $C.8.9.1.1.3 Units
+                // The units of the pixel values obtained after conversion from the stored pixel values (SV) (Pixel
+                // Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept (0028,1052) and
+                // Rescale Slope (0028,1053). Defined Terms:
+                // CNTS = counts
+                // NONE = unitless
+                // CM2 = centimeter**2
+                // PCNT = percent
+                // CPS = counts/second
+                // BQML = Becquerels/milliliter
+                // MGMINML = milligram/minute/milliliter
+                // UMOLMINML = micromole/minute/milliliter
+                // MLMING = milliliter/minute/gram
+                // MLG = milliliter/gram
+                // 1CM = 1/centimeter
+                // UMOLML = micromole/milliliter
+                // PROPCNTS = proportional to counts
+                // PROPCPS = proportional to counts/sec
+                // MLMINML = milliliter/minute/milliliter
+                // MLML = milliliter/milliliter
+                // GML = grams/milliliter
+                // STDDEV = standard deviations
                 if ("BQML".equals(units)) { //$NON-NLS-1$
                     Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
                     DicomElement seq = dicomObject.get(Tag.RadiopharmaceuticalInformationSequence);
@@ -960,38 +975,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         }
     }
 
-    // public boolean readMediaTags(ImageInputStream iis) {
-    // if (iis != null) {
-    // try {
-    // setInput(iis, false, false);
-    // if (getStreamMetadata() instanceof DicomStreamMetaData) {
-    // dicomObject = ((DicomStreamMetaData) getStreamMetadata()).getDicomObject();
-    // }
-    // // Exclude DICOMDIR
-    // if (dicomObject == null
-    // || dicomObject.getString(Tag.MediaStorageSOPClassUID, "").equals("1.2.840.10008.1.3.10")) {
-    // return false;
-    // }
-    // if ("1.2.840.10008.1.2.4.100".equals(dicomObject.getString(Tag.TransferSyntaxUID))) {
-    // video = true;
-    // }
-    // stored = dicomObject.getInt(Tag.BitsStored, dicomObject.getInt(Tag.BitsAllocated, 0));
-    // if (stored > 0) {
-    // numberOfFrame = getNumImages(false);
-    // }
-    // else {
-    // return false;
-    // }
-    // }
-    // catch (Exception e) {
-    // e.printStackTrace();
-    // return false;
-    // }
-    // writeInstanceTags();
-    // }
-    // return true;
-    // }
-
     public boolean containTag(int id) {
         for (Iterator<TagW> it = tags.keySet().iterator(); it.hasNext();) {
             if (it.next().getId() == id) {
@@ -1001,8 +984,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return false;
     }
 
-    public int getStored() {
-        return stored;
+    public int getBitsStored() {
+        return bitsStored;
     }
 
     @Override
@@ -1062,7 +1045,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 readMediaTags();
             }
             int frame = (Integer) media.getKey();
-            if (frame >= 0 && frame < numberOfFrame && stored > 0) {
+            if (frame >= 0 && frame < numberOfFrame && bitsStored > 0) {
                 // read as tiled rendered image
                 LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, dicomObject.getString(Tag.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;

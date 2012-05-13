@@ -86,7 +86,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.ColorModelFactory;
+import org.weasis.dicom.codec.utils.ColorModelFactory;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageio.stream.SegmentedImageInputStream;
@@ -808,15 +808,15 @@ public class DicomImageReader extends ImageReader {
     }
 
     public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
-        // Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported
-        // see http://java.sun.com/javase/6/docs/api/java/awt/image/ComponentColorModel.html
-        // Instances of ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT,
-        // and
-        // DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
-        // when
-        // using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
-        // DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
-        // constructor is used with one of these transfer types, the bits array argument is ignored.
+        /*
+         * Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported see
+         * http://java.sun.com/javase/6/docs/api/java/awt/image/ComponentColorModel.html Instances of
+         * ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT, and
+         * DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
+         * when using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
+         * DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
+         * constructor is used with one of these transfer types, the bits array argument is ignored.
+         */
 
         // Bits Allocated = 16 (Bits alloués )
         // Bits Stored = 12 (Bits enregistrés )
@@ -841,7 +841,7 @@ public class DicomImageReader extends ImageReader {
         // TODO test with all decoders (works with raw decoder)
         if (source != null && dataType == DataBuffer.TYPE_SHORT
             && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT
-            && (highBit = ds.getInt(Tag.HighBit, allocated) + 1) < allocated) {
+            && (highBit = ds.getInt(Tag.HighBit, allocated - 1) + 1) < allocated) {
             source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit }, null);
         }
         return source;

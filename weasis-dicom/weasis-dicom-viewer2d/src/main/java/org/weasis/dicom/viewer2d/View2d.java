@@ -343,11 +343,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             defaultIndex = (defaultIndex < 0) ? 0 : (defaultIndex >= series.size() ? series.size() - 1 : defaultIndex);
             frameIndex = defaultIndex + tileOffset;
             setImage(series.getMedia(frameIndex), true);
-
-            // useless since done in SetImage before
-            // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
-            // actionsInView.put(ActionW.PRESET.cmd(), getImage().getDefaultPreset());
-
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
@@ -361,15 +356,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    protected void setWindowLevel(DicomImageElement img) {
-        // TODO - should be be renamed as setDefautWindowLevel ?
-
+    protected void setDefautWindowLevel(DicomImageElement img) {
         if (img == null) {
             return;
         }
-
         PresetWindowLevel preset = img.getDefaultPreset();
-
         if (preset != null) {
             actionsInView.put(ActionW.PRESET.cmd(), preset);
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
@@ -377,18 +368,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
         } else {
-            super.setWindowLevel(img);
+            super.setDefautWindowLevel(img);
         }
-
-        // if (PresetWindowLevel.DEFAULT.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
-        // actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
-        // actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
-        // } else if (PresetWindowLevel.AUTO.equals(actionsInView.get(ActionW.PRESET.cmd()))) {
-        // float min = img.getMinValue();
-        // float max = img.getMaxValue();
-        // actionsInView.put(ActionW.WINDOW.cmd(), max - min);
-        // actionsInView.put(ActionW.LEVEL.cmd(), (max - min) / 2.0f + min);
-        // }
     }
 
     protected void sortStack() {
@@ -603,7 +584,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     imgLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
-                        float val = dicom.pixel2rescale(c[0]);
+                        float val = dicom.pixel2mLUT(c[0]);
                         message.append((int) val);
                         if (dicom.getPixelValueUnit() != null) {
                             message.append(" " + dicom.getPixelValueUnit()); //$NON-NLS-1$

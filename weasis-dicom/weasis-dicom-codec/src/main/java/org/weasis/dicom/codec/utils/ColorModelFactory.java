@@ -26,7 +26,7 @@
  * ***** END LICENSE BLOCK *****
  */
 
-package org.weasis.dicom.codec;
+package org.weasis.dicom.codec.utils;
 
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;

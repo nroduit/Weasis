@@ -7,19 +7,19 @@ public class LutParameters {
     private final Integer paddingMaxValue;
     private final int bitsStored;
     private final boolean signed;
-    private final boolean inverse;
     private final boolean applyPadding;
+    private final boolean outputSigned;
 
     public LutParameters(float intercept, float slope, boolean applyPadding, Integer paddingMinValue,
-        Integer paddingMaxValue, int bitsStored, boolean signed, boolean inverse) {
+        Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned) {
         this.intercept = intercept;
         this.slope = slope;
         this.paddingMinValue = paddingMinValue;
         this.paddingMaxValue = paddingMaxValue;
         this.bitsStored = bitsStored;
         this.signed = signed;
-        this.inverse = inverse;
         this.applyPadding = applyPadding;
+        this.outputSigned = outputSigned;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class LutParameters {
             LutParameters p = (LutParameters) obj;
             return p.intercept == intercept && p.slope == slope && p.applyPadding == applyPadding
                 && p.paddingMinValue == paddingMinValue && p.paddingMaxValue == paddingMaxValue
-                && p.bitsStored == bitsStored && p.signed == signed && p.inverse == inverse;
+                && p.bitsStored == bitsStored && p.signed == signed && p.isOutputSigned() == outputSigned;
         }
         return false;
     }
@@ -36,10 +36,10 @@ public class LutParameters {
     @Override
     public int hashCode() {
         int hash =
-            (signed ? 2 : 3) + (inverse ? 4 : 5) + (inverse ? 6 : 7) + bitsStored * 9 + Float.floatToIntBits(intercept)
-                * 25 + Float.floatToIntBits(intercept) * 31;
+            (signed ? 2 : 3) + (applyPadding ? 4 : 5) + (outputSigned ? 6 : 7) + bitsStored * 9
+                + Float.floatToIntBits(intercept) * 25 + Float.floatToIntBits(intercept) * 31;
         if (paddingMinValue != null) {
-            hash += paddingMinValue * 13;
+            hash += paddingMinValue * 14;
         }
         if (paddingMaxValue != null) {
             hash += paddingMaxValue * 19;
@@ -71,12 +71,12 @@ public class LutParameters {
         return signed;
     }
 
-    public boolean isInverse() {
-        return inverse;
-    }
-
     public boolean isApplyPadding() {
         return applyPadding;
+    }
+
+    public boolean isOutputSigned() {
+        return outputSigned;
     }
 
 }

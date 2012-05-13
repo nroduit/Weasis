@@ -25,7 +25,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
-import org.weasis.dicom.codec.OverlayUtils;
+import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class OverlayOperation extends AbstractOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOperation.class);

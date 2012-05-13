@@ -318,11 +318,11 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                                 BufferedImage thumbnail = null;
                                 if (thumbnailPath != null) {
                                     if (ImageFiler.writeJPG(thumbnailPath, thumb, 0.75f)) {
-                                        // will read the thumbnail in temp folder, better than getting the
-                                        // thumbnail
-                                        // from t.getAsBufferedImage() (it
-                                        // is true if the image is big and cannot handle all the tiles in
-                                        // memory)
+                                        /*
+                                         * Write the thumbnail in temp folder, better than getting the thumbnail
+                                         * directly from t.getAsBufferedImage() (it is true if the image is big and
+                                         * cannot handle all the tiles in memory)
+                                         */
                                         readable = true;
                                         repaint(50L);
                                         return;

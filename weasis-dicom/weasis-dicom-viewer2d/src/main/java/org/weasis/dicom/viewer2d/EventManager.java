@@ -223,7 +223,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             }
                         }
                     }
-
                 }
                 presetAction.setSelectedItem(null);
             }
@@ -259,7 +258,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (selectedView2dContainer != null && selectedView2dContainer.getSelectedImagePane() != null) {
                     series = (Series<?>) selectedView2dContainer.getSelectedImagePane().getSeries();
                     if (series != null) {
+                        // TODO possible issue, new image can be added to the series that means the index can change
+                        // from now to the moment of consuming this event
                         image = (DicomImageElement) series.getMedia(index);
+                        // Ensure to load image before calling the default preset (requires pixel min and max)
+                        if (!image.isImageAvailable()) {
+                            // Load the image
+                            image.getImage();
+                        }
                     }
                 }
 
@@ -302,16 +308,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel newPreset = null;
 
                     if (oldPreset != null) {
-                        Iterator<PresetWindowLevel> presetIt = image.getPresetList().iterator();
-
-                        while (newPreset == null && presetIt.hasNext()) {
-                            PresetWindowLevel preset = presetIt.next();
-                            if (preset.getName().equals(oldPreset.getName())) {
-                                newPreset = preset;
+                        List<PresetWindowLevel> presetList = image.getPresetList();
+                        if (presetList != null) {
+                            for (Iterator<PresetWindowLevel> it = presetList.iterator(); it.hasNext();) {
+                                PresetWindowLevel preset = it.next();
+                                if (preset.getName().equals(oldPreset.getName())) {
+                                    newPreset = preset;
+                                }
                             }
-                        }
-                        if (newPreset == null) {
-                            newPreset = image.getDefaultPreset();
+                            if (newPreset == null) {
+                                newPreset = image.getDefaultPreset();
+                            }
                         }
                     }
 
@@ -334,6 +341,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // "firePropertyChange(ActionW.SCROLL_SERIES.cmd()..." so "actionsInView" Map that concerns
                     // (Preset, Window, Level and LutShape) key values will be correctly set and
                     // "updateImageOperation(WindowLevelOperation.." will be called
+                    // TODO Is that necessary? multiply the image rendering request
                     firePropertyChange(ActionW.PRESET.cmd(), null, newPreset);
 
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,

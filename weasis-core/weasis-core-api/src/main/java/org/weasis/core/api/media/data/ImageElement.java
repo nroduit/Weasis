@@ -110,11 +110,12 @@ public class ImageElement extends MediaElement<PlanarImage> {
                 }
                 this.minPixelValue = (int) min;
                 this.maxPixelValue = (int) max;
-                // this.minPixelValue = Math.round(min);
-                // this.maxPixelValue = Math.round(max);
-
             }
         }
+    }
+
+    public boolean isImageAvailable() {
+        return maxPixelValue != 0.0 || minPixelValue != 0.0;
     }
 
     protected boolean isGrayImage(RenderedImage source) {

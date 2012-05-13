@@ -105,11 +105,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     // }
 
     @Override
-    protected void setWindowLevel(ImageElement img) {
-
-    }
-
-    @Override
     public void dispose() {
         disableMouseAndKeyListener();
         removeFocusListener(this);

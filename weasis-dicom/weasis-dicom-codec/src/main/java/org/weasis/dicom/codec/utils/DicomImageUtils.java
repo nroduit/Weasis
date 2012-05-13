@@ -2,6 +2,7 @@ package org.weasis.dicom.codec.utils;
 
 import java.awt.image.DataBuffer;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import javax.media.jai.LookupTableJAI;
 
@@ -100,50 +101,6 @@ public class DicomImageUtils {
             new LookupTableJAI((short[]) outLut, (int) minInValue, isSigned);
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // public static LookupTableJAI createRescaleRampLut(LutParameters params) {
-    // float intercept = params.getIntercept();
-    // float slope = params.getSlope();
-    // int bitsStored = params.getBitsStored();
-    // boolean isSigned = params.isSigned();
-    // boolean inverse = params.isInverse();
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    // // int outRangeSize = (1 << bitsStored) - 1;
-    // // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    // // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
-    //
-    // // TODO - use bitsAllocated as a parameter instead of extrapolated one
-    // int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
-    // int outRangeSize = (1 << bitsAllocated) - 1;
-    // float maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
-    // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
-    //
-    // // float minInValue = Math.min(maxValue, minValue);
-    // // float maxInValue = Math.max(maxValue, minValue);
-    //
-    // // int numEntries = (int) (maxInValue - minInValue + 1);
-    // int numEntries = 1 << bitsStored;
-    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-    //
-    // for (int i = 0; i < numEntries; i++) {
-    // int value = Math.round(i * slope + intercept);
-    //
-    // value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
-    // value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
-    //
-    // if (outLut instanceof byte[]) {
-    // Array.set(outLut, i, (byte) value);
-    // } else if (outLut instanceof short[]) {
-    // Array.set(outLut, i, (short) value);
-    // }
-    // }
-    //
-    // return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, 0) : //
-    // new LookupTableJAI((short[]) outLut, 0, !isSigned);
-    // }
-
     /**
      * @return LookupTable with full range of possible input entries according to bitStored.<br>
      *         Note that isSigned is relevant for both input and output values
@@ -151,29 +108,28 @@ public class DicomImageUtils {
 
     public static LookupTableJAI createRescaleRampLut(LutParameters params) {
         return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(),
-            params.isSigned(), params.isInverse());
+            params.isSigned(), params.isOutputSigned());
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int bitsStored, boolean isSigned,
-        boolean inverse) {
+        boolean outputSigned) {
 
         return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned,
-            inverse);
+            false, outputSigned);
     }
 
     public static LookupTableJAI createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
-        int bitsStored, boolean isSigned, boolean inverse) {
+        int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned) {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
 
         int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
         int outRangeSize = (1 << bitsAllocated) - 1;
-        int maxOutValue = isSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
-        int minOutValue = isSigned ? -(maxOutValue + 1) : 0;
+        int maxOutValue = outputSigned ? (1 << (bitsAllocated - 1)) - 1 : outRangeSize;
+        int minOutValue = outputSigned ? -(maxOutValue + 1) : 0;
 
-        int maxInputRangeSize = (1 << bitsStored) - 1;
-        int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : maxInputRangeSize;
-        int minInValue = isSigned ? -(maxInValue + 1) : 0;
+        int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
+        int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
 
         if (maxValue < minValue) {
             int tmpMaxValue = minValue;
@@ -201,7 +157,84 @@ public class DicomImageUtils {
         }
 
         return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, minInValue) : //
-            new LookupTableJAI((short[]) outLut, minInValue, !isSigned);
+            new LookupTableJAI((short[]) outLut, minInValue, !outputSigned);
+    }
+
+    /**
+     * Apply the pixel padding to the modality LUT
+     * 
+     * @see DICOM standard PS 3.3
+     * 
+     *      §C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric Interpretation
+     * 
+     *      * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
+     *      be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both Pixel
+     *      Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121) are present in the image then image
+     *      contrast manipulations shall not be applied to those pixels with values in the range between the values of
+     *      Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive."
+     * 
+     * 
+     *      (0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer to or equal to the
+     *      minimum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121). If Photometric
+     *      Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value (0028,0120) shall be greater than (closer to
+     *      or equal to the maximum possible pixel value) or equal to Pixel Padding Range Limit (0028,0121).
+     * 
+     *      When the relationship between pixel value and X-Ray Intensity is unknown, it is recommended that the
+     *      following values be used to pad with black when the image is unsigned:
+     * 
+     *      0 if Photometric Interpretation (0028,0004) is MONOCHROME2. 2BitsStored - 1 if Photometric Interpretation
+     *      (0028,0004) is MONOCHROME1.
+     * 
+     *      and when the image is signed: -2BitsStored-1 if Photometric Interpretation (0028,0004) is MONOCHROME2.
+     *      2BitsStored-1 - 1 if Photometric Interpretation (0028,0004) is MONOCHROME1.
+     * 
+     * 
+     */
+    public static void applyPixelPaddingToModalityLUT(LookupTableJAI modalityLookup, LutParameters lutparams) {
+        if (modalityLookup != null && lutparams.isApplyPadding() && lutparams.getPaddingMinValue() != null
+            && modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
+
+            int paddingValue = lutparams.getPaddingMinValue();
+            Integer paddingLimit = lutparams.getPaddingMaxValue();
+            int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+            int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
+
+            int numPaddingValues = paddingValueMax - paddingValueMin + 1;
+            int paddingValuesStartIndex = paddingValueMin - modalityLookup.getOffset();
+
+            if (paddingValuesStartIndex >= modalityLookup.getNumEntries()) {
+                return;
+            }
+
+            if (paddingValuesStartIndex < 0) {
+                numPaddingValues += paddingValuesStartIndex;
+                if (numPaddingValues < 1) {
+                    // No padding value in the LUT range
+                    return;
+                }
+                paddingValuesStartIndex = 0;
+            }
+
+            Object inLut = null;
+            // if FALSE DataBuffer Type is supposed to be either TYPE_SHORT or TYPE_USHORT
+            final boolean isDataTypeByte = modalityLookup.getDataType() == DataBuffer.TYPE_BYTE;
+            if (isDataTypeByte) {
+                inLut = modalityLookup.getByteData(0);
+            } else {
+                inLut = modalityLookup.getShortData(0);
+            }
+
+            Object outLut = inLut;
+            if (isDataTypeByte) {
+                byte fillVal = (byte) 0;
+                byte[] data = (byte[]) outLut;
+                Arrays.fill(data, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues, fillVal);
+            } else {
+                short[] data = (short[]) outLut;
+                short fillVal = data[0];
+                Arrays.fill(data, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues, fillVal);
+            }
+        }
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +280,7 @@ public class DicomImageUtils {
         float intercept = maxOutValue - slope * (level + (window / 2f));
 
         for (int i = 0; i < Array.getLength(outLut); i++) {
-            int value = Math.round((i + minInValue) * slope + intercept);
+            int value = (int) ((i + minInValue) * slope + intercept);
 
             value = (int) ((value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value));
             value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);

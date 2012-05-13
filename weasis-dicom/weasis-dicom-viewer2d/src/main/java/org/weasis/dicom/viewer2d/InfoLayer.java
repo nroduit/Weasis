@@ -868,7 +868,12 @@ public class InfoLayer implements AnnotationsLayer {
             boolean logarithmRescale = true;
 
             final int[] histoData = histogram.getBins(0);
-            double maxHistoCount = logarithmRescale ? Math.log1p(image.getMaxHistoCount()) : image.getMaxHistoCount();
+            int histoCount = Integer.MIN_VALUE;
+            for (int c : histoData) {
+                histoCount = Math.max(histoCount, c);
+            }
+
+            double maxHistoCount = logarithmRescale ? Math.log1p(histoCount) : histoCount;
 
             final float yAxisHistoRescaleRatio = (float) (yAxisCoordinateSystemRange / maxHistoCount);
             // final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);

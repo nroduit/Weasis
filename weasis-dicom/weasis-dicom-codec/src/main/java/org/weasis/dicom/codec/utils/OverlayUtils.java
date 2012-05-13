@@ -25,7 +25,7 @@
  * 
  * ***** END LICENSE BLOCK *****
  */
-package org.weasis.dicom.codec;
+package org.weasis.dicom.codec.utils;
 
 import java.awt.Point;
 import java.awt.image.BufferedImage;
@@ -52,6 +52,7 @@ import org.dcm4che2.image.ByteLookupTable;
 import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
 
 /**
  * Provides utility methods to extract overlay information from DICOM files.

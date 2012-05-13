@@ -146,8 +146,8 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     @Override
-    protected void setWindowLevel(ImageElement img) {
-        super.setWindowLevel(img);
+    protected void setDefautWindowLevel(ImageElement img) {
+        super.setDefautWindowLevel(img);
     }
 
     protected void sortStack() {

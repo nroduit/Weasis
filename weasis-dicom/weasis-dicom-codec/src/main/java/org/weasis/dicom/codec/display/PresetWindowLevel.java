@@ -24,6 +24,8 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.LutShape.eFunction;
 import org.weasis.core.api.media.data.TagW;
@@ -31,6 +33,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 
 public class PresetWindowLevel {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);
 
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
 
@@ -40,13 +43,10 @@ public class PresetWindowLevel {
     private final LutShape shape;
 
     public PresetWindowLevel(String name, Float window, Float level, LutShape shape) {
-
         if (name == null || window == null || level == null || shape == null) {
             throw new IllegalArgumentException();
         }
-
         this.name = name;
-        // this.modality = modality;
         this.window = window;
         this.level = level;
         this.shape = shape;
@@ -95,10 +95,10 @@ public class PresetWindowLevel {
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
-        Float[] windowCenterDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowCenter);
-        Float[] windowWidthDefaultTagArray = (Float[]) image.getTagValue(TagW.WindowWidth);
+        Float[] levelList = (Float[]) image.getTagValue(TagW.WindowCenter);
+        Float[] windowList = (Float[]) image.getTagValue(TagW.WindowWidth);
         // optional attributes
-        String[] windowCenterWidthExplanationTagArray = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
+        String[] wlExplanationList = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
         String lutFunctionDescriptor = (String) image.getTagValue(TagW.VOILutFunction);
 
         LutShape defaultLutShape = LutShape.LINEAR; // Implicitly defined as default function in DICOM standard
@@ -111,26 +111,36 @@ public class PresetWindowLevel {
             }
         }
 
-        if (windowCenterDefaultTagArray != null && windowWidthDefaultTagArray != null) {
+        if (levelList != null && windowList != null) {
 
-            int windowLevelDefaultCount = (windowCenterDefaultTagArray.length == windowWidthDefaultTagArray.length) ? //
-                windowCenterDefaultTagArray.length : 0;
+            int windowLevelDefaultCount = (levelList.length == windowList.length) ? //
+                levelList.length : 0;
 
             // String defaultExplanation = Messages.getString("PresetWindowLevel.default");
             // NOTE : PresetWindowLevel.default property should not be use anymore !!
             String defaultExplanation = "Default";
 
+            int bitsStored = image.getBitsStored();
+            float minModLUT = image.getMinValue();
+            float maxModLUT = image.getMaxValue();
+            int k = 1;
             for (int i = 0; i < windowLevelDefaultCount; i++) {
-                String explanation = defaultExplanation + " " + i;
-
-                if (windowCenterWidthExplanationTagArray != null && i < windowCenterWidthExplanationTagArray.length) {
-                    if (windowCenterWidthExplanationTagArray[i] != null
-                        && !windowCenterWidthExplanationTagArray[i].equals("")) {
-                        explanation = windowCenterWidthExplanationTagArray[i]; // optional attribute
+                String explanation = defaultExplanation + " " + k;
+                if (wlExplanationList != null && i < wlExplanationList.length) {
+                    if (wlExplanationList[i] != null && !wlExplanationList[i].equals("")) {
+                        explanation = wlExplanationList[i]; // optional attribute
                     }
                 }
-                presetList.add(new PresetWindowLevel(explanation + dicomKeyWord, windowWidthDefaultTagArray[i],
-                    windowCenterDefaultTagArray[i], defaultLutShape));
+                if (windowList[i] == null || levelList[i] == null || windowList[i] > (1 << bitsStored)
+                    || levelList[i] < minModLUT || levelList[i] > maxModLUT) {
+                    // W/L values are not consistent, do not add to the list
+                    LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
+                    continue;
+                }
+
+                presetList.add(new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i],
+                    defaultLutShape));
+                k++;
             }
         }
 
