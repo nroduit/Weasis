@@ -36,21 +36,15 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.image.ByteLookupTable;
 import org.dcm4che2.image.LookupTable;
-import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 
@@ -81,8 +75,9 @@ public class OverlayUtils {
      * @return
      */
     public static int extractFrameNumber(int imageIndex) {
-        if (isOverlay(imageIndex))
+        if (isOverlay(imageIndex)) {
             return imageIndex & 0xFFFF;
+        }
         throw new IllegalArgumentException("Only frame numbers of overlays can be extracted."); //$NON-NLS-1$
     }
 
@@ -124,16 +119,18 @@ public class OverlayUtils {
     public static BufferedImage extractOverlay(DicomObject ds, int overlayNumber, ImageReader reader, String rgbs)
         throws IOException {
         // We need the original overlay number.
-        if (!OverlayUtils.isOverlay(overlayNumber))
+        if (!OverlayUtils.isOverlay(overlayNumber)) {
             throw new IllegalArgumentException("Overlays must start with 0x60xx xxxx but it starts with " //$NON-NLS-1$
                 + Integer.toString(overlayNumber, 16));
+        }
         int frameNumber = extractFrameNumber(overlayNumber);
         overlayNumber = overlayNumber & 0x60FE0000;
 
         int rows = getOverlayHeight(ds, overlayNumber);
         int cols = getOverlayWidth(ds, overlayNumber);
-        if (cols == 0 || rows == 0)
+        if (cols == 0 || rows == 0) {
             throw new IllegalArgumentException("No overlay found for " + Integer.toString(overlayNumber)); //$NON-NLS-1$
+        }
         int position = ds.getInt(overlayNumber | Tag.OverlayBitPosition);
         byte[] data;
         if (position == 0) {
@@ -206,8 +203,9 @@ public class OverlayUtils {
     protected static byte[] padToFixRowByteBoundary(byte[] unpaddedData, int rows, int cols) {
         int numRowBytes = (cols + 7) / 8;
         int paddedLength = rows * numRowBytes;
-        if ((unpaddedData.length == paddedLength) && (cols % 8) == 0)
+        if ((unpaddedData.length == paddedLength) && (cols % 8) == 0) {
             return unpaddedData;
+        }
 
         byte[] data = new byte[paddedLength];
 
@@ -465,54 +463,55 @@ public class OverlayUtils {
             }
         }
 
-        if (oldStyleOverlayPlanes.size() > 0) {
-            try {
-
-                // int bitsStored = ds.getInt(Tag.BitsStored, -1);
-                // short overlayValue = (short) ((1 << bitsStored) - 1);
-                PlanarImage source = imageElement.getImage();
-                if (source != null) {
-                    int dataType = source.getSampleModel().getDataType();
-                    if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
-                        int mask = Integer.MAX_VALUE;
-                        for (int i = 0, size = oldStyleOverlayPlanes.size(); i < size; i++) {
-                            int val = (1 << oldStyleOverlayPlanes.get(i));
-                            if (dataType == DataBuffer.TYPE_SHORT) {
-                                // TODO need to be validated (no test available)
-                                val = val - 32768;
-                            }
-                            if (val < mask) {
-                                mask = val;
-                            }
-                        }
-
-                        // get the image again, this time without windowing/maskpixeldata
-                        ImageReadParam param = reader.getDefaultReadParam();
-                        if (param instanceof DicomImageReadParam) {
-                            ((DicomImageReadParam) param).setAutoWindowing(false);
-                        }
-
-                        ParameterBlock pb = new ParameterBlock();
-                        pb.addSource(source);
-                        pb.add((double) imageElement.getMinValue());
-                        pb.add((double) (mask - 1));
-                        RenderedOp result = JAI.create("ThresholdToBin", pb, null); //$NON-NLS-1$
-
-                        // pb.add((double) (mask - 1));
-                        // RenderedOp result = JAI.create("binarize", pb, null);
-                        // pb = new ParameterBlock();
-                        // pb.addSource(result);
-                        // return JAI.create("NotBinary", pb);
-                        return result;
-                    } else {
-                        // log.warn("mergeOverlays(): data buffer type {} not supported", _buffer.getDataType());
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                // log.error("mergeOverlays(): ERROR", e);
-            }
-        }
+        // Not use because the modality lut is automatically enlarge
+        // if (oldStyleOverlayPlanes.size() > 0) {
+        // try {
+        //
+        // // int bitsStored = ds.getInt(Tag.BitsStored, -1);
+        // // short overlayValue = (short) ((1 << bitsStored) - 1);
+        // PlanarImage source = imageElement.getImage();
+        // if (source != null) {
+        // int dataType = source.getSampleModel().getDataType();
+        // if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
+        // int mask = Integer.MAX_VALUE;
+        // for (int i = 0, size = oldStyleOverlayPlanes.size(); i < size; i++) {
+        // int val = (1 << oldStyleOverlayPlanes.get(i));
+        // if (dataType == DataBuffer.TYPE_SHORT) {
+        // // TODO need to be validated (no test available)
+        // val = val - 32768;
+        // }
+        // if (val < mask) {
+        // mask = val;
+        // }
+        // }
+        //
+        // // get the image again, this time without windowing/maskpixeldata
+        // ImageReadParam param = reader.getDefaultReadParam();
+        // if (param instanceof DicomImageReadParam) {
+        // ((DicomImageReadParam) param).setAutoWindowing(false);
+        // }
+        //
+        // ParameterBlock pb = new ParameterBlock();
+        // pb.addSource(source);
+        // pb.add((double) imageElement.getMinValue());
+        // pb.add((double) (mask - 1));
+        //                        RenderedOp result = JAI.create("ThresholdToBin", pb, null); //$NON-NLS-1$
+        //
+        // // pb.add((double) (mask - 1));
+        // // RenderedOp result = JAI.create("binarize", pb, null);
+        // // pb = new ParameterBlock();
+        // // pb.addSource(result);
+        // // return JAI.create("NotBinary", pb);
+        // return result;
+        // } else {
+        // // log.warn("mergeOverlays(): data buffer type {} not supported", _buffer.getDataType());
+        // }
+        // }
+        // } catch (Exception e) {
+        // e.printStackTrace();
+        // // log.error("mergeOverlays(): ERROR", e);
+        // }
+        // }
         return overBi;
     }
 }

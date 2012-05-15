@@ -312,7 +312,7 @@ public class DicomImageElement extends ImageElement {
             if (bitsStored < getBitsAllocated()) {
                 /*
                  * Handle bug with some image decoders (ex. reading unsigned 12 bits stored jpeg-ls image gives values
-                 * superior to 4096)
+                 * superior to 4096, and images with overlay located inside the free part of 12 bits stored image)
                  */
                 int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
                 int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
@@ -419,11 +419,7 @@ public class DicomImageElement extends ImageElement {
                  */
                 int bitsStored = getBitsStored();
                 boolean isSigned = isPixelRepresentationSigned();
-                // if (isPhotometricInterpretationInverse()) {
-                // maxValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
-                // } else {
                 minValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
-                // }
             } else {
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
@@ -510,6 +506,14 @@ public class DicomImageElement extends ImageElement {
 
             Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
             Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
+            if (getBitsStored() < getBitsAllocated()) {
+                /*
+                 * Do not trust those values because it can contain values bigger than the bit stored max (ex. overlays
+                 * stored from the bit 12 to 16). Otherwise, the modality lookup will crash because the value for the
+                 * index is bigger than the array length.
+                 */
+                min = max = null;
+            }
 
             minPixelValue = (min == null) ? 0.0f : min.floatValue();
             maxPixelValue = (max == null) ? 0.0f : max.floatValue();

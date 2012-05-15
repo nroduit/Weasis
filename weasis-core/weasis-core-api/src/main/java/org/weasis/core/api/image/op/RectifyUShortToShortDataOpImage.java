@@ -33,8 +33,6 @@ final class RectifyUShortToShortDataOpImage extends ColormapOpImage {
      *            The source image.
      * @param layout
      *            The destination image layout.
-     * @param shift
-     *            The shift to be anded, stored as reference.
      */
     public RectifyUShortToShortDataOpImage(RenderedImage source, Map config, ImageLayout layout) {
         super(source, layout, config, true);
