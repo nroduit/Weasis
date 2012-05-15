@@ -126,14 +126,6 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return true;
     }
 
-    public float getPixelWindow(float window) {
-        return window;
-    }
-
-    public float getPixelLevel(float level) {
-        return level;
-    }
-
     public LutShape getDefaultShape() {
         return LutShape.LINEAR;
     }

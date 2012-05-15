@@ -63,7 +63,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -337,7 +336,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                     if (EXPORT_FORMAT[1].equals(format)) {
                         if (image != null) {
-                            // image = ImageToolkit.getDefaultRenderedImage(img, image);
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
@@ -348,7 +346,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     }
                     if (EXPORT_FORMAT[2].equals(format)) {
                         if (image != null) {
-                            image = ImageToolkit.getDefaultRenderedImage(img, image);
+                            image = img.getRenderedImage(image);
                         }
                         if (image != null) {
                             ImageFiler.writePNG(new File(destinationDir, iuid + ".png"), image); //$NON-NLS-1$
@@ -360,7 +358,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                         if (image != null) {
                             if (!more8bits) {
-                                image = ImageToolkit.getDefaultRenderedImage(img, image);
+                                image = img.getRenderedImage(image);
                             }
                             ImageFiler.writeTIFF(new File(destinationDir, iuid + ".tif"), image); //$NON-NLS-1$
                         } else {
@@ -516,7 +514,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         BufferedImage thumbnail = null;
         PlanarImage imgPl = image.getImage(null);
         if (imgPl != null) {
-            RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
+            RenderedImage img = image.getRenderedImage(imgPl);
             final double scale = Math.min(128 / (double) img.getHeight(), 128 / (double) img.getWidth());
             final PlanarImage thumb =
                 scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale, Thumbnail.DownScaleQualityHints)

@@ -50,9 +50,6 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
             if (imageElement != null) {
                 RenderedImage imageSource = view2DPane.getSourceImage();
                 if (imageSource != null) {
-                    // float window = imageElement.getPixelWindow((Float)
-                    // view2DPane.getActionValue(ActionW.WINDOW.cmd()));
-                    // float level = imageElement.getPixelLevel((Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()));
                     Float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
                     Float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
                     LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());

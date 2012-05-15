@@ -13,6 +13,7 @@ package org.weasis.dicom.codec;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.ref.Reference;
 import java.util.Arrays;
@@ -24,7 +25,6 @@ import javax.media.jai.Histogram;
 import javax.media.jai.JAI;
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.OpImage;
-import javax.media.jai.PlanarImage;
 import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.LookupDescriptor;
@@ -138,23 +138,6 @@ public class DicomImageElement extends ImageElement {
     public float getMaxValue() {
         // Computes min and max as slope can be negative
         return Math.max(pixel2mLUT(minPixelValue), pixel2mLUT(maxPixelValue));
-    }
-
-    // cannot be used like this since modality LUT may be not linear
-    @Deprecated
-    @Override
-    public float getPixelWindow(float window) {
-        Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        if (slope != null) {
-            return window /= slope;
-        }
-        return window;
-    }
-
-    // TODO - must implement a reverse lookup
-    @Override
-    public float getPixelLevel(float level) {
-        return rescale2pixel(level);
     }
 
     @Override
@@ -305,21 +288,14 @@ public class DicomImageElement extends ImageElement {
         int bitsStored = getBitsStored();
         float intercept = getRescaleIntercept();
         float slope = getRescaleSlope();
+        // No need to have a modality lookup table
+        if (bitsStored > 16 || (slope == 1.0f && intercept == 0.0f && paddingValue == null)) {
+            return null;
+        }
 
         Integer paddingLimit = getPaddingLimit();
         boolean outputSigned = false;
         if (bitsStored > 8 && !modSeqLUT) {
-            if (bitsStored < getBitsAllocated()) {
-                /*
-                 * Handle bug with some image decoders (ex. reading unsigned 12 bits stored jpeg-ls image gives values
-                 * superior to 4096, and images with overlay located inside the free part of 12 bits stored image)
-                 */
-                int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
-                int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
-                if ((int) minPixelValue < minInValue || (int) maxPixelValue > maxInValue) {
-                    bitsStored = getBitsAllocated();
-                }
-            }
             float minVal = minPixelValue;
             if (paddingValue != null) {
                 minVal = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
@@ -417,9 +393,7 @@ public class DicomImageElement extends ImageElement {
                  * (closer to or equal to the maximum possible pixel value) or equal to Pixel Padding Range Limit
                  * (0028,0121).
                  */
-                int bitsStored = getBitsStored();
-                boolean isSigned = isPixelRepresentationSigned();
-                minValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
+                minValue = isPixelRepresentationSigned() ? -(1 << (getBitsStored() - 1)) : 0;
             } else {
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
@@ -470,15 +444,15 @@ public class DicomImageElement extends ImageElement {
      */
 
     public Histogram getHistogram(RenderedImage imageSource) {
-        if (imageSource == null) {
+        LookupTableJAI lookup = getModalityLookup();
+        if (imageSource == null || lookup == null) {
             return null;
         }
-
         // TODO instead of computing histo from image get Dicom attribute if present
 
         ParameterBlock pb = new ParameterBlock();
         pb.addSource(imageSource);
-        pb.add(getModalityLookup());
+        pb.add(lookup);
         final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
 
         pb.removeSources();
@@ -506,11 +480,14 @@ public class DicomImageElement extends ImageElement {
 
             Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
             Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
-            if (getBitsStored() < getBitsAllocated()) {
+            int bitsStored = getBitsStored();
+            int bitsAllocated = getBitsAllocated();
+            if (bitsStored < bitsAllocated) {
                 /*
                  * Do not trust those values because it can contain values bigger than the bit stored max (ex. overlays
-                 * stored from the bit 12 to 16). Otherwise, the modality lookup will crash because the value for the
-                 * index is bigger than the array length.
+                 * stored from the bit 12 to 16, or reading unsigned 12 bits stored jpeg-ls image gives values superior
+                 * to 4096). Otherwise, the modality lookup will crash because the value for the index is bigger than
+                 * the array length.
                  */
                 min = max = null;
             }
@@ -542,6 +519,18 @@ public class DicomImageElement extends ImageElement {
                 super.findMinMaxValues(img);
             }
 
+            if (bitsStored < bitsAllocated) {
+                boolean isSigned = isPixelRepresentationSigned();
+                int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
+                int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
+                if ((int) minPixelValue < minInValue || (int) maxPixelValue > maxInValue) {
+                    /*
+                     * When the image contains values smaller or bigger than the bits stored min max values, the bits
+                     * stored is replaced by the bits allocated.
+                     */
+                    setTag(TagW.BitsStored, bitsAllocated);
+                }
+            }
             /*
              * Lazily compute image pixel transformation here since inner class Load is called from a separate and
              * dedicated worker Thread. Also, it will be computed only once
@@ -625,13 +614,47 @@ public class DicomImageElement extends ImageElement {
         lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;
 
-        LookupTableJAI modalityLookup = getModalityLookup(pixelPadding);
-        // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
-        final PlanarImage imageModalityTransformed = LookupDescriptor.create(imageSource, modalityLookup, null);
+        SampleModel sampleModel = imageSource.getSampleModel();
+        if (sampleModel == null) {
+            return null;
+        }
+        int datatype = sampleModel.getDataType();
+        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
+            return imageSource;
+        }
+        if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
+            LookupTableJAI modalityLookup = getModalityLookup(pixelPadding);
+            // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
+            RenderedImage imageModalityTransformed =
+                modalityLookup == null ? imageSource : LookupDescriptor.create(imageSource, modalityLookup, null);
 
-        LookupTableJAI voiLookup = getVOILookup(window, level, lutShape, false, pixelPadding);
-        // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
-        return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
+            LookupTableJAI voiLookup = getVOILookup(window, level, lutShape, false, pixelPadding);
+            // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
+            return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
+        } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
+            || datatype == DataBuffer.TYPE_DOUBLE) {
+            double low = level - window / 2.0;
+            double high = level + window / 2.0;
+            double range = high - low;
+            if (range < 1.0) {
+                range = 1.0;
+            }
+            double slope = 255.0 / range;
+            double y_int = 255.0 - slope * high;
+
+            ParameterBlock pb = new ParameterBlock();
+            pb.addSource(imageSource);
+            pb.add(new double[] { slope });
+            pb.add(new double[] { y_int });
+            RenderedOp rescale = JAI.create("rescale", pb, null); //$NON-NLS-1$
+
+            // produce a byte image
+            pb = new ParameterBlock();
+            pb.addSource(rescale);
+            pb.add(DataBuffer.TYPE_BYTE);
+            return JAI.create("format", pb, null); //$NON-NLS-1$
+        }
+        return null;
     }
 
     public float pixel2mLUT(float pixelValue) {
@@ -642,19 +665,6 @@ public class DicomImageElement extends ImageElement {
             }
         }
         return pixelValue;
-    }
-
-    // TODO - change name because rescale term is already used
-    @Deprecated
-    public float rescale2pixel(float hounsfieldValue) {
-        // Hounsfield units: hu
-        // pixelValue = (hu - intercept value) / rescale slope
-        Float slope = (Float) getTagValue(TagW.RescaleSlope);
-        Float intercept = (Float) getTagValue(TagW.RescaleIntercept);
-        if (slope != null || intercept != null) {
-            return (hounsfieldValue - (intercept == null ? 0.0f : intercept)) / (slope == null ? 1.0f : slope);
-        }
-        return hounsfieldValue;
     }
 
     public GeometryOfSlice getSliceGeometry() {

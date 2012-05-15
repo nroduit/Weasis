@@ -120,7 +120,6 @@ public class PresetWindowLevel {
             // NOTE : PresetWindowLevel.default property should not be use anymore !!
             String defaultExplanation = "Default";
 
-            int bitsStored = image.getBitsStored();
             float minModLUT = image.getMinValue();
             float maxModLUT = image.getMaxValue();
             int k = 1;
@@ -131,13 +130,15 @@ public class PresetWindowLevel {
                         explanation = wlExplanationList[i]; // optional attribute
                     }
                 }
-                if (windowList[i] == null || levelList[i] == null || windowList[i] > (1 << bitsStored)
-                    || levelList[i] < minModLUT || levelList[i] > maxModLUT) {
-                    // W/L values are not consistent, do not add to the list
+                if (windowList[i] == null || levelList[i] == null || levelList[i] < minModLUT
+                    || levelList[i] > maxModLUT) {
+                    // Level value is not consistent, do not add to the list
                     LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
                     continue;
                 }
-
+                if (windowList[i] > maxModLUT - minModLUT) {
+                    windowList[i] = maxModLUT - minModLUT;
+                }
                 presetList.add(new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i],
                     defaultLutShape));
                 k++;

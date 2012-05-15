@@ -182,7 +182,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
         if (image.isReadable() && getDisplayPreferences(LUT)) {
             drawLUT(g2, bound, midfontHeight);
-            drawLUTgraph(g2, bound, midfontHeight);
+            // drawLUTgraph(g2, bound, midfontHeight);
         }
         // if (getDisplayPreferences(IMAGE_ORIENTATION)) {
         // For image Orientation and compression
@@ -605,6 +605,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
     }
 
+    // TODO must be implemented as component of the layout (must inherit Jcomponent and implements SeriesViewerListener)
     public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
 
         final Paint oldPaint = g2d.getPaint();

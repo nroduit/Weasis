@@ -28,7 +28,6 @@ import javax.media.jai.RenderedOp;
 
 import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
 
 /**
  * An image manipulation toolkit.
@@ -330,6 +329,17 @@ public class ImageToolkit {
         return JAI.create("border", params); //$NON-NLS-1$
     }
 
+    /**
+     * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
+     * parameter.
+     * 
+     * @param image
+     * @param source
+     * @param window
+     * @param level
+     * @param pixelPadding
+     * @return
+     */
     public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
         float level, boolean pixelPadding) {
         if (image == null || source == null) {
@@ -345,16 +355,10 @@ public class ImageToolkit {
             return source;
         }
 
-        /**
-         * In Dicom, Pixel data represent a single monochrome image plane. The minimum sample value is intended to be
-         * displayed as white after any VOI gray scale transformations have been performed. See PS 3.4. This value may
-         * be used only when Samples per Pixel (0028,0002) has a value of 1.
-         */
-        boolean monochrome1 =
-            "monochrome1".equalsIgnoreCase((String) image.getTagValue(TagW.PhotometricInterpretation)); //$NON-NLS-1$
-        // Get pixel values of Min and Max (they are store as rescaled values)
-        int minValue = (int) image.getPixelLevel(image.getMinValue());
-        int maxValue = (int) image.getPixelLevel(image.getMaxValue());
+        // Get pixel values of Min and Max (values must not be rescaled rescaled, works only for ImageElement not for
+        // DicomImageElement class)
+        int minValue = (int) image.getMinValue();
+        int maxValue = (int) image.getMaxValue();
         int tableLength = (maxValue - minValue + 1);
 
         double low = level - window / 2.0;
@@ -369,43 +373,11 @@ public class ImageToolkit {
         double y_int = 255.0 - slope * high;
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-            /*
-             * If a Pixel Padding Value (0028,0120) only is present in the image then image contrast manipulations shall
-             * be not be applied to those pixels with the value specified in Pixel Padding Value (0028,0120). If both
-             * Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121) are present in the image then
-             * image contrast manipulations shall not be applied to those pixels with values in the range between the
-             * values of Pixel Padding Value (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive." The
-             * value is a pixel value (not rescaled)
-             */
-            Integer paddingValue = (Integer) image.getTagValue(TagW.PixelPaddingValue);
-            Integer paddingLimit = (Integer) image.getTagValue(TagW.PixelPaddingRangeLimit);
-            byte[][] lut;
-            if (paddingValue != null) {
-                if (paddingLimit == null) {
-                    paddingLimit = paddingValue;
-                } else if (paddingLimit < paddingValue) {
-                    int temp = paddingValue;
-                    paddingValue = paddingLimit;
-                    paddingLimit = temp;
-                }
-                // Enlarge LUT to pixel padding values
-                if (paddingValue < minValue) {
-                    minValue = paddingValue;
-                }
-                if (paddingLimit > maxValue) {
-                    maxValue = paddingLimit;
-                }
-                tableLength = (maxValue - minValue + 1);
-            }
-
-            lut = new byte[1][tableLength];
+            byte[][] lut = new byte[1][tableLength];
 
             for (int i = 0; i < tableLength; i++) {
                 int value = (int) (slope * (i + minValue) + y_int);
 
-                if (monochrome1) {
-                    value = 255 - value;
-                }
                 if (value > 255) {
                     value = 255;
                 }
@@ -413,17 +385,6 @@ public class ImageToolkit {
                     value = 0;
                 }
                 lut[0][i] = (byte) value;
-            }
-
-            if (pixelPadding && paddingValue != null) {
-                // Set padding values to 0 in case they are in the range of the current LUT values
-                int i = paddingValue - minValue;
-                int max = paddingLimit - minValue + 1;
-                if (i >= 0 && max <= tableLength) {
-                    for (; i < max; i++) {
-                        lut[0][i] = 0;
-                    }
-                }
             }
 
             LookupTableJAI lookup = new LookupTableJAI(lut, minValue);
@@ -457,8 +418,6 @@ public class ImageToolkit {
     }
 
     public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source) {
-        float window = image.getPixelWindow(image.getDefaultWindow());
-        float level = image.getPixelLevel(image.getDefaultLevel());
-        return getDefaultRenderedImage(image, source, window, level, true);
+        return getDefaultRenderedImage(image, source, image.getDefaultWindow(), image.getDefaultLevel(), true);
     }
 }
