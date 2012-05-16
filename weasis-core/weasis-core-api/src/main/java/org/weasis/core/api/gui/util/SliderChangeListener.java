@@ -92,8 +92,11 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
         // System.out.println(SwingUtilities.isEventDispatchThread());
         triggerAction = true;
+        boolean paintThicks = max < 65536;
         for (int i = 0; i < sliders.size(); i++) {
             JSliderW s = sliders.get(i);
+            s.setPaintTicks(paintThicks);
+            s.setPaintLabels(paintThicks);
             updateSliderProoperties(s);
             setSliderLabelValues(s, min, max);
         }

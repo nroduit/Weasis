@@ -192,25 +192,30 @@ public class DicomImageElement extends ImageElement {
         return (slope == null) ? 1.0f : slope.floatValue();
     }
 
+    public float pixel2mLUT(float pixelValue) {
+        LookupTableJAI lookup = getModalityLookup();
+        if (lookup != null) {
+            if (pixelValue >= lookup.getOffset() && pixelValue < lookup.getOffset() + lookup.getNumEntries()) {
+                return lookup.lookup(0, (int) pixelValue);
+            }
+        }
+        return pixelValue;
+    }
+
     public int getMinAllocatedValue() {
         boolean signed = isModalityLutOutSigned();
-        // int bitsStored = getBitsStored();
         int bitsAllocated = getBitsAllocated();
-
         int maxValue = signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
         return (signed ? -(maxValue + 1) : 0);
     }
 
     public int getMaxAllocatedValue() {
         boolean signed = isModalityLutOutSigned();
-        // int bitsStored = getBitsStored();
         int bitsAllocated = getBitsAllocated();
-
-        return (signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1));
+        return signed ? (1 << (bitsAllocated - 1)) - 1 : ((1 << bitsAllocated) - 1);
     }
 
     public int getAllocatedOutRangeSize() {
-        // int bitsStored = getBitsStored();
         int bitsAllocated = getBitsAllocated();
         return (1 << bitsAllocated) - 1;
     }
@@ -354,8 +359,6 @@ public class DicomImageElement extends ImageElement {
         return getModalityLookup(true);
     }
 
-    // TODO must take care of getDataType and floating point entries without the use of a lookup but normal JAI
-    // rescaling
     /**
      * 
      * @param window
@@ -655,16 +658,6 @@ public class DicomImageElement extends ImageElement {
             return JAI.create("format", pb, null); //$NON-NLS-1$
         }
         return null;
-    }
-
-    public float pixel2mLUT(float pixelValue) {
-        LookupTableJAI lookup = getModalityLookup();
-        if (lookup != null) {
-            if (pixelValue >= lookup.getOffset() && pixelValue < lookup.getOffset() + lookup.getNumEntries()) {
-                return lookup.lookup(0, (int) pixelValue);
-            }
-        }
-        return pixelValue;
     }
 
     public GeometryOfSlice getSliceGeometry() {
