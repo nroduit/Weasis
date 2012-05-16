@@ -193,7 +193,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         enableActions(false);
 
         // Not to be called here because clearAllPropertyChangeListeners wil erase them
-       
+
         // addPropertyChangeListener(ActionW.WINDOW.cmd(), windowLevelPCL);
         // addPropertyChangeListener(ActionW.LEVEL.cmd(), windowLevelPCL);
         // addPropertyChangeListener(ActionW.LUT_SHAPE.cmd(), windowLevelPCL);
@@ -214,7 +214,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     Object object = dataModel.getElementAt(i);
                     if (object instanceof PresetWindowLevel) {
                         PresetWindowLevel p = (PresetWindowLevel) object;
-                        if (p.getLutShape() == lutShapeAction.getSelectedItem() && p.getLevel() != null
+                        if (p.getLutShape().equals(lutShapeAction.getSelectedItem()) && p.getLevel() != null
                             && p.getWindow() != null) {
                             if (p.getLevel().intValue() == l && p.getWindow().intValue() == w) {
                                 presetAction.setSelectedItem(p);
@@ -313,6 +313,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 PresetWindowLevel preset = it.next();
                                 if (preset.getName().equals(oldPreset.getName())) {
                                     newPreset = preset;
+                                    break;
                                 }
                             }
                             if (newPreset == null) {
