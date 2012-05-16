@@ -231,30 +231,15 @@ public class DicomMediaUtils {
                 ((numEntries <= 256) ? (byte) descriptor[1] : (short) descriptor[1]) : //
                 descriptor[1]; // necessary to cast in order to get negative value when present
 
-            // TODO remove code below and isValueRepresentationSigned that seems to be useless !!!
-
-            // int offset = descriptor[1];
-            // if (isValueRepresentationSigned) {
-            // int highBitMask = numEntries >> 1; // get high bit value for the bitstored format defined by numEntries
-            // if ((offset & highBitMask) > 0) { // check high bit to see if it's negative
-            // offset |= ~(numEntries - 1); // set offset to it's int negative value
-            // }
-            // }
-
             // Third value specifies the number of bits for each entry in the LUT Data.
             int numBits = descriptor[2];
 
             int dataLength = 0; // number of entry values in the LUT Data.
 
-            // LUT Data contains the LUT entry values, assuming data is always unsigned data
-            final byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
-
             if (numBits <= 8) { // LUT Data should be stored in 8 bits allocated format
-
-                dataLength = bData.length;
-                lookupTable = new LookupTableJAI(bData, offset); // LUT entry value range should be [0,255]
-
-            } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
+             
+                // LUT Data contains the LUT entry values, assuming data is always unsigned data
+                byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
                 if (numEntries <= 256 && (bData.length == (numEntries << 1))) {
                     // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
@@ -269,6 +254,33 @@ public class DicomMediaUtils {
                     lookupTable = new LookupTableJAI(bDataNew, offset);
 
                 } else {
+                    dataLength = bData.length;
+                    lookupTable = new LookupTableJAI(bData, offset); // LUT entry value range should be [0,255]
+                }
+            } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
+
+                if (numEntries <= 256) {
+                  
+                    // LUT Data contains the LUT entry values, assuming data is always unsigned data
+                    byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
+
+                    if (bData.length == (numEntries << 1)) {
+
+                        // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
+
+                        byte[] bDataNew = new byte[numEntries];
+                        int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
+                        for (int i = 0; i < numEntries; i++) {
+                            bDataNew[i] = bData[(i << 1) + byteShift];
+                        }
+
+                        dataLength = bDataNew.length;
+                        lookupTable = new LookupTableJAI(bDataNew, offset);
+                    }
+
+                } else {
+                
+                   // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     short[] sData = dicomLutObject.getShorts(Tag.LUTData);
 
                     dataLength = sData.length;
@@ -287,7 +299,6 @@ public class DicomMediaUtils {
                     LOGGER.debug(
                         "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
                         dataLength, numBits);
-                    // lookupTable = null;
                 }
             }
         }
