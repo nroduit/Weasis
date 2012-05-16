@@ -622,9 +622,12 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
-            return imageSource;
-        }
+
+        // BUG fix : when bypass LUT transform no change appears with LUT shape other than linear
+        // if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
+        // return imageSource;
+        // }
+
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             LookupTableJAI modalityLookup = getModalityLookup(pixelPadding);
             // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
