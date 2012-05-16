@@ -75,16 +75,6 @@ public class PresetWindowLevel {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // @Override
-    // public boolean equals(Object obj) {
-    // if (obj instanceof PresetWindowLevel) {
-    // return name.equals(((PresetWindowLevel) obj).name);
-    // }
-    // return super.equals(obj);
-    // }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     public static PresetWindowLevel[] getPresetCollection(DicomImageElement image) {
         if (image == null) {
             return null;

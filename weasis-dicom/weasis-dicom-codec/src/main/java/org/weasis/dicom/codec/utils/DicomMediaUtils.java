@@ -34,34 +34,6 @@ public class DicomMediaUtils {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * @return false if either an argument is null or if at least one tag value is empty in the given tagMap
-     */
-    // public static boolean containsRequiredTags(Map<TagW, Object> tagMap, TagW... requiredTags) {
-    // if (tagMap == null || requiredTags == null || requiredTags.length == 0)
-    // return false;
-    //
-    // int countValues = 0;
-    // List<String> missingTagList = null;
-    //
-    // for (TagW tag : requiredTags) {
-    // Object value = tagMap.get(tag);
-    // if (value != null) {
-    // countValues++;
-    // } else {
-    // if (missingTagList == null) {
-    // missingTagList = new ArrayList<String>(requiredTags.length);
-    // }
-    // missingTagList.add(tag.toString());
-    // }
-    // }
-    // if (countValues > 0 && countValues < requiredTags.length) {
-    // LOGGER.debug("Missing Tags \"{}\" in required list \"{}\"", missingTagList, requiredTags);
-    // }
-    // return (countValues != requiredTags.length);
-    // }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /**
      * @return false if either an argument is null or if at least one tag value is empty in the given dicomObject
      */
     public static boolean containsRequiredAttributes(DicomObject dicomObj, int... requiredTags) {
@@ -237,7 +209,7 @@ public class DicomMediaUtils {
             int dataLength = 0; // number of entry values in the LUT Data.
 
             if (numBits <= 8) { // LUT Data should be stored in 8 bits allocated format
-             
+
                 // LUT Data contains the LUT entry values, assuming data is always unsigned data
                 byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
@@ -260,7 +232,7 @@ public class DicomMediaUtils {
             } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
 
                 if (numEntries <= 256) {
-                  
+
                     // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
@@ -279,8 +251,8 @@ public class DicomMediaUtils {
                     }
 
                 } else {
-                
-                   // LUT Data contains the LUT entry values, assuming data is always unsigned data
+
+                    // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     short[] sData = dicomLutObject.getShorts(Tag.LUTData);
 
                     dataLength = sData.length;
@@ -305,88 +277,22 @@ public class DicomMediaUtils {
         return lookupTable;
     }
 
-    // public static LookupTable createLut(DicomObject dicomLutObject) {
-    // if (dicomLutObject == null || dicomLutObject.isEmpty())
-    // return null;
+    // public static void main(String[] args) {
+    // // http://mindprod.com/jgloss/binary.html#DISPLAY
     //
-    // LookupTable lookupTable = null;
+    // // System.out.println(Integer.toBinaryString(4096));
+    // // System.out.println(Integer.toBinaryString(~4095));
     //
-    // // Three values of the LUT Descriptor describe the format of the LUT Data in the corresponding Data Element
-    // int[] descriptor = dicomLutObject.getInts(Tag.LUTDescriptor);
+    // // 00000000000000000001000000000000
+    // // 11111111111111111111000000000000
     //
-    // if (descriptor == null) {
-    // LOGGER.debug("Missing LUT Descriptor");
-    // } else if (descriptor.length != 3) {
-    // LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length);
-    // } else {
+    // int offset = 63488;
+    // System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
+    // System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
     //
-    // // First value is the number of entries in the lookup table.
-    // // When this value is 0 the number of table entries is equal to 0x10000 (<=> 65536) .
-    // int numEntries = (descriptor[0] == 0) ? 0x10000 : descriptor[0];
-    // // Second value is the first input value mapped.
-    // int offset = descriptor[1];
-    // // Third value specifies the number of bits for each entry in the LUT Data.
-    // int numBits = descriptor[2];
+    // offset = 32767;
+    // System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
+    // System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
     //
-    // int dataLength = 0; // number of entry values in the LUT Data.
-    //
-    // if (numBits <= 8) { // LUT entry value range should be [0,255]
-    // byte[] bData = dicomLutObject.getBytes(Tag.LUTData); // LUT Data contains the LUT entry values.
-    //
-    // if (bData.length == (numEntries << 1)) {
-    // // Appends when some implementations have encoded 8 bit entries with 16 bits
-    // // allocated, padding the high bits;
-    // byte[] bDataNew = new byte[numEntries];
-    // int byteShift = (dicomLutObject.bigEndian() ? 1 : 0);
-    // for (int i = 0; i < numEntries; i++) {
-    // bDataNew[i] = bData[i << 2 + byteShift];
     // }
-    // bData = bDataNew;
-    // }
-    // dataLength = bData.length;
-    // lookupTable = new ByteLookupTable(offset, bData);
-    //
-    // } else if (numBits <= 16) { // LUT entry value range should be [0,65535]
-    // short[] sData = dicomLutObject.getShorts(Tag.LUTData); // LUT Data contains the LUT entry values.
-    //
-    // dataLength = sData.length;
-    // lookupTable = new ShortLookupTable(offset, sData);
-    // } else {
-    // LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
-    // }
-    //
-    // if (lookupTable != null) {
-    // if (dataLength != numEntries) {
-    // LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ",
-    // dataLength, numEntries);
-    // }
-    // if (dataLength > (1 << numBits)) {
-    // LOGGER.debug(
-    // "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
-    // dataLength, numBits);
-    // // lookupTable = null;
-    // }
-    // }
-    // }
-    // return lookupTable;
-    // }
-
-    public static void main(String[] args) {
-        // http://mindprod.com/jgloss/binary.html#DISPLAY
-
-        // System.out.println(Integer.toBinaryString(4096));
-        // System.out.println(Integer.toBinaryString(~4095));
-
-        // 00000000000000000001000000000000
-        // 11111111111111111111000000000000
-
-        int offset = 63488;
-        System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
-        System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
-
-        offset = 32767;
-        System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
-        System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
-
-    }
 }

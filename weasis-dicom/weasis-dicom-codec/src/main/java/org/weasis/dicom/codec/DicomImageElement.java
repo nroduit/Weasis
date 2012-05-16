@@ -634,6 +634,7 @@ public class DicomImageElement extends ImageElement {
             LookupTableJAI voiLookup = getVOILookup(window, level, lutShape, false, pixelPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
             return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
+
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
             double low = level - window / 2.0;
