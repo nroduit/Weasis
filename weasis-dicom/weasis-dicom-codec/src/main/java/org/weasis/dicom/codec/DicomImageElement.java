@@ -623,17 +623,15 @@ public class DicomImageElement extends ImageElement {
         }
         int datatype = sampleModel.getDataType();
 
-        // BUG fix : when bypass LUT transform no change appears with LUT shape other than linear
-        // if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
-        // return imageSource;
-        // }
-
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             LookupTableJAI modalityLookup = getModalityLookup(pixelPadding);
+            if (modalityLookup == null && datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f
+                && LutShape.LINEAR.equals(lutShape)) {
+                return imageSource;
+            }
             // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
             RenderedImage imageModalityTransformed =
                 modalityLookup == null ? imageSource : LookupDescriptor.create(imageSource, modalityLookup, null);
-
             LookupTableJAI voiLookup = getVOILookup(window, level, lutShape, false, pixelPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
             return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
