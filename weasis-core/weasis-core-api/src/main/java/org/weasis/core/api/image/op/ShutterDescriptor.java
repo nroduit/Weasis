@@ -4,6 +4,7 @@ import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.awt.image.renderable.RenderedImageFactory;
+import java.util.Arrays;
 
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
@@ -66,21 +67,35 @@ public class ShutterDescriptor extends OperationDescriptorImpl implements Render
                     source1.getTileGridXOffset(), source1.getTileGridYOffset(), LayoutUtil.createBinarySampelModel(),
                     LayoutUtil.createBinaryIndexColorModel());
         } else {
+            // rgb cannot be null or have less than one value
             Byte[] rgb = (Byte[]) paramBlock.getObjectParameter(1);
-            if (source1.getSampleModel().getNumBands() == 3) {
-                if (rgb == null || rgb.length < 3) {
-                    rgb = new Byte[3];
-                }
-            } else {
-                if (rgb == null || rgb.length < 1) {
-                    rgb = new Byte[1];
-                }
+            int nbands = source1.getSampleModel().getNumBands();
+            if (rgb.length != nbands) {
+                Byte fillVal = rgb[0];
+                rgb = new Byte[nbands];
+                Arrays.fill(rgb, fillVal);
             }
+
             image = ImageFiler.getEmptyTiledImage(rgb, source1.getWidth(), source1.getHeight());
         }
 
         image.set(source1, shape);
         return image;
+    }
+
+    /**
+     * Checks that all parameters in the ParameterBlock have the correct type before constructing the SampleOpImage
+     */
+    public boolean validateParameters(ParameterBlock paramBlock) {
+        Object arg = paramBlock.getObjectParameter(0);
+        if (arg instanceof Byte[] && ((Byte[]) arg).length > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean validateSources(ParameterBlock parameterblock) {
+        return (parameterblock.getRenderedSource(0) != null);
     }
 
     public static RenderedOp create(RenderedImage source0, ROIShape roi, Byte[] bandValues, RenderingHints hints) {

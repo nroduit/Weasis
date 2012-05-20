@@ -362,7 +362,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             class CineThread extends Thread {
 
                 private volatile int iteration;
-                private volatile int wait;
+                private volatile int waitTimeMillis;
                 private volatile int currentCineRate;
                 private volatile long start;
                 private volatile boolean cining = true;
@@ -370,54 +370,41 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 @Override
                 public void run() {
                     iniSpeed();
-                    // Create a robot to monitor the paint
-                    // Robot robot = null;
-                    //
-                    // try {
-                    // robot = new java.awt.Robot();
-                    // }
-                    // catch (Exception e) {
-                    // }
-
                     while (cining) {
-                        GuiExecutor.instance().execute(new Runnable() {
+                        long startFrameTime = System.currentTimeMillis();
+                        // Set the value to SliderCineListener, must be in EDT for refreshing UI correctly
+                        GuiExecutor.instance().invokeAndWait(new Runnable() {
 
                             @Override
                             public void run() {
                                 if (cining) {
                                     int frameIndex = getValue() + 1;
-                                    frameIndex = frameIndex > getMax() ? 0 : frameIndex;
-                                    setValue(frameIndex);
+                                    setValue(frameIndex > getMax() ? 0 : frameIndex);
                                 }
                             }
                         });
-
-                        iteration++;
-                        // Wait until the paint is finished
-                        // robot.waitForIdle();
-
-                        // adjust the delay time based on the current performance
-                        long elapsed = (System.currentTimeMillis() - start) / 1000;
-                        if (elapsed > 0) {
-                            currentCineRate = (int) (iteration / elapsed);
-                            // System.out.println("fps:" + fps);
-
-                            if (currentCineRate < getSpeed()) {
-                                wait--;
-                            } else {
-                                wait++;
-                            }
-                            if (wait < 0) {
-                                wait = 0;
+                        // Time to set the new frame index
+                        long elapsedFrame = System.currentTimeMillis() - startFrameTime;
+                        /*
+                         * If this time is smaller than the time to wait according to the cine speed (fps), then wait
+                         * the time left, otherwise continue (that means the cine speed cannot be reached)
+                         */
+                        if (elapsedFrame < waitTimeMillis) {
+                            try {
+                                Thread.sleep(waitTimeMillis - elapsedFrame);
+                            } catch (Exception e) {
                             }
                         }
 
-                        // wait
-                        if (wait > 0) {
-                            try {
-                                Thread.sleep(wait);
-                            } catch (Exception e) {
-                            }
+                        iteration++;
+                        // Check the speed every 3 images
+                        if (iteration > 2) {
+                            // Get the speed rate (fps) on the last 3 images
+                            currentCineRate = (int) (iteration * 1000 / (System.currentTimeMillis() - start));
+                            // reinitialize the parameters for computing speed next time
+                            iteration = 0;
+                            waitTimeMillis = 1000 / getSpeed();
+                            start = System.currentTimeMillis();
                         }
                     }
                 }
@@ -425,7 +412,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 public void iniSpeed() {
                     iteration = 0;
                     currentCineRate = getSpeed();
-                    wait = 1000 / currentCineRate;
+                    waitTimeMillis = 1000 / currentCineRate;
                     start = System.currentTimeMillis();
                 }
 

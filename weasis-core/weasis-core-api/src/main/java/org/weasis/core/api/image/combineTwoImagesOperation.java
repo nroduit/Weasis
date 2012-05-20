@@ -58,6 +58,7 @@ public class combineTwoImagesOperation extends AbstractOperation {
         for (int i = 0; i < bandValues.length; i++) {
             bandValues[i] = (byte) transparency;
         }
+
         PlanarImage alpha1 = ImageFiler.getEmptyImage(bandValues, sourceDown.getWidth(), sourceDown.getHeight());
         ParameterBlock pb = new ParameterBlock();
         if (sourceDown.getSampleModel().getNumBands() < sourceUp.getSampleModel().getNumBands()) {
