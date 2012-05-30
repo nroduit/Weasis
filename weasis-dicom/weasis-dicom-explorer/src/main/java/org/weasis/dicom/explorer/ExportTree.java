@@ -76,7 +76,7 @@ public class ExportTree extends JScrollPane {
                                     return buffer.toString();
                                 }
                             };
-                            for (DicomImageElement dicom : series.getMedias()) {
+                            for (DicomImageElement dicom : series.getMedias(null)) {
                                 seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
                                     @Override
                                     public String toString() {

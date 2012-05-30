@@ -22,6 +22,7 @@ import java.util.HashMap;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -126,8 +127,13 @@ public class InfoLayer implements AnnotationsLayer {
         }
 
         if (getDisplayPreferences(FRAME)) {
-            paintFontOutline(g2, "Frame: " + (view2DPane.getFrameIndex() + 1) + " / " + view2DPane.getSeries().size(),
-                border, drawY);
+            paintFontOutline(
+                g2,
+                "Frame: "
+                    + (view2DPane.getFrameIndex() + 1)
+                    + " / "
+                    + view2DPane.getSeries().size(
+                        (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())), border, drawY);
             drawY -= fontHeight;
         }
 

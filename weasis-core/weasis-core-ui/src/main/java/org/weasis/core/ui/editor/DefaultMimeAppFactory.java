@@ -37,19 +37,22 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
         @Override
         public void addSeries(MediaSeries<MediaElement> series) {
             if (series != null) {
-                for (MediaElement m : series.getMedias()) {
-                    // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
-                    // in KDE session, but actually does not support it.
-                    // http://bugs.sun.com/view_bug.do?bug_id=6486393
-                    if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
-                        startAssociatedProgramFromLinux(m.getFile());
-                    } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
-                        // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
-                        startAssociatedProgramFromWinCMD(m.getFile());
-                    } else if (Desktop.isDesktopSupported()) {
-                        final Desktop desktop = Desktop.getDesktop();
-                        if (desktop.isSupported(Desktop.Action.OPEN)) {
-                            startAssociatedProgramFromDesktop(desktop, m.getFile());
+                Iterable<MediaElement> list = series.getMedias(null);
+                synchronized (list) {
+                    for (MediaElement m : list) {
+                        // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
+                        // in KDE session, but actually does not support it.
+                        // http://bugs.sun.com/view_bug.do?bug_id=6486393
+                        if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+                            startAssociatedProgramFromLinux(m.getFile());
+                        } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                            // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
+                            startAssociatedProgramFromWinCMD(m.getFile());
+                        } else if (Desktop.isDesktopSupported()) {
+                            final Desktop desktop = Desktop.getDesktop();
+                            if (desktop.isSupported(Desktop.Action.OPEN)) {
+                                startAssociatedProgramFromDesktop(desktop, m.getFile());
+                            }
                         }
                     }
                 }

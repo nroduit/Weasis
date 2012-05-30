@@ -22,6 +22,7 @@ import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -364,7 +365,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
             .getActionValue(ActionW.ZOOM.cmd()))));
-        moveTroughSliceAction.setMinMaxValue(1, series.size(), defaultView2d.getFrameIndex() + 1);
+        moveTroughSliceAction.setMinMaxValue(1,
+            series.size((Filter<ImageElement>) defaultView2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
+            defaultView2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagW.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);

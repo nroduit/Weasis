@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
+import org.weasis.core.api.gui.util.Filter;
+
 public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     enum MEDIA_POSITION {
@@ -33,16 +35,18 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     void addAll(int index, Collection<? extends E> c);
 
-    E getMedia(MEDIA_POSITION position);
+    E getMedia(MEDIA_POSITION position, Filter<E> filter);
 
-    List<E> getMedias();
+    Iterable<E> getMedias(Filter<E> filter);
 
-    E getMedia(int index);
+    List<E> copyOfMedias(Filter<E> filter);
+
+    E getMedia(int index, Filter<E> filter);
 
     @Override
     void dispose();
 
-    int size();
+    int size(Filter<E> filter);
 
     SeriesImporter getSeriesLoader();
 
@@ -58,9 +62,9 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     void setOpen(boolean b);
 
-    void setSelected(boolean b, int selectedImage);
+    void setSelected(boolean b, E selectedMedia);
 
-    int getNearestIndex(double location);
+    E getNearestImage(double location, int offset, Filter<E> filter);
 
     double getFileSize();
 }

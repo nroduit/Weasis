@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -32,7 +33,6 @@ import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -78,16 +78,17 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             public void stateChanged(BoundedRangeModel model) {
 
                 int index = model.getValue() - 1;
-                Series series = null;
+                Series<ImageElement> series = null;
                 ImageElement image = null;
                 if (selectedView2dContainer != null) {
-                    DefaultView2d selectedImagePane = selectedView2dContainer.getSelectedImagePane();
-                    if (selectedImagePane.getSeries() instanceof Series) {
+                    DefaultView2d<ImageElement> selectedImagePane =
+                        (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+                    if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {
                         series = (Series) selectedImagePane.getSeries();
-                        MediaElement media = series.getMedia(index);
-                        if (media instanceof ImageElement) {
-                            image = (ImageElement) media;
-                        }
+                        image =
+                            series.getMedia(index,
+                                (Filter<ImageElement>) selectedImagePane.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+
                     }
                 }
                 Number location = index;

@@ -63,6 +63,7 @@ import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -129,7 +130,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     private final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
     private final Border focusBorder = new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
 
-    protected int frameIndex;
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
     protected ZoomWin<E> lens;
@@ -187,7 +187,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SHUTTER.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
-
+        actionsInView.put(ActionW.KEY_OBJECT.cmd(), null);
+        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -274,10 +275,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setSeries(MediaSeries<E> series) {
-        setSeries(series, -1);
+        setSeries(series, null);
     }
 
-    public void setSeries(MediaSeries<E> series, int defaultIndex) {
+    public void setSeries(MediaSeries<E> series, E selectedMedia) {
         MediaSeries<E> oldsequence = this.series;
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
@@ -290,9 +291,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
-            defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
-            frameIndex = defaultIndex + tileOffset;
-            setImage(series.getMedia(frameIndex), true);
+            E media = selectedMedia;
+            if (selectedMedia == null) {
+                series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+            }
+            setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
@@ -326,7 +330,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         }
         series.setOpen(open);
-        series.setSelected(false, 0);
+        series.setSelected(false, null);
     }
 
     protected int getImageSize(E img, TagW tag1, TagW tag2) {
@@ -432,13 +436,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return series;
     }
 
-    public int getCurrentImageIndex() {
-        if (series instanceof Series) {
-            return ((Series) series).getImageIndex(imageLayer.getSourceImage());
-        }
-        return 0;
-    }
-
     @Override
     public E getImage() {
         return imageLayer.getSourceImage();
@@ -497,7 +494,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public int getFrameIndex() {
-        return frameIndex;
+        if (series instanceof Series) {
+            return ((Series<E>) series).getImageIndex(imageLayer.getSourceImage(),
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+        }
+        return 0;
     }
 
     public void setActionsInView(String action, Object value) {
@@ -662,6 +663,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (layer != null) {
                 layer.deleteAllGraphic();
             }
+            E imgElement = null;
             if (value instanceof Double) {
                 double location = (Double) value;
                 Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
@@ -673,16 +675,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (offset != null) {
                         location += offset;
                     }
-                    frameIndex = series.getNearestIndex(location) + tileOffset;
+                    imgElement =
+                        series.getNearestImage(location, tileOffset,
+                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
                 }
-            } else {
+            } else if (value instanceof Integer) {
                 // TODO recieve Integer and crossline or synch are true
-                frameIndex = (Integer) evt.getNewValue() + tileOffset;
+                imgElement =
+                    series.getMedia((Integer) value + tileOffset,
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
             }
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode
             boolean rescaleView = (val == null || val <= 0.0);
-            setImage(series.getMedia(frameIndex), rescaleView);
+            setImage(imgElement, rescaleView);
             if (rescaleView) {
                 val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);

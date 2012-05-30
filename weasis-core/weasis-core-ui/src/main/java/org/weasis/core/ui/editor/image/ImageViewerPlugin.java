@@ -36,6 +36,7 @@ import javax.swing.plaf.PanelUI;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
@@ -197,7 +198,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         // the first free place
         if (sequence != null) {
             if (SynchView.Mode.Tile.equals(synchView.getMode())) {
-                selectedImagePane.setSeries(sequence, -1);
+                selectedImagePane.setSeries(sequence, null);
                 updateSynchView();
                 return;
             }
@@ -218,7 +219,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             for (int i = 0; i < view2ds.size(); i++) {
                 DefaultView2d<E> v = view2ds.get(i);
                 if (v.getSeries() == series) {
-                    v.setSeries(null, -1);
+                    v.setSeries(null, null);
                 }
             }
         }
@@ -318,7 +319,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             DefaultView2d<E> v = view2ds.get(i);
             if (SynchView.Mode.Tile.equals(synchView)) {
                 v.setTileOffset(i);
-                v.setSeries(selectedImagePane.getSeries(), -1);
+                v.setSeries(selectedImagePane.getSeries(), null);
             }
             v.enableMouseAndKeyListener(mouseActions);
         }
@@ -331,9 +332,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         selectedImagePane.setSelected(true);
         eventManager.updateComponentsListener(selectedImagePane);
         if (selectedImagePane.getSeries() instanceof Series) {
-            Series series = (Series) selectedImagePane.getSeries();
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, series, series
-                .getMedia(selectedImagePane.getFrameIndex()), EVENT.LAYOUT));
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
+                selectedImagePane.getImage(), EVENT.LAYOUT));
         }
     }
 
@@ -343,10 +343,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void setSelectedImagePane(DefaultView2d<E> defaultView2d) {
         if (this.selectedImagePane.getSeries() != null) {
-            this.selectedImagePane.getSeries().setSelected(false, 0);
+            this.selectedImagePane.getSeries().setSelected(false, null);
         }
         if (defaultView2d != null && defaultView2d.getSeries() != null) {
-            defaultView2d.getSeries().setSelected(true, defaultView2d.getFrameIndex());
+            defaultView2d.getSeries().setSelected(true, defaultView2d.getImage());
         }
         if (this.selectedImagePane != defaultView2d && defaultView2d != null) {
             this.selectedImagePane.setSelected(false);
@@ -355,9 +355,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             eventManager.updateComponentsListener(defaultView2d);
         }
         if (defaultView2d != null && defaultView2d.getSeries() instanceof Series) {
-            Series series = (Series) selectedImagePane.getSeries();
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, series, series.getMedia(defaultView2d
-                .getFrameIndex()), EVENT.SELECT));
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
+                selectedImagePane.getImage(), EVENT.SELECT));
         }
         eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
     }
@@ -454,26 +453,28 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     protected void updateSynchView() {
         if (SynchView.Mode.Tile.equals(synchView.getMode())) {
             MediaSeries<E> series = null;
+            DefaultView2d<E> selectedView = selectedImagePane;
             if (selectedImagePane.getSeries() != null) {
                 series = selectedImagePane.getSeries();
             } else {
                 for (DefaultView2d<E> v : view2ds) {
                     if (v.getSeries() != null) {
                         series = v.getSeries();
+                        selectedView = v;
                         break;
                     }
                 }
             }
             if (series != null) {
-                int limit = series.getMedias().size();
+                int limit = series.size((Filter<E>) selectedView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
                 for (int i = 0; i < view2ds.size(); i++) {
                     DefaultView2d<E> v = view2ds.get(i);
                     if (i < limit) {
                         v.getLayerModel().deleteAllGraphics();
                         v.setTileOffset(i);
-                        v.setSeries(series, -1);
+                        v.setSeries(series, null);
                     } else {
-                        v.setSeries(null, -1);
+                        v.setSeries(null, null);
                     }
                 }
             }
@@ -545,7 +546,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 if (view2ds.size() > seriesList.size()) {
                     setSelectedImagePane(view2ds.get(seriesList.size()));
                     for (int i = seriesList.size(); i < view2ds.size(); i++) {
-                        getSelectedImagePane().setSeries(null, -1);
+                        getSelectedImagePane().setSeries(null, null);
                         getNextSelectedImagePane();
                     }
                 }

@@ -67,7 +67,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                         tempFileStream.write(mpeg);
                         DicomVideoElement dicom = (DicomVideoElement) media;
                         dicom.setVideoFile(videoFile);
-                        medias.add(dicom);
+                        this.add(dicom);
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -135,7 +135,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
 
     @Override
     public File getExtractFile() {
-        DicomVideoElement media = getMedia(MEDIA_POSITION.FIRST);
+        DicomVideoElement media = getMedia(MEDIA_POSITION.FIRST, null);
         if (media != null) {
             return media.getVideoFile();
         }

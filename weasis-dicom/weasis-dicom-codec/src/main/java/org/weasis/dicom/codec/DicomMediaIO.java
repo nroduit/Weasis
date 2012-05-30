@@ -400,13 +400,18 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             writeOnlyinstance(dicomObject);
             writeSharedFunctionalGroupsSequence(dicomObject);
             writePerFrameFunctionalGroupsSequence(tags, dicomObject, 0);
-            if (mimeType == SERIES_PR_MIMETYPE) {
+            if (SERIES_PR_MIMETYPE.equals(mimeType)) {
                 // Set the series list for applying the PR
                 setTagNoNull(TagW.ReferencedSeriesSequence, dicomObject.get(Tag.ReferencedSeriesSequence));
                 // Set the name of the PR
                 setTagNoNull(TagW.SeriesDescription, dicomObject.getString(Tag.SeriesDescription));
+            } else if (SERIES_KO_MIMETYPE.equals(mimeType)) {
+                // Set the series list for applying the PR
+                setTagNoNull(TagW.CurrentRequestedProcedureEvidenceSequence,
+                    dicomObject.get(Tag.CurrentRequestedProcedureEvidenceSequence));
+                // Set the name of the PR
+                setTagNoNull(TagW.SeriesDescription, dicomObject.getString(Tag.SeriesDescription));
             }
-
             validateDicomImageValues(tags);
             computeSlicePositionVector(tags);
 

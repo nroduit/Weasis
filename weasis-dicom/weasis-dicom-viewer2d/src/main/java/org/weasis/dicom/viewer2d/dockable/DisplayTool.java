@@ -193,8 +193,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                                     DefaultView2d<DicomImageElement> v = container.getSelectedImagePane();
                                     Series series = (Series) v.getSeries();
                                     EventManager.getInstance().fireSeriesViewerListeners(
-                                        new SeriesViewerEvent(container, series, series.getMedia(v.getFrameIndex()),
-                                            EVENT.ANONYM));
+                                        new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
 
                                 }
                             }

@@ -135,8 +135,10 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
                 @Override
                 public String getMimeType() {
-                    for (ImageElement img : medias) {
-                        return img.getMimeType();
+                    synchronized (medias) {
+                        for (ImageElement img : medias) {
+                            return img.getMimeType();
+                        }
                     }
                     return null;
                 }
@@ -144,11 +146,11 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
                 @Override
                 public void addMedia(MediaElement media) {
                     if (media instanceof ImageElement) {
-                        medias.add((ImageElement) media);
+                        this.add((ImageElement) media);
                         DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, medias.size() - 1)));
+                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
                         }
                     }
                 }

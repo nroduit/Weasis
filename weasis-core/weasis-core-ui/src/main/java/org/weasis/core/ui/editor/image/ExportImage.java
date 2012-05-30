@@ -78,7 +78,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
                 * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
         actionsInView.put("origin.center", p); //$NON-NLS-1$
 
-        setSeries(view2d.getSeries(), view2d.getFrameIndex());
+        setSeries(view2d.getSeries(), view2d.getImage());
 
         // TODO Change the font and reset on dispose
         // List<Graphic> list = getLayerModel().getAllGraphics();

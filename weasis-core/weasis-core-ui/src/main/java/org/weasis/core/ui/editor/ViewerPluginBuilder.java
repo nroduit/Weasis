@@ -89,7 +89,7 @@ public class ViewerPluginBuilder {
         }
         int nbImg = 0;
         for (MediaSeries m : series) {
-            nbImg += m.size();
+            nbImg += m.size(null);
         }
         // Do not add series without medias. BUG WEA-100
         if (nbImg == 0) {

@@ -70,7 +70,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                         tempFileStream.write(doc);
                         DicomEncapDocElement dicom = (DicomEncapDocElement) media;
                         dicom.setDocument(file);
-                        medias.add(dicom);
+                        this.add(dicom);
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -115,7 +115,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
     @Override
     public File getExtractFile() {
-        DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST);
+        DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST, null);
         if (media != null) {
             return media.getDocument();
         }

@@ -12,6 +12,8 @@ package org.weasis.core.api.gui.util;
 
 public interface ActionState {
 
+    String NONE = "None";
+
     void enableAction(boolean enabled);
 
     ActionW getActionW();

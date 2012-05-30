@@ -36,6 +36,7 @@ import javax.vecmath.Vector3d;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
@@ -236,9 +237,12 @@ public class InfoLayer implements AnnotationsLayer {
                     instance = " [" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
-            paintFontOutline(g2,
+            paintFontOutline(
+                g2,
                 Messages.getString("InfoLayer.frame") + instance + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$ //$NON-NLS-2$
-                    + view2DPane.getSeries().size(), border, drawY);
+                    + view2DPane.getSeries().size(
+                        (Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())), border,
+                drawY);
             drawY -= fontHeight;
 
             Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());

@@ -10,9 +10,9 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.media.jai.PlanarImage;
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
@@ -65,7 +66,6 @@ public class DicomSeries extends Series<DicomImageElement> {
             if (media instanceof DicomImageElement) {
 
                 int insertIndex;
-
                 synchronized (medias) {
                     // add image or multi-frame sorted by Instance Number (0020,0013) order
                     int index =
@@ -76,15 +76,15 @@ public class DicomSeries extends Series<DicomImageElement> {
                         // Should not happen because the instance number must be unique
                         insertIndex = index + 1;
                     }
-                    if (insertIndex < 0 || insertIndex > size()) {
+                    if (insertIndex < 0 || insertIndex > medias.size()) {
                         insertIndex = medias.size();
                     }
-                    medias.add(insertIndex, (DicomImageElement) media);
+                    add(insertIndex, (DicomImageElement) media);
                 }
                 DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                 if (model != null) {
                     model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                        new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex)));
+                        new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
                 }
             } else if (media instanceof DicomSpecialElement) {
                 setTag(TagW.DicomSpecialElement, media);
@@ -136,22 +136,34 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public int getNearestIndex(double location) {
-        synchronized (medias) {
-            int index = -1;
+    public DicomImageElement getNearestImage(double location, int offset, Filter<DicomImageElement> filter) {
+        Iterable<DicomImageElement> mediaList = getMedias(filter);
+        DicomImageElement nearest = null;
+        int index = 0;
+        int bestIndex = -1;
+        synchronized (mediaList) {
             double bestDiff = Double.MAX_VALUE;
-            for (int i = 0; i < medias.size(); i++) {
-                double[] val = (double[]) medias.get(i).getTagValue(TagW.SlicePosition);
+            for (Iterator<DicomImageElement> iter = mediaList.iterator(); iter.hasNext();) {
+                DicomImageElement dcm = iter.next();
+                double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
                 if (val != null) {
                     double diff = Math.abs(location - (val[0] + val[1] + val[2]));
                     if (diff < bestDiff) {
                         bestDiff = diff;
-                        index = i;
+                        nearest = dcm;
+                        bestIndex = index;
+                        if (diff == 0.0) {
+                            break;
+                        }
                     }
                 }
+                index++;
             }
-            return index;
         }
+        if (offset > 0) {
+            return getMedia(bestIndex + offset, filter);
+        }
+        return nearest;
     }
 
     public static synchronized void startPreloading(DicomSeries series, int index) {
@@ -181,12 +193,12 @@ public class DicomSeries extends Series<DicomImageElement> {
     static class PreloadingTask extends Thread {
         private volatile boolean preloading = true;
         private final int index;
-        private final ArrayList<DicomImageElement> imageList;
+        private final List<DicomImageElement> imageList;
         private final DicomSeries series;
 
         public PreloadingTask(DicomSeries series, int index) {
             this.series = series;
-            this.imageList = new ArrayList<DicomImageElement>(series.getMedias());
+            this.imageList = series.copyOfMedias(null);
             this.index = index;
         }
 

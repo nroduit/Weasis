@@ -33,6 +33,7 @@ import javax.swing.KeyStroke;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -118,7 +119,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     @Override
-    public void setSeries(MediaSeries<ImageElement> series, int defaultIndex) {
+    public void setSeries(MediaSeries<ImageElement> series, ImageElement selectedImage) {
         MediaSeries<ImageElement> oldsequence = this.series;
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
@@ -130,9 +131,13 @@ public class View2d extends DefaultView2d<ImageElement> {
             imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
         } else {
-            defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
-            frameIndex = defaultIndex + tileOffset;
-            setImage(series.getMedia(frameIndex), true);
+            ImageElement media = selectedImage;
+            if (selectedImage == null) {
+                media =
+                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                        (Filter<ImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+            }
+            setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
@@ -158,7 +163,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode
             boolean rescaleView = (val == null || val <= 0.0);
-            setImage(series.getMedia(frameIndex), rescaleView);
+            setImage(getImage(), rescaleView);
             if (rescaleView) {
                 val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);
@@ -414,7 +419,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            View2d.this.setSeries(null, -1);
+                            View2d.this.setSeries(null, null);
                         }
                     });
                     popupMenu.add(close);

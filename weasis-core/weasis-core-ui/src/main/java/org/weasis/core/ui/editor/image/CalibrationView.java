@@ -180,7 +180,7 @@ public class CalibrationView extends JPanel {
                         if (radioButtonSeries.isSelected()) {
                             MediaSeries seriesList = view2d.getSeries();
                             if (seriesList != null) {
-                                for (Object media : seriesList.getMedias()) {
+                                for (Object media : seriesList.getMedias(null)) {
                                     if (media instanceof ImageElement) {
                                         ImageElement img = (ImageElement) media;
                                         img.setPixelSize(newRatio);

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -27,6 +28,7 @@ import javax.swing.SwingUtilities;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.Filter;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
 
@@ -97,48 +99,80 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public final E getMedia(MEDIA_POSITION position) {
+    public final E getMedia(MEDIA_POSITION position, Filter<E> filter) {
         synchronized (medias) {
-            int size = medias.size();
-            if (size == 0) {
-                return null;
+            if (filter == null) {
+                int size = medias.size();
+                if (size == 0) {
+                    return null;
+                }
+                int pos = 0;
+                if (MEDIA_POSITION.FIRST.equals(position)) {
+                    pos = 0;
+                } else if (MEDIA_POSITION.MIDDLE.equals(position)) {
+                    pos = size / 2;
+                } else if (MEDIA_POSITION.LAST.equals(position)) {
+                    pos = size - 1;
+                } else if (MEDIA_POSITION.RANDOM.equals(position)) {
+                    pos = RANDOM.nextInt(size);
+                }
+                return medias.get(pos);
+            } else {
+                Iterable<E> iter = filter.filter(medias);
+                Iterator<E> list = iter.iterator();
+                if (list.hasNext()) {
+                    E val = list.next();
+                    if (MEDIA_POSITION.FIRST.equals(position)) {
+                        return val;
+                    }
+                    int pos = 0;
+                    int size = Filter.size(iter);
+                    if (MEDIA_POSITION.MIDDLE.equals(position)) {
+                        pos = size / 2;
+                    } else if (MEDIA_POSITION.LAST.equals(position)) {
+                        pos = size - 1;
+                    } else if (MEDIA_POSITION.RANDOM.equals(position)) {
+                        pos = RANDOM.nextInt(size);
+                    }
+                    int k = 0;
+                    for (E elem : iter) {
+                        if (k == pos) {
+                            return elem;
+                        }
+                    }
+                    return val;
+                } else {
+                    return null;
+                }
             }
-            int pos = 0;
-            if (MEDIA_POSITION.FIRST.equals(position)) {
-                pos = 0;
-            } else if (MEDIA_POSITION.MIDDLE.equals(position)) {
-                pos = size / 2;
-            } else if (MEDIA_POSITION.LAST.equals(position)) {
-                pos = size - 1;
-            } else if (MEDIA_POSITION.RANDOM.equals(position)) {
-                pos = RANDOM.nextInt(size);
-            }
-            return medias.get(pos);
         }
     }
 
-    public final int getImageIndex(E source) {
+    public final int getImageIndex(E source, Filter<E> filter) {
         if (source == null) {
             return -1;
         }
-        synchronized (medias) {
-            for (int i = 0; i < medias.size(); i++) {
-                if (medias.get(i) == source) {
-                    return i;
+        Iterable<E> list = getMedias(filter);
+        synchronized (list) {
+            int index = 0;
+            for (E e : list) {
+                if (e == source) {
+                    return index;
                 }
+                index++;
             }
         }
         return -1;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.media.data.MediaSeries#getMedias()
-     */
     @Override
-    public final List<E> getMedias() {
-        return medias;
+    public final Iterable<E> getMedias(Filter<E> filter) {
+        return filter == null ? medias : filter.filter(medias);
+    }
+
+    @Override
+    public final List<E> copyOfMedias(Filter<E> filter) {
+        return filter == null ? new ArrayList<E>(medias) : Filter.makeCollection(filter.filter(medias));
     }
 
     /*
@@ -147,10 +181,23 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
      * @see org.weasis.media.data.MediaSeries#getMedia(int)
      */
     @Override
-    public final E getMedia(int index) {
+    public final E getMedia(int index, Filter<E> filter) {
         synchronized (medias) {
-            if (index >= 0 && index < medias.size()) {
-                return medias.get(index);
+            if (filter == null) {
+                if (index >= 0 && index < medias.size()) {
+                    return medias.get(index);
+                }
+            } else {
+                if (index >= 0) {
+                    Iterable<E> iter = filter.filter(medias);
+                    int k = 0;
+                    for (E elem : iter) {
+                        if (k == index) {
+                            return elem;
+                        }
+                        k++;
+                    }
+                }
             }
         }
         return null;
@@ -248,8 +295,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public int size() {
-        return medias.size();
+    public int size(Filter<E> filter) {
+        return filter == null ? medias.size() : Filter.size(filter.filter(medias));
     }
 
     @Override
@@ -267,7 +314,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         // this.getLoadSeries().getProgressBar().getMaximum();
         // toolTips.append("Number of Frames: " + seqSize + "<br>");
 
-        E media = this.getMedia(MEDIA_POSITION.MIDDLE);
+        E media = this.getMedia(MEDIA_POSITION.MIDDLE, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
             RenderedImage img = image.getImage();
@@ -310,23 +357,12 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public void setSelected(boolean selected, int selectedImage) {
+    public void setSelected(boolean selected, E selectedImage) {
         if (this.isSelected() != selected) {
             setTag(TagW.SeriesSelected, selected);
             Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.repaint();
-            }
-        }
-    }
-
-    public void resetLoaders() {
-        synchronized (medias) {
-            for (int i = 0; i < medias.size(); i++) {
-                E media = medias.get(i);
-                if (media.getMediaReader() != null) {
-                    media.getMediaReader().reset();
-                }
             }
         }
     }
@@ -346,8 +382,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public int getNearestIndex(double location) {
-        return -1;
+    public E getNearestImage(double location, int offset, Filter<E> filter) {
+        return null;
     }
 
     public synchronized void setFileSize(double size) {

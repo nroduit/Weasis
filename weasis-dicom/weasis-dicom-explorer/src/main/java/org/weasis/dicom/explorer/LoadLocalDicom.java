@@ -102,7 +102,7 @@ public class LoadLocalDicom extends ExplorerTask {
         for (final Thumbnail t : thumbs) {
             MediaSeries series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
-            if (series != null && series.getMedias().size() > 2) {
+            if (series != null && series.size(null) > 2) {
                 GuiExecutor.instance().execute(new Runnable() {
 
                     @Override

@@ -42,6 +42,7 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -363,18 +364,19 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
                                 if (seqAction instanceof SliderCineListener) {
                                     SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    if (param instanceof Integer) {
-                                        int imgIndex = series.getImageIndex(img);
-                                        int size = series.size();
-
+                                    if (param instanceof DicomImageElement) {
+                                        Filter<DicomImageElement> filter =
+                                            (Filter<DicomImageElement>) view2DPane
+                                                .getActionValue(ActionW.FILTERED_SERIES.cmd());
+                                        int imgIndex = series.getImageIndex(img, filter);
                                         if (imgIndex < 0) {
                                             imgIndex = 0;
                                             // add again the series for registering listeners
                                             // (require at least one image)
-                                            view2DPane.setSeries(series, -1);
+                                            view2DPane.setSeries(series, null);
                                         }
                                         if (imgIndex >= 0) {
-                                            sliceAction.setMinMaxValue(1, size, imgIndex + 1);
+                                            sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
                                         }
                                     }
                                 }
@@ -457,7 +459,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             // Set to null to be sure that all parameters from the view are apply again to the Series
                             // (for instance it is the same series with more images)
                             v.setSeries(null);
-                            v.setSeries(series, -1);
+                            v.setSeries(series, null);
                         }
                     }
                 }

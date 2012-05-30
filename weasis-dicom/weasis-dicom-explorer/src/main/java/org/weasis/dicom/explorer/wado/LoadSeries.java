@@ -208,7 +208,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             if (splitNb != null || dicomObject != null) {
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null,
                     dicomSeries));
-            } else if (dicomSeries.size() == 0) {
+            } else if (dicomSeries.size(null) == 0) {
                 // Remove in case of split Series and all the SopInstanceUIDs already exist
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, dicomModel, null,
                     dicomSeries));
@@ -895,7 +895,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                 dicomReader = new DicomMediaIO(tempFile);
                 if (dicomReader.readMediaTags()) {
-                    if (dicomSeries.size() == 0) {
+                    if (dicomSeries.size(null) == 0) {
                         // Override the group (patient, study and series) by the dicom fields except the UID of
                         // the group
                         MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
@@ -935,11 +935,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 boolean firstImageToDisplay = false;
                                 MediaElement[] medias = reader.getMediaElement();
                                 if (medias != null) {
-                                    firstImageToDisplay = dicomSeries.size() == 0;
+                                    firstImageToDisplay = dicomSeries.size(null) == 0;
                                     for (MediaElement media : medias) {
                                         dicomModel.applySplittingRules(dicomSeries, media);
                                     }
-                                    if (firstImageToDisplay && dicomSeries.size() == 0) {
+                                    if (firstImageToDisplay && dicomSeries.size(null) == 0) {
                                         firstImageToDisplay = false;
                                     }
                                 }

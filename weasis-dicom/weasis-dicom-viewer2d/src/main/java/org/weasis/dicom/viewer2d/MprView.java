@@ -7,6 +7,7 @@ import javax.media.jai.operator.TransposeType;
 import javax.swing.JComponent;
 
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
@@ -39,10 +40,10 @@ public class MprView extends View2d {
     }
 
     @Override
-    public void setSeries(MediaSeries<DicomImageElement> series, int defaultIndex) {
+    public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         int index = getViewIndex();
         if (index == 0) {
-            super.setSeries(series, defaultIndex);
+            super.setSeries(series, selectedDicom);
         } else {
             MediaSeries<DicomImageElement> oldsequence = this.series;
             if (oldsequence != null) {
@@ -58,7 +59,7 @@ public class MprView extends View2d {
             } else {
                 this.series = new DicomSeries((String) series.getTagValue(series.getTagID()));
 
-                DicomImageElement dcm = series.getMedia(MEDIA_POSITION.MIDDLE);
+                DicomImageElement dcm = series.getMedia(MEDIA_POSITION.MIDDLE, null);
                 if (dcm != null) {
                     double[] val = (double[]) dcm.getTagValue(TagW.ImageOrientationPatient);
                     stackOrientation = ImageOrientation.computeNormalVectorOfPlan(val);
@@ -67,11 +68,14 @@ public class MprView extends View2d {
                     }
                 }
 
-                defaultIndex = defaultIndex < 0 || defaultIndex >= series.size() ? 0 : defaultIndex;
-                frameIndex = defaultIndex + tileOffset;
+                DicomImageElement media = selectedDicom;
+                if (selectedDicom == null) {
+                    media =
+                        series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                            (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                }
+                setImage(media, true);
                 // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
-
-                setImage(series.getMedia(frameIndex), true);
                 Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);
                 center();
@@ -99,8 +103,8 @@ public class MprView extends View2d {
     }
 
     public void anonymizeVolumeNotAxial() {
-        int size = this.series.size();
-        DicomImageElement midSeries = this.series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE);
+        int size = this.series.size(null);
+        DicomImageElement midSeries = this.series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null);
         boolean readVert = false;
 
         double[] v = (double[]) midSeries.getTagValue(TagW.ImageOrientationPatient);

@@ -187,7 +187,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
-        Object media = series.getMedia(mediaPosition);
+        Object media = series.getMedia(mediaPosition, null);
         if (media instanceof MediaElement) {
             MediaElement m = (MediaElement) media;
             String mime = m.getMimeType();
@@ -297,7 +297,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 public void run() {
 
                     if (thumbnailPath == null || !thumbnailPath.canRead()) {
-                        Object media = series.getMedia(mediaPosition);
+                        Object media = series.getMedia(mediaPosition, null);
                         if (media instanceof ImageElement) {
                             final ImageElement image = (ImageElement) media;
                             PlanarImage imgPl = image.getImage(null);
@@ -334,7 +334,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                                     thumbnail = thumb.getAsBufferedImage();
                                 }
                                 if (thumbnail == null
-                                    && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE) != null)) {
+                                    && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE,
+                                        null) != null)) {
                                     readable = false;
                                 } else {
                                     readable = true;
@@ -385,7 +386,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                             e.printStackTrace();
                         }
                         if (thumb == null
-                            && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE) != null)) {
+                            && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null) != null)) {
                             readable = false;
                         } else {
                             readable = true;
@@ -543,9 +544,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         g2d.setFont(FontTools.getFont10());
         int hbleft = y + height - 2;
         if (splitNb != null) {
-            g2d.drawString("#" + splitNb + " [" + series.getMedias().size() + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$
+            g2d.drawString("#" + splitNb + " [" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ $NON-NLS-2$ $NON-NLS-3$
         } else {
-            g2d.drawString("[" + series.getMedias().size() + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
+            g2d.drawString("[" + series.size(null) + "]", x + 2, hbleft); //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
         }
 
         // To avoid concurrency issue

@@ -274,6 +274,8 @@ public class TagW implements Transferable, Serializable {
         "Request Attributes Sequence", TagType.Sequence, 3); //$NON-NLS-1$
     public static final TagW PurposeOfReferenceCodeSequence = new TagW(0x0040A170,
         "Purpose Of Reference Code Sequence", TagType.Sequence); //$NON-NLS-1$
+    public static final TagW CurrentRequestedProcedureEvidenceSequence = new TagW(0x0040A375,
+        "Current Requested Procedure Evidence Sequence", TagType.Sequence); //$NON-NLS-1$;
 
     public static final TagW Units = new TagW(0x00541001, "Units", TagType.String); //$NON-NLS-1$
 

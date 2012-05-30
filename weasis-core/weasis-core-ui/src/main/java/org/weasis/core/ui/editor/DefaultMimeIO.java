@@ -88,19 +88,21 @@ public class DefaultMimeIO implements MediaReader<File> {
                 @Override
                 public void addMedia(MediaElement media) {
                     if (media instanceof MediaElement) {
-                        medias.add(media);
+                        this.add(media);
                         DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                                new SeriesEvent(SeriesEvent.Action.AddImage, this, medias.size() - 1)));
+                                new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
                         }
                     }
                 }
 
                 @Override
                 public String getMimeType() {
-                    for (MediaElement m : medias) {
-                        return m.getMimeType();
+                    synchronized (medias) {
+                        for (MediaElement m : medias) {
+                            return m.getMimeType();
+                        }
                     }
                     return null;
                 }

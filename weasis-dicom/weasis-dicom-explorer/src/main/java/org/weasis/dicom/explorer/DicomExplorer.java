@@ -522,8 +522,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                         // Split Series or series without series number
                         else if ((val1 == null || val2 == null) || val1.intValue() == val2.intValue()) {
-                            DicomImageElement media1 = ((DicomSeries) series).getMedia(0);
-                            DicomImageElement media2 = ((DicomSeries) sp.sequence).getMedia(0);
+                            DicomImageElement media1 = ((DicomSeries) series).getMedia(0, null);
+                            DicomImageElement media2 = ((DicomSeries) sp.sequence).getMedia(0, null);
                             if (media1 != null && media2 != null) {
                                 Float tag1 = (Float) media1.getTagValue(TagW.SliceLocation);
                                 Float tag2 = (Float) media2.getTagValue(TagW.SliceLocation);
@@ -1281,9 +1281,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     private void addSpecialModalityToStudy(Series series) {
         DicomSpecialElement dicomObject = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
         MediaSeriesGroup study = model.getParent(series, DicomModel.study);
-        List list = (List) study.getTagValue(TagW.DicomSpecialElementList);
+        List<DicomSpecialElement> list = (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
         if (list == null) {
-            list = new ArrayList();
+            list = new ArrayList<DicomSpecialElement>();
             study.setTag(TagW.DicomSpecialElementList, list);
         }
         if (!list.contains(dicomObject)) {
@@ -1687,7 +1687,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     frame.setSize(500, 630);
                                     DicomFieldsView view = new DicomFieldsView();
                                     view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
-                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST),
+                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST, null),
                                         EVENT.SELECT));
                                     JPanel panel = new JPanel();
                                     panel.setLayout(new BorderLayout());
@@ -1847,8 +1847,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             }
                         });
                         popupMenu.add(item2);
-                        if (series.getMedias().size() > 1) {
-                            if (series.getMedia(0) instanceof ImageElement) {
+                        if (series.size(null) > 1) {
+                            if (series.getMedia(0, null) instanceof ImageElement) {
                                 popupMenu.add(new JSeparator());
                                 JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb")); //$NON-NLS-1$
                                 item2 = new JMenuItem(Messages.getString("DicomExplorer.from_1")); //$NON-NLS-1$

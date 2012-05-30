@@ -267,7 +267,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
                 for (MediaSeries series : seriesList) {
                     if (series != base) {
-                        base.addAll(series.getMedias());
+                        base.addAll((Collection) series.getMedias(null));
                         removeSeries(series);
                     }
                 }
@@ -506,7 +506,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     return true;
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
-                if (original.getMedias().size() > 0) {
+                if (original.size(null) > 0) {
                     splitSeries(dicomReader, original, media);
                     return true;
                 } else {
@@ -518,7 +518,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
-        final DicomImageElement firstMedia = series.getMedia(0);
+        final DicomImageElement firstMedia = series.getMedia(0, null);
         if (firstMedia == null) {
             // no image
             return true;
