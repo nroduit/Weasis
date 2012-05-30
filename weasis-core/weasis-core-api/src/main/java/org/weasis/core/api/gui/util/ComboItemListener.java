@@ -190,10 +190,10 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         return group;
     }
 
-    public JComboBox createCombo() {
+    public JComboBox createCombo(int width) {
         final ComboItems combo = new ComboItems();
         registerComponent(combo);
-        JMVUtils.setPreferredWidth(combo, 150, 150);
+        JMVUtils.setPreferredWidth(combo, width, width);
         // Update UI before adding the Tooltip feature in the combobox list
         combo.updateUI();
         JMVUtils.addTooltipToComboList(combo);

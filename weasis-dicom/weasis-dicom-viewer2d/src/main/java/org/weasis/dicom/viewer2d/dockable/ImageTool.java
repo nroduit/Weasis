@@ -184,7 +184,7 @@ public class ImageTool extends PluginTool {
             final JLabel presetsLabel = new JLabel();
             panel_3.add(presetsLabel);
             presetsLabel.setText(Messages.getString("ImageTool.presets")); //$NON-NLS-1$
-            final JComboBox presetComboBox = ((ComboItemListener) presetAction).createCombo();
+            final JComboBox presetComboBox = ((ComboItemListener) presetAction).createCombo(160);
             presetComboBox.setMaximumRowCount(10);
             panel_3.add(presetComboBox);
             winLevelPanel.add(panel_3);
@@ -195,7 +195,7 @@ public class ImageTool extends PluginTool {
             final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
             final JLabel label = new JLabel("LUT-Shape:");
             pane.add(label);
-            final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo();
+            final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo(140);
             combo.setMaximumRowCount(10);
             pane.add(combo);
             winLevelPanel.add(pane);
@@ -207,7 +207,7 @@ public class ImageTool extends PluginTool {
             final JLabel lutLabel = new JLabel();
             lutLabel.setText(Messages.getString("ImageTool.lut")); //$NON-NLS-1$
             panel_4.add(lutLabel);
-            final JComboBox lutcomboBox = ((ComboItemListener) lutAction).createCombo();
+            final JComboBox lutcomboBox = ((ComboItemListener) lutAction).createCombo(140);
             panel_4.add(lutcomboBox);
             ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
             if (invlutAction instanceof ToggleButtonListener) {
@@ -223,7 +223,7 @@ public class ImageTool extends PluginTool {
             final JLabel lutLabel = new JLabel();
             lutLabel.setText(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
             panel_4.add(lutLabel);
-            final JComboBox filtercomboBox = ((ComboItemListener) filterAction).createCombo();
+            final JComboBox filtercomboBox = ((ComboItemListener) filterAction).createCombo(160);
             panel_4.add(filtercomboBox);
             winLevelPanel.add(panel_4);
         }
