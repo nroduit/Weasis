@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.SwingUtilities;
@@ -46,6 +48,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     private final DataFlavor[] flavors = { sequenceDataFlavor };
     private PropertyChangeSupport propertyChange = null;
     protected final List<E> medias;
+    protected final Map<Comparator<E>, List<E>> sortedMedias = new HashMap<Comparator<E>, List<E>>(6);
+    protected final Comparator<E> mediaOrder;
     protected SeriesImporter seriesLoader;
     private double fileSize;
 
@@ -58,7 +62,12 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list) {
+        this(tagID, identifier, displayTag, list, null);
+    }
+
+    public Series(TagW tagID, Object identifier, TagW displayTag, List<E> list, Comparator<E> mediaOrder) {
         super(tagID, identifier, displayTag);
+        this.mediaOrder = mediaOrder;
         if (list == null) {
             list = new ArrayList<E>();
             fileSize = 0.0;
@@ -66,11 +75,25 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         medias = Collections.synchronizedList(list);
     }
 
-    @Override
-    public void sort(Comparator<E> comparator) {
-        synchronized (medias) {
-            Collections.sort(medias, comparator);
+    protected void resetSortedMediasMap() {
+        if (!sortedMedias.isEmpty()) {
+            sortedMedias.clear();
         }
+    }
+
+    @Override
+    public List<E> getSortedMedias(Comparator<E> comparator) {
+        // Do not sort when it is the default order.
+        if (comparator != null && !comparator.equals(mediaOrder)) {
+            List<E> sorted = sortedMedias.get(comparator);
+            if (sorted == null) {
+                sorted = new ArrayList<E>(medias);
+                Collections.sort(sorted, comparator);
+                sortedMedias.put(comparator, sorted);
+            }
+            return sorted;
+        }
+        return medias;
     }
 
     @Override
@@ -81,28 +104,33 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public void add(E media) {
         medias.add(media);
+        resetSortedMediasMap();
     }
 
     @Override
     public void add(int index, E media) {
         medias.add(index, media);
+        resetSortedMediasMap();
     }
 
     @Override
     public void addAll(Collection<? extends E> c) {
         medias.addAll(c);
+        resetSortedMediasMap();
     }
 
     @Override
     public void addAll(int index, Collection<? extends E> c) {
         medias.addAll(index, c);
+        resetSortedMediasMap();
     }
 
     @Override
-    public final E getMedia(MEDIA_POSITION position, Filter<E> filter) {
-        synchronized (medias) {
+    public final E getMedia(MEDIA_POSITION position, Filter<E> filter, Comparator<E> sort) {
+        List<E> sortedList = getSortedMedias(sort);
+        synchronized (sortedList) {
             if (filter == null) {
-                int size = medias.size();
+                int size = sortedList.size();
                 if (size == 0) {
                     return null;
                 }
@@ -116,9 +144,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
                 } else if (MEDIA_POSITION.RANDOM.equals(position)) {
                     pos = RANDOM.nextInt(size);
                 }
-                return medias.get(pos);
+                return sortedList.get(pos);
             } else {
-                Iterable<E> iter = filter.filter(medias);
+                Iterable<E> iter = filter.filter(sortedList);
                 Iterator<E> list = iter.iterator();
                 if (list.hasNext()) {
                     E val = list.next();
@@ -148,11 +176,11 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         }
     }
 
-    public final int getImageIndex(E source, Filter<E> filter) {
+    public final int getImageIndex(E source, Filter<E> filter, Comparator<E> sort) {
         if (source == null) {
             return -1;
         }
-        Iterable<E> list = getMedias(filter);
+        Iterable<E> list = getMedias(filter, sort);
         synchronized (list) {
             int index = 0;
             for (E e : list) {
@@ -166,13 +194,15 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public final Iterable<E> getMedias(Filter<E> filter) {
-        return filter == null ? medias : filter.filter(medias);
+    public final Iterable<E> getMedias(Filter<E> filter, Comparator<E> sort) {
+        List<E> sortedList = getSortedMedias(sort);
+        return filter == null ? sortedList : filter.filter(sortedList);
     }
 
     @Override
-    public final List<E> copyOfMedias(Filter<E> filter) {
-        return filter == null ? new ArrayList<E>(medias) : Filter.makeCollection(filter.filter(medias));
+    public final List<E> copyOfMedias(Filter<E> filter, Comparator<E> sort) {
+        List<E> sortedList = getSortedMedias(sort);
+        return filter == null ? new ArrayList<E>(sortedList) : Filter.makeList(filter.filter(sortedList));
     }
 
     /*
@@ -181,15 +211,16 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
      * @see org.weasis.media.data.MediaSeries#getMedia(int)
      */
     @Override
-    public final E getMedia(int index, Filter<E> filter) {
-        synchronized (medias) {
+    public final E getMedia(int index, Filter<E> filter, Comparator<E> sort) {
+        List<E> sortedList = getSortedMedias(sort);
+        synchronized (sortedList) {
             if (filter == null) {
-                if (index >= 0 && index < medias.size()) {
-                    return medias.get(index);
+                if (index >= 0 && index < sortedList.size()) {
+                    return sortedList.get(index);
                 }
             } else {
                 if (index >= 0) {
-                    Iterable<E> iter = filter.filter(medias);
+                    Iterable<E> iter = filter.filter(sortedList);
                     int k = 0;
                     for (E elem : iter) {
                         if (k == index) {
@@ -220,6 +251,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             }
         }
         medias.clear();
+        resetSortedMediasMap();
         Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
         if (thumb != null) {
             thumb.dispose();
@@ -314,7 +346,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         // this.getLoadSeries().getProgressBar().getMaximum();
         // toolTips.append("Number of Frames: " + seqSize + "<br>");
 
-        E media = this.getMedia(MEDIA_POSITION.MIDDLE, null);
+        E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
             RenderedImage img = image.getImage();
@@ -346,6 +378,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.repaint();
+            }
+            if (!open) {
+                resetSortedMediasMap();
             }
         }
     }
@@ -382,7 +417,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
 
     @Override
-    public E getNearestImage(double location, int offset, Filter<E> filter) {
+    public E getNearestImage(double location, int offset, Filter<E> filter, Comparator<E> sort) {
         return null;
     }
 

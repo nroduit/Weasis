@@ -37,7 +37,7 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
         @Override
         public void addSeries(MediaSeries<MediaElement> series) {
             if (series != null) {
-                Iterable<MediaElement> list = series.getMedias(null);
+                Iterable<MediaElement> list = series.getMedias(null, null);
                 synchronized (list) {
                     for (MediaElement m : list) {
                         // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()

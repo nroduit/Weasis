@@ -142,6 +142,7 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW StudyTime = new TagW(0x00080030, "Study Time", TagType.Time, 2); //$NON-NLS-1$
     public static final TagW AcquisitionTime = new TagW(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
+    public static final TagW ContentTime = new TagW(0x00080033, "Content Time", TagType.Time, 4); //$NON-NLS-1$
     public static final TagW AccessionNumber = new TagW(0x00080050, "Accession Number", TagType.String, 2); //$NON-NLS-1$
     public static final TagW RetrieveAETitle = new TagW(0x00080054, "Retrieve AE Title", TagType.String, 3); //$NON-NLS-1$
     public static final TagW Modality = new TagW(0x00080060, "Modality", TagType.String, 3); //$NON-NLS-1$

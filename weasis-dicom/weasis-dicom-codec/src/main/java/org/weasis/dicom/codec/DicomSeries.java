@@ -11,6 +11,7 @@
 package org.weasis.dicom.codec;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +38,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     public DicomSeries(TagW displayTag, String subseriesInstanceUID, List<DicomImageElement> c) {
-        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, displayTag, c);
+        super(TagW.SubseriesInstanceUID, subseriesInstanceUID, displayTag, c, SortSeriesStack.instanceNumber);
     }
 
     @Override
@@ -136,8 +137,9 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public DicomImageElement getNearestImage(double location, int offset, Filter<DicomImageElement> filter) {
-        Iterable<DicomImageElement> mediaList = getMedias(filter);
+    public DicomImageElement getNearestImage(double location, int offset, Filter<DicomImageElement> filter,
+        Comparator<DicomImageElement> sort) {
+        Iterable<DicomImageElement> mediaList = getMedias(filter, sort);
         DicomImageElement nearest = null;
         int index = 0;
         int bestIndex = -1;
@@ -161,20 +163,21 @@ public class DicomSeries extends Series<DicomImageElement> {
             }
         }
         if (offset > 0) {
-            return getMedia(bestIndex + offset, filter);
+            return getMedia(bestIndex + offset, filter, sort);
         }
         return nearest;
     }
 
-    public static synchronized void startPreloading(DicomSeries series, int index) {
-        if (series != null) {
+    public static synchronized void startPreloading(DicomSeries series, List<DicomImageElement> imageList,
+        int currentIndex) {
+        if (series != null && imageList != null) {
             if (preloadingTask != null) {
                 if (preloadingTask.getSeries() == series) {
                     return;
                 }
                 stopPreloading(preloadingTask.getSeries());
             }
-            preloadingTask = new PreloadingTask(series, index);
+            preloadingTask = new PreloadingTask(series, imageList, currentIndex);
             preloadingTask.start();
         }
     }
@@ -196,10 +199,10 @@ public class DicomSeries extends Series<DicomImageElement> {
         private final List<DicomImageElement> imageList;
         private final DicomSeries series;
 
-        public PreloadingTask(DicomSeries series, int index) {
+        public PreloadingTask(DicomSeries series, List<DicomImageElement> imageList, int currentIndex) {
             this.series = series;
-            this.imageList = series.copyOfMedias(null);
-            this.index = index;
+            this.imageList = imageList;
+            this.index = currentIndex;
         }
 
         public synchronized boolean isPreloading() {
@@ -208,6 +211,10 @@ public class DicomSeries extends Series<DicomImageElement> {
 
         public DicomSeries getSeries() {
             return series;
+        }
+
+        public List<DicomImageElement> getImageList() {
+            return imageList;
         }
 
         public synchronized void setPreloading(boolean preloading) {

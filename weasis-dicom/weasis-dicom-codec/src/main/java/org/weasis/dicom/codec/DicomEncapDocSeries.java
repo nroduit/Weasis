@@ -115,7 +115,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
     @Override
     public File getExtractFile() {
-        DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST, null);
+        DicomEncapDocElement media = getMedia(MEDIA_POSITION.FIRST, null, null);
         if (media != null) {
             return media.getDocument();
         }

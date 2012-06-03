@@ -128,10 +128,10 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
     }
 
     protected synchronized void setDataList(Object[] objects, boolean doTriggerAction) {
+        Object oldSelection = model.getSelectedItem();
+        model.removeListDataListener(this);
+        model.removeAllElements();
         if (objects != null && objects.length > 0) {
-            Object oldSelection = model.getSelectedItem();
-            model.removeListDataListener(this);
-            model.removeAllElements();
             boolean oldSelectionStillExist = false;
 
             for (Object object : objects) {
@@ -162,7 +162,6 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
             if (!doTriggerAction) {
                 model.addListDataListener(this);
             }
-
         }
     }
 

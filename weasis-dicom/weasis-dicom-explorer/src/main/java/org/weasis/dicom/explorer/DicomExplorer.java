@@ -522,8 +522,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                         // Split Series or series without series number
                         else if ((val1 == null || val2 == null) || val1.intValue() == val2.intValue()) {
-                            DicomImageElement media1 = ((DicomSeries) series).getMedia(0, null);
-                            DicomImageElement media2 = ((DicomSeries) sp.sequence).getMedia(0, null);
+                            DicomImageElement media1 = ((DicomSeries) series).getMedia(0, null, null);
+                            DicomImageElement media2 = ((DicomSeries) sp.sequence).getMedia(0, null, null);
                             if (media1 != null && media2 != null) {
                                 Float tag1 = (Float) media1.getTagValue(TagW.SliceLocation);
                                 Float tag2 = (Float) media2.getTagValue(TagW.SliceLocation);
@@ -1687,8 +1687,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     frame.setSize(500, 630);
                                     DicomFieldsView view = new DicomFieldsView();
                                     view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory
-                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST, null),
-                                        EVENT.SELECT));
+                                        .createSeriesViewer(null), series, series.getMedia(MEDIA_POSITION.FIRST, null,
+                                        null), EVENT.SELECT));
                                     JPanel panel = new JPanel();
                                     panel.setLayout(new BorderLayout());
                                     panel.add(view);
@@ -1848,7 +1848,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         });
                         popupMenu.add(item2);
                         if (series.size(null) > 1) {
-                            if (series.getMedia(0, null) instanceof ImageElement) {
+                            if (series.getMedia(0, null, null) instanceof ImageElement) {
                                 popupMenu.add(new JSeparator());
                                 JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb")); //$NON-NLS-1$
                                 item2 = new JMenuItem(Messages.getString("DicomExplorer.from_1")); //$NON-NLS-1$

@@ -139,16 +139,16 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 JMenu menu = ((ComboItemListener) filterAction).createMenu("Filter");
                 menuRoot.add(menu);
             }
-            ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
-            if (stackAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) stackAction).createMenu("Sort Stack by");
-                ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                if (invstackAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invstackAction).createMenu("Inverse Stack"));
-                }
-                menuRoot.add(menu);
-            }
+            // ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
+            // if (stackAction instanceof ComboItemListener) {
+            // JMenu menu = ((ComboItemListener) stackAction).createMenu("Sort Stack by");
+            // ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
+            // if (invstackAction instanceof ToggleButtonListener) {
+            // menu.add(new JSeparator());
+            // menu.add(((ToggleButtonListener) invstackAction).createMenu("Inverse Stack"));
+            // }
+            // menuRoot.add(menu);
+            // }
             ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
             if (rotateAction instanceof SliderChangeListener) {
                 menuRoot.add(new JSeparator());
@@ -262,7 +262,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                                         Filter<ImageElement> filter =
                                             (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES
                                                 .cmd());
-                                        int imgIndex = series.getImageIndex(img, filter);
+                                        int imgIndex =
+                                            series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                                         if (imgIndex < 0) {
                                             imgIndex = 0;
                                             // add again the series for registering listeners

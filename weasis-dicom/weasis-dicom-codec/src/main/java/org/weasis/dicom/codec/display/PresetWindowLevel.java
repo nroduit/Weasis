@@ -31,10 +31,12 @@ import org.weasis.core.api.image.LutShape.eFunction;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.Messages;
 
 public class PresetWindowLevel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);
 
+    public static final String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
     private static final Map<String, List<PresetWindowLevel>> presetListByModality = getPresetListByModality();
 
     private final String name;
@@ -184,13 +186,7 @@ public class PresetWindowLevel {
             }
         }
 
-        // String fullDynamicExplanation = Messages.getString("PresetWindowLevel.full");
-        // NOTE : PresetWindowLevel.full property should not be use anymore !!
-        String fullDynamicExplanation = "Auto Level";
-        // String imageTag = " [" + Messages.getString("PresetWindowLevel.imageTag") + "]";
-        String imageTag = " [" + "Image" + "]";
-
-        presetList.add(new PresetWindowLevel(fullDynamicExplanation + imageTag, image.getFullDynamicWidth(), image
+        presetList.add(new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(), image
             .getFullDynamicCenter(), defaultLutShape));
 
         String modalityName = (String) image.getTagValue(TagW.Modality);

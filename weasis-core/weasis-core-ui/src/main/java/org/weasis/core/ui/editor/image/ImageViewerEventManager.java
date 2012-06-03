@@ -87,8 +87,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                         series = (Series) selectedImagePane.getSeries();
                         image =
                             series.getMedia(index,
-                                (Filter<ImageElement>) selectedImagePane.getActionValue(ActionW.FILTERED_SERIES.cmd()));
-
+                                (Filter<ImageElement>) selectedImagePane.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                                selectedImagePane.getCurrentSortComparator());
                     }
                 }
                 Number location = index;

@@ -59,7 +59,7 @@ public class MprView extends View2d {
             } else {
                 this.series = new DicomSeries((String) series.getTagValue(series.getTagID()));
 
-                DicomImageElement dcm = series.getMedia(MEDIA_POSITION.MIDDLE, null);
+                DicomImageElement dcm = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
                 if (dcm != null) {
                     double[] val = (double[]) dcm.getTagValue(TagW.ImageOrientationPatient);
                     stackOrientation = ImageOrientation.computeNormalVectorOfPlan(val);
@@ -72,7 +72,8 @@ public class MprView extends View2d {
                 if (selectedDicom == null) {
                     media =
                         series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                            (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                            (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                            getCurrentSortComparator());
                 }
                 setImage(media, true);
                 // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
@@ -104,7 +105,7 @@ public class MprView extends View2d {
 
     public void anonymizeVolumeNotAxial() {
         int size = this.series.size(null);
-        DicomImageElement midSeries = this.series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null);
+        DicomImageElement midSeries = this.series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
         boolean readVert = false;
 
         double[] v = (double[]) midSeries.getTagValue(TagW.ImageOrientationPatient);

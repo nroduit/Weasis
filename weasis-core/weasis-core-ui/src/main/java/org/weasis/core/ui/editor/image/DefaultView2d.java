@@ -44,6 +44,7 @@ import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -82,6 +83,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
@@ -294,7 +296,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             E media = selectedMedia;
             if (selectedMedia == null) {
                 series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
@@ -492,11 +494,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    public Comparator<E> getCurrentSortComparator() {
+        SeriesComparator<E> sort = (SeriesComparator<E>) actionsInView.get(ActionW.SORTSTACK.cmd());
+        Boolean reverse = (Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd());
+        return (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
+    }
+
     @Override
     public int getFrameIndex() {
         if (series instanceof Series) {
             return ((Series<E>) series).getImageIndex(imageLayer.getSourceImage(),
-                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
         }
         return 0;
     }
@@ -677,13 +685,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                     imgElement =
                         series.getNearestImage(location, tileOffset,
-                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
                 }
             } else if (value instanceof Integer) {
                 // TODO recieve Integer and crossline or synch are true
                 imgElement =
                     series.getMedia((Integer) value + tileOffset,
-                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode

@@ -187,7 +187,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
-        Object media = series.getMedia(mediaPosition, null);
+        Object media = series.getMedia(mediaPosition, null, null);
         if (media instanceof MediaElement) {
             MediaElement m = (MediaElement) media;
             String mime = m.getMimeType();
@@ -297,7 +297,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 public void run() {
 
                     if (thumbnailPath == null || !thumbnailPath.canRead()) {
-                        Object media = series.getMedia(mediaPosition, null);
+                        Object media = series.getMedia(mediaPosition, null, null);
                         if (media instanceof ImageElement) {
                             final ImageElement image = (ImageElement) media;
                             PlanarImage imgPl = image.getImage(null);
@@ -335,7 +335,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                                 }
                                 if (thumbnail == null
                                     && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE,
-                                        null) != null)) {
+                                        null, null) != null)) {
                                     readable = false;
                                 } else {
                                     readable = true;
@@ -386,7 +386,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                             e.printStackTrace();
                         }
                         if (thumb == null
-                            && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null) != null)) {
+                            && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null) != null)) {
                             readable = false;
                         } else {
                             readable = true;

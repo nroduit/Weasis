@@ -440,7 +440,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
                                     DicomImageElement midImage =
                                         ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
-                                            .getMedia(MEDIA_POSITION.MIDDLE, null);
+                                            .getMedia(MEDIA_POSITION.MIDDLE, null, null);
                                     DicomObject seq = mkIconItem(midImage);
                                     if (seq != null) {
                                         serrec.putNestedDicomObject(Tag.IconImageSequence, seq);

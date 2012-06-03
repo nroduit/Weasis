@@ -32,7 +32,6 @@ import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -48,12 +47,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.VR;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -230,13 +224,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             imageLayer.updateImageOperation(OverlayOperation.name);
         } else if (command.equals(ActionW.SORTSTACK.cmd())) {
             actionsInView.put(ActionW.SORTSTACK.cmd(), val);
-            sortStack((Comparator<DicomImageElement>) val);
+            sortStack(getCurrentSortComparator());
         } else if (command.equals(ActionW.VIEWINGPROTOCOL.cmd())) {
             actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), val);
             repaint();
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
-            sortStack((Comparator<DicomImageElement>) actionsInView.get(ActionW.SORTSTACK.cmd()));
+            sortStack(getCurrentSortComparator());
         }
         // IMAGE_PIX_PADDING is already handled in DefaultView2D
         // else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
@@ -252,8 +246,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             setSeries(series);
         } else if (command.equals(ActionW.PR_STATE.cmd())) {
             // TODO use PR reader for other frame when changing image of the series
-            PresentationStateReader pr = (PresentationStateReader) val;
-            actionsInView.put(ActionW.PR_STATE.cmd(), pr);
+            PresentationStateReader pr =
+                val instanceof DicomSpecialElement ? new PresentationStateReader((DicomSpecialElement) val) : null;
+            actionsInView.put(ActionW.PR_STATE.cmd(), val);
             actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
             DicomImageElement m = getImage();
@@ -360,7 +355,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (selectedDicom == null) {
                 media =
                     series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                        (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                        (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                        getCurrentSortComparator());
             }
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
@@ -394,17 +390,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     protected void sortStack(Comparator<DicomImageElement> sortComparator) {
         if (sortComparator != null) {
-            series.sort((Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd()) ? Collections
-                .reverseOrder(sortComparator) : sortComparator);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-            boolean rescaleView = (val == null || val <= 0.0);
-            setImage(getImage(), rescaleView);
-            if (rescaleView) {
-                val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                zoom(val == null ? 1.0 : val);
-                center();
-            }
+            setSeries(series, getImage());
         }
     }
 
@@ -426,8 +412,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     double min = Double.MAX_VALUE;
                     double max = -Double.MAX_VALUE;
                     final Iterable<DicomImageElement> list =
-                        selSeries
-                            .getMedias((Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                        selSeries.getMedias(
+                            (Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                            getCurrentSortComparator());
                     synchronized (list) {
                         for (DicomImageElement dcm : list) {
                             double[] loc = (double[]) dcm.getTagValue(TagW.SlicePosition);
@@ -1060,74 +1047,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
                         }
                     }
-
-                    if (series != null) {
-                        DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
-                        if (model instanceof DicomModel) {
-                            MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
-                            List<DicomSpecialElement> list =
-                                (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
-                            if (list != null) {
-                                String seriesUID = (String) series.getTagValue(TagW.SeriesInstanceUID);
-
-                                JMenu menu = new JMenu(ActionW.PR_STATE.getTitle());
-                                JMenuItem mItem = new JMenuItem("None");
-                                mItem.addActionListener(new ActionListener() {
-
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        propertyChange(new PropertyChangeEvent(EventManager.getInstance(),
-                                            ActionW.PR_STATE.cmd(), null, null));
-                                    }
-                                });
-                                menu.add(mItem);
-
-                                int elIndex = 1;
-                                for (final DicomSpecialElement element : DicomSpecialElement.PR.filter(list)) {
-                                    DicomElement seq =
-                                        (DicomElement) element.getTagValue(TagW.ReferencedSeriesSequence);
-                                    if (seq != null && seq.vr() == VR.SQ) {
-                                        for (int i = 0; i < seq.countItems(); ++i) {
-                                            DicomObject dcmObj = null;
-                                            try {
-                                                dcmObj = seq.getDicomObject(i);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                            }
-                                            if (dcmObj != null
-                                                && seriesUID.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
-                                                String desc = (String) element.getTagValue(TagW.SeriesDescription);
-                                                if (desc == null) {
-                                                    desc = "PR" + elIndex;
-                                                    elIndex++;
-                                                } else {
-                                                    int limit = 25;
-                                                    int size = desc.length();
-                                                    if (size > limit) {
-                                                        desc = desc.substring(0, limit) + "..."; //$NON-NLS-1$
-                                                    }
-                                                }
-                                                JMenuItem menuItem = new JMenuItem(desc);
-                                                menuItem.addActionListener(new ActionListener() {
-
-                                                    @Override
-                                                    public void actionPerformed(ActionEvent e) {
-                                                        propertyChange(new PropertyChangeEvent(EventManager
-                                                            .getInstance(), ActionW.PR_STATE.cmd(), null,
-                                                            new PresentationStateReader(element)));
-                                                    }
-                                                });
-                                                menu.add(menuItem);
-                                            }
-                                        }
-                                    }
-                                }
-                                if (menu.getMenuComponentCount() > 1) {
-                                    popupMenu.add(menu);
-                                }
-                            }
+                    ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
+                    if (prAction instanceof ComboItemListener) {
+                        ComboItemListener pr = (ComboItemListener) prAction;
+                        if (pr.getModel().getSize() > 1) {
+                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
                         }
                     }
+
                     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                     if (presetAction instanceof ComboItemListener) {
                         popupMenu.add(((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages

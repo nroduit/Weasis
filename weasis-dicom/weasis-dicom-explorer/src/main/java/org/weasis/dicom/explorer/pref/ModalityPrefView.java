@@ -119,6 +119,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         fillMap(TagW.SliceThickness);
         fillMap(TagW.AcquisitionDate);
         fillMap(TagW.AcquisitionTime);
+        fillMap(TagW.ContentTime);
 
         fillMap(TagW.ImagePositionPatient);
         fillMap(TagW.ImageOrientationPatient);

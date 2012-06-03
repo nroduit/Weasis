@@ -35,7 +35,7 @@ public abstract class Filter<T> {
         return count;
     }
 
-    public static <T> List<T> makeCollection(Iterable<T> iter) {
+    public static <T> List<T> makeList(Iterable<T> iter) {
         List<T> list = new ArrayList<T>();
         for (T item : iter) {
             list.add(item);

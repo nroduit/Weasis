@@ -174,17 +174,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    protected ToggleButtonListener newInverseStackAction() {
-        return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
-
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
-            }
-        };
-    }
-
-    @Override
     public ActionW getActionFromCommand(String command) {
         ActionW action = super.getActionFromCommand(command);
 

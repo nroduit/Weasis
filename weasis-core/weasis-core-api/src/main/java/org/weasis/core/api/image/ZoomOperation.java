@@ -44,7 +44,7 @@ public class ZoomOperation extends AbstractOperation {
         if (zoomFactor == null || image == null) {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
-        } else if (zoomFactor == 1.0 && image.getRescaleX() == 1.0 && image.getRescaleY() == 1.0) {
+        } else if (zoomFactor == 0.0 || (zoomFactor == 1.0 && image.getRescaleX() == 1.0 && image.getRescaleY() == 1.0)) {
             result = source;
         } else {
             float val = (float) Math.abs(zoomFactor);

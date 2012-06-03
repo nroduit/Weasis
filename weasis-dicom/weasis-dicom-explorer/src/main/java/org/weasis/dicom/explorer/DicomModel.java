@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -267,11 +268,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
                 for (MediaSeries series : seriesList) {
                     if (series != base) {
-                        base.addAll((Collection) series.getMedias(null));
+                        base.addAll((Collection) series.getMedias(null, null));
                         removeSeries(series);
                     }
                 }
-                base.sort(SortSeriesStack.instanceNumber);
+                // Force to sort the new merged media list
+                List sortedMedias = base.getSortedMedias(null);
+                Collections.sort(sortedMedias, SortSeriesStack.instanceNumber);
                 // update observer
                 this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Replace, DicomModel.this, base,
                     base));
@@ -518,7 +521,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
-        final DicomImageElement firstMedia = series.getMedia(0, null);
+        final DicomImageElement firstMedia = series.getMedia(0, null, null);
         if (firstMedia == null) {
             // no image
             return true;

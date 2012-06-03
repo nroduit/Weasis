@@ -26,8 +26,6 @@ import org.weasis.core.api.media.data.TagW;
 
 public class DicomSpecialElement extends MediaElement<URI> {
 
-    public static final String[] NULL_LIST = { ActionState.NONE };
-
     public static final Filter<DicomSpecialElement> PR = new Filter<DicomSpecialElement>() {
         @Override
         public boolean passes(DicomSpecialElement dicom) {
@@ -43,7 +41,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
     public String toString() {
         String desc = (String) getTagValue(TagW.SeriesDescription);
         if (desc == null) {
-            desc = "KO " + getTagValue(TagW.InstanceNumber);
+            desc = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber);
         } else {
             if (desc.length() > 30) {
                 desc = desc.substring(0, 27) + "..."; //$NON-NLS-1$
@@ -60,9 +58,12 @@ public class DicomSpecialElement extends MediaElement<URI> {
     public static final Object[] getKoSeriesFilteredListWithNone(String seriesUID,
         List<DicomSpecialElement> studyElements) {
         if (studyElements == null) {
-            return NULL_LIST;
+            return null;
         } else {
             List filteredList = getKoSeriesFilteredList(seriesUID, studyElements);
+            if (filteredList.size() < 1) {
+                return null;
+            }
             filteredList.add(0, ActionState.NONE);
             return filteredList.toArray();
         }
@@ -98,6 +99,46 @@ public class DicomSpecialElement extends MediaElement<URI> {
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return filteredList;
+    }
+
+    public static final Object[] getPrSeriesFilteredListWithNone(String seriesUID,
+        List<DicomSpecialElement> studyElements) {
+        if (studyElements == null) {
+            return null;
+        } else {
+            List filteredList = getPrSeriesFilteredList(seriesUID, studyElements);
+            if (filteredList.size() < 1) {
+                return null;
+            }
+            filteredList.add(0, ActionState.NONE);
+            return filteredList.toArray();
+        }
+    }
+
+    public static final List<DicomSpecialElement> getPrSeriesFilteredList(String seriesUID,
+        List<DicomSpecialElement> studyElements) {
+        List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
+        if (studyElements != null) {
+            for (DicomSpecialElement dicom : studyElements) {
+                if (seriesUID != null && "PR".equals(dicom.getTagValue(TagW.Modality))) {
+                    DicomElement seq = (DicomElement) dicom.getTagValue(TagW.ReferencedSeriesSequence);
+                    if (seq != null && seq.vr() == VR.SQ) {
+                        for (int i = 0; i < seq.countItems(); ++i) {
+                            DicomObject dcmObj = null;
+                            try {
+                                dcmObj = seq.getDicomObject(i);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            if (dcmObj != null && seriesUID.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
+                                filteredList.add(dicom);
                             }
                         }
                     }

@@ -175,7 +175,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public void setSelectedImagePaneFromFocus(DefaultView2d<DicomImageElement> defaultView2d) {
         setSelectedImagePane(defaultView2d);
         if (defaultView2d != null && defaultView2d.getSeries() instanceof DicomSeries) {
-            DicomSeries.startPreloading((DicomSeries) defaultView2d.getSeries(), defaultView2d.getFrameIndex());
+            DicomSeries series = (DicomSeries) defaultView2d.getSeries();
+            DicomSeries.startPreloading(series, series.copyOfMedias(
+                (Filter<DicomImageElement>) defaultView2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                defaultView2d.getCurrentSortComparator()), defaultView2d.getFrameIndex());
         }
     }
 
@@ -368,7 +371,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                         Filter<DicomImageElement> filter =
                                             (Filter<DicomImageElement>) view2DPane
                                                 .getActionValue(ActionW.FILTERED_SERIES.cmd());
-                                        int imgIndex = series.getImageIndex(img, filter);
+                                        int imgIndex =
+                                            series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                                         if (imgIndex < 0) {
                                             imgIndex = 0;
                                             // add again the series for registering listeners

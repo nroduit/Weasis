@@ -23,7 +23,7 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
         FIRST, MIDDLE, LAST, RANDOM
     };
 
-    void sort(Comparator<E> comparator);
+    List<E> getSortedMedias(Comparator<E> comparator);
 
     void addMedia(MediaElement media);
 
@@ -35,13 +35,13 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     void addAll(int index, Collection<? extends E> c);
 
-    E getMedia(MEDIA_POSITION position, Filter<E> filter);
+    E getMedia(MEDIA_POSITION position, Filter<E> filter, Comparator<E> sort);
 
-    Iterable<E> getMedias(Filter<E> filter);
+    Iterable<E> getMedias(Filter<E> filter, Comparator<E> sort);
 
-    List<E> copyOfMedias(Filter<E> filter);
+    List<E> copyOfMedias(Filter<E> filter, Comparator<E> sort);
 
-    E getMedia(int index, Filter<E> filter);
+    E getMedia(int index, Filter<E> filter, Comparator<E> sort);
 
     @Override
     void dispose();
@@ -64,7 +64,7 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     void setSelected(boolean b, E selectedMedia);
 
-    E getNearestImage(double location, int offset, Filter<E> filter);
+    E getNearestImage(double location, int offset, Filter<E> filter, Comparator<E> sort);
 
     double getFileSize();
 }

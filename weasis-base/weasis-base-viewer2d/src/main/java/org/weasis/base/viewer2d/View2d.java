@@ -19,8 +19,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.Collections;
-import java.util.Comparator;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
@@ -112,10 +110,10 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (series == null) {
             return;
         }
-        if (evt.getPropertyName().equals(ActionW.INVERSESTACK.cmd())) {
-            actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
-            sortStack();
-        }
+        // if (evt.getPropertyName().equals(ActionW.INVERSESTACK.cmd())) {
+        // actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
+        // sortStack();
+        // }
     }
 
     @Override
@@ -135,7 +133,8 @@ public class View2d extends DefaultView2d<ImageElement> {
             if (selectedImage == null) {
                 media =
                     series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                        (Filter<ImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()));
+                        (Filter<ImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                        getCurrentSortComparator());
             }
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
@@ -153,23 +152,6 @@ public class View2d extends DefaultView2d<ImageElement> {
     @Override
     protected void setDefautWindowLevel(ImageElement img) {
         super.setDefautWindowLevel(img);
-    }
-
-    protected void sortStack() {
-        Comparator<ImageElement> sortComparator = (Comparator<ImageElement>) actionsInView.get(ActionW.SORTSTACK.cmd());
-        if (sortComparator != null) {
-            series.sort((Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd()) ? Collections
-                .reverseOrder(sortComparator) : sortComparator);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-            boolean rescaleView = (val == null || val <= 0.0);
-            setImage(getImage(), rescaleView);
-            if (rescaleView) {
-                val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                zoom(val == null ? 1.0 : val);
-                center();
-            }
-        }
     }
 
     @Override
@@ -350,17 +332,17 @@ public class View2d extends DefaultView2d<ImageElement> {
                     if (presetAction instanceof ComboItemListener) {
                         popupMenu.add(((ComboItemListener) presetAction).createUnregisteredRadioMenu("Presets"));
                     }
-                    ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
-                    if (stackAction instanceof ComboItemListener) {
-                        JMenu menu = ((ComboItemListener) stackAction).createUnregisteredRadioMenu("Sort Stack by");
-                        ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                        if (invstackAction instanceof ToggleButtonListener) {
-                            menu.add(new JSeparator());
-                            menu.add(((ToggleButtonListener) invstackAction)
-                                .createUnregiteredJCheckBoxMenuItem("Inverse Stack"));
-                        }
-                        popupMenu.add(menu);
-                    }
+                    // ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
+                    // if (stackAction instanceof ComboItemListener) {
+                    // JMenu menu = ((ComboItemListener) stackAction).createUnregisteredRadioMenu("Sort Stack by");
+                    // ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
+                    // if (invstackAction instanceof ToggleButtonListener) {
+                    // menu.add(new JSeparator());
+                    // menu.add(((ToggleButtonListener) invstackAction)
+                    // .createUnregiteredJCheckBoxMenuItem("Inverse Stack"));
+                    // }
+                    // popupMenu.add(menu);
+                    // }
 
                     ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
                     if (rotateAction instanceof SliderChangeListener) {

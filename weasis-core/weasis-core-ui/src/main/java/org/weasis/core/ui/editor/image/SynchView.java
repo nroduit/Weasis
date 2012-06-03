@@ -43,6 +43,10 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.LUT, true);
         actions.put(ActionW.INVERSELUT, true);
         actions.put(ActionW.FILTER, true);
+        actions.put(ActionW.INVERSESTACK, true);
+        actions.put(ActionW.SORTSTACK, true);
+        actions.put(ActionW.KEY_OBJECT, true);
+        actions.put(ActionW.PR_STATE, true);
         DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), Mode.Tile, //$NON-NLS-1$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 

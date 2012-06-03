@@ -232,8 +232,8 @@ public abstract class ImageOrientation {
         MediaSeries<DicomImageElement> series2) {
         // Test if the two series have the same orientation
         if (series1 != null && series2 != null) {
-            DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null);
-            DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null);
+            DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+            DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null, null);
             return hasSameOrientation(image1, image2);
         }
         return false;

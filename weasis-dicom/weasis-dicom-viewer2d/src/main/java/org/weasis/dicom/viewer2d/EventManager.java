@@ -266,9 +266,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             @Override
             public void itemStateChanged(Object object) {
-                if (object instanceof String) {
-                    firePropertyChange(action.cmd(), null, object);
-                }
+                firePropertyChange(action.cmd(), null, object);
             }
         };
     }
@@ -286,19 +284,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                 Series<DicomImageElement> series = null;
                 DicomImageElement image = null;
-
-                if (selectedView2dContainer != null && selectedView2dContainer.getSelectedImagePane() != null) {
-                    series = (Series<DicomImageElement>) selectedView2dContainer.getSelectedImagePane().getSeries();
-                    if (series != null) {
-                        // TODO possible issue, new image can be added to the series that means the index can change
-                        // from now to the moment of consuming this event
-                        image =
-                            series.getMedia(index, (Filter<DicomImageElement>) selectedView2dContainer
-                                .getSelectedImagePane().getActionValue(ActionW.FILTERED_SERIES.cmd()));
-                        // Ensure to load image before calling the default preset (requires pixel min and max)
-                        if (!image.isImageAvailable()) {
-                            // Load the image
-                            image.getImage();
+                if (selectedView2dContainer != null) {
+                    DefaultView2d<DicomImageElement> selectedImagePane = selectedView2dContainer.getSelectedImagePane();
+                    if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {
+                        series = (Series<DicomImageElement>) selectedImagePane.getSeries();
+                        if (series != null) {
+                            // TODO possible issue, new image can be added to the series that means the index can change
+                            // from now to the moment of consuming this event
+                            image =
+                                series.getMedia(index, (Filter<DicomImageElement>) selectedImagePane
+                                    .getActionValue(ActionW.FILTERED_SERIES.cmd()), selectedImagePane
+                                    .getCurrentSortComparator());
+                            // Ensure to load image before calling the default preset (requires pixel min and max)
+                            if (!image.isImageAvailable()) {
+                                // Load the image
+                                image.getImage();
+                            }
                         }
                     }
                 }
@@ -341,7 +342,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
 
-                    if (oldPreset != null) {
+                    if (oldPreset != null && !PresetWindowLevel.fullDynamicExplanation.equals(oldPreset.getName())) {
                         List<PresetWindowLevel> presetList = image.getPresetList();
                         if (presetList != null) {
                             for (Iterator<PresetWindowLevel> it = presetList.iterator(); it.hasNext();) {
@@ -351,10 +352,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     break;
                                 }
                             }
-                            if (newPreset == null) {
-                                newPreset = image.getDefaultPreset();
-                            }
                         }
+                    }
+                    if (newPreset == null) {
+                        newPreset = image.getDefaultPreset();
                     }
 
                     presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
@@ -376,7 +377,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // "firePropertyChange(ActionW.SCROLL_SERIES.cmd()..." so "actionsInView" Map that concerns
                     // (Preset, Window, Level and LutShape) key values will be correctly set and
                     // "updateImageOperation(WindowLevelOperation.." will be called
-                    // TODO Is that necessary? multiply the image rendering request
                     firePropertyChange(ActionW.PRESET.cmd(), null, newPreset);
 
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
@@ -557,17 +557,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             @Override
             public void itemStateChanged(Object object) {
                 firePropertyChange(action.cmd(), null, object);
-            }
-        };
-    }
-
-    @Override
-    protected ToggleButtonListener newInverseStackAction() {
-        return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
-
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
             }
         };
     }
@@ -805,8 +794,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK
             .cmd()));
 
-        Object[] filteredList;
+        Object[] filteredList = null;
+        Object[] prList = null;
         Object selKo = null;
+        Object selPr = null;
         DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
         if (model instanceof DicomModel) {
             MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
@@ -816,13 +807,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 DicomSpecialElement.getKoSeriesFilteredListWithNone(
                     (String) series.getTagValue(TagW.SeriesInstanceUID), list);
             selKo = defaultView2d.getActionValue(ActionW.KEY_OBJECT.cmd());
-        } else {
-            filteredList = DicomSpecialElement.NULL_LIST;
+            prList =
+                DicomSpecialElement.getPrSeriesFilteredListWithNone(
+                    (String) series.getTagValue(TagW.SeriesInstanceUID), list);
+            selPr = defaultView2d.getActionValue(ActionW.PR_STATE.cmd());
         }
         koAction.setDataListWithoutTriggerAction(filteredList);
-        koAction.setSelectedItemWithoutTriggerAction(selKo == null ? ActionState.NONE : selKo);
-
-        prAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.PR_STATE.cmd()));
+        koAction.setSelectedItemWithoutTriggerAction(selKo == null ? filteredList == null ? null : ActionState.NONE
+            : selKo);
+        prAction.setDataListWithoutTriggerAction(prList);
+        prAction.setSelectedItemWithoutTriggerAction(selPr == null ? prList == null ? null : ActionState.NONE : selPr);
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
@@ -889,7 +883,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (Mode.Stack.equals(synchView.getMode())) {
                         boolean hasLink = false;
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                        DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null);
+                        DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
                         double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
 
                         for (int i = 0; i < panes.size(); i++) {
@@ -935,11 +929,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListeners(pane, synchView);
                         }
-                        // // Force all views to have all the same Key Object Selection and Presentation State
-                        // firePropertyChange(ActionW.KEY_OBJECT.cmd(), null,
-                        // viewPane.getActionValue(ActionW.KEY_OBJECT.cmd()));
-                        // firePropertyChange(ActionW.PR_STATE.cmd(), null,
-                        // viewPane.getActionValue(ActionW.PR_STATE.cmd()));
                     }
                 }
             }
@@ -949,8 +938,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public static boolean hasSameSize(MediaSeries<DicomImageElement> series1, MediaSeries<DicomImageElement> series2) {
         // Test if the two series has the same orientation
         if (series1 != null && series2 != null) {
-            DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null);
-            DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null);
+            DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+            DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null, null);
             if (image1 != null && image2 != null) {
                 return image1.hasSameSize(image2);
             }
@@ -1151,7 +1140,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             opt.usage();
             return;
         }
-
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override

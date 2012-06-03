@@ -496,6 +496,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTagNoNull(TagW.SliceThickness, getFloatFromDicomElement(dicomObject, Tag.SliceThickness, null));
             setTagNoNull(TagW.AcquisitionDate, getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null));
             setTagNoNull(TagW.AcquisitionTime, getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
+            setTagNoNull(TagW.ContentTime, getDateFromDicomElement(dicomObject, Tag.ContentTime, null));
 
             setTagNoNull(TagW.ImagePositionPatient, dicomObject.getDoubles(Tag.ImagePositionPatient, (double[]) null));
             setTagNoNull(TagW.ImageOrientationPatient,
