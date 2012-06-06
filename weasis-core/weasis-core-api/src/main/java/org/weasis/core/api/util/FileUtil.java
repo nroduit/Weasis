@@ -44,11 +44,13 @@ public class FileUtil {
 
     public static String getValidFileName(String fileName) {
         StringBuilder cleanName = new StringBuilder();
-        for (int i = 0; i < fileName.length(); i++) {
-            char c = fileName.charAt(i);
-            if (!(Arrays.binarySearch(illegalChars, c) >= 0 || (c < '\u0020') // ctrls
-            || (c > '\u007e' && c < '\u00a0'))) { // ctrls
-                cleanName.append(c);
+        if (fileName != null) {
+            for (int i = 0; i < fileName.length(); i++) {
+                char c = fileName.charAt(i);
+                if (!(Arrays.binarySearch(illegalChars, c) >= 0 || (c < '\u0020') // ctrls
+                || (c > '\u007e' && c < '\u00a0'))) { // ctrls
+                    cleanName.append(c);
+                }
             }
         }
         return cleanName.toString();

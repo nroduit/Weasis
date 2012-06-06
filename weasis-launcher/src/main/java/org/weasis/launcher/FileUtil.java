@@ -66,15 +66,12 @@ public class FileUtil {
         String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
         File tdir;
         if (tempDir == null || tempDir.length() == 1) {
-            String dir = System.getProperty("user.home"); //$NON-NLS-1$
-            if (dir == null) {
-                dir = ""; //$NON-NLS-1$
-            }
+            String dir = System.getProperty("user.home", ""); //$NON-NLS-1$
             tdir = new File(dir);
         } else {
             tdir = new File(tempDir);
         }
-        return new File(tdir, "weasis"); //$NON-NLS-1$
+        return new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$
     }
 
     public static void storeProperties(File propsFile, Properties props, String comments) {
