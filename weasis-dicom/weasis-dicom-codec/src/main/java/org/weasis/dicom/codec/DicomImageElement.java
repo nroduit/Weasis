@@ -345,6 +345,7 @@ public class DicomImageElement extends ImageElement {
         }
 
         if (isPhotometricInterpretationMonochrome()) {
+            // TODO get also is inverse LUT
             DicomImageUtils.applyPixelPaddingToModalityLUT(modalityLookup, lutparams);
         }
         LUT_Cache.put(lutparams, modalityLookup);
@@ -397,6 +398,7 @@ public class DicomImageElement extends ImageElement {
                  * (0028,0121).
                  */
                 minValue = isPixelRepresentationSigned() ? -(1 << (getBitsStored() - 1)) : 0;
+                // TODO max val for handle isPixelRepresentationSigned and invers LUT
             } else {
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);

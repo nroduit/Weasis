@@ -388,7 +388,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             Date birthdate = getDateFromDicomElement(dicomObject, Tag.PatientBirthDate, null);
             setTagNoNull(TagW.PatientBirthDate, birthdate);
             // Global Identifier for the patient.
-            setTag(TagW.PatientPseudoUID, buildPatientPseudoUID(patientID, name, birthdate));
+            setTag(TagW.PatientPseudoUID,
+                buildPatientPseudoUID(patientID, dicomObject.getString(Tag.IssuerOfPatientID), name, birthdate));
             setTag(TagW.StudyInstanceUID, dicomObject.getString(Tag.StudyInstanceUID, NO_VALUE));
             setTag(TagW.SeriesInstanceUID, dicomObject.getString(Tag.SeriesInstanceUID, NO_VALUE));
             setTag(TagW.Modality, dicomObject.getString(Tag.Modality, NO_VALUE));
@@ -441,14 +442,21 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    public static String buildPatientPseudoUID(String patientID, String patientName, Date birthdate) {
-        // Build a global identifier for the patient. Tend to be unique.
+    public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName,
+        Date birthdate) {
+        // Build a global identifier for the patient.
         StringBuffer buffer = new StringBuffer(patientID == null ? NO_VALUE : patientID);
-        if (birthdate != null) {
-            buffer.append(TagW.dicomformatDate.format(birthdate).toString());
-        }
-        if (patientName != null) {
-            buffer.append(patientName.substring(0, patientName.length() < 5 ? patientName.length() : 5));
+        if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) {
+            // patientID + issuerOfPatientID => should be unique globally
+            buffer.append(issuerOfPatientID);
+        } else {
+            // Try to make it unique.
+            if (birthdate != null) {
+                buffer.append(TagW.dicomformatDate.format(birthdate).toString());
+            }
+            if (patientName != null) {
+                buffer.append(patientName.substring(0, patientName.length() < 5 ? patientName.length() : 5));
+            }
         }
         return buffer.toString();
 

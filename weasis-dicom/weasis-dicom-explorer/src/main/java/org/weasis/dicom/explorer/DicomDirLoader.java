@@ -77,7 +77,8 @@ public class DicomDirLoader {
                 try {
                     String name = DicomMediaIO.buildPatientName(dcmPatient.getString(Tag.PatientName));
                     String patientPseudoUID =
-                        DicomMediaIO.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID), name,
+                        DicomMediaIO.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
+                            dcmPatient.getString(Tag.IssuerOfPatientID), name,
                             DicomMediaIO.getDateFromDicomElement(dcmPatient, Tag.PatientBirthDate, null));
 
                     patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);

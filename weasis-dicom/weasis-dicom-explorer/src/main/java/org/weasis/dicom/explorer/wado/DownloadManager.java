@@ -218,10 +218,11 @@ public class DownloadManager {
         // patient or study
 
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE); //$NON-NLS-1$
+        String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null); //$NON-NLS-1$
         Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
         String name =
             DicomMediaIO.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE)); //$NON-NLS-1$
-        String patientPseudoUID = DicomMediaIO.buildPatientPseudoUID(patientID, name, birthdate);
+        String patientPseudoUID = DicomMediaIO.buildPatientPseudoUID(patientID, issuerOfPatientID, name, birthdate);
 
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {

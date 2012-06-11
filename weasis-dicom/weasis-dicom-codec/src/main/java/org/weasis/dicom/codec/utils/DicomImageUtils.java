@@ -224,6 +224,7 @@ public class DicomImageUtils {
                 inLut = modalityLookup.getShortData(0);
             }
 
+            // TODO max and handle isPixelRepresentationSigned and invers LUT
             Object outLut = inLut;
             if (isDataTypeByte) {
                 byte fillVal = (byte) 0;
