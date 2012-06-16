@@ -194,7 +194,7 @@ public class WeasisLauncher {
                     if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) { //$NON-NLS-1$ //$NON-NLS-2$
                         vmarg[1] = vmarg[1].substring(1, vmarg[1].length() - 1);
                     }
-                    System.setProperty(vmarg[0], vmarg[1]);
+                    System.setProperty(vmarg[0], Util.substVars(vmarg[1], vmarg[0], null, null));
                 }
             }
         }
@@ -362,8 +362,15 @@ public class WeasisLauncher {
 
         } catch (Exception ex) {
             exitStatus = -1;
-            System.err.println("Could not create framework: " + ex); //$NON-NLS-1$
+            System.err.println("Cannot not start framework: " + ex); //$NON-NLS-1$
+            System.err.println("Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
             ex.printStackTrace();
+
+            // Set flag to clean cache at next launch
+            File common_file = new File(System.getProperty(P_WEASIS_PATH), APP_PROPERTY_FILE);
+            Properties common_prop = readProperties(common_file);
+            common_prop.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$
+            FileUtil.storeProperties(common_file, common_prop, null);
         } finally {
             Runtime.getRuntime().halt(exitStatus);
         }
@@ -795,8 +802,9 @@ public class WeasisLauncher {
             common_prop = readProperties(common_file);
         }
 
-        String versionOld = common_prop.getProperty("weasis.version"); //$NON-NLS-1$
-        String versionNew = config.getProperty("weasis.version"); //$NON-NLS-1$
+        String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
+        String versionNew = config.getProperty(P_WEASIS_VERSION);
+        String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();
@@ -812,14 +820,16 @@ public class WeasisLauncher {
                 update = true;
             }
         }
-        if (update) {
-            common_prop.put("weasis.look", look); //$NON-NLS-1$
-            FileUtil.storeProperties(common_file, common_prop, null);
-        }
 
+        // Clean cache if Weasis has crashed during the previous launch
         boolean cleanCache = Boolean.parseBoolean(config.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
-        // Save if not exist or could not be read
-        if (cleanCache && versionNew != null) {
+        if (cleanCacheAfterCrash != null && "true".equals(cleanCacheAfterCrash)) { //$NON-NLS-1$
+            config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+            common_prop.remove("weasis.clean.cache"); //$NON-NLS-1$
+            update = true;
+        }
+        // Clean cache if major or minor version number has changed
+        else if (cleanCache && versionNew != null) {
             try {
                 Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
                 Version vNew = new Version(versionNew.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -832,6 +842,12 @@ public class WeasisLauncher {
                 System.err.println("Cannot read Weasis version!"); //$NON-NLS-1$
             }
         }
+
+        if (update) {
+            common_prop.put("weasis.look", look); //$NON-NLS-1$
+            FileUtil.storeProperties(common_file, common_prop, null);
+        }
+
         final File file = common_file;
         // Test if it is the first time launch
         if (versionOld == null) {
