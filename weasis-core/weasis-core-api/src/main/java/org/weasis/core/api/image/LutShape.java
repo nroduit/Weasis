@@ -49,7 +49,7 @@ public final class LutShape {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static final public ArrayList<LutShape> DEFAULT_FACTORY_FUNCTIONS;
+    public static final ArrayList<LutShape> DEFAULT_FACTORY_FUNCTIONS;
 
     static {
         DEFAULT_FACTORY_FUNCTIONS = new ArrayList<LutShape>();
@@ -58,6 +58,23 @@ public final class LutShape {
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
+    }
+
+    public static final LutShape getLutShape(String shape) {
+        if (shape != null) {
+            String val = shape.toUpperCase();
+            if ("LINEAR".equals(val)) {
+                return LutShape.LINEAR;
+            } else if ("SIGMOID".equals(val)) {
+                return LutShape.SIGMOID;
+            } else if ("LOG".equals(val)) {
+                return LutShape.LOG;
+            } else if ("LOG_INV".equals(val)) {
+                return LutShape.LOG_INV;
+            }
+        }
+        return null;
+
     }
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -207,20 +207,29 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 menuRoot.add(printMenu);
             }
 
-            ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
-            if (viewingAction instanceof ComboItemListener) {
-                menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
-                    .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-            }
-            ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-            if (presetAction instanceof ComboItemListener) {
-                menuRoot.add(((ComboItemListener) presetAction).createMenu(Messages
-                    .getString("View2dContainer.presets"))); //$NON-NLS-1$
-            }
-            ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
-            if (lutShapeAction instanceof ComboItemListener) {
-                menuRoot.add(((ComboItemListener) lutShapeAction).createMenu("LUT_Shape"));
-            }
+            // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
+            // if (viewingAction instanceof ComboItemListener) {
+            // menuRoot.add(((ComboItemListener) viewingAction).createMenu(Messages
+            //                    .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
+            // }
+            // ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+            // if (presetAction instanceof ComboItemListener) {
+            // JMenu menu =
+            // ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
+            //                        .getString("View2dContainer.presets"));//$NON-NLS-1$
+            // for (Component mitem : menu.getMenuComponents()) {
+            // RadioMenuItem ritem = ((RadioMenuItem) mitem);
+            // PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
+            // if (preset.getKeyCode() > 0) {
+            // ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+            // }
+            // }
+            // menuRoot.add(menu);
+            // }
+            // ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
+            // if (lutShapeAction instanceof ComboItemListener) {
+            // menuRoot.add(((ComboItemListener) lutShapeAction).createMenu("LUT_Shape"));
+            // }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
                 JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$

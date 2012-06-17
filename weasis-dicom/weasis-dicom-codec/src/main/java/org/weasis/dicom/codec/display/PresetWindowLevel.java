@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.awt.event.KeyEvent;
 import java.awt.image.DataBuffer;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -43,6 +44,7 @@ public class PresetWindowLevel {
     private final Float window;
     private final Float level;
     private final LutShape shape;
+    private int keyCode = 0;
 
     public PresetWindowLevel(String name, Float window, Float level, LutShape shape) {
         if (name == null || window == null || level == null || shape == null) {
@@ -70,6 +72,18 @@ public class PresetWindowLevel {
         return shape;
     }
 
+    public int getKeyCode() {
+        return keyCode;
+    }
+
+    public void setKeyCode(int keyCode) {
+        this.keyCode = keyCode;
+    }
+
+    public LutShape getShape() {
+        return shape;
+    }
+
     @Override
     public String toString() {
         return name;
@@ -82,7 +96,6 @@ public class PresetWindowLevel {
             return null;
         }
 
-        // String dicomKeyWord = " [" + Messages.getString("PresetWindowLevel.dicomKeyWord") + "]";
         String dicomKeyWord = " [" + "Dicom" + "]";
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
@@ -105,11 +118,7 @@ public class PresetWindowLevel {
 
         if (levelList != null && windowList != null) {
 
-            int windowLevelDefaultCount = (levelList.length == windowList.length) ? //
-                levelList.length : 0;
-
-            // String defaultExplanation = Messages.getString("PresetWindowLevel.default");
-            // NOTE : PresetWindowLevel.default property should not be use anymore !!
+            int windowLevelDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
             String defaultExplanation = "Default";
 
             float minModLUT = image.getMinValue();
@@ -131,8 +140,15 @@ public class PresetWindowLevel {
                 if (windowList[i] > maxModLUT - minModLUT) {
                     windowList[i] = maxModLUT - minModLUT;
                 }
-                presetList.add(new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i],
-                    defaultLutShape));
+                PresetWindowLevel preset =
+                    new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i], defaultLutShape);
+                // Only set shortcuts for the two first presets
+                if (k == 1) {
+                    preset.setKeyCode(KeyEvent.VK_1);
+                } else if (k == 2) {
+                    preset.setKeyCode(KeyEvent.VK_2);
+                }
+                presetList.add(preset);
                 k++;
             }
         }
@@ -180,18 +196,29 @@ public class PresetWindowLevel {
                 float fullDynamicCenter = minValueLookup + fullDynamicWidth / 2f;
 
                 LutShape newLutShape = new LutShape(voiLUTsData[i], explanation + dicomKeyWord);
-
-                presetList.add(new PresetWindowLevel(newLutShape.toString(), fullDynamicWidth, fullDynamicCenter,
-                    newLutShape));
+                PresetWindowLevel preset =
+                    new PresetWindowLevel(newLutShape.toString(), fullDynamicWidth, fullDynamicCenter, newLutShape);
+                // Only set shortcuts for the two first presets
+                int k = presetList.size();
+                if (k == 0) {
+                    preset.setKeyCode(KeyEvent.VK_1);
+                } else if (k == 1) {
+                    preset.setKeyCode(KeyEvent.VK_2);
+                }
+                presetList.add(preset);
             }
         }
 
-        presetList.add(new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(), image
-            .getFullDynamicCenter(), defaultLutShape));
+        PresetWindowLevel autoLevel =
+            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(), image.getFullDynamicCenter(),
+                defaultLutShape);
+        // Set O shortcut for auto levels
+        autoLevel.setKeyCode(KeyEvent.VK_0);
+        presetList.add(autoLevel);
 
-        String modalityName = (String) image.getTagValue(TagW.Modality);
-        if (presetListByModality.containsKey(modalityName)) {
-            presetList.addAll(presetListByModality.get(modalityName));
+        List<PresetWindowLevel> modPresets = presetListByModality.get(image.getTagValue(TagW.Modality));
+        if (modPresets != null) {
+            presetList.addAll(modPresets);
         }
 
         return presetList.toArray(new PresetWindowLevel[presetList.size()]);
@@ -220,22 +247,31 @@ public class PresetWindowLevel {
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         key = xmler.getName().getLocalPart();
-                                        if ("preset".equals(key) && xmler.getAttributeCount() == 4) { //$NON-NLS-1$
-                                            // TODO add LUTShape argument in xml
+                                        if ("preset".equals(key) && xmler.getAttributeCount() >= 4) { //$NON-NLS-1$
                                             String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
-                                            String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
-                                            float window = Float.parseFloat(xmler.getAttributeValue(null, "window"));//$NON-NLS-1$
-                                            float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
-
-                                            PresetWindowLevel preset =
-                                                new PresetWindowLevel(name, window, level, LutShape.LINEAR);
-
-                                            List<PresetWindowLevel> presetList = presetListByModality.get(modality);
-                                            if (presetList == null) {
-                                                presetListByModality.put(modality, presetList =
-                                                    new ArrayList<PresetWindowLevel>());
+                                            try {
+                                                String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
+                                                float window =
+                                                    Float.parseFloat(xmler.getAttributeValue(null, "window"));//$NON-NLS-1$
+                                                float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
+                                                String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
+                                                String keyCode = xmler.getAttributeValue(null, "key");//$NON-NLS-1$
+                                                LutShape lutShape = LutShape.getLutShape(shape);
+                                                PresetWindowLevel preset =
+                                                    new PresetWindowLevel(name, window, level, lutShape == null
+                                                        ? LutShape.LINEAR : lutShape);
+                                                if (keyCode != null) {
+                                                    preset.setKeyCode(Integer.parseInt(keyCode));
+                                                }
+                                                List<PresetWindowLevel> presetList = presetListByModality.get(modality);
+                                                if (presetList == null) {
+                                                    presetListByModality.put(modality, presetList =
+                                                        new ArrayList<PresetWindowLevel>());
+                                                }
+                                                presetList.add(preset);
+                                            } catch (Exception e) {
+                                                LOGGER.error("Preset {} cannot be read from xml file", name);
                                             }
-                                            presetList.add(preset);
                                         }
                                         break;
                                     default:

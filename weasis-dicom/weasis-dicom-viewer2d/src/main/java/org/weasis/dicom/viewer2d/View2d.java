@@ -11,6 +11,7 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
@@ -54,6 +55,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -1035,30 +1037,43 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         popupMenu.add(menuItem);
                     }
                     popupMenu.add(new JSeparator());
-                    ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
-                    if (viewingAction instanceof ComboItemListener) {
-                        popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
-                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-                    }
-                    ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
-                    if (koAction instanceof ComboItemListener) {
-                        ComboItemListener ko = (ComboItemListener) koAction;
-                        if (ko.getModel().getSize() > 1) {
-                            popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
-                        }
-                    }
-                    ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
-                    if (prAction instanceof ComboItemListener) {
-                        ComboItemListener pr = (ComboItemListener) prAction;
-                        if (pr.getModel().getSize() > 1) {
-                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
-                        }
-                    }
+                    // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
+                    // if (viewingAction instanceof ComboItemListener) {
+                    // popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
+                    //                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
+                    // }
+                    // ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
+                    // if (koAction instanceof ComboItemListener) {
+                    // ComboItemListener ko = (ComboItemListener) koAction;
+                    // if (ko.getModel().getSize() > 1) {
+                    //                            popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
+                    // }
+                    // }
+                    // ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
+                    // if (prAction instanceof ComboItemListener) {
+                    // ComboItemListener pr = (ComboItemListener) prAction;
+                    // if (pr.getModel().getSize() > 1) {
+                    //                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
+                    // }
+                    // }
 
                     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
                     if (presetAction instanceof ComboItemListener) {
-                        popupMenu.add(((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
-                            .getString("View2dContainer.presets"))); //$NON-NLS-1$
+                        JMenu menu =
+                            ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
+                                .getString("View2dContainer.presets"));//$NON-NLS-1$
+                        for (Component mitem : menu.getMenuComponents()) {
+                            RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                            PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
+                            if (preset.getKeyCode() > 0) {
+                                ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+                            }
+                        }
+                        popupMenu.add(menu); //$NON-NLS-1$
+                    }
+                    ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
+                    if (lutShapeAction instanceof ComboItemListener) {
+                        popupMenu.add(((ComboItemListener) lutShapeAction).createMenu("LUT Shape"));
                     }
                     ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
                     if (stackAction instanceof ComboItemListener) {
