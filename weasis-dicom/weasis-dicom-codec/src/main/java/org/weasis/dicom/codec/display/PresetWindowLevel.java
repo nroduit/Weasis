@@ -124,6 +124,9 @@ public class PresetWindowLevel {
             float minModLUT = image.getMinValue();
             float maxModLUT = image.getMaxValue();
             int k = 1;
+
+            // TODO do not add new W/L Preset that have same value as previous object already in the list
+
             for (int i = 0; i < windowLevelDefaultCount; i++) {
                 String explanation = defaultExplanation + " " + k;
                 if (wlExplanationList != null && i < wlExplanationList.length) {

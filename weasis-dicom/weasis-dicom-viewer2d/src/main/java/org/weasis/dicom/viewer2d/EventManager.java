@@ -19,7 +19,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BoundedRangeModel;
@@ -125,6 +124,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener prAction;
 
     private final PannerListener panAction;
+
+    private boolean isDefaultPresetSelected;
 
     public static final ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
     static {
@@ -342,23 +343,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
 
-                    if (oldPreset != null && !PresetWindowLevel.fullDynamicExplanation.equals(oldPreset.getName())) {
-                        List<PresetWindowLevel> presetList = image.getPresetList();
-                        if (presetList != null) {
-                            for (Iterator<PresetWindowLevel> it = presetList.iterator(); it.hasNext();) {
-                                PresetWindowLevel preset = it.next();
+                    List<PresetWindowLevel> newPresetList = image.getPresetList();
+
+                    if (oldPreset != null) {
+                        if (isDefaultPresetSelected) {
+                            newPreset = image.getDefaultPreset();
+                        } else {
+                            for (PresetWindowLevel preset : newPresetList) {
                                 if (preset.getName().equals(oldPreset.getName())) {
                                     newPreset = preset;
                                     break;
                                 }
                             }
+                            if (newPreset == null) {
+                                newPreset = image.getDefaultPreset();
+                                isDefaultPresetSelected = true;
+                            }
                         }
                     }
-                    if (newPreset == null) {
-                        newPreset = image.getDefaultPreset();
-                    }
 
-                    presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
+                    presetAction.setDataListWithoutTriggerAction(newPresetList.toArray());
                     presetAction.setSelectedItemWithoutTriggerAction(newPreset);
 
                     int windowValue = (newPreset != null) ? newPreset.getWindow().intValue() : windowAction.getValue();
@@ -515,7 +519,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     levelAction.setValueWithoutTriggerAction(preset.getLevel().intValue());
                     lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
 
+                    isDefaultPresetSelected = preset.equals(this.getFirstItem());
+                } else {
+                    isDefaultPresetSelected = false;
                 }
+
                 firePropertyChange(action.cmd(), null, object);
             }
         };
@@ -757,6 +765,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
         presetAction.setSelectedItemWithoutTriggerAction(defaultPreset);
+        isDefaultPresetSelected = true;
 
         windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(), defaultPreset.getWindow()
             .intValue());
