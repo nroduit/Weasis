@@ -22,6 +22,7 @@ public final class LutShape {
 
     public static final LutShape LINEAR = new LutShape(eFunction.LINEAR);
     public static final LutShape SIGMOID = new LutShape(eFunction.SIGMOID);
+    public static final LutShape SIGMOID_NORM = new LutShape(eFunction.SIGMOID_NORM);
     public static final LutShape LOG = new LutShape(eFunction.LOG);
     public static final LutShape LOG_INV = new LutShape(eFunction.LOG_INV);
 
@@ -32,6 +33,7 @@ public final class LutShape {
     public enum eFunction {
         LINEAR("Linear"), //
         SIGMOID("Sigmoid"), //
+        SIGMOID_NORM("Sigmoid Normalize"), //
         LOG("Logarithmic"), //
         LOG_INV("Logarithmic Inv");
 
@@ -56,6 +58,7 @@ public final class LutShape {
 
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LINEAR);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID_NORM);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG);
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
     }

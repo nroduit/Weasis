@@ -183,7 +183,7 @@ public class InfoLayer implements AnnotationsLayer {
         }
         if (image.isReadable() && getDisplayPreferences(LUT)) {
             drawLUT(g2, bound, midfontHeight);
-            // drawLUTgraph(g2, bound, midfontHeight);
+            drawLUTgraph(g2, bound, midfontHeight);
         }
         // if (getDisplayPreferences(IMAGE_ORIENTATION)) {
         // For image Orientation and compression
