@@ -62,6 +62,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOperation;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.PseudoColorOperation;
 import org.weasis.core.api.image.RotationOperation;
@@ -188,9 +189,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        // TODO ?
-        // actionsInView.put(ActionW.PRESET.cmd(), PresetWindowLevel.DEFAULT);
+
         actionsInView.put(ActionW.PRESET.cmd(), null);
+        actionsInView.put(ActionW.LUT_SHAPE.cmd(), LutShape.LINEAR);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
@@ -378,6 +379,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (img == null) {
             return;
         }
+
         PresetWindowLevel preset = img.getDefaultPreset();
         if (preset != null) {
             actionsInView.put(ActionW.PRESET.cmd(), preset);

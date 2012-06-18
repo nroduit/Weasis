@@ -125,7 +125,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     private final PannerListener panAction;
 
-    private boolean isDefaultPresetSelected;
+    private volatile boolean isDefaultPresetSelected = true;
 
     public static final ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
     static {
@@ -762,18 +762,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         MediaSeries<DicomImageElement> series = defaultView2d.getSeries();
 
         PresetWindowLevel defaultPreset = image.getDefaultPreset();
-
+        PresetWindowLevel preset = (PresetWindowLevel) defaultView2d.getActionValue(ActionW.PRESET.cmd());
         presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
-        presetAction.setSelectedItemWithoutTriggerAction(defaultPreset);
-        isDefaultPresetSelected = true;
+        presetAction.setSelectedItemWithoutTriggerAction(preset);
+        isDefaultPresetSelected = defaultPreset.equals(preset);
 
-        windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(), defaultPreset.getWindow()
-            .intValue());
+        windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
+            ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-            defaultPreset.getLevel().intValue());
+            ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
 
         lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
-        lutShapeAction.setSelectedItemWithoutTriggerAction(defaultPreset.getLutShape());
+        lutShapeAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
 
         lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
 

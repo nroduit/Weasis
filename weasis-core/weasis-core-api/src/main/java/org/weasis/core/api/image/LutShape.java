@@ -70,6 +70,8 @@ public final class LutShape {
                 return LutShape.LINEAR;
             } else if ("SIGMOID".equals(val)) {
                 return LutShape.SIGMOID;
+            } else if ("SIGMOID_NORM".equals(val)) {
+                return LutShape.SIGMOID_NORM;
             } else if ("LOG".equals(val)) {
                 return LutShape.LOG;
             } else if ("LOG_INV".equals(val)) {
