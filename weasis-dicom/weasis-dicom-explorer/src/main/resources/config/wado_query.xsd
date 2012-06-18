@@ -134,6 +134,7 @@
 		</xsd:sequence>
 		<xsd:attribute name="PatientID" type="dicomVrLO" use="required"/>
 		<xsd:attribute name="PatientName" type="dicomVrPN" use="required"/>
+		<xsd:attribute name="IssuerOfPatientID" type="dicomVrLO"/>
 		<xsd:attribute name="PatientBirthDate" type="dicomVrDA"/>
 		<xsd:attribute name="PatientBirthTime" type="dicomVrTM"/>
 		<xsd:attribute name="PatientSex" type="dicomPatientSex"/>

@@ -296,7 +296,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     .getActionValue(ActionW.FILTERED_SERIES.cmd()), selectedImagePane
                                     .getCurrentSortComparator());
                             // Ensure to load image before calling the default preset (requires pixel min and max)
-                            if (!image.isImageAvailable()) {
+                            if (image != null && !image.isImageAvailable()) {
                                 // Load the image
                                 image.getImage();
                             }
@@ -605,6 +605,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     for (Object obj : measureAction.getAllItem()) {
                         if (obj instanceof AngleToolGraphic) {
                             setMeasurement(obj);
+                            break;
+                        }
+                    }
+                } else {
+                    DefaultComboBoxModel model = presetAction.getModel();
+                    for (int i = 0; i < model.getSize(); i++) {
+                        PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
+                        if (val.getKeyCode() == keyEvent) {
+                            presetAction.setSelectedItem(val);
                             break;
                         }
                     }

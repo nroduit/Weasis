@@ -113,7 +113,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PatientName = new TagW(0x00100010, "Patient Name", TagType.String, 1); //$NON-NLS-1$
     public static final TagW PatientID = new TagW(0x00100020, "PatientID", TagType.String, 1); //$NON-NLS-1$
 
-    public static final TagW IssuerOfPatientID = new TagW(0x00100021, "Issuer of PatientID", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW IssuerOfPatientID = new TagW(0x00100021, "Issuer Of PatientID", TagType.String, 1); //$NON-NLS-1$
     public static final TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
     public static final TagW PatientBirthTime = new TagW(0x00100032, "Patient Birth Time", TagType.Time, 1); //$NON-NLS-1$
     public static final TagW PatientSex = new TagW(0x00100040, "Patient Sex", TagType.String, 1); //$NON-NLS-1$
