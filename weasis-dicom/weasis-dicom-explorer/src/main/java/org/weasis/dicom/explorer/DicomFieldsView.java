@@ -54,7 +54,8 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
-    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.PatientSex, TagW.PatientBirthDate };
+    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
+        TagW.PatientBirthDate };
     private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
     private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
         TagW.ReferringPhysicianName, TagW.StudyDescription };
@@ -107,7 +108,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         };
         this.addChangeListener(changeListener);
-
     }
 
     public static void addStylesToDocument(StyledDocument doc, Color textColor) {

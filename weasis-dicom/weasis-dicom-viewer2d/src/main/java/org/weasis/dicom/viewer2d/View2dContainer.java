@@ -72,6 +72,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.internal.Activator;
@@ -195,15 +196,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     JMenuItem item = new JMenuItem(action);
                     printMenu.add(item);
                 }
-                // JMenuItem menuDicomPrint = new JMenuItem("DICOM Print");
-                // menuDicomPrint.addActionListener(new ActionListener() {
-                //
-                // @Override
-                // public void actionPerformed(ActionEvent e) {
-                //
-                // }
-                // });
-                // printMenu.add(menuDicomPrint);
                 menuRoot.add(printMenu);
             }
 
@@ -626,6 +618,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             };
         actions.add(printStd);
 
+        final String title2 = "DICOM Print";
+        AbstractAction printStd2 = new AbstractAction(title2, null) {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                DicomPrintDialog dialog = new DicomPrintDialog(parent, title2, eventManager);
+                JMVUtils.showCenterScreen(dialog, parent);
+            }
+        };
+        actions.add(printStd2);
         return actions;
     }
 }

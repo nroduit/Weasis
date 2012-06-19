@@ -146,7 +146,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
             g2d.setFont(new Font("Dialog", 0, getFontSize())); //$NON-NLS-1$
             infoLayer.paint(g2d);
         }
-        g2d.clip(oldClip);
+        if (oldClip != null) {
+            g2d.clip(oldClip);
+        }
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
     }
@@ -164,18 +166,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     }
 
     private int getFontSize() {
-        int imageWidth = getWidth();
-        if (imageWidth >= 1 && imageWidth <= 101) {
-            return 2;
-        } else if (imageWidth >= 102 && imageWidth <= 152) {
-            return 3;
-        } else if (imageWidth >= 153 && imageWidth <= 203) {
-            return 4;
-        } else if (imageWidth >= 204 && imageWidth <= 254) {
-            return 5;
-        } else if (imageWidth >= 255 && imageWidth <= 305) {
-            return 6;
-        }
-        return 7;
+        double factor = Math.max(getHeight(), getWidth());
+        factor = factor / 800;
+        int fontSize = (int) Math.ceil(20*factor);
+        return fontSize;
     }
 }

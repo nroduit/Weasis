@@ -92,7 +92,7 @@ public class ImagePrint implements Printable {
         }
     }
 
-    private boolean disableDoubleBuffering(JComponent c) {
+    public static boolean disableDoubleBuffering(JComponent c) {
         if (c == null) {
             return false;
         }
@@ -100,7 +100,7 @@ public class ImagePrint implements Printable {
         return c.isDoubleBuffered();
     }
 
-    private void restoreDoubleBuffering(JComponent c, boolean wasBuffered) {
+    public static void restoreDoubleBuffering(JComponent c, boolean wasBuffered) {
         if (c != null) {
             c.setDoubleBuffered(wasBuffered);
         }

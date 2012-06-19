@@ -20,6 +20,7 @@ and the format attribute has been added.
 <element tag="00081090" vr="LO" vm="1" format="" ret="">Manufacturer's Model Name</element>
 <element tag="00100010" vr="PN" vm="1" format="" ret="">Patient's Name</element>
 <element tag="00100020" vr="LO" vm="1" format="ID: $V" ret="">Patient ID</element>
+<element tag="00100021" vr="LO" vm="1" format="" ret="">Issuer of PatientID</element>
 <element tag="00100030" vr="DA" vm="1" format="" ret="">Patient's Birth Date</element>
 <element tag="00100040" vr="CS" vm="1" format="" ret="">Patient's Sex</element>
 <element tag="00101010" vr="AS" vm="1" format="Age: $V" ret="">Patient's Age</element>
