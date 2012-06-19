@@ -317,6 +317,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 TagW.dateTime(getDateFromDicomElement(header, Tag.StudyDate, null),
                     (Date) group.getTagValue(TagW.StudyTime)));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
+            group.setTagNoNull(TagW.StudyComments, header.getString(Tag.StudyComments));
 
             group.setTagNoNull(TagW.AccessionNumber, header.getString(Tag.AccessionNumber));
             group.setTagNoNull(TagW.ModalitiesInStudy, header.getString(Tag.ModalitiesInStudy));
@@ -486,6 +487,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             // Instance tags
             setTagNoNull(TagW.ImageType, getStringFromDicomElement(dicomObject, Tag.ImageType, null));
             setTagNoNull(TagW.ImageComments, dicomObject.getString(Tag.ImageComments));
+            setTagNoNull(TagW.ImageLaterality,
+                dicomObject.getString(Tag.ImageLaterality, dicomObject.getString(Tag.Laterality)));
             setTagNoNull(TagW.ContrastBolusAgent, dicomObject.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.TransferSyntaxUID, dicomObject.getString(Tag.TransferSyntaxUID));
             setTagNoNull(TagW.SOPClassUID, dicomObject.getString(Tag.SOPClassUID));
@@ -1370,6 +1373,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                                 (int[]) null);
                         setTagNoNull(tagList, TagW.ShutterRGBColor, color);
                     }
+                }
+
+                sequenceElt = dcm.get(Tag.FrameAnatomySequence);
+                if (sequenceElt != null && sequenceElt.vr() == VR.SQ && sequenceElt.countItems() > 0) {
+                    DicomObject frame = sequenceElt.getDicomObject(0);
+                    setTagNoNull(tagList, TagW.ImageLaterality, frame.getString(Tag.FrameLaterality));
                 }
             }
         }

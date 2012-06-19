@@ -58,12 +58,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         TagW.PatientBirthDate };
     private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
     private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
-        TagW.ReferringPhysicianName, TagW.StudyDescription };
+        TagW.ReferringPhysicianName, TagW.StudyDescription, TagW.StudyComments };
     private final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
         TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
     private final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID, TagW.InstanceNumber,
-        TagW.PhotometricInterpretation, TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows,
-        TagW.ImageComments, TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };
+        TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation, TagW.SamplesPerPixel,
+        TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth,
+        TagW.BitsAllocated, TagW.BitsStored };
     private final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
     private final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 

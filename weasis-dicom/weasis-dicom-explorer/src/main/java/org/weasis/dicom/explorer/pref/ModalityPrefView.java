@@ -100,6 +100,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         // Instance
         fillMap(TagW.ImageType);
         fillMap(TagW.ImageComments);
+        fillMap(TagW.ImageLaterality);
         fillMap(TagW.ContrastBolusAgent);
         fillMap(TagW.TransferSyntaxUID);
         fillMap(TagW.InstanceNumber);
@@ -306,6 +307,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             TagW.SeriesDescription.setFormat(Messages.getString("ModalityPrefView.series_desc")); //$NON-NLS-1$
             TagW.SliceThickness.setFormat(Messages.getString("ModalityPrefView.thick")); //$NON-NLS-1$
             TagW.SliceLocation.setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
+            TagW.ImageLaterality.setFormat("Laterality: $V");
 
             Modality[] modalities = Modality.values();
             infos = new ModalityInfoData[modalities.length - 1];
@@ -325,7 +327,8 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
                 disElements[4] = TagW.AcquisitionTime;
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
-                disElements[2] = TagW.SeriesNumber;
+                disElements[1] = TagW.SeriesNumber;
+                disElements[2] = TagW.ImageLaterality;
                 disElements[3] = TagW.ContrastBolusAgent;
                 disElements[4] = TagW.SeriesDescription;
                 disElements[5] = TagW.SliceThickness;
