@@ -44,6 +44,7 @@ import org.weasis.core.ui.graphic.OpenAngleToolGraphic;
 import org.weasis.core.ui.graphic.ParallelLineGraphic;
 import org.weasis.core.ui.graphic.PerpendicularLineGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
+import org.weasis.core.ui.graphic.PolylineGraphic;
 import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.ThreePointsCircleGraphic;
@@ -62,6 +63,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final ThreePointsCircleGraphic threePtCircleGraphic = new ThreePointsCircleGraphic(1.0f,
         Color.YELLOW, true);
     public static final PolygonGraphic polygonGraphic = new PolygonGraphic(1.0f, Color.YELLOW, true);
+    public static final PolylineGraphic polylineGraphic = new PolylineGraphic(1.0f, Color.YELLOW, true);
     public static final PerpendicularLineGraphic perpendicularToolGraphic = new PerpendicularLineGraphic(1.0f,
         Color.YELLOW, true);
     public static final ParallelLineGraphic parallelLineGraphic = new ParallelLineGraphic(1.0f, Color.YELLOW, true);
@@ -75,6 +77,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     static {
         graphicList.add(selectionGraphic);
         graphicList.add(lineGraphic);
+        graphicList.add(polylineGraphic);
         graphicList.add(rectangleGraphic);
         graphicList.add(ellipseGraphic);
         graphicList.add(threePtCircleGraphic);
