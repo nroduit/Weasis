@@ -298,16 +298,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 series.getMedia(tileOffset < 0 ? 0 : tileOffset,
                     (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
-            // Ensure to load image before calling the default preset that (requires pixel min and max)
-            if (media != null && !media.isImageAvailable()) {
-                media.getImage();
-            }
+
             setDefautWindowLevel(media);
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
         }
+
+        // NOTE : do the following line has to be under comment ??? If not same function in dicom.Viewer2d.View2D
+        // doesn't need to be Overridden since implementation is exactly the same
         // EventManager.getInstance().updateComponentsListener(this);
 
         // Set the sequence to the state OPEN
@@ -381,7 +381,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
             setShutter(img);
+
+            // Fix issue with W/L values updated when scrolling image of the same series with Preset set to null
+            // Note : if setDefautWindowLevel is called here, every times setImage is called will render image with
+            // default W/L. This shouldn't behaves this way for instance when ActionW.SCROLL_SERIES propertyChange
+            // invoke setImage with custom W/L values
+
             // setDefautWindowLevel(img);
+
             Rectangle2D area = getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
                 ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
@@ -631,6 +638,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void setDefautWindowLevel(E img) {
         if (img != null) {
+            if (!img.isImageAvailable()) {
+                // Ensure to load image before calling the default preset that (requires pixel min and max)
+                img.getImage();
+            }
             actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
         }
@@ -701,7 +712,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode
             boolean rescaleView = (val == null || val <= 0.0);
+
             setImage(imgElement, rescaleView);
+
             if (rescaleView) {
                 val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 zoom(val == null ? 1.0 : val);

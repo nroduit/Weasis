@@ -30,6 +30,7 @@ import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -296,10 +297,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 series.getMedia(index, (Filter<DicomImageElement>) selectedImagePane
                                     .getActionValue(ActionW.FILTERED_SERIES.cmd()), selectedImagePane
                                     .getCurrentSortComparator());
-                            // Ensure to load image before calling the default preset (requires pixel min and max)
+
                             if (image != null && !image.isImageAvailable()) {
-                                // Load the image
-                                image.getImage();
+                                image.getImage();// Ensure to load image
                             }
                         }
                     }
@@ -339,6 +339,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
 
                 if (image != null) {
+
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
 
@@ -361,21 +362,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     }
 
-                    presetAction.setDataListWithoutTriggerAction(newPresetList.toArray());
-                    presetAction.setSelectedItemWithoutTriggerAction(newPreset);
-
                     Float windowValue = (newPreset != null) ? newPreset.getWindow() : windowAction.getValue();
                     Float levelValue = (newPreset != null) ? newPreset.getLevel() : levelAction.getValue();
-
-                    windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
-                        windowValue.intValue());
-                    levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(),
-                        (int) image.getMaxValue(), levelValue.intValue());
-
-                    lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
                     LutShape lutShapeItem =
                         (newPreset != null) ? newPreset.getLutShape() : (LutShape) lutShapeAction.getSelectedItem();
-                    lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
+
+                    // presetAction.setDataListWithoutTriggerAction(newPresetList.toArray());
+                    // presetAction.setSelectedItemWithoutTriggerAction(newPreset);
+                    //
+                    // windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
+                    // windowValue.intValue());
+                    // levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(),
+                    // (int) image.getMaxValue(), levelValue.intValue());
+                    //
+                    // lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
+                    // lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
 
                     // The following "firePropertyChange(ActionW.PRESET..." must be called after previous
                     // "firePropertyChange(ActionW.SCROLL_SERIES.cmd()..." so "actionsInView" Map that concerns
@@ -391,14 +392,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // Note : setting actionInView here without calling a propertyChange avoid another call to
                     // imageLayer.updateImageOperation(WindowLevelOperation.name. This trick may be worked around !!!
                     if (selectedView2dContainer != null) {
-                        DefaultView2d<DicomImageElement> selectedImagePane =
-                            selectedView2dContainer.getSelectedImagePane();
+                        DefaultView2d<DicomImageElement> view2d = selectedView2dContainer.getSelectedImagePane();
 
-                        if (selectedImagePane != null) {
-                            selectedImagePane.setActionsInView(ActionW.PRESET.cmd(), newPreset);
-                            selectedImagePane.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
-                            selectedImagePane.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
-                            selectedImagePane.setActionsInView(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
+                        if (view2d != null) {
+                            view2d.setActionsInView(ActionW.PRESET.cmd(), newPreset);
+                            view2d.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
+                            view2d.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
+                            view2d.setActionsInView(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
+
+                            updateWindowLevelComponentsListener(image, view2d);
                         }
                     }
                 }
@@ -758,8 +760,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     @Override
-    public synchronized boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
-        if (defaultView2d == null) {
+    public synchronized boolean updateComponentsListener(DefaultView2d<DicomImageElement> view2d) {
+        if (view2d == null) {
             return false;
         }
 
@@ -768,13 +770,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             return false;
         }
 
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
+        if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }
 
         clearAllPropertyChangeListeners();
 
-        if (defaultView2d.getSourceImage() == null) {
+        if (view2d.getSourceImage() == null) {
             enableActions(false);
             return false;
         }
@@ -783,59 +785,58 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             enableActions(true);
         }
 
-        DicomImageElement image = defaultView2d.getImage();
-        MediaSeries<DicomImageElement> series = defaultView2d.getSeries();
+        DicomImageElement image = view2d.getImage();
+        MediaSeries<DicomImageElement> series = view2d.getSeries();
 
-        PresetWindowLevel defaultPreset = image.getDefaultPreset();
-        PresetWindowLevel preset = (PresetWindowLevel) defaultView2d.getActionValue(ActionW.PRESET.cmd());
-        presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
-        presetAction.setSelectedItemWithoutTriggerAction(preset);
-        isDefaultPresetSelected = defaultPreset.equals(preset);
+        updateWindowLevelComponentsListener(image, view2d);
 
-        windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
-            ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-            ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+        PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
+        isDefaultPresetSelected = image.getDefaultPreset().equals(preset);
+        // FIXME isDefaultPresetSelected should be an action in order to keep persistence of this state
 
-        lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
-        lutShapeAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
+        // presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
+        // presetAction.setSelectedItemWithoutTriggerAction(preset);
+        //
+        // windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
+        // ((Float) view2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
+        // levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
+        // ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+        //
+        // lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
+        // lutShapeAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
 
-        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
+        lutAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT.cmd()));
 
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
-            .cmd()));
+        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSELUT.cmd()));
 
-        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
+        filterAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.FILTER.cmd()));
 
-        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
+        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
             .getActionValue(ActionW.ZOOM.cmd()))));
 
-        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
+        rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
 
-        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
+        flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
 
-        showLensAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.LENS.cmd()));
-        Double lensZoom = (Double) defaultView2d.getLensActionValue(ActionW.ZOOM.cmd());
+        showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
+        Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
         if (lensZoom != null) {
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
         }
 
         moveTroughSliceAction.setMinMaxValue(1,
-            series.size((Filter<DicomImageElement>) defaultView2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
-            defaultView2d.getFrameIndex() + 1);
+            series.size((Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
+            view2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagW.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
 
         // imageOverlayAction.setSelectedWithoutTriggerAction((Boolean)
-        // defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY
-        // .cmd()));
-        sortStackAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.SORTSTACK.cmd()));
-        viewingProtocolAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.VIEWINGPROTOCOL
-            .cmd()));
-        inverseStackAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK
-            .cmd()));
+        // defaultView2d.getActionValue(ActionW.IMAGE_OVERLAY.cmd()));
+        sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
+        viewingProtocolAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.VIEWINGPROTOCOL.cmd()));
+        inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
         Object[] filteredList = null;
         Object[] prList = null;
@@ -849,11 +850,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             filteredList =
                 DicomSpecialElement.getKoSeriesFilteredListWithNone(
                     (String) series.getTagValue(TagW.SeriesInstanceUID), list);
-            selKo = defaultView2d.getActionValue(ActionW.KEY_OBJECT.cmd());
+            selKo = view2d.getActionValue(ActionW.KEY_OBJECT.cmd());
             prList =
                 DicomSpecialElement.getPrSeriesFilteredListWithNone(
                     (String) series.getTagValue(TagW.SeriesInstanceUID), list);
-            selPr = defaultView2d.getActionValue(ActionW.PR_STATE.cmd());
+            selPr = view2d.getActionValue(ActionW.PR_STATE.cmd());
         }
         koAction.setDataListWithoutTriggerAction(filteredList);
         koAction.setSelectedItemWithoutTriggerAction(selKo == null ? filteredList == null ? null : ActionState.NONE
@@ -866,11 +867,30 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         for (DockableTool p : selectedView2dContainer.getToolPanel()) {
             if (p instanceof GraphicsListener) {
-                defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
             }
         }
 
         return true;
+    }
+
+    private void updateWindowLevelComponentsListener(DicomImageElement image, ImageOperation view2d) {
+
+        Float windowValue = (Float) view2d.getActionValue(ActionW.WINDOW.cmd());
+        Float levelValue = (Float) view2d.getActionValue(ActionW.LEVEL.cmd());
+        PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
+        LutShape lutShapeItem = (LutShape) view2d.getActionValue(ActionW.LUT_SHAPE.cmd());
+
+        windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(), windowValue.intValue());
+        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
+            levelValue.intValue());
+
+        presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
+        presetAction.setSelectedItemWithoutTriggerAction(preset);
+        // isDefaultPresetSelected = preset.equals(image.getDefaultPreset());
+
+        lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
+        lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
     }
 
     @Override

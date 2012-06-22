@@ -29,6 +29,8 @@ import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.LookupDescriptor;
 
+import org.weasis.core.api.gui.ImageOperation;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -411,7 +413,8 @@ public class DicomImageElement extends ImageElement {
     }
 
     /**
-     * @return default as first element of preset List
+     * @return default as first element of preset List <br>
+     *         Note : null should never be returned since auto is at least one preset
      */
     public PresetWindowLevel getDefaultPreset() {
         List<PresetWindowLevel> presetList = getPresetList();
@@ -608,21 +611,37 @@ public class DicomImageElement extends ImageElement {
 
     }
 
-    @Override
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
+    /**
+     * @param imageSource
+     *            is the RenderedImage upon which transformation is done
+     * @param window
+     *            is width from low to high input values around level. If null, getDefaultWindow() value is used
+     * @param level
+     *            is center of window values. If null, getDefaultLevel() value is used
+     * @param lutShape
+     *            defines the shape of applied lookup table transformation. If null getDefaultLutShape() is used
+     * @param pixelPadding
+     *            indicates if some padding values defined in ImageElement should be applied or not. If null, TRUE is
+     *            considered
+     * @return
+     */
+    protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
         LutShape lutShape, Boolean pixelPadding) {
+
         if (imageSource == null) {
             return null;
         }
-        window = (window == null) ? getDefaultWindow() : window;
-        level = (level == null) ? getDefaultLevel() : level;
-        lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
-        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
 
         SampleModel sampleModel = imageSource.getSampleModel();
         if (sampleModel == null) {
             return null;
         }
+
+        window = (window == null) ? getDefaultWindow() : window;
+        level = (level == null) ? getDefaultLevel() : level;
+        lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
+        pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+
         int datatype = sampleModel.getDataType();
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
@@ -667,6 +686,19 @@ public class DicomImageElement extends ImageElement {
             return JAI.create("format", pb, null); //$NON-NLS-1$
         }
         return null;
+    }
+
+    @Override
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, ImageOperation imageOperation) {
+
+        Float window = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+        Float level = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+        LutShape lutShape =
+            (imageOperation == null) ? null : (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
+        Boolean pixelPadding =
+            (imageOperation == null) ? null : (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+
+        return this.getRenderedImage(imageSource, window, level, lutShape, pixelPadding);
     }
 
     public GeometryOfSlice getSliceGeometry() {

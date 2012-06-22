@@ -29,6 +29,8 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.ImageOperation;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -254,34 +256,38 @@ public class ImageElement extends MediaElement<PlanarImage> {
      *            is width from low to high input values around level. If null, getDefaultWindow() value is used
      * @param level
      *            is center of window values. If null, getDefaultLevel() value is used
-     * @param lutShape
-     *            defines the shape of applied lookup table transformation. If null getDefaultLutShape() is used
      * @param pixelPadding
      *            indicates if some padding values defined in ImageElement should be applied or not. If null, TRUE is
      *            considered
      * @return
      */
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
-        LutShape lutShape, Boolean pixelPadding) {
+    protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
+        Boolean pixelPadding) {
+
         if (imageSource == null) {
             return null;
         }
 
         window = (window == null) ? getDefaultWindow() : window;
         level = (level == null) ? getDefaultLevel() : level;
-        lutShape = (lutShape == null) ? getDefaultShape() : lutShape;
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;
 
         return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
     }
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level) {
-        return getRenderedImage(imageSource, window, level, null, null);
+    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
+        return getRenderedImage(imageSource, null);
     }
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
-        return getRenderedImage(imageSource, null, null, null, null);
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, ImageOperation imageOperation) {
+
+        Float window = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+        Float level = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+        Boolean pixelPadding =
+            (imageOperation == null) ? null : (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+
+        return getRenderedImage(imageSource, window, level, pixelPadding);
     }
 
     /**

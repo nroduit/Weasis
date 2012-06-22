@@ -362,17 +362,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         getCurrentSortComparator());
             }
 
-            // Ensure to load image before calling the default preset that (requires pixel min and max)
-            if (media != null && !media.isImageAvailable()) {
-                media.getImage();
-            }
             setDefautWindowLevel(media);
-
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
         }
+
         eventManager.updateComponentsListener(this);
 
         // Set the sequence to the state OPEN
@@ -385,6 +381,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void setDefautWindowLevel(DicomImageElement img) {
         if (img == null) {
             return;
+        }
+
+        if (!img.isImageAvailable()) {
+            // Ensure to load image before calling the default preset that (requires pixel min and max)
+            img.getImage();
         }
 
         PresetWindowLevel preset = img.getDefaultPreset();
