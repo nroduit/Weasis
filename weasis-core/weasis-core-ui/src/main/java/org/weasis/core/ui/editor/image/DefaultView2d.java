@@ -306,8 +306,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             center();
         }
 
-        // NOTE : do the following line has to be under comment ??? If not same function in dicom.Viewer2d.View2D
-        // doesn't need to be Overridden since implementation is exactly the same
+        // Why the EventManager.getInstance().updateComponentsListener call below is under comment ???
+        // If not necessary same function in dicom.Viewer2d.View2D doesn't need to be Overridden since implementation is
+        // exactly the same
+
         // EventManager.getInstance().updateComponentsListener(this);
 
         // Set the sequence to the state OPEN

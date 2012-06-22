@@ -191,6 +191,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super.initActionWState();
 
         actionsInView.put(ActionW.PRESET.cmd(), null);
+        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         actionsInView.put(ActionW.LUT_SHAPE.cmd(), LutShape.LINEAR);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
         actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
@@ -219,6 +220,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
                 imageLayer.updateImageOperation(WindowLevelOperation.name);
             }
+        } else if (command.equals(ActionW.DEFAULT_PRESET.cmd())) {
+            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), val);
         } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), val);
             imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
@@ -394,6 +397,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         } else {
             super.setDefautWindowLevel(img);
         }

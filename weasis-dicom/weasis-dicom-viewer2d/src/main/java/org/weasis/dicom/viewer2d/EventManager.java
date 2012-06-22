@@ -355,10 +355,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     break;
                                 }
                             }
-                            if (newPreset == null) {
-                                newPreset = image.getDefaultPreset();
-                                isDefaultPresetSelected = true;
-                            }
+                            // FIX : If no preset equals previous one correct behavior is to set preset to null and keep
+                            // actual Window/Level/lutShape values
+
+                            // if (newPreset == null) {
+                            // newPreset = image.getDefaultPreset();
+                            // isDefaultPresetSelected = true;
+                            // }
                         }
                     }
 
@@ -367,38 +370,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     LutShape lutShapeItem =
                         (newPreset != null) ? newPreset.getLutShape() : (LutShape) lutShapeAction.getSelectedItem();
 
-                    // presetAction.setDataListWithoutTriggerAction(newPresetList.toArray());
-                    // presetAction.setSelectedItemWithoutTriggerAction(newPreset);
-                    //
-                    // windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
-                    // windowValue.intValue());
-                    // levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(),
-                    // (int) image.getMaxValue(), levelValue.intValue());
-                    //
-                    // lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
-                    // lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
-
-                    // The following "firePropertyChange(ActionW.PRESET..." must be called after previous
-                    // "firePropertyChange(ActionW.SCROLL_SERIES.cmd()..." so "actionsInView" Map that concerns
-                    // (Preset, Window, Level and LutShape) key values will be correctly set and
-                    // "updateImageOperation(WindowLevelOperation.." will be called
-                    // firePropertyChange(ActionW.PRESET.cmd(), null, newPreset);
-
-                    // FIX - When firePropertyChange(ActionW.PRESET..) is called then imageLayer.updateImageOperation()
-                    // and so ImageElement.getRenderedImage() is called 2 times in this function
-                    // Also actionsInView.put(ActionW.WINDOW..) and actionsInView.put(ActionW.LEVEL ...) are set to
-                    // default value if newPreset is null
-
-                    // Note : setting actionInView here without calling a propertyChange avoid another call to
-                    // imageLayer.updateImageOperation(WindowLevelOperation.name. This trick may be worked around !!!
                     if (selectedView2dContainer != null) {
                         DefaultView2d<DicomImageElement> view2d = selectedView2dContainer.getSelectedImagePane();
 
                         if (view2d != null) {
+                            // FIX : setting actionInView here without firing a propertyChange avoid another call to
+                            // imageLayer.updateImageOperation(WindowLevelOperation.name.....
+
+                            // TODO This trick may be worked around by calling a propertyChange listener that updates
+                            // actionsInView values without calling imageLayer.updateImageOperation!!!
+
                             view2d.setActionsInView(ActionW.PRESET.cmd(), newPreset);
                             view2d.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
                             view2d.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
                             view2d.setActionsInView(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
+                            view2d.setActionsInView(ActionW.DEFAULT_PRESET.cmd(), isDefaultPresetSelected);
 
                             updateWindowLevelComponentsListener(image, view2d);
                         }
@@ -546,11 +532,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     levelAction.setValueWithoutTriggerAction(preset.getLevel().intValue());
                     lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
 
-                    isDefaultPresetSelected = preset.equals(this.getFirstItem());
+                    PresetWindowLevel defaultPreset = (PresetWindowLevel) this.getFirstItem();
+                    isDefaultPresetSelected =
+                        preset.getName().equals(defaultPreset != null ? defaultPreset.getName() : null);
                 } else {
                     isDefaultPresetSelected = false;
                 }
 
+                firePropertyChange(ActionW.DEFAULT_PRESET.cmd(), null, isDefaultPresetSelected);
                 firePropertyChange(action.cmd(), null, object);
             }
         };
@@ -785,25 +774,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             enableActions(true);
         }
 
-        DicomImageElement image = view2d.getImage();
-        MediaSeries<DicomImageElement> series = view2d.getSeries();
-
-        updateWindowLevelComponentsListener(image, view2d);
-
-        PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
-        isDefaultPresetSelected = image.getDefaultPreset().equals(preset);
-        // FIXME isDefaultPresetSelected should be an action in order to keep persistence of this state
-
-        // presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
-        // presetAction.setSelectedItemWithoutTriggerAction(preset);
-        //
-        // windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
-        // ((Float) view2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-        // levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-        // ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
-        //
-        // lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
-        // lutShapeAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
+        updateWindowLevelComponentsListener(view2d.getImage(), view2d);
 
         lutAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT.cmd()));
 
@@ -824,6 +795,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
         }
 
+        MediaSeries<DicomImageElement> series = view2d.getSeries();
         moveTroughSliceAction.setMinMaxValue(1,
             series.size((Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1);
@@ -880,6 +852,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         Float levelValue = (Float) view2d.getActionValue(ActionW.LEVEL.cmd());
         PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
         LutShape lutShapeItem = (LutShape) view2d.getActionValue(ActionW.LUT_SHAPE.cmd());
+        isDefaultPresetSelected = (Boolean) view2d.getActionValue(ActionW.DEFAULT_PRESET.cmd());
 
         windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(), windowValue.intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
@@ -887,10 +860,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
         presetAction.setSelectedItemWithoutTriggerAction(preset);
-        // isDefaultPresetSelected = preset.equals(image.getDefaultPreset());
 
         lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
         lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
+
     }
 
     @Override
