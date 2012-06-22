@@ -361,6 +361,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                         getCurrentSortComparator());
             }
+
+            // Ensure to load image before calling the default preset that (requires pixel min and max)
+            if (media != null && !media.isImageAvailable()) {
+                media.getImage();
+            }
+            setDefautWindowLevel(media);
+
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
@@ -384,7 +391,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (preset != null) {
             actionsInView.put(ActionW.PRESET.cmd(), preset);
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
-
             actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
         } else {
@@ -1071,7 +1077,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
                             }
                         }
-                        popupMenu.add(menu); //$NON-NLS-1$
+                        popupMenu.add(menu);
                     }
                     ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
                     if (lutShapeAction instanceof ComboItemListener) {

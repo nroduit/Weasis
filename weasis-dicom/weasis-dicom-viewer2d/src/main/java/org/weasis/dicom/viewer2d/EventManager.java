@@ -203,7 +203,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private void initializeParameters() {
         enableActions(false);
 
-        // Not to be called here because clearAllPropertyChangeListeners wil erase them
+        // Not to be called here because clearAllPropertyChangeListeners will erase them
 
         // addPropertyChangeListener(ActionW.WINDOW.cmd(), windowLevelPCL);
         // addPropertyChangeListener(ActionW.LEVEL.cmd(), windowLevelPCL);
@@ -319,25 +319,24 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             location = val[0] + val[1] + val[2];
                         }
                     } else {
-                        final ArrayList<DefaultView2d<DicomImageElement>> panes =
-                            selectedView2dContainer.getImagePanels();
-                        for (DefaultView2d<DicomImageElement> p : panes) {
-                            Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
-                            if (cutlines != null && cutlines) {
-                                double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
-                                if (val != null) {
-                                    location = val[0] + val[1] + val[2];
-                                } else {
-                                    return; // Do not throw event because
+                        if (selectedView2dContainer != null) {
+                            final ArrayList<DefaultView2d<DicomImageElement>> panes =
+                                selectedView2dContainer.getImagePanels();
+                            for (DefaultView2d<DicomImageElement> p : panes) {
+                                Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
+                                if (cutlines != null && cutlines) {
+                                    double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
+                                    if (val != null) {
+                                        location = val[0] + val[1] + val[2];
+                                    } else {
+                                        return; // Do not throw event because
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
                 }
-
-                // Model contains display value, value-1 is the index value of a sequence
-                firePropertyChange(action.cmd(), null, location);
 
                 if (image != null) {
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
@@ -365,12 +364,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     presetAction.setDataListWithoutTriggerAction(newPresetList.toArray());
                     presetAction.setSelectedItemWithoutTriggerAction(newPreset);
 
-                    int windowValue = (newPreset != null) ? newPreset.getWindow().intValue() : windowAction.getValue();
-                    int levelValue = (newPreset != null) ? newPreset.getLevel().intValue() : levelAction.getValue();
+                    Float windowValue = (newPreset != null) ? newPreset.getWindow() : windowAction.getValue();
+                    Float levelValue = (newPreset != null) ? newPreset.getLevel() : levelAction.getValue();
 
-                    windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(), windowValue);
+                    windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(),
+                        windowValue.intValue());
                     levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(),
-                        (int) image.getMaxValue(), levelValue);
+                        (int) image.getMaxValue(), levelValue.intValue());
 
                     lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());
                     LutShape lutShapeItem =
@@ -381,11 +381,36 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     // "firePropertyChange(ActionW.SCROLL_SERIES.cmd()..." so "actionsInView" Map that concerns
                     // (Preset, Window, Level and LutShape) key values will be correctly set and
                     // "updateImageOperation(WindowLevelOperation.." will be called
-                    firePropertyChange(ActionW.PRESET.cmd(), null, newPreset);
+                    // firePropertyChange(ActionW.PRESET.cmd(), null, newPreset);
 
+                    // FIX - When firePropertyChange(ActionW.PRESET..) is called then imageLayer.updateImageOperation()
+                    // and so ImageElement.getRenderedImage() is called 2 times in this function
+                    // Also actionsInView.put(ActionW.WINDOW..) and actionsInView.put(ActionW.LEVEL ...) are set to
+                    // default value if newPreset is null
+
+                    // Note : setting actionInView here without calling a propertyChange avoid another call to
+                    // imageLayer.updateImageOperation(WindowLevelOperation.name. This trick may be worked around !!!
+                    if (selectedView2dContainer != null) {
+                        DefaultView2d<DicomImageElement> selectedImagePane =
+                            selectedView2dContainer.getSelectedImagePane();
+
+                        if (selectedImagePane != null) {
+                            selectedImagePane.setActionsInView(ActionW.PRESET.cmd(), newPreset);
+                            selectedImagePane.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
+                            selectedImagePane.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
+                            selectedImagePane.setActionsInView(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
+                        }
+                    }
+                }
+
+                // Model contains display value, value-1 is the index value of a sequence
+                firePropertyChange(action.cmd(), null, location);
+
+                if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));
                 }
+
             }
 
             @Override
@@ -858,7 +883,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void updateAllListeners(ImageViewerPlugin<DicomImageElement> viewerPlugin, SynchView synchView) {
         clearAllPropertyChangeListeners();
 
-        // best place to be ????
         addPropertyChangeListener(ActionW.WINDOW.cmd(), windowLevelPCL);
         addPropertyChangeListener(ActionW.LEVEL.cmd(), windowLevelPCL);
         addPropertyChangeListener(ActionW.LUT_SHAPE.cmd(), windowLevelPCL);

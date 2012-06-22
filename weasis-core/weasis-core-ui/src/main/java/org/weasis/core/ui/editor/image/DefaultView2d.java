@@ -298,6 +298,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 series.getMedia(tileOffset < 0 ? 0 : tileOffset,
                     (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
+            // Ensure to load image before calling the default preset that (requires pixel min and max)
+            if (media != null && !media.isImageAvailable()) {
+                media.getImage();
+            }
+            setDefautWindowLevel(media);
             setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
@@ -376,7 +381,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
             setShutter(img);
-            setDefautWindowLevel(img);
+            // setDefautWindowLevel(img);
             Rectangle2D area = getViewModel().getModelArea();
             if (!modelArea.equals(area)) {
                 ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
