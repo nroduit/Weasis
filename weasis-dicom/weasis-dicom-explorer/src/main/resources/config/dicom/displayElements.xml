@@ -33,6 +33,8 @@ and the format attribute has been added.
 <element tag="00181030" vr="LO" vm="1" format="Protocol: $V" ret="">Protocol Name</element>
 <element tag="00200011" vr="IS" vm="1" format="" ret="">Series Number</element>
 <element tag="00200013" vr="IS" vm="1" format="" ret="">Instance Number</element>
+<element tag="00200060" vr="CS" vm="1" format="" ret="">Laterality</element>
+<element tag="00200062" vr="CS" vm="1" format="Lat.: $V" ret="">Image Laterality</element>
 <element tag="00201041" vr="DS" vm="1" format="Slice: $V:$#,##0.##$ mm" ret="">Slice Location</element>
 <element tag="00204000" vr="LT" vm="1" format="" ret="">Image Comments</element>
 <element tag="00541000" vr="CS" vm="2" format="" ret="">Series Type</element>

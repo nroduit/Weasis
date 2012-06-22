@@ -51,7 +51,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", 5, true, true, false); //$NON-NLS-1$
     public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", 6, true, true, false); //$NON-NLS-1$
     public static final Measurement CENTROID_X = new Measurement("Centroid X", 7, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_Y = new Measurement("Centroid X", 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y = new Measurement("Centroid Y", 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -188,6 +188,7 @@ public class TagW implements Transferable, Serializable {
         "Preferred Playback Sequencing", TagType.Integer); //$NON-NLS-1$
     public static final TagW ConvolutionKernel = new TagW(0x00181210, "Convolution Kernel", TagType.String); //$NON-NLS-1$
     public static final TagW FlipAngle = new TagW(0x00181314, "Scan Options", TagType.Float); //$NON-NLS-1$
+    public static final TagW ImageLaterality = new TagW(0x00200062, "Image Laterality", TagType.String, 4); //$NON-NLS-1$
     public static final TagW PatientOrientation = new TagW(0x00200020, "Patient Orientation", TagType.DoubleArray); //$NON-NLS-1$
     public static final TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
 
@@ -236,9 +237,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW BodyPartExamined = new TagW(0x00180015, "Body Part Examined", TagType.String, 3); //$NON-NLS-1$
 
     public static final TagW SeriesNumber = new TagW(0x00200011, "Series Number", TagType.Integer, 3); //$NON-NLS-1$
-
     public static final TagW Laterality = new TagW(0x00200060, "Laterality", TagType.String, 3); //$NON-NLS-1$
-
     public static final TagW NumberOfStudyRelatedSeries = new TagW(0x00201206,
         "Number of Study Related Series", TagType.Integer, 2); //$NON-NLS-1$
     public static final TagW NumberOfStudyRelatedInstances = new TagW(0x00201208,
@@ -267,6 +266,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PixelRepresentation = new TagW(0x00280103, "Pixel Representation", TagType.Integer); //$NON-NLS-1$
 
     public static final TagW StudyStatusID = new TagW(0x0032000A, "Study StatusID", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW StudyComments = new TagW(0x00324000, "Study Comments", TagType.String, 2); //$NON-NLS-1$
     public static final TagW PerformedProcedureStepStartDate = new TagW(0x00400244,
         "Performed Procedure Step Start Date", TagType.Date, 3); //$NON-NLS-1$
     public static final TagW PerformedProcedureStepStartTime = new TagW(0x00400245,
