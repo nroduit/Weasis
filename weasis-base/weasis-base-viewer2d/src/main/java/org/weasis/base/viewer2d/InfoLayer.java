@@ -26,7 +26,6 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -137,14 +136,14 @@ public class InfoLayer implements AnnotationsLayer {
             drawY -= fontHeight;
         }
 
-        if (getDisplayPreferences(ANNOTATIONS)) {
-            MediaSeries<ImageElement> series = view2DPane.getSeries();
-
-            Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
-            String str = synchLink != null && synchLink ? "linked" : "unlinked";
-            paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
-
-        }
+        // if (getDisplayPreferences(ANNOTATIONS)) {
+        // MediaSeries<ImageElement> series = view2DPane.getSeries();
+        //
+        // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
+        // String str = synchLink != null && synchLink ? "linked" : "unlinked";
+        // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
+        //
+        // }
 
     }
 

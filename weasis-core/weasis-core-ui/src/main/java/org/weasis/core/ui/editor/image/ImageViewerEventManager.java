@@ -77,21 +77,32 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
             @Override
             public void stateChanged(BoundedRangeModel model) {
 
-                int index = model.getValue() - 1;
+                DefaultView2d<ImageElement> view2d = null;
                 Series<ImageElement> series = null;
+                MediaObjectEvent mediaEvent = null;
                 ImageElement image = null;
+
                 if (selectedView2dContainer != null) {
-                    DefaultView2d<ImageElement> selectedImagePane =
-                        (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
-                    if (selectedImagePane != null && selectedImagePane.getSeries() instanceof Series) {
-                        series = (Series) selectedImagePane.getSeries();
+                    view2d = (DefaultView2d<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+                }
+
+                if (view2d != null && view2d.getSeries() instanceof Series) {
+                    series = (Series<ImageElement>) view2d.getSeries();
+                    if (series != null) {
+                        // Model contains display value, value-1 is the index value of a sequence
+                        int index = model.getValue() - 1;
                         image =
                             series.getMedia(index,
-                                (Filter<ImageElement>) selectedImagePane.getActionValue(ActionW.FILTERED_SERIES.cmd()),
-                                selectedImagePane.getCurrentSortComparator());
+                                (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                                view2d.getCurrentSortComparator());
+                        mediaEvent = new MediaObjectEvent(image, index);
+                        // Ensure to load image before calling the default preset (requires pixel min and max)
+                        if (image != null && !image.isImageAvailable()) {
+                            image.getImage();
+                        }
                     }
                 }
-                Number location = index;
+
                 // ActionState synch = getAction(ActionW.SYNCH);
                 // if (media != null && synch instanceof ComboItemListener) {
                 // SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
@@ -103,8 +114,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // }
                 // }
 
-                // Model contains display value, value-1 is the index value of a sequence
-                firePropertyChange(action.cmd(), null, location);
+                firePropertyChange(action.cmd(), null, mediaEvent);
                 if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));

@@ -42,16 +42,20 @@ import org.weasis.core.ui.util.MouseEventDouble;
  */
 public class PolygonGraphic extends AbstractDragGraphicArea {
 
-    public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement("Area", 1, true, true, true); //$NON-NLS-1$
-    public static final Measurement PERIMETER = new Measurement("Perimeter", 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement WIDTH = new Measurement("Width", 3, true, true, false); //$NON-NLS-1$
-    public static final Measurement HEIGHT = new Measurement("Height", 4, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_X = new Measurement("Top Left X", 5, true, true, false); //$NON-NLS-1$
-    public static final Measurement TOP_LEFT_POINT_Y = new Measurement("Top Left Y", 6, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_X = new Measurement("Centroid X", 7, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_Y = new Measurement("Centroid Y", 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement PERIMETER = new Measurement(
+        Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement HEIGHT =
+        new Measurement(Messages.getString("measure.height"), 4, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_X = new Measurement(
+        Messages.getString("measure.topx"), 5, true, true, false); //$NON-NLS-1$
+    public static final Measurement TOP_LEFT_POINT_Y = new Measurement(
+        Messages.getString("measure.topy"), 6, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_X = new Measurement("Centroid X", 7, true, true, false);
+    public static final Measurement CENTROID_Y = new Measurement("Centroid Y", 8, true, true, false);
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -330,13 +334,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             double perimeter = 0.0;
 
             for (Line2D line : lineSegmentList) {
-                Point2D P1 = line.getP1();
-                Point2D P2 = line.getP2();
-
-                double dx = P1.getX() - P2.getX();
-                double dy = P1.getY() - P2.getY();
-
-                perimeter += Math.sqrt(Math.abs((dx * dx) - (dy * dy)));
+                perimeter += line.getP1().distance(line.getP2());
             }
 
             return perimeter;
@@ -427,195 +425,4 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         }
         return null;
     }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // DEBUG only - overridden method defined for graphic debug
-
-    // @Override
-    // public void paint(Graphics2D g2d, AffineTransform transform) {
-    // super.paint(g2d, transform);
-    //
-    // Paint oldPaint = g2d.getPaint();
-    // Stroke oldStroke = g2d.getStroke();
-    //
-    // List<Line2D> lineSegmentList = getClosedPathSegments(getPathArea());
-    //
-    // if (lineSegmentList != null) {
-    // double area = 0.0, cx = 0.0, cy = 0.0;
-    // for (Line2D line : lineSegmentList) {
-    // Point2D P1 = line.getP1();
-    // Point2D P2 = line.getP2();
-    //
-    // double tmp = (P1.getX() * P2.getY()) - (P2.getX() * P1.getY());
-    // area += tmp;
-    // cx += (P1.getX() + P2.getX()) * tmp;
-    // cy += (P1.getY() + P2.getY()) * tmp;
-    // }
-    //
-    // area = 0.5 * area;
-    // cx /= (6.0 * area);
-    // cy /= (6.0 * area);
-    //
-    // Point2D cT =
-    // (transform != null) ? transform.transform(new Point2D.Double(cx, cy), null)
-    // : new Point2D.Double(cx, cy);
-    //
-    // Path2D centroid = new Path2D.Double();
-    // centroid.append(new Line2D.Double(cT.getX() - 8, cT.getY(), cT.getX() + 8, cT.getY()), false);
-    // centroid.append(new Line2D.Double(cT.getX(), cT.getY() - 8, cT.getX(), cT.getY() + 8), false);
-    // centroid.append(new Ellipse2D.Double(cT.getX() - 5, cT.getY() - 5, 10, 10), false);
-    //
-    // g2d.draw(centroid);
-    //
-    // Map<Point2D, StringBuilder> ptMap = new HashMap<Point2D, StringBuilder>(lineSegmentList.size() * 2);
-    // int ptIndex = 0;
-    //
-    // for (Line2D line : lineSegmentList) {
-    // for (Point2D pt : new Point2D[] { line.getP1(), line.getP2() }) {
-    // StringBuilder sb = ptMap.get(pt);
-    // if (sb == null) {
-    // ptMap.put(pt, new StringBuilder(Integer.toString(ptIndex++)));
-    // } else {
-    // sb.append(" , ").append(Integer.toString(ptIndex++));
-    // }
-    // }
-    // }
-    //
-    // for (Entry<Point2D, StringBuilder> entry : ptMap.entrySet()) {
-    // Point2D pt = entry.getKey();
-    // String str = entry.getValue().toString();
-    // if (transform != null) {
-    // pt = transform.transform(new Point2D.Double(pt.getX() + 5, pt.getY() + 5), null);
-    // }
-    // g2d.drawString(str, (float) pt.getX(), (float) pt.getY());
-    // }
-    //
-    // g2d.setPaint(oldPaint);
-    // g2d.setStroke(oldStroke);
-    // }
-    // }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // DEBUG only - previous version but still useful to understand full process
-
-    // @Override
-    // public void paint(Graphics2D g2d, AffineTransform transform) {
-    // super.paint(g2d, transform);
-    //
-    // Paint oldPaint = g2d.getPaint();
-    // Stroke oldStroke = g2d.getStroke();
-    //
-    // PATH_AREA_ITERATION:
-    //
-    // if (handlePointList.size() > 1 && handlePointList.get(0) != null) {
-    //
-    // Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, handlePointList.size());
-    // polygonPath.moveTo(handlePointList.get(0).getX(), handlePointList.get(0).getY());
-    //
-    // for (int i = 1; i < handlePointList.size(); i++) {
-    // Point2D pt = handlePointList.get(i);
-    // if (pt == null) {
-    // break PATH_AREA_ITERATION;
-    // }
-    // polygonPath.lineTo(pt.getX(), pt.getY());
-    // }
-    //
-    // List<Line2D> lineSegmentList = new ArrayList<Line2D>(handlePointList.size());
-    // PathIterator pathIt = new Area(polygonPath).getPathIterator(null);
-    //
-    // double coords[] = new double[6];
-    // double startX = NaN, startY = NaN, curX = NaN, curY = NaN;
-    // double area = 0.0, cx = 0.0, cy = 0.0;
-    //
-    // while (!pathIt.isDone()) {
-    //
-    // int segType = pathIt.currentSegment(coords);
-    // double lastX = coords[0], lastY = coords[1];
-    //
-    // switch (segType) {
-    // case PathIterator.SEG_CLOSE:
-    // // lineSegmentList.add(new Line2D.Double(curX, curY, startX, startY));
-    // lastX = startX;
-    // lastY = startY;
-    // case PathIterator.SEG_LINETO:
-    // double tmp = (curX * lastY) - (lastX * curY);
-    // area += tmp;
-    // cx += (curX + lastX) * tmp;
-    // cy += (curY + lastY) * tmp;
-    //
-    // BigDecimal dX = new BigDecimal(Math.abs(curX - lastX)).setScale(10, RoundingMode.DOWN);
-    // BigDecimal dY = new BigDecimal(Math.abs(curY - lastY)).setScale(10, RoundingMode.DOWN);
-    // if (dX.compareTo(BigDecimal.ZERO) != 0 || dY.compareTo(BigDecimal.ZERO) != 0) {
-    // lineSegmentList.add(new Line2D.Double(curX, curY, lastX, lastY));
-    // }
-    // curX = lastX;
-    // curY = lastY;
-    // break;
-    // case PathIterator.SEG_MOVETO:
-    // startX = curX = lastX;
-    // startY = curY = lastY;
-    // break;
-    // default:
-    // break PATH_AREA_ITERATION;
-    // }
-    // pathIt.next();
-    // }
-    //
-    // if (java.lang.Double.isNaN(area)) {
-    // logger.warn("pathIterator contains an open path");
-    // break PATH_AREA_ITERATION;
-    // }
-    //
-    // area = 0.5 * area;
-    // cx /= (6.0 * area);
-    // cy /= (6.0 * area);
-    //
-    // Point2D cT =
-    // (transform != null) ? transform.transform(new Point2D.Double(cx, cy), null)
-    // : new Point2D.Double(cx, cy);
-    //
-    // Path2D centroid = new Path2D.Double();
-    // centroid.append(new Line2D.Double(cT.getX() - 8, cT.getY(), cT.getX() + 8, cT.getY()), false);
-    // centroid.append(new Line2D.Double(cT.getX(), cT.getY() - 8, cT.getX(), cT.getY() + 8), false);
-    // centroid.append(new Ellipse2D.Double(cT.getX() - 5, cT.getY() - 5, 10, 10), false);
-    //
-    // g2d.draw(centroid);
-    //
-    // Map<Point2D, StringBuilder> ptMap = new HashMap<Point2D, StringBuilder>(lineSegmentList.size() * 2);
-    // Set<Point2D> ptSet = ptMap.keySet();
-    // int ptIndex = 0;
-    //
-    // for (Line2D line : lineSegmentList) {
-    // for (Point2D pt : new Point2D[] { line.getP1(), line.getP2() }) {
-    //
-    // for (Point2D p : ptSet) {
-    // BigDecimal dist = new BigDecimal(p.distance(pt)).setScale(10, RoundingMode.DOWN);
-    // if (dist.compareTo(BigDecimal.ZERO) == 0) {
-    // pt = p;
-    // break;
-    // }
-    // }
-    //
-    // StringBuilder sb = ptMap.get(pt);
-    // if (sb == null) {
-    // ptMap.put(pt, new StringBuilder(Integer.toString(ptIndex++)));
-    // } else {
-    // sb.append(" , ").append(Integer.toString(ptIndex++));
-    // }
-    // }
-    // }
-    //
-    // for (Entry<Point2D, StringBuilder> entry : ptMap.entrySet()) {
-    // Point2D pt = entry.getKey();
-    // String str = entry.getValue().toString();
-    // if (transform != null) {
-    // pt = transform.transform(new Point2D.Double(pt.getX() + 5, pt.getY() + 5), null);
-    // }
-    // g2d.drawString(str, (float) pt.getX(), (float) pt.getY());
-    // }
-    // }
-    //
-    // g2d.setPaint(oldPaint);
-    // g2d.setStroke(oldStroke);
-    // }
 }

@@ -68,6 +68,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final SliderChangeListener levelAction;
     private final SliderChangeListener rotateAction;
     private final SliderChangeListener zoomAction;
+    private final SliderChangeListener lensZoomAction;
 
     private final ToggleButtonListener flipAction;
     private final ToggleButtonListener inverseLutAction;
@@ -110,6 +111,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(levelAction = newLevelAction());
         iniAction(rotateAction = newRotateAction());
         iniAction(zoomAction = newZoomAction());
+        iniAction(lensZoomAction = newLensZoomAction());
 
         iniAction(flipAction = newFlipAction());
         iniAction(inverseLutAction = newInverseLutAction());
@@ -286,8 +288,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void resetAllActions() {
         if (selectedView2dContainer != null) {
             DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-            windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-            levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+            ImageElement img = defaultView2d.getImage();
+            if (img != null) {
+                windowAction.setValue((int) img.getDefaultWindow());
+                levelAction.setValue((int) img.getDefaultLevel());
+            }
         }
         flipAction.setSelected(false);
         rotateAction.setValue(0);
@@ -309,8 +314,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
                 DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-                windowAction.setValue(((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-                levelAction.setValue(((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+                ImageElement img = defaultView2d.getImage();
+                if (img != null) {
+                    windowAction.setValue((int) img.getDefaultWindow());
+                    levelAction.setValue((int) img.getDefaultLevel());
+                }
             }
         } else if (ResetTools.Pan.equals(action)) {
             if (selectedView2dContainer != null) {
@@ -323,55 +331,59 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     @Override
-    public synchronized boolean updateComponentsListener(DefaultView2d<ImageElement> defaultView2d) {
-        if (defaultView2d == null) {
+    public synchronized boolean updateComponentsListener(DefaultView2d<ImageElement> view2d) {
+        if (view2d == null) {
             return false;
         }
         Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
         if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
             return false;
         }
-        if (selectedView2dContainer == null || defaultView2d != selectedView2dContainer.getSelectedImagePane()) {
+        if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }
         // System.out.println(v.getId() + ": udpate");
         // selectedView2dContainer.setSelectedImagePane(v);
         clearAllPropertyChangeListeners();
-        if (defaultView2d.getSourceImage() == null) {
+        if (view2d.getSourceImage() == null) {
             enableActions(false);
             return false;
         }
         if (!enabledAction) {
             enableActions(true);
         }
-        ImageElement image = defaultView2d.getImage();
-        MediaSeries<ImageElement> series = defaultView2d.getSeries();
+        ImageElement image = view2d.getImage();
+        MediaSeries<ImageElement> series = view2d.getSeries();
         windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
-            ((Float) defaultView2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
+            ((Float) view2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-            ((Float) defaultView2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
-        rotateAction.setValueWithoutTriggerAction((Integer) defaultView2d.getActionValue(ActionW.ROTATION.cmd()));
-        flipAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.FLIP.cmd()));
-        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) defaultView2d
+            ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+        rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
+        flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
+        zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
             .getActionValue(ActionW.ZOOM.cmd()))));
+        showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
+        Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
+        if (lensZoom != null) {
+            lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
+        }
         moveTroughSliceAction.setMinMaxValue(1,
-            series.size((Filter<ImageElement>) defaultView2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
-            defaultView2d.getFrameIndex() + 1);
+            series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
+            view2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagW.CineRate);
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
-        lutAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.LUT.cmd()));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) defaultView2d.getActionValue(ActionW.INVERSELUT
-            .cmd()));
-        filterAction.setSelectedItemWithoutTriggerAction(defaultView2d.getActionValue(ActionW.FILTER.cmd()));
-        inverseStackAction.setSelected((Boolean) defaultView2d.getActionValue(ActionW.INVERSESTACK.cmd()));
+        lutAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT.cmd()));
+        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSELUT.cmd()));
+        filterAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.FILTER.cmd()));
+        inverseStackAction.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
 
         for (DockableTool p : selectedView2dContainer.getToolPanel()) {
             if (p instanceof GraphicsListener) {
-                defaultView2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
             }
         }
 

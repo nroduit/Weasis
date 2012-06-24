@@ -306,11 +306,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             center();
         }
 
-        // Why the EventManager.getInstance().updateComponentsListener call below is under comment ???
-        // If not necessary same function in dicom.Viewer2d.View2D doesn't need to be Overridden since implementation is
-        // exactly the same
-
-        // EventManager.getInstance().updateComponentsListener(this);
+        eventManager.updateComponentsListener(this);
 
         // Set the sequence to the state OPEN
         if (series != null && oldsequence != series) {
@@ -684,32 +680,44 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
-            Object value = evt.getNewValue();
+            MediaObjectEvent value = (MediaObjectEvent) evt.getNewValue();
             AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
             if (layer != null) {
                 layer.deleteAllGraphic();
             }
+
             E imgElement = null;
-            if (value instanceof Double) {
-                double location = (Double) value;
-                Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-                if (cutlines != null && cutlines) {
-                    computeCrosslines(location);
-                } else {
-                    // TODO add a way in GUI to resynchronize series
-                    Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-                    if (offset != null) {
-                        location += offset;
+            if (value != null) {
+                if (value.getLocation() != null) {
+                    Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+                    if (cutlines != null && cutlines) {
+                        // Compute cutlines from the location of selected image
+                        computeCrosslines(value.getLocation().doubleValue());
+                    } else {
+                        double location = value.getLocation().doubleValue();
+                        // TODO add a way in GUI to resynchronize series
+                        Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+                        if (offset != null) {
+                            location += offset;
+                        }
+                        imgElement =
+                            series.getNearestImage(location, tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
                     }
-                    imgElement =
-                        series.getNearestImage(location, tileOffset,
-                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                } else {
+                    if (value.getMedia() instanceof ImageElement) {
+                        imgElement = (E) value.getMedia();
+                    }
+
+                    if (tileOffset != 0) {
+                        // Index could have changed when loading images.
+                        imgElement =
+                            series.getMedia(value.getSeriesIndex() + tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
+                    }
                 }
-            } else if (value instanceof Integer) {
-                // TODO recieve Integer and crossline or synch are true
-                imgElement =
-                    series.getMedia((Integer) value + tileOffset,
-                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             // If zoom has not been defined or was besfit, set image in bestfit zoom mode

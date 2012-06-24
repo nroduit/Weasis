@@ -134,11 +134,16 @@ public class PresetWindowLevel {
                         explanation = wlExplanationList[i]; // optional attribute
                     }
                 }
-                if (windowList[i] == null || levelList[i] == null || levelList[i] < minModLUT
-                    || levelList[i] > maxModLUT) {
+                if (windowList[i] == null || levelList[i] == null) {
                     // Level value is not consistent, do not add to the list
                     LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
                     continue;
+                }
+                if (levelList[i] < minModLUT) {
+                    levelList[i] = minModLUT;
+                }
+                if (levelList[i] > maxModLUT) {
+                    levelList[i] = maxModLUT;
                 }
                 if (windowList[i] > maxModLUT - minModLUT) {
                     windowList[i] = maxModLUT - minModLUT;

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -67,7 +68,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.mainTool);
-        //        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
+        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
 
         tree = new CheckboxTree();

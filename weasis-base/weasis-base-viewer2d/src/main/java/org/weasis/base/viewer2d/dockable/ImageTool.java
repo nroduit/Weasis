@@ -58,6 +58,7 @@ public class ImageTool extends PluginTool {
 
     public ImageTool(String pluginName, Icon icon) {
         super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
+        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(290);
         jbInit();
 

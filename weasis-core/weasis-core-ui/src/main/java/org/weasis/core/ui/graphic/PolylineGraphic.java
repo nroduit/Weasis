@@ -173,13 +173,9 @@ public class PolylineGraphic extends AbstractDragGraphic {
         if (handlePointList.size() > 1) {
             double perimeter = 0.0;
             Point2D pLast = handlePointList.get(0);
-
             for (int i = 1; i < handlePointList.size(); i++) {
                 Point2D P2 = handlePointList.get(i);
-                double dx = pLast.getX() - P2.getX();
-                double dy = pLast.getY() - P2.getY();
-                perimeter += Math.sqrt(Math.abs((dx * dx) - (dy * dy)));
-
+                perimeter += pLast.distance(P2);
                 pLast = P2;
             }
             return perimeter;
@@ -187,4 +183,17 @@ public class PolylineGraphic extends AbstractDragGraphic {
         return null;
     }
 
+    @Override
+    public void forceToAddPoints(int fromPtIndex) {
+        if (isVariablePointsNumber() && fromPtIndex >= 0 && fromPtIndex < handlePointList.size()) {
+            if (fromPtIndex < handlePointList.size() - 1) {
+                // Add only one point
+                handlePointList.add(fromPtIndex, getHandlePoint(fromPtIndex));
+                handlePointTotalNumber++;
+            } else {
+                // Continue to draw when it is the last point
+                handlePointTotalNumber = UNDEFINED;
+            }
+        }
+    }
 }

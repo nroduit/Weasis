@@ -237,14 +237,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
             sortStack(getCurrentSortComparator());
-        }
-        // IMAGE_PIX_PADDING is already handled in DefaultView2D
-        // else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
-        // TODO synch with statistics
-        // actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), val);
-        // imageLayer.updateImageOperation(WindowLevelOperation.name);
-        // }
-        else if (command.equals(ActionW.KEY_OBJECT.cmd())) {
+        } else if (command.equals(ActionW.KEY_OBJECT.cmd())) {
             KeyObjectReader ko =
                 val instanceof DicomSpecialElement ? new KeyObjectReader((DicomSpecialElement) val) : null;
             actionsInView.put(ActionW.KEY_OBJECT.cmd(), val);
