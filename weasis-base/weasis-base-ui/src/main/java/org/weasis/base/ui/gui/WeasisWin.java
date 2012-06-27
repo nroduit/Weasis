@@ -65,6 +65,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
 import org.weasis.base.ui.action.ExitAction;
+import org.weasis.base.ui.action.OpenMediaAction;
 import org.weasis.base.ui.action.OpenPreferencesAction;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -768,7 +769,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static void buildMenuFile() {
         menuFile.removeAll();
-
+        // TODO dynamic menu for Viewers?
+        menuFile.add(OpenMediaAction.getInstance());
         DynamicMenu importMenu = new DynamicMenu(Messages.getString("WeasisWin.import")) {//$NON-NLS-1$
 
                 @Override

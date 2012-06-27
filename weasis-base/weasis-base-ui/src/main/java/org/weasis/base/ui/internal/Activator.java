@@ -10,8 +10,10 @@
  ******************************************************************************/
 package org.weasis.base.ui.internal;
 
+import java.io.File;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Properties;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.BundleActivator;
@@ -25,7 +27,9 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -34,6 +38,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     private static final String dataExplorerViewFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DataExplorerView.class.getName()); //$NON-NLS-1$
+    public static final Properties LOCAL_PERSISTENCE = new Properties();
     private BundleContext context = null;
 
     @Override
@@ -107,12 +112,20 @@ public class Activator implements BundleActivator, ServiceListener {
             }
 
         });
+        File dataFolder = AbstractProperties.getBundleDataFolder(context);
+        if (dataFolder != null) {
+            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), LOCAL_PERSISTENCE);//$NON-NLS-1$
+        }
     }
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // UnRegister default model
         ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWin.getInstance());
+        File dataFolder = AbstractProperties.getBundleDataFolder(context);
+        if (dataFolder != null) {
+            FileUtil.storeProperties(new File(dataFolder, "persitence.properties"), LOCAL_PERSISTENCE, null);//$NON-NLS-1$
+        }
         this.context = null;
     }
 

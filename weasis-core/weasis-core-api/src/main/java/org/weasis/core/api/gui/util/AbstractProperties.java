@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import javax.swing.LookAndFeel;
 
+import org.osgi.framework.BundleContext;
 import org.weasis.core.api.util.FileUtil;
 
 /**
@@ -61,6 +62,13 @@ public abstract class AbstractProperties {
     /** Container for Properties */
     protected static Properties s_prop = new Properties();
     public static final GhostGlassPane glassPane = new GhostGlassPane();
+
+    public static File getBundleDataFolder(BundleContext context) {
+        if (context == null) {
+            return null;
+        }
+        return new File(AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$;
+    }
 
     protected static String checkProperty(String key, String defaultValue) {
         String result = null;
@@ -268,7 +276,6 @@ public abstract class AbstractProperties {
 
     // TODO move to explorer preferences
     public static boolean isThumbnailSortDesend() {
-        // TODO Auto-generated method stub
         return true;
     }
 

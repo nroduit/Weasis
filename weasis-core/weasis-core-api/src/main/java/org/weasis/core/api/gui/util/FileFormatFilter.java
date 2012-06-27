@@ -86,11 +86,13 @@ public class FileFormatFilter extends FileFilter {
     @Override
     public boolean accept(File f) {
         if (f != null) {
-            if (f.isDirectory())
+            if (f.isDirectory()) {
                 return true;
+            }
             String extension = getExtension(f);
-            if (extension != null && fExtensions.get(extension) != null)
+            if (extension != null && fExtensions.get(extension) != null) {
                 return true;
+            }
         }
         return false;
     }
@@ -99,8 +101,9 @@ public class FileFormatFilter extends FileFilter {
         if (f != null) {
             String filename = f.getName();
             int i = filename.lastIndexOf(46);
-            if (i > 0 && i < filename.length() - 1)
+            if (i > 0 && i < filename.length() - 1) {
                 return filename.substring(i + 1).toLowerCase();
+            }
         }
         return null;
     }
@@ -153,7 +156,7 @@ public class FileFormatFilter extends FileFilter {
     public static void setImageDecodeFilters(JFileChooser chooser) {
         // get the current available codecs in jai lib
         Enumeration codecs = ImageCodec.getCodecs();
-        ArrayList namesList = new ArrayList(20);
+        ArrayList<String> namesList = new ArrayList<String>(20);
         ImageCodec ic;
         for (; codecs.hasMoreElements(); namesList.add(ic.getFormatName())) {
             ic = (ImageCodec) codecs.nextElement();
@@ -247,8 +250,9 @@ public class FileFormatFilter extends FileFilter {
         for (Iterator it = maps.iterator(); it.hasNext();) {
             java.util.Map.Entry me = (java.util.Map.Entry) it.next();
             String value = (String) me.getValue();
-            if (value.equals(codecName))
+            if (value.equals(codecName)) {
                 return (String) me.getKey();
+            }
         }
         return null;
     }

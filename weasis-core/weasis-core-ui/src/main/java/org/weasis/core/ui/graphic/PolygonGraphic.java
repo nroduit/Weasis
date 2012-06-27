@@ -78,14 +78,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         return Messages.getString("MeasureToolBar.polygon"); //$NON-NLS-1$
     }
 
-    /**
-     * Force to display handles even during resizing or moving sequences
-     */
-    @Override
-    protected boolean isResizingOrMoving() {
-        return false;
-    }
-
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
 
