@@ -148,7 +148,7 @@ public class ViewerPluginBuilder {
     public static void openSequenceInDefaultPlugin(File file) {
         MediaReader reader = getMedia(file);
         if (reader != null) {
-            MediaSeries s = buildDicomStructure(reader);
+            MediaSeries s = buildMediaSeriesWithDefaultModel(reader);
             openSequenceInDefaultPlugin(s, DefaultDataModel, true, true);
         }
     }
@@ -173,7 +173,7 @@ public class ViewerPluginBuilder {
         return null;
     }
 
-    private static MediaSeries buildDicomStructure(MediaReader reader) {
+    public static MediaSeries buildMediaSeriesWithDefaultModel(MediaReader reader) {
         if (reader instanceof DefaultMimeIO) {
             return reader.getMediaSeries();
         }

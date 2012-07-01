@@ -124,6 +124,7 @@ public class Activator implements BundleActivator, ServiceListener {
         ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWin.getInstance());
         File dataFolder = AbstractProperties.getBundleDataFolder(context);
         if (dataFolder != null) {
+            // FIXME is parent directory exists
             FileUtil.storeProperties(new File(dataFolder, "persitence.properties"), LOCAL_PERSISTENCE, null);//$NON-NLS-1$
         }
         this.context = null;

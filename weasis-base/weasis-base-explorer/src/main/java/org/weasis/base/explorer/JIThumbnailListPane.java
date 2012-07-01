@@ -198,13 +198,11 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
 
     @Override
     public List<Action> getExportActions() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public List getPrintActions() {
-        // TODO Auto-generated method stub
         return null;
     }
 

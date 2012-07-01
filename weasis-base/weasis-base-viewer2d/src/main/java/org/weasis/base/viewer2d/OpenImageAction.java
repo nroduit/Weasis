@@ -8,19 +8,13 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.base.ui.action;
+package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 
-import javax.swing.Action;
 import javax.swing.JFileChooser;
-import javax.swing.KeyStroke;
 
-import org.weasis.base.ui.gui.WeasisWin;
-import org.weasis.base.ui.internal.Activator;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
@@ -29,36 +23,35 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
 
-public class OpenMediaAction extends AbstractUIAction {
+public class OpenImageAction extends AbstractUIAction {
 
     /** The singleton instance of this singleton class. */
-    private static OpenMediaAction openAction = null;
+    private static OpenImageAction openAction = null;
 
     /** Return the singleton instance */
-    public static OpenMediaAction getInstance() {
+    public static OpenImageAction getInstance() {
         if (openAction == null) {
-            openAction = new OpenMediaAction();
+            openAction = new OpenImageAction();
         }
         return openAction;
     }
 
-    private OpenMediaAction() {
-        super("Open Image...");
+    private OpenImageAction() {
+        super("Image");
         setDescription("Open an supported image file");
-        putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String directory = Activator.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
-        JFileChooser fileChooser = new JFileChooser(directory);
+        //   String directory = Activator.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
+        JFileChooser fileChooser = new JFileChooser();
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
         // TODO add format from plugins
         FileFormatFilter.setImageDecodeFilters(fileChooser);
         File selectedFile = null;
-        if (fileChooser.showOpenDialog(WeasisWin.getInstance()) != JFileChooser.APPROVE_OPTION
+        if (fileChooser.showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
             || (selectedFile = fileChooser.getSelectedFile()) == null) {
             return;
         } else {
@@ -79,7 +72,7 @@ public class OpenMediaAction extends AbstractUIAction {
                 }
             }
             if (lastDir != null) {
-                Activator.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", lastDir);
+                // Activator.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", lastDir);
             }
         }
     }
