@@ -34,20 +34,36 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 
-public class FileUtil {
+public final class FileUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
+
+    public static final int FILE_BUFFER = 4096;
     private static final double BASE = 1024, KB = BASE, MB = KB * BASE, GB = MB * BASE;
-    private static final DecimalFormat df = new DecimalFormat("#.##"); //$NON-NLS-1$
-    private final static int[] illegalChars = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    private static final DecimalFormat DEC_FORMAT = new DecimalFormat("#.##"); //$NON-NLS-1$
+    private static final int[] ILLEGAL_CHARS = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34, 42, 47, 58, 60, 62, 63, 92, 124 };
 
+    private FileUtil() {
+    }
+
+    /**
+     * Transform a string into a writable string for all the operating system. All the special and control characters
+     * are excluded.
+     * 
+     * @param fileName
+     *            a filename or directory name
+     * @return a writable filename
+     */
     public static String getValidFileName(String fileName) {
         StringBuilder cleanName = new StringBuilder();
         if (fileName != null) {
             for (int i = 0; i < fileName.length(); i++) {
                 char c = fileName.charAt(i);
-                if (!(Arrays.binarySearch(illegalChars, c) >= 0 || (c < '\u0020') // ctrls
+                if (!(Arrays.binarySearch(ILLEGAL_CHARS, c) >= 0 || (c < '\u0020') // ctrls
                 || (c > '\u007e' && c < '\u00a0'))) { // ctrls
                     cleanName.append(c);
                 }
@@ -57,27 +73,27 @@ public class FileUtil {
     }
 
     public static void safeClose(final Closeable object) {
-        try {
-            if (object != null) {
+        if (object != null) {
+            try {
                 object.close();
+            } catch (IOException e) {
+                LOGGER.debug(e.getMessage());
             }
-        } catch (IOException e) {
-            // Do nothing
         }
     }
 
     public static void safeClose(ImageInputStream stream) {
-        try {
-            if (stream != null) {
+        if (stream != null) {
+            try {
                 stream.flush();
                 stream.close();
+            } catch (IOException e) {
+                LOGGER.debug(e.getMessage());
             }
-        } catch (IOException e) {
-            // Do nothing
         }
     }
 
-    public static final void deleteDirectoryContents(final File dir) {
+    public static void deleteDirectoryContents(final File dir) {
         if ((dir == null) || !dir.isDirectory()) {
             return;
         }
@@ -88,9 +104,11 @@ public class FileUtil {
                     deleteDirectoryContents(f);
                 } else {
                     try {
-                        f.delete();
+                        if (!f.delete()) {
+                            LOGGER.info("Cannot delete {}", f.getPath());
+                        }
                     } catch (Exception e) {
-                        // Do nothing, wait next start to delete it
+                        LOGGER.error(e.getMessage());
                     }
                 }
             }
@@ -98,57 +116,35 @@ public class FileUtil {
     }
 
     public static void safeClose(XMLStreamWriter writer) {
-        try {
-            if (writer != null) {
+        if (writer != null) {
+            try {
                 writer.close();
+            } catch (XMLStreamException e) {
+                LOGGER.debug(e.getMessage());
             }
-        } catch (XMLStreamException e) {
-            // Do nothing
         }
     }
 
     public static void safeClose(XMLStreamReader xmler) {
-        try {
-            if (xmler != null) {
+        if (xmler != null) {
+            try {
                 xmler.close();
+            } catch (XMLStreamException e) {
+                LOGGER.debug(e.getMessage());
             }
-        } catch (XMLStreamException e) {
-            // Do nothing
         }
     }
 
-    public static boolean isWriteable(File file) {
-        if (file.exists()) {
-            // Check the existing file.
-            if (!file.canWrite()) {
-                return false;
-            }
-        } else {
+    public static void prepareToWriteFile(File file) throws IOException {
+        if (!file.exists()) {
             // Check the file that doesn't exist yet.
-            // Create a new file. The file is writeable if
-            // the creation succeeds.
-            try {
-                String parentDir = file.getParent();
-                if (parentDir != null) {
-                    File outputDir = new File(file.getParent());
-                    if (outputDir.exists() == false) {
-                        // Output directory doesn't exist, so create it.
-                        outputDir.mkdirs();
-                    } else {
-                        if (outputDir.isDirectory() == false) {
-                            // File, which have a same name as the output directory, exists.
-                            // Create output directory.
-                            outputDir.mkdirs();
-                        }
-                    }
-                }
-
-                file.createNewFile();
-            } catch (IOException ioe) {
-                return false;
+            // Create a new file. The file is writable if the creation succeeds.
+            File outputDir = file.getParentFile();
+            // necessary to check exists otherwise mkdirs() is false when dir exists
+            if (outputDir != null && !outputDir.exists() && !outputDir.mkdirs()) {
+                throw new IOException("Cannot write parent directory of " + file.getPath());
             }
         }
-        return true;
     }
 
     public static String nameWithoutExtension(String fn) {
@@ -184,14 +180,14 @@ public class FileUtil {
         try {
             input = url.openStream();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
             return 0;
         }
         FileOutputStream outputStream;
         try {
             outputStream = new FileOutputStream(outFilename);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
             return 0;
         }
         return writeFile(input, outputStream);
@@ -208,7 +204,7 @@ public class FileUtil {
             return 0;
         }
         try {
-            byte[] buf = new byte[4096];
+            byte[] buf = new byte[FILE_BUFFER];
             int offset;
             while ((offset = inputStream.read(buf)) > 0) {
                 out.write(buf, 0, offset);
@@ -217,7 +213,11 @@ public class FileUtil {
         } catch (InterruptedIOException e) {
             return e.bytesTransferred;
         } catch (IOException e) {
-            e.printStackTrace();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("Error when writing file", e);
+            } else {
+                LOGGER.error(e.getMessage());
+            }
             return 0;
         }
 
@@ -230,15 +230,15 @@ public class FileUtil {
     public static String formatSize(double size) {
         StringBuffer buf = new StringBuffer();
         if (size >= GB) {
-            buf.append(df.format(size / GB));
+            buf.append(DEC_FORMAT.format(size / GB));
             buf.append(' ');
             buf.append(Messages.getString("FileUtil.gb")); //$NON-NLS-1$
         } else if (size >= MB) {
-            buf.append(df.format(size / MB));
+            buf.append(DEC_FORMAT.format(size / MB));
             buf.append(' ');
             buf.append(Messages.getString("FileUtil.mb")); //$NON-NLS-1$
         } else if (size >= KB) {
-            buf.append(df.format(size / KB));
+            buf.append(DEC_FORMAT.format(size / KB));
             buf.append(' ');
             buf.append(Messages.getString("FileUtil.kb")); //$NON-NLS-1$
         } else {
@@ -259,7 +259,11 @@ public class FileUtil {
             fco.transferFrom(fci, 0, fci.size());
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("nio exception", e);
+            } else {
+                LOGGER.error(e.getMessage());
+            }
             return false;
         } finally {
             FileUtil.safeClose(inputStream);
@@ -283,7 +287,11 @@ public class FileUtil {
             }
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("nio exception", e);
+            } else {
+                LOGGER.error(e.getMessage());
+            }
             return false;
         } finally {
             FileUtil.safeClose(in);
@@ -303,7 +311,11 @@ public class FileUtil {
             in.transferTo(0, in.size(), out);
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("nio exception", e);
+            } else {
+                LOGGER.error(e.getMessage());
+            }
             return false;
         } finally {
             FileUtil.safeClose(in);
@@ -319,9 +331,9 @@ public class FileUtil {
             try {
                 fileStream = new FileInputStream(propsFile);
                 p.load(fileStream);
-
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Error when reading properties: {}", propsFile);
+                LOGGER.error(e.getMessage());
             } finally {
                 FileUtil.safeClose(fileStream);
             }
@@ -335,10 +347,9 @@ public class FileUtil {
             try {
                 fout = new FileOutputStream(propsFile);
                 props.store(fout, comments);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Error when writing properties: {}", propsFile);
+                LOGGER.error(e.getMessage());
             } finally {
                 FileUtil.safeClose(fout);
             }

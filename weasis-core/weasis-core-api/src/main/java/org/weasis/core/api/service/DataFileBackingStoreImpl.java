@@ -66,13 +66,14 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     protected OutputStream getOutputStream(PreferencesDescription desc) throws IOException {
         File file = this.getFile(desc);
         // Write user folder if not exists
-        FileUtil.isWriteable(file);
+        FileUtil.prepareToWriteFile(file);
         return new FileOutputStream(file);
     }
 
     /**
      * @see org.apache.felix.prefs.BackingStore#availableBundles()
      */
+    @Override
     public Long[] availableBundles() {
         return new Long[0];
     }
@@ -105,6 +106,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     /**
      * @see org.apache.felix.prefs.BackingStore#remove(java.lang.Long)
      */
+    @Override
     public void remove(Long bundleId) throws BackingStoreException {
         // Do nothing, we don't want to delete the preferences file when a bundle is uninstalled
     }
@@ -112,6 +114,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     /**
      * @see org.apache.felix.prefs.BackingStore#loadAll(org.apache.felix.prefs.BackingStoreManager, java.lang.Long)
      */
+    @Override
     public PreferencesImpl[] loadAll(BackingStoreManager manager, Long bundleId) throws BackingStoreException {
         this.checkAccess();
 
@@ -124,6 +127,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
      * @see org.apache.felix.prefs.BackingStore#load(org.apache.felix.prefs.BackingStoreManager,
      *      org.apache.felix.prefs.PreferencesDescription)
      */
+    @Override
     public PreferencesImpl load(BackingStoreManager manager, PreferencesDescription desc) throws BackingStoreException {
         this.checkAccess();
         final File file = this.getFile(desc);
@@ -145,7 +149,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
                                 while (xmler.hasNext()) {
                                     eventType = xmler.next();
                                     switch (eventType) {
-                                        // It is a child of the preferences node
+                                    // It is a child of the preferences node
                                         case XMLStreamConstants.START_ELEMENT:
                                             this.read(root, xmler, xmler.getName().getLocalPart());
                                             break;

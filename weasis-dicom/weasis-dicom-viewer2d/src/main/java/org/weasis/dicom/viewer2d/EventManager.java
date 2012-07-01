@@ -27,6 +27,8 @@ import javax.swing.DefaultComboBoxModel;
 import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -90,7 +92,9 @@ import org.weasis.dicom.viewer2d.internal.Activator;
  */
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
-    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
+
+    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -1061,7 +1065,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final String[] usage =
             {
                 "Change the window/level values of the selected image", //$NON-NLS-1$
-                "Usage: dcmview2d:wl -- [window integer value] [level integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+                "Usage: dcmview2d:wl -- [window integer value] [level integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
                 "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
@@ -1092,7 +1096,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final String[] usage =
             {
                 "Change the pan value of the selected image", //$NON-NLS-1$
-                "Usage: dcmview2d:move -- [x integer value] [y integer value] (it is mantory to have -- for negative values)", //$NON-NLS-1$
+                "Usage: dcmview2d:move -- [x integer value] [y integer value] (it is mandatory to have '--' for negative values)", //$NON-NLS-1$
                 "  -? --help       show help" }; //$NON-NLS-1$ 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
@@ -1184,6 +1188,42 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             GridBagLayoutModel val = selectedView2dContainer.getViewLayout(args.get(0));
                             if (val != null) {
                                 layoutAction.setSelectedItem(val);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public void mouseLeftAction(String[] argv) throws IOException {
+        final String[] usage = { "Change the mouse left action", //$NON-NLS-1$
+            "Usage: dcmview2d:mouseLeftAction [action String value]", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.size() != 1) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    String command = args.get(0);
+                    if (command != null && !command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                        mouseActions.setAction(MouseActions.LEFT, command);
+                        ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+                        if (view != null) {
+                            view.setMouseActions(mouseActions);
+                            final ViewerToolBar toolBar = view.getViewerToolBar();
+                            if (toolBar != null) {
+                                toolBar.changeButtonState(MouseActions.LEFT, command);
                             }
                         }
                     }

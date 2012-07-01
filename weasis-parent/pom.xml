@@ -116,6 +116,7 @@
 	</profiles>
 
 	<dependencies>
+	<!-- Version of core and compendium must match with the OSGI Framework version (Felix) -->
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
