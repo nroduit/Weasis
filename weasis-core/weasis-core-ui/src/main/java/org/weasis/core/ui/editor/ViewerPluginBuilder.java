@@ -148,12 +148,16 @@ public class ViewerPluginBuilder {
     public static void openSequenceInDefaultPlugin(File file) {
         MediaReader reader = getMedia(file);
         if (reader != null) {
-            MediaSeries s = buildDicomStructure(reader);
+            MediaSeries s = buildMediaSeriesWithDefaultModel(reader);
             openSequenceInDefaultPlugin(s, DefaultDataModel, true, true);
         }
     }
 
     public static MediaReader getMedia(File file) {
+        return getMedia(file, true);
+    }
+
+    public static MediaReader getMedia(File file, boolean systemReader) {
         if (file != null && file.canRead()) {
             String mimeType = MimeInspector.getMimeType(file);
             if (mimeType != null) {
@@ -162,12 +166,14 @@ public class ViewerPluginBuilder {
                     return codec.getMediaIO(file.toURI(), mimeType, null);
                 }
             }
-            return new DefaultMimeIO(file.toURI(), null);
+            if (systemReader) {
+                return new DefaultMimeIO(file.toURI(), null);
+            }
         }
         return null;
     }
 
-    private static MediaSeries buildDicomStructure(MediaReader reader) {
+    public static MediaSeries buildMediaSeriesWithDefaultModel(MediaReader reader) {
         if (reader instanceof DefaultMimeIO) {
             return reader.getMediaSeries();
         }

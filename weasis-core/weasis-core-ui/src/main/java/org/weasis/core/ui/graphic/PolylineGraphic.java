@@ -66,14 +66,6 @@ public class PolylineGraphic extends AbstractDragGraphic {
         return "Polyline";
     }
 
-    /**
-     * Force to display handles even during resizing or moving sequences
-     */
-    @Override
-    protected boolean isResizingOrMoving() {
-        return false;
-    }
-
     @Override
     protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
         Shape newShape = null;

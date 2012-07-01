@@ -660,6 +660,21 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
+    private static void buildOpenSubMenu(final JMenu importMenu) {
+        synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
+            List<SeriesViewerFactory> viewers = UIManager.SERIES_VIEWER_FACTORIES;
+            for (final SeriesViewerFactory view : viewers) {
+                List<Action> actions = view.getOpenActions();
+                if (actions != null) {
+                    for (Action action : actions) {
+                        JMenuItem item = new JMenuItem(action);
+                        importMenu.add(item);
+                    }
+                }
+            }
+        }
+    }
+
     private static void buildImportSubMenu(final JMenu importMenu) {
         synchronized (UIManager.EXPLORER_PLUGINS) {
             List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
@@ -768,13 +783,21 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static void buildMenuFile() {
         menuFile.removeAll();
+        DynamicMenu openMenu = new DynamicMenu("Open") {
+
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildOpenSubMenu(this);
+            }
+        };
+        openMenu.addPopupMenuListener();
+        menuFile.add(openMenu);
 
         DynamicMenu importMenu = new DynamicMenu(Messages.getString("WeasisWin.import")) {//$NON-NLS-1$
 
                 @Override
                 public void popupMenuWillBecomeVisible() {
                     buildImportSubMenu(this);
-
                 }
             };
         importMenu.addPopupMenuListener();
@@ -785,7 +808,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 @Override
                 public void popupMenuWillBecomeVisible() {
                     buildExportSubMenu(this);
-
                 }
             };
         exportMenu.addPopupMenuListener();
@@ -797,7 +819,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 @Override
                 public void popupMenuWillBecomeVisible() {
                     buildPrintSubMenu(this);
-
                 }
             };
         printMenu.addPopupMenuListener();

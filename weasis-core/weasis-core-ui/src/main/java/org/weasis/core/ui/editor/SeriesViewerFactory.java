@@ -11,6 +11,9 @@
 package org.weasis.core.ui.editor;
 
 import java.util.Hashtable;
+import java.util.List;
+
+import javax.swing.Action;
 
 import org.weasis.core.api.gui.util.GUIEntry;
 
@@ -23,4 +26,6 @@ public interface SeriesViewerFactory extends GUIEntry {
     boolean isViewerCreatedByThisFactory(SeriesViewer viewer);
 
     int getLevel();
+
+    List<Action> getOpenActions();
 }

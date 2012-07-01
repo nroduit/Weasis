@@ -10,9 +10,12 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -137,5 +140,17 @@ public class View2dFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 5;
+    }
+
+    @Override
+    public List<Action> getOpenActions() {
+        DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+        if (dicomView == null) {
+            ArrayList<Action> actions = new ArrayList<Action>(1);
+            actions.add(OpenDicomAction.getInstance());
+            return actions;
+        }
+        // In case DICOM explorer has been loaded get the first import action
+        return dicomView.getOpenImportDialogAction().subList(0, 1);
     }
 }

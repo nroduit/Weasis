@@ -13,7 +13,9 @@ package org.weasis.dicom.explorer;
 import java.awt.Desktop;
 import java.io.File;
 import java.util.Hashtable;
+import java.util.List;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -107,5 +109,10 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     @Override
     public int getLevel() {
         return 100;
+    }
+
+    @Override
+    public List<Action> getOpenActions() {
+        return null;
     }
 }
