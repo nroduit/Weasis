@@ -33,8 +33,8 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
     private boolean isInitialized = false;
     private PixelAccessor srcPA;
     private int srcSampleType;
-    private long totalPixelCount;
-    private double totalPixelValue;
+    private long[] totalPixelCount;
+    private double[] totalPixelValue;
 
     public ImageStatistics2OpImage(RenderedImage source, ROI roi, int xStart, int yStart, int xPeriod, int yPeriod,
         Double mean, Double excludedMin, Double excludedMax, Double slope, Double intercept) {
@@ -109,8 +109,8 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                 results[1][i] = 0.0;
                 results[2][i] = 0.0;
             }
-            totalPixelCount = 0;
-            totalPixelValue = 0.0;
+            totalPixelCount = new long[srcPA.numBands];
+            totalPixelValue = new double[srcPA.numBands];
             isInitialized = true;
         }
 
@@ -169,13 +169,13 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
         if (name.equalsIgnoreCase("statistics")) { //$NON-NLS-1$
             double[][] ext = (double[][]) stats;
             for (int i = 0; i < srcPA.numBands; i++) {
-                if (totalPixelCount < 4) {
+                if (totalPixelCount[i] < 4) {
                     ext[0][i] = Double.NaN;
                     ext[1][i] = Double.NaN;
                     ext[2][i] = Double.NaN;
                 } else {
-                    double pix = totalPixelCount;
-                    double variance = (results[0][i] - (totalPixelValue * totalPixelValue / pix)) / (pix - 1.0);
+                    double pix = totalPixelCount[i];
+                    double variance = (results[0][i] - (totalPixelValue[i] * totalPixelValue[i] / pix)) / (pix - 1.0);
                     // Standard Deviation
                     ext[0][i] = Math.sqrt(variance);
                     // Skewness
@@ -230,15 +230,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
-
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
     private void accumulateStatisticsUShort(UnpackedImageData uid) {
@@ -281,15 +282,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
-
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
     private void accumulateStatisticsShort(UnpackedImageData uid) {
@@ -332,14 +334,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
     private void accumulateStatisticsInt(UnpackedImageData uid) {
@@ -382,15 +386,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
-
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
     private void accumulateStatisticsFloat(UnpackedImageData uid) {
@@ -433,15 +438,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
-
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
     private void accumulateStatisticsDouble(UnpackedImageData uid) {
@@ -484,15 +490,16 @@ public class ImageStatistics2OpImage extends StatisticsOpImage {
                     }
                 }
             }
-            totalPixelCount -= outRange;
-            totalPixelValue += totalValues;
+            totalPixelCount[b] -= outRange;
+            totalPixelValue[b] += totalValues;
             results[0][b] += accum2;
             results[1][b] += accum3;
             results[2][b] += accum4;
         }
-        totalPixelCount +=
-            (int) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
-
+        long nbpix = (long) Math.ceil((double) rect.height / yPeriod) * (int) Math.ceil((double) rect.width / xPeriod);
+        for (int b = 0; b < srcPA.numBands; b++) {
+            totalPixelCount[b] += nbpix;
+        }
     }
 
 }

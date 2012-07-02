@@ -14,13 +14,20 @@ public class MeasureItem {
     private final Measurement measurement;
     private final Double value;
     private final String unit;
+    private final String labelExtension;
 
     public MeasureItem(Measurement measurement, Double value, String unit) {
-        if (measurement == null)
+        this(measurement, null, value, unit);
+    }
+
+    public MeasureItem(Measurement measurement, String labelExtension, Double value, String unit) {
+        if (measurement == null) {
             throw new IllegalArgumentException("Measurement cannot be null!"); //$NON-NLS-1$
+        }
         this.measurement = measurement;
         this.value = value;
         this.unit = unit;
+        this.labelExtension = labelExtension;
     }
 
     public Measurement getMeasurement() {
@@ -33,6 +40,10 @@ public class MeasureItem {
 
     public String getUnit() {
         return unit;
+    }
+
+    public String getLabelExtension() {
+        return labelExtension;
     }
 
 }

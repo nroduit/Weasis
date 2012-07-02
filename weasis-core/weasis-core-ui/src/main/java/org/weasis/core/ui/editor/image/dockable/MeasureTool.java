@@ -390,6 +390,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 MeasureItem m = measList.get(i);
                 Object[] row = new Object[2];
                 StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
+                if (m.getLabelExtension() != null) {
+                    buffer.append(m.getLabelExtension());
+                }
                 if (m.getUnit() != null) {
                     buffer.append(" ["); //$NON-NLS-1$
                     buffer.append(m.getUnit());

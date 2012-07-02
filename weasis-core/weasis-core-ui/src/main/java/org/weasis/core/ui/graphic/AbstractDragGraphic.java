@@ -669,7 +669,11 @@ public abstract class AbstractDragGraphic implements Graphic {
                         String unit = item.getUnit();
 
                         if (name != null) {
-                            sb.append(name).append(" : "); //$NON-NLS-1$
+                            sb.append(name);
+                            if (item.getLabelExtension() != null) {
+                                sb.append(item.getLabelExtension());
+                            }
+                            sb.append(" : "); //$NON-NLS-1$
                             if (value != null) {
                                 sb.append(DecFormater.oneDecimalUngroup(value));
                                 if (unit != null) {

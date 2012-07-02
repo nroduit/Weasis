@@ -70,16 +70,16 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
         if (layer != null) {
             ImageElement imageElement = layer.getSourceImage();
             if (imageElement != null && isShapeValid()) {
-                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>(4);
+                ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();
 
                 if (IMAGE_MIN.isComputed() || IMAGE_MAX.isComputed() || IMAGE_MEAN.isComputed()) {
 
-                    Double min = null;
-                    Double max = null;
-                    Double mean = null;
-                    Double stdv = null;
-                    Double skew = null;
-                    Double kurtosis = null;
+                    Double[] min = null;
+                    Double[] max = null;
+                    Double[] mean = null;
+                    Double[] stdv = null;
+                    Double[] skew = null;
+                    Double[] kurtosis = null;
 
                     if (releaseEvent && shape != null) {
                         RenderedImage image = layer.getSourceRenderedImage();
@@ -107,66 +107,81 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         ((OpImage) dst.getRendering()).setTileCache(null);
                         // For basic statistics, rescale values can be computed afterwards
                         double[][] extrema = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
+                        if (extrema == null || extrema.length < 1 || extrema[0].length < 1) {
+                            return null;
+                        }
+                        min = new Double[extrema[0].length];
+                        max = new Double[extrema[0].length];
+                        mean = new Double[extrema[0].length];
+
                         // LOGGER.error("Basic stats [ms]: {}", System.currentTimeMillis() - startTime);
                         // unit = pixelValue * rescale slope + rescale intercept
                         Float slopeVal = (Float) imageElement.getTagValue(TagW.RescaleSlope);
                         Float interceptVal = (Float) imageElement.getTagValue(TagW.RescaleIntercept);
                         double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
                         double intercept = interceptVal == null ? 0.0f : interceptVal.doubleValue();
-                        min = extrema[0][0] * slope + intercept;
-                        max = extrema[1][0] * slope + intercept;
-                        mean = extrema[2][0] * slope + intercept;
+                        for (int i = 0; i < extrema[0].length; i++) {
+                            min[i] = extrema[0][i] * slope + intercept;
+                            max[i] = extrema[1][i] * slope + intercept;
+                            mean[i] = extrema[2][i] * slope + intercept;
+                        }
 
                         if (IMAGE_STD.isComputed() || IMAGE_SKEW.isComputed() || IMAGE_KURTOSIS.isComputed()) {
                             // startTime = System.currentTimeMillis();
                             // Required the mean value (not rescaled), slope and intercept to calculate correctly std,
-                            // skew
-                            // and kurtosis
+                            // skew and kurtosis
                             dst =
                                 ImageStatistics2Descriptor.create(image, roi, 1, 1, extrema[2][0], excludedMin,
                                     excludedMax, slope, intercept, null);
                             // To ensure this image is not stored in tile cache
                             ((OpImage) dst.getRendering()).setTileCache(null);
                             double[][] extrema2 = (double[][]) dst.getProperty("statistics"); //$NON-NLS-1$
-                            // LOGGER.info("Adv. stats [ms]: {}", System.currentTimeMillis() - startTime);
-                            stdv = extrema2[0][0];
-                            skew = extrema2[1][0];
-                            kurtosis = extrema2[2][0];
+                            if (extrema != null && extrema.length > 0 && extrema[0].length > 0) {
+                                stdv = new Double[extrema2[0].length];
+                                skew = new Double[extrema2[0].length];
+                                kurtosis = new Double[extrema2[0].length];
+                                // LOGGER.info("Adv. stats [ms]: {}", System.currentTimeMillis() - startTime);
+                                for (int i = 0; i < extrema2[0].length; i++) {
+                                    stdv[i] = extrema2[0][i];
+                                    skew[i] = extrema2[1][i];
+                                    kurtosis[i] = extrema2[2][i];
+                                }
+                            }
                         }
                     }
 
                     String unit = imageElement.getPixelValueUnit();
                     if (IMAGE_MIN.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_MIN, min, unit));
+                        addMeasure(measVal, IMAGE_MIN, min, unit);
                     }
                     if (IMAGE_MAX.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_MAX, max, unit));
+                        addMeasure(measVal, IMAGE_MAX, max, unit);
                     }
                     if (IMAGE_MEAN.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_MEAN, mean, unit));
+                        addMeasure(measVal, IMAGE_MEAN, mean, unit);
                     }
 
                     if (IMAGE_STD.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_STD, stdv, unit));
+                        addMeasure(measVal, IMAGE_STD, stdv, unit);
                     }
                     if (IMAGE_SKEW.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_SKEW, skew, unit));
+                        addMeasure(measVal, IMAGE_SKEW, skew, unit);
                     }
                     if (IMAGE_KURTOSIS.isComputed()) {
-                        measVal.add(new MeasureItem(IMAGE_KURTOSIS, kurtosis, unit));
+                        addMeasure(measVal, IMAGE_KURTOSIS, kurtosis, unit);
                     }
 
                     Double suv = (Double) imageElement.getTagValue(TagW.SuvFactor);
                     if (suv != null) {
                         unit = "SUVbw"; //$NON-NLS-1$
                         if (IMAGE_MIN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MIN, min == null ? null : min * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MIN, min[0] == null ? null : min[0] * suv, unit));
                         }
                         if (IMAGE_MAX.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MAX, max == null ? null : max * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MAX, max[0] == null ? null : max[0] * suv, unit));
                         }
                         if (IMAGE_MEAN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MEAN, mean == null ? null : mean * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MEAN, mean[0] == null ? null : mean[0] * suv, unit));
                         }
                     }
                 }
@@ -176,4 +191,15 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
         return null;
     }
 
+    private static void addMeasure(ArrayList<MeasureItem> measVal, Measurement measure, Double[] val, String unit) {
+        if (val == null) {
+            measVal.add(new MeasureItem(measure, null, unit));
+        } else if (val.length == 1) {
+            measVal.add(new MeasureItem(measure, val[0], unit));
+        } else {
+            for (int i = 0; i < val.length; i++) {
+                measVal.add(new MeasureItem(measure, " " + (i + 1), val[i], unit));
+            }
+        }
+    }
 }
