@@ -18,7 +18,9 @@ import javax.swing.JFileChooser;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
@@ -38,42 +40,48 @@ public class OpenImageAction extends AbstractUIAction {
 
     private OpenImageAction() {
         super("Image");
-        setDescription("Open an supported image file");
+        setDescription("Open an image file");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //   String directory = Activator.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
-        JFileChooser fileChooser = new JFileChooser();
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
+        JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setMultiSelectionEnabled(true);
         // TODO add format from plugins
         FileFormatFilter.setImageDecodeFilters(fileChooser);
-        File selectedFile = null;
+        File[] selectedFiles = null;
         if (fileChooser.showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
-            || (selectedFile = fileChooser.getSelectedFile()) == null) {
+            || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {
-            String lastDir = selectedFile.getPath();
-
-            if (selectedFile != null && selectedFile.canRead()) {
-                String mimeType = MimeInspector.getMimeType(selectedFile);
+            MediaSeries series = null;
+            for (File file : selectedFiles) {
+                String mimeType = MimeInspector.getMimeType(file);
                 // TODO add message when cannot open image
                 if (mimeType != null && mimeType.startsWith("image")) {
                     Codec codec = BundleTools.getCodec(mimeType, null);
                     if (codec != null) {
-                        MediaReader reader = codec.getMediaIO(selectedFile.toURI(), mimeType, null);
+                        MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
                         if (reader != null) {
-                            ViewerPluginBuilder
-                                .openSequenceInDefaultPlugin(reader.getMediaSeries(), null, false, false);
+                            if (series == null) {
+                                series = reader.getMediaSeries();
+                            } else {
+                                MediaElement[] elements = reader.getMediaElement();
+                                if (elements != null) {
+                                    for (MediaElement media : elements) {
+                                        series.addMedia(media);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            if (lastDir != null) {
-                // Activator.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", lastDir);
-            }
+            ViewerPluginBuilder.openSequenceInDefaultPlugin(series, null, true, false);
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent());
         }
     }
 }

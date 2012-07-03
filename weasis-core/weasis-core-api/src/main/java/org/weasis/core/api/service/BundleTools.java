@@ -55,6 +55,8 @@ public class BundleTools {
         }
     }
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
+    public static final WProperties LOCAL_PERSISTENCE = new WProperties();
+
     static {
         FileUtil.readProperties(propsFile, SYSTEM_PREFERENCES);
         if (!propsFile.canRead()) {

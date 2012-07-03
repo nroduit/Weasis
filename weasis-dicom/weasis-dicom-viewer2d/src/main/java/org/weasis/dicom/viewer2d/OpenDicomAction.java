@@ -45,8 +45,8 @@ public class OpenDicomAction extends AbstractUIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //  String directory = Activator.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
-        JFileChooser fileChooser = new JFileChooser();
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$
+        JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
@@ -57,12 +57,6 @@ public class OpenDicomAction extends AbstractUIAction {
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {
-            String lastDir = null;
-            if (selectedFiles.length == 1) {
-                lastDir = selectedFiles[0].getPath();
-            } else {
-                lastDir = selectedFiles[0].getParent();
-            }
             Codec codec = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
             if (codec != null) {
                 ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
@@ -80,11 +74,7 @@ public class OpenDicomAction extends AbstractUIAction {
                         false);
                 }
             }
-            if (lastDir != null) {
-                // Activator.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", lastDir);
-
-            }
-
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent());
         }
     }
 }

@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.internal;
 
+import java.io.File;
+
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -17,8 +19,11 @@ import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -28,6 +33,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static final String pluginViewerFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
+
     private static BundleContext bundleContext = null;
 
     @Override
@@ -56,6 +62,10 @@ public class Activator implements BundleActivator, ServiceListener {
                 // m_tracker.close();
             }
         });
+        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
+        if (dataFolder != null) {
+            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
+        }
     }
 
     // @Override
@@ -64,6 +74,12 @@ public class Activator implements BundleActivator, ServiceListener {
         // Save preferences
         MeasureTool.viewSetting.savePreferences(PREFERENCES.getDefaultPreferences());
         PREFERENCES.close();
+        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
+        if (dataFolder != null) {
+            File file = new File(dataFolder, "persitence.properties");
+            FileUtil.prepareToWriteFile(file);
+            FileUtil.storeProperties(file, BundleTools.LOCAL_PERSISTENCE, null);//$NON-NLS-1$
+        }
         Activator.bundleContext = null;
     }
 
