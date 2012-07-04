@@ -180,6 +180,9 @@ public class ViewerPluginBuilder {
         MediaSeries series = null;
         // Require to read the header
         MediaElement[] medias = reader.getMediaElement();
+        if (medias == null) {
+            return null;
+        }
         String seriesUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
         if (seriesUID == null) {
             for (MediaElement media : medias) {

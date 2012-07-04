@@ -10,10 +10,12 @@
  ******************************************************************************/
 package org.weasis.base.viewer2d;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.media.MimeInspector;
@@ -40,7 +42,7 @@ public class OpenImageAction extends AbstractUIAction {
 
     private OpenImageAction() {
         super("Image");
-        setDescription("Open an image file");
+        setDescription("Open image files");
     }
 
     @Override
@@ -60,13 +62,13 @@ public class OpenImageAction extends AbstractUIAction {
             MediaSeries series = null;
             for (File file : selectedFiles) {
                 String mimeType = MimeInspector.getMimeType(file);
-                // TODO add message when cannot open image
                 if (mimeType != null && mimeType.startsWith("image")) {
                     Codec codec = BundleTools.getCodec(mimeType, null);
                     if (codec != null) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
                         if (reader != null) {
                             if (series == null) {
+                                // TODO improve group model for image, uid for group ?
                                 series = reader.getMediaSeries();
                             } else {
                                 MediaElement[] elements = reader.getMediaElement();
@@ -80,7 +82,14 @@ public class OpenImageAction extends AbstractUIAction {
                     }
                 }
             }
-            ViewerPluginBuilder.openSequenceInDefaultPlugin(series, null, true, false);
+            if (series != null && series.size(null) > 1) {
+                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, ViewerPluginBuilder.DefaultDataModel, true,
+                    false);
+            } else {
+                Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                JOptionPane.showMessageDialog(c, "Cannot open the requested files!", getDescription(),
+                    JOptionPane.WARNING_MESSAGE);
+            }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent());
         }
     }

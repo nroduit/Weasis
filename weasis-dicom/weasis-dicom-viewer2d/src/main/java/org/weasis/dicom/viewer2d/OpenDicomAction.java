@@ -10,12 +10,16 @@
  ******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
+import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -50,8 +54,11 @@ public class OpenDicomAction extends AbstractUIAction {
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
-        // TODO add format from plugins
-        // FileFormatFilter.setImageDecodeFilters(fileChooser);
+        FileFormatFilter filter = new FileFormatFilter(new String[] { "dcm", "dicm" }, "DICOM");
+        fileChooser.addChoosableFileFilter(filter);
+        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setFileFilter(filter);
+
         File[] selectedFiles = null;
         if (fileChooser.showOpenDialog(EventManager.getInstance().getSelectedView2dContainer()) != JFileChooser.APPROVE_OPTION
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
@@ -61,17 +68,23 @@ public class OpenDicomAction extends AbstractUIAction {
             if (codec != null) {
                 ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
                 for (File file : selectedFiles) {
-                    MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
-                    if (reader != null) {
-                        MediaSeries s = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader);
-                        if (!list.contains(s)) {
-                            list.add(s);
+                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
+                        MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
+                        if (reader != null) {
+                            MediaSeries s = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader);
+                            if (s != null && !list.contains(s)) {
+                                list.add(s);
+                            }
                         }
                     }
                 }
                 if (list.size() > 0) {
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(list, ViewerPluginBuilder.DefaultDataModel, true,
                         false);
+                } else {
+                    Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+                    JOptionPane.showMessageDialog(c, "Cannot open the requested files!", getDescription(),
+                        JOptionPane.WARNING_MESSAGE);
                 }
             }
             BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent());
