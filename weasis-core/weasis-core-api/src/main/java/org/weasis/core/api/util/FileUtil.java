@@ -69,7 +69,7 @@ public final class FileUtil {
                 }
             }
         }
-        return cleanName.toString();
+        return cleanName.toString().trim();
     }
 
     public static void safeClose(final Closeable object) {
