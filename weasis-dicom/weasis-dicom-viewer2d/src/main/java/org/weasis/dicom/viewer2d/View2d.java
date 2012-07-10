@@ -77,6 +77,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -357,6 +358,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                         getCurrentSortComparator());
             }
+
+            AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(),
+                series.getTagValue(TagW.Modality));
 
             setDefautWindowLevel(media);
             setImage(media, true);

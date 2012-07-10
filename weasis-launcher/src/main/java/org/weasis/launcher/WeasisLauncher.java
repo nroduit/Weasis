@@ -805,6 +805,8 @@ public class WeasisLauncher {
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
         String versionNew = config.getProperty(P_WEASIS_VERSION);
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
+        // Transmit the audit log property to the bundle context
+        config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim());
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();

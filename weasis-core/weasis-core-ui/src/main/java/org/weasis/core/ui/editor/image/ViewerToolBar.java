@@ -37,6 +37,7 @@ import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -143,6 +144,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
                 // value is adjusted by the BoundedRangeModel
                 eventManager.firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+                AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd());
             }
         });
         add(jButtonBestFit);

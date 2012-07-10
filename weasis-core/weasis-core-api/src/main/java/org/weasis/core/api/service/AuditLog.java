@@ -25,7 +25,7 @@ public class AuditLog {
     public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names"; //$NON-NLS-1$
 
     public enum LEVEL {
-        DEBUG, INFO, WARN, ERROR, FATAL;
+        TRACE, DEBUG, INFO, WARN, ERROR;
 
         public static LEVEL getLevel(String level) {
             try {
@@ -35,13 +35,6 @@ public class AuditLog {
             return INFO;
         }
     };
-
-    // TODO activate audit log for the functionalities usage of Weasis
-    // static {
-    // AuditLog.createOrUpdateLogger("audit.log", new String[] { "org.weasis.core.api.service.AuditLog" }, "DEBUG",
-    // AbstractProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit.log",
-    // "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null);
-    // }
 
     public static void createOrUpdateLogger(String loggerKey, String[] loggerVal, String level, String logFile,
         String pattern, String nbFiles, String logSize) {
@@ -56,8 +49,7 @@ public class AuditLog {
                     if (confAdmin != null) {
                         try {
                             Dictionary<String, Object> loggingProperties;
-                            Configuration logConfiguration =
-                                getLogConfiguration(confAdmin, "(" + loggerKey + "=" + loggerVal[0] + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                             if (logConfiguration == null) {
                                 logConfiguration =
                                     confAdmin.createFactoryConfiguration(
@@ -94,15 +86,18 @@ public class AuditLog {
         }
     }
 
-    public static Configuration getLogConfiguration(ConfigurationAdmin confAdmin, String filter) throws IOException {
+    public static Configuration getLogConfiguration(ConfigurationAdmin confAdmin, String key, String val)
+        throws IOException {
         Configuration logConfiguration = null;
-        try {
-            Configuration[] configs = confAdmin.listConfigurations(filter);
-            if (configs != null && configs.length > 0) {
-                logConfiguration = configs[0];
+        if (key != null && val != null) {
+            try {
+                Configuration[] configs = confAdmin.listConfigurations("(" + key + "=" + val + ")");
+                if (configs != null && configs.length > 0) {
+                    logConfiguration = configs[0];
+                }
+            } catch (InvalidSyntaxException e) {
+                // ignore this as we'll create what we need
             }
-        } catch (InvalidSyntaxException e) {
-            // ignore this as we'll create what we need
         }
         return logConfiguration;
     }

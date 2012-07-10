@@ -41,6 +41,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -85,6 +86,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -398,6 +400,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
             }
             imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+            if (AuditLog.LOGGER.isInfoEnabled()) {
+                PlanarImage image = img.getImage();
+                if (image != null) {
+                    StringBuffer pixSize = new StringBuffer();
+                    SampleModel sm = image.getSampleModel();
+                    if (sm != null) {
+                        int[] spsize = sm.getSampleSize();
+                        if (spsize != null && spsize.length > 0) {
+                            pixSize.append(spsize[0]);
+                            for (int i = 1; i < spsize.length; i++) {
+                                pixSize.append(',');
+                                pixSize.append(spsize[i]);
+                            }
+                        }
+                    }
+                    AuditLog.LOGGER.info("open:image size:{},{} depth:{}",
+                        new Object[] { image.getWidth(), image.getHeight(), pixSize.toString() });
+                }
+            }
         }
     }
 
@@ -532,6 +554,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         getLayerModel().setSelectedGraphics(null);
         // Throws to the tool listener the current graphic selection.
         getLayerModel().fireGraphicsSelectionChanged(imageLayer);
+
+        if (selected && series != null) {
+            AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber());
+        }
     }
 
     /** paint routine */
@@ -704,6 +730,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                             series.getNearestImage(location, tileOffset,
                                 (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                                 getCurrentSortComparator());
+
+                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
                     }
                 } else {
                     if (value.getMedia() instanceof ImageElement) {

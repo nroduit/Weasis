@@ -26,6 +26,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
 
 public abstract class SliderChangeListener extends MouseActionAdapter implements ChangeListener, ActionState {
@@ -149,6 +150,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
         if (triggerAction && ajusting) {
             stateChanged(model);
+            AuditLog.LOGGER.info("action:{} val:{} min:{} max:{}",
+                new Object[] { action.cmd(), model.getValue(), model.getMinimum(), model.getMaximum() });
         }
         for (int i = 0; i < sliders.size(); i++) {
             updateSliderProoperties(sliders.get(i));

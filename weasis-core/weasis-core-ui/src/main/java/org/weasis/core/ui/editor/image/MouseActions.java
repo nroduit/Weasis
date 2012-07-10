@@ -14,8 +14,8 @@ import java.awt.event.InputEvent;
 
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.ui.Messages;
 
 public class MouseActions {
 
@@ -36,8 +36,8 @@ public class MouseActions {
     private String middle = ActionW.PAN.cmd();
     private String right = ActionW.CONTEXTMENU.cmd();
     private String wheel = ActionW.SCROLL_SERIES.cmd();
-    private int activeButtons =
-        InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK;
+    private int activeButtons = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK
+        | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK;
 
     public MouseActions(String left, String middle, String right, String wheel) {
         super();
@@ -123,19 +123,17 @@ public class MouseActions {
         } else if (MouseActions.WHEEL.equals(type)) {
             setWheel(action);
         }
+        AuditLog.LOGGER.info("mouse:{} action:{}", type, action);
     }
 
     public static void loadPreferences(Preferences prefs, boolean defaultValue) {
         if (prefs != null) {
             Preferences p = prefs.node(MouseActions.PREFERENCE_NODE);
-            p.put(P_MOUSE_LEFT, defaultValue ? ActionW.WINLEVEL.cmd() : p.get(P_MOUSE_LEFT, ActionW.WINLEVEL
-                .cmd()));
-            p.put(P_MOUSE_MIDDLE, defaultValue ? ActionW.PAN.cmd() : p.get(P_MOUSE_MIDDLE, ActionW.PAN
-                .cmd()));
-            p.put(P_MOUSE_RIGHT, defaultValue ? ActionW.CONTEXTMENU.cmd() : p.get(P_MOUSE_RIGHT,
-                ActionW.CONTEXTMENU.cmd()));
-            p.put(P_MOUSE_WHEEL, defaultValue ? ActionW.ZOOM.cmd() : p.get(P_MOUSE_WHEEL, ActionW.ZOOM
-                .cmd()));
+            p.put(P_MOUSE_LEFT, defaultValue ? ActionW.WINLEVEL.cmd() : p.get(P_MOUSE_LEFT, ActionW.WINLEVEL.cmd()));
+            p.put(P_MOUSE_MIDDLE, defaultValue ? ActionW.PAN.cmd() : p.get(P_MOUSE_MIDDLE, ActionW.PAN.cmd()));
+            p.put(P_MOUSE_RIGHT,
+                defaultValue ? ActionW.CONTEXTMENU.cmd() : p.get(P_MOUSE_RIGHT, ActionW.CONTEXTMENU.cmd()));
+            p.put(P_MOUSE_WHEEL, defaultValue ? ActionW.ZOOM.cmd() : p.get(P_MOUSE_WHEEL, ActionW.ZOOM.cmd()));
         }
     }
 

@@ -20,6 +20,7 @@ import java.awt.geom.Point2D;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.graphic.DragPoint;
 
 public abstract class PannerListener extends MouseActionAdapter implements ActionState, KeyListener {
@@ -37,6 +38,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         enable = true;
     }
 
+    @Override
     public void enableAction(boolean enabled) {
         this.enable = enabled;
     }
@@ -49,6 +51,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         if (point != null) {
             this.point = point;
             pointChanged(point);
+            AuditLog.LOGGER.info("action:{} val:{},{}", new Object[] { action.cmd(), point.getX(), point.getY() });
         }
     }
 
@@ -56,6 +59,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         return triggerAction;
     }
 
+    @Override
     public ActionW getActionW() {
         return action;
     }
@@ -125,6 +129,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         pickPoint = null;
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             setPoint(new Point(5, 0));
@@ -137,9 +142,11 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         }
     }
 
+    @Override
     public void keyReleased(KeyEvent e) {
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {
     }
 

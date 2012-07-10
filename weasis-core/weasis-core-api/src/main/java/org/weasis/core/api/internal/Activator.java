@@ -11,6 +11,10 @@
 package org.weasis.core.api.internal;
 
 import java.awt.image.renderable.RenderedImageFactory;
+import java.io.File;
+import java.io.IOException;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptorImpl;
@@ -26,9 +30,12 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.image.op.FormatBinaryDescriptor;
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
@@ -39,6 +46,7 @@ import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.op.ThresholdToBinDescriptor;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.DataFileBackingStoreImpl;
 import org.weasis.core.api.util.ProxyDetector;
@@ -91,6 +99,8 @@ public class Activator implements BundleActivator, ServiceListener {
 
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
+
+        initLoggerAndAudit();
     }
 
     @Override
@@ -149,4 +159,41 @@ public class Activator implements BundleActivator, ServiceListener {
         return bundleContext;
     }
 
+    private void initLoggerAndAudit() throws IOException {
+        // Audit log for giving statistics about usage of Weasis
+        String loggerKey = "audit.log";
+        String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" };
+        // Activate audit log by adding an entry "audit.log=true" in Weasis.
+        String audit = bundleContext.getProperty(loggerKey);
+        if (audit != null && audit.equalsIgnoreCase("true")) {
+            String user = System.getProperty("weasis.user", System.getProperty("user.name", "local"));
+            AuditLog.createOrUpdateLogger(loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH
+                + File.separator + "log" + File.separator + "audit-" + user + ".log",
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null);
+            AuditLog.LOGGER.info("Start audit log session");
+        } else {
+            ServiceReference configurationAdminReference =
+                bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
+            if (configurationAdminReference != null) {
+                ConfigurationAdmin confAdmin =
+                    (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
+                if (confAdmin != null) {
+
+                    Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
+                    if (logConfiguration == null) {
+                        logConfiguration =
+                            confAdmin.createFactoryConfiguration(
+                                "org.apache.sling.commons.log.LogManager.factory.config", null);
+                        Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                        loggingProperties.put("org.apache.sling.commons.log.level", "ERROR");
+                        // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
+                        loggingProperties.put("org.apache.sling.commons.log.names", loggerVal);
+                        // add this property to give us something unique to re-find this configuration
+                        loggingProperties.put(loggerKey, loggerVal[0]);
+                        logConfiguration.update(loggingProperties);
+                    }
+                }
+            }
+        }
+    }
 }

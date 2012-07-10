@@ -54,6 +54,8 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     String getToolTips();
 
+    String getSeriesNumber();
+
     boolean isOpen();
 
     boolean isSelected();

@@ -118,6 +118,14 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
+    public String getSeriesNumber() {
+        Integer splitNb = (Integer) getTagValue(TagW.SplitSeriesNumber);
+        Integer val = (Integer) getTagValue(TagW.SeriesNumber);
+        String result = val == null ? "" : val.toString();
+        return splitNb == null ? result : result + "-" + splitNb.toString();
+    }
+
+    @Override
     public String getMimeType() {
         String modality = (String) getTagValue(TagW.Modality);
         if ("PR".equals(modality)) { //$NON-NLS-1$

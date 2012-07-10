@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.internal;
 
-import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -18,10 +17,10 @@ import javax.imageio.spi.IIORegistry;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
@@ -52,7 +51,7 @@ public class Activator implements BundleActivator {
         if (configurationAdminReference != null) {
             ConfigurationAdmin confAdmin = (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
             if (confAdmin != null) {
-                Configuration logConfiguration = getLogConfiguration(confAdmin);
+                Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
                 if (logConfiguration == null) {
                     logConfiguration =
                         confAdmin.createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config",
@@ -67,19 +66,6 @@ public class Activator implements BundleActivator {
                 }
             }
         }
-    }
-
-    private Configuration getLogConfiguration(ConfigurationAdmin confAdmin) throws IOException {
-        Configuration logConfiguration = null;
-        try {
-            Configuration[] configs = confAdmin.listConfigurations("(" + LOGGER_KEY + "=" + LOGGER_VAL + ")");
-            if (configs != null && configs.length > 0) {
-                logConfiguration = configs[0];
-            }
-        } catch (InvalidSyntaxException e) {
-            // ignore this as we'll create what we need
-        }
-        return logConfiguration;
     }
 
     // @Override

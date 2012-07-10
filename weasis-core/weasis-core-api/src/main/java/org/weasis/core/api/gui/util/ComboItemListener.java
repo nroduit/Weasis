@@ -20,6 +20,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+import org.weasis.core.api.service.AuditLog;
+
 public abstract class ComboItemListener implements ListDataListener, ChangeListener, ActionState {
 
     protected final ActionW action;
@@ -39,7 +41,9 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
     @Override
     public void contentsChanged(ListDataEvent e) {
         // if (model.equals(e.getSource())) {
-        itemStateChanged(model.getSelectedItem());
+        Object val = model.getSelectedItem();
+        itemStateChanged(val);
+        AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val);
         // }
     }
 

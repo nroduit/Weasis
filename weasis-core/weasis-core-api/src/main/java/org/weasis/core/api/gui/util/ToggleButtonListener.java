@@ -21,6 +21,8 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton.ToggleButtonModel;
 
+import org.weasis.core.api.service.AuditLog;
+
 public abstract class ToggleButtonListener implements ActionListener, ActionState {
 
     protected final ArrayList<AbstractButton> itemList;
@@ -35,6 +37,7 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
         model.addActionListener(this);
     }
 
+    @Override
     public void enableAction(boolean enabled) {
         model.setEnabled(enabled);
     }
@@ -44,13 +47,16 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
         return action.getTitle();
     }
 
+    @Override
     public ActionW getActionW() {
         return action;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof ButtonModel) {
             actionPerformed(model.isSelected());
+            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected());
         }
     };
 
@@ -65,6 +71,7 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
         if (oldVal != selected) {
             model.setSelected(selected);
             actionPerformed(selected);
+            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected());
         }
     }
 

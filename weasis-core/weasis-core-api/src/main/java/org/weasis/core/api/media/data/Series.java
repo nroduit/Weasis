@@ -430,4 +430,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         return fileSize;
     }
 
+    public String getSeriesNumber() {
+        Integer val = (Integer) getTagValue(TagW.SeriesNumber);
+        return val == null ? "" : val.toString();
+    }
 }
