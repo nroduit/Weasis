@@ -49,6 +49,26 @@ import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class WeasisLauncher {
+    public enum STATE {
+        UNINSTALLED(0x00000001), INSTALLED(0x00000002), RESOLVED(0x00000004), STARTING(0x00000008),
+        STOPPING(0x00000010), ACTIVE(0x00000020);
+
+        private int state;
+
+        private STATE(int state) {
+            this.state = state;
+        }
+
+        public static String valueOf(int state) {
+            for (STATE s : STATE.values()) {
+                if (s.state == state) {
+                    return s.name();
+                }
+            }
+            return "UNKNOWN";
+        }
+
+    }
 
     /**
      * Switch for specifying bundle directory.
@@ -232,6 +252,8 @@ public class WeasisLauncher {
                 baseURL += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
                 System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
                 System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
+                // Allow export feature for portable version
+                System.setProperty("weasis.export.dicom", "true");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -241,7 +263,7 @@ public class WeasisLauncher {
         // If no configuration properties were found, then create
         // an empty properties object.
         if (configProps == null) {
-            System.err.println("No " + CONFIG_PROPERTIES_FILE_VALUE + " found."); //$NON-NLS-1$ //$NON-NLS-2$
+            System.err.println("Cannot start, no " + CONFIG_PROPERTIES_FILE_VALUE + " found."); //$NON-NLS-1$ //$NON-NLS-2$
             configProps = new Properties();
         }
 
@@ -364,7 +386,11 @@ public class WeasisLauncher {
             exitStatus = -1;
             System.err.println("Cannot not start framework: " + ex); //$NON-NLS-1$
             System.err.println("Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
-            ex.printStackTrace();
+            System.err.println("State of the framework:"); //$NON-NLS-1$
+            for (Bundle b : m_felix.getBundleContext().getBundles()) {
+                System.err.println(" * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " "
+                    + STATE.valueOf(b.getState()));
+            }
 
             // Set flag to clean cache at next launch
             File common_file = new File(System.getProperty(P_WEASIS_PATH), APP_PROPERTY_FILE);
@@ -594,6 +620,7 @@ public class WeasisLauncher {
         if (overrideBundleProp && value != null) {
             bundleProp.setProperty(key, value);
         }
+        System.out.println(key + ": " + value); //$NON-NLS-1$
         return value;
     }
 
@@ -641,6 +668,10 @@ public class WeasisLauncher {
     }
 
     public static WebStartLoader loadProperties(Properties config) {
+        System.out.println();
+        System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
+        System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$
+
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
@@ -650,6 +681,7 @@ public class WeasisLauncher {
             while (commandsIterator.hasNext()) {
                 REMOTE_PREFS = commandsIterator.next();
                 REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user); //$NON-NLS-1$
+                System.out.println("Loading remote preferences for : " + user); //$NON-NLS-1$
                 break;
             }
         }
@@ -663,6 +695,7 @@ public class WeasisLauncher {
 
         String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
+            System.out.println("Starting portable version"); //$NON-NLS-1$
             System
                 .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
         }
@@ -680,6 +713,8 @@ public class WeasisLauncher {
                 e.printStackTrace();
             }
         }
+        System.out.println("Installation directory: " + basdir.getPath()); //$NON-NLS-1$
+
         File common_file = new File(basdir, APP_PROPERTY_FILE);
         Properties s_prop = readProperties(common_file);
         // General Preferences priority order:
@@ -792,6 +827,7 @@ public class WeasisLauncher {
             e.printStackTrace();
         }
         s_prop.put("weasis.look", look); //$NON-NLS-1$
+        System.out.println("weasis.look: " + look); //$NON-NLS-1$
 
         Properties common_prop;
         if (basdir.getPath().equals(dir)) {
@@ -803,7 +839,9 @@ public class WeasisLauncher {
         }
 
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
+        System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
         String versionNew = config.getProperty(P_WEASIS_VERSION);
+        System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
         // Transmit the audit log property to the bundle context
         config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim());
@@ -829,6 +867,7 @@ public class WeasisLauncher {
             config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             common_prop.remove("weasis.clean.cache"); //$NON-NLS-1$
             update = true;
+            System.out.println("Clean plug-in cache because Weasis has crashed during the previous launch"); //$NON-NLS-1$
         }
         // Clean cache if major or minor version number has changed
         else if (cleanCache && versionNew != null) {
@@ -839,6 +878,7 @@ public class WeasisLauncher {
                     System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
                     config
                         .setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+                    System.out.println("Clean plug-in cache because the minor version has changed"); //$NON-NLS-1$
                 }
             } catch (Exception e) {
                 System.err.println("Cannot read Weasis version!"); //$NON-NLS-1$
@@ -924,7 +964,7 @@ public class WeasisLauncher {
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
                     message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
-                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10435")); //$NON-NLS-1$
+                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10441")); //$NON-NLS-1$
                     message.append("</P>"); //$NON-NLS-1$
                     jTextPane1.setText(message.toString());
                     JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
@@ -932,6 +972,7 @@ public class WeasisLauncher {
                 }
             });
         }
+        System.out.println("***** End of Configuration *****"); //$NON-NLS-1$
         return loader;
     }
 

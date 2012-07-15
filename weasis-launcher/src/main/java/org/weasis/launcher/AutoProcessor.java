@@ -272,6 +272,14 @@ public class AutoProcessor {
         Bundle[] bundles = context.getBundles();
         for (int i = 0; i < bundles.length; i++) {
             try {
+                // TODO could be remove in version 2
+                if (bundles[i].getSymbolicName().equals("org.apache.sling.commons.log")
+                    && bundles[i].getVersion().getMajor() < 3) {
+                    bundles[i].uninstall();
+                    System.out
+                        .println("Remove conflicting old version of sling logger (< 3.0): " + bundles[i].getLocation()); //$NON-NLS-1$
+                    continue;
+                }
                 // Remove snapshot version to prevent bundle conflicts and to update at every launch
                 if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) {
                     bundles[i].uninstall();

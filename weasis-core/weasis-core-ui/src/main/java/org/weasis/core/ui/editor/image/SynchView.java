@@ -26,7 +26,7 @@ public class SynchView implements GUIEntry {
 
     public static final SynchView NONE =
         new SynchView(
-            Messages.getString("SynchView.none"), Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("SynchView.none"), "None", Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$ //$NON-NLS-2$
     public static final SynchView DEFAULT_TILE;
     public static final SynchView DEFAULT_STACK;
     static {
@@ -47,7 +47,7 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.SORTSTACK, true);
         actions.put(ActionW.KEY_OBJECT, true);
         actions.put(ActionW.PR_STATE, true);
-        DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), Mode.Tile, //$NON-NLS-1$
+        DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), "Tile", Mode.Tile, //$NON-NLS-1$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
         actions = new HashMap<ActionW, Boolean>();
@@ -56,20 +56,23 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.ZOOM, true);
         actions.put(ActionW.ROTATION, true);
         actions.put(ActionW.FLIP, true);
-        DEFAULT_STACK = new SynchView(Messages.getString("SynchView.def_s"), Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$
-            .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
+        DEFAULT_STACK =
+            new SynchView(Messages.getString("SynchView.def_s"), "Stack", Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$
+                .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
     }
 
     private final HashMap<ActionW, Boolean> actions;
     private final Mode mode;
     private final String name;
+    private final String command;
     private final Icon icon;
 
-    public SynchView(String name, Mode mode, Icon icon, HashMap<ActionW, Boolean> actions) {
+    public SynchView(String name, String command, Mode mode, Icon icon, HashMap<ActionW, Boolean> actions) {
         if (name == null || actions == null) {
             throw new IllegalArgumentException("A parameter is null!"); //$NON-NLS-1$
         }
         this.name = name;
+        this.command = command;
         this.actions = actions;
         this.mode = mode;
         this.icon = icon;
@@ -87,6 +90,10 @@ public class SynchView implements GUIEntry {
     @Override
     public String toString() {
         return name;
+    }
+
+    public String getCommand() {
+        return command;
     }
 
     public Mode getMode() {

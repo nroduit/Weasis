@@ -23,22 +23,33 @@ import javax.swing.event.PopupMenuListener;
 public abstract class DropDownButton extends JButton implements PopupMenuListener, ActionListener {
 
     private final String type;
+    private final GroupRadioMenu menuModel;
 
-    public DropDownButton(String type, Icon icon) {
+    public DropDownButton(String type, Icon icon, GroupRadioMenu model) {
         super(icon);
+        this.menuModel = model;
         this.type = type;
         init();
+    }
+
+    public DropDownButton(String type, Icon icon) {
+        this(type, icon, (GroupRadioMenu) null);
     }
 
     public DropDownButton(String type, String text) {
         super(new DropDownLabel(text));
         this.type = type;
+        this.menuModel = null;
         init();
     }
 
     private void init() {
         addActionListener(this);
         // arrowButton.setMargin(new Insets(3, 0, 3, 0));
+    }
+
+    public GroupRadioMenu getMenuModel() {
+        return menuModel;
     }
 
     @Override
@@ -54,17 +65,20 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         }
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         JPopupMenu popup = getPopupMenu();
         popup.addPopupMenuListener(this);
         popup.show(this, 0, getHeight());
     }
 
+    @Override
     public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         getModel().setRollover(true);
         getModel().setSelected(true);
     }
 
+    @Override
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         getModel().setRollover(false);
         getModel().setSelected(false);
@@ -73,6 +87,7 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         // ((JPopupMenu) e.getSource()).removeAll();
     }
 
+    @Override
     public void popupMenuCanceled(PopupMenuEvent e) {
     }
 

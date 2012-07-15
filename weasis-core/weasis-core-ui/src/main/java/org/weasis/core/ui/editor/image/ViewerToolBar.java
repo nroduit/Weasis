@@ -27,13 +27,14 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
+import javax.swing.event.ListDataEvent;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
-import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
@@ -62,6 +63,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private DropDownButton mouseMiddle;
     private DropDownButton mouseRight;
     private DropDownButton mouseWheel;
+    private DropDownButton synchButton;
     private final MeasureToolBar<E> measureToolBar;
 
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager) {
@@ -114,8 +116,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         add(Box.createRigidArea(new Dimension(5, 0)));
 
-        final DropDownButton button = buildSynchButton();
-        add(button);
+        synchButton = buildSynchButton();
+        add(synchButton);
 
         addSeparator(WtoolBar.SEPARATOR_2x24);
 
@@ -177,35 +179,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     public DropDownButton getMouseLeft() {
         return mouseLeft;
-    }
-
-    private JPopupMenu getSychPopupMenuButton(final DropDownButton dropDownButton) {
-        ActionState synch = eventManager.getAction(ActionW.SYNCH);
-        JPopupMenu popupMouseButtons = new JPopupMenu();
-        if (synch instanceof ComboItemListener) {
-            final ComboItemListener combo = ((ComboItemListener) synch);
-            ActionListener listener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (e.getSource() instanceof RadioMenuItem) {
-                        RadioMenuItem item = (RadioMenuItem) e.getSource();
-                        Icon icon = buildSynchIcon((SynchView) item.getObject());
-                        dropDownButton.setIcon(icon);
-                    }
-                }
-            };
-            JMenu menu = combo.createUnregisteredRadioMenu("synch"); //$NON-NLS-1$
-            popupMouseButtons.setInvoker(dropDownButton);
-            Component[] cps = menu.getMenuComponents();
-            for (int i = 0; i < cps.length; i++) {
-                if (cps[i] instanceof RadioMenuItem) {
-                    RadioMenuItem button = (RadioMenuItem) cps[i];
-                    button.addActionListener(listener);
-                }
-                popupMouseButtons.add(cps[i]);
-            }
-        }
-        return popupMouseButtons;
     }
 
     private JPopupMenu getLayoutPopupMenuButton(DropDownButton dropDownButton) {
@@ -348,20 +321,26 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private DropDownButton buildSynchButton() {
+        GroupRadioMenu menu = null;
         ActionState synch = eventManager.getAction(ActionW.SYNCH);
         SynchView synchView = SynchView.DEFAULT_STACK;
         if (synch instanceof ComboItemListener) {
-            Object sel = ((ComboItemListener) synch).getSelectedItem();
+            ComboItemListener m = (ComboItemListener) synch;
+            Object sel = m.getSelectedItem();
             if (sel instanceof SynchView) {
                 synchView = (SynchView) sel;
             }
+            menu = new SynchGroupMenu();
+            m.registerComponent(menu);
         }
-        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView)) { //$NON-NLS-1$
-
+        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) { //$NON-NLS-1$
                 @Override
                 protected JPopupMenu getPopupMenu() {
-                    return getSychPopupMenuButton(this);
+                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                    menu.setInvoker(this);
+                    return menu;
                 }
+
             };
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
         return button;
@@ -442,5 +421,26 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             return actions[index];
         }
         return null;
+    }
+
+    class SynchGroupMenu extends GroupRadioMenu {
+
+        public SynchGroupMenu() {
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent e) {
+            super.contentsChanged(e);
+            changeButtonState();
+        }
+
+        public void changeButtonState() {
+            Object sel = dataModel.getSelectedItem();
+            if (sel instanceof SynchView && synchButton != null) {
+                Icon icon = buildSynchIcon((SynchView) sel);
+                synchButton.setIcon(icon);
+                synchButton.setActionCommand(sel.toString());
+            }
+        }
     }
 }

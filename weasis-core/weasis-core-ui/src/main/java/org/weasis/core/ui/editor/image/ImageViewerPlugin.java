@@ -308,7 +308,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     elements.put(e, component);
                     grid.add(component, e);
                 }
-
             }
         }
         grid.revalidate();
@@ -317,6 +316,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         MouseActions mouseActions = eventManager.getMouseActions();
         for (int i = 0; i < view2ds.size(); i++) {
             DefaultView2d<E> v = view2ds.get(i);
+            // Close lens because update does not work
+            v.closeLens();
             if (SynchView.Mode.Tile.equals(synchView)) {
                 v.setTileOffset(i);
                 v.setSeries(selectedImagePane.getSeries(), null);

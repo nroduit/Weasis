@@ -91,7 +91,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     }
     protected final JButton jButtondelete = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
-    protected final MeasureButton measureButton;
+    protected final DropDownButton measureButton;
     protected final ImageViewerEventManager<E> eventManager;
 
     public MeasureToolBar(final ImageViewerEventManager<E> eventManager) {
@@ -113,7 +113,14 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             menu = new MeasureGroupMenu();
             m.registerComponent(menu);
         }
-        measureButton = new MeasureButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu);
+        measureButton = new DropDownButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu) {
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                menu.setInvoker(this);
+                return menu;
+            }
+        };
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
 
         add(measureButton);
@@ -191,23 +198,6 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             }
         }
         return null;
-    }
-
-    static class MeasureButton extends DropDownButton {
-        private final GroupRadioMenu model;
-
-        public MeasureButton(String type, Icon icon, GroupRadioMenu model) {
-            super(type, icon);
-            this.model = model;
-        }
-
-        @Override
-        protected JPopupMenu getPopupMenu() {
-            JPopupMenu menu = (model == null) ? new JPopupMenu() : model.createJPopupMenu();
-            menu.setInvoker(this);
-            return menu;
-        }
-
     }
 
     class MeasureGroupMenu extends GroupRadioMenu {

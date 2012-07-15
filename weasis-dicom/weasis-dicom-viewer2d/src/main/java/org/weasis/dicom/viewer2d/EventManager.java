@@ -95,7 +95,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
-    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -1162,7 +1162,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void layout(String[] argv) throws IOException {
         final String[] usage = { "Select a split-screen layout", //$NON-NLS-1$
-            "Usage: dcmview2d:layout [nubmer | id] [VALUE]", //$NON-NLS-1$
+            "Usage: dcmview2d:layout [number | id] [VALUE]", //$NON-NLS-1$
             "  -n --number [integer value]  select the best matching number of views", //$NON-NLS-1$
             "  -i --id  select the layout from its identifier", //$NON-NLS-1$
             "  -? --help       show help" }; //$NON-NLS-1$ 
@@ -1230,6 +1230,46 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 }
                             }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
+    public void synch(String[] argv) throws IOException {
+        StringBuffer buffer = new StringBuffer("{");
+        for (SynchView synch : SYNCH_LIST) {
+            buffer.append(synch.getCommand());
+            buffer.append(" ");
+        }
+        buffer.append("}");
+
+        final String[] usage = { "Set a synchronization mode " + buffer.toString(), //$NON-NLS-1$
+            "Usage: dcmview2d:synch [VALUE]", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                String command = args.get(0);
+                if (command != null) {
+                    try {
+                        for (SynchView synch : SYNCH_LIST) {
+                            if (synch.getCommand().equals(command)) {
+                                synchAction.setSelectedItem(synch);
+                                return;
+                            }
+                        }
+                        throw new IllegalArgumentException("Synch command '" + command + "' not found!");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
