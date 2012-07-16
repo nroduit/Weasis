@@ -82,7 +82,7 @@ public class OpenImageAction extends AbstractUIAction {
                     }
                 }
             }
-            if (series != null && series.size(null) > 1) {
+            if (series != null && series.size(null) > 0) {
                 ViewerPluginBuilder.openSequenceInDefaultPlugin(series, ViewerPluginBuilder.DefaultDataModel, true,
                     false);
             } else {
