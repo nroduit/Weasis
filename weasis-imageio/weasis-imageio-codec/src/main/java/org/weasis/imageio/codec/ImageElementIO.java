@@ -56,7 +56,13 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
             throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
         }
         this.uri = media;
-        this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
+        if (mimeType == null) {
+            this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
+        } else if ("image/x-ms-bmp".equals(mimeType)) {
+            this.mimeType = "image/bmp";
+        } else {
+            this.mimeType = mimeType;
+        }
         this.codec = codec;
     }
 

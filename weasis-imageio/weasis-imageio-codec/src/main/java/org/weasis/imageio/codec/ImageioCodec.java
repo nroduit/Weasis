@@ -11,7 +11,9 @@
 package org.weasis.imageio.codec;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -22,7 +24,12 @@ public class ImageioCodec implements Codec {
 
     @Override
     public String[] getReaderMIMETypes() {
-        return ImageIO.getReaderMIMETypes();
+        List<String> list = new ArrayList<String>();
+        for (String s : ImageIO.getReaderMIMETypes()) {
+            list.add(s);
+        }
+        list.add("image/x-ms-bmp");
+        return list.toArray(new String[list.size()]);
     }
 
     @Override
@@ -33,7 +40,7 @@ public class ImageioCodec implements Codec {
     @Override
     public boolean isMimeTypeSupported(String mimeType) {
         if (mimeType != null) {
-            for (String mime : ImageIO.getReaderMIMETypes()) {
+            for (String mime : getReaderMIMETypes()) {
                 if (mimeType.equals(mime)) {
                     return true;
                 }
