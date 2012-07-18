@@ -299,6 +299,15 @@ public class DicomDirLoader {
         for (int i = 1; i < fileID.length; i++) {
             sb.append(File.separatorChar).append(fileID[i]);
         }
-        return new File(reader.getFile().getParent(), sb.toString()).toURI().toString();
+        File file = new File(reader.getFile().getParent(), sb.toString());
+        if (!file.exists()) {
+            // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
+            File fileLowerCase = new File(reader.getFile().getParent(), sb.toString().toLowerCase());
+            if (fileLowerCase.exists()) {
+                file = fileLowerCase;
+            }
+        }
+
+        return file.toURI().toString();
     }
 }
