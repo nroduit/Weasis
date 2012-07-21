@@ -265,10 +265,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
         for (File drive : dvs) {
             // Detect read-only media
-            if (drive.canRead() && !drive.canWrite() && !drive.isHidden()) {
+            if (drive.canRead() && !drive.isHidden()) {
                 for (int j = 0; j < dicomdir.length; j++) {
                     File f = new File(drive, dicomdir[j]);
-                    if (f.canRead()) {
+                    if (f.canRead() && !f.canWrite()) {
                         return f;
                     }
                 }

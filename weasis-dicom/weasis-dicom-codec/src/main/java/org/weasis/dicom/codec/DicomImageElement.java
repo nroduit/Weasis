@@ -129,7 +129,7 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getMinValue() {
         // Computes min and max as slope can be negative
-        return Math.min(pixel2mLUT(minPixelValue), pixel2mLUT(maxPixelValue));
+        return Math.min(pixel2mLUT(super.getMinValue()), pixel2mLUT(super.getMaxValue()));
     }
 
     /**
@@ -139,7 +139,7 @@ public class DicomImageElement extends ImageElement {
     @Override
     public float getMaxValue() {
         // Computes min and max as slope can be negative
-        return Math.max(pixel2mLUT(minPixelValue), pixel2mLUT(maxPixelValue));
+        return Math.max(pixel2mLUT(super.getMinValue()), pixel2mLUT(super.getMaxValue()));
     }
 
     @Override
@@ -303,7 +303,8 @@ public class DicomImageElement extends ImageElement {
         Integer paddingLimit = getPaddingLimit();
         boolean outputSigned = false;
         if (bitsStored > 8 && !modSeqLUT) {
-            float minVal = minPixelValue;
+            // Get raw min value
+            float minVal = super.getMinValue();
             if (paddingValue != null) {
                 minVal = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
             }
@@ -484,8 +485,7 @@ public class DicomImageElement extends ImageElement {
          * This function can be called several times from the inner class Load. min and max will be computed only once.
          */
 
-        if (img != null && minPixelValue == 0.0f && maxPixelValue == 0.0f) {
-
+        if (img != null && !isImageAvailable()) {
             Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
             Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
             int bitsStored = getBitsStored();
@@ -500,8 +500,8 @@ public class DicomImageElement extends ImageElement {
                 min = max = null;
             }
 
-            minPixelValue = (min == null) ? 0.0f : min.floatValue();
-            maxPixelValue = (max == null) ? 0.0f : max.floatValue();
+            minPixelValue = min == null ? null : min.floatValue();
+            maxPixelValue = max == null ? null : max.floatValue();
 
             if (isPhotometricInterpretationMonochrome()) {
                 Integer paddingValue = getPaddingValue();
@@ -509,8 +509,8 @@ public class DicomImageElement extends ImageElement {
                     Integer paddingLimit = getPaddingLimit();
                     int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                     int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
-                    if (minPixelValue != 0.0f || maxPixelValue != 0.0f) {
-                        if (paddingValueMin <= minPixelValue || paddingValueMax >= maxPixelValue) {
+                    if (isImageAvailable()) {
+                        if (paddingValueMin <= minPixelValue.intValue() || paddingValueMax >= maxPixelValue.intValue()) {
                             /*
                              * possible confusing Min/Max image values regarding to padding Min/Max range in order to
                              * get full dynamic range of the image with real pixel only
@@ -523,15 +523,15 @@ public class DicomImageElement extends ImageElement {
                 }
             }
 
-            if (minPixelValue == 0.0f && maxPixelValue == 0.0f) {
+            if (!isImageAvailable()) {
                 super.findMinMaxValues(img);
             }
 
-            if (bitsStored < bitsAllocated) {
+            if (bitsStored < bitsAllocated && isImageAvailable()) {
                 boolean isSigned = isPixelRepresentationSigned();
                 int minInValue = isSigned ? -(1 << (bitsStored - 1)) : 0;
                 int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
-                if ((int) minPixelValue < minInValue || (int) maxPixelValue > maxInValue) {
+                if (minPixelValue < (float) minInValue || maxPixelValue > (float) maxInValue) {
                     /*
                      * When the image contains values smaller or bigger than the bits stored min max values, the bits
                      * stored is replaced by the bits allocated.
@@ -558,8 +558,8 @@ public class DicomImageElement extends ImageElement {
         if (img != null) {
             int datatype = img.getSampleModel().getDataType();
             if (datatype == DataBuffer.TYPE_BYTE) {
-                this.minPixelValue = 0;
-                this.maxPixelValue = 255;
+                this.minPixelValue = 0.0f;
+                this.maxPixelValue = 255.0f;
             } else {
                 RenderedOp dst =
                     ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, new Double(paddingValueMin), new Double(
@@ -576,8 +576,13 @@ public class DicomImageElement extends ImageElement {
                     min = Math.min(min, extrema[0][i]);
                     max = Math.max(max, extrema[1][i]);
                 }
-                this.minPixelValue = (int) min;
-                this.maxPixelValue = (int) max;
+                this.minPixelValue = Double.valueOf(min).floatValue();
+                this.maxPixelValue = Double.valueOf(max).floatValue();
+                // Handle special case when min and max are equal, ex. black image
+                // + 1 to max enables to display the correct value
+                if (this.minPixelValue.equals(this.maxPixelValue)) {
+                    this.maxPixelValue += 1.0f;
+                }
             }
         }
     }

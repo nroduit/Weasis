@@ -77,8 +77,8 @@ public class ImageElement extends MediaElement<PlanarImage> {
     protected String pixelSizeCalibrationDescription = null;
     protected String pixelValueUnit = null;
 
-    protected float minPixelValue;
-    protected float maxPixelValue;
+    protected Float minPixelValue;
+    protected Float maxPixelValue;
 
     public ImageElement(MediaReader<PlanarImage> mediaIO, Object key) {
         super(mediaIO, key);
@@ -88,7 +88,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
-        if (img != null && minPixelValue == 0.0f && maxPixelValue == 0.0f) {
+        if (img != null && !isImageAvailable()) {
 
             int datatype = img.getSampleModel().getDataType();
             if (datatype == DataBuffer.TYPE_BYTE) {
@@ -110,14 +110,19 @@ public class ImageElement extends MediaElement<PlanarImage> {
                     min = Math.min(min, extrema[0][i]);
                     max = Math.max(max, extrema[1][i]);
                 }
-                this.minPixelValue = (int) min;
-                this.maxPixelValue = (int) max;
+                this.minPixelValue = Double.valueOf(min).floatValue();
+                this.maxPixelValue = Double.valueOf(max).floatValue();
+                // Handle special case when min and max are equal, ex. black image
+                // + 1 to max enables to display the correct value
+                if (this.minPixelValue.equals(this.maxPixelValue)) {
+                    this.maxPixelValue += 1.0f;
+                }
             }
         }
     }
 
     public boolean isImageAvailable() {
-        return maxPixelValue != 0.0 || minPixelValue != 0.0;
+        return maxPixelValue != null && minPixelValue != null;
     }
 
     protected boolean isGrayImage(RenderedImage source) {
@@ -133,19 +138,22 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public float getDefaultWindow() {
-        return maxPixelValue - minPixelValue;
+        return getMaxValue() - getMinValue();
     }
 
     public float getDefaultLevel() {
-        return minPixelValue + (maxPixelValue - minPixelValue) / 2.f;
+        if (isImageAvailable()) {
+            return minPixelValue + (maxPixelValue - minPixelValue) / 2.f;
+        }
+        return 0.0f;
     }
 
     public float getMaxValue() {
-        return maxPixelValue;
+        return maxPixelValue == null ? 0.0f : maxPixelValue;
     }
 
     public float getMinValue() {
-        return minPixelValue;
+        return minPixelValue == null ? 0.0f : minPixelValue;
     }
 
     public int getRescaleWidth(int width) {
@@ -300,8 +308,10 @@ public class ImageElement extends MediaElement<PlanarImage> {
         try {
             cacheImage = startImageLoading();
         } catch (OutOfMemoryError e1) {
-            // Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
-            // Extrema)
+            /*
+             * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
+             * Extrema)
+             */
             logger.warn("Out of MemoryError: {}", getMediaURI()); //$NON-NLS-1$
             mCache.expungeStaleEntries();
             System.gc();
