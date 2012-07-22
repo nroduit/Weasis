@@ -224,9 +224,12 @@ public class PresetWindowLevel {
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);
 
-        List<PresetWindowLevel> modPresets = presetListByModality.get(image.getTagValue(TagW.Modality));
-        if (modPresets != null) {
-            presetList.addAll(modPresets);
+        // Exclude Secondary Capture CT
+        if (image.getBitsStored() > 8) {
+            List<PresetWindowLevel> modPresets = presetListByModality.get(image.getTagValue(TagW.Modality));
+            if (modPresets != null) {
+                presetList.addAll(modPresets);
+            }
         }
 
         return presetList.toArray(new PresetWindowLevel[presetList.size()]);

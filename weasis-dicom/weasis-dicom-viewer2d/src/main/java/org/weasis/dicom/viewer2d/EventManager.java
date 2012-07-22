@@ -373,6 +373,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         // FIX : setting actionInView here without firing a propertyChange avoid another call to
                         // imageLayer.updateImageOperation(WindowLevelOperation.name.....
 
+                        // TODO pass to mediaEvent with PR and KO
                         view2d.setActionsInView(ActionW.PRESET.cmd(), newPreset);
                         view2d.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
                         view2d.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
@@ -857,7 +858,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
             levelValue.intValue());
 
-        presetAction.setDataListWithoutTriggerAction(image.getPresetList().toArray());
+        List<PresetWindowLevel> presetList = image.getPresetList();
+        presetAction.setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray());
         presetAction.setSelectedItemWithoutTriggerAction(preset);
 
         lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection().toArray());

@@ -351,7 +351,7 @@ public class ImageToolkit {
             return null;
         }
         int datatype = sampleModel.getDataType();
-        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && level == 127.5f) {
+        if (datatype == DataBuffer.TYPE_BYTE && window == 255.0f && (level == 127.5f || level == 127.0f)) {
             return source;
         }
 
