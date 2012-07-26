@@ -486,22 +486,24 @@ public class DicomImageElement extends ImageElement {
          */
 
         if (img != null && !isImageAvailable()) {
-            Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
-            Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
+            // Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
+            // Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
             int bitsStored = getBitsStored();
             int bitsAllocated = getBitsAllocated();
-            if (bitsStored < bitsAllocated) {
-                /*
-                 * Do not trust those values because it can contain values bigger than the bit stored max (ex. overlays
-                 * stored from the bit 12 to 16, or reading unsigned 12 bits stored jpeg-ls image gives values superior
-                 * to 4096). Otherwise, the modality lookup will crash because the value for the index is bigger than
-                 * the array length.
-                 */
-                min = max = null;
-            }
-
-            minPixelValue = min == null ? null : min.floatValue();
-            maxPixelValue = max == null ? null : max.floatValue();
+            // if (bitsStored < bitsAllocated) {
+            //
+            // min = max = null;
+            // }
+            /*
+             * Do not trust those values because it can contain values bigger than the bit stored max (ex. overlays
+             * stored from the bit 12 to 16, or reading unsigned 12 bits stored jpeg-ls image gives values superior to
+             * 4096). Otherwise, the modality lookup will crash because the value for the index is bigger than the array
+             * length.
+             * 
+             * When min and max are wrong with pure Java of JAI, the image cannot be displayed
+             */
+            minPixelValue = null;
+            maxPixelValue = null;
 
             if (isPhotometricInterpretationMonochrome()) {
                 Integer paddingValue = getPaddingValue();
