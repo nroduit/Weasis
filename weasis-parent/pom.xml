@@ -164,7 +164,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai-lib</artifactId>
-			<version>1.1.4-b03</version>
+			<version>1.1.4-b05</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
