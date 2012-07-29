@@ -31,14 +31,14 @@ public class DicomPrintOptions {
     private Integer numOfCopies;
     private Integer minDensity;
     private Integer maxDensity;
-    private Boolean printInColor;
+    private boolean printInColor = true;
     private DicomPrinter dicomPrinter;
 
-    public Boolean getPrintInColor() {
+    public Boolean isPrintInColor() {
         return printInColor;
     }
 
-    public void setPrintInColor(Boolean printInColor) {
+    public void setPrintInColor(boolean printInColor) {
         this.printInColor = printInColor;
     }
 

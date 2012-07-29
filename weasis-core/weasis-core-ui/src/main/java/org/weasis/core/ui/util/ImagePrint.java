@@ -51,14 +51,12 @@ public class ImagePrint implements Printable {
         this.printable = exportImage;
         printLoc = new Point(0, 0);
         this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
-        ;
     }
 
     public ImagePrint(ExportLayout<ImageElement> layout, PrintOptions printOptions) {
         this.printable = layout;
         printLoc = new Point(0, 0);
         this.printOptions = printOptions == null ? new PrintOptions(true, 1.0F) : printOptions;
-        ;
     }
 
     public void setPrintLocation(Point d) {
@@ -81,6 +79,7 @@ public class ImagePrint implements Printable {
         // paper.setImageableArea(0.5 * 72, 0.5 * 72, 9 * 72, 6 * 72);
         // pf.setPaper(paper);
 
+        // Get page format from the printer
         if (pj.printDialog(aset)) {
             try {
                 // PrinterResolution pr = new PrinterResolution(96, 96, ResolutionSyntax.DPI);
@@ -161,8 +160,8 @@ public class ImagePrint implements Printable {
                 double canvasWidth;
                 double canvasHeight;
                 if (bestfit || originSize == null) {
-                    canvasWidth = img.getWidth();
-                    canvasHeight = img.getHeight();
+                    canvasWidth = img.getWidth() * image.getImage().getRescaleX();
+                    canvasHeight = img.getHeight() * image.getImage().getRescaleY();
                 } else {
                     canvasWidth = originSize.getWidth() / originZoom;
                     canvasHeight = originSize.getHeight() / originZoom;
@@ -226,8 +225,8 @@ public class ImagePrint implements Printable {
             image.getInfoLayer().setVisible(false);
         }
         RenderedImage img = image.getSourceImage();
-        int w = img == null ? image.getWidth() : img.getWidth();
-        int h = img == null ? image.getHeight() : img.getHeight();
+        double w = img == null ? image.getWidth() : img.getWidth() * image.getImage().getRescaleX();
+        double h = img == null ? image.getHeight() : img.getHeight() * image.getImage().getRescaleY();
         double scaleFactor = getScaleFactor(f, w, h);
         // Set the print area in pixel
         int cw = (int) (w * scaleFactor + 0.5);

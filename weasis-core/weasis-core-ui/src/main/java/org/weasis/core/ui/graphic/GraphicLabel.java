@@ -15,6 +15,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -24,7 +25,6 @@ import java.awt.geom.Rectangle2D;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class GraphicLabel implements Cloneable {
     /**
@@ -128,7 +128,8 @@ public class GraphicLabel implements Cloneable {
             reset();
         } else {
             labelStringArray = labels;
-            Font defaultFont = MeasureTool.viewSetting.getFont();
+            Graphics2D g2d = (Graphics2D) view2d.getGraphics();
+            Font defaultFont = g2d.getFont();
             FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
@@ -184,7 +185,7 @@ public class GraphicLabel implements Cloneable {
             for (String label : labelStringArray) {
                 if (label.length() > 0) {
                     py += labelHeight;
-                    paintFontOutline(g2d, label, px, py);
+                    paintColorFontOutline(g2d, label, px, py, Color.WHITE);
                 }
             }
 
@@ -215,9 +216,7 @@ public class GraphicLabel implements Cloneable {
     }
 
     protected void paintBoundOutline(Graphics2D g2d, AffineTransform transform) {
-
         Rectangle2D boundingRect = getTransformedBounds(transform);
-
         Paint oldPaint = g2d.getPaint();
 
         g2d.setPaint(Color.BLACK);
@@ -231,35 +230,30 @@ public class GraphicLabel implements Cloneable {
         g2d.setPaint(oldPaint);
     }
 
-    protected static void paintFontOutline(Graphics2D g2d, String str, float x, float y) {
-        Paint oldPaint = g2d.getPaint();
-        // TextLayout layout = new TextLayout(str, g2d.getFont(), g2d.getFontRenderContext());
-        // NOTE : when using TextLayout, export to clipboard doesn't work
+    public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
+        paintColorFontOutline(g2, str, x, y, Color.WHITE);
+    }
 
-        g2d.setPaint(Color.BLACK);
-        // layout.draw(g2d, x - 1f, y - 1f);
-        // layout.draw(g2d, x - 1f, y);
-        // layout.draw(g2d, x - 1f, y + 1f);
-        // layout.draw(g2d, x, y - 1f);
-        // layout.draw(g2d, x, y + 1f);
-        // layout.draw(g2d, x + 1f, y - 1f);
-        // layout.draw(g2d, x + 1f, y);
-        // layout.draw(g2d, x + 1f, y + 1f);
+    public static void paintColorFontOutline(Graphics2D g2, String str, float x, float y, Color color) {
+        g2.setPaint(Color.BLACK);
 
-        g2d.drawString(str, x - 1f, y - 1f);
-        g2d.drawString(str, x - 1f, y);
-        g2d.drawString(str, x - 1f, y + 1f);
-        g2d.drawString(str, x, y - 1f);
-        g2d.drawString(str, x, y + 1f);
-        g2d.drawString(str, x + 1f, y - 1f);
-        g2d.drawString(str, x + 1f, y);
-        g2d.drawString(str, x + 1f, y + 1f);
-
-        g2d.setPaint(Color.WHITE);
-        // layout.draw(g2d, x, y);
-        g2d.drawString(str, x, y);
-
-        g2d.setPaint(oldPaint);
+        if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
+            TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
+            Rectangle2D b = layout.getBounds();
+            b.setRect(x + b.getX() - 0.75, y + b.getY() - 0.75, b.getWidth() + 1.5, b.getHeight() + 1.5);
+            g2.fill(b);
+        } else {
+            g2.drawString(str, x - 1f, y - 1f);
+            g2.drawString(str, x - 1f, y);
+            g2.drawString(str, x - 1f, y + 1f);
+            g2.drawString(str, x, y - 1f);
+            g2.drawString(str, x, y + 1f);
+            g2.drawString(str, x + 1f, y - 1f);
+            g2.drawString(str, x + 1f, y);
+            g2.drawString(str, x + 1f, y + 1f);
+        }
+        g2.setPaint(color);
+        g2.drawString(str, x, y);
     }
 
     @Override

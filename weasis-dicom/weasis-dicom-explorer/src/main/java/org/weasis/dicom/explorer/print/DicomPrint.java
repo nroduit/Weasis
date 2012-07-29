@@ -15,12 +15,18 @@ package org.weasis.dicom.explorer.print;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
+import java.io.File;
 import java.util.concurrent.Executor;
 
 import org.dcm4che2.data.BasicDicomObject;
@@ -61,8 +67,8 @@ public class DicomPrint {
             image.getInfoLayer().setVisible(false);
         }
         RenderedImage img = image.getSourceImage();
-        int w = img == null ? image.getWidth() : img.getWidth();
-        int h = img == null ? image.getHeight() : img.getHeight();
+        double w = img == null ? image.getWidth() : img.getWidth() * image.getImage().getRescaleX();
+        double h = img == null ? image.getHeight() : img.getHeight() * image.getImage().getRescaleY();
         double scaleFactor = printOptions.getImageScale();
         // Set the print area in pixel
         int cw = (int) (w * scaleFactor + 0.5);
@@ -73,10 +79,24 @@ public class DicomPrint {
         image.center();
 
         boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
-        BufferedImage bufferedImage = DicomImageReader.createRGBBufferedImage(image.getWidth(), image.getHeight());
+        BufferedImage bufferedImage;
+        if (printOptions.isColor()) {
+            bufferedImage = DicomImageReader.createRGBBufferedImage(image.getWidth(), image.getHeight());
+        } else {
+            bufferedImage = createGrayBufferedImage(image.getWidth(), image.getHeight());
+        }
         image.draw((Graphics2D) bufferedImage.getGraphics());
         ImagePrint.restoreDoubleBuffering(image, wasBuffered);
         return bufferedImage;
+    }
+
+    public static BufferedImage createGrayBufferedImage(int destWidth, int destHeight) {
+        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+        ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
+        BufferedImage dest = new BufferedImage(cm, r, false, null);
+
+        return dest;
     }
 
     public void printImage(BufferedImage image) throws Exception {
@@ -85,14 +105,16 @@ public class DicomPrint {
         DicomObject imageBoxAttrs = new BasicDicomObject();
         DicomObject dicomImage = new BasicDicomObject();
         final String printManagementSOPClass =
-            dicomPrintOptions.getPrintInColor() ? UID.BasicColorPrintManagementMetaSOPClass
+            dicomPrintOptions.isPrintInColor() ? UID.BasicColorPrintManagementMetaSOPClass
                 : UID.BasicGrayscalePrintManagementMetaSOPClass;
         final String imageBoxSOPClass =
-            dicomPrintOptions.getPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
+            dicomPrintOptions.isPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
 
-        storeRasterInDicom(image, dicomImage, dicomPrintOptions.getPrintInColor());
+        storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
         TransferCapability[] transferCapability =
             { new TransferCapability(printManagementSOPClass, NATIVE_LE_TS, TransferCapability.SCU) };
+
+        writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
         Device device = new Device("");
         NetworkApplicationEntity ae = new NetworkApplicationEntity();
@@ -134,7 +156,7 @@ public class DicomPrint {
         filmBoxAttrs.putInt(Tag.MaxDensity, VR.US, dicomPrintOptions.getMaxDensity());
         filmBoxAttrs.putString(Tag.ImageDisplayFormat, VR.ST, dicomPrintOptions.getImageDisplayFormat());
         imageBoxAttrs.putInt(Tag.ImageBoxPosition, VR.US, 1);
-        if (dicomPrintOptions.getPrintInColor()) {
+        if (dicomPrintOptions.isPrintInColor()) {
             imageBoxAttrs.putNestedDicomObject(Tag.BasicColorImageSequence, dicomImage);
         } else {
             imageBoxAttrs.putNestedDicomObject(Tag.BasicGrayscaleImageSequence, dicomImage);
@@ -193,6 +215,7 @@ public class DicomPrint {
             dcmObj.putInt(Tag.HighBit, VR.US, 7);
             dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
             if (printInColor) {
+                // Must be PixelInterleavedSampleModel
                 dcmObj.putInt(Tag.PlanarConfiguration, VR.US, 0);
             } else {
                 image = convertRGBImageToMonochrome(image);

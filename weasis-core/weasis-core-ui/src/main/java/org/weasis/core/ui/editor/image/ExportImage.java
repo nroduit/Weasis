@@ -15,10 +15,12 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 import javax.swing.ToolTipManager;
 
@@ -28,15 +30,17 @@ import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.ImageOperationAction;
 import org.weasis.core.api.image.OperationsManager;
+import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.graphic.Graphic;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
     private final DefaultView2d<E> view2d;
+    private Graphics2D currentG2d;
 
     public ExportImage(DefaultView2d<E> view2d) {
         super(view2d.eventManager, view2d.getLayerModel(), null);
@@ -45,6 +49,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.imageLayer.setBuildIterator(false);
         setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
+        infoLayer.setShowBottomScale(false);
         // For exporting view, remove Pixel value, Preloading bar
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
@@ -80,29 +85,11 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
         setSeries(view2d.getSeries(), view2d.getImage());
 
-        // TODO Change the font and reset on dispose
-        // List<Graphic> list = getLayerModel().getAllGraphics();
-        // for (Graphic graphic : list) {
-        // graphic.updateLabel(true, this);
-        // }
-
-        // imageLayer.setImage(view2d.getImage(), (OperationsManager)
-        // view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
-        // getViewModel().setModelArea(view2d.getViewModel().getModelArea());
+        // Restore previous W/L that is reset to default in setSeries()
+        actionsInView.put(ActionW.WINDOW.cmd(), view2d.getActionValue(ActionW.WINDOW.cmd()));
+        actionsInView.put(ActionW.LEVEL.cmd(), view2d.getActionValue(ActionW.LEVEL.cmd()));
+        imageLayer.updateImageOperation(WindowLevelOperation.name);
     }
-
-    // @Override
-    // public void zoom(double viewScale) {
-    // if (viewScale == 0.0) {
-    // final double viewportWidth = getWidth() - 1;
-    // final double viewportHeight = getHeight() - 1;
-    // final Rectangle2D modelArea = getViewModel().getModelArea();
-    // viewScale = Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
-    // }
-    // super.zoom(viewScale);
-    // // imageLayer.updateImageOperation(ZoomOperation.name);
-    // // updateAffineTransform();
-    // }
 
     @Override
     public void dispose() {
@@ -116,6 +103,14 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     }
 
     @Override
+    public Graphics getGraphics() {
+        if (currentG2d != null) {
+            return currentG2d;
+        }
+        return super.getGraphics();
+    }
+
+    @Override
     public void paintComponent(Graphics g) {
         if (g instanceof Graphics2D) {
             draw((Graphics2D) g);
@@ -124,6 +119,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
 
     @Override
     public void draw(Graphics2D g2d) {
+        currentG2d = g2d;
         Stroke oldStroke = g2d.getStroke();
         Paint oldColor = g2d.getPaint();
         Shape oldClip = g2d.getClip();
@@ -134,16 +130,21 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         double offsetY = getViewModel().getModelOffsetY() * viewScale;
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
-        // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
-        Font defaultFont = MeasureTool.viewSetting.getFont();
+        // Set font size according to the view size
+        double fontSize = (g2d.getFontMetrics(new Font("Dialog", 0, 10)).stringWidth("0123456789") * 6.0) / getWidth();
+        Font defaultFont = new Font("Dialog", 0, (int) Math.ceil(10 / fontSize));
         g2d.setFont(defaultFont);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        // Set label box size and spaces between items
+        List<Graphic> list = getLayerModel().getAllGraphics();
+        for (Graphic graphic : list) {
+            graphic.updateLabel(true, this);
+        }
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
         g2d.translate(offsetX, offsetY);
         if (infoLayer != null) {
-            // Set font size according to the view size
-            g2d.setFont(new Font("Dialog", 0, getFontSize())); //$NON-NLS-1$
             infoLayer.paint(g2d);
         }
         if (oldClip != null) {
@@ -151,24 +152,20 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         }
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+        // Reset label box size and spaces between items
+        list = view2d.getLayerModel().getAllGraphics();
+        for (Graphic graphic : list) {
+            graphic.updateLabel(true, view2d);
+        }
+        currentG2d = null;
     }
 
     @Override
     public void handleLayerChanged(ImageLayer layer) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void enableMouseAndKeyListener(MouseActions mouseActions) {
-        // TODO Auto-generated method stub
-
-    }
-
-    private int getFontSize() {
-        double factor = Math.max(getHeight(), getWidth());
-        factor = factor / 800;
-        int fontSize = (int) Math.ceil(20*factor);
-        return fontSize;
     }
 }

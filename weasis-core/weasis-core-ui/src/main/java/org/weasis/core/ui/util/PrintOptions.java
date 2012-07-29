@@ -42,6 +42,7 @@ public class PrintOptions {
     private Boolean hasAnnotations;
     private double imageScale;
     private boolean center;
+    private boolean color;
     private SCALE scale;
 
     public PrintOptions(Boolean hasAnnotations, double imageScale) {
@@ -49,6 +50,7 @@ public class PrintOptions {
         this.imageScale = imageScale;
         this.center = true;
         this.scale = SCALE.ShrinkToPage;
+        this.color = true;
     }
 
     public SCALE getScale() {
@@ -71,7 +73,7 @@ public class PrintOptions {
         return imageScale;
     }
 
-    public void setImageScale(Float imageScale) {
+    public void setImageScale(double imageScale) {
         this.imageScale = imageScale;
     }
 
@@ -81,6 +83,14 @@ public class PrintOptions {
 
     public void setCenter(boolean center) {
         this.center = center;
+    }
+
+    public boolean isColor() {
+        return color;
+    }
+
+    public void setColor(boolean color) {
+        this.color = color;
     }
 
 }

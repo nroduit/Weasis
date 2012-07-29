@@ -29,6 +29,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.graphic.GraphicLabel;
 
 /**
  * The Class InfoLayer.
@@ -46,6 +47,7 @@ public class InfoLayer implements AnnotationsLayer {
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
     private int border = BORDER;
+    private boolean showBottomScale = true;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
@@ -63,6 +65,16 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     @Override
+    public boolean isShowBottomScale() {
+        return showBottomScale;
+    }
+
+    @Override
+    public void setShowBottomScale(boolean showBottomScale) {
+        this.showBottomScale = showBottomScale;
+    }
+
+    @Override
     public void paint(Graphics2D g2) {
         ImageElement image = view2DPane.getImage();
         if (!visible || image == null) {
@@ -77,18 +89,20 @@ public class InfoLayer implements AnnotationsLayer {
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-        float drawY = bound.height - border;
+        float drawY = bound.height - border - 1.5f; // -1.5 for outline
 
         if (!image.isReadable()) {
             String message = "Cannot read this media!";
             float y = midy;
-            paintRedFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y);
+            GraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
+                Color.RED);
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
                 for (String str : desc) {
                     if (str != null) {
                         y += fontHeight;
-                        paintRedFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y);
+                        GraphicLabel.paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y,
+                            Color.RED);
                     }
                 }
             }
@@ -102,37 +116,39 @@ public class InfoLayer implements AnnotationsLayer {
 
         if (getDisplayPreferences(PIXEL)) {
             String str = "Pixel: " + pixelInfo;
-            paintFontOutline(g2, str, border, drawY - 1);
+            GraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
                 (int) fontHeight + 2);
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            paintFontOutline(
-                g2,
-                "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
-                    + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY);
+            GraphicLabel.paintFontOutline(g2, "Win.: " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " Level: "
+                + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
-            paintFontOutline(g2, "Zoom: " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100)
-                + " %", border, drawY);
+            GraphicLabel
+                .paintFontOutline(g2, "Zoom: " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100)
+                    + " %", border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °", border, drawY);
+            GraphicLabel.paintFontOutline(g2, "Angle: " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °",
+                border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
-            paintFontOutline(
-                g2,
-                "Frame: "
-                    + (view2DPane.getFrameIndex() + 1)
-                    + " / "
-                    + view2DPane.getSeries().size(
-                        (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())), border, drawY);
+            GraphicLabel
+                .paintFontOutline(
+                    g2,
+                    "Frame: "
+                        + (view2DPane.getFrameIndex() + 1)
+                        + " / "
+                        + view2DPane.getSeries().size(
+                            (Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())), border,
+                    drawY);
             drawY -= fontHeight;
         }
 
@@ -145,66 +161,6 @@ public class InfoLayer implements AnnotationsLayer {
         //
         // }
 
-    }
-
-    public void paintFontOutline(Graphics2D g2, String str, float x, float y) {
-        g2.setPaint(Color.BLACK);
-        g2.drawString(str, x - 1f, y - 1f);
-        g2.drawString(str, x - 1f, y);
-        g2.drawString(str, x - 1f, y + 1f);
-        g2.drawString(str, x, y - 1f);
-        g2.drawString(str, x, y + 1f);
-        g2.drawString(str, x + 1f, y - 1f);
-        g2.drawString(str, x + 1f, y);
-        g2.drawString(str, x + 1f, y + 1f);
-        g2.setPaint(Color.WHITE);
-        g2.drawString(str, x, y);
-
-        // FontRenderContext frc = g2.getFontRenderContext();
-        // TextLayout tl = new TextLayout(str, FontTools.getFont12(), frc);
-        // g2.setColor(Color.BLACK);
-        // AffineTransform transform = new AffineTransform();
-        // transform.setToTranslation(x - 1d, y - 1);
-        // Shape shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x - 1, y);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x - 1, y + 1);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x, y - 1);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x, y + 1);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x + 1, y - 1);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x + 1, y);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // transform.setToTranslation(x + 1, y + 1);
-        // shape = tl.getOutline(transform);
-        // g2.draw(shape);
-        // g2.setPaint(Color.WHITE);
-        // g2.drawString(str, x, y);
-
-    }
-
-    public void paintRedFontOutline(Graphics2D g2, String str, float x, float y) {
-        g2.setPaint(Color.BLACK);
-        g2.drawString(str, x - 1f, y - 1f);
-        g2.drawString(str, x - 1f, y);
-        g2.drawString(str, x - 1f, y + 1f);
-        g2.drawString(str, x, y - 1f);
-        g2.drawString(str, x, y + 1f);
-        g2.drawString(str, x + 1f, y - 1f);
-        g2.drawString(str, x + 1f, y);
-        g2.drawString(str, x + 1f, y + 1f);
-        g2.setPaint(Color.RED);
-        g2.drawString(str, x, y);
     }
 
     public Rectangle2D getOutLine(Line2D l) {
@@ -248,19 +204,21 @@ public class InfoLayer implements AnnotationsLayer {
             float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()) / separation;
             float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()) - stepWindow * 2f;
             String str = "" + (int) firstlevel;
-            paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
+            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
             for (int i = 1; i < separation; i++) {
                 float posY = y + i * step;
                 line.setLine(x - 5f, posY, x - 1f, posY);
                 g2.draw(line);
                 str = "" + (int) (firstlevel + i * stepWindow);
-                paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY + midfontHeight);
+                GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY
+                    + midfontHeight);
             }
 
             line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
             g2.draw(line);
             str = "" + (int) (firstlevel + 4 * stepWindow);
-            paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12, y + length + midfontHeight);
+            GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12, y + length
+                + midfontHeight);
             rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
             g2.draw(rect);
 
@@ -285,7 +243,7 @@ public class InfoLayer implements AnnotationsLayer {
         double scaleSizex =
             ajustShowScale(scale,
                 (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (scaleSizex > 30.0d) {
+        if (showBottomScale & scaleSizex > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
             g2d.setPaint(color);
@@ -294,7 +252,7 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setPaint(Color.black);
 
             double posx = bound.width / 2.0 - scaleSizex / 2.0;
-            double posy = bound.height - border;
+            double posy = bound.height - border - 1.5; // -1.5 for outline
             Line2D line = new Line2D.Double(posx, posy, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
             line.setLine(posx, posy - 15.0, posx, posy);
@@ -342,10 +300,11 @@ public class InfoLayer implements AnnotationsLayer {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             String pixSizeDesc = image.getPixelSizeCalibrationDescription();
             if (pixSizeDesc != null) {
-                paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy - fontHeight);
+                GraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy
+                    - fontHeight);
             }
             str += " " + unit[0].getAbbreviation();
-            paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
+            GraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
         double scaleSizeY =
@@ -410,7 +369,7 @@ public class InfoLayer implements AnnotationsLayer {
 
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-            paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, (int) (posy - 5));
+            GraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, (int) (posy - 5));
         }
 
     }
@@ -555,8 +514,16 @@ public class InfoLayer implements AnnotationsLayer {
 
     @Override
     public AnnotationsLayer getLayerCopy(DefaultView2d view2dPane) {
-        // TODO Auto-generated method stub
-        return null;
+        InfoLayer layer = new InfoLayer(view2DPane);
+        HashMap<String, Boolean> prefs = layer.displayPreferences;
+        prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
+        prefs.put(SCALE, getDisplayPreferences(SCALE));
+        prefs.put(LUT, getDisplayPreferences(LUT));
+        prefs.put(PIXEL, getDisplayPreferences(PIXEL));
+        prefs.put(WINDOW_LEVEL, getDisplayPreferences(WINDOW_LEVEL));
+        prefs.put(ZOOM, getDisplayPreferences(ZOOM));
+        prefs.put(ROTATION, getDisplayPreferences(ROTATION));
+        return layer;
     }
 
     @Override

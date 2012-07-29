@@ -64,8 +64,9 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     // Transferable
     @Override
     public Object getTransferData(DataFlavor flavor) {
-        if (isDataFlavorSupported(flavor))
+        if (isDataFlavorSupported(flavor)) {
             return image;
+        }
         return null;
     }
 

@@ -32,7 +32,6 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class AnnotationGraphic extends AbstractDragGraphic {
@@ -138,7 +137,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         float py = (float) pt.getY();
         if (labelStringArray != null) {
             if (labelHeight == 0) {
-                Font defaultFont = MeasureTool.viewSetting.getFont();
+                Font defaultFont = g2d.getFont();
                 FontRenderContext fontRenderContext = g2d.getFontRenderContext();
                 double maxWidth = 0;
                 for (String label : labelStringArray) {

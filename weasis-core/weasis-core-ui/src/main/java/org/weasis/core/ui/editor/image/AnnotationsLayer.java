@@ -47,4 +47,8 @@ public interface AnnotationsLayer extends Layer {
     void paint(Graphics2D g2d);
 
     AnnotationsLayer getLayerCopy(DefaultView2d view2DPane);
+
+    boolean isShowBottomScale();
+
+    void setShowBottomScale(boolean showBottomScale);
 }

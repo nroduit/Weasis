@@ -55,7 +55,7 @@ public class PrintDialog extends javax.swing.JDialog {
 
     private int returnStatus = RET_CANCEL;
     private ImageViewerEventManager eventManager;
-    private JCheckBox chckbxNewCheckBox;
+    private JCheckBox chckbxSelctedView;
     private JSpinner spinner;
 
     /** Creates new form PrintDialog */
@@ -165,12 +165,12 @@ public class PrintDialog extends javax.swing.JDialog {
         });
 
         if (layout) {
-            chckbxNewCheckBox = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
-            chckbxNewCheckBox.addActionListener(new ActionListener() {
+            chckbxSelctedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
+            chckbxSelctedView.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    setOnlySelectedView(!chckbxNewCheckBox.isSelected());
+                    setOnlySelectedView(!chckbxSelctedView.isSelected());
                 }
             });
             GridBagConstraints gbc_chckbxNewCheckBox = new GridBagConstraints();
@@ -179,7 +179,7 @@ public class PrintDialog extends javax.swing.JDialog {
             gbc_chckbxNewCheckBox.insets = new Insets(0, 15, 10, 5);
             gbc_chckbxNewCheckBox.gridx = 0;
             gbc_chckbxNewCheckBox.gridy = 4;
-            getContentPane().add(chckbxNewCheckBox, gbc_chckbxNewCheckBox);
+            getContentPane().add(chckbxSelctedView, gbc_chckbxNewCheckBox);
         }
 
         getRootPane().setDefaultButton(printButton);
@@ -253,7 +253,7 @@ public class PrintDialog extends javax.swing.JDialog {
         }
         doClose();
 
-        if (container.getImagePanels().size() > 1 && !chckbxNewCheckBox.isSelected()) {
+        if (container.getImagePanels().size() > 1 && !chckbxSelctedView.isSelected()) {
             // Several views
             ExportLayout<ImageElement> layout =
                 new ExportLayout<ImageElement>(container.getImagePanels(), container.getLayoutModel());
@@ -263,7 +263,7 @@ public class PrintDialog extends javax.swing.JDialog {
         } else {
             // One View
             ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(eventManager.getSelectedViewPane());
-            exportImage.getInfoLayer().setBorder(3);
+            exportImage.getInfoLayer().setBorder(2);
             ImagePrint print = new ImagePrint(exportImage, printOptions);
             print.print();
             exportImage.dispose();

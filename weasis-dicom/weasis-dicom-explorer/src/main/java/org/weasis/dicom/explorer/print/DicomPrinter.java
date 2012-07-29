@@ -70,51 +70,53 @@ public class DicomPrinter {
     }
 
     public static void loadPrintersSettings(javax.swing.JComboBox printersComboBox) {
-        XMLStreamReader xmler = null;
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        try {
-            xmler =
-                factory.createXMLStreamReader(new FileReader(new File(Activator.PREFERENCES.getDataFolder(),
-                    "dicomPrinters.xml")));
-            int eventType;
-            while (xmler.hasNext()) {
-                eventType = xmler.next();
-                switch (eventType) {
-                    case XMLStreamConstants.START_ELEMENT:
-                        String key = xmler.getName().getLocalPart();
-                        if ("printers".equals(key)) { //$NON-NLS-1$
-                            while (xmler.hasNext()) {
-                                eventType = xmler.next();
-                                switch (eventType) {
-                                    case XMLStreamConstants.START_ELEMENT:
-                                        key = xmler.getName().getLocalPart();
-                                        if ("printer".equals(key)) { //$NON-NLS-1$
-                                            if (xmler.getAttributeCount() == 5) {
-                                                DicomPrinter printer = new DicomPrinter();
-                                                printer.setDescription(xmler.getAttributeValue(null, "description"));
-                                                printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle"));
-                                                printer.setHostname(xmler.getAttributeValue(null, "hostname"));
-                                                printer.setPort(xmler.getAttributeValue(null, "port"));
-                                                printer.setColorPrintSupported(Boolean.parseBoolean(xmler
-                                                    .getAttributeValue(null, "colorPrintSupported")));
-                                                printersComboBox.addItem(printer);
+        File prefs = new File(Activator.PREFERENCES.getDataFolder(), "dicomPrinters.xml");
+        if (prefs.canRead()) {
+            XMLStreamReader xmler = null;
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            try {
+                xmler = factory.createXMLStreamReader(new FileReader(prefs));
+                int eventType;
+                while (xmler.hasNext()) {
+                    eventType = xmler.next();
+                    switch (eventType) {
+                        case XMLStreamConstants.START_ELEMENT:
+                            String key = xmler.getName().getLocalPart();
+                            if ("printers".equals(key)) { //$NON-NLS-1$
+                                while (xmler.hasNext()) {
+                                    eventType = xmler.next();
+                                    switch (eventType) {
+                                        case XMLStreamConstants.START_ELEMENT:
+                                            key = xmler.getName().getLocalPart();
+                                            if ("printer".equals(key)) { //$NON-NLS-1$
+                                                if (xmler.getAttributeCount() == 5) {
+                                                    DicomPrinter printer = new DicomPrinter();
+                                                    printer
+                                                        .setDescription(xmler.getAttributeValue(null, "description"));
+                                                    printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle"));
+                                                    printer.setHostname(xmler.getAttributeValue(null, "hostname"));
+                                                    printer.setPort(xmler.getAttributeValue(null, "port"));
+                                                    printer.setColorPrintSupported(Boolean.parseBoolean(xmler
+                                                        .getAttributeValue(null, "colorPrintSupported")));
+                                                    printersComboBox.addItem(printer);
+                                                }
                                             }
-                                        }
-                                        break;
-                                    default:
-                                        break;
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
-                        }
-                        break;
-                    default:
-                        break;
+                            break;
+                        default:
+                            break;
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                FileUtil.safeClose(xmler);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            FileUtil.safeClose(xmler);
         }
     }
 
