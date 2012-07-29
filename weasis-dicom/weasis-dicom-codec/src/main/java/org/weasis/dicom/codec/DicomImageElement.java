@@ -401,12 +401,13 @@ public class DicomImageElement extends ImageElement {
                  * (0028,0121).
                  */
                 minValue = isPixelRepresentationSigned() ? -(1 << (getBitsStored() - 1)) : 0;
-                // TODO max val for handle isPixelRepresentationSigned and invers LUT
+                // TODO max val for handle isPixelRepresentationSigned and inverse LUT
             } else {
+                // Create a VOI LUT without excluding pixel padding values
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
-                minValue = Math.min(minValue, paddingValueMin);
-                maxValue = Math.max(maxValue, paddingValueMax);
+                minValue = Math.min(minValue, (int) pixel2mLUT(paddingValueMin));
+                maxValue = Math.max(maxValue, (int) pixel2mLUT(paddingValueMax));
             }
         }
 
@@ -486,6 +487,7 @@ public class DicomImageElement extends ImageElement {
          */
 
         if (img != null && !isImageAvailable()) {
+            // Cannot trust min and max values!
             // Integer min = (Integer) getTagValue(TagW.SmallestImagePixelValue);
             // Integer max = (Integer) getTagValue(TagW.LargestImagePixelValue);
             int bitsStored = getBitsStored();
@@ -511,17 +513,7 @@ public class DicomImageElement extends ImageElement {
                     Integer paddingLimit = getPaddingLimit();
                     int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                     int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
-                    if (isImageAvailable()) {
-                        if (paddingValueMin <= minPixelValue.intValue() || paddingValueMax >= maxPixelValue.intValue()) {
-                            /*
-                             * possible confusing Min/Max image values regarding to padding Min/Max range in order to
-                             * get full dynamic range of the image with real pixel only
-                             */
-                            findMinMaxValues(img, paddingValueMin, paddingValueMax);
-                        }
-                    } else {
-                        findMinMaxValues(img, paddingValueMin, paddingValueMax);
-                    }
+                    findMinMaxValues(img, paddingValueMin, paddingValueMax);
                 }
             }
 

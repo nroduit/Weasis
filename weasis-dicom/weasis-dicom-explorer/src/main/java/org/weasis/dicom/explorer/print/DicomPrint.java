@@ -26,7 +26,6 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
-import java.io.File;
 import java.util.concurrent.Executor;
 
 import org.dcm4che2.data.BasicDicomObject;
@@ -114,7 +113,7 @@ public class DicomPrint {
         TransferCapability[] transferCapability =
             { new TransferCapability(printManagementSOPClass, NATIVE_LE_TS, TransferCapability.SCU) };
 
-        writeDICOM(new File("/tmp/print.dcm"), dicomImage);
+        // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
         Device device = new Device("");
         NetworkApplicationEntity ae = new NetworkApplicationEntity();
