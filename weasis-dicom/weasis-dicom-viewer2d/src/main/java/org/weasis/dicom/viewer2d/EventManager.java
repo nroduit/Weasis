@@ -346,7 +346,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel newPreset = null;
 
                     List<PresetWindowLevel> newPresetList = image.getPresetList();
-                    if (oldPreset != null) {
+                    // Assume the image cannot display when win =1 and level = 0
+                    if (oldPreset != null || (windowAction.getValue() <= 1 && levelAction.getValue() == 0)) {
                         if (isDefaultPresetSelected) {
                             newPreset = image.getDefaultPreset();
                         } else {

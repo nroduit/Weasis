@@ -175,13 +175,16 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     if (suv != null) {
                         unit = "SUVbw"; //$NON-NLS-1$
                         if (IMAGE_MIN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MIN, min[0] == null ? null : min[0] * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MIN, min == null || min[0] == null ? null : min[0] * suv,
+                                unit));
                         }
                         if (IMAGE_MAX.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MAX, max[0] == null ? null : max[0] * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MAX, max == null || max[0] == null ? null : max[0] * suv,
+                                unit));
                         }
                         if (IMAGE_MEAN.isComputed()) {
-                            measVal.add(new MeasureItem(IMAGE_MEAN, mean[0] == null ? null : mean[0] * suv, unit));
+                            measVal.add(new MeasureItem(IMAGE_MEAN, mean == null || mean[0] == null ? null : mean[0]
+                                * suv, unit));
                         }
                     }
                 }
