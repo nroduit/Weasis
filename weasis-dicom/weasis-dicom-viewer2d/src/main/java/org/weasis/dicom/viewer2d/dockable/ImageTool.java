@@ -193,7 +193,7 @@ public class ImageTool extends PluginTool {
         ActionState lutShapeAction = EventManager.getInstance().getAction(ActionW.LUT_SHAPE);
         if (lutShapeAction instanceof ComboItemListener) {
             final JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
-            final JLabel label = new JLabel("LUT Shape:");
+            final JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + ":"); //$NON-NLS-1$
             pane.add(label);
             final JComboBox combo = ((ComboItemListener) lutShapeAction).createCombo(140);
             combo.setMaximumRowCount(10);

@@ -18,15 +18,15 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 public enum ResetTools {
-    All("All"),
+    All(Messages.getString("ResetTools.all")), //$NON-NLS-1$
 
-    WindowLevel("Window/Level"),
+    WindowLevel(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
 
-    Zoom("Zoom"),
+    Zoom(Messages.getString("ResetTools.zoom")), //$NON-NLS-1$
 
-    Rotation("Rotation"),
+    Rotation(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
 
-    Pan("Pan");
+    Pan(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
 
     private final String name;
 
@@ -41,7 +41,7 @@ public enum ResetTools {
 
     public static JMenu createUnregisteredJMenu() {
         ButtonGroup group = new ButtonGroup();
-        JMenu menu = new JMenu("Reset");
+        JMenu menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
         for (final ResetTools action : values()) {
             final JMenuItem item = new JMenuItem(action.toString());
             item.addActionListener(new ActionListener() {

@@ -1070,7 +1070,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1.setBorder(new TitledBorder(
-                Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue())); //$NON-NLS-1$
+                Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(true);
@@ -1082,7 +1082,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     JSlider source = (JSlider) e.getSource();
                     if (!source.getValueIsAdjusting()) {
                         ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages
-                            .getString("DicomExplorer.thmb_size") + " " + source.getValue()); //$NON-NLS-1$
+                            .getString("DicomExplorer.thmb_size") + " " + source.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
                         palenSlider1.repaint();
                         updateThumbnailSize();
                     }
@@ -1651,7 +1651,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                     for (final SeriesViewerFactory viewerFactory : plugins) {
                         JMenuItem item4 =
                             new JMenuItem(
-                                Messages.getString("DicomExplorer.open_series") + " " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$
+                                Messages.getString("DicomExplorer.open_series") + " " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$ //$NON-NLS-2$
                         item4.addActionListener(new ActionListener() {
 
                             @Override
@@ -1665,7 +1665,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         // TODO add if viewerFactory supports add method
                         item4 =
                             new JMenuItem(
-                                Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$
+                                Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$ //$NON-NLS-2$
                                 viewerFactory.getIcon());
                         item4.addActionListener(new ActionListener() {
 

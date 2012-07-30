@@ -86,7 +86,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     public LoadRemoteDicomManifest(String[] xmlFiles, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"));
+        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -95,7 +95,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     public LoadRemoteDicomManifest(File[] xmlFiles, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"));
+        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

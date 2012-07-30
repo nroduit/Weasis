@@ -368,7 +368,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 if (title.length() > 30) {
                     viewer.setToolTipText(title);
                     title = title.substring(0, 30);
-                    title = title.concat("...");
+                    title = title.concat("..."); //$NON-NLS-1$
                 }
                 viewer.setPluginName(title);
             }
@@ -783,7 +783,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static void buildMenuFile() {
         menuFile.removeAll();
-        DynamicMenu openMenu = new DynamicMenu("Open") {
+        DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
 
             @Override
             public void popupMenuWillBecomeVisible() {

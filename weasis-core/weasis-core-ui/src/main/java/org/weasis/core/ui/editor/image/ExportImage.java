@@ -86,6 +86,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         setSeries(view2d.getSeries(), view2d.getImage());
 
         // Restore previous W/L that is reset to default in setSeries()
+        actionsInView.put(ActionW.LUT_SHAPE.cmd(), view2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
         actionsInView.put(ActionW.WINDOW.cmd(), view2d.getActionValue(ActionW.WINDOW.cmd()));
         actionsInView.put(ActionW.LEVEL.cmd(), view2d.getActionValue(ActionW.LEVEL.cmd()));
         imageLayer.updateImageOperation(WindowLevelOperation.name);
@@ -131,8 +132,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size according to the view size
-        double fontSize = (g2d.getFontMetrics(new Font("Dialog", 0, 10)).stringWidth("0123456789") * 6.0) / getWidth();
-        Font defaultFont = new Font("Dialog", 0, (int) Math.ceil(10 / fontSize));
+        double fontSize = (g2d.getFontMetrics(new Font("Dialog", 0, 10)).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ //$NON-NLS-2$
+        Font defaultFont = new Font("Dialog", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
         g2d.setFont(defaultFont);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         // Set label box size and spaces between items

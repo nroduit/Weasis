@@ -198,7 +198,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
             measVal.add(new MeasureItem(measure, val[0], unit));
         } else {
             for (int i = 0; i < val.length; i++) {
-                measVal.add(new MeasureItem(measure, " " + (i + 1), val[i], unit));
+                measVal.add(new MeasureItem(measure, " " + (i + 1), val[i], unit)); //$NON-NLS-1$
             }
         }
     }

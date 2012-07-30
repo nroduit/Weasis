@@ -30,7 +30,7 @@ public class WindowLevelOperation extends AbstractOperation {
         result = imageSource;
 
         if (imageElement == null || imageSource == null) {
-            LOGGER.warn("Cannot apply \"{}\" ", name);
+            LOGGER.warn("Cannot apply \"{}\" ", name); //$NON-NLS-1$
         } else {
             result = imageElement.getRenderedImage(imageSource, imageOperation);
         }

@@ -29,7 +29,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
     public static final Filter<DicomSpecialElement> PR = new Filter<DicomSpecialElement>() {
         @Override
         public boolean passes(DicomSpecialElement dicom) {
-            return "PR".equals(dicom.getTagValue(TagW.Modality));
+            return "PR".equals(dicom.getTagValue(TagW.Modality)); //$NON-NLS-1$
         }
     };
 
@@ -41,7 +41,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
     public String toString() {
         String desc = (String) getTagValue(TagW.SeriesDescription);
         if (desc == null) {
-            desc = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber);
+            desc = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber); //$NON-NLS-1$
         } else {
             if (desc.length() > 30) {
                 desc = desc.substring(0, 27) + "..."; //$NON-NLS-1$
@@ -74,7 +74,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
         List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
         if (studyElements != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (seriesUID != null && "KO".equals(dicom.getTagValue(TagW.Modality))) {
+                if (seriesUID != null && "KO".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                     DicomElement seq = (DicomElement) dicom.getTagValue(TagW.CurrentRequestedProcedureEvidenceSequence);
                     if (seq != null && seq.vr() == VR.SQ) {
                         for (int i = 0; i < seq.countItems(); ++i) {
@@ -127,7 +127,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
         List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
         if (studyElements != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (seriesUID != null && "PR".equals(dicom.getTagValue(TagW.Modality))) {
+                if (seriesUID != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                     DicomElement seq = (DicomElement) dicom.getTagValue(TagW.ReferencedSeriesSequence);
                     if (seq != null && seq.vr() == VR.SQ) {
                         for (int i = 0; i < seq.countItems(); ++i) {

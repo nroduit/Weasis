@@ -14,6 +14,8 @@ import java.util.ArrayList;
 
 import javax.media.jai.LookupTableJAI;
 
+import org.weasis.core.api.Messages;
+
 /**
  * @author btja
  */
@@ -31,11 +33,11 @@ public final class LutShape {
      * Other LUT functions have their own custom implementation
      */
     public enum eFunction {
-        LINEAR("Linear"), //
-        SIGMOID("Sigmoid"), //
-        SIGMOID_NORM("Sigmoid Normalize"), //
-        LOG("Logarithmic"), //
-        LOG_INV("Logarithmic Inv");
+        LINEAR(Messages.getString("LutShape.linear")), // //$NON-NLS-1$
+        SIGMOID(Messages.getString("LutShape.sigmoid")), // //$NON-NLS-1$
+        SIGMOID_NORM(Messages.getString("LutShape.sig_norm")), // //$NON-NLS-1$
+        LOG(Messages.getString("LutShape.log")), // //$NON-NLS-1$
+        LOG_INV(Messages.getString("LutShape.log_inv")); //$NON-NLS-1$
 
         final String explanation;
 
@@ -66,15 +68,15 @@ public final class LutShape {
     public static final LutShape getLutShape(String shape) {
         if (shape != null) {
             String val = shape.toUpperCase();
-            if ("LINEAR".equals(val)) {
+            if ("LINEAR".equals(val)) { //$NON-NLS-1$
                 return LutShape.LINEAR;
-            } else if ("SIGMOID".equals(val)) {
+            } else if ("SIGMOID".equals(val)) { //$NON-NLS-1$
                 return LutShape.SIGMOID;
-            } else if ("SIGMOID_NORM".equals(val)) {
+            } else if ("SIGMOID_NORM".equals(val)) { //$NON-NLS-1$
                 return LutShape.SIGMOID_NORM;
-            } else if ("LOG".equals(val)) {
+            } else if ("LOG".equals(val)) { //$NON-NLS-1$
                 return LutShape.LOG;
-            } else if ("LOG_INV".equals(val)) {
+            } else if ("LOG_INV".equals(val)) { //$NON-NLS-1$
                 return LutShape.LOG_INV;
             }
         }

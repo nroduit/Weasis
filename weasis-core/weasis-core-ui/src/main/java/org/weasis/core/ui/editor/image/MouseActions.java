@@ -123,7 +123,7 @@ public class MouseActions {
         } else if (MouseActions.WHEEL.equals(type)) {
             setWheel(action);
         }
-        AuditLog.LOGGER.info("mouse:{} action:{}", type, action);
+        AuditLog.LOGGER.info("mouse:{} action:{}", type, action); //$NON-NLS-1$
     }
 
     public static void loadPreferences(Preferences prefs, boolean defaultValue) {

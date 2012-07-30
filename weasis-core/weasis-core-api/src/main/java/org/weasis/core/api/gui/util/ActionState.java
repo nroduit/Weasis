@@ -10,9 +10,11 @@
  ******************************************************************************/
 package org.weasis.core.api.gui.util;
 
+import org.weasis.core.api.Messages;
+
 public interface ActionState {
 
-    String NONE = "None";
+    String NONE = Messages.getString("ActionState.none"); //$NON-NLS-1$
 
     void enableAction(boolean enabled);
 

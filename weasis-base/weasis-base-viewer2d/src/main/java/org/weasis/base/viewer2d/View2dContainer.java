@@ -79,35 +79,35 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
 
-            PluginTool tool = new MiniTool("Mini", null) {
+            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
 
-                @Override
-                public SliderChangeListener[] getActions() {
-                    ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) seqAction);
+                    @Override
+                    public SliderChangeListener[] getActions() {
+                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                        if (seqAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) seqAction);
+                        }
+                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                        if (zoomAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) zoomAction);
+                        }
+                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                        if (rotateAction instanceof SliderChangeListener) {
+                            listeners.add((SliderChangeListener) rotateAction);
+                        }
+                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
                     }
-                    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                    if (zoomAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) zoomAction);
-                    }
-                    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                    if (rotateAction instanceof SliderChangeListener) {
-                        listeners.add((SliderChangeListener) rotateAction);
-                    }
-                    return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                }
-            };
+                };
             tool.setHide(false);
             tool.registerToolAsDockable();
             TOOLS.add(tool);
 
-            tool = new ImageTool("Image Tools", null);
+            tool = new ImageTool(Messages.getString("View2dContainer.img_tool"), null); //$NON-NLS-1$
             tool.registerToolAsDockable();
             TOOLS.add(tool);
 
-            tool = new DisplayTool("Display");
+            tool = new DisplayTool(Messages.getString("View2dContainer.display")); //$NON-NLS-1$
             tool.registerToolAsDockable();
             TOOLS.add(tool);
             eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
@@ -126,17 +126,19 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) lutAction).createMenu("LUT");
+                JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$
                 ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
                 if (invlutAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invlutAction).createMenu("Inverse LUT"));
+                    menu.add(((ToggleButtonListener) invlutAction).createMenu(Messages
+                        .getString("View2dContainer.inv_lut"))); //$NON-NLS-1$
                 }
                 menuRoot.add(menu);
             }
             ActionState filterAction = eventManager.getAction(ActionW.FILTER);
             if (filterAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) filterAction).createMenu("Filter");
+                JMenu menu =
+                    ((ComboItemListener) filterAction).createMenu(Messages.getString("View2dContainer.filter")); //$NON-NLS-1$
                 menuRoot.add(menu);
             }
             // ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);
@@ -152,8 +154,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
             if (rotateAction instanceof SliderChangeListener) {
                 menuRoot.add(new JSeparator());
-                JMenu menu = new JMenu("Orientation");
-                JMenuItem menuItem = new JMenuItem("Reset");
+                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+                JMenuItem menuItem = new JMenuItem(Messages.getString("View2dContainer.reset")); //$NON-NLS-1$
                 final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                 menuItem.addActionListener(new ActionListener() {
 
@@ -163,7 +165,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     }
                 });
                 menu.add(menuItem);
-                menuItem = new JMenuItem("- 90");
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
                     @Override
@@ -172,7 +174,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     }
                 });
                 menu.add(menuItem);
-                menuItem = new JMenuItem("+90");
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
                     @Override
@@ -181,7 +183,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                     }
                 });
                 menu.add(menuItem);
-                menuItem = new JMenuItem("+180");
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.180")); //$NON-NLS-1$
                 menuItem.addActionListener(new ActionListener() {
 
                     @Override
@@ -193,7 +195,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 ActionState flipAction = eventManager.getAction(ActionW.FLIP);
                 if (flipAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createMenu("Flip Horizontally"));
+                    menu.add(((ToggleButtonListener) flipAction).createMenu(Messages.getString("View2dContainer.flip"))); //$NON-NLS-1$
                     menuRoot.add(menu);
                 }
             }

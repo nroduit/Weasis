@@ -83,7 +83,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     // TODO read and store models
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
         new GridBagLayoutModel(
-            View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$
+            View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
 
     // public static final GridBagLayoutModel VIEWS_2x2_mpr = new GridBagLayoutModel(
@@ -618,7 +618,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             };
         actions.add(printStd);
 
-        final String title2 = "DICOM Print";
+        final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
         AbstractAction printStd2 = new AbstractAction(title2, null) {
 
             @Override

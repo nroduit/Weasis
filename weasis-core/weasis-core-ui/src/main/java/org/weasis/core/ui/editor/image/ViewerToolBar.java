@@ -146,7 +146,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
                 // value is adjusted by the BoundedRangeModel
                 eventManager.firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
-                AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd());
+                AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
             }
         });
         add(jButtonBestFit);

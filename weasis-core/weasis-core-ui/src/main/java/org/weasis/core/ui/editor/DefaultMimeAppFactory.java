@@ -22,11 +22,12 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 
 public class DefaultMimeAppFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "Default System Application";
+    public static final String NAME = Messages.getString("DefaultMimeAppFactory.sys_app"); //$NON-NLS-1$
     public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
     public static final MimeSystemAppViewer MimeSystemViewer = new MimeSystemAppViewer() {
         private final String dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement(); //$NON-NLS-1$;

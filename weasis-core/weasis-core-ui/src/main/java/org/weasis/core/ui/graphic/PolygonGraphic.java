@@ -54,8 +54,8 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         Messages.getString("measure.topx"), 5, true, true, false); //$NON-NLS-1$
     public static final Measurement TOP_LEFT_POINT_Y = new Measurement(
         Messages.getString("measure.topy"), 6, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_X = new Measurement("Centroid X", 7, true, true, false);
-    public static final Measurement CENTROID_Y = new Measurement("Centroid Y", 8, true, true, false);
+    public static final Measurement CENTROID_X = new Measurement(Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y = new Measurement(Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 

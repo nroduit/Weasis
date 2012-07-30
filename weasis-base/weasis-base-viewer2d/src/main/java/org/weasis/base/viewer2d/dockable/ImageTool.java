@@ -33,6 +33,7 @@ import javax.swing.border.TitledBorder;
 
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.ResetTools;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -49,7 +50,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 
 public class ImageTool extends PluginTool {
 
-    public static final String BUTTON_NAME = "Image Tool";
+    public static final String BUTTON_NAME = Messages.getString("ImageTool.imgtool"); //$NON-NLS-1$
 
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
@@ -88,13 +89,13 @@ public class ImageTool extends PluginTool {
         panel_2.setAlignmentY(Component.TOP_ALIGNMENT);
         panel_2.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_2.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        panel_2.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Reset",
+        panel_2.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.reset"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         final JComboBox resetComboBox = new JComboBox(ResetTools.values());
         panel_2.add(resetComboBox);
 
         final JButton resetButton = new JButton();
-        resetButton.setText("Reset");
+        resetButton.setText(Messages.getString("ImageTool.reset")); //$NON-NLS-1$
         resetButton.addActionListener(new ActionListener() {
 
             @Override
@@ -112,7 +113,7 @@ public class ImageTool extends PluginTool {
         framePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         framePanel.setAlignmentY(Component.TOP_ALIGNMENT);
         framePanel.setLayout(new BoxLayout(framePanel, BoxLayout.Y_AXIS));
-        framePanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Frame",
+        framePanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.frame"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
@@ -124,7 +125,7 @@ public class ImageTool extends PluginTool {
             final JPanel panel_3 = new JPanel();
             panel_3.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
             final JLabel speedLabel = new JLabel();
-            speedLabel.setText("Cine Speed (fpm):");
+            speedLabel.setText(Messages.getString("ImageTool.cine_speed")); //$NON-NLS-1$
             panel_3.add(speedLabel);
 
             final JSpinner speedSpinner = new JSpinner(cineAction.getSpeedModel());
@@ -133,16 +134,16 @@ public class ImageTool extends PluginTool {
             final JButton startButton = new JButton();
             startButton.setActionCommand(ActionW.CINESTART.cmd());
             startButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
-            startButton.setToolTipText("Cine start");
-            startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png")));
+            startButton.setToolTipText(Messages.getString("ImageTool.cine_start")); //$NON-NLS-1$
+            startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png"))); //$NON-NLS-1$
             startButton.addActionListener(EventManager.getInstance());
             panel_3.add(startButton);
 
             final JButton stopButton = new JButton();
             stopButton.setActionCommand(ActionW.CINESTOP.cmd());
             stopButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
-            stopButton.setToolTipText("Cine stop");
-            stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png")));
+            stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop")); //$NON-NLS-1$
+            stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png"))); //$NON-NLS-1$
             stopButton.addActionListener(EventManager.getInstance());
             panel_3.add(stopButton);
             framePanel.add(panel_3);
@@ -156,7 +157,7 @@ public class ImageTool extends PluginTool {
         winLevelPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         winLevelPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         winLevelPanel.setLayout(new BoxLayout(winLevelPanel, BoxLayout.Y_AXIS));
-        winLevelPanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, " Window / level ",
+        winLevelPanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.wl"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
@@ -179,7 +180,7 @@ public class ImageTool extends PluginTool {
             panel_3.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 3));
             final JLabel presetsLabel = new JLabel();
             panel_3.add(presetsLabel);
-            presetsLabel.setText("Preset:");
+            presetsLabel.setText(Messages.getString("ImageTool.preset")); //$NON-NLS-1$
             final JComboBox presetComboBox = ((ComboItemListener) presetAction).createCombo(160);
             presetComboBox.setMaximumRowCount(10);
             panel_3.add(presetComboBox);
@@ -189,13 +190,13 @@ public class ImageTool extends PluginTool {
         if (lutAction instanceof ComboItemListener) {
             final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
             final JLabel lutLabel = new JLabel();
-            lutLabel.setText("LUT:");
+            lutLabel.setText(Messages.getString("ImageTool.lut")); //$NON-NLS-1$
             panel_4.add(lutLabel);
             final JComboBox lutcomboBox = ((ComboItemListener) lutAction).createCombo(140);
             panel_4.add(lutcomboBox);
             ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
             if (invlutAction instanceof ToggleButtonListener) {
-                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox("Inverse"));
+                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages.getString("ImageTool.inverse"))); //$NON-NLS-1$
             }
             winLevelPanel.add(panel_4);
         }
@@ -203,7 +204,7 @@ public class ImageTool extends PluginTool {
         if (filterAction instanceof ComboItemListener) {
             final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
             final JLabel lutLabel = new JLabel();
-            lutLabel.setText("Filter");
+            lutLabel.setText(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
             panel_4.add(lutLabel);
             final JComboBox filtercomboBox = ((ComboItemListener) filterAction).createCombo(160);
             panel_4.add(filtercomboBox);
@@ -217,7 +218,7 @@ public class ImageTool extends PluginTool {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, "Transform",
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.transform"), //$NON-NLS-1$
             TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
         if (zoomAction instanceof SliderChangeListener) {
@@ -234,7 +235,7 @@ public class ImageTool extends PluginTool {
         ActionState flipAction = EventManager.getInstance().getAction(ActionW.FLIP);
         if (flipAction instanceof ToggleButtonListener) {
             JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 3));
-            pane.add(((ToggleButtonListener) flipAction).createCheckBox("Flip Image"));
+            pane.add(((ToggleButtonListener) flipAction).createCheckBox(Messages.getString("ImageTool.flip"))); //$NON-NLS-1$
             transform.add(pane);
         }
         return transform;

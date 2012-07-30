@@ -45,7 +45,7 @@ public class DicomExport extends AbstractWizardDialog {
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
 
-        final JButton exportandClose = new JButton("Export and Close");
+        final JButton exportandClose = new JButton(Messages.getString("DicomExport.exp_close")); //$NON-NLS-1$
         exportandClose.addActionListener(new ActionListener() {
 
             @Override

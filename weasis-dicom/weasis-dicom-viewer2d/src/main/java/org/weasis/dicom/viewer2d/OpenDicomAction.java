@@ -43,18 +43,18 @@ public class OpenDicomAction extends AbstractUIAction {
     }
 
     private OpenDicomAction() {
-        super("DICOM");
-        setDescription("Open DICOM files");
+        super(Messages.getString("OpenDicomAction.title")); //$NON-NLS-1$
+        setDescription(Messages.getString("OpenDicomAction.desc")); //$NON-NLS-1$
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
-        FileFormatFilter filter = new FileFormatFilter(new String[] { "dcm", "dicm" }, "DICOM");
+        FileFormatFilter filter = new FileFormatFilter(new String[] { "dcm", "dicm" }, "DICOM"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fileChooser.addChoosableFileFilter(filter);
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(filter);
@@ -83,11 +83,11 @@ public class OpenDicomAction extends AbstractUIAction {
                         false);
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                    JOptionPane.showMessageDialog(c, "Cannot open the requested files!", getDescription(),
+                    JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), getDescription(), //$NON-NLS-1$
                         JOptionPane.WARNING_MESSAGE);
                 }
             }
-            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent());
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }
     }
 }

@@ -307,7 +307,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             TagW.SeriesDescription.setFormat(Messages.getString("ModalityPrefView.series_desc")); //$NON-NLS-1$
             TagW.SliceThickness.setFormat(Messages.getString("ModalityPrefView.thick")); //$NON-NLS-1$
             TagW.SliceLocation.setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
-            TagW.ImageLaterality.setFormat("Laterality: $V");
+            TagW.ImageLaterality.setFormat(Messages.getString("ModalityPrefView.laterality")); //$NON-NLS-1$
 
             Modality[] modalities = Modality.values();
             infos = new ModalityInfoData[modalities.length - 1];

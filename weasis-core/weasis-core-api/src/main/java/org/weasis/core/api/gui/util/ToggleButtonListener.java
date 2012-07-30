@@ -56,7 +56,7 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof ButtonModel) {
             actionPerformed(model.isSelected());
-            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected());
+            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected()); //$NON-NLS-1$
         }
     };
 
@@ -71,7 +71,7 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
         if (oldVal != selected) {
             model.setSelected(selected);
             actionPerformed(selected);
-            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected());
+            AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), model.isSelected()); //$NON-NLS-1$
         }
     }
 

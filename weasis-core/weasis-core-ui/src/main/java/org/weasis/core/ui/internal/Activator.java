@@ -76,7 +76,7 @@ public class Activator implements BundleActivator, ServiceListener {
         PREFERENCES.close();
         File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
-            File file = new File(dataFolder, "persitence.properties");
+            File file = new File(dataFolder, "persitence.properties"); //$NON-NLS-1$
             FileUtil.prepareToWriteFile(file);
             FileUtil.storeProperties(file, BundleTools.LOCAL_PERSISTENCE, null);//$NON-NLS-1$
         }

@@ -172,7 +172,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 writeInstanceTags();
 
             } catch (Throwable t) {
-                LOGGER.warn("", t);
+                LOGGER.warn("", t); //$NON-NLS-1$
                 close();
                 return false;
             }
@@ -447,7 +447,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         Date birthdate) {
         // Build a global identifier for the patient.
         StringBuffer buffer = new StringBuffer(patientID == null ? NO_VALUE : patientID);
-        if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) {
+        if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) { //$NON-NLS-1$
             // patientID + issuerOfPatientID => should be unique globally
             buffer.append(issuerOfPatientID);
         } else {
@@ -472,7 +472,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 try {
                     dcm = seq.getDicomObject(0);
                 } catch (Exception e) {
-                    LOGGER.warn("", e);
+                    LOGGER.warn("", e); //$NON-NLS-1$
                 }
                 if (dcm != null) {
                     writeFunctionalGroupsSequence(tags, dcm);
@@ -643,19 +643,19 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
                 if (dicomTagMap.get(TagW.ModalityLUTData) != null) {
                     if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
-                        LOGGER.debug("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
+                        LOGGER.debug("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
                     }
                     if (dicomTagMap.get(TagW.ModalityLUTType) == null) {
-                        LOGGER.debug("Modality Type is required if Modality LUT Sequence is present. ");
+                        LOGGER.debug("Modality Type is required if Modality LUT Sequence is present. "); //$NON-NLS-1$
                     }
                 } else if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
                     if (dicomTagMap.get(TagW.RescaleSlope) == null) {
-                        LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present.");
+                        LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present."); //$NON-NLS-1$
                     } else if (dicomTagMap.get(TagW.RescaleType) == null) {
-                        LOGGER.debug("Modality Rescale Type is required if Rescale Intercept is present.");
+                        LOGGER.debug("Modality Rescale Type is required if Rescale Intercept is present."); //$NON-NLS-1$
                     }
                 } else {
-                    LOGGER.debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. ");
+                    LOGGER.debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
                 }
             }
 
@@ -725,12 +725,12 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 Float[] windowWidthDefaultTagArray = (Float[]) dicomTagMap.get(TagW.WindowWidth);
 
                 if (windowCenterDefaultTagArray == null && windowWidthDefaultTagArray != null) {
-                    LOGGER.debug("VOI Window Center is required if Window Width is present");
+                    LOGGER.debug("VOI Window Center is required if Window Width is present"); //$NON-NLS-1$
                 } else if (windowWidthDefaultTagArray == null && windowCenterDefaultTagArray != null) {
-                    LOGGER.debug("VOI Window Width is required if Window Center is present");
+                    LOGGER.debug("VOI Window Width is required if Window Center is present"); //$NON-NLS-1$
                 } else if (windowCenterDefaultTagArray != null && windowWidthDefaultTagArray != null
                     && windowWidthDefaultTagArray.length != windowCenterDefaultTagArray.length) {
-                    LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} // {}",
+                    LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} // {}", //$NON-NLS-1$
                         windowCenterDefaultTagArray, windowWidthDefaultTagArray);
                 }
             }
@@ -809,7 +809,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         try {
                             dcm = seq.getDicomObject(index);
                         } catch (Exception e) {
-                            LOGGER.warn("", e);
+                            LOGGER.warn("", e); //$NON-NLS-1$
                         }
                         if (dcm != null) {
                             Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
@@ -914,7 +914,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 return element.getDate(false);
             } catch (Exception e) {
                 // Value not valid according to DICOM standard
-                LOGGER.error("Cannot parse date {}", element.toString());
+                LOGGER.error("Cannot parse date {}", element.toString()); //$NON-NLS-1$
             }
         }
         return defaultValue;
@@ -1030,7 +1030,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             DicomObject dcm = dis.readDicomObject();
             out.writeDicomFile(dcm);
         } catch (IOException e) {
-            LOGGER.warn("", e);
+            LOGGER.warn("", e); //$NON-NLS-1$
             destination.delete();
             return false;
         } finally {
@@ -1220,7 +1220,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                 try {
                     dcm = seq.getDicomObject(index);
                 } catch (Exception e) {
-                    LOGGER.warn("", e);
+                    LOGGER.warn("", e); //$NON-NLS-1$
                 }
                 if (dcm != null) {
                     writeFunctionalGroupsSequence(tagList, dcm);
@@ -1281,7 +1281,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             getStringFromDicomElement(pixelValueTransformation, Tag.RescaleType, null));
                         setTagNoNull(tagList, TagW.ModalityLUTSequence, null); // must be identity transformation
                     } else {
-                        LOGGER.info("Ignore {} with unconsistent attributes",
+                        LOGGER.info("Ignore {} with unconsistent attributes", //$NON-NLS-1$
                             TagUtils.toString(Tag.PixelValueTransformationSequence));
                     }
                 }
@@ -1310,7 +1310,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                             getStringFromDicomElement(frameVOILUTSequence, Tag.VOILUTFunction, null));
                         setTagNoNull(TagW.VOILUTSequence, frameVOILUTSequence.get(Tag.VOILUTSequence));
                     } else {
-                        LOGGER.info("Ignore {} with unconsistent attributes",
+                        LOGGER.info("Ignore {} with unconsistent attributes", //$NON-NLS-1$
                             TagUtils.toString(Tag.FrameVOILUTSequence));
                     }
                 }

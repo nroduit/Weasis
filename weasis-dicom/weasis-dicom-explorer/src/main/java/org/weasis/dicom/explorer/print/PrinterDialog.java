@@ -34,6 +34,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.NumberFormatter;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.dicom.explorer.Messages;
 
 /**
  * 
@@ -90,7 +91,7 @@ public class PrinterDialog extends JDialog {
         content.setLayout(gridBagLayout);
         descriptionLabel = new JLabel();
 
-        descriptionLabel.setText("Description:");
+        descriptionLabel.setText(Messages.getString("PrinterDialog.desc")); //$NON-NLS-1$
         GridBagConstraints gbc_descriptionLabel = new GridBagConstraints();
         gbc_descriptionLabel.anchor = GridBagConstraints.EAST;
         gbc_descriptionLabel.insets = new Insets(0, 0, 5, 5);
@@ -107,7 +108,7 @@ public class PrinterDialog extends JDialog {
         content.add(descriptionTf, gbc_descriptionTf);
         aeTitleLabel = new JLabel();
 
-        aeTitleLabel.setText("AE title:");
+        aeTitleLabel.setText(Messages.getString("PrinterDialog.aet")); //$NON-NLS-1$
         GridBagConstraints gbc_aeTitleLabel = new GridBagConstraints();
         gbc_aeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
         gbc_aeTitleLabel.insets = new Insets(0, 0, 5, 5);
@@ -124,7 +125,7 @@ public class PrinterDialog extends JDialog {
         content.add(aeTitleTf, gbc_aeTitleTf);
         hostnameLabel = new JLabel();
 
-        hostnameLabel.setText("Hostname:");
+        hostnameLabel.setText(Messages.getString("PrinterDialog.host")); //$NON-NLS-1$
         GridBagConstraints gbc_hostnameLabel = new GridBagConstraints();
         gbc_hostnameLabel.anchor = GridBagConstraints.EAST;
         gbc_hostnameLabel.insets = new Insets(0, 0, 5, 5);
@@ -141,7 +142,7 @@ public class PrinterDialog extends JDialog {
         content.add(hostnameTf, gbc_hostnameTf);
         portLabel = new JLabel();
 
-        portLabel.setText("Port:");
+        portLabel.setText(Messages.getString("PrinterDialog.port")); //$NON-NLS-1$
         GridBagConstraints gbc_portLabel = new GridBagConstraints();
         gbc_portLabel.anchor = GridBagConstraints.WEST;
         gbc_portLabel.insets = new Insets(0, 0, 5, 5);
@@ -161,7 +162,7 @@ public class PrinterDialog extends JDialog {
         content.add(portTf, gbc_portTf);
         colorPrintSupportCheckBox = new JCheckBox();
 
-        colorPrintSupportCheckBox.setText("Color print supported");
+        colorPrintSupportCheckBox.setText(Messages.getString("PrinterDialog.color")); //$NON-NLS-1$
         GridBagConstraints gbc_colorPrintSupportCheckBox = new GridBagConstraints();
         gbc_colorPrintSupportCheckBox.anchor = GridBagConstraints.WEST;
         gbc_colorPrintSupportCheckBox.insets = new Insets(0, 0, 0, 5);
@@ -182,7 +183,7 @@ public class PrinterDialog extends JDialog {
         okButton = new JButton();
         footPanel.add(okButton);
 
-        okButton.setText("OK");
+        okButton.setText(Messages.getString("PrinterDialog.ok")); //$NON-NLS-1$
         okButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -192,7 +193,7 @@ public class PrinterDialog extends JDialog {
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(Messages.getString("PrinterDialog.cancel")); //$NON-NLS-1$
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -211,10 +212,10 @@ public class PrinterDialog extends JDialog {
         String hostname = hostnameTf.getText();
         String port = portTf.getText();
 
-        if (desc == null || "".equals(desc) || aeTitle == null || "".equals(aeTitle) || hostname == null
-            || "".equals(hostname) || port == null || "".equals(port)) {
-            JOptionPane.showMessageDialog(this, "All items must be filled!", //$NON-NLS-1$
-                "Error", JOptionPane.ERROR_MESSAGE);
+        if (desc == null || "".equals(desc) || aeTitle == null || "".equals(aeTitle) || hostname == null //$NON-NLS-1$ //$NON-NLS-2$
+            || "".equals(hostname) || port == null || "".equals(port)) { //$NON-NLS-1$ //$NON-NLS-2$
+            JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
+                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return;
         }
         if (dicomPrinter == null) {

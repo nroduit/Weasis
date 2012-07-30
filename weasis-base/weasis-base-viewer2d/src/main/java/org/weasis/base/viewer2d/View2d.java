@@ -319,7 +319,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                     mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
                                     final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
                                     if (ptIndex >= 0) {
-                                        JMenuItem menuItem = new JMenuItem("Remove this Point");
+                                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rem_point")); //$NON-NLS-1$
                                         menuItem.addActionListener(new ActionListener() {
 
                                             @Override
@@ -329,7 +329,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                         });
                                         popupMenu.add(menuItem);
 
-                                        menuItem = new JMenuItem("Add Points");
+                                        menuItem = new JMenuItem(Messages.getString("View2d.add_point")); //$NON-NLS-1$
                                         menuItem.addActionListener(new ActionListener() {
 
                                             @Override
@@ -347,7 +347,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                                     }
                                 } else if (ds != null
                                     && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
-                                    final JMenuItem item2 = new JMenuItem("Stop drawing");
+                                    final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                                     item2.addActionListener(new ActionListener() {
 
                                         @Override
@@ -365,7 +365,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         }
                     }
                     if (graphicComplete) {
-                        JMenuItem menuItem = new JMenuItem("Delete Selected");
+                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_selec")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -375,7 +375,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         });
                         popupMenu.add(menuItem);
 
-                        menuItem = new JMenuItem("Cut");
+                        menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -385,7 +385,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         });
                         popupMenu.add(menuItem);
-                        menuItem = new JMenuItem("Copy");
+                        menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -406,7 +406,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                     if (selected.size() == 1) {
                         final Graphic graph = selected.get(0);
-                        JMenuItem item = new JMenuItem("To Front");
+                        JMenuItem item = new JMenuItem(Messages.getString("View2d.front")); //$NON-NLS-1$
                         item.addActionListener(new ActionListener() {
 
                             @Override
@@ -415,7 +415,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         });
                         popupMenu.add(item);
-                        item = new JMenuItem("To Back");
+                        item = new JMenuItem(Messages.getString("View2d.back")); //$NON-NLS-1$
                         item.addActionListener(new ActionListener() {
 
                             @Override
@@ -428,12 +428,12 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                         if (graphicComplete && graph instanceof LineGraphic) {
 
-                            final JMenuItem calibMenu = new JMenuItem("Change Spatial Calibration");
+                            final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.calib")); //$NON-NLS-1$
                             calibMenu.addActionListener(new ActionListener() {
 
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    String title = "Manual Calibration";
+                                    String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                                     CalibrationView calibrationDialog =
                                         new CalibrationView((LineGraphic) graph, View2d.this);
                                     int res =
@@ -449,7 +449,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         }
                     }
                     if (list.size() > 0) {
-                        JMenuItem properties = new JMenuItem("Properties");
+                        JMenuItem properties = new JMenuItem(Messages.getString("View2d.prop")); //$NON-NLS-1$
                         properties.addActionListener(new ActionListener() {
 
                             @Override
@@ -464,7 +464,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     popupMenu.show(evt.getComponent(), evt.getX() - 5, evt.getY() - 5);
                 } else if (View2d.this.getSourceImage() != null) {
                     JPopupMenu popupMenu = new JPopupMenu();
-                    JMenuItem item = new JMenuItem("Left mouse actions:");
+                    JMenuItem item = new JMenuItem(Messages.getString("View2d.left_mouse")); //$NON-NLS-1$
                     Font font = item.getFont();
                     item.setFont(new Font(font.getFamily(), Font.BOLD, font.getSize()));
                     item.setFocusable(false);
@@ -506,7 +506,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                     }
                     if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
                         popupMenu.add(new JSeparator());
-                        JMenuItem menuItem = new JMenuItem("Paste Drawings");
+                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -548,8 +548,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                     ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
                     if (rotateAction instanceof SliderChangeListener) {
                         popupMenu.add(new JSeparator());
-                        JMenu menu = new JMenu("Orientation");
-                        JMenuItem menuItem = new JMenuItem("Reset");
+                        JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2dContainer.reset")); //$NON-NLS-1$
                         final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
                         menuItem.addActionListener(new ActionListener() {
 
@@ -559,7 +559,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         });
                         menu.add(menuItem);
-                        menuItem = new JMenuItem("- 90");
+                        menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -568,7 +568,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         });
                         menu.add(menuItem);
-                        menuItem = new JMenuItem("+ 90");
+                        menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -577,7 +577,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         });
                         menu.add(menuItem);
-                        menuItem = new JMenuItem("+ 180");
+                        menuItem = new JMenuItem(Messages.getString("View2dContainer.180")); //$NON-NLS-1$
                         menuItem.addActionListener(new ActionListener() {
 
                             @Override
@@ -589,15 +589,15 @@ public class View2d extends DefaultView2d<ImageElement> {
                         ActionState flipAction = eventManager.getAction(ActionW.FLIP);
                         if (flipAction instanceof ToggleButtonListener) {
                             menu.add(new JSeparator());
-                            menu.add(((ToggleButtonListener) flipAction)
-                                .createUnregiteredJCheckBoxMenuItem("Flip Horizontally"));
+                            menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
+                                .getString("View2d.flip"))); //$NON-NLS-1$
                             popupMenu.add(menu);
                         }
                     }
 
                     popupMenu.add(new JSeparator());
                     popupMenu.add(ResetTools.createUnregisteredJMenu());
-                    JMenuItem close = new JMenuItem("Close");
+                    JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
                     close.addActionListener(new ActionListener() {
 
                         @Override

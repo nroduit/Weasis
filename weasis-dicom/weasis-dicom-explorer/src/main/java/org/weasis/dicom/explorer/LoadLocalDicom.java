@@ -42,7 +42,7 @@ public class LoadLocalDicom extends ExplorerTask {
     private boolean openPlugin;
 
     public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"));
+        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public class LoadLocalDicom extends ExplorerTask {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + " " + patient); //$NON-NLS-1$
+            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + " " + patient); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);

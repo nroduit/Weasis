@@ -176,7 +176,7 @@ public class InfoLayer implements AnnotationsLayer {
                 Color.RED);
             String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
             if (tsuid != null) {
-                tsuid = Messages.getString("InfoLayer.tsuid") + " " + tsuid; //$NON-NLS-1$
+                tsuid = Messages.getString("InfoLayer.tsuid") + " " + tsuid; //$NON-NLS-1$ //$NON-NLS-2$
                 y += fontHeight;
                 GraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y,
                     Color.RED);
@@ -209,10 +209,10 @@ public class InfoLayer implements AnnotationsLayer {
                 Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
                 GraphicLabel.paintColorFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.lossy")
-                        + " "
+                    Messages.getString("InfoLayer.lossy") //$NON-NLS-1$
+                        + " " //$NON-NLS-1$
                         + tsuid
-                        + ((rate == null || rate < 1) ? "" : " " + rate + " "
+                        + ((rate == null || rate < 1) ? "" : " " + rate + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                             + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 drawY -= fontHeight;
             }
@@ -231,23 +231,23 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.win") + " " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " " + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$
-                        + " " + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY);
+                    Messages.getString("InfoLayer.win") + " " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " " + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                        + " " + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.zoom") + " " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100) //$NON-NLS-1$
-                        + " " + Messages.getString("InfoLayer.percent_symb"), border, drawY); //$NON-NLS-1$
+                    Messages.getString("InfoLayer.zoom") + " " + DecFormater.twoDecimal(view2DPane.getViewModel().getViewScale() * 100) //$NON-NLS-1$ //$NON-NLS-2$
+                        + " " + Messages.getString("InfoLayer.percent_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.angle") + " " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$
+                    Messages.getString("InfoLayer.angle") + " " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             drawY -= fontHeight;
         }
 

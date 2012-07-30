@@ -45,18 +45,18 @@ public class DicomPrinter {
         try {
             writer =
                 factory.createXMLStreamWriter(new FileWriter(new File(Activator.PREFERENCES.getDataFolder(),
-                    "dicomPrinters.xml")));
+                    "dicomPrinters.xml"))); //$NON-NLS-1$
 
             writer.writeStartDocument();
-            writer.writeStartElement("printers");
+            writer.writeStartElement("printers"); //$NON-NLS-1$
             for (int i = 0; i < printersComboBox.getItemCount(); i++) {
                 DicomPrinter printer = (DicomPrinter) printersComboBox.getItemAt(i);
-                writer.writeStartElement("printer");
-                writer.writeAttribute("description", printer.getDescription());
-                writer.writeAttribute("aeTitle", printer.getAeTitle());
-                writer.writeAttribute("hostname", printer.getHostname());
-                writer.writeAttribute("port", printer.getPort());
-                writer.writeAttribute("colorPrintSupported", printer.isColorPrintSupported().toString());
+                writer.writeStartElement("printer"); //$NON-NLS-1$
+                writer.writeAttribute("description", printer.getDescription()); //$NON-NLS-1$
+                writer.writeAttribute("aeTitle", printer.getAeTitle()); //$NON-NLS-1$
+                writer.writeAttribute("hostname", printer.getHostname()); //$NON-NLS-1$
+                writer.writeAttribute("port", printer.getPort()); //$NON-NLS-1$
+                writer.writeAttribute("colorPrintSupported", printer.isColorPrintSupported().toString()); //$NON-NLS-1$
                 writer.writeEndElement();
             }
             writer.writeEndElement();
@@ -70,7 +70,7 @@ public class DicomPrinter {
     }
 
     public static void loadPrintersSettings(javax.swing.JComboBox printersComboBox) {
-        File prefs = new File(Activator.PREFERENCES.getDataFolder(), "dicomPrinters.xml");
+        File prefs = new File(Activator.PREFERENCES.getDataFolder(), "dicomPrinters.xml"); //$NON-NLS-1$
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
             XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -92,12 +92,12 @@ public class DicomPrinter {
                                                 if (xmler.getAttributeCount() == 5) {
                                                     DicomPrinter printer = new DicomPrinter();
                                                     printer
-                                                        .setDescription(xmler.getAttributeValue(null, "description"));
-                                                    printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle"));
-                                                    printer.setHostname(xmler.getAttributeValue(null, "hostname"));
-                                                    printer.setPort(xmler.getAttributeValue(null, "port"));
+                                                        .setDescription(xmler.getAttributeValue(null, "description")); //$NON-NLS-1$
+                                                    printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle")); //$NON-NLS-1$
+                                                    printer.setHostname(xmler.getAttributeValue(null, "hostname")); //$NON-NLS-1$
+                                                    printer.setPort(xmler.getAttributeValue(null, "port")); //$NON-NLS-1$
                                                     printer.setColorPrintSupported(Boolean.parseBoolean(xmler
-                                                        .getAttributeValue(null, "colorPrintSupported")));
+                                                        .getAttributeValue(null, "colorPrintSupported"))); //$NON-NLS-1$
                                                     printersComboBox.addItem(printer);
                                                 }
                                             }

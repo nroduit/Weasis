@@ -95,7 +95,7 @@ import org.weasis.dicom.viewer2d.internal.Activator;
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
-    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -1220,7 +1220,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 String command = args.get(0);
                 if (command != null) {
                     try {
-                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command);
+                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
                         if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
                             mouseActions.setAction(MouseActions.LEFT, command);
                             ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
@@ -1241,12 +1241,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void synch(String[] argv) throws IOException {
-        StringBuffer buffer = new StringBuffer("{");
+        StringBuffer buffer = new StringBuffer("{"); //$NON-NLS-1$
         for (SynchView synch : SYNCH_LIST) {
             buffer.append(synch.getCommand());
-            buffer.append(" ");
+            buffer.append(" "); //$NON-NLS-1$
         }
-        buffer.append("}");
+        buffer.append("}"); //$NON-NLS-1$
 
         final String[] usage = { "Set a synchronization mode " + buffer.toString(), //$NON-NLS-1$
             "Usage: dcmview2d:synch [VALUE]", //$NON-NLS-1$
@@ -1271,7 +1271,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 return;
                             }
                         }
-                        throw new IllegalArgumentException("Synch command '" + command + "' not found!");
+                        throw new IllegalArgumentException("Synch command '" + command + "' not found!"); //$NON-NLS-1$ //$NON-NLS-2$
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

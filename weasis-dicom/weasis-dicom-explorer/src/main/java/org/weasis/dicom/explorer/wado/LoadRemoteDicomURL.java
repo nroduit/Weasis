@@ -38,7 +38,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
     private final DicomModel dicomModel;
 
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"));
+        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -57,7 +57,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
     }
 
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"));
+        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

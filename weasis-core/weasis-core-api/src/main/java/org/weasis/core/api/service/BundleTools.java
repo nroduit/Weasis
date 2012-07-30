@@ -30,7 +30,7 @@ public class BundleTools {
         for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
             Entry<Object, Object> element = iter.next();
             String tag = element.getKey().toString();
-            if (tag.startsWith("TG-")) {
+            if (tag.startsWith("TG-")) { //$NON-NLS-1$
                 SESSION_TAGS.put(tag.substring(3), element.getValue().toString());
             }
         }

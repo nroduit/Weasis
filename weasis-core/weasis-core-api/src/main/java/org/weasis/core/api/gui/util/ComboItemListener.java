@@ -43,7 +43,7 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         // if (model.equals(e.getSource())) {
         Object val = model.getSelectedItem();
         itemStateChanged(val);
-        AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val);
+        AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val); //$NON-NLS-1$
         // }
     }
 

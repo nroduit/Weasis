@@ -115,19 +115,19 @@ public class DicomPrint {
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-        Device device = new Device("");
+        Device device = new Device(""); //$NON-NLS-1$
         NetworkApplicationEntity ae = new NetworkApplicationEntity();
         NetworkConnection conn = new NetworkConnection();
-        Executor executor = new NewThreadExecutor("WEASIS_AE");
+        Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
         NetworkApplicationEntity remoteAE = new NetworkApplicationEntity();
         NetworkConnection remoteConn = new NetworkConnection();
 
         conn.setPort(106);
-        conn.setHostname("localhost");
+        conn.setHostname("localhost"); //$NON-NLS-1$
 
         ae.setNetworkConnection(conn);
         ae.setAssociationInitiator(true);
-        ae.setAETitle("WEASIS_AE");
+        ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
         ae.setTransferCapability(transferCapability);
 
         remoteConn.setPort(Integer.parseInt(dicomPrintOptions.getDicomPrinter().getPort()));
@@ -197,7 +197,7 @@ public class DicomPrint {
         response.next();
         DicomObject command = response.getCommand();
         if (command.getInt(Tag.Status) != 0) {
-            throw new Exception("Unable to print the image.");
+            throw new Exception("Unable to print the image."); //$NON-NLS-1$
         }
     }
 
@@ -207,7 +207,7 @@ public class DicomPrint {
             dcmObj.putInt(Tag.Columns, VR.US, image.getWidth());
             dcmObj.putInt(Tag.Rows, VR.US, image.getHeight());
             dcmObj.putInt(Tag.PixelRepresentation, VR.US, 0);
-            dcmObj.putString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2");
+            dcmObj.putString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2"); //$NON-NLS-1$ //$NON-NLS-2$
             dcmObj.putInt(Tag.SamplesPerPixel, VR.US, printInColor ? 3 : 1);
             dcmObj.putInt(Tag.BitsAllocated, VR.US, 8);
             dcmObj.putInt(Tag.BitsStored, VR.US, 8);

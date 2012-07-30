@@ -47,9 +47,8 @@ public class ActionW {
             Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     public static final ActionW FLIP = new ActionW(Messages.getString("ActionW.flip"), "flip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PRESET = new ActionW(Messages.getString("ActionW.preset"), "preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW DEFAULT_PRESET = new ActionW(
-        Messages.getString("ActionW.default_preset"), "default_preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW LUT_SHAPE = new ActionW("Lut Shape", "lut_shape", 0, 0, null);
+    public static final ActionW DEFAULT_PRESET = new ActionW("", "default_preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LUT_SHAPE = new ActionW(Messages.getString("ActionW.lut_shape"), "lut_shape", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW INVERSELUT = new ActionW("", "inverseLut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -70,7 +69,7 @@ public class ActionW {
     public static final ActionW IMAGE_OVERLAY = new ActionW(
         Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PR_STATE = new ActionW(Messages.getString("ActionW.PR"), "pr_state", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
-    public static final ActionW KEY_OBJECT = new ActionW("Key Object Selection", "key_object", 0, 0, null);
+    public static final ActionW KEY_OBJECT = new ActionW(Messages.getString("ActionW.ko"), "key_object", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW IMAGE_PIX_PADDING = new ActionW(
         Messages.getString("ActionW.pixpad"), "pixel_padding", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW IMAGE_SHUTTER = new ActionW(

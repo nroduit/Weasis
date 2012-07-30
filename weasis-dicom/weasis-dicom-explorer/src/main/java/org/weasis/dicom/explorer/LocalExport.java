@@ -173,7 +173,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1.setBorder(new TitledBorder(
-                Messages.getString("LocalExport.jpeg_quality") + " " + slider.getValue())); //$NON-NLS-1$
+                Messages.getString("LocalExport.jpeg_quality") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(false);
@@ -272,7 +272,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
             final String format = (String) comboBoxImgFormat.getSelectedItem();
-            ExplorerTask task = new ExplorerTask("Exporting...") {
+            ExplorerTask task = new ExplorerTask("Exporting...") { //$NON-NLS-1$
 
                 @Override
                 protected Boolean doInBackground() throws Exception {

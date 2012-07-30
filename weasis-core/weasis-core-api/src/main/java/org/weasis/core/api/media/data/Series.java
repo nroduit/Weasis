@@ -432,6 +432,6 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     public String getSeriesNumber() {
         Integer val = (Integer) getTagValue(TagW.SeriesNumber);
-        return val == null ? "" : val.toString();
+        return val == null ? "" : val.toString(); //$NON-NLS-1$
     }
 }

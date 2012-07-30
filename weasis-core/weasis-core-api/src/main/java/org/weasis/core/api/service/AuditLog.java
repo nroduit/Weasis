@@ -91,7 +91,7 @@ public class AuditLog {
         Configuration logConfiguration = null;
         if (key != null && val != null) {
             try {
-                Configuration[] configs = confAdmin.listConfigurations("(" + key + "=" + val + ")");
+                Configuration[] configs = confAdmin.listConfigurations("(" + key + "=" + val + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 if (configs != null && configs.length > 0) {
                     logConfiguration = configs[0];
                 }

@@ -161,16 +161,16 @@ public class Activator implements BundleActivator, ServiceListener {
 
     private void initLoggerAndAudit() throws IOException {
         // Audit log for giving statistics about usage of Weasis
-        String loggerKey = "audit.log";
-        String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" };
+        String loggerKey = "audit.log"; //$NON-NLS-1$
+        String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         String audit = bundleContext.getProperty(loggerKey);
-        if (audit != null && audit.equalsIgnoreCase("true")) {
-            String user = System.getProperty("weasis.user", System.getProperty("user.name", "local"));
-            AuditLog.createOrUpdateLogger(loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH
-                + File.separator + "log" + File.separator + "audit-" + user + ".log",
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null);
-            AuditLog.LOGGER.info("Start audit log session");
+        if (audit != null && audit.equalsIgnoreCase("true")) { //$NON-NLS-1$
+            String user = System.getProperty("weasis.user", System.getProperty("user.name", "local")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            AuditLog.createOrUpdateLogger(loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
+                + File.separator + "log" + File.separator + "audit-" + user + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
+            AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
             ServiceReference configurationAdminReference =
                 bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
@@ -183,11 +183,11 @@ public class Activator implements BundleActivator, ServiceListener {
                     if (logConfiguration == null) {
                         logConfiguration =
                             confAdmin.createFactoryConfiguration(
-                                "org.apache.sling.commons.log.LogManager.factory.config", null);
+                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                         Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
-                        loggingProperties.put("org.apache.sling.commons.log.level", "ERROR");
+                        loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
                         // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
-                        loggingProperties.put("org.apache.sling.commons.log.names", loggerVal);
+                        loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); //$NON-NLS-1$
                         // add this property to give us something unique to re-find this configuration
                         loggingProperties.put(loggerKey, loggerVal[0]);
                         logConfiguration.update(loggingProperties);

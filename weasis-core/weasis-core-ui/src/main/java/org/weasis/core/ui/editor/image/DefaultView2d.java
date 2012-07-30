@@ -201,7 +201,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public String getPixelInfo(Point p, RenderedImageLayer<E> imageLayer) {
         ImageElement imageElement = imageLayer.getSourceImage();
-        StringBuffer message = new StringBuffer(" ");
+        StringBuffer message = new StringBuffer(" "); //$NON-NLS-1$
         if (imageElement != null && imageLayer.getReadIterator() != null) {
             PlanarImage image =
                 imageElement.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
@@ -416,7 +416,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                             }
                         }
                     }
-                    AuditLog.LOGGER.info("open:image size:{},{} depth:{}",
+                    AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
                         new Object[] { image.getWidth(), image.getHeight(), pixSize.toString() });
                 }
             }
@@ -556,7 +556,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         getLayerModel().fireGraphicsSelectionChanged(imageLayer);
 
         if (selected && series != null) {
-            AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber());
+            AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
         }
     }
 
@@ -731,7 +731,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                                 (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                                 getCurrentSortComparator());
 
-                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                     }
                 } else {
                     if (value.getMedia() instanceof ImageElement) {

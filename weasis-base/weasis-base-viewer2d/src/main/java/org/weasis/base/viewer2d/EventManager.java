@@ -131,7 +131,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
         mouseActions.applyPreferences(pref);
         if (pref != null) {
-            Preferences prefNode = pref.node("mouse.sensivity");
+            Preferences prefNode = pref.node("mouse.sensivity"); //$NON-NLS-1$
             windowAction.setMouseSensivity(prefNode.getDouble(windowAction.getActionW().cmd(), 1.25));
             levelAction.setMouseSensivity(prefNode.getDouble(levelAction.getActionW().cmd(), 1.25));
             moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(), 0.1));
@@ -394,7 +394,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
-            Preferences prefNode = prefs.node("mouse.sensivity");
+            Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$
             BundlePreferences.putDoublePreferences(prefNode, windowAction.getActionW().cmd(),
                 windowAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, levelAction.getActionW().cmd(),

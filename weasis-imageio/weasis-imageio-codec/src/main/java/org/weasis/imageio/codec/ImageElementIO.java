@@ -58,8 +58,8 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
         this.uri = media;
         if (mimeType == null) {
             this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
-        } else if ("image/x-ms-bmp".equals(mimeType)) {
-            this.mimeType = "image/bmp";
+        } else if ("image/x-ms-bmp".equals(mimeType)) { //$NON-NLS-1$
+            this.mimeType = "image/bmp"; //$NON-NLS-1$
         } else {
             this.mimeType = mimeType;
         }
@@ -137,7 +137,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
     @Override
     public MediaSeries<ImageElement> getMediaSeries() {
         MediaSeries<ImageElement> series =
-            new Series<ImageElement>(TagW.SubseriesInstanceUID, uri == null ? "unknown" : uri.toString(), TagW.FileName) {
+            new Series<ImageElement>(TagW.SubseriesInstanceUID, uri == null ? "unknown" : uri.toString(), TagW.FileName) { //$NON-NLS-1$
 
                 @Override
                 public String getMimeType() {

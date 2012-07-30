@@ -28,7 +28,7 @@ public class ImageioCodec implements Codec {
         for (String s : ImageIO.getReaderMIMETypes()) {
             list.add(s);
         }
-        list.add("image/x-ms-bmp");
+        list.add("image/x-ms-bmp"); //$NON-NLS-1$
         return list.toArray(new String[list.size()]);
     }
 

@@ -33,8 +33,8 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
 public class ViewerFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "Image Viewer";
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png"));
+    public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
 
     public ViewerFactory() {
     }
@@ -51,7 +51,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public boolean canReadMimeType(String mimeType) {
-        if (mimeType != null && mimeType.startsWith("image/")) {
+        if (mimeType != null && mimeType.startsWith("image/")) { //$NON-NLS-1$
             return true;
         }
         return false;

@@ -63,7 +63,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return "Polyline";
+        return Messages.getString("MeasureToolBar.polygon"); //$NON-NLS-1$
     }
 
     @Override

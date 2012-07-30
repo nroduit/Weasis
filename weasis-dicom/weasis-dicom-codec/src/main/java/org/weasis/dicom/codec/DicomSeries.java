@@ -121,8 +121,8 @@ public class DicomSeries extends Series<DicomImageElement> {
     public String getSeriesNumber() {
         Integer splitNb = (Integer) getTagValue(TagW.SplitSeriesNumber);
         Integer val = (Integer) getTagValue(TagW.SeriesNumber);
-        String result = val == null ? "" : val.toString();
-        return splitNb == null ? result : result + "-" + splitNb.toString();
+        String result = val == null ? "" : val.toString(); //$NON-NLS-1$
+        return splitNb == null ? result : result + "-" + splitNb.toString(); //$NON-NLS-1$
     }
 
     @Override

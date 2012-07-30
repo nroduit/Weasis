@@ -35,13 +35,13 @@ public abstract class AbstractProperties {
         String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
         File tdir;
         if (tempDir == null || tempDir.length() == 1) {
-            String dir = System.getProperty("user.home", ""); //$NON-NLS-1$
+            String dir = System.getProperty("user.home", ""); //$NON-NLS-1$ //$NON-NLS-2$
             tdir = new File(dir);
         } else {
             tdir = new File(tempDir);
         }
 
-        APP_TEMP_DIR = new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$
+        APP_TEMP_DIR = new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         try {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR);

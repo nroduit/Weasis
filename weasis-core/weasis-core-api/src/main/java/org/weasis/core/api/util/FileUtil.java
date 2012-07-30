@@ -105,7 +105,7 @@ public final class FileUtil {
                 } else {
                     try {
                         if (!f.delete()) {
-                            LOGGER.info("Cannot delete {}", f.getPath());
+                            LOGGER.info("Cannot delete {}", f.getPath()); //$NON-NLS-1$
                         }
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage());
@@ -142,7 +142,7 @@ public final class FileUtil {
             File outputDir = file.getParentFile();
             // necessary to check exists otherwise mkdirs() is false when dir exists
             if (outputDir != null && !outputDir.exists() && !outputDir.mkdirs()) {
-                throw new IOException("Cannot write parent directory of " + file.getPath());
+                throw new IOException("Cannot write parent directory of " + file.getPath()); //$NON-NLS-1$
             }
         }
     }
@@ -214,7 +214,7 @@ public final class FileUtil {
             return e.bytesTransferred;
         } catch (IOException e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Error when writing file", e);
+                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -260,7 +260,7 @@ public final class FileUtil {
             return true;
         } catch (Exception e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e);
+                LOGGER.error("nio exception", e); //$NON-NLS-1$
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -288,7 +288,7 @@ public final class FileUtil {
             return true;
         } catch (IOException e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e);
+                LOGGER.error("nio exception", e); //$NON-NLS-1$
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -312,7 +312,7 @@ public final class FileUtil {
             return true;
         } catch (IOException e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("nio exception", e);
+                LOGGER.error("nio exception", e); //$NON-NLS-1$
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -332,7 +332,7 @@ public final class FileUtil {
                 fileStream = new FileInputStream(propsFile);
                 p.load(fileStream);
             } catch (IOException e) {
-                LOGGER.error("Error when reading properties: {}", propsFile);
+                LOGGER.error("Error when reading properties: {}", propsFile); //$NON-NLS-1$
                 LOGGER.error(e.getMessage());
             } finally {
                 FileUtil.safeClose(fileStream);
@@ -348,7 +348,7 @@ public final class FileUtil {
                 fout = new FileOutputStream(propsFile);
                 props.store(fout, comments);
             } catch (IOException e) {
-                LOGGER.error("Error when writing properties: {}", propsFile);
+                LOGGER.error("Error when writing properties: {}", propsFile); //$NON-NLS-1$
                 LOGGER.error(e.getMessage());
             } finally {
                 FileUtil.safeClose(fout);

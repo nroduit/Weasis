@@ -41,13 +41,13 @@ public class OpenImageAction extends AbstractUIAction {
     }
 
     private OpenImageAction() {
-        super("Image");
-        setDescription("Open image files");
+        super(Messages.getString("OpenImageAction.img")); //$NON-NLS-1$
+        setDescription(Messages.getString("OpenImageAction.open_img")); //$NON-NLS-1$
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$
+        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -62,7 +62,7 @@ public class OpenImageAction extends AbstractUIAction {
             MediaSeries series = null;
             for (File file : selectedFiles) {
                 String mimeType = MimeInspector.getMimeType(file);
-                if (mimeType != null && mimeType.startsWith("image")) {
+                if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$
                     Codec codec = BundleTools.getCodec(mimeType, null);
                     if (codec != null) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
@@ -87,10 +87,10 @@ public class OpenImageAction extends AbstractUIAction {
                     false);
             } else {
                 Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                JOptionPane.showMessageDialog(c, "Cannot open the requested files!", getDescription(),
+                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), getDescription(), //$NON-NLS-1$
                     JOptionPane.WARNING_MESSAGE);
             }
-            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent());
+            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }
     }
 }

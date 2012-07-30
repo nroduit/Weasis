@@ -359,7 +359,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         getCurrentSortComparator());
             }
 
-            AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(),
+            AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(), //$NON-NLS-1$
                 series.getTagValue(TagW.Modality));
 
             setDefautWindowLevel(media);
@@ -587,7 +587,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imgLayer) {
         DicomImageElement dicom = imgLayer.getSourceImage();
-        StringBuffer message = new StringBuffer(" ");
+        StringBuffer message = new StringBuffer(" "); //$NON-NLS-1$
         if (dicom != null && imgLayer.getReadIterator() != null) {
             RenderedImage image = imgLayer.getSourceRenderedImage();
             Point realPoint =
@@ -1083,7 +1083,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
                     if (lutShapeAction instanceof ComboItemListener) {
-                        popupMenu.add(((ComboItemListener) lutShapeAction).createMenu("LUT Shape"));
+                        popupMenu.add(((ComboItemListener) lutShapeAction).createMenu(ActionW.LUT_SHAPE.getTitle())); //$NON-NLS-1$
                     }
                     ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
                     if (stackAction instanceof ComboItemListener) {

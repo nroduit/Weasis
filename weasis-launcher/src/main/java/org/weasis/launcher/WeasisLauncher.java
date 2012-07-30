@@ -65,7 +65,7 @@ public class WeasisLauncher {
                     return s.name();
                 }
             }
-            return "UNKNOWN";
+            return "UNKNOWN"; //$NON-NLS-1$
         }
 
     }
@@ -253,7 +253,7 @@ public class WeasisLauncher {
                 System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
                 System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
                 // Allow export feature for portable version
-                System.setProperty("weasis.export.dicom", "true");
+                System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -388,14 +388,14 @@ public class WeasisLauncher {
             System.err.println("Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
             System.err.println("State of the framework:"); //$NON-NLS-1$
             for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                System.err.println(" * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " "
+                System.err.println(" * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     + STATE.valueOf(b.getState()));
             }
 
             // Set flag to clean cache at next launch
             File common_file = new File(System.getProperty(P_WEASIS_PATH), APP_PROPERTY_FILE);
             Properties common_prop = readProperties(common_file);
-            common_prop.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$
+            common_prop.setProperty("weasis.clean.cache", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             FileUtil.storeProperties(common_file, common_prop, null);
         } finally {
             Runtime.getRuntime().halt(exitStatus);
@@ -670,7 +670,7 @@ public class WeasisLauncher {
     public static WebStartLoader loadProperties(Properties config) {
         System.out.println();
         System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
-        System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$
+        System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty(P_WEASIS_PATH, dir);
@@ -767,7 +767,7 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
-        if (lang.equals("en") && country.equals("US")) { //$NON-NLS-1$
+        if (lang.equals("en") && country.equals("US")) { //$NON-NLS-1$ //$NON-NLS-2$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         }
@@ -844,7 +844,7 @@ public class WeasisLauncher {
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
         // Transmit the audit log property to the bundle context
-        config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim());
+        config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();

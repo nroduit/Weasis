@@ -162,7 +162,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     public boolean isPhotometricInterpretationInverse() {
-        return "MONOCHROME1".equalsIgnoreCase(getPhotometricInterpretation());
+        return "MONOCHROME1".equalsIgnoreCase(getPhotometricInterpretation()); //$NON-NLS-1$
     }
 
     /**
@@ -236,7 +236,7 @@ public class DicomImageElement extends ImageElement {
         String photometricInterpretation = getPhotometricInterpretation();
 
         return (photometricInterpretation != null && //
-        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2"
+        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2" //$NON-NLS-1$ //$NON-NLS-2$
             .equalsIgnoreCase(photometricInterpretation)));
     }
 
@@ -463,7 +463,7 @@ public class DicomImageElement extends ImageElement {
         ParameterBlock pb = new ParameterBlock();
         pb.addSource(imageSource);
         pb.add(lookup);
-        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null);
+        final RenderedImage imageModalityTransformed = JAI.create("lookup", pb, null); //$NON-NLS-1$
 
         pb.removeSources();
         pb.removeParameters();
@@ -476,8 +476,8 @@ public class DicomImageElement extends ImageElement {
         pb.add(new double[] { getMinAllocatedValue() }); // Min value to be considered.
         pb.add(new double[] { getMaxAllocatedValue() }); // Max value to be considered.
 
-        RenderedOp op = JAI.create("histogram", pb, ImageToolkit.NOCACHE_HINT);
-        return (Histogram) op.getProperty("histogram");
+        RenderedOp op = JAI.create("histogram", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+        return (Histogram) op.getProperty("histogram"); //$NON-NLS-1$
     }
 
     @Override

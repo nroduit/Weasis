@@ -36,6 +36,7 @@ import javax.swing.tree.TreePath;
 
 import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
@@ -51,10 +52,10 @@ import org.weasis.core.ui.graphic.model.Tools;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-    public static final String IMAGE = "Image";
-    public static final String ANNOTATIONS = "Annotations";
+    public static final String IMAGE = Messages.getString("DisplayTool.img"); //$NON-NLS-1$
+    public static final String ANNOTATIONS = Messages.getString("DisplayTool.annotations"); //$NON-NLS-1$
 
-    public static final String BUTTON_NAME = "Display";
+    public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
 
     private final JCheckBox applyAllViews = new JCheckBox("Apply to all views", true); //$NON-NLS-1$
     private final CheckboxTree tree;

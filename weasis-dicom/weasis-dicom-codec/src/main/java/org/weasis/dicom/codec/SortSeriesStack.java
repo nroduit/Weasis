@@ -49,7 +49,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return "Position/Orientation";
+            return Messages.getString("SortSeriesStack.pos_orient"); //$NON-NLS-1$
         }
     };
 
@@ -103,7 +103,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return "Content time";
+            return Messages.getString("SortSeriesStack.content_time"); //$NON-NLS-1$
         }
     };
 
