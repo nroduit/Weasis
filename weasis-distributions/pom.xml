@@ -6,11 +6,12 @@
 	<artifactId>weasis-distributions</artifactId>
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
-	<version>1.1.3-beta</version>
+	<!-- Remove "-beta" for release -->
+	<version>1.1.3</version>
 	<properties>
-		<qualifier>-SNAPSHOT</qualifier>
-		<!-- dollar property to avoid replacing some variables when filtering resources 
-			files (ex. ${user.home} in config.properties) -->
+		<!-- Remove "-SNAPSHOT" for release -->
+		<qualifier></qualifier>
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -305,12 +306,9 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex"
-									classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml"
-									description="Weasis Bundle Repository" licenseurl="http://www.eclipse.org/legal/epl-v10.html"
-									quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${basedir}/lib/bindex.jar" />
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -364,8 +362,7 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias 
-										is not null jars are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -408,8 +405,7 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" 
-					-Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
 					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
@@ -471,8 +467,7 @@
 									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
 									<icon>etc/weasis.ico</icon>
-									<!-- Setting it to . will change the current dir to the same directory 
-										as the executable -->
+									<!-- Setting it to . will change the current dir to the same directory as the executable -->
 									<cmdLine>$dicom:get --portable</cmdLine>
 									<chdir>.</chdir>
 									<classPath>
