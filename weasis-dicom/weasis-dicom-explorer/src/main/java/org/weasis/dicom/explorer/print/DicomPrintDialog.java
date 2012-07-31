@@ -39,10 +39,10 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.dicom.explorer.Messages;
 
 /**
  * 
