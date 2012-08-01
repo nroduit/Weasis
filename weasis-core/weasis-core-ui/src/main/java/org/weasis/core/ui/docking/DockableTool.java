@@ -12,20 +12,18 @@ package org.weasis.core.ui.docking;
 
 import java.awt.Component;
 
-import org.noos.xing.mydoggy.ToolWindow;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
 
 public interface DockableTool {
 
-    ToolWindow registerToolAsDockable();
-
-    String getDockableUID();
-
-    ToolWindow getToolWindow();
+    DefaultSingleCDockable getDockable();
 
     void showDockable();
 
     void closeDockable();
 
     Component getToolComponent();
+
+    int getDockableWidth();
 
 }

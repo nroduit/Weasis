@@ -16,7 +16,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.gui.util.ActionState;
@@ -335,10 +334,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (view2d == null) {
             return false;
         }
-        Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
-            return false;
-        }
+       // TODO docking
+        // Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
+        // if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
+        // return false;
+        // }
         if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }

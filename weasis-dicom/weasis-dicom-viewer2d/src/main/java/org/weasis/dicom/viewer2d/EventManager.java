@@ -24,7 +24,6 @@ import java.util.List;
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultComboBoxModel;
 
-import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
@@ -756,10 +755,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             return false;
         }
 
-        Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
-        if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
-            return false;
-        }
+        // TODO docking
+        // Content selectedContent = UIManager.toolWindowManager.getContentManager().getSelectedContent();
+        // if (selectedContent == null || selectedContent.getComponent() != selectedView2dContainer) {
+        // return false;
+        // }
 
         if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;

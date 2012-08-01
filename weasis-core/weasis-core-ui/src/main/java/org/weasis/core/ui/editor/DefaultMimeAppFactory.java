@@ -115,4 +115,13 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
     public List<Action> getOpenActions() {
         return null;
     }
+        @Override
+    public boolean canAddSeries() {
+        return false;
+    }
+
+    @Override
+    public boolean canExternalizeSeries() {
+        return false;
+    }
 }

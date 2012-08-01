@@ -126,7 +126,13 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>substance</artifactId>
-			<version>7.1.0</version>
+			<version>7.1.2</version>
+		</dependency>
+				<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
+			<version>1.1.1-SNAPSHOT</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

@@ -31,7 +31,6 @@ import javax.swing.JSpinner;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
-import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.ResetTools;
@@ -48,6 +47,8 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.MouseActions;
 
+import bibliothek.gui.dock.common.CLocation;
+
 public class ImageTool extends PluginTool {
 
     public static final String BUTTON_NAME = Messages.getString("ImageTool.imgtool"); //$NON-NLS-1$
@@ -58,8 +59,8 @@ public class ImageTool extends PluginTool {
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public ImageTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
-        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
+        super(BUTTON_NAME, pluginName, PluginTool.TYPE.tool);
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(290);
         jbInit();
 
@@ -89,8 +90,9 @@ public class ImageTool extends PluginTool {
         panel_2.setAlignmentY(Component.TOP_ALIGNMENT);
         panel_2.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel_2.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        panel_2.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.reset"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        panel_2.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("ImageTool.reset"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         final JComboBox resetComboBox = new JComboBox(ResetTools.values());
         panel_2.add(resetComboBox);
 
@@ -113,8 +115,9 @@ public class ImageTool extends PluginTool {
         framePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         framePanel.setAlignmentY(Component.TOP_ALIGNMENT);
         framePanel.setLayout(new BoxLayout(framePanel, BoxLayout.Y_AXIS));
-        framePanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.frame"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        framePanel.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("ImageTool.frame"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
@@ -157,8 +160,9 @@ public class ImageTool extends PluginTool {
         winLevelPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         winLevelPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         winLevelPanel.setLayout(new BoxLayout(winLevelPanel, BoxLayout.Y_AXIS));
-        winLevelPanel.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.wl"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        winLevelPanel.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("ImageTool.wl"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
             final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(4, false);
@@ -196,7 +200,8 @@ public class ImageTool extends PluginTool {
             panel_4.add(lutcomboBox);
             ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
             if (invlutAction instanceof ToggleButtonListener) {
-                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages.getString("ImageTool.inverse"))); //$NON-NLS-1$
+                panel_4.add(((ToggleButtonListener) invlutAction).createCheckBox(Messages
+                    .getString("ImageTool.inverse"))); //$NON-NLS-1$
             }
             winLevelPanel.add(panel_4);
         }
@@ -218,8 +223,9 @@ public class ImageTool extends PluginTool {
         transform.setAlignmentY(Component.TOP_ALIGNMENT);
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-        transform.setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("ImageTool.transform"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        transform.setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("ImageTool.transform"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
         if (zoomAction instanceof SliderChangeListener) {
             final JSliderW zoomSlider = ((SliderChangeListener) zoomAction).createSlider(0, false);
@@ -242,7 +248,7 @@ public class ImageTool extends PluginTool {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
 
     }

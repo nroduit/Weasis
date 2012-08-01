@@ -30,7 +30,6 @@ import javax.swing.JSpinner;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
-import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -47,6 +46,8 @@ import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 
+import bibliothek.gui.dock.common.CLocation;
+
 public class ImageTool extends PluginTool {
 
     public static final String BUTTON_NAME = Messages.getString("ImageTool.img_tool"); //$NON-NLS-1$
@@ -57,8 +58,8 @@ public class ImageTool extends PluginTool {
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public ImageTool(String pluginName) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
-        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
+        super(BUTTON_NAME, pluginName, PluginTool.TYPE.tool);
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(290);
         jbInit();
 
@@ -260,7 +261,7 @@ public class ImageTool extends PluginTool {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
 
     }

@@ -46,7 +46,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 
-import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -81,6 +80,8 @@ import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.ui.util.TableNumberRenderer;
 
+import bibliothek.gui.dock.common.CLocation;
+
 public class MeasureTool extends PluginTool implements GraphicsListener {
 
     public static final String BUTTON_NAME = Messages.getString("Tools.meas"); //$NON-NLS-1$
@@ -104,9 +105,9 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     private List<AbstractDragGraphic> selectedGraphic;
 
     public MeasureTool(ImageViewerEventManager eventManager) {
-        super(BUTTON_NAME, BUTTON_NAME, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
+        super(BUTTON_NAME, BUTTON_NAME, PluginTool.TYPE.tool);
         this.eventManager = eventManager;
-        setIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
         setDockableWidth(DockableWidth);
         jbInit();
 
@@ -356,7 +357,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
     }
 

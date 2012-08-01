@@ -153,4 +153,14 @@ public class View2dFactory implements SeriesViewerFactory {
         // In case DICOM explorer has been loaded get the first import action
         return dicomView.getOpenImportDialogAction().subList(0, 1);
     }
+    
+        @Override
+    public boolean canAddSeries() {
+        return true;
+    }
+
+    @Override
+    public boolean canExternalizeSeries() {
+        return true;
+    }
 }

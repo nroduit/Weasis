@@ -168,8 +168,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>mydoggy</artifactId>
-			<version>1.5.0-b05</version>
+			<artifactId>docking-frames</artifactId>
+			<version>1.1.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

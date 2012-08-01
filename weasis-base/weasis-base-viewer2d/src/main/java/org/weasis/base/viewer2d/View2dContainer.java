@@ -79,7 +79,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
 
-            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
 
                     @Override
                     public SliderChangeListener[] getActions() {
@@ -99,21 +99,21 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                         return listeners.toArray(new SliderChangeListener[listeners.size()]);
                     }
                 };
-            tool.setHide(false);
-            tool.registerToolAsDockable();
+            // tool.setHide(false);
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
 
             tool = new ImageTool(Messages.getString("View2dContainer.img_tool"), null); //$NON-NLS-1$
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
 
             tool = new DisplayTool(Messages.getString("View2dContainer.display")); //$NON-NLS-1$
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
             eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
 
             tool = new MeasureTool(eventManager);
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
         }
     }

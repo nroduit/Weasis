@@ -17,10 +17,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -74,10 +78,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.felix.service.command.CommandProcessor;
-import org.noos.xing.mydoggy.DockedTypeDescriptor;
-import org.noos.xing.mydoggy.ToolWindow;
-import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.noos.xing.mydoggy.ToolWindowType;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -112,6 +112,9 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public class DicomExplorer extends PluginTool implements DataExplorerView {
 
@@ -303,9 +306,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     }
 
     public DicomExplorer(DicomModel model) {
-        super(BUTTON_NAME, NAME, ToolWindowAnchor.LEFT, PluginTool.TYPE.mainExplorer);
+        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.TYPE.mainExplorer);
         setLayout(new BorderLayout());
         setDockableWidth(180);
+        dockable.setMaximizable(true);
         this.model = model == null ? new DicomModel() : model;
         Color panelBckColor = (Color) javax.swing.UIManager.get("Panel.background"); //$NON-NLS-1$
         if (panelBckColor == null) {
@@ -314,7 +318,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
-        changeToolWindowAnchor(getAnchor());
+        changeToolWindowAnchor(getDockable().getBaseLocation());
 
     }
 
@@ -662,7 +666,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
 
         public void addPane(PatientPane patientPane, int position) {
-            boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+            boolean vertical = true;
+            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // ToolWindowAnchor.LEFT.equals(getAnchor());
             constraint.gridx = vertical ? 0 : position;
             constraint.gridy = vertical ? position : 0;
 
@@ -817,7 +823,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
 
         public void addPane(StudyPane studyPane, int position) {
-            boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+            boolean vertical = true;
+            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // ToolWindowAnchor.LEFT.equals(getAnchor());
             constraint.gridx = vertical ? 0 : position;
             constraint.gridy = vertical ? position : 0;
 
@@ -874,7 +882,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         }
 
         private void refreshLayout() {
-            boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+            boolean vertical = true;
+            // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) ||
+            // ToolWindowAnchor.LEFT.equals(getAnchor());
             this.setLayout(vertical ? new WrapLayout(FlowLayout.LEFT) : new BoxLayout(this, BoxLayout.X_AXIS));
         }
 
@@ -1274,7 +1284,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
     @Override
     public void dispose() {
-        // TODO Auto-generated method stub
+        super.closeDockable();
 
     }
 
@@ -1482,20 +1492,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         removeAll();
-        boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
+        boolean vertical = true;
+        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
         add(getPanel(), vertical ? BorderLayout.NORTH : BorderLayout.WEST);
         patientContainer.refreshLayout();
-        ToolWindow win = getToolWindow();
-        if (win != null) {
-            DockedTypeDescriptor dockedTypeDescriptor =
-                (DockedTypeDescriptor) win.getTypeDescriptor(ToolWindowType.DOCKED);
-            int width = this.getDockableWidth();
-            if (width > 0) {
-                dockedTypeDescriptor.setDockLength(vertical ? width : width + 15);
-            }
-        }
+        // ToolWindow win = getToolWindow();
+        // if (win != null) {
+        // DockedTypeDescriptor dockedTypeDescriptor =
+        // (DockedTypeDescriptor) win.getTypeDescriptor(ToolWindowType.DOCKED);
+        // int width = this.getDockableWidth();
+        // if (width > 0) {
+        // dockedTypeDescriptor.setDockLength(vertical ? width : width + 15);
+        // }
+        // }
         add(thumnailView, BorderLayout.CENTER);
         if (tasks.size() > 0) {
             add(getLoadingPanel(), vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
@@ -1526,8 +1537,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                         }
                         if (getComponentZOrder(loadingPanel) == -1) {
                             globalProgress.setIndeterminate(true);
-                            boolean vertical =
-                                ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+                            // boolean vertical =
+                            // ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+                            boolean vertical = true;
                             add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
                             revalidate();
                             repaint();
@@ -1536,6 +1548,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 });
             }
         }
+        add(thumnailView, BorderLayout.CENTER);
+        if (tasks.size() > 0) {
+            add(getLoadingPanel(), true ? BorderLayout.SOUTH : BorderLayout.EAST);
+        }
+
     }
 
     public synchronized void removeTaskToGlobalProgression(ExplorerTask task) {
@@ -1610,7 +1627,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
 
             @Override
             public void mousePressed(MouseEvent mouseevent) {
-                Component c = mouseevent.getComponent();
+                final Component c = mouseevent.getComponent();
                 if (!c.isFocusOwner()) {
                     c.requestFocusInWindow();
                 }
@@ -1662,21 +1679,59 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                             }
                         });
                         popupMenu.add(item4);
-                        // TODO add if viewerFactory supports add method
-                        item4 =
-                            new JMenuItem(
-                                Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$ //$NON-NLS-2$
-                                viewerFactory.getIcon());
-                        item4.addActionListener(new ActionListener() {
+                        if (viewerFactory.canAddSeries()) {
+                            item4 =
+                                new JMenuItem(
+                                    Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$
+                                    viewerFactory.getIcon());
+                            item4.addActionListener(new ActionListener() {
 
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                selList.clear();
-                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
-                                    false);
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    selList.clear();
+                                    ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
+                                        true, false);
+                                }
+                            });
+                            popupMenu.add(item4);
+                        }
+                        if (viewerFactory.canExternalizeSeries()) {
+
+                            Toolkit toolkit = Toolkit.getDefaultToolkit();
+                            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                            GraphicsDevice[] gd = ge.getScreenDevices();
+                            if (gd.length > 1) {
+                                Rectangle bound =
+                                    WinUtil.getClosedScreenBound(WinUtil.getParentFrame((Component) explorer)
+                                        .getBounds());
+
+                                for (int i = 0; i < gd.length; i++) {
+                                    GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+                                    final Rectangle b = config.getBounds();
+                                    if (!b.contains(bound)) {
+                                        Insets inset = toolkit.getScreenInsets(config);
+                                        b.x -= inset.left;
+                                        b.y -= inset.top;
+                                        b.width -= inset.right;
+                                        b.height -= inset.bottom;
+                                        item4 =
+                                            new JMenuItem("Open selected series in new tab " + gd[i].getIDstring(),
+                                                viewerFactory.getIcon());
+                                        item4.addActionListener(new ActionListener() {
+
+                                            @Override
+                                            public void actionPerformed(ActionEvent e) {
+                                                selList.clear();
+                                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
+                                                    dicomModel, true, true, b);
+                                            }
+                                        });
+                                        popupMenu.add(item4);
+                                    }
+                                }
                             }
-                        });
-                        popupMenu.add(item4);
+
+                        }
                         if (viewerFactory instanceof MimeSystemAppFactory) {
                             final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
                             item5.addActionListener(new ActionListener() {

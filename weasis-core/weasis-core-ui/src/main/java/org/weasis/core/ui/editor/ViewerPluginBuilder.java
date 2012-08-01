@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class ViewerPluginBuilder {
     private final DataExplorerModel model;
     private final boolean compareEntryToBuildNewViewer;
     private final boolean removeOldSeries;
+    private Rectangle screenBound;
 
     public ViewerPluginBuilder(SeriesViewerFactory factory, List<MediaSeries> series, DataExplorerModel model) {
         this(factory, series, model, true, true);
@@ -50,6 +52,7 @@ public class ViewerPluginBuilder {
         this.model = model;
         this.compareEntryToBuildNewViewer = compareEntryToBuildNewViewer;
         this.removeOldSeries = removeOldSeries;
+        this.screenBound = null;
     }
 
     public SeriesViewerFactory getFactory() {
@@ -72,6 +75,14 @@ public class ViewerPluginBuilder {
         return removeOldSeries;
     }
 
+    public Rectangle getScreenBound() {
+        return screenBound;
+    }
+
+    public void setScreenBound(Rectangle screenBound) {
+        this.screenBound = screenBound;
+    }
+
     public static void openSequenceInPlugin(SeriesViewerFactory factory, MediaSeries series, DataExplorerModel model,
         boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
         if (factory == null || series == null || model == null) {
@@ -84,6 +95,11 @@ public class ViewerPluginBuilder {
 
     public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
         DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
+        openSequenceInPlugin(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries, null);
+    }
+
+    public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
+        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries, Rectangle screenBound) {
         if (factory == null || series == null || model == null) {
             return;
         }
@@ -95,8 +111,10 @@ public class ViewerPluginBuilder {
         if (nbImg == 0) {
             return;
         }
-        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null,
-            new ViewerPluginBuilder(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries)));
+        ViewerPluginBuilder builder =
+            new ViewerPluginBuilder(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries);
+        builder.setScreenBound(screenBound);
+        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, builder));
 
     }
 

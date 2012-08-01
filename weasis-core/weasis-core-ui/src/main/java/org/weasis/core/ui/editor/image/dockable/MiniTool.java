@@ -22,16 +22,15 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
 
-import org.noos.xing.mydoggy.DockedTypeDescriptor;
-import org.noos.xing.mydoggy.ToolWindow;
-import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.noos.xing.mydoggy.ToolWindowType;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.util.WtoolBar;
+
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {
 
@@ -40,16 +39,17 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     private SliderChangeListener currentAction;
     private final JSliderW slider;
 
-    public MiniTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.tool);
+    public MiniTool(String pluginName) {
+        super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.TYPE.tool);
         setDockableWidth(40);
         currentAction = getActions()[0];
-        slider = createSlider(currentAction, getAnchor());
+        slider = createSlider(currentAction);
         jbInit();
     }
 
     private void jbInit() {
-        boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+        boolean vertical = true;
+        // boolean vertical = ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
         setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
         Dimension dim = new Dimension(5, 5);
@@ -78,8 +78,9 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
     public abstract SliderChangeListener[] getActions();
 
-    public static JSliderW createSlider(final SliderChangeListener action, ToolWindowAnchor anchor) {
-        boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
+    public static JSliderW createSlider(final SliderChangeListener action) {
+        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
+        boolean vertical = true;
         JSliderW slider = new JSliderW(action.getMin(), action.getMax(), action.getValue());
         slider.setDisplayOnlyValue(true);
         slider.setInverted(vertical);
@@ -90,23 +91,20 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
-        boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
-        setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-        slider.getParent().setLayout(new BoxLayout(slider.getParent(), vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-        slider.setInverted(vertical);
-        slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
-        ToolWindow win = getToolWindow();
-        if (win != null) {
-            DockedTypeDescriptor dockedTypeDescriptor =
-                (DockedTypeDescriptor) win.getTypeDescriptor(ToolWindowType.DOCKED);
-            int width = this.getDockableWidth();
-            if (width > 0) {
-                dockedTypeDescriptor.setDockLength(vertical ? width : width + 10);
-            }
+    protected void changeToolWindowAnchor(CLocation clocation) {
+        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
+        boolean vertical = getHeight() > getWidth();
+        if (vertical != slider.getInverted()) {
+            // UIManager.DOCKING_CONTROL.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.LEFT_OF_DOCKABLE);
+
+            setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+            slider.getParent().setLayout(
+                new BoxLayout(slider.getParent(), vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+            slider.setInverted(vertical);
+            slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
+            slider.revalidate();
+            slider.repaint();
         }
-        slider.revalidate();
-        slider.repaint();
     }
 
     private JPopupMenu getPopupMenuScroll(DropDownButton dropButton) {

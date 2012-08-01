@@ -37,7 +37,7 @@
 		<weasis.base.version>2.0.0${qualifier}</weasis.base.version>
 		<weasis.dicom.version>2.0.0${qualifier}</weasis.dicom.version>
 
-		<mydoggy.version>1.5.0-b05</mydoggy.version>
+		<dockingframes.version>1.1.1-SNAPSHOT</dockingframes.version>
 		<substance.version>7.1.2</substance.version>
 		<jai.version>1.1.4-b05</jai.version>
 		<jai.native.version>1.1.4-b03</jai.native.version>
@@ -169,8 +169,8 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.thirdparty</groupId>
-									<artifactId>mydoggy</artifactId>
-									<version>${mydoggy.version}</version>
+									<artifactId>docking-frames</artifactId>
+									<version>${dockingframes.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>

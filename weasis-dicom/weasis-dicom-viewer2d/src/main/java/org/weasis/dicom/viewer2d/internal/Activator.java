@@ -86,7 +86,7 @@ public class Activator implements BundleActivator, ServiceListener {
                                 Object service = context.getService(scrServiceRef[i]);
                                 if (service instanceof DockableTool && !View2dContainer.TOOLS.contains(service)) {
                                     View2dContainer.TOOLS.add((DockableTool) service);
-                                    ((DockableTool) service).registerToolAsDockable();
+                                    // ((DockableTool) service).registerToolAsDockable();
                                 }
                             }
                         }
@@ -152,7 +152,7 @@ public class Activator implements BundleActivator, ServiceListener {
                                     if (event.getType() == ServiceEvent.REGISTERED) {
                                         if (!View2dContainer.TOOLS.contains(tool)) {
                                             View2dContainer.TOOLS.add(tool);
-                                            tool.registerToolAsDockable();
+                                            // tool.registerToolAsDockable();
                                         }
                                     } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                                         if (View2dContainer.TOOLS.contains(tool)) {

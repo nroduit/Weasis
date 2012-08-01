@@ -32,7 +32,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
-import org.noos.xing.mydoggy.Content;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +131,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
             }
 
-            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
+            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
 
                     @Override
                     public SliderChangeListener[] getActions() {
@@ -153,21 +152,23 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         return listeners.toArray(new SliderChangeListener[listeners.size()]);
                     }
                 };
-            tool.setHide(false);
-            tool.registerToolAsDockable();
+            // DefaultSingleCDockable dock = tool.registerToolAsDockable();
+            // dock.setDefaultLocation(ExtendedMode.NORMALIZED,
+            // CLocation.base(UIManager.BASE_AREA).normalRectangle(1.0, 0.0, 0.05, 1.0));
+            // dock.setExtendedMode(ExtendedMode.NORMALIZED);
             TOOLS.add(tool);
 
             tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
 
             tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
             eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
 
             tool = new MeasureTool(eventManager);
-            tool.registerToolAsDockable();
+            // tool.registerToolAsDockable();
             TOOLS.add(tool);
         }
     }
@@ -432,12 +433,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                         if (group.equals(getGroupID())) {
                             // Close the content of the plug-in
                             close();
-                            Content content =
-                                UIManager.toolWindowManager.getContentManager().getContent(this.getDockableUID());
-                            if (content != null) {
-                                // Close the window
-                                UIManager.toolWindowManager.getContentManager().removeContent(content);
-                            }
                         }
                     }
                     // Study Group

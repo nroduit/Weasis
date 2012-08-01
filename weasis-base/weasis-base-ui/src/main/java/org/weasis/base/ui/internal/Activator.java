@@ -93,7 +93,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
                             if (explorer instanceof DockableTool) {
                                 final DockableTool dockable = (DockableTool) explorer;
-                                dockable.registerToolAsDockable();
+                                // dockable.registerToolAsDockable();
                                 dockable.showDockable();
                             }
                         }
@@ -147,7 +147,7 @@ public class Activator implements BundleActivator, ServiceListener {
                                 }
                                 if (explorer instanceof DockableTool) {
                                     final DockableTool dockable = (DockableTool) explorer;
-                                    dockable.registerToolAsDockable();
+                                    // dockable.registerToolAsDockable();
                                     dockable.showDockable();
                                 }
 

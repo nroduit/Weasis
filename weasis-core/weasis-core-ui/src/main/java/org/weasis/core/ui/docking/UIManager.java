@@ -14,28 +14,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.noos.xing.mydoggy.Content;
-import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.noos.xing.mydoggy.ToolWindowManagerDescriptor;
-import org.noos.xing.mydoggy.ToolWindowType;
-import org.noos.xing.mydoggy.ToolWindowTypeDescriptor;
-import org.noos.xing.mydoggy.plaf.MyDoggyToolWindowBar;
-import org.noos.xing.mydoggy.plaf.MyDoggyToolWindowManager;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
-public class UIManager {
+import bibliothek.gui.dock.common.CContentArea;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.CWorkingArea;
 
-    public static final MyDoggyToolWindowManager toolWindowManager = builWinManager();
+public class UIManager {
 
     public static final AtomicInteger dockableUIGenerator = new AtomicInteger(1);
 
@@ -44,6 +34,12 @@ public class UIManager {
         .synchronizedList(new ArrayList<DataExplorerView>());
     public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES = Collections
         .synchronizedList(new ArrayList<SeriesViewerFactory>());
+
+    public static final CControl DOCKING_CONTROL = new CControl();
+    public static final CContentArea BASE_AREA = DOCKING_CONTROL.getContentArea();
+    public static final CWorkingArea MAIN_AREA = DOCKING_CONTROL.createWorkingArea("mainArea");
+
+    // public static final CContentArea WEST_AREA = DOCKING_CONTROL.createContentArea("westArea");
 
     public static DataExplorerView getExplorerplugin(String name) {
         if (name != null) {
@@ -56,51 +52,6 @@ public class UIManager {
             }
         }
         return null;
-    }
-
-    private static MyDoggyToolWindowManager builWinManager() {
-        MyDoggyToolWindowManager result = null;
-
-        FutureTask<MyDoggyToolWindowManager> future =
-            new FutureTask<MyDoggyToolWindowManager>(new Callable<MyDoggyToolWindowManager>() {
-
-                @Override
-                public MyDoggyToolWindowManager call() throws Exception {
-                    MyDoggyToolWindowManager winManager =
-                        new MyDoggyToolWindowManager(Locale.getDefault(),
-                            MyDoggyToolWindowManager.class.getClassLoader());
-                    // TODO are the two lines below really not useful
-                    //                    winManager.getResourceManager().setUserBundle(Locale.getDefault(), "/toolWindow", //$NON-NLS-1$
-                    // UIManager.class.getClassLoader());
-                    // set the size of the splitPane separator
-                    for (ToolWindowAnchor anchor : ToolWindowAnchor.values()) {
-                        MyDoggyToolWindowBar bar = winManager.getBar(anchor);
-                        bar.setDividerSize(7);
-                    }
-
-                    ToolWindowManagerDescriptor desc = winManager.getToolWindowManagerDescriptor();
-                    desc.setNumberingEnabled(false);
-
-                    for (ToolWindowType toolWinType : ToolWindowType.values()) {
-                        if (toolWinType.equals(ToolWindowType.EXTERN)) {
-                            continue;
-                        }
-                        ToolWindowTypeDescriptor type = winManager.getTypeDescriptorTemplate(toolWinType);
-                        type.setIdVisibleOnTitleBar(false);
-                        type.setAnimating(false);
-                    }
-                    return winManager;
-                }
-            });
-        GuiExecutor.instance().invokeAndWait(future);
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
     }
 
     public static SeriesViewerFactory getViewerFactory(SeriesViewer seriesViewer) {
@@ -189,20 +140,17 @@ public class UIManager {
 
     public static void closeSeriesViewer(final List<? extends SeriesViewer> pluginsToRemove) {
         if (pluginsToRemove != null) {
-            GuiExecutor.instance().execute(new Runnable() {
 
-                @Override
-                public void run() {
-                    for (final SeriesViewer viewerPlugin : pluginsToRemove) {
-                        viewerPlugin.close();
-                        Content content =
-                            UIManager.toolWindowManager.getContentManager().getContent(viewerPlugin.getDockableUID());
-                        if (content != null) {
-                            UIManager.toolWindowManager.getContentManager().removeContent(content);
-                        }
-                    }
-                }
-            });
+            for (final SeriesViewer viewerPlugin : pluginsToRemove) {
+                viewerPlugin.close();
+                // TODO docking
+                // Content content =
+                // UIManager.toolWindowManager.getContentManager().getContent(viewerPlugin.getDockableUID());
+                // if (content != null) {
+                // UIManager.toolWindowManager.getContentManager().removeContent(content);
+                // }
+            }
+
         }
     }
 }

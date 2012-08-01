@@ -30,7 +30,6 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -41,6 +40,9 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
@@ -75,7 +77,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     public DefaultExplorer(final FileTreeModel model) {
-        super(BUTTON_NAME, NAME, ToolWindowAnchor.LEFT, PluginTool.TYPE.explorer);
+        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.MINIMIZED, PluginTool.TYPE.explorer);
         setDockableWidth(300);
         scan = new JMenu("Import to");
         this.tree = new JTree(model);
@@ -585,8 +587,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     @Override
     public void dispose() {
-        // TODO Auto-generated method stub
-
+        super.closeDockable();
     }
 
     public void openThumbnailsListView() {
@@ -642,7 +643,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
 
     }

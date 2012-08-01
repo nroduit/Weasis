@@ -12,9 +12,9 @@ package org.weasis.base.ui.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -49,18 +49,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.TransferHandler;
 
-import org.noos.xing.mydoggy.Content;
-import org.noos.xing.mydoggy.ContentManager;
-import org.noos.xing.mydoggy.ContentManagerListener;
-import org.noos.xing.mydoggy.ContentManagerUIListener;
-import org.noos.xing.mydoggy.MultiSplitConstraint;
-import org.noos.xing.mydoggy.MultiSplitContentManagerUI;
-import org.noos.xing.mydoggy.TabbedContentManagerUI;
-import org.noos.xing.mydoggy.TabbedContentUI;
-import org.noos.xing.mydoggy.ToolWindow;
-import org.noos.xing.mydoggy.event.ContentManagerEvent;
-import org.noos.xing.mydoggy.event.ContentManagerUIEvent;
-import org.noos.xing.mydoggy.plaf.ui.content.MyDoggyMultiSplitContentManagerUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -74,7 +62,9 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -96,6 +86,17 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.ui.util.WtoolBar.TYPE;
 
+import bibliothek.extension.gui.dock.theme.EclipseTheme;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CFocusListener;
+import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.common.theme.ThemeMap;
+import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
+import bibliothek.gui.dock.util.DirectWindowProvider;
+
 public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
@@ -109,6 +110,24 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private final ToolBarContainer toolbarContainer;
 
     private volatile boolean busy = false;
+
+    private final List<Runnable> runOnClose = new ArrayList<Runnable>();
+
+    private CFocusListener selectionListener = new CFocusListener() {
+
+        @Override
+        public void focusGained(CDockable dockable) {
+            if (dockable != null && dockable.getFocusComponent() instanceof ViewerPlugin) {
+                setSelectedPlugin((ViewerPlugin) dockable.getFocusComponent());
+            }
+        }
+
+        @Override
+        public void focusLost(CDockable dockable) {
+            // TODO Auto-generated method stub
+
+        }
+    };
 
     private WeasisWin() {
         this.setJMenuBar(createMenuBar());
@@ -141,76 +160,56 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
             int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
+                closeAllRunnable();
                 System.exit(0);
                 return true;
             }
         } else {
+            closeAllRunnable();
             System.exit(0);
             return true;
         }
         return false;
     }
 
-    private void initToolWindowManager() throws Exception {
-        initContentManager();
-        // Add myDoggyToolWindowManager to the frame. MyDoggyToolWindowManager is an extension of a JPanel
-        this.getContentPane().add(UIManager.toolWindowManager, BorderLayout.CENTER);
+    private void closeAllRunnable() {
+        for (Runnable onClose : runOnClose) {
+            onClose.run();
+        }
     }
 
-    protected void initContentManager() throws Exception {
+    public void runOnClose(Runnable run) {
+        runOnClose.add(run);
+    }
 
-        ContentManager contentManager = UIManager.toolWindowManager.getContentManager();
-        MultiSplitContentManagerUI contentManagerUI = new MyDoggyMultiSplitContentManagerUI();
-        contentManager.setContentManagerUI(contentManagerUI);
-        contentManagerUI.setMinimizable(false);
-        contentManagerUI.setShowAlwaysTab(true);
-        contentManagerUI.setTabPlacement(TabbedContentManagerUI.TabPlacement.TOP);
-        JComponent mainContainer = (JComponent) UIManager.toolWindowManager.getMainContainer();
-        // Require to remove droptarget (seems to be recreate automatically)
-        mainContainer.setDropTarget(null);
-        mainContainer.setTransferHandler(new SequenceHandler());
-        contentManagerUI.addContentManagerUIListener(new ContentManagerUIListener() {
-
+    public void destroyOnClose(final CControl control) {
+        runOnClose(new Runnable() {
             @Override
-            public boolean contentUIRemoving(ContentManagerUIEvent event) {
-                Component c = event.getContentUI().getContent().getComponent();
-                if (c instanceof ViewerPlugin) {
-                    // close the content of the plugin
-                    ((ViewerPlugin) c).close();
-                }
-                return true;
-            }
-
-            @Override
-            public void contentUIDetached(ContentManagerUIEvent event) {
-            }
-        });
-
-        contentManager.addContentManagerListener(new ContentManagerListener() {
-
-            @Override
-            public void contentSelected(ContentManagerEvent event) {
-                Component plugin = event.getContent().getComponent();
-                if (plugin instanceof ViewerPlugin) {
-                    if (ContentManagerEvent.ActionId.CONTENT_SELECTED.equals(event.getId())) {
-                        setSelectedPlugin((ViewerPlugin) plugin);
-                    }
-                }
-            }
-
-            @Override
-            public void contentRemoved(ContentManagerEvent event) {
-            }
-
-            @Override
-            public void contentAdded(ContentManagerEvent event) {
+            public void run() {
+                control.destroy();
             }
         });
     }
 
     public void createMainPanel() throws Exception {
-        initToolWindowManager();
+        // initToolWindowManager();
         this.setGlassPane(AbstractProperties.glassPane);
+
+        CControl control = UIManager.DOCKING_CONTROL;
+        control.setRootWindow(new DirectWindowProvider(this));
+        destroyOnClose(control);
+        ThemeMap themes = control.getThemes();
+        themes.select(ThemeMap.KEY_ECLIPSE_THEME);
+        control.getController().getProperties().set(EclipseTheme.PAINT_ICONS_WHEN_DESELECTED, true);
+        // control.setGroupBehavior(CGroupBehavior.TOPMOST);
+        // control.setDefaultLocation(centerArea.getStationLocation());
+        control.addFocusListener(selectionListener);
+
+        // control.setDefaultLocation(UIManager.BASE_AREA.
+        // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
+        this.add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
+        UIManager.MAIN_AREA.setVisible(true);
 
     }
 
@@ -235,7 +234,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                 }
                             }
                             if (view instanceof PluginTool) {
-                                ((PluginTool) view).showDockable();
+                                PluginTool tool = (PluginTool) view;
+                                tool.showDockable();
                             }
                         }
                     }
@@ -268,7 +268,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                openSeriesInViewerPlugin(factory, model, group, series, builder.isRemoveOldSeries());
+                                openSeriesInViewerPlugin(factory, model, group, series, builder.isRemoveOldSeries(),
+                                    builder.getScreenBound());
                             } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
                                     getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
@@ -278,12 +279,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     MediaSeriesGroup group = entry.getKey();
                                     List<MediaSeries> seriesList = entry.getValue();
                                     openSeriesInViewerPlugin(factory, model, group, seriesList,
-                                        builder.isRemoveOldSeries());
+                                        builder.isRemoveOldSeries(), builder.getScreenBound());
                                 }
                             }
 
                         } else {
-                            openSeriesInViewerPlugin(factory, model, null, series, true);
+                            openSeriesInViewerPlugin(factory, model, null, series, true, builder.getScreenBound());
 
                         }
 
@@ -332,11 +333,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
-        List<MediaSeries> seriesList, boolean removeOldSeries) {
+        List<MediaSeries> seriesList, boolean removeOldSeries, Rectangle screenBound) {
         if (factory == null || seriesList == null || seriesList.size() == 0) {
             return;
         }
-        if (factory != null && group != null) {
+        if (screenBound == null && factory != null && group != null) {
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
@@ -372,16 +373,76 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 }
                 viewer.setPluginName(title);
             }
-            registerPlugin(viewer);
-            viewer.setSelectedAndGetFocus();
-            if (seriesViewer instanceof ImageViewerPlugin) {
-                selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.size());
+            boolean isregistered;
+            if (screenBound != null) {
+                isregistered = registerDetachWindow(viewer, screenBound);
+            } else {
+                isregistered = registerPlugin(viewer);
             }
-            for (MediaSeries m : seriesList) {
-                viewer.addSeries(m);
+            if (isregistered) {
+                viewer.setSelectedAndGetFocus();
+                if (seriesViewer instanceof ImageViewerPlugin) {
+                    selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.size());
+                }
+                for (MediaSeries m : seriesList) {
+                    viewer.addSeries(m);
+                }
+                viewer.setSelected(true);
+            } else {
+                viewer.close();
             }
-            viewer.setSelected(true);
         }
+    }
+
+    private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
+        if (screenBound != null) {
+            ViewerPlugin oldWin = null;
+            synchronized (UIManager.VIEWER_PLUGINS) {
+                Dialog old = null;
+                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                    ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                    if (p.getDockable().isExternalizable()) {
+                        Dialog dialog = WinUtil.getParentDialog(p);
+                        old = dialog;
+                        if (dialog != null && old != dialog
+                            && screenBound.equals(WinUtil.getClosedScreenBound(dialog.getBounds()))) {
+                            oldWin = p;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            final DefaultSingleCDockable dock = plugin.getDockable();
+            dock.setExternalizable(true);
+
+            if (oldWin == null) {
+                dock.setLocation(CLocation.external(screenBound.x, screenBound.y, screenBound.width - 150,
+                    screenBound.height - 150));
+                plugin.showDockable();
+                GuiExecutor.instance().execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (dock.isVisible()) {
+                            dock.setExtendedMode(ExtendedMode.MAXIMIZED);
+                        }
+                    }
+                });
+            } else {
+                Component parent = WinUtil.getParentOfClass(oldWin, ConfiguredBackgroundPanel.class);
+                if (parent == null) {
+                    return false;
+                } else {
+                    Rectangle b2 = parent.getBounds();
+                    b2.setLocation(parent.getLocationOnScreen());
+                    dock.setLocation(CLocation.external(b2.x, b2.y, b2.width, b2.height).stack());
+                    plugin.showDockable();
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private void selectLayoutPositionForAddingSeries(ImageViewerPlugin viewer, int seriesNumber) {
@@ -393,37 +454,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         viewer.setSelectedImagePane(view2ds.get(pos));
     }
 
-    public void registerPlugin(final ViewerPlugin plugin) {
-        synchronized (UIManager.VIEWER_PLUGINS) {
-            if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin)) {
-                return;
-            }
-            UIManager.VIEWER_PLUGINS.add(plugin);
-            ContentManager contentManager = UIManager.toolWindowManager.getContentManager();
-            if (contentManager.getContentCount() > 0) {
-                Content win = contentManager.getContent(plugin.getDockableUID());
-                if (win == null) {
-                    contentManager.addContent(plugin.getDockableUID(), plugin.getPluginName(), plugin.getIcon(),
-                        plugin, null, new MultiSplitConstraint(contentManager.getContent(0), 0));
-                }
-            } else {
-                contentManager.addContent(plugin.getDockableUID(), plugin.getPluginName(), plugin.getIcon(), plugin);
-                TabbedContentUI contentUI =
-                    (TabbedContentUI) UIManager.toolWindowManager.getContentManager().getContent(0).getContentUI();
-                // Or you can use :
-                // TabbedContentUI contentUI =
-                // contentManagerUI.getContentUI(toolWindowManager.getContentManager().getContent(0));
-                // without the need of the cast
-
-                contentUI.setCloseable(true);
-                contentUI.setDetachable(true);
-                contentUI.setTransparentMode(true);
-                contentUI.setTransparentRatio(0.7f);
-                contentUI.setTransparentDelay(1000);
-                // contentUI.setAddToTaskBarWhenDetached(true);
-                contentUI.setMinimizable(false);
-            }
+    public boolean registerPlugin(final ViewerPlugin plugin) {
+        if (plugin == null || UIManager.VIEWER_PLUGINS.contains(plugin)) {
+            return false;
         }
+        plugin.showDockable();
+        return true;
     }
 
     public synchronized ViewerPlugin getSelectedPlugin() {
@@ -459,8 +495,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         p.closeDockable();
                     }
                 }
-                for (DockableTool p : tool) {
-                    p.registerToolAsDockable();
+                for (int i = 0; i < tool.size(); i++) {
+                    DockableTool p = tool.get(i);
+                    p.showDockable();
                 }
             }
         }
@@ -506,27 +543,36 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // TODO command line maximize screen: 0 => all screens, 1,2 => first,
         // second screen or 1-2 for two screens, or 2-4
         // three screens from the second one
-        int minScreen = 0;
-        int maxScreen = 0;
+        // int minScreen = 0;
+        // int maxScreen = 0;
         Rectangle bound = null;
         // Get size of each screen
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        minScreen = minScreen < gs.length ? minScreen : gs.length - 1;
-        maxScreen = maxScreen < minScreen ? minScreen : maxScreen < gs.length ? maxScreen : gs.length - 1;
-        for (int j = minScreen; j <= maxScreen; j++) {
-            GraphicsConfiguration config = gs[j].getDefaultConfiguration();
-            Rectangle b = config.getBounds();
-            Insets inset = kit.getScreenInsets(config);
-            b.x -= inset.left;
-            b.y -= inset.top;
-            b.width -= inset.right;
-            b.height -= inset.bottom;
-            if (bound == null) {
-                bound = b;
-            } else {
-                bound = bound.union(b);
-            }
-        }
+        // GraphicsDevice[] gs = ge.getScreenDevices();
+        // minScreen = minScreen < gs.length ? minScreen : gs.length - 1;
+        // maxScreen = maxScreen < minScreen ? minScreen : maxScreen < gs.length ? maxScreen : gs.length - 1;
+        // for (int j = minScreen; j <= maxScreen; j++) {
+        // GraphicsConfiguration config = gs[j].getDefaultConfiguration();
+        // Rectangle b = config.getBounds();
+        // Insets inset = kit.getScreenInsets(config);
+        // b.x -= inset.left;
+        // b.y -= inset.top;
+        // b.width -= inset.right;
+        // b.height -= inset.bottom;
+        // if (bound == null) {
+        // bound = b;
+        // } else {
+        // bound = bound.union(b);
+        // }
+        // }
+        GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        Rectangle b = config.getBounds();
+        Insets inset = kit.getScreenInsets(config);
+        b.x -= inset.left;
+        b.y -= inset.top;
+        b.width -= inset.right;
+        b.height -= inset.bottom;
+        bound = b;
+
         log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         setMaximizedBounds(bound);
         // set a valid size, insets of screen is often non consistent
@@ -623,30 +669,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
-    private void buildToolSubMenu(final JMenu toolMenu) {
-        ToolWindow[] tools = UIManager.toolWindowManager.getDockables();
-        if (tools != null) {
-            for (final ToolWindow t : tools) {
-                Component c = t.getComponent();
-                if (c instanceof JScrollPane) {
-                    c = ((JScrollPane) c).getViewport().getView();
-                }
-                if (c instanceof PluginTool && PluginTool.TYPE.tool.equals(((PluginTool) c).getType())) {
-                    JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getTitle(), t.isAvailable());
-                    item.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            if (e.getSource() instanceof JCheckBoxMenuItem) {
-                                t.setAvailable(((JCheckBoxMenuItem) e.getSource()).isSelected());
-                            }
-                        }
-                    });
-                    toolMenu.add(item);
-                }
-            }
-        }
-    }
+    // private void buildToolSubMenu(final JMenu toolMenu) {
+    // List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
+    // if (tools != null) {
+    // for (DockableTool t : tools) {
+    // if (t instanceof PluginTool && PluginTool.TYPE.tool.equals(((PluginTool) t).getType())) {
+    // toolMenu.add(((PlaceholderDockable) t.registerToolAsDockable()).createMenuItem());
+    // }
+    // }
+    // }
+    // }
 
     private static void buildPrintSubMenu(final JMenu printMenu) {
         if (selectedPlugin != null) {
@@ -905,7 +937,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                         treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
                                     ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
                                     list.add(seq);
-                                    openSeriesInViewerPlugin(factory, model, group, list, true);
+                                    openSeriesInViewerPlugin(factory, model, group, list, true, null);
                                 }
                                 break;
                             }

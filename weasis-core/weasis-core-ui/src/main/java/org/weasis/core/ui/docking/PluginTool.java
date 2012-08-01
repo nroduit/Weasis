@@ -11,19 +11,19 @@
 package org.weasis.core.ui.docking;
 
 import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.Dimension;
 
-import javax.swing.Icon;
 import javax.swing.JPanel;
 
-import org.noos.xing.mydoggy.DockedTypeDescriptor;
-import org.noos.xing.mydoggy.ToolWindow;
-import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.noos.xing.mydoggy.ToolWindowType;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.service.BundlePreferences;
+
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CDockableLocationEvent;
+import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import bibliothek.gui.dock.common.location.CBaseLocation;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
 
@@ -33,23 +33,42 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         mainExplorer, explorer, mainTool, tool
     };
 
-    private final TYPE type;
-    private final String dockableUID;
-    private String toolName;
-    private Icon icon;
-    private int dockableWidth;
-    private boolean hide;
-    private ToolWindowAnchor anchor;
+    public enum POSITION {
+        NORTH, EAST, SOUTH, WEST
+    };
 
-    public PluginTool(String id, String toolName, ToolWindowAnchor anchor, TYPE type) {
-        this.toolName = toolName;
-        this.icon = null;
+    private final TYPE type;
+    private int dockableWidth;
+    protected final DefaultSingleCDockable dockable;
+    protected POSITION defaultPosition;
+    protected ExtendedMode defaultMode;
+
+    public PluginTool(String id, String toolName, TYPE type) {
+        this(id, toolName, null, null, type);
+    }
+
+    public PluginTool(String id, String toolName, POSITION defaultPosition, ExtendedMode defaultMode, TYPE type) {
         // Works only if there is only one instance of pluginTool at the same time
-        this.dockableUID = id;
         this.dockableWidth = -1;
-        this.anchor = anchor;
         this.type = type;
-        this.hide = true;
+        this.defaultPosition = defaultPosition;
+        this.defaultMode = defaultMode;
+
+        this.dockable = new DefaultSingleCDockable(id, null, toolName);
+        this.dockable.setTitleText(toolName);
+        this.dockable.setExternalizable(false);
+        this.dockable.setMaximizable(false);
+        this.dockable.addCDockableLocationListener(new CDockableLocationListener() {
+
+            @Override
+            public void changed(CDockableLocationEvent event) {
+                if (event.isLocationChanged()) {
+                    changeToolWindowAnchor(event.getNewLocation());
+                }
+            }
+        });
+        // this.dockable.setResizeRequest(new RequestDimension(getDockableWidth(), true), false);
+
     }
 
     public void applyPreferences(Preferences prefs) {
@@ -62,45 +81,14 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(this.getClass().getSimpleName());
-            BundlePreferences.putBooleanPreferences(p, "show", isAvailable()); //$NON-NLS-1$
+            //        BundlePreferences.putBooleanPreferences(p, "show", isAvailable()); //$NON-NLS-1$
         }
     }
 
-    protected abstract void changeToolWindowAnchor(ToolWindowAnchor anchor);
+    protected abstract void changeToolWindowAnchor(CLocation clocation);
 
     public TYPE getType() {
         return type;
-    }
-
-    @Override
-    public ToolWindow registerToolAsDockable() {
-        ToolWindow win = getToolWindow();
-        if (win == null) {
-            win = UIManager.toolWindowManager.registerToolWindow(dockableUID, // Id
-                toolName, // Title
-                icon, // Icon
-                getToolComponent(), // Component
-                anchor); // Anchor
-            win.addPropertyChangeListener(new PropertyChangeListener() {
-
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if ("anchor".equals(evt.getPropertyName()) && evt.getNewValue() instanceof ToolWindowAnchor) { //$NON-NLS-1$
-                        setAnchor((ToolWindowAnchor) evt.getNewValue());
-                    }
-                }
-            });
-        }
-        DockedTypeDescriptor dockedTypeDescriptor = (DockedTypeDescriptor) win.getTypeDescriptor(ToolWindowType.DOCKED);
-        if (dockableWidth > 0) {
-            if (dockedTypeDescriptor.getMinimumDockLength() > dockableWidth) {
-                dockedTypeDescriptor.setMinimumDockLength(dockableWidth);
-            }
-            dockedTypeDescriptor.setDockLength(dockableWidth);
-        }
-        win.setAvailable(true);
-        win.setVisible(!hide);
-        return win;
     }
 
     @Override
@@ -113,60 +101,13 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     }
 
     @Override
-    public String getDockableUID() {
-        return dockableUID;
-    }
-
-    public String getToolName() {
-        return toolName;
-    }
-
-    public void setToolName(String toolName) {
-        this.toolName = toolName;
-    }
-
-    public Icon getIcon() {
-        return icon;
-    }
-
-    public void setIcon(Icon icon) {
-        this.icon = icon;
-    }
-
-    public ToolWindowAnchor getAnchor() {
-        return anchor;
-    }
-
-    public void setAnchor(ToolWindowAnchor anchor) {
-        if (anchor != null && !anchor.equals(this.anchor)) {
-            this.anchor = anchor;
-            changeToolWindowAnchor(anchor);
-        }
-    }
-
-    public boolean isAvailable() {
-        ToolWindow win = getToolWindow();
-        if (win == null) {
-            return win.isAvailable();
-        }
-        return false;
-    }
-
-    public boolean isHide() {
-        return hide;
-    }
-
-    public void setHide(boolean hide) {
-        this.hide = hide;
-    }
-
     public int getDockableWidth() {
         return dockableWidth;
     }
 
     @Override
-    public final ToolWindow getToolWindow() {
-        return UIManager.toolWindowManager.getToolWindow(dockableUID);
+    public final DefaultSingleCDockable getDockable() {
+        return dockable;
     }
 
     @Override
@@ -175,11 +116,41 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
             @Override
             public void run() {
-                ToolWindow tool = getToolWindow();
-                if (tool != null) {
-                    tool.setActive(true);
-                }
+                if (!dockable.isVisible()) {
+                    Component component = getToolComponent();
+                    dockable.add(component);
+                    dockable.setFocusComponent(component);
 
+                    UIManager.DOCKING_CONTROL.addDockable(dockable);
+                    // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
+                    POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
+                    ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
+                    CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
+
+                    CLocation minimizeLocation =
+                        pos == POSITION.EAST ? base.minimalEast() : pos == POSITION.WEST ? base.minimalWest()
+                            : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
+                    dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
+
+                    double w = UIManager.BASE_AREA.getWidth();
+                    if (w > 0) {
+                        double ratio = dockableWidth / w;
+                        if (ratio > 0.9) {
+                            ratio = 0.9;
+                        }
+                        // Set default size and position for NORMALIZED mode
+                        CLocation normalizedLocation =
+                            pos == POSITION.EAST ? base.normalEast(ratio) : pos == POSITION.WEST ? base
+                                .normalWest(ratio) : pos == POSITION.NORTH ? base.normalNorth(ratio) : base
+                                .normalSouth(ratio);
+                        dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
+                    }
+                    // Set default size for FlapLayout
+                    dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
+                    dockable.setExtendedMode(mode);
+
+                    dockable.setVisible(true);
+                }
             }
         });
     }
@@ -190,8 +161,9 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
             @Override
             public void run() {
-                UIManager.toolWindowManager.unregisterToolWindow(dockableUID);
+                UIManager.DOCKING_CONTROL.removeDockable(dockable);
             }
         });
     }
+
 }

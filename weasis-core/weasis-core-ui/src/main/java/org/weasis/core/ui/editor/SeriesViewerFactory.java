@@ -26,6 +26,10 @@ public interface SeriesViewerFactory extends GUIEntry {
     boolean isViewerCreatedByThisFactory(SeriesViewer viewer);
 
     int getLevel();
+    
+    boolean canAddSeries();
 
+    boolean canExternalizeSeries();
+    
     List<Action> getOpenActions();
 }

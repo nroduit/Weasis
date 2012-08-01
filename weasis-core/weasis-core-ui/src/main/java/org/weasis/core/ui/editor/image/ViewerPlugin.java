@@ -19,12 +19,18 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 
-import org.noos.xing.mydoggy.Content;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.util.Toolbar;
+
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.action.predefined.CCloseAction;
+import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
 
@@ -33,32 +39,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     private String pluginName;
     private final Icon icon;
     private final String tooltips;
-
-    // private final DockableActionCustomizer detachOnScreen = new DockableActionCustomizer() {
-    //
-    // @Override
-    // public void visitTabSelectorPopUp(JPopupMenu popUpMenu, Dockable dockable) {
-    // GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    // Toolkit kit = Toolkit.getDefaultToolkit();
-    // // Get size of each screen
-    // GraphicsDevice[] gs = ge.getScreenDevices();
-    // GraphicsConfiguration mainConfig = ViewerPlugin.this.getGraphicsConfiguration();
-    // for (int j = 0; j < gs.length; j++) {
-    // GraphicsConfiguration config = gs[j].getDefaultConfiguration();
-    // if (config != mainConfig) {
-    // Rectangle b = config.getBounds();
-    // Insets inset = kit.getScreenInsets(config);
-    // b.x -= inset.left;
-    // b.y -= inset.top;
-    // b.width -= inset.right;
-    // b.height -= inset.bottom;
-    // JMenuItem menu = new JMenuItem(createFloatTabAction("Detach on Screen " + j, b));
-    // popUpMenu.add(menu);
-    // }
-    // }
-    //
-    // }
-    // };
+    private final DefaultSingleCDockable dockable;
 
     public ViewerPlugin(String PluginName) {
         this(PluginName, null, null);
@@ -71,6 +52,32 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         this.icon = icon;
         this.tooltips = tooltips;
         this.dockableUID = "" + UIManager.dockableUIGenerator.getAndIncrement(); //$NON-NLS-1$
+        this.dockable = new DefaultSingleCDockable(dockableUID, icon, pluginName);
+        this.dockable.setTitleText(pluginName);
+        this.dockable.setTitleToolTip(tooltips);
+        this.dockable.setTitleIcon(icon);
+        this.dockable.setFocusComponent(this);
+        this.dockable.setStackable(true);
+        this.dockable.setSingleTabShown(false);
+        this.dockable.putAction(CDockable.ACTION_KEY_CLOSE, new CCloseAction(UIManager.DOCKING_CONTROL) {
+            @Override
+            public void close(CDockable dockable) {
+                super.close(dockable);
+                if (dockable.getFocusComponent() instanceof SeriesViewer) {
+                    ((SeriesViewer) dockable.getFocusComponent()).close();
+                }
+            }
+        });
+        this.dockable.setCloseable(true);
+        this.dockable.setMinimizable(false);
+        this.dockable.setExternalizable(false);
+        // LocationHint hint = new LocationHint(LocationHint.DOCKABLE, LocationHint.RIGHT_OF_ALL);
+        // DefaultDockActionSource source = new DefaultDockActionSource(hint);
+        // source.add(setupDropDownMenu(dockable));
+        // source.addSeparator();
+        // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
+        // this.dockable.setActionOffers(source);
+
     }
 
     @Override
@@ -102,28 +109,52 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
 
     public void setPluginName(String pluginName) {
         this.pluginName = pluginName;
-        Content content = UIManager.toolWindowManager.getContentManager().getContent(this.getDockableUID());
-        if (content != null) {
-            content.setTitle(pluginName);
-        }
+        this.dockable.setTitleText(pluginName);
     }
 
     public void setSelectedAndGetFocus() {
-        Content content = UIManager.toolWindowManager.getContentManager().getContent(this.getDockableUID());
-        if (content != null) {
-            content.setSelected(true);
-        }
-        // necessary for some cases, lose the focus to the old owner
-        this.requestFocusInWindow();
+        UIManager.DOCKING_CONTROL.getController().setFocusedDockable(dockable.intern(), this, true, true, false);
     }
 
     @Override
     public void close() {
-        UIManager.VIEWER_PLUGINS.remove(ViewerPlugin.this);
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                UIManager.VIEWER_PLUGINS.remove(ViewerPlugin.this);
+                UIManager.DOCKING_CONTROL.removeDockable(dockable);
+            }
+        });
+
     }
 
     public Component getComponent() {
         return this;
+    }
+
+    public final DefaultSingleCDockable getDockable() {
+        return dockable;
+    }
+
+    public void showDockable() {
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                if (!dockable.isVisible()) {
+                    if (!UIManager.VIEWER_PLUGINS.contains(ViewerPlugin.this)) {
+                        UIManager.VIEWER_PLUGINS.add(ViewerPlugin.this);
+                    }
+                    dockable.add(getComponent());
+                    dockable.setFocusComponent(ViewerPlugin.this);
+                    UIManager.MAIN_AREA.add(getDockable());
+                    dockable
+                        .setDefaultLocation(ExtendedMode.NORMALIZED, CLocation.working(UIManager.MAIN_AREA).stack());
+                    dockable.setVisible(true);
+                }
+            }
+        });
     }
 
     public ViewerToolBar getViewerToolBar() {

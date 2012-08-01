@@ -202,7 +202,7 @@ public class JIThumbnailListPane extends ViewerPlugin implements DiskFileList {
     }
 
     @Override
-    public List getPrintActions() {
+    public List<Action> getPrintActions() {
         return null;
     }
 

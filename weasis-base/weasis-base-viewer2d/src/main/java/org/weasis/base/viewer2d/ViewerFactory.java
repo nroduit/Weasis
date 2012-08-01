@@ -141,4 +141,14 @@ public class ViewerFactory implements SeriesViewerFactory {
         actions.add(OpenImageAction.getInstance());
         return actions;
     }
+    
+        @Override
+    public boolean canAddSeries() {
+        return true;
+    }
+
+    @Override
+    public boolean canExternalizeSeries() {
+        return true;
+    }
 }

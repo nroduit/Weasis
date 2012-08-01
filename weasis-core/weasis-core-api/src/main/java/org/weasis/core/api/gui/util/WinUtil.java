@@ -144,6 +144,32 @@ public abstract class WinUtil {
         return new Dimension(scrWidth, scrHeight);
     }
 
+    public static Rectangle getClosedScreenBound(Rectangle bound) {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gd = ge.getScreenDevices();
+        Rectangle screenBounds = null;
+        Rectangle intersect = null;
+        for (int i = 0; i < gd.length; i++) {
+            GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+            Rectangle b = config.getBounds();
+            Rectangle intersection = bound.intersection(b);
+            if (intersection.width > 0 && intersection.height > 0) {
+                if (intersect == null
+                    || (intersect.width * intersect.height) < (intersection.width * intersection.height)) {
+                    Insets inset = toolkit.getScreenInsets(config);
+                    b.x -= inset.left;
+                    b.y -= inset.top;
+                    b.width -= inset.right;
+                    b.height -= inset.bottom;
+                    screenBounds = b;
+                    intersect = intersection;
+                }
+            }
+        }
+        return screenBounds;
+    }
+
     public static void adjustLocationToFitScreen(Component cp, Point p) {
         if (cp == null) {
             return;
@@ -290,5 +316,25 @@ public abstract class WinUtil {
 
     public static void showMessageDialog(Component component, String s) {
         JOptionPane.showMessageDialog(component, s);
+    }
+
+    public static Rectangle[] getScreens() throws Exception {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        Toolkit kit = Toolkit.getDefaultToolkit();
+
+        // Get size of each screen
+        GraphicsDevice[] gs = ge.getScreenDevices();
+        Rectangle[] bounds = new Rectangle[gs.length];
+        for (int j = 0; j < gs.length; j++) {
+            GraphicsConfiguration config = gs[j].getDefaultConfiguration();
+            Rectangle b = config.getBounds();
+            Insets inset = kit.getScreenInsets(config);
+            b.x -= inset.left;
+            b.y -= inset.top;
+            b.width -= inset.right;
+            b.height -= inset.bottom;
+            bounds[j] = b;
+        }
+        return bounds;
     }
 }

@@ -35,7 +35,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.noos.xing.mydoggy.ToolWindowAnchor;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.PluginTool;
@@ -51,6 +50,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2dContainer;
+
+import bibliothek.gui.dock.common.CLocation;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -73,8 +74,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private TreePath rootPath;
 
     public DisplayTool(String pluginName) {
-        super(BUTTON_NAME, pluginName, ToolWindowAnchor.RIGHT, PluginTool.TYPE.mainTool);
-        setIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
+        super(BUTTON_NAME, pluginName, PluginTool.TYPE.mainTool);
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
 
         tree = new CheckboxTree();
@@ -317,7 +318,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     @Override
-    protected void changeToolWindowAnchor(ToolWindowAnchor anchor) {
+    protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
 
     }
