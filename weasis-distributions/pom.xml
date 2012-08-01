@@ -7,7 +7,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.1.4-beta</version>
+	<version>2.0.0-alpha</version>
 	<properties>
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier>-SNAPSHOT</qualifier>
@@ -31,11 +31,11 @@
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.0</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.11${qualifier}</weasis.launcher.version>
-		<weasis.core.version>0.5.11${qualifier}</weasis.core.version>
-		<weasis.imageio.version>0.7.9${qualifier}</weasis.imageio.version>
-		<weasis.base.version>0.5.11${qualifier}</weasis.base.version>
-		<weasis.dicom.version>0.5.11${qualifier}</weasis.dicom.version>
+		<weasis.launcher.version>2.0.0${qualifier}</weasis.launcher.version>
+		<weasis.core.version>2.0.0${qualifier}</weasis.core.version>
+		<weasis.imageio.version>2.0.0${qualifier}</weasis.imageio.version>
+		<weasis.base.version>2.0.0${qualifier}</weasis.base.version>
+		<weasis.dicom.version>2.0.0${qualifier}</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>7.1.2</substance.version>

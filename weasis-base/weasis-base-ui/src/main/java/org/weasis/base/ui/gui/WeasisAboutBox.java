@@ -107,7 +107,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
 
         String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
         message.append(String.format("<a href=\"%s\">" + rn + "</a>", //$NON-NLS-1$ //$NON-NLS-2$
-            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10441")); //$NON-NLS-1$
+            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10406")); //$NON-NLS-1$
         message.append("<BR>"); //$NON-NLS-1$
         message.append("Copyright © 2009-2011,"); //$NON-NLS-1$
         message.append("<BR>"); //$NON-NLS-1$
