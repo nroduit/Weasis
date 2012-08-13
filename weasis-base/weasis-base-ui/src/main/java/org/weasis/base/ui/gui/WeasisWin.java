@@ -11,6 +11,7 @@
 package org.weasis.base.ui.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
@@ -45,8 +46,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.LookAndFeel;
 import javax.swing.TransferHandler;
 
 import org.slf4j.Logger;
@@ -87,6 +88,8 @@ import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
+import bibliothek.extension.gui.dock.theme.eclipse.rex.RexSystemColor;
+import bibliothek.gui.DockUI;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -96,6 +99,10 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
+import bibliothek.gui.dock.util.Priority;
+import bibliothek.gui.dock.util.color.ColorManager;
+import bibliothek.gui.dock.util.laf.LookAndFeelColors;
+import bibliothek.util.Colors;
 
 public class WeasisWin extends JFrame implements PropertyChangeListener {
 
@@ -203,6 +210,40 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         control.getController().getProperties().set(EclipseTheme.PAINT_ICONS_WHEN_DESELECTED, true);
         // control.setGroupBehavior(CGroupBehavior.TOPMOST);
         // control.setDefaultLocation(centerArea.getStationLocation());
+
+        // Fix substance
+        LookAndFeel laf = javax.swing.UIManager.getLookAndFeel();
+        if (laf.getClass().getName().startsWith("org.pushingpixels")) { //$NON-NLS-1$
+            ColorManager colors = control.getController().getColors();
+
+            Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground");
+            Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
+            Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
+            Color activeColor = selection.darker();
+            Color ActiveTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground");
+
+            colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient);
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection);
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor);
+
+            colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor);
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor);
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor);
+
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient);
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection);
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor);
+
+            colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor());
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", ActiveTextColor);
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor());
+
+            colors.put(Priority.CLIENT, "title.flap.active", selection);
+            colors.put(Priority.CLIENT, "title.flap.active.text", ActiveTextColor);
+            colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection));
+            colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection));
+        }
+
         control.addFocusListener(selectionListener);
 
         // control.setDefaultLocation(UIManager.BASE_AREA.
@@ -817,11 +858,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuFile.removeAll();
         DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
 
-            @Override
-            public void popupMenuWillBecomeVisible() {
-                buildOpenSubMenu(this);
-            }
-        };
+                @Override
+                public void popupMenuWillBecomeVisible() {
+                    buildOpenSubMenu(this);
+                }
+            };
         openMenu.addPopupMenuListener();
         menuFile.add(openMenu);
 

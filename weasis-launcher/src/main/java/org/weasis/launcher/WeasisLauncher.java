@@ -1018,7 +1018,6 @@ public class WeasisLauncher {
             System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
             laf = UIManager.getSystemLookAndFeelClassName();
         }
-
         return laf;
     }
 
