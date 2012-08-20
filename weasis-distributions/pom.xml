@@ -466,6 +466,8 @@
 									<outfile>${project.build.directory}/tmp/weasis-win32.exe</outfile>
 									<jar>weasis/weasis-launcher.jar</jar>
 									<errTitle>weasis</errTitle>
+									<!-- Set the process name as the executable filename -->
+									<customProcName>true</customProcName>
 									<icon>etc/weasis.ico</icon>
 									<!-- Setting it to . will change the current dir to the same directory as the executable -->
 									<cmdLine>$dicom:get --portable</cmdLine>
@@ -473,7 +475,8 @@
 									<classPath>
 										<mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
 										<addDependencies>false</addDependencies>
-										<preCp>weasis\felix.jar;weasis\substance.jar</preCp>
+										<!-- <preCp>weasis\felix.jar;weasis\substance.jar</preCp> -->
+										<preCp>weasis\*.jar</preCp>
 									</classPath>
 									<jre>
 										<minVersion>1.6.0</minVersion>
