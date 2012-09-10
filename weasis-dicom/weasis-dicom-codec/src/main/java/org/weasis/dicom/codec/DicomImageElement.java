@@ -237,7 +237,7 @@ public class DicomImageElement extends ImageElement {
 
         return (photometricInterpretation != null && //
         ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) || "MONOCHROME2" //$NON-NLS-1$ //$NON-NLS-2$
-            .equalsIgnoreCase(photometricInterpretation)));
+        .equalsIgnoreCase(photometricInterpretation)));
     }
 
     /**
@@ -303,10 +303,11 @@ public class DicomImageElement extends ImageElement {
         Integer paddingLimit = getPaddingLimit();
         boolean outputSigned = false;
         if (bitsStored > 8 && !modSeqLUT) {
-            // Get raw min value
+            // Get raw min value including padding values
             float minVal = super.getMinValue();
             if (paddingValue != null) {
-                minVal = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+                int minValue = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+                minVal = Math.min(minValue, minVal);
             }
             outputSigned = (minVal * slope + intercept) < 0 ? true : isSigned;
         }
@@ -365,6 +366,7 @@ public class DicomImageElement extends ImageElement {
 
     /**
      * 
+     * @param modalityLookup
      * @param window
      * @param level
      * @param shape
@@ -373,8 +375,8 @@ public class DicomImageElement extends ImageElement {
      * 
      * @return 8 bits unsigned Lookup Table
      */
-    public LookupTableJAI getVOILookup(Float window, Float level, LutShape shape, boolean fillLutOutside,
-        boolean pixelPadding) {
+    public LookupTableJAI getVOILookup(LookupTableJAI modalityLookup, Float window, Float level, LutShape shape,
+        boolean fillLutOutside, boolean pixelPadding) {
 
         if (window == null || level == null || shape == null) {
             return null;
@@ -406,8 +408,19 @@ public class DicomImageElement extends ImageElement {
                 // Create a VOI LUT without excluding pixel padding values
                 int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
                 int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
-                minValue = Math.min(minValue, (int) pixel2mLUT(paddingValueMin));
-                maxValue = Math.max(maxValue, (int) pixel2mLUT(paddingValueMax));
+
+                if (modalityLookup != null) {
+                    if (paddingValueMin >= modalityLookup.getOffset()
+                        && paddingValueMin < modalityLookup.getOffset() + modalityLookup.getNumEntries()) {
+                        paddingValueMin = modalityLookup.lookup(0, paddingValueMin);
+                    }
+                    if (paddingValueMax >= modalityLookup.getOffset()
+                        && paddingValueMax < modalityLookup.getOffset() + modalityLookup.getNumEntries()) {
+                        paddingValueMax = modalityLookup.lookup(0, paddingValueMax);
+                    }
+                }
+                minValue = Math.min(minValue, paddingValueMin);
+                maxValue = Math.max(maxValue, paddingValueMax);
             }
         }
 
@@ -650,7 +663,7 @@ public class DicomImageElement extends ImageElement {
             RenderedImage imageModalityTransformed =
                 modalityLookup == null ? imageSource : LookupDescriptor.create(imageSource, modalityLookup, null);
 
-            LookupTableJAI voiLookup = getVOILookup(window, level, lutShape, false, pixelPadding);
+            LookupTableJAI voiLookup = getVOILookup(modalityLookup, window, level, lutShape, false, pixelPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
             return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
 

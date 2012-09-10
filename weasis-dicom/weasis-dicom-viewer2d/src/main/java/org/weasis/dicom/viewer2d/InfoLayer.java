@@ -207,13 +207,10 @@ public class InfoLayer implements AnnotationsLayer {
             String tsuid = getLossyTransferSyntaxUID((String) dcm.getTagValue(TagW.TransferSyntaxUID));
             if (tsuid != null) {
                 Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
-                GraphicLabel.paintColorFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.lossy") //$NON-NLS-1$
-                        + " " //$NON-NLS-1$
-                        + tsuid
-                        + ((rate == null || rate < 1) ? "" : " " + rate + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                GraphicLabel.paintColorFontOutline(g2, Messages.getString("InfoLayer.lossy") //$NON-NLS-1$
+                    + " " //$NON-NLS-1$
+                    + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 drawY -= fontHeight;
             }
         }
@@ -603,7 +600,7 @@ public class InfoLayer implements AnnotationsLayer {
         final boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
 
         LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
-        LookupTableJAI lookup = image.getVOILookup(window, level, lutShape, true, true);
+        LookupTableJAI lookup = image.getVOILookup(image.getModalityLookup(), window, level, lutShape, true, true);
         // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
 
         // System.out.println(lutShape.toString());
