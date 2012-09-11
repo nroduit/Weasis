@@ -575,6 +575,7 @@ public class InfoLayer implements AnnotationsLayer {
 
     // TODO must be implemented as component of the layout (must inherit Jcomponent and implements SeriesViewerListener)
     public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
+        boolean pixelPadding = true;
 
         final Paint oldPaint = g2d.getPaint();
         final RenderingHints oldRenderingHints = g2d.getRenderingHints();
@@ -594,13 +595,17 @@ public class InfoLayer implements AnnotationsLayer {
         final float lowLevel = Math.round(level - window / 2);
         final float highLevel = Math.round(level + window / 2);
 
-        int lowInputValue = (int) (image.getMinValue() < lowLevel ? lowLevel : image.getMinValue());
-        int highInputValue = (int) (image.getMaxValue() > highLevel ? highLevel : image.getMaxValue());
+        int lowInputValue =
+            (int) (image.getMinValue(pixelPadding) < lowLevel ? lowLevel : image.getMinValue(pixelPadding));
+        int highInputValue =
+            (int) (image.getMaxValue(pixelPadding) > highLevel ? highLevel : image.getMaxValue(pixelPadding));
 
         final boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
 
         LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
-        LookupTableJAI lookup = image.getVOILookup(image.getModalityLookup(), window, level, lutShape, true, true);
+
+        LookupTableJAI lookup =
+            image.getVOILookup(image.getModalityLookup(pixelPadding), window, level, lutShape, true, pixelPadding);
         // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
 
         // System.out.println(lutShape.toString());
@@ -831,7 +836,7 @@ public class InfoLayer implements AnnotationsLayer {
         // Draw Histogram
 
         boolean showHistogram = true;
-        Histogram histogram = showHistogram ? image.getHistogram(view2DPane.getSourceImage()) : null;
+        Histogram histogram = showHistogram ? image.getHistogram(view2DPane.getSourceImage(), pixelPadding) : null;
 
         if (histogram != null) {
 

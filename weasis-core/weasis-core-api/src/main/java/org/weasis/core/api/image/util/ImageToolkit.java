@@ -357,8 +357,8 @@ public class ImageToolkit {
 
         // Get pixel values of Min and Max (values must not be rescaled rescaled, works only for ImageElement not for
         // DicomImageElement class)
-        int minValue = (int) image.getMinValue();
-        int maxValue = (int) image.getMaxValue();
+        int minValue = (int) image.getMinValue(pixelPadding);
+        int maxValue = (int) image.getMaxValue(pixelPadding);
         int tableLength = (maxValue - minValue + 1);
 
         double low = level - window / 2.0;
@@ -412,12 +412,8 @@ public class ImageToolkit {
         return result;
     }
 
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, float window,
-        float level) {
-        return getDefaultRenderedImage(image, source, window, level, true);
-    }
-
-    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source) {
-        return getDefaultRenderedImage(image, source, image.getDefaultWindow(), image.getDefaultLevel(), true);
+    public static RenderedImage getDefaultRenderedImage(ImageElement image, RenderedImage source, boolean pixelPadding) {
+        return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
+            image.getDefaultLevel(pixelPadding), true);
     }
 }

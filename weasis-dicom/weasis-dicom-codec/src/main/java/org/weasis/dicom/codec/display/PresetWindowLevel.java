@@ -91,7 +91,7 @@ public class PresetWindowLevel {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static PresetWindowLevel[] getPresetCollection(DicomImageElement image) {
+    public static PresetWindowLevel[] getPresetCollection(DicomImageElement image, boolean pixelPadding) {
         if (image == null) {
             return null;
         }
@@ -121,8 +121,8 @@ public class PresetWindowLevel {
             int windowLevelDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
             String defaultExplanation = "Default";
 
-            float minModLUT = image.getMinValue();
-            float maxModLUT = image.getMaxValue();
+            float minModLUT = image.getMinValue(pixelPadding);
+            float maxModLUT = image.getMaxValue(pixelPadding);
             int k = 1;
 
             // TODO do not add new W/L Preset that have same value as previous object already in the list
@@ -191,11 +191,11 @@ public class PresetWindowLevel {
 
                 minValueLookup = Math.min(minValueLookup, maxValueLookup);
                 maxValueLookup = Math.max(minValueLookup, maxValueLookup);
-                int minAllocatedValue = image.getMinAllocatedValue();
+                int minAllocatedValue = image.getMinAllocatedValue(pixelPadding);
                 if (minValueLookup < minAllocatedValue) {
                     minValueLookup = minAllocatedValue;
                 }
-                int maxAllocatedValue = image.getMaxAllocatedValue();
+                int maxAllocatedValue = image.getMaxAllocatedValue(pixelPadding);
                 if (maxValueLookup > maxAllocatedValue) {
                     maxValueLookup = maxAllocatedValue;
                 }
@@ -218,8 +218,8 @@ public class PresetWindowLevel {
         }
 
         PresetWindowLevel autoLevel =
-            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(), image.getFullDynamicCenter(),
-                defaultLutShape);
+            new PresetWindowLevel(fullDynamicExplanation, image.getFullDynamicWidth(pixelPadding),
+                image.getFullDynamicCenter(pixelPadding), defaultLutShape);
         // Set O shortcut for auto levels
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);

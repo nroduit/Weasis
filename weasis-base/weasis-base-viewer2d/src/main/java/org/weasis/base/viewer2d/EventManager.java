@@ -22,6 +22,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -289,8 +290,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
             ImageElement img = defaultView2d.getImage();
             if (img != null) {
-                windowAction.setValue((int) img.getDefaultWindow());
-                levelAction.setValue((int) img.getDefaultLevel());
+                boolean pixelPadding =
+                    JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
+                levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
             }
         }
         flipAction.setSelected(false);
@@ -315,8 +318,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
                 ImageElement img = defaultView2d.getImage();
                 if (img != null) {
-                    windowAction.setValue((int) img.getDefaultWindow());
-                    levelAction.setValue((int) img.getDefaultLevel());
+                    boolean pixelPadding =
+                        JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                    windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
+                    levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
                 }
             }
         } else if (ResetTools.Pan.equals(action)) {
@@ -354,10 +359,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
         ImageElement image = view2d.getImage();
         MediaSeries<ImageElement> series = view2d.getSeries();
-        windowAction.setMinMaxValueWithoutTriggerAction(0, (int) (image.getMaxValue() - image.getMinValue()),
+        boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+
+        windowAction.setMinMaxValueWithoutTriggerAction(0,
+            (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)),
             ((Float) view2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(), (int) image.getMaxValue(),
-            ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
+        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
+            (int) image.getMaxValue(pixelPadding), ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
         rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
         flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d

@@ -133,26 +133,27 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return true;
     }
 
-    public LutShape getDefaultShape() {
+    public LutShape getDefaultShape(boolean pixelPadding) {
         return LutShape.LINEAR;
     }
 
-    public float getDefaultWindow() {
-        return getMaxValue() - getMinValue();
+    public float getDefaultWindow(boolean pixelPadding) {
+        return getMaxValue(pixelPadding) - getMinValue(pixelPadding);
     }
 
-    public float getDefaultLevel() {
+    public float getDefaultLevel(boolean pixelPadding) {
         if (isImageAvailable()) {
-            return minPixelValue + (maxPixelValue - minPixelValue) / 2.f;
+            float min = getMinValue(pixelPadding);
+            return min + (getMaxValue(pixelPadding) - min) / 2.f;
         }
         return 0.0f;
     }
 
-    public float getMaxValue() {
+    public float getMaxValue(boolean pixelPadding) {
         return maxPixelValue == null ? 0.0f : maxPixelValue;
     }
 
-    public float getMinValue() {
+    public float getMinValue(boolean pixelPadding) {
         return minPixelValue == null ? 0.0f : minPixelValue;
     }
 
@@ -277,9 +278,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
             return null;
         }
 
-        window = (window == null) ? getDefaultWindow() : window;
-        level = (level == null) ? getDefaultLevel() : level;
         pixelPadding = (pixelPadding == null) ? true : pixelPadding;
+        window = (window == null) ? getDefaultWindow(pixelPadding) : window;
+        level = (level == null) ? getDefaultLevel(pixelPadding) : level;
 
         return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
     }

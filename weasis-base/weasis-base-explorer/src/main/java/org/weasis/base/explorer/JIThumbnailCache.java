@@ -84,7 +84,8 @@ public final class JIThumbnailCache {
                 @Override
                 public void run() {
                     // final BufferedImage tIcon = JIUtility.createThumbnailRetry(diskObject);
-                    RenderedImage img = ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null));
+                    RenderedImage img =
+                        ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null), true);
                     if (img == null) {
                         return;
                     }

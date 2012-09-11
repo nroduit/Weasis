@@ -9,9 +9,10 @@ public class LutParameters {
     private final boolean signed;
     private final boolean applyPadding;
     private final boolean outputSigned;
+    private boolean inverseLut;
 
     public LutParameters(float intercept, float slope, boolean applyPadding, Integer paddingMinValue,
-        Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned) {
+        Integer paddingMaxValue, int bitsStored, boolean signed, boolean outputSigned, boolean inverseLut) {
         this.intercept = intercept;
         this.slope = slope;
         this.paddingMinValue = paddingMinValue;
@@ -20,6 +21,7 @@ public class LutParameters {
         this.signed = signed;
         this.applyPadding = applyPadding;
         this.outputSigned = outputSigned;
+        this.inverseLut = inverseLut;
     }
 
     @Override
@@ -28,7 +30,8 @@ public class LutParameters {
             LutParameters p = (LutParameters) obj;
             return p.intercept == intercept && p.slope == slope && p.applyPadding == applyPadding
                 && p.paddingMinValue == paddingMinValue && p.paddingMaxValue == paddingMaxValue
-                && p.bitsStored == bitsStored && p.signed == signed && p.isOutputSigned() == outputSigned;
+                && p.bitsStored == bitsStored && p.signed == signed && p.isOutputSigned() == outputSigned
+                && p.isInverseLut() == inverseLut;
         }
         return false;
     }
@@ -36,7 +39,7 @@ public class LutParameters {
     @Override
     public int hashCode() {
         int hash =
-            (signed ? 2 : 3) + (applyPadding ? 4 : 5) + (outputSigned ? 6 : 7) + bitsStored * 9
+            (signed ? 2 : 3) + (applyPadding ? 4 : 5) + (outputSigned ? 6 : 7) + (inverseLut ? 8 : 9) + bitsStored * 10
                 + Float.floatToIntBits(intercept) * 25 + Float.floatToIntBits(intercept) * 31;
         if (paddingMinValue != null) {
             hash += paddingMinValue * 14;
@@ -77,6 +80,14 @@ public class LutParameters {
 
     public boolean isOutputSigned() {
         return outputSigned;
+    }
+
+    public boolean isInverseLut() {
+        return inverseLut;
+    }
+
+    public void setInverseLut(boolean inverseLut) {
+        this.inverseLut = inverseLut;
     }
 
 }
