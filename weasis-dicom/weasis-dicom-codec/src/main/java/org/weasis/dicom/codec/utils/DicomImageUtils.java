@@ -227,15 +227,14 @@ public class DicomImageUtils {
                 inLut = modalityLookup.getShortData(0);
             }
 
-            // TODO max and handle isPixelRepresentationSigned and invers LUT
             Object outLut = inLut;
             if (isDataTypeByte) {
-                byte fillVal = (byte) 0;
+                byte fillVal = lutparams.isInverseLut() ? (byte) 255 : (byte) 0;
                 byte[] data = (byte[]) outLut;
                 Arrays.fill(data, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues, fillVal);
             } else {
                 short[] data = (short[]) outLut;
-                short fillVal = data[0];
+                short fillVal = lutparams.isInverseLut() ? data[data.length - 1] : data[0];
                 Arrays.fill(data, paddingValuesStartIndex, paddingValuesStartIndex + numPaddingValues, fillVal);
             }
         }

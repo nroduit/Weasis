@@ -71,6 +71,17 @@ public class JMVUtils {
 
     public static final Color lightGray = new Color(237, 237, 237);
 
+    public static boolean getNULLtoFalse(Boolean val) {
+        return Boolean.TRUE.equals(val);
+    }
+
+    public static boolean getNULLtoTrue(Boolean val) {
+        if (val instanceof Boolean) {
+            return val.booleanValue();
+        }
+        return true;
+    }
+
     public static int getNumberOfInvolvedTiles(PlanarImage img, Rectangle bound) {
         int maxTileIndexX = img.getMinTileX() + img.getNumXTiles();
         int maxTileIndexY = img.getMinTileY() + img.getNumYTiles();

@@ -54,6 +54,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -387,8 +388,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             // Ensure to load image before calling the default preset that (requires pixel min and max)
             img.getImage();
         }
-
-        PresetWindowLevel preset = img.getDefaultPreset();
+        boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+        PresetWindowLevel preset = img.getDefaultPreset(pixelPadding);
         if (preset != null) {
             actionsInView.put(ActionW.PRESET.cmd(), preset);
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
@@ -600,7 +601,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     imgLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
-                        float val = dicom.pixel2mLUT(c[0]);
+                        boolean pixelPadding =
+                            JMVUtils.getNULLtoTrue((Boolean) getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                        float val = dicom.pixel2mLUT(c[0], pixelPadding);
                         message.append((int) val);
                         if (dicom.getPixelValueUnit() != null) {
                             message.append(" " + dicom.getPixelValueUnit()); //$NON-NLS-1$

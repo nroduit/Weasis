@@ -66,6 +66,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -666,8 +667,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 // Ensure to load image before calling the default preset that (requires pixel min and max)
                 img.getImage();
             }
-            actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow());
-            actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel());
+            boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+            actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
+            actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
         }
     }
 
@@ -821,7 +823,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             imageLayer.updateImageOperation(PseudoColorOperation.name);
         } else if (command.equals(ActionW.INVERSELUT.cmd())) {
             actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(PseudoColorOperation.name);
+            // Update VOI LUT if pixel padding
+            imageLayer.updateImageOperation(WindowLevelOperation.name);
         } else if (command.equals(ActionW.FILTER.cmd())) {
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(FilterOperation.name);
