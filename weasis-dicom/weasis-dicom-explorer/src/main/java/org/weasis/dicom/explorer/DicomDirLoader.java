@@ -177,9 +177,12 @@ public class DicomDirLoader {
                 if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
                     iconInstance = seq.getDicomObject(0);
                 }
+
+                // TODO implement Key Object
                 DicomObject instance = findFirstChildRecord(series);
                 while (instance != null) {
-                    if (DirectoryRecordType.IMAGE.equals(instance.getString(Tag.DirectoryRecordType))) {
+                    if (DirectoryRecordType.IMAGE.equals(instance.getString(Tag.DirectoryRecordType))
+                        || DirectoryRecordType.ENCAP_DOC.equals(instance.getString(Tag.DirectoryRecordType))) {
                         // update instance level tag values
 
                         String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
