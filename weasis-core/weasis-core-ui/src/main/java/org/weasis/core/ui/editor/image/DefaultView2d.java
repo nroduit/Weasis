@@ -515,18 +515,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    @Override
-    public Font getFont() {
-        final Rectangle bound = getBounds();
-        if (bound.height < 300 || bound.width < 300) {
-            return FontTools.getFont8();
-        } else if (bound.height < 500 || bound.width < 500) {
-            return FontTools.getFont10();
-        } else {
-            return FontTools.getFont12();
-        }
-    }
-
     public Comparator<E> getCurrentSortComparator() {
         SeriesComparator<E> sort = (SeriesComparator<E>) actionsInView.get(ActionW.SORTSTACK.cmd());
         Boolean reverse = (Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd());
@@ -561,6 +549,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
+    @Override
+    public Font getFont() {
+        // required when used getGraphics().getFont() in GraphicLabel
+        return MeasureTool.viewSetting.getFont();
+    }
+
+    public Font getLayerFont() {
+        int fontSize =
+            // Set font size according to the view size
+            (int) Math
+                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth())); //$NON-NLS-1$
+        fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
+        return new Font("SansSerif", 0, fontSize);
+    }
+
     /** paint routine */
     @Override
     public synchronized void paintComponent(Graphics g) {
@@ -578,7 +581,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
-        Font defaultFont = MeasureTool.viewSetting.getFont();
+        Font defaultFont = getFont();
         g2d.setFont(defaultFont);
 
         imageLayer.drawImage(g2d);
@@ -588,8 +591,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         drawPointer(g2d);
         if (infoLayer != null) {
-            // Set font size according to the view size
-            g2d.setFont(getFont());
+            g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
         }
         g2d.setFont(defaultFont);
@@ -997,7 +999,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             oldBound.width =
                 Math.max(
                     oldBound.width,
-                    DefaultView2d.this.getGraphics().getFontMetrics()
+                    this.getGraphics().getFontMetrics(getLayerFont())
                         .stringWidth(Messages.getString("DefaultView2d.pix") + str) + 4); //$NON-NLS-1$
             infoLayer.setPixelInfo(str);
             repaint(oldBound);

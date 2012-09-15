@@ -220,8 +220,8 @@ public class InfoLayer implements AnnotationsLayer {
             String str = Messages.getString("InfoLayer.pixel") + pixelInfo; //$NON-NLS-1$
             GraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
-            pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
-                (int) fontHeight + 2);
+            pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics(view2DPane.getLayerFont())
+                .stringWidth(str) + 4, (int) fontHeight + 2);
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
