@@ -112,6 +112,13 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
     }
 
     @Override
+    public final Font getLayerFont() {
+        double fontSize =
+            (this.getGraphics().getFontMetrics(FontTools.getFont10()).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ 
+        return new Font("SansSerif", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
+    }
+
+    @Override
     public void paintComponent(Graphics g) {
         if (g instanceof Graphics2D) {
             draw((Graphics2D) g);
@@ -132,9 +139,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size according to the view size
-        double fontSize = (g2d.getFontMetrics(new Font("Dialog", 0, 10)).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ //$NON-NLS-2$
-        Font defaultFont = new Font("Dialog", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
-        g2d.setFont(defaultFont);
+        g2d.setFont(getLayerFont());
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         // Set label box size and spaces between items
         List<Graphic> list = getLayerModel().getAllGraphics();
