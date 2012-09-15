@@ -46,7 +46,11 @@ echo "Base Path: $basepath"
 
 # JAVA_HOME is often not in env
 if [ -z "$JAVA_HOME" ] ; then
-	export JAVA_HOME='/System/Library/Frameworks/JavaVM.framework/Home'
+	if [ -e '/usr/libexec/java_home' ] ; then
+		export JAVA_HOME=`/usr/libexec/java_home`
+	else
+		export JAVA_HOME='/System/Library/Frameworks/JavaVM.framework/Home'
+	fi
 fi
 
 
