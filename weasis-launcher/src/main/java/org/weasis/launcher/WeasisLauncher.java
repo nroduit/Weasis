@@ -729,7 +729,7 @@ public class WeasisLauncher {
             getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
@@ -846,6 +846,8 @@ public class WeasisLauncher {
         // Transmit the audit log property to the bundle context
         config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
+        final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
+
         // Splash screen that shows bundles loading
         final WebStartLoader loader = new WebStartLoader();
         // Display splash screen
@@ -859,6 +861,22 @@ public class WeasisLauncher {
             if (versionOld == null || !versionOld.equals(versionNew)) {
                 update = true;
             }
+            try {
+                Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
+                if (vOld.getMajor() < 2) {
+                    // Force to change some properties when the old version < 2.x
+                    if (basdir.getPath().equals(dir)) {
+                        common_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
+                        update = true;
+                    } else {
+                        s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
+                        File file = new File(basdir, APP_PROPERTY_FILE);
+                        FileUtil.storeProperties(file, s_prop, null);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Cannot read old Weasis version!"); //$NON-NLS-1$
+            }
         }
 
         // Clean cache if Weasis has crashed during the previous launch
@@ -869,19 +887,12 @@ public class WeasisLauncher {
             update = true;
             System.out.println("Clean plug-in cache because Weasis has crashed during the previous launch"); //$NON-NLS-1$
         }
-        // Clean cache if major or minor version number has changed
+        // Clean cache when version has changed
         else if (cleanCache && versionNew != null) {
-            try {
-                Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
-                Version vNew = new Version(versionNew.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
-                if (vNew.getMinor() != vOld.getMinor() || vNew.getMajor() != vOld.getMajor()) {
-                    System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
-                    config
-                        .setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-                    System.out.println("Clean plug-in cache because the minor version has changed"); //$NON-NLS-1$
-                }
-            } catch (Exception e) {
-                System.err.println("Cannot read Weasis version!"); //$NON-NLS-1$
+            if (!versionNew.equals(versionOld)) {
+                System.out.printf("Clean previous Weasis version: %s \n", versionOld); //$NON-NLS-1$
+                config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+                System.out.println("Clean plug-in cache because the version has changed"); //$NON-NLS-1$
             }
         }
 
@@ -964,7 +975,7 @@ public class WeasisLauncher {
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
                     message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
-                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10406")); //$NON-NLS-1$
+                        releaseNotesUrl));
                     message.append("</P>"); //$NON-NLS-1$
                     jTextPane1.setText(message.toString());
                     JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,

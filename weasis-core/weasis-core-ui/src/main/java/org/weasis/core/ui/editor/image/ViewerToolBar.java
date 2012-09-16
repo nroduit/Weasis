@@ -39,6 +39,8 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -79,7 +81,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
         mouseLeft
             .setToolTipText(Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        add(mouseLeft);
+
+        if (((active & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK)) {
+            add(mouseLeft);
+        }
         if (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)) {
             add(mouseMiddle = buildMouseButton(actions, MouseActions.MIDDLE));
         }
@@ -97,11 +102,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                         return getPopupMenuScroll(this);
                     }
                 };
-            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1$
+            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1
             add(mouseWheel);
         }
 
-        addSeparator(WtoolBar.SEPARATOR_2x24);
+        if (active > 1) {
+            addSeparator(WtoolBar.SEPARATOR_2x24);
+        }
 
         final DropDownButton layout = new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
             .getResource("/icon/32x32/layout.png")))) { //$NON-NLS-1$
@@ -112,15 +119,24 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 }
             };
         layout.setToolTipText(Messages.getString("ViewerToolBar.layout")); //$NON-NLS-1$
-        add(layout);
 
-        add(Box.createRigidArea(new Dimension(5, 0)));
+        WProperties p = BundleTools.SYSTEM_PREFERENCES;
+        boolean separtor = false;
+        if (p.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
+            add(layout);
+            separtor = true;
+        }
 
-        synchButton = buildSynchButton();
-        add(synchButton);
+        if (p.getBooleanProperty("weasis.toolbar.synchbouton", true)) {
+            add(Box.createRigidArea(new Dimension(5, 0)));
 
-        addSeparator(WtoolBar.SEPARATOR_2x24);
-
+            synchButton = buildSynchButton();
+            add(synchButton);
+            separtor = true;
+        }
+        if (separtor) {
+            addSeparator(WtoolBar.SEPARATOR_2x24);
+        }
         final JButton jButtonActualZoom =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-original.png"))); //$NON-NLS-1$
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
@@ -260,10 +276,12 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private void displayMeasureToobar() {
-        if (isCommandActive(ActionW.MEASURE.cmd())) {
-            measureToolBar.setVisible(true);
-        } else {
-            measureToolBar.setVisible(false);
+        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.measure.alwaysvisible", false)) {
+            if (isCommandActive(ActionW.MEASURE.cmd())) {
+                measureToolBar.setVisible(true);
+            } else {
+                measureToolBar.setVisible(false);
+            }
         }
         revalidate();
         repaint();

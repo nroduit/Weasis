@@ -31,6 +31,8 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -75,19 +77,46 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
     static {
-        graphicList.add(selectionGraphic);
-        graphicList.add(lineGraphic);
-        graphicList.add(polylineGraphic);
-        graphicList.add(rectangleGraphic);
-        graphicList.add(ellipseGraphic);
-        graphicList.add(threePtCircleGraphic);
-        graphicList.add(polygonGraphic);
-        graphicList.add(perpendicularToolGraphic);
-        graphicList.add(parallelLineGraphic);
-        graphicList.add(angleToolGraphic);
-        graphicList.add(openAngleToolGraphic);
-        graphicList.add(fourPointsAngleToolGraphic);
-        graphicList.add(cobbAngleToolGraphic);
+        WProperties p = BundleTools.SYSTEM_PREFERENCES;
+        if (p.getBooleanProperty("weasis.measure.selection", true)) {
+            graphicList.add(selectionGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.line", true)) {
+            graphicList.add(lineGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.polyline", true)) {
+            graphicList.add(polylineGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.rectangle", true)) {
+            graphicList.add(rectangleGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.ellipse", true)) {
+            graphicList.add(ellipseGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.threeptcircle", true)) {
+            graphicList.add(threePtCircleGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.polygon", true)) {
+            graphicList.add(polygonGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.perpendicular", true)) {
+            graphicList.add(perpendicularToolGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.parallele", true)) {
+            graphicList.add(parallelLineGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.angle", true)) {
+            graphicList.add(angleToolGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.openangle", true)) {
+            graphicList.add(openAngleToolGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.fourptangle", true)) {
+            graphicList.add(fourPointsAngleToolGraphic);
+        }
+        if (p.getBooleanProperty("weasis.measure.cobbangle", true)) {
+            graphicList.add(cobbAngleToolGraphic);
+        }
     }
     protected final JButton jButtondelete = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
@@ -123,6 +152,31 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         };
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
 
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.measure.alwaysvisible", false)) {
+            // when user press the measure icon, set the action to measure
+            measureButton.addActionListener(new java.awt.event.ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
+                    if (view != null) {
+                        final ViewerToolBar toolBar = view.getViewerToolBar();
+                        if (toolBar != null) {
+                            String cmd = ActionW.MEASURE.cmd();
+                            if (!toolBar.isCommandActive(cmd)) {
+                                MouseActions mouseActions = eventManager.getMouseActions();
+                                mouseActions.setAction(MouseActions.LEFT, cmd);
+                                if (view != null) {
+                                    view.setMouseActions(mouseActions);
+                                }
+                                toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                            }
+                        }
+                    }
+                }
+            });
+        }
         add(measureButton);
 
         // add(measureButtonGap);

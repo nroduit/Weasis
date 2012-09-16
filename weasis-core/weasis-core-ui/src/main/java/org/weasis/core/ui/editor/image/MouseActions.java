@@ -16,6 +16,7 @@ import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 
 public class MouseActions {
 
@@ -45,9 +46,13 @@ public class MouseActions {
         this.middle = middle;
         this.right = right;
         this.wheel = wheel;
+        this.activeButtons =
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
     }
 
     public MouseActions(Preferences prefs) {
+        this.activeButtons =
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
         applyPreferences(prefs);
     }
 

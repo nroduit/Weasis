@@ -54,6 +54,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -128,48 +129,66 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
                 Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-                cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
+
+                boolean cineLoopIsEnabled = prefNode.getBoolean(CineToolBar.class.getName(), false);
+
+                // MEDECOM UI CONFIG
+                if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.cinetoolbar.alwaysvisible", true)) {
+                    cineLoopIsEnabled = true;
+                }
+                cineBar.setEnabled(cineLoopIsEnabled);
+
             }
 
-            PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
+            PluginTool tool = null;
 
-                    @Override
-                    public SliderChangeListener[] getActions() {
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.minitools", true)) {
+                tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
 
-                        ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
-                        ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                        if (seqAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) seqAction);
+                        @Override
+                        public SliderChangeListener[] getActions() {
+
+                            ArrayList<SliderChangeListener> listeners = new ArrayList<SliderChangeListener>(3);
+                            ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                            if (seqAction instanceof SliderChangeListener) {
+                                listeners.add((SliderChangeListener) seqAction);
+                            }
+                            ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+                            if (zoomAction instanceof SliderChangeListener) {
+                                listeners.add((SliderChangeListener) zoomAction);
+                            }
+                            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+                            if (rotateAction instanceof SliderChangeListener) {
+                                listeners.add((SliderChangeListener) rotateAction);
+                            }
+                            return listeners.toArray(new SliderChangeListener[listeners.size()]);
                         }
-                        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                        if (zoomAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) zoomAction);
-                        }
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            listeners.add((SliderChangeListener) rotateAction);
-                        }
-                        return listeners.toArray(new SliderChangeListener[listeners.size()]);
-                    }
-                };
-            // DefaultSingleCDockable dock = tool.registerToolAsDockable();
-            // dock.setDefaultLocation(ExtendedMode.NORMALIZED,
-            // CLocation.base(UIManager.BASE_AREA).normalRectangle(1.0, 0.0, 0.05, 1.0));
-            // dock.setExtendedMode(ExtendedMode.NORMALIZED);
-            TOOLS.add(tool);
+                    };
+                // DefaultSingleCDockable dock = tool.registerToolAsDockable();
+                // dock.setDefaultLocation(ExtendedMode.NORMALIZED,
+                // CLocation.base(UIManager.BASE_AREA).normalRectangle(1.0, 0.0, 0.05, 1.0));
+                // dock.setExtendedMode(ExtendedMode.NORMALIZED);
+                TOOLS.add(tool);
+            }
 
-            tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-            // tool.registerToolAsDockable();
-            TOOLS.add(tool);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.imagestools", true)) {
+                tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
+                // tool.registerToolAsDockable();
+                TOOLS.add(tool);
+            }
 
-            tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-            // tool.registerToolAsDockable();
-            TOOLS.add(tool);
-            eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.display", true)) {
+                tool = new DisplayTool(DisplayTool.BUTTON_NAME);
+                // tool.registerToolAsDockable();
+                TOOLS.add(tool);
+                eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+            }
 
-            tool = new MeasureTool(eventManager);
-            // tool.registerToolAsDockable();
-            TOOLS.add(tool);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.measuretools", true)) {
+                tool = new MeasureTool(eventManager);
+                // tool.registerToolAsDockable();
+                TOOLS.add(tool);
+            }
         }
     }
 

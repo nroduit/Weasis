@@ -13,6 +13,7 @@ package org.weasis.core.api.service;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.osgi.framework.BundleContext;
 import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.util.Base64;
 
@@ -96,7 +97,10 @@ public class WProperties extends Properties {
     public String getProperty(String key) {
         String value = super.getProperty(key);
         if (value == null) {
-            value = Activator.getBundleContext().getProperty(key);
+            BundleContext ctx = Activator.getBundleContext();
+            if (ctx != null) {
+                value = ctx.getProperty(key);
+            }
         }
         return value;
     }

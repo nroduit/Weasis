@@ -1039,25 +1039,28 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
-            GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
-            gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
-            gbc_btnMoreOptions.gridx = 1;
-            gbc_btnMoreOptions.gridy = 2;
-            btnMoreOptions.setFont(FontTools.getFont10());
-            btnMoreOptions.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (btnMoreOptions.isSelected()) {
-                        panel_1.add(panel_2, BorderLayout.SOUTH);
-                    } else {
-                        panel_1.remove(panel_2);
-                    }
-                    panel_1.revalidate();
-                    panel_1.repaint();
-                }
-            });
-            panel.add(btnMoreOptions, gbc_btnMoreOptions);
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) {
+	            GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
+	            gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
+	            gbc_btnMoreOptions.gridx = 1;
+	            gbc_btnMoreOptions.gridy = 2;
+	            btnMoreOptions.setFont(FontTools.getFont10());
+	            btnMoreOptions.addActionListener(new ActionListener() {
+	
+	                @Override
+	                public void actionPerformed(ActionEvent e) {
+	                    if (btnMoreOptions.isSelected()) {
+	                        panel_1.add(panel_2, BorderLayout.SOUTH);
+	                    } else {
+	                        panel_1.remove(panel_2);
+	                    }
+	                    panel_1.revalidate();
+	                    panel_1.repaint();
+	                }
+	            });
+	            panel.add(btnMoreOptions, gbc_btnMoreOptions);
+            }
+            
             // panel_1.add(panel_2, BorderLayout.SOUTH);
             GridBagLayout gbl_panel_2 = new GridBagLayout();
             panel_2.setLayout(gbl_panel_2);

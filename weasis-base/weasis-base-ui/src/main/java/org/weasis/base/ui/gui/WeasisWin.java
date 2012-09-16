@@ -137,10 +137,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     };
 
     private WeasisWin() {
-        this.setJMenuBar(createMenuBar());
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
+            this.setJMenuBar(createMenuBar());
+        }
         toolbarContainer = new ToolBarContainer();
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
-        this.setTitle("Weasis v" + AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
+        this.setTitle("Weasis v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
         this.setIconImage(new ImageIcon(UIManager.class.getResource("/icon/logo-button.png")).getImage()); //$NON-NLS-1$
     }
 
@@ -655,7 +657,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    URL url = new URL("http://www.dcm4che.org/confluence/display/WEA/Keyboard+and+Mouse+Shortcuts"); //$NON-NLS-1$
+                    URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
                     JMVUtils.OpenInDefaultBrowser(webMenuItem, url);
                 } catch (MalformedURLException e1) {
                     e1.printStackTrace();
@@ -668,7 +670,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    URL url = new URL("http://www.dcm4che.org/confluence/display/WEA/Home"); //$NON-NLS-1$
+                    URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
                     JMVUtils.OpenInDefaultBrowser(websiteMenuItem, url);
                 } catch (MalformedURLException e1) {
                     e1.printStackTrace();
