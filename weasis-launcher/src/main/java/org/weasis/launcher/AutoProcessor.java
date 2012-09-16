@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.JarOutputStream;
@@ -252,124 +253,128 @@ public class AutoProcessor {
         // property name, where "n" is the desired start level for the list
         // of bundles. If no start level is specified, the default start
         // level is assumed.
-        int nbBundles = 0;
+        Map<String, BundleElement> bundleList = new HashMap<String, BundleElement>();
+
         Set set = configMap.keySet();
-        for (Iterator i = set.iterator(); i.hasNext();) {
-            String key = ((String) i.next()).toLowerCase();
+        for (Iterator item = set.iterator(); item.hasNext();) {
+            String key = ((String) item.next()).toLowerCase();
 
             // Ignore all keys that are not an auto property.
             if (!key.startsWith(AUTO_INSTALL_PROP) && !key.startsWith(AUTO_START_PROP)) {
                 continue;
             }
-            StringTokenizer st = new StringTokenizer((String) configMap.get(key), "\" ", true); //$NON-NLS-1$
-            for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
-                nbBundles++;
-            }
-        }
-        webStartLoader.setMax(nbBundles);
-
-        final Map<String, Bundle> installedBundleMap = new HashMap<String, Bundle>();
-        Bundle[] bundles = context.getBundles();
-        for (int i = 0; i < bundles.length; i++) {
-            try {
-                // TODO could be remove in version 2
-                if (bundles[i].getSymbolicName().equals("org.apache.sling.commons.log") //$NON-NLS-1$
-                    && bundles[i].getVersion().getMajor() < 3) {
-                    bundles[i].uninstall();
-                    System.out
-                        .println("Remove conflicting old version of sling logger (< 3.0): " + bundles[i].getLocation()); //$NON-NLS-1$
-                    continue;
-                }
-                // Remove snapshot version to prevent bundle conflicts and to update at every launch
-                if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) { //$NON-NLS-1$
-                    bundles[i].uninstall();
-                    System.out.println("Uninstall SNAPSHOT: " + bundles[i].getLocation()); //$NON-NLS-1$
-                    continue;
-                }
-            } catch (Exception e) {
-                System.err.println("Cannot uninstall SNAPSHOT: " + bundles[i].getLocation()); //$NON-NLS-1$
-            }
-            String bundleName = getBundleNameFromLocation(bundles[i].getLocation());
-            if (!"System Bundle".equals(bundleName)) { //$NON-NLS-1$
-                installedBundleMap.put(bundleName, bundles[i]);
-                // Ensure old bundles won't be active
-                sl.setBundleStartLevel(bundles[i], Integer.MAX_VALUE);
-            }
-        }
-
-        int bundleIter = 0;
-        for (Iterator i = set.iterator(); i.hasNext();) {
-            String key = ((String) i.next()).toLowerCase();
-
-            // Ignore all keys that are not an auto property.
-            if (!key.startsWith(AUTO_INSTALL_PROP) && !key.startsWith(AUTO_START_PROP)) {
-                continue;
-            }
-
             // If the auto property does not have a start level,
             // then assume it is the default bundle start level, otherwise
             // parse the specified start level.
             int startLevel = sl.getInitialBundleStartLevel();
-            if (!key.equals(AUTO_INSTALL_PROP) && !key.equals(AUTO_START_PROP)) {
-                try {
-                    startLevel = Integer.parseInt(key.substring(key.lastIndexOf('.') + 1));
-                } catch (NumberFormatException ex) {
-                    System.err.println("Invalid property: " + key); //$NON-NLS-1$
-                }
+            try {
+                startLevel = Integer.parseInt(key.substring(key.lastIndexOf('.') + 1));
+            } catch (NumberFormatException ex) {
+                System.err.println("Invalid start level: " + key); //$NON-NLS-1$
             }
-
-            // Parse and install the bundles associated with the key.
+            boolean canBeStarted = key.startsWith(AUTO_START_PROP);
             StringTokenizer st = new StringTokenizer((String) configMap.get(key), "\" ", true); //$NON-NLS-1$
             for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
                 String bundleName = getBundleNameFromLocation(location);
-                try {
-                    webStartLoader.writeLabel(WebStartLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
-                    // Handle same bundle version with different location
-                    Bundle b = installedBundleMap.get(bundleName);
-                    if (b == null) {
-                        b = installBundle(context, location);
-                        installedBundleMap.put(bundleName, b);
-                    }
-                    sl.setBundleStartLevel(b, startLevel);
-                    loadTranslationBundle(context, b, installedBundleMap);
-                } catch (Exception ex) {
-                    String arch = System.getProperty("native.library.spec"); //$NON-NLS-1$
-                    if (bundleName.contains(arch)) {
-                        System.err.println("Cannot install native plug-in: " + bundleName); //$NON-NLS-1$
-                    } else {
-                        printError(ex, "Auto-properties install: " + location); //$NON-NLS-1$
-                        if (ex.getCause() != null) {
-                            ex.printStackTrace();
-                        }
-                    }
-                } finally {
-                    bundleIter++;
-                    webStartLoader.setValue(bundleIter);
+                if (!"System Bundle".equals(bundleName)) { //$NON-NLS-1$
+                    BundleElement b = new BundleElement(startLevel, location, canBeStarted);
+                    bundleList.put(bundleName, b);
                 }
             }
+        }
+        webStartLoader.setMax(bundleList.size());
+
+        final Map<String, Bundle> installedBundleMap = new HashMap<String, Bundle>();
+        Bundle[] bundles = context.getBundles();
+        for (int i = 0; i < bundles.length; i++) {
+            String bundleName = getBundleNameFromLocation(bundles[i].getLocation());
+            if (bundleName == null) {
+                // Should never happen
+                continue;
+            }
+            try {
+                BundleElement b = bundleList.get(bundleName);
+                // Remove the bundles in cache when they are not in the config.properties list
+                if (b == null) {
+                    if (!"System Bundle".equals(bundleName)) {//$NON-NLS-1$
+                        bundles[i].uninstall();
+                        System.out.println("Uninstall not used: " + bundleName); //$NON-NLS-1$
+                    }
+                    continue;
+                }
+                // Remove snapshot version to install it every time
+                if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) { //$NON-NLS-1$
+                    bundles[i].uninstall();
+                    System.out.println("Uninstall SNAPSHOT: " + bundleName); //$NON-NLS-1$
+                    continue;
+                }
+                installedBundleMap.put(bundleName, bundles[i]);
+
+            } catch (Exception e) {
+                System.err.println("Cannot remove from OSGI cache: " + bundleName); //$NON-NLS-1$
+            }
+        }
+
+        int bundleIter = 0;
+
+        // Parse and install the bundles associated with the key.
+        for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator(); iter.hasNext();) {
+            Entry<String, BundleElement> element = iter.next();
+            String bundleName = element.getKey();
+            BundleElement bundle = element.getValue();
+            if (bundle == null) {
+                // Should never happen
+                continue;
+            }
+            try {
+                webStartLoader.writeLabel(WebStartLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
+                // Do not download again the same bundle version but with different location or already in installed
+                // in cache from a previous version of Weasis
+                Bundle b = installedBundleMap.get(bundleName);
+                if (b == null) {
+                    b = installBundle(context, bundle.getLocation());
+                    installedBundleMap.put(bundleName, b);
+                }
+                sl.setBundleStartLevel(b, bundle.getStartLevel());
+                loadTranslationBundle(context, b, installedBundleMap);
+            } catch (Exception ex) {
+                if (bundleName.contains(System.getProperty("native.library.spec"))) { //$NON-NLS-1$
+                    System.err.println("Cannot install native bundle: " + bundleName); //$NON-NLS-1$
+                } else {
+                    printError(ex, "Cannot install bundle: " + bundleName); //$NON-NLS-1$
+                    if (ex.getCause() != null) {
+                        ex.printStackTrace();
+                    }
+                }
+            } finally {
+                bundleIter++;
+                webStartLoader.setValue(bundleIter);
+            }
+
         }
 
         webStartLoader.writeLabel(Messages.getString("AutoProcessor.start")); //$NON-NLS-1$
         // Now loop through the auto-start bundles and start them.
-        for (Iterator i = configMap.keySet().iterator(); i.hasNext();) {
-            String key = ((String) i.next()).toLowerCase();
-            if (key.startsWith(AUTO_START_PROP)) {
-                StringTokenizer st = new StringTokenizer((String) configMap.get(key), "\" ", true); //$NON-NLS-1$
-                for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
-                    String bundleName = getBundleNameFromLocation(location);
-                    try {
-                        // Handle same bundle version with different location
-                        Bundle b = installedBundleMap.get(bundleName);
-                        if (b == null) {
-                            // Should not reinstall
-                            b = installBundle(context, location);
-                        }
-                        if (b != null) {
-                            b.start();
-                        }
-                    } catch (Exception ex) {
-                        printError(ex, "Auto-properties start: " + location); //$NON-NLS-1$
+        for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator(); iter.hasNext();) {
+            Entry<String, BundleElement> element = iter.next();
+            String bundleName = element.getKey();
+            BundleElement bundle = element.getValue();
+            if (bundle == null) {
+                // Should never happen
+                continue;
+            }
+            if (bundle.isCanBeStarted()) {
+                try {
+                    Bundle b = installedBundleMap.get(bundleName);
+                    if (b == null) {
+                        // Try to reinstall
+                        b = installBundle(context, bundle.getLocation());
                     }
+                    if (b != null) {
+                        b.start();
+                    }
+                } catch (Exception ex) {
+                    printError(ex, "Cannot start bundle: " + bundleName); //$NON-NLS-1$
                 }
             }
         }
@@ -544,5 +549,31 @@ public class AutoProcessor {
 
         }
         return context.installBundle(location, null);
+    }
+
+    static class BundleElement {
+        private final int startLevel;
+        private final String location;
+        private final boolean canBeStarted;
+
+        public BundleElement(int startLevel, String location, boolean canBeStarted) {
+
+            this.startLevel = startLevel;
+            this.location = location;
+            this.canBeStarted = canBeStarted;
+        }
+
+        public int getStartLevel() {
+            return startLevel;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public boolean isCanBeStarted() {
+            return canBeStarted;
+        }
+
     }
 }
