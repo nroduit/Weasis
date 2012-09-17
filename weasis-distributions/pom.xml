@@ -7,7 +7,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.1.4-beta</version>
+	<version>1.2.1-beta</version>
 	<properties>
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier>-SNAPSHOT</qualifier>
