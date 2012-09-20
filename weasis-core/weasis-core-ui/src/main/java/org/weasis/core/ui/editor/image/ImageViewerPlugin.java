@@ -46,6 +46,7 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 
@@ -365,6 +366,16 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
         final LinkedHashMap<LayoutConstraints, JComponent> elements = layoutModel.getConstraints();
         if (elements.size() > 1) {
+            // Prevent conflict with double click for stopping to draw a graphic (like polyline)
+            List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
+            if (selGraphics != null) {
+                for (AbstractDragGraphic g : selGraphics) {
+                    if (g.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                        return;
+                    }
+                }
+            }
+
             for (DefaultView2d<E> v : view2ds) {
                 v.removeFocusListener(v);
             }

@@ -1315,19 +1315,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     class FocusHandler extends MouseActionAdapter {
 
         @Override
-        public void mouseClicked(MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
-                if (pane != null) {
-                    pane.maximizedSelectedImagePane(DefaultView2d.this);
-                }
-            }
-        }
-
-        @Override
         public void mousePressed(MouseEvent mouseevent) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
             if (pane == null) {
+                return;
+            }
+            if (mouseevent.getClickCount() == 2) {
+                pane.maximizedSelectedImagePane(DefaultView2d.this);
                 return;
             }
             if (pane.isContainingView(DefaultView2d.this)) {
