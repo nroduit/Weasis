@@ -209,6 +209,7 @@ public final class FileUtil {
             while ((offset = inputStream.read(buf)) > 0) {
                 out.write(buf, 0, offset);
             }
+            out.flush();
             return -1;
         } catch (InterruptedIOException e) {
             return e.bytesTransferred;
