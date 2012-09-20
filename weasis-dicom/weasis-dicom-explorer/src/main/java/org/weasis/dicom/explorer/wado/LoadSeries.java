@@ -41,9 +41,11 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
 import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VRMap;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che2.io.StopTagInputHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -315,7 +317,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
                         // Solaris has all the decoders, but no bundle has been built for Weasis
                         if (!DicomMediaIO.hasPlatformNativeImageioCodecs()) {
-                            if (TransferSyntax.requiresNativeImageioCodecs(wado_tsuid)) { //$NON-NLS-1$
+                            if (TransferSyntax.requiresNativeImageioCodecs(wado_tsuid)) {
                                 wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
                             }
                         }
@@ -998,9 +1000,12 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             DicomInputStream dis = null;
             DicomOutputStream dos = null;
             try {
-                dis = new DicomInputStream(new BufferedInputStream(inputStream));
+                BufferedInputStream bin = new BufferedInputStream(inputStream);
+                dis = new DicomInputStream(bin);
+                dis.setHandler(new StopTagInputHandler(Tag.PixelData));
                 DicomObject dcm = dis.readDicomObject();
-                dos = new DicomOutputStream(new BufferedOutputStream(out));
+                BufferedOutputStream bout = new BufferedOutputStream(out);
+                dos = new DicomOutputStream(bout);
 
                 if (overrideList != null) {
                     MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
@@ -1030,7 +1035,20 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     }
                 }
                 dos.writeDicomFile(dcm);
-                return -1;
+                dos.flush();
+
+                // Read again the the beginning of the pixel data tag, if needed
+                if (dis.tag() == Tag.PixelData) {
+                    long stop = dis.getStreamPosition();
+                    dis.reset();
+                    int diff = (int) (stop - dis.getStreamPosition());
+                    if (diff > 0) {
+                        byte[] pixBuffer = new byte[diff];
+                        dis.read(pixBuffer);
+                        bout.write(pixBuffer);
+                    }
+                }
+                return FileUtil.writeFile(bin, bout);
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (IOException e) {
