@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>1.10</version>
+		<version>1.10-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Codec [${project.artifactId}]</name>
-	<version>0.5.11</version>
+	<version>0.5.11-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
@@ -54,7 +54,7 @@
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>0.7.9</version>
+			<version>0.7.9-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
