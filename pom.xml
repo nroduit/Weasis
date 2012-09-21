@@ -2,7 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-framework</artifactId>
-	<version>1.2.2-SNAPSHOT</version>
+	<groupId>org.weasis</groupId>
+	<version>1.2.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>
@@ -52,10 +53,4 @@
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>
 	</modules>
-	<parent>
-		<groupId>org.weasis</groupId>
-		<artifactId>weasis-parent</artifactId>
-		<version>1.12-SNAPSHOT</version>
-		<relativePath>weasis-parent/pom.xml</relativePath>
-	</parent>
 </project>
