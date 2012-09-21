@@ -561,7 +561,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             (int) Math
                 .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) / getWidth())); //$NON-NLS-1$
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-        return new Font("SansSerif", 0, fontSize);
+        return new Font("SansSerif", 0, fontSize); //$NON-NLS-1$
     }
 
     /** paint routine */
