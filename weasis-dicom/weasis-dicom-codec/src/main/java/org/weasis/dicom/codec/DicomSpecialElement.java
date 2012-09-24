@@ -74,7 +74,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
         List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
         if (studyElements != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (seriesUID != null && "KO".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
+                if (dicom != null && seriesUID != null && "KO".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                     DicomElement seq = (DicomElement) dicom.getTagValue(TagW.CurrentRequestedProcedureEvidenceSequence);
                     if (seq != null && seq.vr() == VR.SQ) {
                         for (int i = 0; i < seq.countItems(); ++i) {
@@ -127,7 +127,7 @@ public class DicomSpecialElement extends MediaElement<URI> {
         List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
         if (studyElements != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (seriesUID != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
+                if (dicom != null && seriesUID != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
                     DicomElement seq = (DicomElement) dicom.getTagValue(TagW.ReferencedSeriesSequence);
                     if (seq != null && seq.vr() == VR.SQ) {
                         for (int i = 0; i < seq.countItems(); ++i) {
