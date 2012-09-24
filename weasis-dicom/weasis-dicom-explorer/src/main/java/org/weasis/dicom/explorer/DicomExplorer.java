@@ -1048,6 +1048,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 }
             });
             panel.add(btnMoreOptions, gbc_btnMoreOptions);
+
             // panel_1.add(panel_2, BorderLayout.SOUTH);
             GridBagLayout gbl_panel_2 = new GridBagLayout();
             panel_2.setLayout(gbl_panel_2);
@@ -1286,7 +1287,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             list = new ArrayList<DicomSpecialElement>();
             study.setTag(TagW.DicomSpecialElementList, list);
         }
-        if (!list.contains(dicomObject)) {
+        if (dicomObject != null && !list.contains(dicomObject)) {
             list.add(dicomObject);
         }
     }
