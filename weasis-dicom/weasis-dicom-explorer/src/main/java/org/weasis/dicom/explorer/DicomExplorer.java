@@ -1286,7 +1286,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
             list = new ArrayList<DicomSpecialElement>();
             study.setTag(TagW.DicomSpecialElementList, list);
         }
-        if (!list.contains(dicomObject)) {
+        if (dicomObject != null && !list.contains(dicomObject)) {
             list.add(dicomObject);
         }
     }
