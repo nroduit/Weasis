@@ -10,7 +10,7 @@
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>2D DICOM Viewer [${project.artifactId}]</name>
-	<version>0.5.11</version>
+	<version>0.5.11-p2</version>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>0.5.11</version>
+			<version>0.5.11-p2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>0.5.11</version>
+			<version>0.5.11-p2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

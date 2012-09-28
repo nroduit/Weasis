@@ -10,7 +10,7 @@
 	<artifactId>weasis-dicom-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Codec [${project.artifactId}]</name>
-	<version>0.5.11</version>
+	<version>0.5.11-p2</version>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>

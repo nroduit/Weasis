@@ -7,7 +7,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 	<properties>
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier></qualifier>
@@ -35,7 +35,7 @@
 		<weasis.core.version>0.5.11${qualifier}</weasis.core.version>
 		<weasis.imageio.version>0.7.9${qualifier}</weasis.imageio.version>
 		<weasis.base.version>0.5.11${qualifier}</weasis.base.version>
-		<weasis.dicom.version>0.5.11${qualifier}</weasis.dicom.version>
+		<weasis.dicom.version>0.5.11-p2</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>7.1.2</substance.version>

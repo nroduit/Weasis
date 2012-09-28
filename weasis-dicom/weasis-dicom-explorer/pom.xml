@@ -10,7 +10,7 @@
 	<artifactId>weasis-dicom-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Data Explorer [${project.artifactId}]</name>
-	<version>0.5.11</version>
+	<version>0.5.11-p2</version>
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>0.5.11</version>
+			<version>0.5.11-p2</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
