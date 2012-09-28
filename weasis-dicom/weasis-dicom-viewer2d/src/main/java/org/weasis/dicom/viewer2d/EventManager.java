@@ -1226,15 +1226,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 String command = args.get(0);
                 if (command != null) {
                     try {
-                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
-                        if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                            mouseActions.setAction(MouseActions.LEFT, command);
-                            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                view.setMouseActions(mouseActions);
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                        if (command.startsWith("session")) {
+                            AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
+                        } else {
+                            AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
+                            if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                                mouseActions.setAction(MouseActions.LEFT, command);
+                                ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+                                if (view != null) {
+                                    view.setMouseActions(mouseActions);
+                                    final ViewerToolBar toolBar = view.getViewerToolBar();
+                                    if (toolBar != null) {
+                                        toolBar.changeButtonState(MouseActions.LEFT, command);
+                                    }
                                 }
                             }
                         }
