@@ -55,7 +55,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -96,7 +95,8 @@ import org.weasis.dicom.viewer2d.internal.Activator;
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
-    public static final String[] functions = { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+    public static final String[] functions = {
+        "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -710,7 +710,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    public void resetAllActions() {
+    private void resetAllActions() {
         firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
 
         if (selectedView2dContainer != null) {
@@ -731,6 +731,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void reset(ResetTools action) {
+        AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
             resetAllActions();
         } else if (ResetTools.Zoom.equals(action)) {
@@ -1225,15 +1226,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 String command = args.get(0);
                 if (command != null) {
                     try {
-                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
-                        if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                            mouseActions.setAction(MouseActions.LEFT, command);
-                            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-                            if (view != null) {
-                                view.setMouseActions(mouseActions);
-                                final ViewerToolBar toolBar = view.getViewerToolBar();
-                                if (toolBar != null) {
-                                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                        if (command.startsWith("session")) {
+                            AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
+                        } else {
+                            AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
+                            if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                                mouseActions.setAction(MouseActions.LEFT, command);
+                                ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+                                if (view != null) {
+                                    view.setMouseActions(mouseActions);
+                                    final ViewerToolBar toolBar = view.getViewerToolBar();
+                                    if (toolBar != null) {
+                                        toolBar.changeButtonState(MouseActions.LEFT, command);
+                                    }
                                 }
                             }
                         }
@@ -1277,6 +1282,44 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             }
                         }
                         throw new IllegalArgumentException("Synch command '" + command + "' not found!"); //$NON-NLS-1$ //$NON-NLS-2$
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
+    public void reset(String[] argv) throws IOException {
+        final String[] usage = { "Reset a tool or all the tools", //$NON-NLS-1$
+            "Usage: dcmview2d:reset [action String value | all]", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$ 
+        final Option opt = Options.compile(usage).parse(argv);
+        final List<String> args = opt.args();
+
+        if (opt.isSet("help") || args.size() != 1) { //$NON-NLS-1$
+            opt.usage();
+            return;
+        }
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                String command = args.get(0);
+                if (command != null) {
+                    try {
+                        if (ActionW.WINLEVEL.cmd().equals(command)) {
+                            reset(ResetTools.WindowLevel);
+                        } else if (ActionW.ZOOM.cmd().equals(command)) {
+                            reset(ResetTools.Zoom);
+                        } else if (ActionW.PAN.cmd().equals(command)) {
+                            reset(ResetTools.Pan);
+                        } else if (ActionW.ROTATION.cmd().equals(command)) {
+                            reset(ResetTools.Rotation);
+                        } else {
+                            reset(ResetTools.All);
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
