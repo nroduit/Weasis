@@ -17,7 +17,6 @@ import java.awt.event.ActionListener;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.Icon;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
@@ -41,6 +40,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
     public MiniTool(String pluginName) {
         super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.TYPE.tool);
+        // TODO display a button to minimize or do not display the tab
+        dockable.setTitleShown(false);
         setDockableWidth(40);
         currentAction = getActions()[0];
         slider = createSlider(currentAction);
