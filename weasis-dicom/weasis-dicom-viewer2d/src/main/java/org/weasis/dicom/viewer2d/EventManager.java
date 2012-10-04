@@ -97,7 +97,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
     public static final String[] functions = {
-        "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
@@ -1227,7 +1227,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 String command = args.get(0);
                 if (command != null) {
                     try {
-                        if (command.startsWith("session")) {
+                        if (command.startsWith("session")) { //$NON-NLS-1$
                             AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
                         } else {
                             AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$

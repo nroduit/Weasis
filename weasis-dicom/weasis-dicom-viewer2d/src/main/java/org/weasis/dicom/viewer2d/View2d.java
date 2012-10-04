@@ -13,7 +13,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -104,6 +103,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -794,6 +794,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (selected.size() > 0) {
 
             JPopupMenu popupMenu = new JPopupMenu();
+            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
+            popupMenu.add(itemTitle);
+            popupMenu.addSeparator();
+
             boolean graphicComplete = true;
             if (selected.size() == 1) {
                 final Graphic graph = selected.get(0);
@@ -957,13 +961,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
             return popupMenu;
         } else if (View2d.this.getSourceImage() != null) {
-            JPopupMenu popupMenu = new JPopupMenu();
+            final JPopupMenu popupMenu = new JPopupMenu();
+            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.left_mouse"), popupMenu.getInsets()); //$NON-NLS-1$
+            popupMenu.add(itemTitle);
             final EventManager event = EventManager.getInstance();
-            JMenuItem item = new JMenuItem(Messages.getString("View2d.left_mouse")); //$NON-NLS-1$
-            Font font = item.getFont();
-            item.setFont(new Font(font.getFamily(), Font.BOLD, font.getSize()));
-            item.setFocusable(false);
-            popupMenu.add(item);
             popupMenu.setLabel(MouseActions.LEFT);
             String action = event.getMouseActions().getLeft();
             ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
@@ -1170,16 +1171,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
 
         private void showPopup(final MouseEvent evt) {
-            if (evt.isPopupTrigger()) {
-                int buttonMask = getButtonMaskEx();
-                // Context menu
-                if ((evt.getModifiersEx() & buttonMask) != 0) {
-                    JPopupMenu popupMenu = View2d.this.buidContexMenu(evt);
-                    if (popupMenu != null) {
-                        popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
-                    }
+            // Context menu
+            if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
+                JPopupMenu popupMenu = View2d.this.buidContexMenu(evt);
+                if (popupMenu != null) {
+                    popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                 }
             }
         }
     }
+
 }
