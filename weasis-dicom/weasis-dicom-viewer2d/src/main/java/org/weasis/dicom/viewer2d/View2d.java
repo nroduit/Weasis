@@ -13,7 +13,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -106,6 +105,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -791,403 +791,418 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
+    protected JPopupMenu buidGraphicContextMenu(final MouseEvent evt, final ArrayList<Graphic> selected) {
+        if (selected != null) {
+            final JPopupMenu popupMenu = new JPopupMenu();
+            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
+            popupMenu.add(itemTitle);
+            popupMenu.addSeparator();
+            boolean graphicComplete = true;
+            if (selected.size() == 1) {
+                final Graphic graph = selected.get(0);
+                if (graph instanceof AbstractDragGraphic) {
+                    final AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
+                    if (!absgraph.isGraphicComplete()) {
+                        graphicComplete = false;
+                    }
+                    if (absgraph.isVariablePointsNumber()) {
+                        if (graphicComplete) {
+                            /*
+                             * Convert mouse event point to real image coordinate point (without geometric
+                             * transformation)
+                             */
+                            final MouseEventDouble mouseEvt =
+                                new MouseEventDouble(View2d.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0,
+                                    0, 0, 1, true, 1);
+                            mouseEvt.setSource(View2d.this);
+                            mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
+                            final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
+                            if (ptIndex >= 0) {
+                                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt")); //$NON-NLS-1$
+                                menuItem.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        absgraph.removeHandlePoint(ptIndex, mouseEvt);
+                                    }
+                                });
+                                popupMenu.add(menuItem);
+
+                                menuItem = new JMenuItem(Messages.getString("View2d.draw_pt")); //$NON-NLS-1$
+                                menuItem.addActionListener(new ActionListener() {
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        absgraph.forceToAddPoints(ptIndex);
+                                        MouseEventDouble evt2 =
+                                            new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt.getWhen(),
+                                                16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt.getYOnScreen(), 1,
+                                                true, 1);
+                                        mouseClickHandler.mousePressed(evt2);
+                                    }
+                                });
+                                popupMenu.add(menuItem);
+                                popupMenu.add(new JSeparator());
+                            }
+                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                            final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
+                            item2.addActionListener(new ActionListener() {
+
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    MouseEventDouble event =
+                                        new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
+                                    ds.completeDrag(event);
+                                    mouseClickHandler.mouseReleased(event);
+                                }
+                            });
+                            popupMenu.add(item2);
+                            popupMenu.add(new JSeparator());
+                        }
+                    }
+                }
+            }
+            if (graphicComplete) {
+                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        View2d.this.getLayerModel().deleteSelectedGraphics(true);
+                    }
+                });
+                popupMenu.add(menuItem);
+
+                menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                        View2d.this.getLayerModel().deleteSelectedGraphics(false);
+                    }
+                });
+                popupMenu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        AbstractLayerModel.GraphicClipboard.setGraphics(selected);
+                    }
+                });
+                popupMenu.add(menuItem);
+                popupMenu.add(new JSeparator());
+            }
+            // TODO separate AbstractDragGraphic and ClassGraphic for properties
+            final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+            for (Graphic graphic : selected) {
+                if (graphic instanceof AbstractDragGraphic) {
+                    list.add((AbstractDragGraphic) graphic);
+                }
+            }
+
+            if (selected.size() == 1) {
+                final Graphic graph = selected.get(0);
+                JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front")); //$NON-NLS-1$
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        graph.toFront();
+                    }
+                });
+                popupMenu.add(item);
+                item = new JMenuItem(Messages.getString("View2d.to_back")); //$NON-NLS-1$
+                item.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        graph.toBack();
+                    }
+                });
+                popupMenu.add(item);
+                popupMenu.add(new JSeparator());
+
+                if (graphicComplete && graph instanceof LineGraphic) {
+
+                    final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
+                    calibMenu.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
+                            CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
+                            int res =
+                                JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
+                                    JOptionPane.OK_CANCEL_OPTION);
+                            if (res == JOptionPane.OK_OPTION) {
+                                calibrationDialog.applyNewCalibration();
+                            }
+                        }
+                    });
+                    popupMenu.add(calibMenu);
+                    popupMenu.add(new JSeparator());
+                }
+            }
+            if (list.size() > 0) {
+                JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop")); //$NON-NLS-1$
+                properties.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
+                        WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
+                        dialog.setVisible(true);
+                    }
+                });
+                popupMenu.add(properties);
+            }
+            return popupMenu;
+        }
+        return null;
+    }
+
+    protected JPopupMenu buidContexMenu(final MouseEvent evt) {
+        JPopupMenu popupMenu = new JPopupMenu();
+        TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.left_mouse"), popupMenu.getInsets()); //$NON-NLS-1$
+        popupMenu.add(itemTitle);
+        final EventManager event = EventManager.getInstance();
+        popupMenu.setLabel(MouseActions.LEFT);
+        String action = event.getMouseActions().getLeft();
+        ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
+        ButtonGroup groupButtons = new ButtonGroup();
+        ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
+        if (view != null) {
+            final ViewerToolBar toolBar = view.getViewerToolBar();
+            if (toolBar != null) {
+                ActionListener leftButtonAction = new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (e.getSource() instanceof JRadioButtonMenuItem) {
+                            JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
+                            toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
+                        }
+                    }
+                };
+
+                for (int i = 0; i < actionsButtons.length; i++) {
+                    ActionW actionW = actionsButtons[i];
+                    JRadioButtonMenuItem radio =
+                        new JRadioButtonMenuItem(actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
+                    radio.setActionCommand(actionW.cmd());
+                    radio.setAccelerator(KeyStroke.getKeyStroke(actionW.getKeyCode(), actionW.getModifier()));
+                    // Trigger the selected mouse action
+                    radio.addActionListener(toolBar);
+                    // Update the state of the button in the toolbar
+                    radio.addActionListener(leftButtonAction);
+                    popupMenu.add(radio);
+                    groupButtons.add(radio);
+                }
+            }
+        }
+        if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
+            popupMenu.add(new JSeparator());
+            JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
+                    if (graphs != null) {
+                        Rectangle2D area = View2d.this.getViewModel().getModelArea();
+                        for (Graphic g : graphs) {
+                            if (!g.getBounds(null).intersects(area)) {
+                                int option =
+                                    JOptionPane.showConfirmDialog(View2d.this,
+                                        "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                                if (option == JOptionPane.YES_OPTION) {
+                                    break;
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
+                        for (Graphic g : graphs) {
+                            AbstractLayer layer = View2d.this.getLayerModel().getLayer(g.getLayerID());
+                            if (layer != null) {
+                                Graphic graph = g.deepCopy();
+                                if (graph != null) {
+                                    graph.updateLabel(true, View2d.this);
+                                    layer.addGraphic(graph);
+                                }
+                            }
+                        }
+                        // Repaint all because labels are not drawn
+                        View2d.this.getLayerModel().repaint();
+                    }
+                }
+            });
+            popupMenu.add(menuItem);
+        }
+        popupMenu.add(new JSeparator());
+
+        // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
+        // if (viewingAction instanceof ComboItemListener) {
+        // popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
+        //                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
+        // }
+        // ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
+        // if (koAction instanceof ComboItemListener) {
+        // ComboItemListener ko = (ComboItemListener) koAction;
+        // if (ko.getModel().getSize() > 1) {
+        //                            popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
+        // }
+        // }
+        // ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
+        // if (prAction instanceof ComboItemListener) {
+        // ComboItemListener pr = (ComboItemListener) prAction;
+        // if (pr.getModel().getSize() > 1) {
+        //                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
+        // }
+        // }
+        WProperties p = BundleTools.SYSTEM_PREFERENCES;
+        if (p.getBooleanProperty("weasis.contextmenu.presets", true)) {
+            ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+            if (presetAction instanceof ComboItemListener) {
+                JMenu menu =
+                    ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.presets"));//$NON-NLS-1$
+                for (Component mitem : menu.getMenuComponents()) {
+                    RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                    PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
+                    if (preset.getKeyCode() > 0) {
+                        ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+                    }
+                }
+                popupMenu.add(menu);
+            }
+        }
+
+        if (p.getBooleanProperty("weasis.contextmenu.lut", true)) {
+            ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
+            if (lutShapeAction instanceof ComboItemListener) {
+                popupMenu.add(((ComboItemListener) lutShapeAction).createMenu(ActionW.LUT_SHAPE.getTitle())); //$NON-NLS-1$
+            }
+        }
+
+        if (p.getBooleanProperty("weasis.contextmenu.sortstack", true)) {
+            ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
+            if (stackAction instanceof ComboItemListener) {
+                JMenu menu =
+                    ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
+                if (invstackAction instanceof ToggleButtonListener) {
+                    menu.add(new JSeparator());
+                    menu.add(((ToggleButtonListener) invstackAction).createUnregiteredJCheckBoxMenuItem(Messages
+                        .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+                }
+                popupMenu.add(menu);
+            }
+        }
+
+        if (p.getBooleanProperty("weasis.contextmenu.orientation", true)) {
+            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+            if (rotateAction instanceof SliderChangeListener) {
+                popupMenu.add(new JSeparator());
+                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotation.setValue(0);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotation.setValue((rotation.getValue() + 90) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+                menuItem.addActionListener(new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rotation.setValue((rotation.getValue() + 180) % 360);
+                    }
+                });
+                menu.add(menuItem);
+                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
+                if (flipAction instanceof ToggleButtonListener) {
+                    menu.add(new JSeparator());
+                    menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
+                        .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+                }
+                popupMenu.add(menu);
+            }
+        }
+
+        popupMenu.add(new JSeparator());
+
+        if (p.getBooleanProperty("weasis.contextmenu.reset", true)) {
+            popupMenu.add(ResetTools.createUnregisteredJMenu());
+        }
+
+        if (p.getBooleanProperty("weasis.contextmenu.close", true)) {
+            JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
+            close.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    event.getSelectedView2dContainer();
+                    View2d.this.setSeries(null, null);
+                }
+            });
+            popupMenu.add(close);
+        }
+        return popupMenu;
+    }
+
     class ContextMenuHandler extends MouseActionAdapter {
 
         @Override
         public void mousePressed(final MouseEvent evt) {
-            int buttonMask = getButtonMaskEx();
+            showPopup(evt);
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent evt) {
+            showPopup(evt);
+        }
+
+        private void showPopup(final MouseEvent evt) {
             // Context menu
-            if ((evt.getModifiersEx() & buttonMask) != 0) {
+            if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
+                JPopupMenu popupMenu = null;
                 final ArrayList<Graphic> selected =
                     new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics());
                 if (selected.size() > 0) {
-
-                    JPopupMenu popupMenu = new JPopupMenu();
-                    boolean graphicComplete = true;
-                    if (selected.size() == 1) {
-                        final Graphic graph = selected.get(0);
-                        if (graph instanceof AbstractDragGraphic) {
-                            final AbstractDragGraphic absgraph = (AbstractDragGraphic) graph;
-                            if (!absgraph.isGraphicComplete()) {
-                                graphicComplete = false;
-                            }
-                            if (absgraph.isVariablePointsNumber()) {
-                                if (graphicComplete) {
-                                    /*
-                                     * Convert mouse event point to real image coordinate point (without geometric
-                                     * transformation)
-                                     */
-                                    final MouseEventDouble mouseEvt =
-                                        new MouseEventDouble(View2d.this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16,
-                                            0, 0, 0, 0, 1, true, 1);
-                                    mouseEvt.setSource(View2d.this);
-                                    mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
-                                    final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
-                                    if (ptIndex >= 0) {
-                                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt")); //$NON-NLS-1$
-                                        menuItem.addActionListener(new ActionListener() {
-
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                absgraph.removeHandlePoint(ptIndex, mouseEvt);
-                                            }
-                                        });
-                                        popupMenu.add(menuItem);
-
-                                        menuItem = new JMenuItem(Messages.getString("View2d.draw_pt")); //$NON-NLS-1$
-                                        menuItem.addActionListener(new ActionListener() {
-
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                absgraph.forceToAddPoints(ptIndex);
-                                                MouseEventDouble evt2 =
-                                                    new MouseEventDouble(View2d.this, MouseEvent.MOUSE_PRESSED, evt
-                                                        .getWhen(), 16, evt.getX(), evt.getY(), evt.getXOnScreen(), evt
-                                                        .getYOnScreen(), 1, true, 1);
-                                                mouseClickHandler.mousePressed(evt2);
-                                            }
-                                        });
-                                        popupMenu.add(menuItem);
-                                        popupMenu.add(new JSeparator());
-                                    }
-                                } else if (ds != null
-                                    && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
-                                    final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
-                                    item2.addActionListener(new ActionListener() {
-
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            MouseEventDouble event =
-                                                new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
-                                            ds.completeDrag(event);
-                                            mouseClickHandler.mouseReleased(event);
-                                        }
-                                    });
-                                    popupMenu.add(item2);
-                                    popupMenu.add(new JSeparator());
-                                }
-                            }
-                        }
-                    }
-                    if (graphicComplete) {
-                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel")); //$NON-NLS-1$
-                        menuItem.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                View2d.this.getLayerModel().deleteSelectedGraphics(true);
-                            }
-                        });
-                        popupMenu.add(menuItem);
-
-                        menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
-                        menuItem.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                                View2d.this.getLayerModel().deleteSelectedGraphics(false);
-                            }
-                        });
-                        popupMenu.add(menuItem);
-                        menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
-                        menuItem.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                AbstractLayerModel.GraphicClipboard.setGraphics(selected);
-                            }
-                        });
-                        popupMenu.add(menuItem);
-                        popupMenu.add(new JSeparator());
-                    }
-                    // TODO separate AbstractDragGraphic and ClassGraphic for properties
-                    final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
-                    for (Graphic graphic : selected) {
-                        if (graphic instanceof AbstractDragGraphic) {
-                            list.add((AbstractDragGraphic) graphic);
-                        }
-                    }
-
-                    if (selected.size() == 1) {
-                        final Graphic graph = selected.get(0);
-                        JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front")); //$NON-NLS-1$
-                        item.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                graph.toFront();
-                            }
-                        });
-                        popupMenu.add(item);
-                        item = new JMenuItem(Messages.getString("View2d.to_back")); //$NON-NLS-1$
-                        item.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                graph.toBack();
-                            }
-                        });
-                        popupMenu.add(item);
-                        popupMenu.add(new JSeparator());
-
-                        if (graphicComplete && graph instanceof LineGraphic) {
-
-                            final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
-                            calibMenu.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
-                                    CalibrationView calibrationDialog =
-                                        new CalibrationView((LineGraphic) graph, View2d.this);
-                                    int res =
-                                        JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
-                                            JOptionPane.OK_CANCEL_OPTION);
-                                    if (res == JOptionPane.OK_OPTION) {
-                                        calibrationDialog.applyNewCalibration();
-                                    }
-                                }
-                            });
-                            popupMenu.add(calibMenu);
-                            popupMenu.add(new JSeparator());
-                        }
-                    }
-                    if (list.size() > 0) {
-                        JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop")); //$NON-NLS-1$
-                        properties.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
-                                WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
-                                dialog.setVisible(true);
-                            }
-                        });
-                        popupMenu.add(properties);
-                    }
-                    popupMenu.show(evt.getComponent(), evt.getX() - 5, evt.getY() - 5);
+                    popupMenu = View2d.this.buidGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {
-                    JPopupMenu popupMenu = new JPopupMenu();
-                    final EventManager event = EventManager.getInstance();
-                    JMenuItem item = new JMenuItem(Messages.getString("View2d.left_mouse")); //$NON-NLS-1$
-                    Font font = item.getFont();
-                    item.setFont(new Font(font.getFamily(), Font.BOLD, font.getSize()));
-                    item.setFocusable(false);
-                    popupMenu.add(item);
-                    popupMenu.setLabel(MouseActions.LEFT);
-                    String action = event.getMouseActions().getLeft();
-                    ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
-                    ButtonGroup groupButtons = new ButtonGroup();
-                    ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
-                    if (view != null) {
-                        final ViewerToolBar toolBar = view.getViewerToolBar();
-                        if (toolBar != null) {
-                            ActionListener leftButtonAction = new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    if (e.getSource() instanceof JRadioButtonMenuItem) {
-                                        JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
-                                    }
-                                }
-                            };
-
-                            for (int i = 0; i < actionsButtons.length; i++) {
-                                ActionW actionW = actionsButtons[i];
-                                JRadioButtonMenuItem radio =
-                                    new JRadioButtonMenuItem(actionW.getTitle(), actionW.getIcon(), actionW.cmd()
-                                        .equals(action));
-                                radio.setActionCommand(actionW.cmd());
-                                radio
-                                    .setAccelerator(KeyStroke.getKeyStroke(actionW.getKeyCode(), actionW.getModifier()));
-                                // Trigger the selected mouse action
-                                radio.addActionListener(toolBar);
-                                // Update the state of the button in the toolbar
-                                radio.addActionListener(leftButtonAction);
-                                popupMenu.add(radio);
-                                groupButtons.add(radio);
-                            }
-                        }
-                    }
-                    if (AbstractLayerModel.GraphicClipboard.getGraphics() != null) {
-                        popupMenu.add(new JSeparator());
-                        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
-                        menuItem.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                List<Graphic> graphs = AbstractLayerModel.GraphicClipboard.getGraphics();
-                                if (graphs != null) {
-                                    Rectangle2D area = View2d.this.getViewModel().getModelArea();
-                                    for (Graphic g : graphs) {
-                                        if (!g.getBounds(null).intersects(area)) {
-                                            int option =
-                                                JOptionPane
-                                                    .showConfirmDialog(View2d.this,
-                                                        "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
-                                            if (option == JOptionPane.YES_OPTION) {
-                                                break;
-                                            } else {
-                                                return;
-                                            }
-                                        }
-                                    }
-                                    for (Graphic g : graphs) {
-                                        AbstractLayer layer = View2d.this.getLayerModel().getLayer(g.getLayerID());
-                                        if (layer != null) {
-                                            Graphic graph = g.deepCopy();
-                                            if (graph != null) {
-                                                graph.updateLabel(true, View2d.this);
-                                                layer.addGraphic(graph);
-                                            }
-                                        }
-                                    }
-                                    // Repaint all because labels are not drawn
-                                    View2d.this.getLayerModel().repaint();
-                                }
-                            }
-                        });
-                        popupMenu.add(menuItem);
-                    }
-                    popupMenu.add(new JSeparator());
-
-                    // ActionState viewingAction = eventManager.getAction(ActionW.VIEWINGPROTOCOL);
-                    // if (viewingAction instanceof ComboItemListener) {
-                    // popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
-                    //                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
-                    // }
-                    // ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
-                    // if (koAction instanceof ComboItemListener) {
-                    // ComboItemListener ko = (ComboItemListener) koAction;
-                    // if (ko.getModel().getSize() > 1) {
-                    //                            popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
-                    // }
-                    // }
-                    // ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
-                    // if (prAction instanceof ComboItemListener) {
-                    // ComboItemListener pr = (ComboItemListener) prAction;
-                    // if (pr.getModel().getSize() > 1) {
-                    //                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
-                    // }
-                    // }
-                    WProperties p = BundleTools.SYSTEM_PREFERENCES;
-                    if (p.getBooleanProperty("weasis.contextmenu.presets", true)) {
-                        ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                        if (presetAction instanceof ComboItemListener) {
-                            JMenu menu =
-                                ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
-                                    .getString("View2dContainer.presets"));//$NON-NLS-1$
-                            for (Component mitem : menu.getMenuComponents()) {
-                                RadioMenuItem ritem = ((RadioMenuItem) mitem);
-                                PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
-                                if (preset.getKeyCode() > 0) {
-                                    ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
-                                }
-                            }
-                            popupMenu.add(menu);
-                        }
-                    }
-
-                    if (p.getBooleanProperty("weasis.contextmenu.lut", true)) {
-                        ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
-                        if (lutShapeAction instanceof ComboItemListener) {
-                            popupMenu
-                                .add(((ComboItemListener) lutShapeAction).createMenu(ActionW.LUT_SHAPE.getTitle())); //$NON-NLS-1$
-                        }
-                    }
-
-                    if (p.getBooleanProperty("weasis.contextmenu.sortstack", true)) {
-                        ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
-                        if (stackAction instanceof ComboItemListener) {
-                            JMenu menu =
-                                ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
-                                    .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
-                            ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                            if (invstackAction instanceof ToggleButtonListener) {
-                                menu.add(new JSeparator());
-                                menu.add(((ToggleButtonListener) invstackAction)
-                                    .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
-                            }
-                            popupMenu.add(menu);
-                        }
-                    }
-
-                    if (p.getBooleanProperty("weasis.contextmenu.orientation", true)) {
-                        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                        if (rotateAction instanceof SliderChangeListener) {
-                            popupMenu.add(new JSeparator());
-                            JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                            JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                            final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                            menuItem.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    rotation.setValue(0);
-                                }
-                            });
-                            menu.add(menuItem);
-                            menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                            menuItem.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                                }
-                            });
-                            menu.add(menuItem);
-                            menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                            menuItem.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    rotation.setValue((rotation.getValue() + 90) % 360);
-                                }
-                            });
-                            menu.add(menuItem);
-                            menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                            menuItem.addActionListener(new ActionListener() {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    rotation.setValue((rotation.getValue() + 180) % 360);
-                                }
-                            });
-                            menu.add(menuItem);
-                            ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                            if (flipAction instanceof ToggleButtonListener) {
-                                menu.add(new JSeparator());
-                                menu.add(((ToggleButtonListener) flipAction)
-                                    .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
-                            }
-                            popupMenu.add(menu);
-                        }
-                    }
-
-                    popupMenu.add(new JSeparator());
-
-                    if (p.getBooleanProperty("weasis.contextmenu.reset", true)) {
-                        popupMenu.add(ResetTools.createUnregisteredJMenu());
-                    }
-
-                    if (p.getBooleanProperty("weasis.contextmenu.close", true)) {
-                        JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
-                        close.addActionListener(new ActionListener() {
-
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                event.getSelectedView2dContainer();
-                                View2d.this.setSeries(null, null);
-                            }
-                        });
-                        popupMenu.add(close);
-                    }
-                    popupMenu.show(evt.getComponent(), evt.getX() - 5, evt.getY() - 5);
+                    popupMenu = View2d.this.buidContexMenu(evt);
+                }
+                if (popupMenu != null) {
+                    popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                 }
             }
         }
     }
-
 }
