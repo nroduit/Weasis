@@ -785,11 +785,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         menuFile.removeAll();
         DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
 
-            @Override
-            public void popupMenuWillBecomeVisible() {
-                buildOpenSubMenu(this);
-            }
-        };
+                @Override
+                public void popupMenuWillBecomeVisible() {
+                    buildOpenSubMenu(this);
+                }
+            };
         openMenu.addPopupMenuListener();
         menuFile.add(openMenu);
 
@@ -814,13 +814,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
-        DynamicMenu printMenu = new DynamicMenu("Print") {//$NON-NLS-1$
+        DynamicMenu printMenu = new DynamicMenu("Print") {
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildPrintSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildPrintSubMenu(this);
+            }
+        };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
         menuFile.add(new JSeparator());
