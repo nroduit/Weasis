@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>org.weasis</groupId>
 		<artifactId>weasis-parent</artifactId>
-		<version>1.12-SNAPSHOT</version>
+		<version>1.12</version>
 	</parent>
 	<artifactId>weasis-framework</artifactId>
-	<version>1.2.3-SNAPSHOT</version>
+	<version>1.2.3</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>
