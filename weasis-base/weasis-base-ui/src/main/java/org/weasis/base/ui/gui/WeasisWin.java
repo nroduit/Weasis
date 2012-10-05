@@ -50,7 +50,6 @@ import javax.swing.JSeparator;
 import javax.swing.LookAndFeel;
 import javax.swing.TransferHandler;
 
-import org.noos.xing.mydoggy.plaf.ui.util.Colors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -87,6 +86,23 @@ import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.ui.util.WtoolBar.TYPE;
+
+import bibliothek.extension.gui.dock.theme.EclipseTheme;
+import bibliothek.extension.gui.dock.theme.eclipse.rex.RexSystemColor;
+import bibliothek.gui.DockUI;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CFocusListener;
+import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.common.theme.ThemeMap;
+import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
+import bibliothek.gui.dock.util.DirectWindowProvider;
+import bibliothek.gui.dock.util.Priority;
+import bibliothek.gui.dock.util.color.ColorManager;
+import bibliothek.gui.dock.util.laf.LookAndFeelColors;
+import bibliothek.util.Colors;
 
 public class WeasisWin extends JFrame implements PropertyChangeListener {
 
