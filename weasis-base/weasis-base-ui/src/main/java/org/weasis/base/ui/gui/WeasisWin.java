@@ -889,13 +889,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
-        DynamicMenu printMenu = new DynamicMenu("Print") {//$NON-NLS-1$
+        DynamicMenu printMenu = new DynamicMenu("Print") {
 
-                @Override
-                public void popupMenuWillBecomeVisible() {
-                    buildPrintSubMenu(this);
-                }
-            };
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildPrintSubMenu(this);
+            }
+        };
         printMenu.addPopupMenuListener();
         menuFile.add(printMenu);
         menuFile.add(new JSeparator());
