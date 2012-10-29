@@ -84,6 +84,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         slider.setDisplayOnlyValue(true);
         slider.setInverted(vertical);
         slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
+        slider.setPaintTicks(true);
         slider.setPreferredSize(new Dimension(35, 250));
         action.registerSlider(slider);
         return slider;
