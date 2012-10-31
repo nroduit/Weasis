@@ -562,7 +562,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        String cmd = "/usr/bin/open -a OsiriX"; //$NON-NLS-1$
+                        String cmd = "/usr/bin/open -b com.rossetantoine.osirix"; //$NON-NLS-1$
                         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
                         if (baseDir != null) {
                             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
