@@ -527,6 +527,8 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTagNoNull(TagW.RescaleSlope, getFloatFromDicomElement(dicomObject, Tag.RescaleSlope, null));
             setTagNoNull(TagW.RescaleIntercept, getFloatFromDicomElement(dicomObject, Tag.RescaleIntercept, null));
             setTagNoNull(TagW.RescaleType, getStringFromDicomElement(dicomObject, Tag.RescaleType, null));
+            setTagNoNull(TagW.PixelIntensityRelationship,
+                getStringFromDicomElement(dicomObject, Tag.PixelIntensityRelationship, null));
 
             setTagNoNull(TagW.VOILUTSequence, dicomObject.get(Tag.VOILUTSequence));
             setTagNoNull(TagW.WindowWidth, getFloatArrayFromDicomElement(dicomObject, Tag.WindowWidth, null));
@@ -613,16 +615,30 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             DicomElement modalityLUTSequence = (DicomElement) dicomTagMap.get(TagW.ModalityLUTSequence);
 
             if (DicomMediaUtils.containsRequiredModalityLUTSequenceAttributes(modalityLUTSequence)) {
-                DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
+                boolean canApplyMLUT = true;
+                String modlality = (String) dicomTagMap.get(TagW.Modality);
+                if ("XA".equals(modlality) || "XRF".equals(modlality)) {
+                    // See PS 3.4 N.2.1.2.
+                    String pixRel = (String) dicomTagMap.get(TagW.PixelIntensityRelationship);
+                    if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) {
+                        canApplyMLUT = false;
+                        LOGGER
+                            .debug("Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
+                    }
+                }
 
-                // TODO - should not create modality LUT here and prefer to do it in DicomImageElement Factory
+                if (canApplyMLUT) {
+                    DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
 
-                setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
-                    DicomMediaUtils.createLut(modalityLUTobj, isPixelRepresentationSigned));
-                setTagNoNull(dicomTagMap, TagW.ModalityLUTType,
-                    getStringFromDicomElement(modalityLUTobj, Tag.ModalityLUTType, null));
-                setTagNoNull(dicomTagMap, TagW.ModalityLUTExplanation, // Optional Tag
-                    getStringFromDicomElement(modalityLUTobj, Tag.LUTExplanation, null));
+                    // TODO - should not create modality LUT here and prefer to do it in DicomImageElement Factory
+
+                    setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
+                        DicomMediaUtils.createLut(modalityLUTobj, isPixelRepresentationSigned));
+                    setTagNoNull(dicomTagMap, TagW.ModalityLUTType,
+                        getStringFromDicomElement(modalityLUTobj, Tag.ModalityLUTType, null));
+                    setTagNoNull(dicomTagMap, TagW.ModalityLUTExplanation, // Optional Tag
+                        getStringFromDicomElement(modalityLUTobj, Tag.LUTExplanation, null));
+                }
             }
 
             if (LOGGER.isDebugEnabled()) {
@@ -1349,7 +1365,10 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                         getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
                 }
 
-                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT, Real World Value Mapping
+                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14), Real World Value
+                // Mapping (C.7.6.16-12)
+                // This transformation should be applied in in the pixel value (add a list of transformation for pixel
+                // statistics)
 
                 // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
                 // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
