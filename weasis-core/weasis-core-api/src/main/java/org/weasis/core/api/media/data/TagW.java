@@ -223,7 +223,8 @@ public class TagW implements Transferable, Serializable {
     public static final TagW RescaleSlope = new TagW(0x00281053, "Rescale Slope", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleIntercept = new TagW(0x00281052, "Rescale Intercept", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
-
+    public static final TagW PixelIntensityRelationship = new TagW(0x00281040,
+        "Pixel Intensity Relationship", TagType.String); //$NON-NLS-1$
     // public static final TagW FrameVOILUTSequence = new TagW(0x00289132, "Frame VOI LUT Sequence", TagType.Sequence);
     // public static final TagW PixelValueTransformationSequence = new TagW(0x00289145,
     // "Pixel Value Transformation Sequence", TagType.Sequence);

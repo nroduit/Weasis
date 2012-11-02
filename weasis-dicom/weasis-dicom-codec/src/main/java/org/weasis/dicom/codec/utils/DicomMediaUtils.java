@@ -277,22 +277,4 @@ public class DicomMediaUtils {
         return lookupTable;
     }
 
-    // public static void main(String[] args) {
-    // // http://mindprod.com/jgloss/binary.html#DISPLAY
-    //
-    // // System.out.println(Integer.toBinaryString(4096));
-    // // System.out.println(Integer.toBinaryString(~4095));
-    //
-    // // 00000000000000000001000000000000
-    // // 11111111111111111111000000000000
-    //
-    // int offset = 63488;
-    // System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
-    // System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
-    //
-    // offset = 32767;
-    // System.out.println(String.format("%32s", Integer.toBinaryString(offset)).replace(" ", "0"));
-    // System.out.println(String.format("%32s", Integer.toBinaryString((short) offset)).replace(" ", "0"));
-    //
-    // }
 }

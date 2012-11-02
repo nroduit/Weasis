@@ -64,8 +64,8 @@ public class DicomImageElement extends ImageElement {
             }
         };
 
-    volatile private List<PresetWindowLevel> windowingPresetCollection = null;
-    volatile private Collection<LutShape> lutShapeCollection = null;
+    private volatile List<PresetWindowLevel> windowingPresetCollection = null;
+    private volatile Collection<LutShape> lutShapeCollection = null;
 
     public DicomImageElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
