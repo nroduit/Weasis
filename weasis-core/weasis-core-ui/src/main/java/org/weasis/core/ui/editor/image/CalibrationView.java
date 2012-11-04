@@ -181,7 +181,7 @@ public class CalibrationView extends JPanel {
                             MediaSeries seriesList = view2d.getSeries();
                             if (seriesList != null) {
                                 Iterable list = seriesList.getMedias(null, null);
-                                synchronized (list) {
+                                synchronized (seriesList) {
                                     for (Object media : list) {
                                         if (media instanceof ImageElement) {
                                             ImageElement img = (ImageElement) media;

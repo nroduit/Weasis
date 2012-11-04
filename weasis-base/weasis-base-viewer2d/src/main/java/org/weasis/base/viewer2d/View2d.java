@@ -464,7 +464,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             popupMenu.add(itemTitle);
             popupMenu.setLabel(MouseActions.LEFT);
             String action = eventManager.getMouseActions().getLeft();
-            ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
+
             ButtonGroup groupButtons = new ButtonGroup();
             ImageViewerPlugin<ImageElement> view = eventManager.getSelectedView2dContainer();
             if (view != null) {
@@ -480,20 +480,22 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                         }
                     };
-                    for (int i = 0; i < ViewerToolBar.actionsButtons.length; i++) {
-                        JRadioButtonMenuItem radio =
-                            new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(),
-                                actionsButtons[i].cmd().equals(action));
+                    List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;
+                    synchronized (actionsButtons) {
+                        for (int i = 0; i < actionsButtons.size(); i++) {
+                            ActionW b = actionsButtons.get(i);
+                            JRadioButtonMenuItem radio =
+                                new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
 
-                        radio.setActionCommand(actionsButtons[i].cmd());
-                        radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
-                            actionsButtons[i].getModifier()));
-                        // Trigger the selected mouse action
-                        radio.addActionListener(toolBar);
-                        // Update the state of the button in the toolbar
-                        radio.addActionListener(leftButtonAction);
-                        popupMenu.add(radio);
-                        groupButtons.add(radio);
+                            radio.setActionCommand(b.cmd());
+                            radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                            // Trigger the selected mouse action
+                            radio.addActionListener(toolBar);
+                            // Update the state of the button in the toolbar
+                            radio.addActionListener(leftButtonAction);
+                            popupMenu.add(radio);
+                            groupButtons.add(radio);
+                        }
                     }
                 }
             }

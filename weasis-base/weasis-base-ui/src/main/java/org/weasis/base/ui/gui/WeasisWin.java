@@ -425,7 +425,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             if (isregistered) {
                 viewer.setSelectedAndGetFocus();
                 if (seriesViewer instanceof ImageViewerPlugin) {
-                    selectLayoutPositionForAddingSeries((ImageViewerPlugin) viewer, seriesList.size());
+                    ((ImageViewerPlugin) viewer).selectLayoutPositionForAddingSeries(seriesList);
                 }
                 for (MediaSeries m : seriesList) {
                     viewer.addSeries(m);
@@ -486,15 +486,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             return true;
         }
         return false;
-    }
-
-    private void selectLayoutPositionForAddingSeries(ImageViewerPlugin viewer, int seriesNumber) {
-        ArrayList<DefaultView2d> view2ds = viewer.getImagePanels();
-        int pos = view2ds.size() - seriesNumber;
-        if (pos < 0) {
-            pos = 0;
-        }
-        viewer.setSelectedImagePane(view2ds.get(pos));
     }
 
     public boolean registerPlugin(final ViewerPlugin plugin) {

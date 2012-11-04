@@ -49,7 +49,6 @@ import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.View2dContainer;
 
 import bibliothek.gui.dock.common.CLocation;
 
@@ -325,8 +324,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
-        if (event.getEventType().equals(EVENT.SELECT_VIEW) && event.getSeriesViewer() instanceof View2dContainer) {
-            iniTreeValues(((View2dContainer) event.getSeriesViewer()).getSelectedImagePane());
+        if (event.getEventType().equals(EVENT.SELECT_VIEW) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
+            iniTreeValues(((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane());
         }
     }
 

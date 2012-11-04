@@ -219,6 +219,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
             if (val instanceof PresetWindowLevel) {
                 PresetWindowLevel preset = (PresetWindowLevel) val;
+                DicomImageElement img = getImage();
+                if (img == null || !img.containsPreset(preset)) {
+                    // When series synchronization, do not synch preset from other series
+                    actionsInView.put(ActionW.PRESET.cmd(), null);
+                }
                 actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
                 actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
                 actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
@@ -328,6 +333,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             }
                             return actionsInView.get(action);
                         }
+
+                        @Override
+                        public MediaSeries getSeries() {
+                            return View2d.this.getSeries();
+                        }
                     });
                     manager.addImageOperationAction(new CropOperation());
                     actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
@@ -430,7 +440,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         selSeries.getMedias(
                             (Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd()),
                             getCurrentSortComparator());
-                    synchronized (list) {
+                    synchronized (selSeries) {
                         for (DicomImageElement dcm : list) {
                             double[] loc = (double[]) dcm.getTagValue(TagW.SlicePosition);
                             if (loc != null) {
@@ -465,7 +475,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     }
 
-    private void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
+    protected void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
         GeometryOfSlice sliceGeometry = selImage.getSliceGeometry();
         if (sliceGeometry != null) {
             List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
@@ -545,7 +555,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         this.addMouseMotionListener(adapter);
     }
 
-    private MouseActionAdapter getMouseAdapter(String action) {
+    protected MouseActionAdapter getMouseAdapter(String action) {
         if (action.equals(ActionW.MEASURE.cmd())) {
             return mouseClickHandler;
         } else if (action.equals(ActionW.PAN.cmd())) {
@@ -579,7 +589,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         mouseClickHandler.setButtonMaskEx(0);
     }
 
-    private MouseActionAdapter getAction(ActionW action) {
+    protected MouseActionAdapter getAction(ActionW action) {
         ActionState a = eventManager.getAction(action);
         if (a instanceof MouseActionAdapter) {
             return (MouseActionAdapter) a;
@@ -970,7 +980,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         final EventManager event = EventManager.getInstance();
         popupMenu.setLabel(MouseActions.LEFT);
         String action = event.getMouseActions().getLeft();
-        ActionW[] actionsButtons = ViewerToolBar.actionsButtons;
         ButtonGroup groupButtons = new ButtonGroup();
         ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
         if (view != null) {
@@ -987,18 +996,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                 };
 
-                for (int i = 0; i < actionsButtons.length; i++) {
-                    ActionW actionW = actionsButtons[i];
-                    JRadioButtonMenuItem radio =
-                        new JRadioButtonMenuItem(actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
-                    radio.setActionCommand(actionW.cmd());
-                    radio.setAccelerator(KeyStroke.getKeyStroke(actionW.getKeyCode(), actionW.getModifier()));
-                    // Trigger the selected mouse action
-                    radio.addActionListener(toolBar);
-                    // Update the state of the button in the toolbar
-                    radio.addActionListener(leftButtonAction);
-                    popupMenu.add(radio);
-                    groupButtons.add(radio);
+                List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;
+                synchronized (actionsButtons) {
+                    for (int i = 0; i < actionsButtons.size(); i++) {
+                        ActionW b = actionsButtons.get(i);
+                        JRadioButtonMenuItem radio =
+                            new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                        radio.setActionCommand(b.cmd());
+                        radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                        // Trigger the selected mouse action
+                        radio.addActionListener(toolBar);
+                        // Update the state of the button in the toolbar
+                        radio.addActionListener(leftButtonAction);
+                        popupMenu.add(radio);
+                        groupButtons.add(radio);
+                    }
                 }
             }
         }

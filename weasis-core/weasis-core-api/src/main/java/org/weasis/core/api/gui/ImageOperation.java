@@ -13,6 +13,7 @@ package org.weasis.core.api.gui;
 import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
 
 public interface ImageOperation {
 
@@ -22,4 +23,6 @@ public interface ImageOperation {
 
     // Return the source image for the first operation in the list
     RenderedImage getSourceImage();
+
+    MediaSeries getSeries();
 }

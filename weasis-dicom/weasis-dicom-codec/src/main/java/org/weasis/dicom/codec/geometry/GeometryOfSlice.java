@@ -2,6 +2,8 @@
 
 package org.weasis.dicom.codec.geometry;
 
+import java.awt.geom.Point2D;
+
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
@@ -216,6 +218,27 @@ public class GeometryOfSlice {
      */
     public final Point3d getTLHC() {
         return tlhc;
+    }
+    
+    
+    public final Point3d getPosition(Point2D p) {
+        Point3d temp = tlhc;
+        temp.x += (p.getX() * row.x + p.getY() * column.x)*this.voxelSpacing.x;
+        temp.y += (p.getX() * row.y + p.getY() * column.y)*this.voxelSpacing.x;
+        temp.z += (p.getX() * row.z + p.getY() * column.z)*this.voxelSpacing.x;
+        
+        return temp;
+    }
+
+    public final Point2D getImagePosition(Point3d p3) {
+        if(voxelSpacing.x<0.00001)
+            return null;
+        double dx = (p3.x - tlhc.x)/voxelSpacing.x;
+        double dy = (p3.y - tlhc.y)/voxelSpacing.x;
+        double dz = (p3.z - tlhc.z)/voxelSpacing.x;
+        double ix = dx * row.x + dy * row.y + dz * row.z;
+        double iy = dx * column.y + dy * column.y + dz * column.z;     
+        return new Point2D.Double(ix, iy);
     }
 
     /**

@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.image;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
     private final Icon icon;
     private final String id;
 
-    private final LinkedHashMap<LayoutConstraints, JComponent> constraints;
+    private final LinkedHashMap<LayoutConstraints, Component> constraints;
 
     public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass, Icon icon) {
         this.title = title;
@@ -51,7 +52,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         if (rows < 1) {
             rows = 1;
         }
-        this.constraints = new LinkedHashMap<LayoutConstraints, JComponent>(cols * rows);
+        this.constraints = new LinkedHashMap<LayoutConstraints, Component>(cols * rows);
         double weightx = 1.0 / cols;
         double weighty = 1.0 / rows;
         for (int y = 0; y < rows; y++) {
@@ -62,7 +63,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         }
     }
 
-    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, JComponent> constraints, String id, String title,
+    public GridBagLayoutModel(LinkedHashMap<LayoutConstraints, Component> constraints, String id, String title,
         Icon icon) {
         if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
@@ -77,7 +78,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         this.title = title;
         this.id = id;
         this.icon = icon;
-        this.constraints = new LinkedHashMap<LayoutConstraints, JComponent>();
+        this.constraints = new LinkedHashMap<LayoutConstraints, Component>();
         try {
             loadXML(stream);
         } catch (IOException e) {
@@ -96,7 +97,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         return title;
     }
 
-    public LinkedHashMap<LayoutConstraints, JComponent> getConstraints() {
+    public LinkedHashMap<LayoutConstraints, Component> getConstraints() {
         return constraints;
     }
 
@@ -249,8 +250,8 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        LinkedHashMap<LayoutConstraints, JComponent> map =
-            new LinkedHashMap<LayoutConstraints, JComponent>(constraints.size());
+        LinkedHashMap<LayoutConstraints, Component> map =
+            new LinkedHashMap<LayoutConstraints, Component>(constraints.size());
         Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
         while (enumVal.hasNext()) {
             map.put((LayoutConstraints) enumVal.next().clone(), null);

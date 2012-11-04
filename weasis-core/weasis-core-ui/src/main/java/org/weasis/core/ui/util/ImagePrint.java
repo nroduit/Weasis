@@ -12,6 +12,7 @@
 
 package org.weasis.core.ui.util;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -138,10 +139,10 @@ public class ImagePrint implements Printable {
         double[] lastwy = new double[dimGrid.width];
         double wx = 0.0;
 
-        final LinkedHashMap<LayoutConstraints, JComponent> elements = layout.layoutModel.getConstraints();
-        Iterator<Entry<LayoutConstraints, JComponent>> enumVal = elements.entrySet().iterator();
+        final LinkedHashMap<LayoutConstraints, Component> elements = layout.layoutModel.getConstraints();
+        Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
         while (enumVal.hasNext()) {
-            Entry<LayoutConstraints, JComponent> e = enumVal.next();
+            Entry<LayoutConstraints, Component> e = enumVal.next();
             LayoutConstraints key = e.getKey();
             ExportImage image = (ExportImage) e.getValue();
             if (printOptions.getHasAnnotations()) {

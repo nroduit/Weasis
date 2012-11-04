@@ -13,7 +13,6 @@ package org.weasis.base.viewer2d;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.osgi.service.prefs.Preferences;
@@ -27,6 +26,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
@@ -35,7 +35,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -84,13 +83,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     private final PannerListener panAction;
 
-    public static final ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
-    static {
-        SYNCH_LIST.add(SynchView.NONE);
-        SYNCH_LIST.add(SynchView.DEFAULT_STACK);
-        SYNCH_LIST.add(SynchView.DEFAULT_TILE);
-    }
-
     /**
      * Return the single instance of this class. This method guarantees the singleton property of this class.
      */
@@ -121,8 +113,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
         iniAction(lutAction = getLutAction());
         iniAction(filterAction = getFilterAction());
-        iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
-        iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
+        iniAction(layoutAction =
+            newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
+                .size()])));
+        iniAction(synchAction =
+            newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));

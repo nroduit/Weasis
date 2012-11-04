@@ -40,6 +40,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -54,8 +55,25 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
-    public static final GridBagLayoutModel[] MODELS = { VIEWS_1x1, VIEWS_2x1, VIEWS_1x2, VIEWS_2x2, VIEWS_3x2,
-        VIEWS_3x3, VIEWS_4x3, VIEWS_4x4 };
+    public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
+    static {
+        SYNCH_LIST.add(SynchView.NONE);
+        SYNCH_LIST.add(SynchView.DEFAULT_STACK);
+        SYNCH_LIST.add(SynchView.DEFAULT_TILE);
+    }
+
+    public static final List<GridBagLayoutModel> LAYOUT_LIST = Collections
+        .synchronizedList(new ArrayList<GridBagLayoutModel>());
+    static {
+        LAYOUT_LIST.add(VIEWS_1x1);
+        LAYOUT_LIST.add(VIEWS_1x2);
+        LAYOUT_LIST.add(VIEWS_2x1);
+        LAYOUT_LIST.add(VIEWS_2x2);
+        LAYOUT_LIST.add(VIEWS_3x2);
+        LAYOUT_LIST.add(VIEWS_3x3);
+        LAYOUT_LIST.add(VIEWS_4x3);
+        LAYOUT_LIST.add(VIEWS_4x4);
+    }
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
@@ -63,7 +81,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
     private static WtoolBar statusBar = null;
-    private static boolean INI_COMPONENTS = false;
+    private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -75,7 +93,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
-            ViewerToolBar<ImageElement> bar = new ViewerToolBar<ImageElement>(EventManager.getInstance());
+            ViewerToolBar<ImageElement> bar =
+                new ViewerToolBar<ImageElement>(EventManager.getInstance(), EventManager.getInstance()
+                    .getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES);
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
 
@@ -390,5 +410,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public List<Action> getPrintActions() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public List<SynchView> getSynchList() {
+        return SYNCH_LIST;
+    }
+
+    @Override
+    public List<GridBagLayoutModel> getLayoutList() {
+        return LAYOUT_LIST;
     }
 }

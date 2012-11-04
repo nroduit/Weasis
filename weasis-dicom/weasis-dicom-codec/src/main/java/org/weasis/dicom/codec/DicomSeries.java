@@ -48,7 +48,7 @@ public class DicomSeries extends Series<DicomImageElement> {
 
     public boolean[] getImageInMemoryList() {
         boolean[] list;
-        synchronized (medias) {
+        synchronized (this) {
             list = new boolean[medias.size()];
             for (int i = 0; i < medias.size(); i++) {
                 if (medias.get(i).isImageInCache()) {
@@ -67,7 +67,7 @@ public class DicomSeries extends Series<DicomImageElement> {
             if (media instanceof DicomImageElement) {
 
                 int insertIndex;
-                synchronized (medias) {
+                synchronized (this) {
                     // add image or multi-frame sorted by Instance Number (0020,0013) order
                     int index =
                         Collections.binarySearch(medias, (DicomImageElement) media, SortSeriesStack.instanceNumber);
@@ -151,7 +151,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         DicomImageElement nearest = null;
         int index = 0;
         int bestIndex = -1;
-        synchronized (mediaList) {
+        synchronized (this) {
             double bestDiff = Double.MAX_VALUE;
             for (Iterator<DicomImageElement> iter = mediaList.iterator(); iter.hasNext();) {
                 DicomImageElement dcm = iter.next();

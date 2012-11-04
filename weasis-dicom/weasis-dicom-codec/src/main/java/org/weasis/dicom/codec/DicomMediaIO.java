@@ -504,7 +504,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
             setTagNoNull(TagW.FlipAngle, getFloatFromDicomElement(dicomObject, Tag.FlipAngle, null));
             setTagNoNull(TagW.PatientOrientation, dicomObject.getStrings(Tag.PatientOrientation, (String[]) null));
             setTagNoNull(TagW.SliceLocation, getFloatFromDicomElement(dicomObject, Tag.SliceLocation, null));
-            setTagNoNull(TagW.SliceThickness, getFloatFromDicomElement(dicomObject, Tag.SliceThickness, null));
+            setTagNoNull(TagW.SliceThickness, getDoubleFromDicomElement(dicomObject, Tag.SliceThickness, null));
             setTagNoNull(TagW.AcquisitionDate, getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null));
             setTagNoNull(TagW.AcquisitionTime, getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
             setTagNoNull(TagW.ContentTime, getDateFromDicomElement(dicomObject, Tag.ContentTime, null));
@@ -603,7 +603,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return result < minInValue ? minInValue : result > maxInValue ? maxInValue : result;
     }
 
-    private static void validateDicomImageValues(HashMap<TagW, Object> dicomTagMap) {
+    public static void validateDicomImageValues(HashMap<TagW, Object> dicomTagMap) {
         if (dicomTagMap != null) {
 
             Integer pixelRepresentation = (Integer) dicomTagMap.get(TagW.PixelRepresentation);
@@ -772,16 +772,16 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
         return pixelValue;
     }
 
-    private static void computeSlicePositionVector(HashMap<TagW, Object> tagList) {
+    public static void computeSlicePositionVector(HashMap<TagW, Object> tagList) {
         double[] patientPos = (double[]) tagList.get(TagW.ImagePositionPatient);
         if (patientPos != null && patientPos.length == 3) {
             double[] imgOrientation =
                 ImageOrientation.computeNormalVectorOfPlan((double[]) tagList.get(TagW.ImageOrientationPatient));
             if (imgOrientation != null) {
                 double[] slicePosition = new double[3];
-                slicePosition[0] = imgOrientation[0] * patientPos[0];
-                slicePosition[1] = imgOrientation[1] * patientPos[1];
-                slicePosition[2] = imgOrientation[2] * patientPos[2];
+                slicePosition[0] = Math.abs(imgOrientation[0]) * patientPos[0];
+                slicePosition[1] = Math.abs(imgOrientation[1]) * patientPos[1];
+                slicePosition[2] = Math.abs(imgOrientation[2]) * patientPos[2];
                 setTag(tagList, TagW.SlicePosition, slicePosition);
             }
         }
@@ -1336,7 +1336,7 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
                     DicomObject measure = sequenceElt.getDicomObject(0);
                     setTagNoNull(tagList, TagW.PixelSpacing, measure.getDoubles(Tag.PixelSpacing, (double[]) null));
                     setTagNoNull(tagList, TagW.SliceThickness,
-                        getFloatFromDicomElement(measure, Tag.SliceThickness, null));
+                        getDoubleFromDicomElement(measure, Tag.SliceThickness, null));
                 }
 
                 // Identifies the characteristics of this frame. Only a single Item shall be permitted in this sequence.

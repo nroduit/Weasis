@@ -316,6 +316,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         };
     }
 
+    protected CrosshairListener newCrosshairAction() {
+        return new CrosshairListener(ActionW.CROSSHAIR, null) {
+
+            @Override
+            public void pointChanged(Point2D point) {
+                firePropertyChange(action.cmd(), null, point);
+            }
+        };
+    }
+
     protected ToggleButtonListener newFlipAction() {
         return new ToggleButtonListener(ActionW.FLIP, false) {
 

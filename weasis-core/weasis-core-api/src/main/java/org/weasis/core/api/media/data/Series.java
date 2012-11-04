@@ -128,7 +128,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public final E getMedia(MEDIA_POSITION position, Filter<E> filter, Comparator<E> sort) {
         List<E> sortedList = getSortedMedias(sort);
-        synchronized (sortedList) {
+        synchronized (this) {
             if (filter == null) {
                 int size = sortedList.size();
                 if (size == 0) {
@@ -181,7 +181,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             return -1;
         }
         Iterable<E> list = getMedias(filter, sort);
-        synchronized (list) {
+        synchronized (this) {
             int index = 0;
             for (E e : list) {
                 if (e == source) {
@@ -213,7 +213,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public final E getMedia(int index, Filter<E> filter, Comparator<E> sort) {
         List<E> sortedList = getSortedMedias(sort);
-        synchronized (sortedList) {
+        synchronized (this) {
             if (filter == null) {
                 if (index >= 0 && index < sortedList.size()) {
                     return sortedList.get(index);
@@ -241,7 +241,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
      */
     @Override
     public void dispose() {
-        synchronized (medias) {
+        synchronized (this) {
             for (MediaElement media : medias) {
                 if (media instanceof ImageElement) {
                     // Removing from cache will close the image stream
@@ -328,7 +328,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public int size(Filter<E> filter) {
-        return filter == null ? medias.size() : Filter.size(filter.filter(medias));
+        synchronized (this) {
+            return filter == null ? medias.size() : Filter.size(filter.filter(medias));
+        }
     }
 
     @Override
@@ -404,7 +406,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     public boolean hasMediaContains(TagW tag, Object val) {
         if (val != null) {
-            synchronized (medias) {
+            synchronized (this) {
                 for (int i = 0; i < medias.size(); i++) {
                     Object val2 = medias.get(i).getTagValue(tag);
                     if (val.equals(val2)) {
@@ -430,6 +432,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         return fileSize;
     }
 
+    @Override
     public String getSeriesNumber() {
         Integer val = (Integer) getTagValue(TagW.SeriesNumber);
         return val == null ? "" : val.toString(); //$NON-NLS-1$

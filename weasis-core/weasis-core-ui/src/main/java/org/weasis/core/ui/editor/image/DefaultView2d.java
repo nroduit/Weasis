@@ -138,6 +138,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
     protected ZoomWin<E> lens;
+    protected final List<ViewButton> viewButtons;
 
     protected MediaSeries<E> series = null;
     protected static final Color focusColor = Color.orange;
@@ -158,7 +159,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
         this.eventManager = eventManager;
-        tileOffset = 0;
+        this.viewButtons = new ArrayList<ViewButton>();
+        this.tileOffset = 0;
         initActionWState();
 
         imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), true);
@@ -298,8 +300,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else {
             E media = selectedMedia;
             if (selectedMedia == null) {
-                series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                media =
+                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
 
             setDefautWindowLevel(media);
@@ -594,9 +597,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
         }
+        drawExtendedAtions(g2d);
         g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
+    }
+
+    protected void drawExtendedAtions(Graphics2D g2d) {
     }
 
     @Override
@@ -1023,7 +1030,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0) {
+            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
                 return;
             }
 
@@ -1245,7 +1252,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0) {
+            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
                 return;
             }
 
@@ -1315,12 +1322,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     class FocusHandler extends MouseActionAdapter {
 
         @Override
-        public void mousePressed(MouseEvent mouseevent) {
+        public void mousePressed(MouseEvent evt) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
             if (pane == null) {
                 return;
             }
-            if (mouseevent.getClickCount() == 2) {
+            if (evt.getClickCount() == 2) {
                 pane.maximizedSelectedImagePane(DefaultView2d.this);
                 return;
             }
@@ -1332,7 +1339,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             // request the focus even it is the same pane selected
             requestFocusInWindow();
-            int modifiers = mouseevent.getModifiersEx();
+            int modifiers = evt.getModifiersEx();
             MouseActions mouseActions = eventManager.getMouseActions();
             ActionW action = null;
             // left mouse button, always active
@@ -1349,7 +1356,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
-
+            for (ViewButton b : viewButtons) {
+                if (b.contains(evt.getPoint())) {
+                    evt.consume();
+                    b.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+                    action = null;
+                }
+            }
             DefaultView2d.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
         }
 

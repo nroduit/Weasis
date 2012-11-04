@@ -56,6 +56,20 @@ public class LineGraphic extends AbstractDragGraphic {
         super(2, paintColor, lineThickness, labelVisible);
     }
 
+    public LineGraphic(List<Point2D> handlePointList, float lineThickness, Color paintColor, boolean labelVisible) {
+        super(handlePointList, 2, paintColor, lineThickness, labelVisible, false);
+    }
+
+    public void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
+        if (ptStart != null) {
+            setHandlePoint(0, (Point2D) ptStart.clone());
+        }
+        if (ptEnd != null) {
+            setHandlePoint(1, (Point2D) ptEnd.clone());
+        }
+        updateShapeOnDrawing(null);
+    }
+
     @Override
     public Icon getIcon() {
         return ICON;

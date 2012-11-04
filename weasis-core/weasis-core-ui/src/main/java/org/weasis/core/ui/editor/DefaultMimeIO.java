@@ -99,7 +99,7 @@ public class DefaultMimeIO implements MediaReader<File> {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (medias) {
+                    synchronized (this) {
                         for (MediaElement m : medias) {
                             return m.getMimeType();
                         }

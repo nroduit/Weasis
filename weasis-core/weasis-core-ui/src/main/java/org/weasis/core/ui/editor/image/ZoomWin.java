@@ -46,6 +46,7 @@ import org.weasis.core.api.image.RotationOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
@@ -370,6 +371,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 }
                 return freezeActionsInView.get(action);
             }
+
+            @Override
+            public MediaSeries getSeries() {
+                return view2d.getSeries();
+            }
         });
         for (ImageOperationAction op : pManager.getOperations()) {
             try {
@@ -407,6 +413,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                     return null;
                 }
                 return freezeActionsInView.get(action);
+            }
+
+            @Override
+            public MediaSeries getSeries() {
+                return view2d.getSeries();
             }
         });
         for (ImageOperationAction op : pManager.getOperations()) {
@@ -559,6 +570,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             refreshZoomWin();
         }
+    }
+
+    @Override
+    public MediaSeries getSeries() {
+        return view2d.getSeries();
     }
 
 }

@@ -88,8 +88,8 @@ public class ActionW {
         Messages.getString("ActionW.draw_once"), "drawOnce", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW PROGRESSION = new ActionW("", "img_progress", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW FILTERED_SERIES = new ActionW("", "filter_series", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
-
-    // keep TempLayer in last position
+    public static final ActionW CROSSHAIR = new ActionW(
+        Messages.getString("ActionW.crosshair"), "crosshair", KeyEvent.VK_H, 0, new Cursor(Cursor.CROSSHAIR_CURSOR)); //$NON-NLS-1$ //$NON-NLS-2$ 
 
     private final String title;
     private final String command;

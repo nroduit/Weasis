@@ -56,6 +56,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -83,6 +84,7 @@ import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.internal.Activator;
+import org.weasis.dicom.viewer2d.mpr.MprView;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -132,13 +134,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener prAction;
 
     private final PannerListener panAction;
-
-    public static final ArrayList<SynchView> SYNCH_LIST = new ArrayList<SynchView>();
-    static {
-        SYNCH_LIST.add(SynchView.NONE);
-        SYNCH_LIST.add(SynchView.DEFAULT_STACK);
-        SYNCH_LIST.add(SynchView.DEFAULT_TILE);
-    }
+    private final CrosshairListener crosshairAction;
 
     /**
      * Return the single instance of this class. This method guarantees the singleton property of this class.
@@ -176,12 +172,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(filterAction = newFilterAction());
         iniAction(sortStackAction = newSortStackAction());
         iniAction(viewingProtocolAction = newViewingProtocolAction());
-        iniAction(layoutAction = newLayoutAction(View2dContainer.MODELS));
-        iniAction(synchAction = newSynchAction(SYNCH_LIST.toArray(new SynchView[SYNCH_LIST.size()])));
+        iniAction(layoutAction =
+            newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
+                .size()])));
+        iniAction(synchAction =
+            newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
+        iniAction(crosshairAction = newCrosshairAction());
 
         iniAction(koAction = newKoAction());
         iniAction(prAction = newPrAction());
@@ -677,8 +677,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             moveTroughSliceAction.stop();
 
         }
+        ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
+
         if (selectedView2dContainer != null) {
+            if (oldContainer != null) {
+                if (!oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
+                    synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
+                    layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
+                }
+            }
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
@@ -845,7 +853,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
             }
         }
-
         return true;
     }
 
@@ -895,6 +902,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             MediaSeries<DicomImageElement> series = viewPane.getSeries();
             if (series != null) {
                 addPropertyChangeListeners(viewPane);
+                if (viewPane instanceof MipView) {
+                    propertySupport.removePropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), viewPane);
+                }
                 final ArrayList<DefaultView2d<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
@@ -908,7 +918,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                         MediaSeries<DicomImageElement> s = pane.getSeries();
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                        if (s != null && fruid != null) {
+                        boolean specialView = pane instanceof MipView;
+                        if (s != null && fruid != null && !specialView) {
                             if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                 if (!ImageOrientation.hasSameOrientation(series, s)) {
                                     pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
@@ -934,7 +945,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 layer.deleteAllGraphic();
                             }
                             MediaSeries<DicomImageElement> s = pane.getSeries();
-                            if (s != null && fruid != null && val != null) {
+                            boolean specialView = pane instanceof MipView;
+                            if (s != null && fruid != null && val != null && !specialView) {
                                 if (fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
                                     if (ImageOrientation.hasSameOrientation(series, s)) {
                                         hasLink = true;
@@ -951,9 +963,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                                 .addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
                                         }
                                     } else {
-                                        pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), false);
-                                        pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
-                                        propertySupport.addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
+                                        boolean mpr = pane instanceof MprView;
+                                        pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), mpr);
+                                        pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), !mpr);
+                                        if (mpr) {
+                                            addPropertyChangeListeners(pane, synchView);
+                                        } else {
+                                            propertySupport
+                                                .addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
+                                        }
                                     }
                                 }
                             }
@@ -966,7 +984,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     } else if (Mode.Tile.equals(synchView.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
-                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
+                            boolean specialView = pane instanceof MipView;
+                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), !specialView);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListeners(pane, synchView);
                         }
@@ -1252,7 +1271,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     public void synch(String[] argv) throws IOException {
         StringBuffer buffer = new StringBuffer("{"); //$NON-NLS-1$
-        for (SynchView synch : SYNCH_LIST) {
+        for (SynchView synch : View2dContainer.SYNCH_LIST) {
             buffer.append(synch.getCommand());
             buffer.append(" "); //$NON-NLS-1$
         }
@@ -1274,16 +1293,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void run() {
                 String command = args.get(0);
                 if (command != null) {
-                    try {
-                        for (SynchView synch : SYNCH_LIST) {
-                            if (synch.getCommand().equals(command)) {
-                                synchAction.setSelectedItem(synch);
-                                return;
+                    ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+                    if (view != null) {
+                        try {
+                            for (SynchView synch : view.getSynchList()) {
+                                if (synch.getCommand().equals(command)) {
+                                    synchAction.setSelectedItem(synch);
+                                    return;
+                                }
                             }
+                            throw new IllegalArgumentException("Synch command '" + command + "' not found!"); //$NON-NLS-1$ //$NON-NLS-2$
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        throw new IllegalArgumentException("Synch command '" + command + "' not found!"); //$NON-NLS-1$ //$NON-NLS-2$
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
             }

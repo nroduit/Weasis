@@ -74,20 +74,24 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         return menu;
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         setSelected(dataModel.getSelectedItem());
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof RadioMenuItem) {
             RadioMenuItem item = (RadioMenuItem) e.getSource();
@@ -135,15 +139,15 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
 
     @Override
     public void setModel(ComboBoxModel dataModel) {
-        boolean changeListener = dataModel != null && dataModel != this.dataModel;
         if (this.dataModel != null) {
             this.dataModel.removeListDataListener(this);
         }
+        if (dataModel != null) {
+            dataModel.removeListDataListener(this);
+        }
         this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
         init();
-        if (changeListener) {
-            this.dataModel.addListDataListener(this);
-        }
+        this.dataModel.addListDataListener(this);
     }
 
     @Override

@@ -1117,17 +1117,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     public boolean isPatientHasOpenSeries(MediaSeriesGroup p) {
 
         Collection<MediaSeriesGroup> studies = model.getChildren(p);
-        synchronized (studies) {
+        synchronized (model) {
             for (Iterator<MediaSeriesGroup> iterator = studies.iterator(); iterator.hasNext();) {
                 MediaSeriesGroup study = iterator.next();
                 Collection<MediaSeriesGroup> seriesList = model.getChildren(study);
-                synchronized (seriesList) {
-                    for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
-                        MediaSeriesGroup seq = it.next();
-                        if (seq instanceof Series) {
-                            Boolean open = (Boolean) ((Series) seq).getTagValue(TagW.SeriesOpen);
-                            return open == null ? false : open;
-                        }
+                for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                    MediaSeriesGroup seq = it.next();
+                    if (seq instanceof Series) {
+                        Boolean open = (Boolean) ((Series) seq).getTagValue(TagW.SeriesOpen);
+                        return open == null ? false : open;
                     }
                 }
             }
@@ -1771,7 +1769,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                         selList.clear();
                                         MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
                                         Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
-                                        synchronized (seriesList) {
+                                        synchronized (dicomModel) {
                                             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                                                 MediaSeriesGroup seq = it.next();
                                                 if (seq instanceof Series) {
@@ -1796,7 +1794,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                         selList.clear();
                                         MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
                                         Collection<MediaSeriesGroup> seriesList = dicomModel.getChildren(studyGroup);
-                                        synchronized (seriesList) {
+                                        synchronized (dicomModel) {
                                             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                                                 MediaSeriesGroup seq = it.next();
                                                 if (seq instanceof Series) {

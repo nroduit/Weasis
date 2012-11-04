@@ -97,6 +97,8 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(PRELOADING_BAR, true);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
+
+        // FIXME when config with no DICOM Explorer
         DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (dicomView != null) {
             model = (DicomModel) dicomView.getDataExplorerModel();

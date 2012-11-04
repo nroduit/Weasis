@@ -141,7 +141,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (medias) {
+                    synchronized (this) {
                         for (ImageElement img : medias) {
                             return img.getMimeType();
                         }

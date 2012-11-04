@@ -26,10 +26,13 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.util.Toolbar;
 
+import bibliothek.gui.Dockable;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.predefined.CCloseAction;
+import bibliothek.gui.dock.common.intern.AbstractCDockable;
 import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
@@ -65,6 +68,23 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 super.close(dockable);
                 if (dockable.getFocusComponent() instanceof SeriesViewer) {
                     ((SeriesViewer) dockable.getFocusComponent()).close();
+                }
+                Dockable prevDockable =
+                    UIManager.DOCKING_CONTROL.getController().getFocusHistory()
+                        .getNewestOn(dockable.getWorkingArea().getStation());
+                if (prevDockable == null) {
+                    int size = UIManager.VIEWER_PLUGINS.size();
+                    if (size > 0) {
+                        ViewerPlugin lp = UIManager.VIEWER_PLUGINS.get(size - 1);
+                        if (lp != null) {
+                            lp.dockable.toFront();
+                        }
+                    }
+                } else {
+                    CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
+                    if (ld instanceof AbstractCDockable) {
+                        ((AbstractCDockable) ld).toFront();
+                    }
                 }
             }
         });

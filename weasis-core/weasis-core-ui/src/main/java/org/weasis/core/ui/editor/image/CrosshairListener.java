@@ -21,9 +21,8 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.ui.graphic.DragPoint;
 
-public abstract class PannerListener extends MouseActionAdapter implements ActionState, KeyListener {
+public abstract class CrosshairListener extends MouseActionAdapter implements ActionState, KeyListener {
 
     protected final ActionW action;
     private boolean enable;
@@ -32,7 +31,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
 
     private Point2D point;
 
-    public PannerListener(ActionW action, Point2D point) {
+    public CrosshairListener(ActionW action, Point2D point) {
         this.action = action;
         this.point = point == null ? new Point2D.Double() : point;
         enable = true;
@@ -85,14 +84,15 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
 
     @Override
     public void mousePressed(MouseEvent e) {
+
+        // System.out.println("cross pressed");
+
         int buttonMask = getButtonMaskEx();
         if ((e.getModifiersEx() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
                 pickPoint = e.getPoint();
-                double scale = panner.getViewModel().getViewScale();
-                setPoint(new DragPoint(DragPoint.STATE.Started, -(pickPoint.getX() / scale),
-                    -(pickPoint.getY() / scale)));
+                setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
             }
         }
     }
@@ -100,14 +100,11 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     @Override
     public void mouseDragged(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
-        if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
+        if ((e.getModifiersEx() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
                 if (pickPoint != null) {
-                    double scale = panner.getViewModel().getViewScale();
-                    setPoint(new DragPoint(DragPoint.STATE.Dragged, -((e.getX() - pickPoint.getX()) / scale),
-                        -((e.getY() - pickPoint.getY()) / scale)));
-                    panner.setPointerType(1);
+                    setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
             }
         }
@@ -116,7 +113,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     @Override
     public void mouseReleased(MouseEvent e) {
         int buttonMask = getButtonMask();
-        if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
+        if ((e.getModifiers() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
                 panner.setPointerType(0);
@@ -131,15 +128,6 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            setPoint(new Point(5, 0));
-        } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-            setPoint(new Point(0, 5));
-        } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            setPoint(new Point(-5, 0));
-        } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            setPoint(new Point(0, -5));
-        }
     }
 
     @Override

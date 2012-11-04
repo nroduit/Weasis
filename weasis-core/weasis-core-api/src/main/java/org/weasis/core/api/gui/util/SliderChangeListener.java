@@ -184,27 +184,31 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         slider.setModel(new DefaultBoundedRangeModel(0, 0, 0, 100));
     }
 
-    public static void setSliderLabelValues(JSliderW slider, int min, int max) {
-        int div = slider.getLabelDivision();
+    public static void setSliderLabelValues(JSliderW slider, final int min, int max) {
+        final int div = slider.getLabelDivision();
         if (div < 1) {
             return;
         }
-        int spacing = (max - min) / (div - 1);
-        if (spacing < 1) {
-            spacing = 1;
-        }
+        int space = (max - min) / (div - 1);
+        final int spacing = space < 1 ? 1 : space;
         // TODO générer les subdivisions par rapport à la taille du slider
 
         if (!slider.getPaintLabels()) {
             return;
         }
 
-        Hashtable<Integer, JLabel> table = new Hashtable<Integer, JLabel>();
+        final Hashtable<Integer, JLabel> table = new Hashtable<Integer, JLabel>();
+        GuiExecutor.instance().invokeAndWait(new Runnable() {
 
-        for (int i = 0; i < div; i++) {
-            Integer index = i * spacing + min;
-            table.put(index, new JLabel("" + index)); //$NON-NLS-1$
-        }
+            @Override
+            public void run() {
+                for (int i = 0; i < div; i++) {
+                    Integer index = i * spacing + min;
+                    table.put(index, new JLabel("" + index)); //$NON-NLS-1$
+                }
+            }
+        });
+
         slider.setLabelTable(table);
         FontTools.setFont10(slider);
         slider.setMajorTickSpacing(spacing);
@@ -226,7 +230,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     @Override
     public void mousePressed(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
-        if ((e.getModifiersEx() & buttonMask) != 0) {
+        if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
             lastPosition = isMoveOnX() ? e.getX() : e.getY();
             dragAccumulator = getValue();
         }
@@ -238,7 +242,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         int modifier = e.getModifiersEx();
         // dragAccumulator == Double.NaN when the listener did not catch the Pressed MouseEvent (could append in
         // multisplit container)
-        if ((modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
+        if (!e.isConsumed() && (modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
             int position = isMoveOnX() ? e.getX() : e.getY();
             int mask = (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
             // Accelerate the action if ctrl or shift is down

@@ -13,6 +13,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -113,7 +114,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      */
 
     protected final ArrayList<DefaultView2d<E>> view2ds;
-    protected final ArrayList<JComponent> components;
+    protected final ArrayList<Component> components;
 
     protected SynchView synchView = SynchView.NONE;
 
@@ -135,7 +136,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         this.eventManager = eventManager;
         view2ds = new ArrayList<DefaultView2d<E>>();
-        components = new ArrayList<JComponent>();
+        components = new ArrayList<Component>();
         grid = new JPanel();
         // For having a black background with any Look and Feel
         grid.setUI(new PanelUI() {
@@ -165,7 +166,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public abstract DefaultView2d<E> createDefaultView(String classType);
 
-    public abstract JComponent createUIcomponent(String clazz);
+    public abstract Component createUIcomponent(String clazz);
 
     public DefaultView2d<E> getSelectedImagePane() {
         return selectedImagePane;
@@ -275,14 +276,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 oldViews.remove(i).dispose();
             }
         }
-        for (JComponent c : components) {
+        for (Component c : components) {
             if (c instanceof SeriesViewerListener) {
                 eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
             }
         }
         components.clear();
 
-        final LinkedHashMap<LayoutConstraints, JComponent> elements = this.layoutModel.getConstraints();
+        final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
         while (enumVal.hasNext()) {
             LayoutConstraints e = enumVal.next();
@@ -302,9 +303,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     oldView.getSeries().setOpen(true);
                 }
             } else {
-                JComponent component = createUIcomponent(e.getType());
+                Component component = createUIcomponent(e.getType());
                 if (component != null) {
-                    component.setOpaque(true);
+                    if (component instanceof JComponent) {
+                        ((JComponent) component).setOpaque(true);
+                    }
                     components.add(component);
                     elements.put(e, component);
                     grid.add(component, e);
@@ -339,6 +342,56 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
     }
 
+    public void replaceView(DefaultView2d<E> oldView2d, DefaultView2d<E> newView2d) {
+        if (oldView2d != null && newView2d != null) {
+            grid.removeAll();
+            final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
+            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, Component> element = enumVal.next();
+
+                if (element.getValue() == oldView2d) {
+                    if (selectedImagePane == oldView2d) {
+                        selectedImagePane = newView2d;
+                    }
+                    oldView2d.dispose();
+                    int index = view2ds.indexOf(oldView2d);
+                    if (index >= 0) {
+                        view2ds.set(index, newView2d);
+                    }
+                    elements.put(element.getKey(), newView2d);
+                    grid.add(newView2d, element.getKey());
+                    if (newView2d.getSeries() != null) {
+                        newView2d.getSeries().setOpen(true);
+                    }
+                } else {
+                    grid.add(element.getValue(), element.getKey());
+                }
+            }
+            grid.revalidate();
+
+            MouseActions mouseActions = eventManager.getMouseActions();
+            for (int i = 0; i < view2ds.size(); i++) {
+                DefaultView2d<E> v = view2ds.get(i);
+                // Close lens because update does not work
+                v.closeLens();
+                if (SynchView.Mode.Tile.equals(synchView)) {
+                    v.setTileOffset(i);
+                    v.setSeries(selectedImagePane.getSeries(), null);
+                }
+                v.enableMouseAndKeyListener(mouseActions);
+            }
+            Graphic graphic = null;
+            ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            setDrawActions(graphic);
+            selectedImagePane.setSelected(true);
+            eventManager.updateComponentsListener(selectedImagePane);
+        }
+    }
+
     public void setSelectedImagePaneFromFocus(DefaultView2d<E> defaultView2d) {
         setSelectedImagePane(defaultView2d);
     }
@@ -364,7 +417,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
-        final LinkedHashMap<LayoutConstraints, JComponent> elements = layoutModel.getConstraints();
+        final LinkedHashMap<LayoutConstraints, Component> elements = layoutModel.getConstraints();
         if (elements.size() > 1) {
             // Prevent conflict with double click for stopping to draw a graphic (like polyline)
             List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
@@ -382,9 +435,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             int nb = grid.getComponentCount();
             grid.removeAll();
             if (nb > 1) {
-                Iterator<Entry<LayoutConstraints, JComponent>> enumVal = elements.entrySet().iterator();
+                Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
                 while (enumVal.hasNext()) {
-                    Entry<LayoutConstraints, JComponent> entry = enumVal.next();
+                    Entry<LayoutConstraints, Component> entry = enumVal.next();
                     if (entry.getValue().equals(defaultView2d)) {
                         GridBagConstraints c = (GridBagConstraints) entry.getKey().clone();
                         c.weightx = 1.0;
@@ -395,9 +448,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     }
                 }
             } else {
-                Iterator<Entry<LayoutConstraints, JComponent>> enumVal = elements.entrySet().iterator();
+                Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
                 while (enumVal.hasNext()) {
-                    Entry<LayoutConstraints, JComponent> entry = enumVal.next();
+                    Entry<LayoutConstraints, Component> entry = enumVal.next();
                     grid.add(entry.getValue(), entry.getKey());
                 }
                 for (DefaultView2d<E> v : view2ds) {
@@ -442,6 +495,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         return selectedImagePane;
     }
+
+    public abstract List<SynchView> getSynchList();
+
+    public abstract List<GridBagLayoutModel> getLayoutList();
 
     public boolean isContainingView(DefaultView2d<E> view2DPane) {
         for (DefaultView2d<E> v : view2ds) {
@@ -545,7 +602,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         return VIEWS_1x1;
     }
 
-    public void addSeriesList(List<MediaSeries> seriesList, boolean removeOldSeries) {
+    public void addSeriesList(List<MediaSeries<E>> seriesList, boolean removeOldSeries) {
         if (seriesList != null && seriesList.size() > 0) {
             if (SynchView.Mode.Tile.equals(synchView.getMode())) {
                 addSeries(seriesList.get(0));
@@ -608,12 +665,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             pickPoint = e.getPoint();
             point = null;
             list.clear();
-            Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
+            Iterator<Entry<LayoutConstraints, Component>> enumVal =
                 ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
-            Entry<LayoutConstraints, JComponent> entry = null;
+            Entry<LayoutConstraints, Component> entry = null;
             while (enumVal.hasNext()) {
                 entry = enumVal.next();
-                JComponent c = entry.getValue();
+                Component c = entry.getValue();
                 if (c != null) {
                     Rectangle rect = c.getBounds();
                     if (Math.abs(rect.x - pickPoint.x) <= LayoutConstraints.SPACE
@@ -635,7 +692,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 enumVal = ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
                 while (enumVal.hasNext()) {
                     entry = enumVal.next();
-                    JComponent c = entry.getValue();
+                    Component c = entry.getValue();
                     if (c != null) {
                         list.add(new DragLayoutElement(entry.getKey(), c));
                     }
@@ -754,11 +811,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
         private int getCursor(MouseEvent me) {
             Point p = me.getPoint();
-            Iterator<Entry<LayoutConstraints, JComponent>> enumVal =
+            Iterator<Entry<LayoutConstraints, Component>> enumVal =
                 ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
             while (enumVal.hasNext()) {
-                Entry<LayoutConstraints, JComponent> entry = enumVal.next();
-                JComponent c = entry.getValue();
+                Entry<LayoutConstraints, Component> entry = enumVal.next();
+                Component c = entry.getValue();
                 if (c != null) {
                     Rectangle rect = c.getBounds();
                     if ((Math.abs(rect.x - p.x) <= LayoutConstraints.SPACE || Math.abs(rect.x + rect.width - p.x) <= LayoutConstraints.SPACE)
@@ -780,9 +837,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         private final LayoutConstraints originalConstraints;
         private final Rectangle originalBound;
         private final LayoutConstraints constraints;
-        private final JComponent component;
+        private final Component component;
 
-        public DragLayoutElement(LayoutConstraints constraints, JComponent component) {
+        public DragLayoutElement(LayoutConstraints constraints, Component component) {
             if (constraints == null || component == null) {
                 throw new IllegalArgumentException("Arguments cannot be null"); //$NON-NLS-1$
             }
@@ -804,9 +861,24 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             return constraints;
         }
 
-        public JComponent getComponent() {
+        public Component getComponent() {
             return component;
         }
 
+    }
+
+    public void selectLayoutPositionForAddingSeries(List<MediaSeries<E>> seriesList) {
+        int nbSeriesToAdd = 1;
+        if (seriesList != null) {
+            nbSeriesToAdd = seriesList.size();
+            if (nbSeriesToAdd < 1) {
+                nbSeriesToAdd = 1;
+            }
+        }
+        int pos = view2ds.size() - nbSeriesToAdd;
+        if (pos < 0) {
+            pos = 0;
+        }
+        setSelectedImagePane(view2ds.get(pos));
     }
 }

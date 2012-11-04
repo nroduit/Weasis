@@ -13,11 +13,11 @@ package org.weasis.core.ui.util;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 
@@ -67,7 +67,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     }
 
     private void setLayoutModel() {
-        final LinkedHashMap<LayoutConstraints, JComponent> elements = this.layoutModel.getConstraints();
+        final LinkedHashMap<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
         int index = 0;
         while (enumVal.hasNext()) {
