@@ -88,7 +88,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 if (file[i].canRead()) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
-                        if (loader.readMediaTags()) {
+                        if (loader.isReadableDicom()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
                             Thumbnail t = buildDicomStructure(loader, openPlugin);
                             if (t != null) {
@@ -208,7 +208,7 @@ public class LoadLocalDicom extends ExplorerTask {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            dicomReader.reset();
+            // dicomReader.reset();
         }
         return thumb;
     }

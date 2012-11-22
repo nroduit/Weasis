@@ -343,7 +343,7 @@ public class SeriesBuilder {
             File file = new File(MPR_CACHE_DIR, name + ".dcm");
             if (file.canRead()) {
                 DicomMediaIO dicomReader = new DicomMediaIO(file);
-                if (dicomReader.readMediaTags()) {
+                if (dicomReader.isReadableDicom()) {
                     try {
                         if (i == 0) {
                             dicomReader.writeMetaData(dicomSeries);
@@ -358,8 +358,6 @@ public class SeriesBuilder {
 
                     } catch (Exception e) {
                         e.printStackTrace();
-                    } finally {
-                        dicomReader.reset();
                     }
                 }
             }

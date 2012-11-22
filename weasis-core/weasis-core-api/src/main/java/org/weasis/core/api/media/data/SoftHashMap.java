@@ -41,10 +41,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
             // null if it has been garbage collected
             result = soft_ref.get();
             if (result == null) {
-                // If the value has been garbage collected, remove the
-                // entry from the HashMap.
-                // hash.remove(key);
-                // reverseLookup.remove(soft_ref);
+                // If the value has been garbage collected, remove the entry from the HashMap.
                 removeElement(soft_ref);
             }
         }
@@ -53,14 +50,15 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
 
     public void removeElement(Reference<? extends V> soft) {
         K key = reverseLookup.remove(soft);
-        hash.remove(key);
+        if (key != null) {
+            hash.remove(key);
+        }
     }
 
     public void expungeStaleEntries() {
         Reference<? extends V> sv;
         while ((sv = queue.poll()) != null) {
             removeElement(sv);
-            // hash.remove(reverseLookup.remove(sv));
         }
     }
 
@@ -84,6 +82,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
         if (result == null) {
             return null;
         }
+        reverseLookup.remove(result);
         return result.get();
     }
 
@@ -112,14 +111,17 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
             if (value != null) {
                 result.add(new Entry<K, V>() {
 
+                    @Override
                     public K getKey() {
                         return entry.getKey();
                     }
 
+                    @Override
                     public V getValue() {
                         return value;
                     }
 
+                    @Override
                     public V setValue(V v) {
                         entry.setValue(new SoftReference<V>(v, queue));
                         return value;
@@ -128,5 +130,24 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> implements Serializable
             }
         }
         return result;
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        expungeStaleEntries();
+        SoftReference<V> soft_ref = hash.get(key);
+        if (soft_ref != null) {
+            // From the SoftReference we get the value, which can be
+            // null if it has been garbage collected
+            V result = soft_ref.get();
+            if (result != null) {
+                return true;
+            }
+            // If the value has been garbage collected, remove the
+            // entry from the HashMap.
+            hash.remove(key);
+            reverseLookup.remove(soft_ref);
+        }
+        return false;
     }
 }

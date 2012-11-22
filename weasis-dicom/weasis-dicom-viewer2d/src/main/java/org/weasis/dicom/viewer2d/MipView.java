@@ -10,6 +10,7 @@ import java.awt.image.DataBufferUShort;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +28,10 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
+import org.weasis.core.api.image.op.MaxCollectionZprojection;
+import org.weasis.core.api.image.op.MeanCollectionZprojection;
+import org.weasis.core.api.image.op.MinCollectionZprojection;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
@@ -44,7 +49,7 @@ public class MipView extends View2d {
     public static final ActionW MIP_MAX_SLICE = new ActionW("Max Slice: ", "mip_max", 0, 0, null);
 
     public enum Type {
-        MIN("min-MIP"), MAX("MIP");
+        MIN("min-MIP"), MEAN("mean-MIP"), MAX("MIP");
 
         private final String value;
 
@@ -164,7 +169,7 @@ public class MipView extends View2d {
                                 MipView.this.repaint();
                             }
                         });
-                        final String operator = mipType.name().toLowerCase();
+
                         SeriesComparator sort =
                             (SeriesComparator) imageOperation.getActionValue(ActionW.SORTSTACK.cmd());
                         Boolean reverse = (Boolean) imageOperation.getActionValue(ActionW.INVERSESTACK.cmd());
@@ -181,44 +186,36 @@ public class MipView extends View2d {
                                 DicomImageElement dcm = iter.next();
                                 if (k >= startIndex) {
                                     firstDcm = dcm;
-                                    curImage = dcm.getImage();
                                     break;
                                 }
                                 k++;
                             }
                         } else {
                             if (iter.hasNext()) {
-                                DicomImageElement dcmCur = iter.next();
-                                firstDcm = dcmCur;
-                                curImage = dcmCur.getImage();
+                                firstDcm = iter.next();
                             }
                         }
 
                         int stopIndex = max - 1;
-                        if (curImage != null) {
+                        if (firstDcm != null) {
+                            List<ImageElement> sources = new ArrayList<ImageElement>();
+                            sources.add(firstDcm);
                             while (iter.hasNext()) {
                                 if (this.isInterrupted()) {
                                     return;
                                 }
                                 DicomImageElement dcm = iter.next();
-                                PlanarImage img = dcm.getImage();
-                                if (img == null) {
-                                    return;
-                                }
-                                curImage = arithmeticOperation(operator, curImage, img);
-                                GuiExecutor.instance().execute(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        progressBar.setValue(progressBar.getValue() + 1);
-                                        MipView.this.repaint();
-                                    }
-                                });
+                                sources.add(dcm);
 
                                 if (k >= stopIndex) {
                                     break;
                                 }
                                 k++;
+                            }
+                            if (sources.size() > 1) {
+                                curImage = addCollectionOperation(mipType, sources, MipView.this, progressBar);
+                            } else {
+                                curImage = null;
                             }
                         }
                         // }
@@ -283,7 +280,7 @@ public class MipView extends View2d {
 
                             rawIO.setTagNoNull(TagW.VOILUTSequence, firstDcm.getTagValue(TagW.VOILUTSequence));
                             // rawIO.setTagNoNull(TagW.WindowWidth, img.getTagValue(TagW.WindowWidth));
-                            // rawIO.setTagNoNull(TagW.WindowCenter, img.getTagValue(TagW.WindowCenter));
+                            // rawIO.setTagNoNull(TagW.WinArrayListdowCenter, img.getTagValue(TagW.WindowCenter));
                             // rawIO.setTagNoNull(TagW.WindowCenterWidthExplanation,
                             // img.getTagValue(TagW.WindowCenterWidthExplanation));
                             rawIO.setTagNoNull(TagW.VOILutFunction, firstDcm.getTagValue(TagW.VOILutFunction));
@@ -334,6 +331,20 @@ public class MipView extends View2d {
         pb2.addSource(img1);
         pb2.addSource(img2);
         return JAI.create(operation, pb2);
+    }
+
+    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources, MipView mipView,
+        JProgressBar progressBar) {
+        if (Type.MIN.equals(mipType)) {
+            MinCollectionZprojection op = new MinCollectionZprojection(sources, mipView, progressBar);
+            return op.computeMinCollectionOpImage();
+        }
+        if (Type.MEAN.equals(mipType)) {
+            MeanCollectionZprojection op = new MeanCollectionZprojection(sources, mipView, progressBar);
+            return op.computeMeanCollectionOpImage();
+        }
+        MaxCollectionZprojection op = new MaxCollectionZprojection(sources, mipView, progressBar);
+        return op.computeMaxCollectionOpImage();
     }
 
     private static void writeRasterInRaw(BufferedImage image, OutputStream out) throws IOException {

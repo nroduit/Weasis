@@ -48,18 +48,24 @@ public class MipPopup implements ShowPopup {
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
         final JPanel framePanel = new JPanel();
+        framePanel.setBorder(new TitledBorder(null, "Projection", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         final ButtonGroup ratioGroup = new ButtonGroup();
 
-        JRadioButton rdbtnMinProjection = new JRadioButton("Min Projection");
+        JRadioButton rdbtnMinProjection = new JRadioButton("Min");
         framePanel.add(rdbtnMinProjection);
-        JRadioButton rdbtnMaxProjection = new JRadioButton("Max Projection");
+        JRadioButton rdbtnMeanProjection = new JRadioButton("Mean");
+        framePanel.add(rdbtnMeanProjection);
+        JRadioButton rdbtnMaxProjection = new JRadioButton("Max");
         framePanel.add(rdbtnMaxProjection);
         panel_1.add(framePanel);
         ratioGroup.add(rdbtnMinProjection);
+        ratioGroup.add(rdbtnMeanProjection);
         ratioGroup.add(rdbtnMaxProjection);
         MipView.Type type = (MipView.Type) view.getActionValue(MipView.MIP.cmd());
         if (MipView.Type.MIN.equals(type)) {
             rdbtnMinProjection.setSelected(true);
+        } else if (MipView.Type.MEAN.equals(type)) {
+            rdbtnMeanProjection.setSelected(true);
         } else {
             rdbtnMaxProjection.setSelected(true);
         }
@@ -71,6 +77,19 @@ public class MipPopup implements ShowPopup {
                     JRadioButton btn = (JRadioButton) e.getSource();
                     if (btn.isSelected()) {
                         view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MIN);
+                        view.applyMipParameters();
+                    }
+                }
+            }
+        });
+        rdbtnMeanProjection.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (e.getSource() instanceof JRadioButton) {
+                    JRadioButton btn = (JRadioButton) e.getSource();
+                    if (btn.isSelected()) {
+                        view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MEAN);
                         view.applyMipParameters();
                     }
                 }
