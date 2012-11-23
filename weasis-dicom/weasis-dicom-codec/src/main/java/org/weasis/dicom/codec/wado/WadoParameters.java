@@ -43,8 +43,9 @@ public class WadoParameters {
         this.wadoURL = wadoURL;
         this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(3);
         // Add possible session tags
-        if (BundleTools.SESSION_TAGS.size() > 0) {
-            for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS.entrySet().iterator(); iter.hasNext();) {
+        if (BundleTools.SESSION_TAGS_FILE.size() > 0) {
+            for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS_FILE.entrySet().iterator(); iter
+                .hasNext();) {
                 Entry<String, String> element = iter.next();
                 addHttpTag(element.getKey(), element.getValue());
             }

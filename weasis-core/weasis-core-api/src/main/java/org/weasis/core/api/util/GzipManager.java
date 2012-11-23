@@ -113,6 +113,15 @@ public class GzipManager {
         return gzipUncompressToFile(input, outputStream);
     }
 
+    public static InputStream gzipUncompressToStream(InputStream inputstream) {
+        try {
+            return new BufferedInputStream(new GZIPInputStream(inputstream));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static InputStream gzipUncompressToStream(URL url) {
         try {
             return new BufferedInputStream(new GZIPInputStream(url.openStream()));

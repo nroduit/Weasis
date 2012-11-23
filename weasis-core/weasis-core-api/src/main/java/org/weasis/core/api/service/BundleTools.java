@@ -25,13 +25,16 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
 
 public class BundleTools {
-    public static final Map<String, String> SESSION_TAGS = new HashMap<String, String>(3);
+    public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<String, String>(3);
+    public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<String, String>(3);
     static {
         for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
             Entry<Object, Object> element = iter.next();
             String tag = element.getKey().toString();
-            if (tag.startsWith("TG-")) { //$NON-NLS-1$
-                SESSION_TAGS.put(tag.substring(3), element.getValue().toString());
+            if (tag.startsWith("TGM-")) { //$NON-NLS-1$
+                SESSION_TAGS_MANIFEST.put(tag.substring(4), element.getValue().toString());
+            } else if (tag.startsWith("TGF-")) { //$NON-NLS-1$
+                SESSION_TAGS_FILE.put(tag.substring(4), element.getValue().toString());
             }
         }
     }
