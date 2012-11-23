@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.12-SNAPSHOT</version>
+		<version>1.13-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -12,7 +12,7 @@
 	<!-- The weasis launcher is not OSGI bundle, it is a simple jar -->
 	<packaging>jar</packaging>
 	<name>Weasis Launcher (Felix) [${project.artifactId}]</name>
-	<version>0.5.12-SNAPSHOT</version>
+	<version>0.5.13-SNAPSHOT</version>
 	<licenses>
 		<license>
 			<name>Eclipse Public License v1.0</name>
