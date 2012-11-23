@@ -81,8 +81,9 @@ public class DownloadManager {
 
             URL url = uri.toURL();
             URLConnection httpCon = url.openConnection();
-            if (BundleTools.SESSION_TAGS.size() > 0) {
-                for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS.entrySet().iterator(); iter
+
+            if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
+                for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS_MANIFEST.entrySet().iterator(); iter
                     .hasNext();) {
                     Entry<String, String> element = iter.next();
                     httpCon.setRequestProperty(element.getKey(), element.getValue());
@@ -91,20 +92,21 @@ public class DownloadManager {
 
             LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
             if (path.endsWith(".gz")) { //$NON-NLS-1$
-                stream = GzipManager.gzipUncompressToStream(url);
+                stream = GzipManager.gzipUncompressToStream(httpCon.getInputStream());
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
-                stream = url.openStream();
+                stream = httpCon.getInputStream();
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeFile(url, outFile) == -1) {
+                if (FileUtil.writeFile(httpCon.getInputStream(), new FileOutputStream(outFile)) == -1) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
                     } else {
-                        stream = url.openStream();
+                        stream = new FileInputStream(outFile);
                     }
                 }
             }
+
             File tempFile = null;
             if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { //$NON-NLS-1$ //$NON-NLS-2$
                 tempFile = new File(path);
@@ -144,7 +146,7 @@ public class DownloadManager {
                             String additionnalParameters =
                                 getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
                             String overrideList = getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-                            String webLogin = getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null); //$NON-NLS-1$
+                            String webLogin = getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
                             final WadoParameters wadoParameters =
                                 new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
                             int pat = 0;
@@ -217,11 +219,11 @@ public class DownloadManager {
         // the tags located in DICOM object (because original DICOM can contain different values after merging
         // patient or study
 
-        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE); //$NON-NLS-1$
-        String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null); //$NON-NLS-1$
-        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false); //$NON-NLS-1$
+        String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE);
+        String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
+        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false);
         String name =
-            DicomMediaIO.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE)); //$NON-NLS-1$
+            DicomMediaIO.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
         String patientPseudoUID = DicomMediaIO.buildPatientPseudoUID(patientID, issuerOfPatientID, name, birthdate);
 
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
