@@ -84,7 +84,15 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                     if (releaseEvent && shape != null) {
                         RenderedImage image = layer.getSourceRenderedImage();
                         // long startTime = System.currentTimeMillis();
-                        ROIShape roi = new ROIShape(shape);
+                        double scaleX = imageElement.getRescaleX();
+                        double scaleY = imageElement.getRescaleY();
+                        ROIShape roi;
+                        if (scaleX != scaleY) {
+                            AffineTransform transform = AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
+                            roi = new ROIShape(transform.createTransformedShape(shape));
+                        } else {
+                            roi = new ROIShape(shape);
+                        }
                         // Get padding values => exclude values
                         Double excludedMin = null;
                         Double excludedMax = null;
