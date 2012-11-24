@@ -36,6 +36,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -119,6 +120,31 @@ public class MipView extends View2d {
             progressBar.paint(g2d);
             g2d.translate(-shiftx, -shifty);
         }
+    }
+
+    public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
+        super.setSeries(series, selectedDicom);
+    }
+
+    @Override
+    public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
+        // If series is updates by other actions than MIP, the view is reseted
+        exitMipMode(series, selectedDicom);
+    }
+
+    public void exitMipMode(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
+        // reset current process
+        this.setActionsInView(MipView.MIP.cmd(), null);
+        this.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), null);
+        this.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), null);
+        this.applyMipParameters();
+
+        ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
+        container.setSelectedAndGetFocus();
+        View2d newView2d = new View2d(this.getEventManager());
+        newView2d.registerDefaultListeners();
+        newView2d.setSeries(series, selectedDicom);
+        container.replaceView(this, newView2d);
     }
 
     public void applyMipParameters() {
@@ -290,7 +316,13 @@ public class MipView extends View2d {
                             rawIO.setTag(TagW.InstanceNumber, 1);
 
                             DicomImageElement dicom = new DicomImageElement(rawIO, 0);
-                            imageLayer.setImage(dicom, null);
+                            DicomImageElement oldImage = getImage();
+                            // Use graphics of the previous image when they belongs to a MIP image
+                            if (oldImage != null && "mip.1".equals(oldImage.getTagValue(TagW.SOPInstanceUID))) {
+                                dicom.setTag(TagW.MeasurementGraphics, oldImage.getTagValue(TagW.MeasurementGraphics));
+                            }
+
+                            setImage(dicom, false);
                         }
                         // TODO check images have similar modality and VOI LUT, W/L, LUT shape...
                         // imageLayer.updateAllImageOperations();

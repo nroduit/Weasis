@@ -88,6 +88,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         double scaleY = imageElement.getRescaleY();
                         ROIShape roi;
                         if (scaleX != scaleY) {
+                            // Rescale ROI for non-square pixel image
                             AffineTransform transform = AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
                             roi = new ROIShape(transform.createTransformedShape(shape));
                         } else {

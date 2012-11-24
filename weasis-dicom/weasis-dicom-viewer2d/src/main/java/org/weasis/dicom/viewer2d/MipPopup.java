@@ -28,9 +28,7 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ShowPopup;
-import org.weasis.dicom.codec.DicomImageElement;
 
 public class MipPopup implements ShowPopup {
     private final Logger LOGGER = LoggerFactory.getLogger(MipPopup.class);
@@ -154,18 +152,7 @@ public class MipPopup implements ShowPopup {
         btnExitMipMode.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // reset current process
-                view.setActionsInView(MipView.MIP.cmd(), null);
-                view.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), null);
-                view.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), null);
-                view.applyMipParameters();
-
-                ImageViewerPlugin<DicomImageElement> container = view.getEventManager().getSelectedView2dContainer();
-                container.setSelectedAndGetFocus();
-                View2d newView2d = new View2d(view.getEventManager());
-                newView2d.registerDefaultListeners();
-                newView2d.setSeries(view.getSeries());
-                container.replaceView(view, newView2d);
+                view.exitMipMode(view.getSeries(), null);
                 dialog.dispose();
             }
         });

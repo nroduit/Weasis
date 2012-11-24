@@ -66,7 +66,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             container.setSelectedAndGetFocus();
                             MipView newView2d = new MipView(eventManager);
                             newView2d.registerDefaultListeners();
-                            newView2d.setSeries(s);
+                            newView2d.setMIPSeries(s, null);
                             container.replaceView(selView, newView2d);
                             newView2d.applyMipParameters();
                         }

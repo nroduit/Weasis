@@ -344,20 +344,15 @@ public class SeriesBuilder {
             if (file.canRead()) {
                 DicomMediaIO dicomReader = new DicomMediaIO(file);
                 if (dicomReader.isReadableDicom()) {
-                    try {
-                        if (i == 0) {
-                            dicomReader.writeMetaData(dicomSeries);
-                        }
+                    if (i == 0) {
+                        dicomReader.writeMetaData(dicomSeries);
+                    }
 
-                        MediaElement[] medias = dicomReader.getMediaElement();
-                        if (medias != null) {
-                            for (MediaElement media : medias) {
-                                dicomSeries.add((DicomImageElement) media);
-                            }
+                    MediaElement[] medias = dicomReader.getMediaElement();
+                    if (medias != null) {
+                        for (MediaElement media : medias) {
+                            dicomSeries.add((DicomImageElement) media);
                         }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
             }

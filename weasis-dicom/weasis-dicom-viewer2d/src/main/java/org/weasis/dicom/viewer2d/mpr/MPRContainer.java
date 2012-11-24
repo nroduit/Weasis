@@ -30,11 +30,9 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -42,7 +40,6 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
@@ -285,7 +282,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public void setSelected(boolean selected) {
         if (selected) {
             if (ViewerToolBar.actionsButtons.indexOf(ActionW.CROSSHAIR) == -1) {
-                ViewerToolBar.actionsButtons.set(0, ActionW.CROSSHAIR);
+                ViewerToolBar.actionsButtons.add(0, ActionW.CROSSHAIR);
             }
             final ViewerToolBar toolBar = getViewerToolBar();
             if (toolBar != null) {
@@ -348,71 +345,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ObservableEvent event = (ObservableEvent) evt;
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
-            if (newVal instanceof SeriesEvent) {
-                SeriesEvent event2 = (SeriesEvent) newVal;
-                if (ObservableEvent.BasicAction.Add.equals(action)) {
-                    SeriesEvent.Action action2 = event2.getActionCommand();
-                    Object source = event2.getSource();
-                    Object param = event2.getParam();
-
-                    if (SeriesEvent.Action.AddImage.equals(action2)) {
-                        if (source instanceof DicomSeries) {
-                            DicomSeries series = (DicomSeries) source;
-                            DefaultView2d<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
-                            DicomImageElement img = view2DPane.getImage();
-                            if (img != null && view2DPane.getSeries() == series) {
-                                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                                if (seqAction instanceof SliderCineListener) {
-                                    SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                                    if (param instanceof DicomImageElement) {
-                                        Filter<DicomImageElement> filter =
-                                            (Filter<DicomImageElement>) view2DPane
-                                                .getActionValue(ActionW.FILTERED_SERIES.cmd());
-                                        int imgIndex =
-                                            series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
-                                        if (imgIndex < 0) {
-                                            imgIndex = 0;
-                                            // add again the series for registering listeners
-                                            // (require at least one image)
-                                            view2DPane.setSeries(series, null);
-                                        }
-                                        if (imgIndex >= 0) {
-                                            sliceAction.setMinMaxValue(1, series.size(filter), imgIndex + 1);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else if (SeriesEvent.Action.UpdateImage.equals(action2)) {
-                        if (source instanceof DicomImageElement) {
-                            DicomImageElement dcm = (DicomImageElement) source;
-                            for (DefaultView2d<DicomImageElement> v : view2ds) {
-                                if (dcm == v.getImage()) {
-                                    // Force to repaint the same image
-                                    if (v.getImageLayer().getDisplayImage() == null) {
-                                        v.setActionsInView(ActionW.PROGRESSION.cmd(), param);
-                                        // Set image to null for getting correct W/L values
-                                        v.getImageLayer().setImage(null, null);
-                                        v.setSeries(v.getSeries());
-                                    } else {
-                                        v.propertyChange(new PropertyChangeEvent(dcm, ActionW.PROGRESSION.cmd(), null,
-                                            param));
-                                    }
-                                }
-                            }
-                        }
-                    } else if (SeriesEvent.Action.loadImageInMemory.equals(action2)) {
-                        if (source instanceof DicomSeries) {
-                            DicomSeries dcm = (DicomSeries) source;
-                            for (DefaultView2d<DicomImageElement> v : view2ds) {
-                                if (dcm == v.getSeries()) {
-                                    v.repaint(v.getInfoLayer().getPreloadingProgressBound());
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (ObservableEvent.BasicAction.Remove.equals(action)) {
+            if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     DicomSeries dicomSeries = (DicomSeries) newVal;
                     for (DefaultView2d<DicomImageElement> v : view2ds) {
@@ -451,9 +384,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                     for (DefaultView2d<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (series.equals(s)) {
-                            // Set to null to be sure that all parameters from the view are apply again to the Series
-                            // (for instance it is the same series with more images)
-                            v.setSeries(null);
+                            // It will reset MIP view
                             v.setSeries(series, null);
                         }
                     }
