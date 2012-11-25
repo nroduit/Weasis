@@ -28,8 +28,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
-import javax.imageio.stream.FileCacheImageInputStream;
-import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
@@ -38,7 +36,6 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
 import org.weasis.core.api.gui.util.AbstractBufferHandler;
-import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.util.FileUtil;
 
 import com.sun.media.jai.codec.ImageCodec;
@@ -138,35 +135,35 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    public static PlanarImage loadImage2(InputStream stream) {
-        PlanarImage src = null;
-        if (stream != null) {
-            try {
-                ImageInputStream in = new FileCacheImageInputStream(stream, AbstractProperties.APP_TEMP_DIR);
-                // Tile image while reading to handle large images
-                ImageLayout layout = new ImageLayout();
-                layout.setTileWidth(TILESIZE);
-                layout.setTileHeight(TILESIZE);
-                RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
-                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-                pb.setParameter("Input", in); //$NON-NLS-1$
-                src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
-            } catch (Exception ex) {
-                src = null;
-            }
-            if (src == null) {
-                try {
-                    stream.close();
-                } catch (IOException ex1) {
-                }
-                // JMVisionWin.getInstance().setStatusMessage("Unable to load " + file.getName() + ".\nThis image format
-                // is
-                // not supported");
-            }
-            return src;
-        }
-        return null;
-    }
+    // public static PlanarImage loadImage2(InputStream stream) {
+    // PlanarImage src = null;
+    // if (stream != null) {
+    // try {
+    // ImageInputStream in = new FileCacheImageInputStream(stream, AbstractProperties.APP_TEMP_DIR);
+    // // Tile image while reading to handle large images
+    // ImageLayout layout = new ImageLayout();
+    // layout.setTileWidth(TILESIZE);
+    // layout.setTileHeight(TILESIZE);
+    // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+    //                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
+    //                pb.setParameter("Input", in); //$NON-NLS-1$
+    //                src = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
+    // } catch (Exception ex) {
+    // src = null;
+    // }
+    // if (src == null) {
+    // try {
+    // stream.close();
+    // } catch (IOException ex1) {
+    // }
+    // // JMVisionWin.getInstance().setStatusMessage("Unable to load " + file.getName() + ".\nThis image format
+    // // is
+    // // not supported");
+    // }
+    // return src;
+    // }
+    // return null;
+    // }
 
     public static boolean writeOptimizedTIFF(String fichier, RenderedImage source) throws Exception {
         return writeOptimizedTIFF(new File(fichier), source);

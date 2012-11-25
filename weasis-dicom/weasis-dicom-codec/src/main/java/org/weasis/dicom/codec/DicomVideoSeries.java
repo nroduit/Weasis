@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.dcm4che2.data.DicomObject;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
@@ -54,8 +55,8 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                 try {
                     width = dicomImageLoader.getWidth(0);
                     height = dicomImageLoader.getHeight(0);
-                    dicomImageLoader.readPixelData();
-                    mpeg = dicomImageLoader.getDicomObject().get(TagW.PixelData.getId()).getFragment(1);
+                    DicomObject pixData = dicomImageLoader.readPixelData();
+                    mpeg = pixData.get(TagW.PixelData.getId()).getFragment(1);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

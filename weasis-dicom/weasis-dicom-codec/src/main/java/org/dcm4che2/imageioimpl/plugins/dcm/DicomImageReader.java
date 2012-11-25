@@ -902,25 +902,25 @@ public class DicomImageReader extends ImageReader {
     }
 
     // TODO add to original dcm4che class
-    public void readPixelData() throws Exception {
-        DicomObject ds = readMetaData(true);
-        if (dis.tag() == Tag.PixelData) {
-            // Remove the StopHandler on the tag 'Pixel Data'
-            dis.setHandler(dis);
-            // Set the position at the beginning of the tag 'Pixel Data'
-            dis.reset();
-            // Read the Pixel Data (compressed is a sequence attribute)
-            dis.readDicomObject(ds, -1);
+    public DicomObject readPixelData() throws Exception {
+        try {
+            readMetaData(true);
+            if (dis.tag() == Tag.PixelData) {
+                // Remove the StopHandler on the tag 'Pixel Data'
+                dis.setHandler(dis);
+                // Set the position at the beginning of the tag 'Pixel Data'
+                dis.reset();
+                // Read the Pixel Data (compressed is a sequence attribute)
+                return dis.readDicomObject();
+
+            } else {
+                throw new Exception("Cannot read pixel data");
+            }
+        } finally {
             // Close stream
             FileUtil.safeClose(iis);
             iis = null;
-        } else {
-            throw new Exception("Cannot read pixel data");
         }
-    }
-
-    public long getPixelDataPos() {
-        return pixelDataPos;
     }
 
     /**

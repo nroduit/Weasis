@@ -15,6 +15,7 @@ import javax.media.jai.JAI;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.weasis.core.api.service.ImageioUtil;
 
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi;
@@ -55,8 +56,13 @@ public class Activator implements BundleActivator {
                 GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
-            registerServiceProvider(registry, c);
+            ImageioUtil.registerServiceProvider(registry, c);
         }
+
+        // TODO Should be in properties?
+        // Unregister sun native jpeg codec
+        // ImageioUtil.unRegisterServiceProvider(registry, CLibJPEGImageReaderSpi.class);
+
         // Register the ImageRead and ImageWrite operation for JAI
         new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
     }
@@ -74,7 +80,7 @@ public class Activator implements BundleActivator {
                 GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
-            unRegisterServiceProvider(registry, c);
+            ImageioUtil.unRegisterServiceProvider(registry, c);
         }
 
     }
@@ -88,33 +94,5 @@ public class Activator implements BundleActivator {
         JAI jai = JAI.getDefaultInstance();
         Thread.currentThread().setContextClassLoader(originalClassLoader);
         return jai;
-    }
-
-    private static void registerServiceProvider(IIORegistry registry, Class clazz) {
-        Class spiClass = null;
-        try {
-            // If JRE contains imageio.jar in lib/ext, get spi classes and unregister them
-            spiClass = Class.forName(clazz.getName(), true, ClassLoader.getSystemClassLoader());
-        } catch (ClassNotFoundException e) {
-        }
-        if (spiClass != null) {
-            Object spi = registry.getServiceProviderByClass(spiClass);
-            if (spi != null) {
-                registry.deregisterServiceProvider(spi);
-            }
-        }
-        try {
-            // Resister again the spi classes with the bundle classloader
-            registry.registerServiceProvider(clazz.newInstance());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void unRegisterServiceProvider(IIORegistry registry, Class clazz) {
-        Object spi = registry.getServiceProviderByClass(clazz);
-        if (spi != null) {
-            registry.deregisterServiceProvider(spi);
-        }
     }
 }

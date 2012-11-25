@@ -78,6 +78,18 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
         if (s == null) {
             throw new UnsupportedOperationException("No Image Reader available for Transfer Syntax:" + tsuid);
         }
+		// TODO build a dynamic way to register TSUID
+        if ("1.2.840.10008.1.2.4.80".equals(tsuid) || "1.2.840.10008.1.2.4.81".equals(tsuid)) {
+            final String jpegls = "org.weasis.jpeg.NativeJLSImageReader";
+            for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg-ls"); it.hasNext();) {
+                ImageReader r = (ImageReader) it.next();
+                if (jpegls.equals(r.getClass().getName())) {
+                    log.debug("Found reader " + jpegls + " for " + tsuid);
+                    return r;
+                }
+            }
+        }
+
         int delim = s.indexOf(',');
         if (delim == -1) {
             throw new ConfigurationError("Missing ',' in " + tsuid + "=" + s);
