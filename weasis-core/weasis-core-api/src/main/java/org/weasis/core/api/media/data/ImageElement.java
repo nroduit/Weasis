@@ -16,7 +16,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -226,9 +225,12 @@ public class ImageElement extends MediaElement<PlanarImage> {
     }
 
     public void removeImageFromCache() {
-        SoftReference<PlanarImage> img = mCache.hash.get(this);
-        if (img != null) {
-            mCache.removeElement(img);
+        mCache.remove(this);
+        MediaReader<PlanarImage> reader = this.getMediaReader();
+        this.setTag(TagW.ImageCache, false);
+        if (reader != null) {
+            // Close the image stream
+            reader.close();
         }
     }
 
@@ -304,10 +306,17 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * 
      * @return
      */
-    public synchronized PlanarImage getImage(OperationsManager manager) {
+    public PlanarImage getImage(OperationsManager manager) {
+        return getImage(manager, true);
+    }
+
+    public synchronized PlanarImage getImage(OperationsManager manager, boolean findMinMax) {
         PlanarImage cacheImage;
         try {
             cacheImage = startImageLoading();
+            if (findMinMax) {
+                findMinMaxValues(cacheImage);
+            }
         } catch (OutOfMemoryError e1) {
             /*
              * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
@@ -321,6 +330,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
             } catch (InterruptedException et) {
             }
             cacheImage = startImageLoading();
+            if (findMinMax) {
+                findMinMaxValues(cacheImage);
+            }
         }
         if (manager != null && cacheImage != null) {
             cacheImage = PlanarImage.wrapRenderedImage(manager.getFinalImage());
@@ -408,9 +420,7 @@ public class ImageElement extends MediaElement<PlanarImage> {
 
         @Override
         public PlanarImage call() throws Exception {
-            PlanarImage img = loadImage();
-            findMinMaxValues(img);
-            return img;
+            return loadImage();
         }
     }
 
