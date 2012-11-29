@@ -896,7 +896,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 FileUtil.safeClose(stream);
 
                 dicomReader = new DicomMediaIO(tempFile);
-                if (dicomReader.readMediaTags()) {
+                if (dicomReader.isReadableDicom()) {
                     if (dicomSeries.size(null) == 0) {
                         // Override the group (patient, study and series) by the dicom fields except the UID of
                         // the group
@@ -926,7 +926,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             if (status == Status.Downloading) {
                 status = Status.Complete;
                 if (tempFile != null) {
-                    if (dicomSeries != null && dicomReader.readMediaTags()) {
+                    if (dicomSeries != null && dicomReader.isReadableDicom()) {
                         final DicomMediaIO reader = dicomReader;
                         // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
                         // before reaching done() of SwingWorker
@@ -946,7 +946,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     }
                                 }
 
-                                reader.reset();
+                                // reader.reset();
                                 Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumb != null) {
                                     thumb.repaint();

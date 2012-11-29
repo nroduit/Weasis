@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.image.util;
 
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -20,10 +21,13 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
 
 import javax.media.jai.BorderExtender;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
+import javax.media.jai.PlanarImage;
+import javax.media.jai.RasterFactory;
 import javax.media.jai.TileCache;
 
 /**
@@ -33,8 +37,8 @@ import javax.media.jai.TileCache;
  */
 public class LayoutUtil {
 
-    public static RenderingHints BORDER_COPY =
-        new RenderingHints(JAI.KEY_BORDER_EXTENDER, BorderExtender.createInstance(BorderExtender.BORDER_COPY));
+    public static RenderingHints BORDER_COPY = new RenderingHints(JAI.KEY_BORDER_EXTENDER,
+        BorderExtender.createInstance(BorderExtender.BORDER_COPY));
 
     public LayoutUtil() {
     }
@@ -125,6 +129,48 @@ public class LayoutUtil {
 
     public static SampleModel createBinarySampelModel() {
         return createBinarySampelModel(ImageFiler.TILESIZE, ImageFiler.TILESIZE);
+    }
+
+    public static WritableRaster createCompatibleRaster(PlanarImage img, Rectangle region) {
+        if (region == null) { // copy the entire image
+            region = img.getBounds();
+        } else {
+            region = region.intersection(img.getBounds());
+
+            if (region.isEmpty()) {
+                return null;
+            }
+        }
+
+        SampleModel sm = img.getSampleModel();
+        if (sm.getWidth() != region.width || sm.getHeight() != region.height) {
+            sm = sm.createCompatibleSampleModel(region.width, region.height);
+        }
+
+        WritableRaster raster = RasterFactory.createWritableRaster(sm, region.getLocation());
+
+        // int startTileX = img.XToTileX(region.x);
+        // int startTileY = img.YToTileY(region.y);
+        // int endTileX = img.XToTileX(region.x + region.width - 1);
+        // int endTileY = img.YToTileY(region.y + region.height - 1);
+        //
+        // SampleModel[] sampleModels = { img.getSampleModel() };
+        // int tagID = RasterAccessor.findCompatibleTag(sampleModels, raster.getSampleModel());
+        //
+        // RasterFormatTag srcTag = new RasterFormatTag(img.getSampleModel(), tagID);
+        // RasterFormatTag dstTag = new RasterFormatTag(raster.getSampleModel(), tagID);
+        //
+        // for (int ty = startTileY; ty <= endTileY; ty++) {
+        // for (int tx = startTileX; tx <= endTileX; tx++) {
+        // Raster tile = img.getTile(tx, ty);
+        // Rectangle subRegion = region.intersection(tile.getBounds());
+        //
+        // RasterAccessor s = new RasterAccessor(tile, subRegion, srcTag, img.getColorModel());
+        // RasterAccessor d = new RasterAccessor(raster, subRegion, dstTag, null);
+        // ImageUtil.copyRaster(s, d);
+        // }
+        // }
+        return raster;
     }
 
     public static ColorModel createBinaryIndexColorModel() {
