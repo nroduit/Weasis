@@ -409,7 +409,7 @@ public class WeasisLauncher {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuffer command = new StringBuffer(args[i].substring(1));
                 // look for parameters
-                while (i + 1 < length && !args[i + 1].startsWith("$")) { //$NON-NLS-1$
+                while (i + 1 < length && !args[i + 1].startsWith("$") && !args[i + 1].startsWith("-VMP")) { //$NON-NLS-1$
                     i++;
                     command.append(" "); //$NON-NLS-1$
                     if (args[i].indexOf(" ") != -1) { //$NON-NLS-1$
