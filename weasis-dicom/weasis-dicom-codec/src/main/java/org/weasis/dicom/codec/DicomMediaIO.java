@@ -18,9 +18,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,8 +44,6 @@ import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
-import org.dcm4che2.io.DicomInputStream;
-import org.dcm4che2.io.DicomOutputStream;
 import org.dcm4che2.iod.module.pr.DisplayShutterModule;
 import org.dcm4che2.util.ByteUtils;
 import org.dcm4che2.util.TagUtils;
@@ -65,7 +61,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -1024,30 +1019,6 @@ public class DicomMediaIO extends DicomImageReader implements MediaReader<Planar
 
     public int getBitsStored() {
         return bitsStored;
-    }
-
-    public boolean writeDICOM(File destination) throws Exception {
-        DicomOutputStream out = null;
-        DicomInputStream dis = null;
-        try {
-            out = new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(destination)));
-            if (uri.toString().startsWith("file:/")) { //$NON-NLS-1$
-                dis = new DicomInputStream(new File(uri));
-            } else {
-                dis = new DicomInputStream(uri.toURL().openStream());
-            }
-            // dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-            DicomObject dcm = dis.readDicomObject();
-            out.writeDicomFile(dcm);
-        } catch (IOException e) {
-            LOGGER.warn("", e); //$NON-NLS-1$
-            destination.delete();
-            return false;
-        } finally {
-            FileUtil.safeClose(out);
-            FileUtil.safeClose(dis);
-        }
-        return true;
     }
 
     @Override
