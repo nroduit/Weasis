@@ -46,13 +46,14 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
     public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<ActionW>(Arrays
-        .asList(new ActionW[] { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
-            ActionW.MEASURE, ActionW.CONTEXTMENU })));
+        .asList(new ActionW[] { ActionW.NO_ACTION, ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM,
+            ActionW.ROTATION, ActionW.MEASURE, ActionW.CONTEXTMENU })));
 
     public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
     public static final Icon MouseLeftIcon =
@@ -65,7 +66,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         MouseActions.class.getResource("/icon/32x32/mouse-wheel.png")); //$NON-NLS-1$
 
     protected final ImageViewerEventManager<E> eventManager;
-    private final DropDownButton mouseLeft;
+    private DropDownButton mouseLeft;
     private DropDownButton mouseMiddle;
     private DropDownButton mouseRight;
     private DropDownButton mouseWheel;
@@ -82,11 +83,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         MouseActions actions = eventManager.getMouseActions();
 
-        mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
-        mouseLeft
-            .setToolTipText(Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
         if (((activeMouse & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK)) {
+            mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
+            mouseLeft
+                .setToolTipText(Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             add(mouseLeft);
         }
         if (((activeMouse & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)) {
@@ -111,7 +111,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
 
         if (activeMouse > 1) {
-            addSeparator(WtoolBar.SEPARATOR_2x24);
+            addSeparator(Toolbar.SEPARATOR_2x24);
         }
 
         boolean separtor = false;
@@ -138,7 +138,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             separtor = true;
         }
         if (separtor) {
-            addSeparator(WtoolBar.SEPARATOR_2x24);
+            addSeparator(Toolbar.SEPARATOR_2x24);
         }
         final JButton jButtonActualZoom =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-original.png"))); //$NON-NLS-1$
@@ -330,7 +330,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private Icon buildMouseIcon(String type, String action) {
         final Icon mouseIcon = getMouseIcon(type);
         ActionW actionW = getAction(actionsButtons, action);
-        final Icon smallIcon = actionW == null ? null : actionW.getIcon();
+        final Icon smallIcon = (actionW == null || actionW.equals(ActionW.NO_ACTION)) ? null : actionW.getIcon();
+
         return new DropButtonIcon(new Icon() {
 
             @Override
@@ -368,15 +369,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             menu = new SynchGroupMenu();
             m.registerComponent(menu);
         }
-        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) { //$NON-NLS-1$
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                    menu.setInvoker(this);
-                    return menu;
-                }
+        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                menu.setInvoker(this);
+                return menu;
+            }
 
-            };
+        };
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
         return button;
     }

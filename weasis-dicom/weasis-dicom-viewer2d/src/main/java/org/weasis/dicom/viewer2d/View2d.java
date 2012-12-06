@@ -504,14 +504,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (actions.getMiddle().equals(actions.getLeft())) {
             // If mouse action is already registered, only add the modifier mask
             MouseActionAdapter adapter = getMouseAdapter(actions.getMiddle());
-            adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON2_DOWN_MASK);
+            if (adapter != null) {
+                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON2_DOWN_MASK);
+            }
         } else {
             addMouseAdapter(actions.getMiddle(), InputEvent.BUTTON2_DOWN_MASK);// middle mouse button
         }
         if (actions.getRight().equals(actions.getLeft()) || actions.getRight().equals(actions.getMiddle())) {
             // If mouse action is already registered, only add the modifier mask
             MouseActionAdapter adapter = getMouseAdapter(actions.getRight());
-            adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON3_DOWN_MASK);
+            if (adapter != null) {
+                adapter.setButtonMaskEx(adapter.getButtonMaskEx() | InputEvent.BUTTON3_DOWN_MASK);
+            }
         } else {
             addMouseAdapter(actions.getRight(), InputEvent.BUTTON3_DOWN_MASK); // right mouse button
         }

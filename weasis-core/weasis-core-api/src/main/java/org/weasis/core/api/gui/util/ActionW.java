@@ -23,6 +23,9 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.Messages;
 
 public class ActionW {
+
+    public static final ActionW NO_ACTION = new ActionW("No Action", "none", KeyEvent.VK_N, 0, null);
+
     public static final ActionW SYNCH = new ActionW(Messages.getString("ActionW.synch"), "synch", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW VIEW_MODE =
         new ActionW(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
@@ -48,7 +51,8 @@ public class ActionW {
     public static final ActionW FLIP = new ActionW(Messages.getString("ActionW.flip"), "flip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PRESET = new ActionW(Messages.getString("ActionW.preset"), "preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DEFAULT_PRESET = new ActionW("", "default_preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final ActionW LUT_SHAPE = new ActionW(Messages.getString("ActionW.lut_shape"), "lut_shape", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LUT_SHAPE = new ActionW(
+        Messages.getString("ActionW.lut_shape"), "lut_shape", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW LUT = new ActionW(Messages.getString("ActionW.lut"), "lut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW INVERSELUT = new ActionW("", "inverseLut", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW RESET = new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
