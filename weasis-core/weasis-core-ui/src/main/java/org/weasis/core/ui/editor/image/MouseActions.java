@@ -40,20 +40,31 @@ public class MouseActions {
     private int activeButtons = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK
         | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK;
 
-    public MouseActions(String left, String middle, String right, String wheel) {
-        super();
-        this.left = left;
-        this.middle = middle;
-        this.right = right;
-        this.wheel = wheel;
-        this.activeButtons =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
-    }
+    // public MouseActions(String left, String middle, String right, String wheel) {
+    // super();
+    // this.left = left;
+    // this.middle = middle;
+    // this.right = right;
+    // this.wheel = wheel;
+    //
+    // this.activeButtons =
+    // BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
+    //
+    // }
 
     public MouseActions(Preferences prefs) {
+
         this.activeButtons =
             BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
+
         applyPreferences(prefs);
+
+        int numberOfButtons = java.awt.MouseInfo.getNumberOfButtons();
+
+        if (numberOfButtons < 3) {
+            this.activeButtons &= ~(1 << 11); // Invalidate middle button clic when doesn't exist (ie : OK with genuine
+                                              // Mac mouses )
+        }
     }
 
     public String getWheel() {
