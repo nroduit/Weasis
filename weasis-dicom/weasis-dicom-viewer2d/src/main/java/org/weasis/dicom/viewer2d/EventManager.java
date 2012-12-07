@@ -100,7 +100,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
+        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
 
     /** The single instance of this singleton class. */
 
@@ -1249,15 +1249,34 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
                         } else {
                             AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
+
                             if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                                mouseActions.setAction(MouseActions.LEFT, command);
                                 ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+
                                 if (view != null) {
-                                    view.setMouseActions(mouseActions);
                                     final ViewerToolBar toolBar = view.getViewerToolBar();
+
                                     if (toolBar != null) {
+
+                                        // Test if mouse action exist and if not NO_ACTION is set
+                                        ActionW action = toolBar.getAction(ViewerToolBar.actionsButtons, command);
+                                        if (action == null) {
+                                            command = ActionW.NO_ACTION.cmd();
+                                        }
+
                                         toolBar.changeButtonState(MouseActions.LEFT, command);
                                     }
+
+                                    // Note : setting mouse action has sense only if a viewContainer exist
+                                    mouseActions.setAction(MouseActions.LEFT, command);
+                                    view.setMouseActions(mouseActions);
+
+                                    // TODO - finding if mouseAction exist through the viewerToolbar is not the best
+                                    // place, may be setting the authorized mouseActions in the viewerPlugin would be
+                                    // better ...
+                                    // A setter for mouseAction in the viewerManager would be helpful ...
+                                    // A binding for mouseActions change should simplify the behavior instead of
+                                    // calling toolBar.changeButtonState
                                 }
                             }
                         }

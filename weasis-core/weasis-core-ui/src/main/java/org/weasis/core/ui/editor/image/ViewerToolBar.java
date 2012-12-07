@@ -52,10 +52,11 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
     public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<ActionW>(Arrays
-        .asList(new ActionW[] { ActionW.NO_ACTION, ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM,
-            ActionW.ROTATION, ActionW.MEASURE, ActionW.CONTEXTMENU })));
+        .asList(new ActionW[] { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
+            ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION })));
 
-    public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
+    public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
+        ActionW.NO_ACTION };
     public static final Icon MouseLeftIcon =
         new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png")); //$NON-NLS-1$
     public static final Icon MouseRightIcon = new ImageIcon(
@@ -422,7 +423,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return null;
     }
 
-    private ActionW getAction(List<ActionW> buttons, String command) {
+    public ActionW getAction(List<ActionW> buttons, String command) {
         if (buttons != null) {
             synchronized (buttons) {
                 for (ActionW a : buttons) {
