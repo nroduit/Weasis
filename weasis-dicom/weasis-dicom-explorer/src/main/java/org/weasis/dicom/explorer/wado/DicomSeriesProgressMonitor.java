@@ -11,7 +11,7 @@ import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
-    private final boolean wadoRequest;
+    private volatile boolean wadoRequest;
 
     public DicomSeriesProgressMonitor(final Series series, InputStream in, boolean wadoRequest) {
         super(series, in);
@@ -21,7 +21,8 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     @Override
     public int read(byte b[]) throws IOException {
         int nr = super.read(b);
-        if (wadoRequest && nread == nr && nr > 0) {
+        if (wadoRequest && nread > 132) {
+            wadoRequest = false;
             readMetaInfo(this, b);
         }
         return nr;
@@ -30,7 +31,9 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     @Override
     public int read(byte b[], int off, int len) throws IOException {
         int nr = super.read(b, off, len);
-        if (wadoRequest && nread == nr && nr > 0) {
+        // 200 is an empirical value: 132 is the magic number position + something to be sure to get TSUID
+        if (wadoRequest && nread > 200 && b.length >= 512) {
+            wadoRequest = false;
             readMetaInfo(this, b);
         }
         return nr;
@@ -72,6 +75,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
                     vl = (int) extractUnsigned32(b, byteOffset + 2);
                     byteOffset += 6;
                 }
+                // (0x0002, 0x0010) Transfer Syntax UID
                 if (element == 0x0010 && vl != 0 && byteOffset + vl < b.length) {
                     String tsuid = new String(b, byteOffset, vl);
                     if (TransferSyntax.requiresNativeImageioCodecs(tsuid)) {
