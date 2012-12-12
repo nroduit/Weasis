@@ -68,6 +68,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TransferSyntax;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -316,7 +317,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         // syntax for TSUID: 1.2.840.10008.1.2.4.51, 1.2.840.10008.1.2.4.57
                         // 1.2.840.10008.1.2.4.70 1.2.840.10008.1.2.4.80, 1.2.840.10008.1.2.4.81
                         // Solaris has all the decoders, but no bundle has been built for Weasis
-                        if (!DicomMediaIO.hasPlatformNativeImageioCodecs()) {
+                        if (!DicomImageUtils.hasPlatformNativeImageioCodecs()) {
                             if (TransferSyntax.requiresNativeImageioCodecs(wado_tsuid)) {
                                 wado_tsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
                             }

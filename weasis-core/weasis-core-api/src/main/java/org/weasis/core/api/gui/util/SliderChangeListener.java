@@ -76,30 +76,34 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     }
 
     public synchronized void setMinMaxValue(int min, int max, int value) {
-        // Adjust the value to min and max to avoid the model to change the min and the max
-        value = value > max ? max : value < min ? min : value;
-        model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
-        for (int i = 0; i < sliders.size(); i++) {
-            JSliderW s = sliders.get(i);
-            updateSliderProoperties(s);
-            setSliderLabelValues(s, min, max);
+        if (min < max) {
+            // Adjust the value to min and max to avoid the model to change the min and the max
+            value = value > max ? max : value < min ? min : value;
+            model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
+            for (int i = 0; i < sliders.size(); i++) {
+                JSliderW s = sliders.get(i);
+                updateSliderProoperties(s);
+                setSliderLabelValues(s, min, max);
+            }
         }
     }
 
     public synchronized void setMinMaxValueWithoutTriggerAction(int min, int max, int value) {
-        // Adjust the value to min and max to avoid the model to change the min and the max
-        value = (value > max) ? max : ((value < min) ? min : value);
-        triggerAction = false;
-        model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
-        // System.out.println(SwingUtilities.isEventDispatchThread());
-        triggerAction = true;
-        boolean paintThicks = max < 65536;
-        for (int i = 0; i < sliders.size(); i++) {
-            JSliderW s = sliders.get(i);
-            s.setPaintTicks(paintThicks);
-            s.setPaintLabels(paintThicks);
-            updateSliderProoperties(s);
-            setSliderLabelValues(s, min, max);
+        if (min < max) {
+            // Adjust the value to min and max to avoid the model to change the min and the max
+            value = (value > max) ? max : ((value < min) ? min : value);
+            triggerAction = false;
+            model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
+            // System.out.println(SwingUtilities.isEventDispatchThread());
+            triggerAction = true;
+            boolean paintThicks = max < 65536;
+            for (int i = 0; i < sliders.size(); i++) {
+                JSliderW s = sliders.get(i);
+                s.setPaintTicks(paintThicks);
+                s.setPaintLabels(paintThicks);
+                updateSliderProoperties(s);
+                setSliderLabelValues(s, min, max);
+            }
         }
     }
 

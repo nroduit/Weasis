@@ -118,8 +118,18 @@ public class ColorModelFactory {
 
     private static ColorSpace createRGBColorSpace(DicomObject ds) {
         byte[] iccProfile = ds.getBytes(Tag.ICCProfile);
-        return iccProfile != null ? new ICC_ColorSpace(ICC_Profile.getInstance(iccProfile)) : ColorSpace
-            .getInstance(ColorSpace.CS_sRGB);
+        ColorSpace ret = null;
+        try {
+            if (iccProfile != null) {
+                ret = new ICC_ColorSpace(ICC_Profile.getInstance(iccProfile));
+            }
+        } catch (Exception e) {
+            log.info("Encountered exception while parsing ICC Profile data", e);
+        }
+        if (ret == null) {
+            ret = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        }
+        return ret;
     }
 
     public static boolean isMonochrome(DicomObject ds) {

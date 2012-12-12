@@ -3,10 +3,13 @@ package org.weasis.dicom.codec.utils;
 import java.awt.image.DataBuffer;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.HashMap;
 
+import javax.imageio.ImageIO;
 import javax.media.jai.LookupTableJAI;
 
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.media.data.TagW;
 
 /**
  * 
@@ -921,5 +924,28 @@ public class DicomImageUtils {
 
         System.out.println();
 
+    }
+
+    public static boolean hasPlatformNativeImageioCodecs() {
+        return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
+    }
+
+    public static float pixel2rescale(HashMap<TagW, Object> tagList, float pixelValue) {
+        if (tagList != null) {
+            LookupTableJAI lookup = (LookupTableJAI) tagList.get(TagW.ModalityLUTData);
+            if (lookup != null) {
+                if (pixelValue >= lookup.getOffset() && pixelValue <= lookup.getOffset() + lookup.getNumEntries() - 1) {
+                    return lookup.lookup(0, (int) pixelValue);
+                }
+            } else {
+                // value = pixelValue * rescale slope + intercept value
+                Float slope = (Float) tagList.get(TagW.RescaleSlope);
+                Float intercept = (Float) tagList.get(TagW.RescaleIntercept);
+                if (slope != null || intercept != null) {
+                    return (pixelValue * (slope == null ? 1.0f : slope) + (intercept == null ? 0.0f : intercept));
+                }
+            }
+        }
+        return pixelValue;
     }
 }
