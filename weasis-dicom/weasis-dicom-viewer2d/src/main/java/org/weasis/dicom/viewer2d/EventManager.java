@@ -1251,33 +1251,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
 
                             if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-                                ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
 
+                                ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
                                 if (view != null) {
                                     final ViewerToolBar toolBar = view.getViewerToolBar();
-
                                     if (toolBar != null) {
-
                                         // Test if mouse action exist and if not NO_ACTION is set
                                         ActionW action = toolBar.getAction(ViewerToolBar.actionsButtons, command);
                                         if (action == null) {
                                             command = ActionW.NO_ACTION.cmd();
                                         }
-
                                         toolBar.changeButtonState(MouseActions.LEFT, command);
                                     }
-
-                                    // Note : setting mouse action has sense only if a viewContainer exist
-                                    mouseActions.setAction(MouseActions.LEFT, command);
                                     view.setMouseActions(mouseActions);
-
-                                    // TODO - finding if mouseAction exist through the viewerToolbar is not the best
-                                    // place, may be setting the authorized mouseActions in the viewerPlugin would be
-                                    // better ...
-                                    // A setter for mouseAction in the viewerManager would be helpful ...
-                                    // A binding for mouseActions change should simplify the behavior instead of
-                                    // calling toolBar.changeButtonState
                                 }
+                                mouseActions.setAction(MouseActions.LEFT, command);
                             }
                         }
                     } catch (Exception e) {

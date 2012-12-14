@@ -331,7 +331,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private Icon buildMouseIcon(String type, String action) {
         final Icon mouseIcon = getMouseIcon(type);
         ActionW actionW = getAction(actionsButtons, action);
-        final Icon smallIcon = (actionW == null || actionW.equals(ActionW.NO_ACTION)) ? null : actionW.getIcon();
+        final Icon smallIcon = actionW == null ? ActionW.NO_ACTION.getIcon() : actionW.getIcon();
 
         return new DropButtonIcon(new Icon() {
 

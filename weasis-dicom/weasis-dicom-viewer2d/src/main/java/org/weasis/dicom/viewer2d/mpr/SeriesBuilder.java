@@ -48,6 +48,7 @@ import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.Type;
 
@@ -170,7 +171,7 @@ public class SeriesBuilder {
                                     public void run() {
                                         secView.setProgressBar(null);
                                         // Copy tags from original dicom into series
-                                        DicomMediaIO.writeMetaData(dicomSeries, dcmObj);
+                                        DicomMediaUtils.writeMetaData(dicomSeries, dcmObj);
                                         secView.setSeries(dicomSeries);
                                         // Copy the synch values from the main view
                                         for (ActionW action : MPRContainer.DEFAULT_MPR.getActions().keySet()) {
@@ -204,7 +205,7 @@ public class SeriesBuilder {
                                     public void run() {
                                         thirdView.setProgressBar(null);
                                         // Copy tags from original dicom into series
-                                        DicomMediaIO.writeMetaData(dicomSeries2, dcmObj);
+                                        DicomMediaUtils.writeMetaData(dicomSeries2, dcmObj);
                                         thirdView.setSeries(dicomSeries2);
                                         for (ActionW action : MPRContainer.DEFAULT_MPR.getActions().keySet()) {
                                             thirdView.setActionsInView(action.cmd(), view.getActionValue(action.cmd()));
@@ -285,8 +286,8 @@ public class SeriesBuilder {
                 rotate ? pos[1] : location, pos[2] });
 
             HashMap<TagW, Object> tagList = rawIO.getMediaFragmentTags(null);
-            DicomMediaIO.validateDicomImageValues(tagList);
-            DicomMediaIO.computeSlicePositionVector(tagList);
+            DicomMediaUtils.validateDicomImageValues(tagList);
+            DicomMediaUtils.computeSlicePositionVector(tagList);
             DicomImageElement dcm = new DicomImageElement(rawIO, 0);
             dcms.add(dcm);
         }
