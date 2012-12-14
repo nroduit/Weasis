@@ -310,9 +310,19 @@ public class DicomImageWriter extends ImageWriter {
      */
     @Override
     public void endWriteSequence() throws IOException {
+    	endWriteSequence(true);
+    }
+
+    public void endWriteSequence(boolean finish) throws IOException {
         if (encapsulated) {
             dos.writeHeader(Tag.SequenceDelimitationItem, null, 0);
         }
+    	if (finish) {
+    		finishStream();
+    	}
+    }
+
+	protected void finishStream() throws IOException {
         dos.finish();
         ((ImageOutputStream) output).flush();
         dos = null;

@@ -48,7 +48,7 @@ public class DicomImageWriterSpi extends ImageWriterSpi {
     private static final String[] formatNames = { "dicom", "DICOM" };
     private static final String[] suffixes = { "dcm", "dic", "dicm", "dicom" };
     private static final String[] MIMETypes = { "application/dicom" };
-    private static final String[] readers = { "org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader" };
+    private static final String[] readers = { "org.weasis.dicom.codec.DicomMediaIO" };
 
     private static String vendor;
     private static String version;
