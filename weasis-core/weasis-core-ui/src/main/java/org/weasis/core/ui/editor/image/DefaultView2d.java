@@ -91,6 +91,8 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
@@ -920,16 +922,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE && e.isControlDown()) {
-            ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-            if (view != null) {
-                ViewerToolBar<E> toolBar = view.getViewerToolBar();
-                if (toolBar != null) {
-                    String command =
-                        ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
-                            toolBar.getMouseLeft().getActionCommand()).cmd();
-                    changeLeftMouseAction(command);
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if (e.isControlDown()) {
+                ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+                if (view != null) {
+                    ViewerToolBar<E> toolBar = view.getViewerToolBar();
+                    if (toolBar != null) {
+                        String command =
+                            ViewerToolBar.getNextCommand(ViewerToolBar.actionsButtons,
+                                toolBar.getMouseLeft().getActionCommand()).cmd();
+                        changeLeftMouseAction(command);
+                    }
                 }
+            } else {
+                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
+                    null, null, EVENT.TOOGLE_INFO));
             }
         } else {
             ActionW action = eventManager.getActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
