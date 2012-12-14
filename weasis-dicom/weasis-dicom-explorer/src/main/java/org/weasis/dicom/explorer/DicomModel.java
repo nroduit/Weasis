@@ -52,7 +52,6 @@ import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
-import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoElement;
@@ -467,7 +466,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (original instanceof DicomSeries) {
                 // Handle cases when the Series is created before getting the image (downloading)
                 if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-                    replaceSeries(dicomReader, original, media);
+                    if (original.size(null) > 0) {
+                        // When the series already contains elements (images), always split video and document
+                        splitSeries(dicomReader, original, media);
+                    } else {
+                        replaceSeries(dicomReader, original, media);
+                    }
                     return true;
                 }
                 DicomSeries initialSeries = (DicomSeries) original;
@@ -510,8 +514,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
                 if (original.size(null) > 0) {
-                    splitSeries(dicomReader, original, media);
-                    return true;
+                    // Always split when it is a video or a document
+                    if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
+                        splitSeries(dicomReader, original, media);
+                        return true;
+                    } else {
+                        findMatchingSeriesOrsplit(original, media);
+                    }
                 } else {
                     original.addMedia(media);
                 }
@@ -520,11 +529,56 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return false;
     }
 
-    private boolean isSimilar(TagW[] rules, DicomSeries series, final MediaElement media) {
-        final DicomImageElement firstMedia = series.getMedia(0, null, null);
+    private boolean findMatchingSeriesOrsplit(Series original, MediaElement media) {
+        DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
+        int frames = dicomReader.getMediaElementNumber();
+        if (frames < 1) {
+            original.addMedia(media);
+        } else {
+            Modality modality = Modality.getModality((String) original.getTagValue(TagW.Modality));
+            String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
+            TagW[] rules = frames > 1 ? multiframeSplittingRules : splittingRules.get(modality);
+
+            if (rules == null) {
+                rules = splittingRules.get(Modality.Default);
+            }
+            // If similar add to the original series
+            if (isSimilar(rules, original, media)) {
+                original.addMedia(media);
+                return false;
+            }
+            // else try to find a similar previous split series
+            MediaSeriesGroup study = getParent(original, DicomModel.study);
+            int k = 1;
+            while (true) {
+                String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+                MediaSeriesGroup group = getHierarchyNode(study, uid);
+                if (group instanceof Series) {
+                    if (isSimilar(rules, (Series) group, media)) {
+                        ((Series) group).addMedia(media);
+                        return false;
+                    }
+                } else {
+                    break;
+                }
+                k++;
+            }
+            // no matching series exists, so split series
+            splitSeries(dicomReader, original, media);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isSimilar(TagW[] rules, Series<?> s, final MediaElement<?> media) {
+        final MediaElement<?> firstMedia = s.getMedia(0, null, null);
         if (firstMedia == null) {
             // no image
             return true;
+        }
+        // Not similar when the instances have different classes (even when inheriting class)
+        if (firstMedia.getClass() != media.getClass()) {
+            return false;
         }
         for (TagW tagElement : rules) {
             Object tag = media.getTagValue(tagElement);
