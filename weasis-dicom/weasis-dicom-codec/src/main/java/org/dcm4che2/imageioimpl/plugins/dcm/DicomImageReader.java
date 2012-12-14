@@ -1,30 +1,40 @@
-/*
- * ***** BEGIN LICENSE BLOCK ***** Version: MPL 1.1/GPL 2.0/LGPL 2.1
- * 
- * The contents of this file are subject to the Mozilla Public License Version 1.1 (the "License"); you may not use this
- * file except in compliance with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
- * 
- * Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
- * express or implied. See the License for the specific language governing rights and limitations under the License.
- * 
- * The Original Code is part of dcm4che, an implementation of DICOM(TM) in Java(TM), hosted at
- * http://sourceforge.net/projects/dcm4che.
- * 
- * The Initial Developer of the Original Code is Gunter Zeilinger, Huetteldorferstr. 24/10, 1150 Vienna/Austria/Europe.
- * Portions created by the Initial Developer are Copyright (C) 2002-2005 the Initial Developer. All Rights Reserved.
- * 
- * Contributor(s): See listed authors below.
- * 
- * Alternatively, the contents of this file may be used under the terms of either the GNU General Public License Version
- * 2 or later (the "GPL"), or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"), in which case the
- * provisions of the GPL or the LGPL are applicable instead of those above. If you wish to allow use of your version of
- * this file only under the terms of either the GPL or the LGPL, and not to allow others to use your version of this
- * file under the terms of the MPL, indicate your decision by deleting the provisions above and replace them with the
- * notice and other provisions required by the GPL or the LGPL. If you do not delete the provisions above, a recipient
- * may use your version of this file under the terms of any one of the MPL, the GPL or the LGPL.
- * 
- * ***** END LICENSE BLOCK *****
- */
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is part of dcm4che, an implementation of DICOM(TM) in
+ * Java(TM), hosted at http://sourceforge.net/projects/dcm4che.
+ *
+ * The Initial Developer of the Original Code is
+ * Gunter Zeilinger, Huetteldorferstr. 24/10, 1150 Vienna/Austria/Europe.
+ * Portions created by the Initial Developer are Copyright (C) 2002-2005
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ * See listed authors below.
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 package org.dcm4che2.imageioimpl.plugins.dcm;
 
@@ -39,38 +49,35 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.Raster;
-import java.awt.image.RasterFormatException;
-import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.io.File;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Iterator;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
-import javax.media.jai.RenderedOp;
 
+import org.dcm4che2.data.BasicDicomObject;
+import org.dcm4che2.data.CombineDicomObject;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
+import org.dcm4che2.data.TransferSyntax;
 import org.dcm4che2.data.UID;
 import org.dcm4che2.data.VR;
+import org.dcm4che2.image.ByteLookupTable;
+import org.dcm4che2.image.ColorModelFactory;
 import org.dcm4che2.image.LookupTable;
 import org.dcm4che2.image.OverlayUtils;
 import org.dcm4che2.image.PartialComponentSampleModel;
@@ -79,16 +86,12 @@ import org.dcm4che2.imageio.ImageReaderFactory;
 import org.dcm4che2.imageio.ItemParser;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
+import org.dcm4che2.io.DicomInputHandler;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractProperties;
-import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
-import org.weasis.core.api.media.data.SoftHashMap;
-import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.utils.ColorModelFactory;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageio.stream.SegmentedImageInputStream;
@@ -100,40 +103,21 @@ import com.sun.media.imageio.stream.SegmentedImageInputStream;
  */
 public class DicomImageReader extends ImageReader {
 
-    public static final File DICOM_CACHE_DIR = new File(AbstractProperties.APP_TEMP_DIR, "cache"); //$NON-NLS-1$
-    static {
-        try {
-            DICOM_CACHE_DIR.mkdirs();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    private static final SoftHashMap<DicomImageReader, DicomObject> HEADER_CACHE =
-        new SoftHashMap<DicomImageReader, DicomObject>() {
-
-            public Reference<? extends DicomObject> getReference(DicomImageReader key) {
-                return hash.get(key);
-            }
-
-            @Override
-            public void removeElement(Reference<? extends DicomObject> soft) {
-                DicomImageReader key = reverseLookup.remove(soft);
-                if (key != null) {
-                    hash.remove(key);
-                    key.reset();
-                }
-            }
-        };
-
     private static final Logger log = LoggerFactory.getLogger(DicomImageReader.class);
+
     private static final String J2KIMAGE_READER = "com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader";
+
     private static final int[] OFFSETS_0 = { 0 };
+
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
+
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
 
-    private volatile ImageInputStream iis;
+    private ImageInputStream iis;
 
     private DicomInputStream dis;
+
+    private DicomObject ds;
 
     private int width;
 
@@ -167,6 +151,8 @@ public class DicomImageReader extends ImageReader {
 
     private boolean clampPixelValues;
 
+    private DicomStreamMetaData streamMetaData;
+
     protected ImageReader reader;
 
     private ItemParser itemParser;
@@ -176,8 +162,10 @@ public class DicomImageReader extends ImageReader {
     private String pmi;
 
     private Float autoWindowCenter;
-
     private Float autoWindowWidth;
+
+    /** Used to indicate whether or not to skip large private dicom elements. */
+    private boolean skipLargePrivate = false;
 
     /**
      * Store the transfer syntax locally in case it gets modified to re-write the image
@@ -191,21 +179,21 @@ public class DicomImageReader extends ImageReader {
     @Override
     public void setInput(Object input, boolean seekForwardOnly, boolean ignoreMetadata) {
         super.setInput(input, seekForwardOnly, ignoreMetadata);
+
         resetLocal();
+
         if (input != null) {
             if (!(input instanceof ImageInputStream)) {
                 throw new IllegalArgumentException("Input not an ImageInputStream!");
             }
-
             this.iis = (ImageInputStream) input;
         }
     }
 
     @Override
     public void dispose() {
-        HEADER_CACHE.remove(this);
-        reset();
         super.dispose();
+        resetLocal();
     }
 
     @Override
@@ -215,9 +203,10 @@ public class DicomImageReader extends ImageReader {
     }
 
     private void resetLocal() {
-        FileUtil.safeClose(iis);
         iis = null;
         dis = null;
+        ds = null;
+        streamMetaData = null;
         width = 0;
         height = 0;
         frames = 0;
@@ -256,9 +245,7 @@ public class DicomImageReader extends ImageReader {
      */
     @Override
     public IIOMetadata getStreamMetadata() throws IOException {
-        readMetaData(false);
-        DicomStreamMetaData streamMetaData = new DicomStreamMetaData();
-        streamMetaData.setDicomObject(getDicomObject());
+        readMetaData();
         return streamMetaData;
     }
 
@@ -276,96 +263,112 @@ public class DicomImageReader extends ImageReader {
      */
     @Override
     public int getNumImages(boolean allowSearch) throws IOException {
-        readMetaData(false);
+        readMetaData();
         return frames;
     }
 
     /**
      * Reads the DICOM header meta-data, up to, but not including pixel data.
      * 
-     * @throws Exception
+     * @throws IOException
      */
-    private synchronized DicomObject readMetaData(boolean readImageAfter) throws IOException {
-        DicomObject header = HEADER_CACHE.get(this);
-        if (header != null && !readImageAfter) {
-            return header;
-        }
-
-        if (iis == null) {
-            buildImageInputStream();
-        }
+    private void readMetaData() throws IOException {
         if (iis == null) {
             throw new IllegalStateException("Input not set!");
         }
-        if (header != null && tsuid != null) {
-            return header;
+        if (ds != null) {
+            return;
         }
-        try {
-            dis = new DicomInputStream(iis);
-            dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-            DicomObject ds = dis.readDicomObject();
-            while (dis.tag() == 0xFFFCFFFC) {
-                dis.readBytes(dis.valueLength());
-                dis.readDicomObject(ds, -1);
-            }
-            bigEndian = dis.getTransferSyntax().bigEndian();
-            tsuid = ds.getString(Tag.TransferSyntaxUID);
-            width = ds.getInt(Tag.Columns);
-            height = ds.getInt(Tag.Rows);
-            frames = ds.getInt(Tag.NumberOfFrames);
-            allocated = ds.getInt(Tag.BitsAllocated, 8);
-            stored = ds.getInt(Tag.BitsStored, allocated);
-            samples = ds.getInt(Tag.SamplesPerPixel, 1);
-            banded = ds.getInt(Tag.PlanarConfiguration) != 0;
-            // dataType = allocated <= 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_USHORT;
-            dataType =
-                allocated <= 8 ? DataBuffer.TYPE_BYTE : ds.getInt(Tag.PixelRepresentation) != 0 ? DataBuffer.TYPE_SHORT
-                    : DataBuffer.TYPE_USHORT;
-            if (allocated > 16 && samples == 1) {
-                dataType = DataBuffer.TYPE_INT;
-            }
-            paletteColor = ColorModelFactory.isPaletteColor(ds);
-            monochrome = ColorModelFactory.isMonochrome(ds);
-            pmi = ds.getString(Tag.PhotometricInterpretation);
+        dis = new DicomInputStream(iis);
+        DicomInputHandler ih = new StopTagInputHandler(Tag.PixelData);
+        if (isSkipLargePrivate()) {
+            ih = new SizeSkipInputHandler(ih);
+        }
+        dis.setHandler(ih);
+        ds = dis.readDicomObject();
+        streamMetaData = new DicomStreamMetaData();
+        streamMetaData.setDicomObject(ds);
+        bigEndian = dis.getTransferSyntax().bigEndian();
+        tsuid = ds.getString(Tag.TransferSyntaxUID);
+        width = ds.getInt(Tag.Columns);
+        height = ds.getInt(Tag.Rows);
+        frames = ds.getInt(Tag.NumberOfFrames);
+        allocated = ds.getInt(Tag.BitsAllocated, 8);
+        stored = ds.getInt(Tag.BitsStored, allocated);
+        banded = ds.getInt(Tag.PlanarConfiguration) != 0;
+        dataType = allocated <= 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_USHORT;
+        samples = ds.getInt(Tag.SamplesPerPixel, 1);
+        paletteColor = ColorModelFactory.isPaletteColor(ds);
+        monochrome = ColorModelFactory.isMonochrome(ds);
+        pmi = ds.getString(Tag.PhotometricInterpretation);
 
-            if (dis.tag() == Tag.PixelData) {
-                if (frames == 0) {
-                    frames = 1;
-                }
-                swapByteOrder = bigEndian && dis.vr() == VR.OW && dataType == DataBuffer.TYPE_BYTE;
-                if (swapByteOrder && banded) {
-                    throw new UnsupportedOperationException(
-                        "Big Endian color-by-plane with Pixel Data VR=OW not implemented");
-                }
-                pixelDataPos = dis.getStreamPosition();
-                pixelDataLen = dis.valueLength();
-                compressed = pixelDataLen == -1;
-                if (compressed) {
-                    ImageReaderFactory f = ImageReaderFactory.getInstance();
-                    log.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
-                    f.adjustDatasetForTransferSyntax(ds, tsuid);
-                    clampPixelValues = allocated == 16 && stored < 12 && UID.JPEGExtended24.equals(tsuid);
-                }
-            } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
-                if (frames == 0) {
-                    frames = 1;
-                    compressed = true;
-                }
+        if (dis.tag() == Tag.PixelData) {
+            if (frames == 0) {
+                frames = 1;
             }
-            HEADER_CACHE.put(this, ds);
-            return ds;
-        } finally {
-            if (!readImageAfter) {
-                // Reset must be called only after reading the header, because closing imageStream does not let through
-                // getTile(x,y) read image data.
-                // unlock file to be deleted on exit
-                FileUtil.safeClose(iis);
-                iis = null;
+            swapByteOrder = bigEndian && dis.vr() == VR.OW && dataType == DataBuffer.TYPE_BYTE;
+            if (swapByteOrder && banded) {
+                throw new UnsupportedOperationException(
+                    "Big Endian color-by-plane with Pixel Data VR=OW not implemented");
+            }
+            pixelDataPos = dis.getStreamPosition();
+            pixelDataLen = dis.valueLength();
+            compressed = pixelDataLen == -1;
+            if (compressed) {
+                ImageReaderFactory f = ImageReaderFactory.getInstance();
+                log.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
+                f.adjustDatasetForTransferSyntax(ds, tsuid);
+                clampPixelValues = allocated == 16 && stored < 12 && UID.JPEGExtended24.equals(tsuid);
             }
         }
     }
 
-    protected void buildImageInputStream() throws IOException {
+    public void readPostPixeldata() throws IOException {
+        readMetaData();
+        long currentPosition = dis.getStreamPosition();
+
+        DicomObject postPixelDs = new BasicDicomObject();
+
+        if (pixelDataPos > 0) {
+            // There is pixeldata
+            if (pixelDataLen >= 0) {
+                // last call already read the tag, but we want to init a new InputStream from here
+                dis.reset();
+
+                // there is uncompressed pixeldata
+                long startPosition = pixelDataPos + pixelDataLen;
+                iis.seek(startPosition);
+            } else {
+                // via siis
+                int imageIndex = frames - 1;
+                imageIndex = (imageIndex < 0) ? 0 : imageIndex;
+                if (siis == null) {
+                    initCompressedImageReader(imageIndex);
+                }
+                itemParser.seekFooter();
+            }
+        } else {
+            // last call already read the tag, but we want to init a new InputStream from here
+            dis.reset();
+        }
+
+        // Not reusing the earlier dicom input stream as it has a stop tag handler and we want to go past the pixeldata.
+        DicomInputStream postDis = new DicomInputStream(iis, TransferSyntax.valueOf(tsuid));
+        if (isSkipLargePrivate()) {
+            DicomInputHandler dih = new SizeSkipInputHandler(null);
+            postDis.setHandler(dih);
+        }
+
+        postPixelDs = postDis.readDicomObject();
+        if (postPixelDs != null && !postPixelDs.isEmpty()) {
+            // Note the postPixelDs.copyTo(ds) does not work because the copy does not handle the
+            // SkippedDicomElements correctly
+            ds = new CombineDicomObject(ds, postPixelDs);
+            streamMetaData.setDicomObject(ds);
+        }
+
+        // reset the stream
+        iis.seek(currentPosition);
     }
 
     /**
@@ -376,7 +379,7 @@ public class DicomImageReader extends ImageReader {
      * @throws IOException
      */
     protected void initImageReader(int imageIndex) throws IOException {
-        readMetaData(true);
+        readMetaData();
         if (reader == null) {
             if (compressed) {
                 initCompressedImageReader(imageIndex);
@@ -384,8 +387,9 @@ public class DicomImageReader extends ImageReader {
                 initRawImageReader();
             }
         }
-        // Reset the input stream location if required, and reset the reader if required
-        if (compressed && itemParser != null) {
+        // Reset the input stream location if required, and reset the reader if
+        // required
+        if (compressed) {
             itemParser.seekFrame(siis, imageIndex);
             reader.setInput(siis, false);
         }
@@ -394,10 +398,8 @@ public class DicomImageReader extends ImageReader {
     private void initCompressedImageReader(int imageIndex) throws IOException {
         ImageReaderFactory f = ImageReaderFactory.getInstance();
         this.reader = f.getReaderForTransferSyntax(tsuid);
-        if (!"1.2.840.10008.1.2.4.94".equals(tsuid)) {
-            this.itemParser = new ItemParser(dis, iis, frames, tsuid);
-            this.siis = new SegmentedImageInputStream(iis, itemParser);
-        }
+        this.itemParser = new ItemParser(dis, iis, frames, tsuid);
+        this.siis = new SegmentedImageInputStream(iis, itemParser);
     }
 
     private void initRawImageReader() {
@@ -460,7 +462,7 @@ public class DicomImageReader extends ImageReader {
 
     /** Create an image type specifier for the entire image */
     protected ImageTypeSpecifier createImageTypeSpecifier() {
-        ColorModel cm = ColorModelFactory.createColorModel(getDicomObject());
+        ColorModel cm = ColorModelFactory.createColorModel(ds);
         SampleModel sm = createSampleModel();
         return new ImageTypeSpecifier(cm, sm);
     }
@@ -476,27 +478,11 @@ public class DicomImageReader extends ImageReader {
         }
 
         if (pmi.endsWith("422")) {
-            return new PartialComponentSampleModel(width, height, 2, 1) {
-                @Override
-                public SampleModel createSubsetSampleModel(int[] bands) {
-                    if (bands.length != 3) {
-                        throw new RasterFormatException("Accept only 3 bands");
-                    }
-                    return this;
-                }
-            };
+            return new PartialComponentSampleModel(width, height, 2, 1);
         }
 
         if ((!compressed) && pmi.endsWith("420")) {
-            return new PartialComponentSampleModel(width, height, 2, 2) {
-                @Override
-                public SampleModel createSubsetSampleModel(int[] bands) {
-                    if (bands.length != 3) {
-                        throw new RasterFormatException("Accept only 3 bands");
-                    }
-                    return this;
-                }
-            };
+            return new PartialComponentSampleModel(width, height, 2, 2);
         }
 
         return new PixelInterleavedSampleModel(dataType, width, height, 3, width * 3, OFFSETS_0_1_2);
@@ -504,7 +490,7 @@ public class DicomImageReader extends ImageReader {
 
     @Override
     public int getHeight(int imageIndex) throws IOException {
-        DicomObject ds = readMetaData(false);
+        readMetaData();
         if (OverlayUtils.isOverlay(imageIndex)) {
             return OverlayUtils.getOverlayHeight(ds, imageIndex);
         }
@@ -513,7 +499,7 @@ public class DicomImageReader extends ImageReader {
 
     @Override
     public int getWidth(int imageIndex) throws IOException {
-        DicomObject ds = readMetaData(false);
+        readMetaData();
         if (OverlayUtils.isOverlay(imageIndex)) {
             return OverlayUtils.getOverlayWidth(ds, imageIndex);
         }
@@ -521,7 +507,7 @@ public class DicomImageReader extends ImageReader {
     }
 
     public String getTransferSyntaxUID() throws IOException {
-        readMetaData(false);
+        readMetaData();
         return tsuid;
     }
 
@@ -584,6 +570,7 @@ public class DicomImageReader extends ImageReader {
             }
             SampleModel sm = createSampleModel();
             WritableRaster wr = Raster.createWritableRaster(sm, new Point());
+
             DataBufferByte dbb = (DataBufferByte) wr.getDataBuffer();
             byte[] data = dbb.getData();
             int frameLength = calculateFrameLength();
@@ -623,7 +610,7 @@ public class DicomImageReader extends ImageReader {
     @Override
     public BufferedImage read(int imageIndex, ImageReadParam param) throws IOException {
         if (OverlayUtils.isOverlay(imageIndex)) {
-            DicomObject ds = readMetaData(false);
+            readMetaData();
             String rgbs = (param != null) ? ((DicomImageReadParam) param).getOverlayRGB() : null;
             return OverlayUtils.extractOverlay(ds, imageIndex, this, rgbs);
         }
@@ -641,9 +628,7 @@ public class DicomImageReader extends ImageReader {
             }
             postDecompress();
             if (paletteColor && bi.getColorModel().getNumComponents() == 1) {
-                bi =
-                    new BufferedImage(ColorModelFactory.createColorModel(readMetaData(false)), bi.getRaster(), false,
-                        null);
+                bi = new BufferedImage(ColorModelFactory.createColorModel(ds), bi.getRaster(), false, null);
             }
         } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
             bi = readYbr400(imageIndex, param);
@@ -653,28 +638,28 @@ public class DicomImageReader extends ImageReader {
                 ByteUtils.toggleShortEndian(((DataBufferByte) bi.getRaster().getDataBuffer()).getData());
             }
         }
-        // if (monochrome) {
-        // WritableRaster raster = bi.getRaster();
-        // LookupTable lut = createLut((DicomImageReadParam) param, imageIndex + 1, raster);
-        // if (lut != null) {
-        // WritableRaster dest = raster;
-        // if (dest.getDataBuffer().getDataType() != DataBuffer.TYPE_BYTE && (lut instanceof ByteLookupTable)) {
-        // BufferedImage ret = new BufferedImage(bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        // dest = ret.getRaster();
-        // bi = ret;
-        // }
-        // DataBuffer destData = dest.getDataBuffer();
-        // lut.lookup(raster, dest);
-        // if (destData.getDataType() == DataBuffer.TYPE_SHORT) {
-        // ColorModel cm = bi.getColorModel();
-        // short[] ss = ((DataBufferShort) destData).getData();
-        // return new BufferedImage(cm, Raster.createWritableRaster(raster.getSampleModel(), new DataBufferUShort(
-        // ss, ss.length), null), cm.isAlphaPremultiplied(), new Hashtable<Object, Object>());
-        // }
-        // }
-        // }
-        RenderedImage img = validateSignedShortDataBuffer(bi);
-        return (img instanceof BufferedImage ? (BufferedImage) img : ((RenderedOp) img).getAsBufferedImage());
+        if (monochrome) {
+            WritableRaster raster = bi.getRaster();
+            LookupTable lut = createLut((DicomImageReadParam) param, imageIndex + 1, raster);
+            if (lut != null) {
+                WritableRaster dest = raster;
+                if (dest.getDataBuffer().getDataType() != DataBuffer.TYPE_BYTE && (lut instanceof ByteLookupTable)) {
+                    BufferedImage ret = new BufferedImage(bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+                    dest = ret.getRaster();
+                    bi = ret;
+                }
+                DataBuffer destData = dest.getDataBuffer();
+                lut.lookup(raster, dest);
+                if (destData.getDataType() == DataBuffer.TYPE_SHORT) {
+                    ColorModel cm = bi.getColorModel();
+                    short[] ss = ((DataBufferShort) destData).getData();
+                    return new BufferedImage(cm, Raster.createWritableRaster(raster.getSampleModel(),
+                        new DataBufferUShort(ss, ss.length), null), cm.isAlphaPremultiplied(),
+                        new Hashtable<Object, Object>());
+                }
+            }
+        }
+        return bi;
     }
 
     /**
@@ -693,7 +678,7 @@ public class DicomImageReader extends ImageReader {
         }
         BufferedImage bi;
         WritableRaster wr = (WritableRaster) readRaster(imageIndex, useParam);
-        bi = new BufferedImage(ColorModelFactory.createColorModel(getDicomObject()), wr, false, null);
+        bi = new BufferedImage(ColorModelFactory.createColorModel(ds), wr, false, null);
         if (useParam == param) {
             return bi;
         }
@@ -741,186 +726,6 @@ public class DicomImageReader extends ImageReader {
         BufferedImage dest = new BufferedImage(cm, r, false, null);
 
         return dest;
-    }
-
-    @Override
-    public RenderedImage readAsRenderedImage(int imageIndex, ImageReadParam param) throws IOException {
-        initImageReader(imageIndex);
-        if (param == null) {
-            param = getDefaultReadParam();
-        }
-        RenderedImage bi;
-        if (compressed) {
-            ImageReadParam param1 = reader.getDefaultReadParam();
-            copyReadParam(param, param1);
-            bi = reader.readAsRenderedImage(0, param1);
-            postDecompress();
-
-            // // TEST cache compressed images. Reading is slow with pure java raw reader! Issue W/L shifted.
-            // if (reader.getClass().getName().equals("com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader")) {
-            // Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("RAW");
-            // ImageWriter writer = null;
-            // while (iter.hasNext()) {
-            // writer = iter.next();
-            // }
-            // if (writer != null) {
-            //                    File outFile = File.createTempFile("raw_", ".raw", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-            // ImageOutputStream out = null;
-            // out = ImageIO.createImageOutputStream(outFile);
-            // writer.setOutput(out);
-            //
-            // ImageWriteParam iwp = writer.getDefaultWriteParam();
-            // iwp.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
-            // iwp.setTiling(ImageFiler.TILESIZE, ImageFiler.TILESIZE, 0, 0);
-            // writer.write(null, new IIOImage(bi, null, null), iwp);
-            //
-            // // Read image, no need to cache because image would accessible
-            // long[] frameOffsets = new long[frames];
-            // int frameLen = width * height * samples * (allocated >> 3);
-            // frameOffsets[0] = 0;
-            // for (int i = 1; i < frameOffsets.length; i++) {
-            // frameOffsets[i] = frameOffsets[i - 1] + frameLen;
-            // }
-            // Dimension[] imageDimensions = new Dimension[frames];
-            // Arrays.fill(imageDimensions, new Dimension(width, height));
-            // ColorModel cm = ColorModelFactory.createColorModel(ds);
-            // SampleModel sm = cm.createCompatibleSampleModel(width, height);
-            // RawImageInputStream riis =
-            // new RawImageInputStream(ImageIO.createImageInputStream(outFile),
-            // new ImageTypeSpecifier(cm, sm), frameOffsets, imageDimensions);
-            // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-            // // ImageReader readerRaw = ImageIO.getImageReadersByFormatName("RAW").next();
-            // // readerRaw.setInput(riis);
-            // // Tile image while reading to handle large images
-            // ImageLayout layout = new ImageLayout();
-            // layout.setTileWidth(ImageFiler.TILESIZE);
-            // layout.setTileHeight(ImageFiler.TILESIZE);
-            // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
-            //                    ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-            //                    pb.setParameter("Input", riis); //$NON-NLS-1$
-            //                    bi = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
-            // }
-            // }
-        } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
-            bi = readYbr400(imageIndex, param);
-            if (bi != null) {
-                File outFile = File.createTempFile("img_", ".jpg", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                ImageOutputStream out = null;
-                try {
-                    Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");
-                    ImageWriter writer = null;
-                    while (iter.hasNext()) {
-                        ImageWriter w = iter.next();
-                        // Other encoder do not write it correctly
-                        // Workaround: overrides createSubsetSampleModel() in constructor of PartialComponentSampleModel
-                        if (w.getClass().getName().equals("com.sun.imageio.plugins.jpeg.JPEGImageWriter")) {
-                            writer = w;
-                            break;
-                        }
-                    }
-                    if (writer != null) {
-                        out = ImageIO.createImageOutputStream(outFile);
-                        writer.setOutput(out);
-                        JPEGImageWriteParam iwp = new JPEGImageWriteParam(null);
-                        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                        iwp.setCompressionQuality(1.0f);
-
-                        writer.write(null, new IIOImage(bi, null, null), iwp);
-                        // Read image. No need to cache the filename because it is contained in the rendered image.
-                        bi = ImageIO.read(outFile);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    FileUtil.safeClose(out);
-                }
-            }
-
-        } else {
-            bi = reader.readAsRenderedImage(imageIndex, param);
-            if (swapByteOrder) {
-                // TODO handle this case for big image, find an example
-                ByteUtils.toggleShortEndian(((DataBufferByte) bi.getData().getDataBuffer()).getData());
-            }
-        }
-        return validateSignedShortDataBuffer(bi);
-    }
-
-    public RenderedImage validateSignedShortDataBuffer(RenderedImage source) {
-        /*
-         * Issue in ComponentColorModel when signed short DataBuffer, only 16 bits is supported see
-         * http://java.sun.com/javase/6/docs/api/java/awt/image/ComponentColorModel.html Instances of
-         * ComponentColorModel created with transfer types DataBuffer.TYPE_SHORT, DataBuffer.TYPE_FLOAT, and
-         * DataBuffer.TYPE_DOUBLE use all the bits of all sample values. Thus all color/alpha components have 16 bits
-         * when using DataBuffer.TYPE_SHORT, 32 bits when using DataBuffer.TYPE_FLOAT, and 64 bits when using
-         * DataBuffer.TYPE_DOUBLE. When the ComponentColorModel(ColorSpace, int[], boolean, boolean, int, int) form of
-         * constructor is used with one of these transfer types, the bits array argument is ignored.
-         */
-
-        // Bits Allocated = 16 (Bits alloués )
-        // Bits Stored = 12 (Bits enregistrés )
-        // High Bit = 11 (Bit le plus significatif)
-        // |<------------------ pixel ----------------->|
-        // ______________ ______________ ______________ ______________
-        // |XXXXXXXXXXXXXX| | | |
-        // |______________|______________|______________|______________|
-        // 15 12 11 8 7 4 3 0
-        //
-        // ---------------------------
-        //
-        // Bits Allocated = 16
-        // Bits Stored = 12
-        // High Bit = 15
-        // |<------------------ pixel ----------------->|
-        // ______________ ______________ ______________ ______________
-        // | | | |XXXXXXXXXXXXXX|
-        // |______________|______________|______________|______________|
-        // 15 12 11 8 7 4 3 0
-        int highBit;
-        // TODO test with all decoders (works with raw decoder)
-        if (source != null && dataType == DataBuffer.TYPE_SHORT
-            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT
-            && (highBit = getDicomObject().getInt(Tag.HighBit, allocated - 1) + 1) < allocated) {
-            source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit }, null);
-        }
-        return source;
-    }
-
-    public int getDataType() {
-        return dataType;
-    }
-
-    @Override
-    public BufferedImage readTile(int imageIndex, int tileX, int tileY) throws IOException {
-        return super.readTile(imageIndex, tileX, tileY);
-    }
-
-    @Override
-    public Raster readTileRaster(int imageIndex, int tileX, int tileY) throws IOException {
-        return super.readTileRaster(imageIndex, tileX, tileY);
-    }
-
-    // TODO add to original dcm4che class
-    public DicomObject readPixelData() throws Exception {
-        try {
-            readMetaData(true);
-            if (dis.tag() == Tag.PixelData) {
-                // Remove the StopHandler on the tag 'Pixel Data'
-                dis.setHandler(dis);
-                // Set the position at the beginning of the tag 'Pixel Data'
-                dis.reset();
-                // Read the Pixel Data (compressed is a sequence attribute)
-                return dis.readDicomObject();
-
-            } else {
-                throw new Exception("Cannot read pixel data");
-            }
-        } finally {
-            // Close stream
-            FileUtil.safeClose(iis);
-            iis = null;
-        }
     }
 
     /**
@@ -982,7 +787,6 @@ public class DicomImageReader extends ImageReader {
         if (ImageReaderFactory.getInstance().needsImageTypeSpecifier(tsuid)) {
             dst.setDestinationType(createImageTypeSpecifier());
         }
-
     }
 
     private Raster decompressRaster(int imageIndex, ImageReadParam param) throws IOException {
@@ -1024,7 +828,6 @@ public class DicomImageReader extends ImageReader {
         float c = param.getWindowCenter();
         float w = param.getWindowWidth();
         String vlutFct = param.getVoiLutFunction();
-        DicomObject ds = getDicomObject();
         if (param.isAutoWindowing()) {
             DicomObject voiObj = VOIUtils.selectVoiObject(ds, pr, frame);
             if (voiObj == null) {
@@ -1040,13 +843,11 @@ public class DicomImageReader extends ImageReader {
         return LookupTable.createLutForImageWithPR(ds, pr, frame, c, w, vlutFct, 8, pval2gray);
     }
 
-    public DicomObject getDicomObject() {
-        try {
-            return readMetaData(false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    public boolean isSkipLargePrivate() {
+        return skipLargePrivate;
     }
 
+    public void setSkipLargePrivate(boolean skipLargePrivate) {
+        this.skipLargePrivate = skipLargePrivate;
+    }
 }

@@ -68,6 +68,8 @@ import org.dcm4che2.imageio.ItemParser;
 import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
 import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
+import org.dcm4che2.imageioimpl.plugins.dcm.SizeSkipInputHandler;
+import org.dcm4che2.io.DicomInputHandler;
 import org.dcm4che2.io.DicomInputStream;
 import org.dcm4che2.io.StopTagInputHandler;
 import org.dcm4che2.iod.module.pr.DisplayShutterModule;
@@ -170,6 +172,8 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
      * Store the transfer syntax locally in case it gets modified to re-write the image
      */
     private String tsuid;
+    /** Used to indicate whether or not to skip large private dicom elements. */
+    private boolean skipLargePrivate = true;
     private volatile boolean readingHeader = false;
     private volatile boolean readingImage = false;
 
@@ -1135,6 +1139,62 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         return super.readTileRaster(imageIndex, tileX, tileY);
     }
 
+    public boolean isSkipLargePrivate() {
+        return skipLargePrivate;
+    }
+
+    public void setSkipLargePrivate(boolean skipLargePrivate) {
+        this.skipLargePrivate = skipLargePrivate;
+    }
+
+    // public void readPostPixeldata() throws IOException {
+    // readMetaData(true);
+    // long currentPosition = dis.getStreamPosition();
+    //
+    // DicomObject postPixelDs = new BasicDicomObject();
+    //
+    // if (pixelDataPos > 0) {
+    // // There is pixeldata
+    // if (pixelDataLen >= 0) {
+    // // last call already read the tag, but we want to init a new InputStream from here
+    // dis.reset();
+    //
+    // // there is uncompressed pixeldata
+    // long startPosition = pixelDataPos + pixelDataLen;
+    // iis.seek(startPosition);
+    // } else {
+    // // via siis
+    // int imageIndex = numberOfFrame - 1;
+    // imageIndex = (imageIndex < 0) ? 0 : imageIndex;
+    // if (siis == null) {
+    // initCompressedImageReader(imageIndex);
+    // }
+    // itemParser.seekFooter();
+    // }
+    // } else {
+    // // last call already read the tag, but we want to init a new InputStream from here
+    // dis.reset();
+    // }
+    //
+    // // Not reusing the earlier dicom input stream as it has a stop tag handler and we want to go past the pixeldata.
+    // DicomInputStream postDis = new DicomInputStream(iis, org.dcm4che2.data.TransferSyntax.valueOf(tsuid));
+    // if (isSkipLargePrivate()) {
+    // DicomInputHandler dih = new SizeSkipInputHandler(null);
+    // postDis.setHandler(dih);
+    // }
+    //
+    // postPixelDs = postDis.readDicomObject();
+    // if (postPixelDs != null && !postPixelDs.isEmpty()) {
+    // // Note the postPixelDs.copyTo(ds) does not work because the copy does not handle the
+    // // SkippedDicomElements correctly
+    // ds = new CombineDicomObject(ds, postPixelDs);
+    // streamMetaData.setDicomObject(ds);
+    // }
+    //
+    // // reset the stream
+    // iis.seek(currentPosition);
+    // }
+
     public DicomObject readPixelData() throws Exception {
         try {
             readMetaData(true);
@@ -1294,7 +1354,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
             iis.seek(0L);
             dis = new DicomInputStream(iis);
-            dis.setHandler(new StopTagInputHandler(Tag.PixelData));
+            DicomInputHandler ih = new StopTagInputHandler(Tag.PixelData);
+            if (isSkipLargePrivate()) {
+                ih = new SizeSkipInputHandler(ih);
+            }
+            dis.setHandler(ih);
             DicomObject ds = dis.readDicomObject();
             while (dis.tag() == 0xFFFCFFFC) {
                 dis.readBytes(dis.valueLength());

@@ -66,17 +66,16 @@ public class ItemParser implements StreamSegmentMapper {
 
     private static final Logger log = LoggerFactory.getLogger(ItemParser.class);
 
-    private static final HashSet<String> JPEG_TS =
-        new HashSet<String>(Arrays.asList(new String[] { UID.JPEGBaseline1, UID.JPEGExtended24,
-            UID.JPEGExtended35Retired, UID.JPEGSpectralSelectionNonHierarchical68Retired,
-            UID.JPEGSpectralSelectionNonHierarchical79Retired, UID.JPEGFullProgressionNonHierarchical1012Retired,
-            UID.JPEGFullProgressionNonHierarchical1113Retired, UID.JPEGLosslessNonHierarchical14,
-            UID.JPEGLosslessNonHierarchical15Retired, UID.JPEGExtendedHierarchical1618Retired,
-            UID.JPEGExtendedHierarchical1719Retired, UID.JPEGSpectralSelectionHierarchical2022Retired,
-            UID.JPEGSpectralSelectionHierarchical2123Retired, UID.JPEGFullProgressionHierarchical2426Retired,
-            UID.JPEGFullProgressionHierarchical2527Retired, UID.JPEGLosslessHierarchical28Retired,
-            UID.JPEGLosslessHierarchical29Retired, UID.JPEGLossless, UID.JPEGLSLossless, UID.JPEGLSLossyNearLossless,
-            UID.JPEG2000LosslessOnly, UID.JPEG2000 }));
+    private static final HashSet<String> JPEG_TS = new HashSet<String>(Arrays.asList(new String[] { UID.JPEGBaseline1,
+        UID.JPEGExtended24, UID.JPEGExtended35Retired, UID.JPEGSpectralSelectionNonHierarchical68Retired,
+        UID.JPEGSpectralSelectionNonHierarchical79Retired, UID.JPEGFullProgressionNonHierarchical1012Retired,
+        UID.JPEGFullProgressionNonHierarchical1113Retired, UID.JPEGLosslessNonHierarchical14,
+        UID.JPEGLosslessNonHierarchical15Retired, UID.JPEGExtendedHierarchical1618Retired,
+        UID.JPEGExtendedHierarchical1719Retired, UID.JPEGSpectralSelectionHierarchical2022Retired,
+        UID.JPEGSpectralSelectionHierarchical2123Retired, UID.JPEGFullProgressionHierarchical2426Retired,
+        UID.JPEGFullProgressionHierarchical2527Retired, UID.JPEGLosslessHierarchical28Retired,
+        UID.JPEGLosslessHierarchical29Retired, UID.JPEGLossless, UID.JPEGLSLossless, UID.JPEGLSLossyNearLossless,
+        UID.JPEG2000LosslessOnly, UID.JPEG2000 }));
 
     public static final class Item {
 
@@ -237,12 +236,14 @@ public class ItemParser implements StreamSegmentMapper {
         return items.get(items.size() - 1);
     }
 
+    @Override
     public StreamSegment getStreamSegment(long pos, int len) {
         StreamSegment retval = new StreamSegment();
         getStreamSegment(pos, len, retval);
         return retval;
     }
 
+    @Override
     public void getStreamSegment(long pos, int len, StreamSegment seg) {
         if (log.isDebugEnabled()) {
             log.debug("getStreamSegment(pos=" + pos + ", len=" + len + ")");
@@ -294,6 +295,14 @@ public class ItemParser implements StreamSegmentMapper {
     }
 
     public byte[] readFrame(SegmentedImageInputStream siis, int frame) throws IOException {
+        int frameSize = getFrameLength(frame);
+        byte[] data = new byte[frameSize];
+        seekFrame(siis, frame);
+        siis.readFully(data);
+        return data;
+    }
+
+    protected int getFrameLength(int frame) throws IOException {
         Item item = getFirstItemOfFrame(frame);
         int frameSize = item.length;
         int firstItemOfNextFrameIndex =
@@ -301,10 +310,7 @@ public class ItemParser implements StreamSegmentMapper {
         for (int i = items.indexOf(item) + 1; i < firstItemOfNextFrameIndex; i++) {
             frameSize += items.get(i).length;
         }
-        byte[] data = new byte[frameSize];
-        seekFrame(siis, frame);
-        siis.readFully(data);
-        return data;
+        return frameSize;
     }
 
     /**
@@ -316,13 +322,7 @@ public class ItemParser implements StreamSegmentMapper {
      * @throws IOException
      */
     public int seekImageFrameBeforeReadStream(SegmentedImageInputStream siis, int frame) throws IOException {
-        Item item = getFirstItemOfFrame(frame);
-        int frameSize = item.length;
-        int firstItemOfNextFrameIndex =
-            frame + 1 < numberOfFrames ? items.indexOf(getFirstItemOfFrame(frame + 1)) : getNumberOfDataFragments();
-        for (int i = items.indexOf(item) + 1; i < firstItemOfNextFrameIndex; i++) {
-            frameSize += items.get(i).length;
-        }
+        int frameSize = getFrameLength(frame);
         seekFrame(siis, frame);
         return frameSize;
     }

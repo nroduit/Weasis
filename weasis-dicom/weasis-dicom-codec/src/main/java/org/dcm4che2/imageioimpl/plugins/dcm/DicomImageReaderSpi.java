@@ -40,6 +40,7 @@ package org.dcm4che2.imageioimpl.plugins.dcm;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Locale;
 
 import javax.imageio.ImageReader;
@@ -70,8 +71,7 @@ public class DicomImageReaderSpi extends ImageReaderSpi {
     }
 
     public DicomImageReaderSpi() {
-        this(vendor, version, MIMETypes, "org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader", STANDARD_INPUT_TYPE,
-            null, false, false);
+        this(vendor, version, MIMETypes, "org.weasis.dicom.codec.DicomMediaIO", STANDARD_INPUT_TYPE, null, false, false);
     }
 
     /**
@@ -139,6 +139,6 @@ public class DicomImageReaderSpi extends ImageReaderSpi {
 
     @Override
     public ImageReader createReaderInstance(Object extension) {
-        return new DicomImageReader(this);
+        return new org.weasis.dicom.codec.DicomMediaIO((URI) null);
     }
 }
