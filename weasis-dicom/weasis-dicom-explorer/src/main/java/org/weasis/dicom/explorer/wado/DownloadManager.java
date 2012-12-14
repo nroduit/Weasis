@@ -59,6 +59,7 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.xml.sax.SAXException;
@@ -223,8 +224,8 @@ public class DownloadManager {
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
         Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false);
         String name =
-            DicomMediaIO.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
-        String patientPseudoUID = DicomMediaIO.buildPatientPseudoUID(patientID, issuerOfPatientID, name, birthdate);
+            DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
+        String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, birthdate);
 
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {

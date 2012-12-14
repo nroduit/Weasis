@@ -34,6 +34,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.ColorModelFactory;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
@@ -75,16 +76,16 @@ public class DicomDirLoader {
         while (dcmPatient != null) {
             if (DirectoryRecordType.PATIENT.equals(dcmPatient.getString(Tag.DirectoryRecordType))) {
                 try {
-                    String name = DicomMediaIO.buildPatientName(dcmPatient.getString(Tag.PatientName));
+                    String name = DicomMediaUtils.buildPatientName(dcmPatient.getString(Tag.PatientName));
                     String patientPseudoUID =
-                        DicomMediaIO.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
+                        DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID),
                             dcmPatient.getString(Tag.IssuerOfPatientID), name,
-                            DicomMediaIO.getDateFromDicomElement(dcmPatient, Tag.PatientBirthDate, null));
+                            DicomMediaUtils.getDateFromDicomElement(dcmPatient, Tag.PatientBirthDate, null));
 
                     patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
                     if (patient == null) {
                         patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
-                        DicomMediaIO.writeMetaData(patient, dcmPatient);
+                        DicomMediaUtils.writeMetaData(patient, dcmPatient);
                         dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
                         pat++;
                     }
@@ -132,7 +133,7 @@ public class DicomDirLoader {
                 MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
                 if (study == null) {
                     study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
-                    DicomMediaIO.writeMetaData(study, dcmStudy);
+                    DicomMediaUtils.writeMetaData(study, dcmStudy);
                     dicomModel.addHierarchyNode(patient, study);
                 }
                 parseSeries(patient, study, dcmStudy);
@@ -152,7 +153,7 @@ public class DicomDirLoader {
                     dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                     dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
                     dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
-                    DicomMediaIO.writeMetaData(dicomSeries, series);
+                    DicomMediaUtils.writeMetaData(dicomSeries, series);
                     dicomModel.addHierarchyNode(study, dicomSeries);
                 } else {
                     WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
@@ -196,7 +197,7 @@ public class DicomDirLoader {
                             } else {
                                 String filename = toFileName(instance);
                                 if (filename != null) {
-                                    dcmInstance.setInstanceNumber(DicomMediaIO.getIntegerFromDicomElement(instance,
+                                    dcmInstance.setInstanceNumber(DicomMediaUtils.getIntegerFromDicomElement(instance,
                                         Tag.InstanceNumber, -1));
                                     dcmInstance.setDirectDownloadFile(filename);
                                     dicomInstances.add(dcmInstance);

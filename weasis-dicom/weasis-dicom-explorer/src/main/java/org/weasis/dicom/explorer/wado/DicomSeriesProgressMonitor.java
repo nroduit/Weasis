@@ -6,8 +6,8 @@ import java.io.InterruptedIOException;
 
 import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TransferSyntax;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
 
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
@@ -53,7 +53,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             progress.nread = 0;
             throw exc;
         }
-        if (!DicomMediaIO.hasPlatformNativeImageioCodecs()) {
+        if (!DicomImageUtils.hasPlatformNativeImageioCodecs()) {
             int endByteOffset = b.length - 1;
             while (byteOffset < endByteOffset) {
                 int group = extractUnsigned16(b, byteOffset);
