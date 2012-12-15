@@ -11,7 +11,8 @@
 	<properties>
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier>-SNAPSHOT</qualifier>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
+			in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -25,7 +26,7 @@
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
 		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
-		<felix.configadmin.version>1.2.8</felix.configadmin.version>
+		<felix.configadmin.version>1.6.0</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
 		<felix.scr.version>1.6.0</felix.scr.version>
 		<slf4j.version>1.6.4</slf4j.version>
@@ -306,9 +307,11 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${basedir}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+									classpath="${basedir}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -362,7 +365,8 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
+										are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -405,8 +409,8 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
-					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
+					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -450,9 +454,9 @@
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
-						<artifactId>launch4j-plugin</artifactId>
-						<version>1.5.0.0</version>
+						<groupId>com.akathist.maven.plugins.launch4j</groupId>
+						<artifactId>launch4j-maven-plugin</artifactId>
+						<version>1.5.2</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
@@ -478,6 +482,9 @@
 										<!-- <preCp>weasis\felix.jar;weasis\substance.jar</preCp> -->
 										<preCp>weasis\*.jar</preCp>
 									</classPath>
+									<singleInstance>
+										<mutexName>weasis-native</mutexName>
+									</singleInstance>
 									<jre>
 										<minVersion>1.6.0</minVersion>
 										<initialHeapSize>64</initialHeapSize>
