@@ -64,7 +64,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.3</version>
+				<version>2.6</version>
 				<executions>
 					<execution>
 						<id>copy-bundles</id>
@@ -173,13 +173,15 @@
 									<artifactId>docking-frames</artifactId>
 									<version>${dockingframes.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+									<!-- Workaround to get a snapshot name without timestamp (download from nexus) -->
+									<destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 									<artifactId>jai-lib</artifactId>
 									<version>${jai.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
+								</artifactItem>${dockingframes.version}
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 									<artifactId>jai-lib-linux-x86</artifactId>
