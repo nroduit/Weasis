@@ -28,7 +28,8 @@
 		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
 		<felix.configadmin.version>1.6.0</felix.configadmin.version>
 		<felix.prefs.version>1.0.4</felix.prefs.version>
-		<felix.scr.version>1.6.0</felix.scr.version>
+		<felix.scr.version>1.6.2</felix.scr.version>
+		<felix.metatype.version>1.0.6</felix.metatype.version>
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.0</sling.commons.log.version>
 
@@ -128,6 +129,12 @@
 									<version>${felix.scr.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.felix</groupId>
+									<artifactId>org.apache.felix.metatype</artifactId>
+									<version>${felix.metatype.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>								
 								<artifactItem>
 									<groupId>org.apache.felix</groupId>
 									<artifactId>javax.servlet</artifactId>
