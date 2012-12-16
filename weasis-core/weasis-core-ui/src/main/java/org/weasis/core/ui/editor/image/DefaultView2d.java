@@ -604,7 +604,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(g2d, transform, inverseTransform);
+            getLayerModel().draw(
+                g2d,
+                transform,
+                inverseTransform,
+                new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
+                    modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
     }
 

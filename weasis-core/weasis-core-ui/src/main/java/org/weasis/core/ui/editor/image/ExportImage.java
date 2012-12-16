@@ -11,12 +11,10 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -49,6 +47,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.imageLayer.setBuildIterator(false);
         setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
+        infoLayer.setVisible(view2d.getInfoLayer().isVisible());
         infoLayer.setShowBottomScale(false);
         // For exporting view, remove Pixel value, Preloading bar
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
@@ -111,12 +110,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         return super.getGraphics();
     }
 
-    @Override
-    public final Font getLayerFont() {
-        double fontSize =
-            (this.getGraphics().getFontMetrics(FontTools.getFont10()).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ 
-        return new Font("SansSerif", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
-    }
+    // @Override
+    // public final Font getLayerFont() {
+    // double fontSize =
+    //                    (this.getGraphics().getFontMetrics(FontTools.getFont10()).stringWidth("0123456789") * 6.0) / getWidth(); //$NON-NLS-1$ 
+    //                return new Font("SansSerif", 0, (int) Math.ceil(10 / fontSize)); //$NON-NLS-1$
+    // }
 
     @Override
     public void paintComponent(Graphics g) {
@@ -130,9 +129,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         currentG2d = g2d;
         Stroke oldStroke = g2d.getStroke();
         Paint oldColor = g2d.getPaint();
-        Shape oldClip = g2d.getClip();
-        g2d.setClip(getBounds());
-
         double viewScale = getViewModel().getViewScale();
         double offsetX = getViewModel().getModelOffsetX() * viewScale;
         double offsetY = getViewModel().getModelOffsetY() * viewScale;
@@ -148,13 +144,11 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         }
 
         imageLayer.drawImage(g2d);
+
         drawLayers(g2d, affineTransform, inverseTransform);
         g2d.translate(offsetX, offsetY);
         if (infoLayer != null) {
             infoLayer.paint(g2d);
-        }
-        if (oldClip != null) {
-            g2d.clip(oldClip);
         }
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);

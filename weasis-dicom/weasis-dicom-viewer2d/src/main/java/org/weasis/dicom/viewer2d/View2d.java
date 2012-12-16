@@ -164,8 +164,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 // Resize in best fit window only if the previous value is also a best fit value.
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
+                    center();
                 }
-                center();
                 if (lens != null) {
                     lens.updateZoom();
 

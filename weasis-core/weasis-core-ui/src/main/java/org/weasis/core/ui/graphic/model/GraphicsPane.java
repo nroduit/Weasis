@@ -234,20 +234,10 @@ public class GraphicsPane extends JComponent {
             g.setColor(getBackground());
             g.fillRect(0, 0, getWidth(), getHeight());
         }
-        if (g instanceof Graphics2D) {
-            drawLayers((Graphics2D) g, null, null);
-        }
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////
     // Drawing
-    public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-        // create a new Graphics because we shall not alter the Graphics passed in
-        final Graphics2D g2dClone = (Graphics2D) g2d.create();
-        transformGraphics(g2dClone, true);
-        getLayerModel().draw(g2dClone, transform, inverseTransform);
-        g2dClone.dispose();
-    }
 
     public void transformGraphics(final Graphics2D g2d, boolean forward) {
         if (forward) {

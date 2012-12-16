@@ -144,9 +144,7 @@ public class ImagePrint implements Printable {
             Entry<LayoutConstraints, JComponent> e = enumVal.next();
             LayoutConstraints key = e.getKey();
             ExportImage image = (ExportImage) e.getValue();
-            if (printOptions.getHasAnnotations()) {
-                image.getInfoLayer().setVisible(true);
-            } else {
+            if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
                 image.getInfoLayer().setVisible(false);
             }
             double padX = 0.0;
@@ -209,6 +207,7 @@ public class ImagePrint implements Printable {
             // Set us to the upper left corner
             g2d.translate(x, y);
             boolean wasBuffered = disableDoubleBuffering(image);
+            g2d.setClip(image.getBounds());
             image.draw(g2d);
             restoreDoubleBuffering(image, wasBuffered);
             g2d.translate(-x, -y);
@@ -219,9 +218,7 @@ public class ImagePrint implements Printable {
         if ((image == null) || (g2d == null)) {
             return;
         }
-        if (printOptions.getHasAnnotations()) {
-            image.getInfoLayer().setVisible(true);
-        } else {
+        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
             image.getInfoLayer().setVisible(false);
         }
         RenderedImage img = image.getSourceImage();
@@ -246,6 +243,7 @@ public class ImagePrint implements Printable {
         // Set us to the upper left corner
         g2d.translate(x, y);
         boolean wasBuffered = disableDoubleBuffering(image);
+        g2d.setClip(image.getBounds());
         image.draw(g2d);
         restoreDoubleBuffering(image, wasBuffered);
         g2d.translate(-x, -y);
