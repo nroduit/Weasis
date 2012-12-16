@@ -14,6 +14,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
 import java.awt.BorderLayout;
@@ -50,7 +51,6 @@ import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.View2dContainer;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -324,8 +324,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
-        if (event.getEventType().equals(EVENT.SELECT_VIEW) && event.getSeriesViewer() instanceof View2dContainer) {
-            iniTreeValues(((View2dContainer) event.getSeriesViewer()).getSelectedImagePane());
+        EVENT e = event.getEventType();
+        if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
+            iniTreeValues(((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane());
+        } else if (EVENT.TOOGLE_INFO.equals(e)) {
+            TreeCheckingModel model = tree.getCheckingModel();
+            model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
         }
     }
 
