@@ -11,7 +11,6 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -218,12 +217,13 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         if (!visible || displayImage == null) {
             return;
         }
-        Rectangle clipBounds = g2d.getClipBounds();
-        if (clipBounds == null) {
-            clipBounds =
-                new Rectangle(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth(),
-                    displayImage.getHeight());
-        }
+        // Rectangle clipBounds = g2d.getClipBounds();
+        // if (clipBounds == null || clipBounds.isEmpty()) {
+        // clipBounds =
+        // new Rectangle(displayImage.getMinX(), displayImage.getMinY(), displayImage.getWidth(),
+        // displayImage.getHeight());
+        // g2d.setClip(clipBounds);
+        // }
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
             Rectangle2D rect =
@@ -245,7 +245,6 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
             } catch (InterruptedException et) {
             }
         }
-
         g2d.setClip(clip);
 
     }

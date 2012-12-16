@@ -385,11 +385,13 @@ public class AbstractLayerModel implements LayerModel {
     // }
 
     @Override
-    public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
+    public void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D viewClip) {
         Rectangle2D bound = null;
-        // Get the visible view in real coordinates
-        Shape area = inverseTransform.createTransformedShape(g2d.getClipBounds());
+
+        // Get the visible view in real coordinates, note only Sun g2d return consistent clip area with offset
+        Shape area = inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
         bound = area.getBounds2D();
+
         g2d.translate(0.5, 0.5);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasingOn);
         // g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));

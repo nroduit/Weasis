@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic.model;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,9 +64,11 @@ public interface LayerModel {
      * @param g2d
      *            the 2D graphics context
      * @param transform
+     * @param clip
+     *            TODO
      * 
      */
-    void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform);
+    void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D viewClip);
 
     /**
      * Releases all resources held by this model. Method calls to this model after <code>dispose</code> has been called,

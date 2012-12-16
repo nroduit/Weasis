@@ -13,6 +13,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
@@ -21,8 +22,11 @@ import javax.media.jai.TiledImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
+import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.graphic.model.DefaultViewModel;
+import org.weasis.core.ui.util.ImagePrint;
 
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
@@ -46,7 +50,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
 
         if (comp instanceof DefaultView2d) {
             DefaultView2d view2DPane = (DefaultView2d) comp;
-            PlanarImage imgP = ViewTransferHandler.createComponentImage(view2DPane);
+            PlanarImage imgP = createComponentImage(view2DPane);
             if (imgP != null) {
                 image = imgP.getAsBufferedImage();
                 return this;
@@ -80,21 +84,32 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         return flavor.equals(DataFlavor.imageFlavor);
     }
 
-    public static PlanarImage createComponentImage(DefaultView2d<? extends ImageElement> canvas) {
+    private PlanarImage createComponentImage(DefaultView2d canvas) {
         TiledImage image = ImageFiler.getEmptyTiledImage(Color.BLACK, canvas.getWidth(), canvas.getHeight());
-        Graphics2D g = image.createGraphics();
-        if (g != null) {
-            boolean anonymAnnotationsStatus =
-                canvas.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
-            if (!anonymAnnotationsStatus) {
-                canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, true);
-            }
-            canvas.draw(g);
-            g.dispose();
+        ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(canvas);
+        try {
+            exportImage.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, true);
+            exportImage.getInfoLayer().setBorder(3);
+            Graphics2D g = image.createGraphics();
+            if (g != null) {
+                ViewModel originViewModel = canvas.getViewModel();
+                ViewModel viewModel = exportImage.getViewModel();
+                final Rectangle modelArea = exportImage.getImageBounds(exportImage.getImage());
+                ((DefaultViewModel) viewModel).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                viewModel.setModelArea(originViewModel.getModelArea());
+                viewModel.setModelOffset(originViewModel.getModelOffsetX(), originViewModel.getModelOffsetY(),
+                    originViewModel.getViewScale());
 
-            if (!anonymAnnotationsStatus) {
-                canvas.getInfoLayer().setDisplayPreferencesValue(AnnotationsLayer.ANONYM_ANNOTATIONS, false);
+                exportImage.setBounds(canvas.getX(), canvas.getY(), canvas.getWidth(), canvas.getHeight());
+                boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
+                exportImage.zoom(originViewModel.getViewScale());
+                // exportImage.center();
+                exportImage.draw(g);
+                ImagePrint.restoreDoubleBuffering(exportImage, wasBuffered);
+                g.dispose();
             }
+        } finally {
+            exportImage.dispose();
         }
         return image;
     }

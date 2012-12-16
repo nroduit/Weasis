@@ -204,10 +204,14 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         g2d.setStroke(oldStroke);
     }
 
-    @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAW.cmd())) {
-            getLayerModel().draw(g2d, transform, inverseTransform);
+            getLayerModel().draw(
+                g2d,
+                transform,
+                inverseTransform,
+                new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
+                    modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
         }
     }
 

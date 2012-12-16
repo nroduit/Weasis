@@ -60,9 +60,7 @@ public class DicomPrint {
         if ((image == null)) {
             return null;
         }
-        if (printOptions.getHasAnnotations()) {
-            image.getInfoLayer().setVisible(true);
-        } else {
+        if (!printOptions.getHasAnnotations() && image.getInfoLayer().isVisible()) {
             image.getInfoLayer().setVisible(false);
         }
         RenderedImage img = image.getSourceImage();
@@ -84,7 +82,9 @@ public class DicomPrint {
         } else {
             bufferedImage = createGrayBufferedImage(image.getWidth(), image.getHeight());
         }
-        image.draw((Graphics2D) bufferedImage.getGraphics());
+        Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
+        g2d.setClip(image.getBounds());
+        image.draw(g2d);
         ImagePrint.restoreDoubleBuffering(image, wasBuffered);
         return bufferedImage;
     }
