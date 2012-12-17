@@ -980,7 +980,7 @@ public class DicomMediaUtils {
                     DicomObject measure = sequenceElt.getDicomObject(0);
                     setTagNoNull(tagList, TagW.PixelSpacing, measure.getDoubles(Tag.PixelSpacing, (double[]) null));
                     setTagNoNull(tagList, TagW.SliceThickness,
-                        getFloatFromDicomElement(measure, Tag.SliceThickness, null));
+                        getDoubleFromDicomElement(measure, Tag.SliceThickness, null));
                 }
 
                 // Identifies the characteristics of this frame. Only a single Item shall be permitted in this sequence.
