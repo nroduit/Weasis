@@ -135,10 +135,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     .getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES);
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
+            More2DToolBar more2dBar = new More2DToolBar<DicomImageElement>();
+            TOOLBARS.add(2, more2dBar);
             Basic3DToolBar b3dBar = new Basic3DToolBar<DicomImageElement>();
-            TOOLBARS.add(2, b3dBar);
+            TOOLBARS.add(3, b3dBar);
             CineToolBar cineBar = new CineToolBar<DicomImageElement>();
-            TOOLBARS.add(3, cineBar);
+            TOOLBARS.add(4, cineBar);
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {

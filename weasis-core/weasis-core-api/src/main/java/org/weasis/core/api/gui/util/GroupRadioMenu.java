@@ -26,16 +26,18 @@ import javax.swing.event.ListDataEvent;
 public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
 
     protected final List<RadioMenuItem> itemList;
+    protected final ButtonGroup group;
     protected ComboBoxModel dataModel;
 
     public GroupRadioMenu() {
         this.itemList = new ArrayList<RadioMenuItem>();
+        group = new ButtonGroup();
     }
 
     private void init() {
         itemList.clear();
         Object selectedItem = dataModel.getSelectedItem();
-        ButtonGroup group = new ButtonGroup();
+
         for (int i = 0; i < dataModel.getSize(); i++) {
             Object object = dataModel.getElementAt(i);
             Icon icon = null;
@@ -102,7 +104,9 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
     };
 
     public void setSelected(Object selected) {
-        if (selected != null) {
+        if (selected == null) {
+            group.clearSelection();
+        } else {
             for (int i = 0; i < itemList.size(); i++) {
                 RadioMenuItem item = itemList.get(i);
                 if (item.getObject() == selected) {
@@ -112,7 +116,6 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
                 }
             }
         }
-
     }
 
     public int getSelectedIndex() {
