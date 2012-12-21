@@ -40,8 +40,13 @@ public abstract class AbstractProperties {
         } else {
             tdir = new File(tempDir);
         }
-
-        APP_TEMP_DIR = new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        /*
+         * Set the user name and the id (weasis source instance on web) to avoid mixing files by several users (Linux)
+         * or by running multiple instances of Weasis from different sources.
+         */
+        APP_TEMP_DIR =
+            new File(tdir,
+                "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         try {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR);

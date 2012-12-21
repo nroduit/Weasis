@@ -13,7 +13,6 @@ package org.weasis.core.api.image.op;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * <code>ByteLutCollection</code> contains a collection of lookup tables (LUT).
@@ -645,24 +644,4 @@ public class ByteLutCollection {
         return invertlut;
     }
 
-    public static byte[][] readLutFile(Scanner scan) throws Exception {
-        final byte lut[][] = new byte[3][256];
-        int lineIndex = 0;
-
-        while (scan.hasNext()) {
-            if (lineIndex >= 256) {
-                break;
-            }
-
-            String[] line = scan.nextLine().split("\t"); //$NON-NLS-1$
-            if (line.length == 3) {
-                lut[0][lineIndex] = (byte) Integer.parseInt(line[0]);
-                lut[1][lineIndex] = (byte) Integer.parseInt(line[1]);
-                lut[2][lineIndex] = (byte) Integer.parseInt(line[2]);
-            }
-
-            lineIndex++;
-        }
-        return lut;
-    }
 }

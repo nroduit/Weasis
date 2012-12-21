@@ -17,7 +17,6 @@ import java.util.Scanner;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.internal.Activator;
 
 public class LutManager {
@@ -35,15 +34,19 @@ public class LutManager {
         String[] files =
             { "BlackBody.txt", "Cardiac.txt", "Flow.txt", "GEcolor.txt", "GrayRainbow.txt", "Hue1.txt", "Hue2.txt", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
                 "Stern.txt", "Ucla.txt", "VR Bones.txt" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        Scanner scan = null;
         for (int i = 0; i < files.length; i++) {
             try {
-                byte[][] lut =
-                    readLutFile(new Scanner(LutManager.class.getResourceAsStream("/config/luts/" + files[i]), "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+                scan = new Scanner(LutManager.class.getResourceAsStream("/config/luts/" + files[i]), "UTF-8");
+                byte[][] lut = readLutFile(scan); //$NON-NLS-1$ //$NON-NLS-2$
                 luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i]), lut, ByteLutCollection.invert(lut)));
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                if (scan != null) {
+                    scan.close();
+                }
             }
-
         }
     }
 
@@ -51,14 +54,20 @@ public class LutManager {
         File lutFolder = new File(Activator.PREFERENCES.getDataFolder(), LUT_DIR);
         if (lutFolder.exists() && lutFolder.isDirectory()) {
             File[] files = lutFolder.listFiles();
+            Scanner scan = null;
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isFile() && files[i].canRead()) {
                     try {
+                        scan = new Scanner(files[i], "UTF-8");
                         byte[][] lut = readLutFile(new Scanner(files[i], "UTF-8")); //$NON-NLS-1$
                         luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut, ByteLutCollection
                             .invert(lut)));
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        if (scan != null) {
+                            scan.close();
+                        }
                     }
                 }
             }

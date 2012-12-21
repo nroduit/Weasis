@@ -132,7 +132,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         @Override
         public void focusLost(CDockable dockable) {
             // TODO Auto-generated method stub
-
         }
     };
 
