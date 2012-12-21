@@ -258,6 +258,7 @@ public class WeasisLauncher {
                 e.printStackTrace();
             }
         }
+
         // Read configuration properties.
         Properties configProps = WeasisLauncher.loadConfigProperties();
         // If no configuration properties were found, then create
@@ -273,6 +274,11 @@ public class WeasisLauncher {
             configProps.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
         }
 
+        String sourceID =
+            toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode());
+        System.setProperty("weasis.source.id", sourceID);
+
+        cacheDir = configProps.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID;
         // If there is a passed in bundle cache directory, then
         // that overwrites anything in the config file.
         if (cacheDir != null) {
@@ -400,6 +406,15 @@ public class WeasisLauncher {
         } finally {
             Runtime.getRuntime().halt(exitStatus);
         }
+    }
+
+    private static String toHex(int val) {
+        final char[] HEX_DIGIT = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        char[] ch8 = new char[8];
+        for (int i = 8; --i >= 0; val >>= 4) {
+            ch8[i] = HEX_DIGIT[val & 0xf];
+        }
+        return String.valueOf(ch8);
     }
 
     public static List<StringBuffer> splitCommand(String[] args) {
