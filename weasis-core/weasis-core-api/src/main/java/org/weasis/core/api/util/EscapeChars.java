@@ -17,8 +17,6 @@ import java.text.StringCharacterIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.weasis.core.api.Messages;
-
 /**
  * Convenience methods for escaping special characters related to HTML, XML, and regular expressions.
  * 
@@ -263,7 +261,7 @@ public final class EscapeChars {
      * <P>
      * Replaces all <tt>'&'</tt> characters with <tt>'&amp;'</tt>.
      * 
-     *<P>
+     * <P>
      * An ampersand character may appear in the query string of a URL. The ampersand character is indeed valid in a URL.
      * <em>However, URLs usually appear as an <tt>HREF</tt> attribute, and 
      * such attributes have the additional constraint that ampersands 
@@ -399,17 +397,17 @@ public final class EscapeChars {
      * 
      * <P>
      * The escaped characters include :
-     *<ul>
-     *<li>.
-     *<li>\
-     *<li>?, * , and +
-     *<li>&
-     *<li>:
-     *<li>{ and }
-     *<li>[ and ]
-     *<li>( and )
-     *<li>^ and $
-     *</ul>
+     * <ul>
+     * <li>.
+     * <li>\
+     * <li>?, * , and +
+     * <li>&
+     * <li>:
+     * <li>{ and }
+     * <li>[ and ]
+     * <li>( and )
+     * <li>^ and $
+     * </ul>
      */
     public static String forRegex(String aRegexFragment) {
         final StringBuilder result = new StringBuilder();
@@ -508,5 +506,34 @@ public final class EscapeChars {
         }
         String number = padding + aIdx.toString();
         aBuilder.append("&#" + number + ";"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    /**
+     * Converts a string contain LF, CR/LF, LF/CR or CR into a set of lines by themselves.
+     * 
+     * @param unformatted
+     * @return Array of strings, one per line.
+     */
+    public static String[] convertToLines(String unformatted) {
+        if (unformatted == null) {
+            return new String[0];
+        }
+        int lfPos = unformatted.indexOf('\n');
+        int crPos = unformatted.indexOf('\r');
+        if (crPos < 0 && lfPos < 0) {
+            return new String[] { unformatted };
+        }
+        String regex;
+        if (lfPos == -1) {
+            regex = "\r"; //$NON-NLS-1$
+        } else if (crPos == -1) {
+            regex = "\n"; //$NON-NLS-1$
+        } else if (crPos < lfPos) {
+            regex = "\r\n"; //$NON-NLS-1$
+        } else {
+            regex = "\n\r"; //$NON-NLS-1$
+        }
+        String[] ret = unformatted.split(regex);
+        return ret;
     }
 }

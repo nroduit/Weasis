@@ -10,22 +10,37 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Window;
+import java.awt.Dimension;
 import java.util.List;
 
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+
+import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class MeasureDialog extends PropertiesDialog {
     private List<AbstractDragGraphic> graphics;
+    private JTextPane textPane = new JTextPane();
+    private DefaultView2d view2D;
 
-    public MeasureDialog(Window parent, List<AbstractDragGraphic> selectedGraphic) {
-        super(parent, Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
-        if (selectedGraphic == null)
+    public MeasureDialog(DefaultView2d view2d, List<AbstractDragGraphic> selectedGraphic) {
+        super(WinUtil.getParentWindow(view2d), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
+        if (selectedGraphic == null) {
             throw new IllegalArgumentException("Selected Graphics cannot be null!"); //$NON-NLS-1$
+        }
+        this.view2D = view2d;
         this.graphics = selectedGraphic;
         iniGraphicDialog();
         pack();
+
     }
 
     public void iniGraphicDialog() {
@@ -71,7 +86,24 @@ public class MeasureDialog extends PropertiesDialog {
             if (graphics.size() == 1 || (!mcolor && !mfill && !mwidth)) {
                 lbloverridesmultipleValues.setVisible(false);
             }
+            if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
+                JScrollPane panel = new JScrollPane();
+
+                panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, "Text",
+                    TitledBorder.LEADING, TitledBorder.TOP, null, null)));
+                panel.setPreferredSize(new Dimension(400, 140));
+                StringBuffer buf = new StringBuffer();
+                String[] labels = ((AnnotationGraphic) graphic).labelStringArray;
+                for (String s : labels) {
+                    buf.append(s);
+                    buf.append("\n");
+                }
+                textPane.setText(buf.toString());
+                panel.setViewportView(textPane);
+                getContentPane().add(panel, BorderLayout.NORTH);
+            }
         }
+
     }
 
     /**
@@ -88,6 +120,12 @@ public class MeasureDialog extends PropertiesDialog {
             }
             if (jCheckBoxFilled.isEnabled()) {
                 graphic.setFilled(jCheckBoxFilled.isSelected());
+            }
+        }
+        if (graphics.size() == 1 && view2D != null) {
+            AbstractDragGraphic graphic = graphics.get(0);
+            if (graphic instanceof AnnotationGraphic) {
+                graphic.setLabel(EscapeChars.convertToLines(textPane.getText()), view2D);
             }
         }
         dispose();

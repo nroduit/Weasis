@@ -30,6 +30,8 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.GraphicLabel;
+import org.weasis.core.ui.graphic.model.AbstractLayer;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
  * The Class InfoLayer.
@@ -48,9 +50,11 @@ public class InfoLayer implements AnnotationsLayer {
     private final Rectangle preloadingProgressBound;
     private int border = BORDER;
     private boolean showBottomScale = true;
+    private final Identifier identifier;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
+        this.identifier = AbstractLayer.ANNOTATION;
         displayPreferences.put(ANNOTATIONS, true);
         displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(SCALE, true);
@@ -542,5 +546,10 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public void setBorder(int border) {
         this.border = border;
+    }
+
+    @Override
+    public Identifier getIdentifier() {
+        return identifier;
     }
 }

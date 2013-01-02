@@ -21,6 +21,7 @@ import java.util.List;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
  * The Interface Graphic.
@@ -67,9 +68,9 @@ public interface Graphic extends GUIEntry, Cloneable {
 
     void toBack();
 
-    void setLayerID(int layerID);
+    void setLayerID(Identifier identifier);
 
-    int getLayerID();
+    Identifier getLayerID();
 
     Shape getShape();
 

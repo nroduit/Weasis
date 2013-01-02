@@ -13,6 +13,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -36,6 +37,8 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenu;
@@ -47,6 +50,8 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
@@ -89,12 +94,15 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PolygonGraphic;
@@ -103,7 +111,6 @@ import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
-import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
@@ -127,6 +134,38 @@ import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
+
+    private static final ViewButton PR_BUTTON = new ViewButton(new ShowPopup() {
+
+        @Override
+        public void showPopup(Component invoker, int x, int y) {
+            if (invoker instanceof View2d) {
+                ActionState prAction = EventManager.getInstance().getAction(ActionW.PR_STATE);
+                if (prAction instanceof ComboItemListener) {
+                    ComboItemListener pr = (ComboItemListener) prAction;
+                    JPopupMenu popupMenu = pr.createGroupRadioMenu().createJPopupMenu();
+                    popupMenu.show(invoker, x, y);
+                }
+            }
+        }
+    }, new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png")));
+
+    private static final ViewButton KO_BUTTON = new ViewButton(new ShowPopup() {
+
+        @Override
+        public void showPopup(Component invoker, int x, int y) {
+            if (invoker instanceof View2d) {
+                ActionState koAction = EventManager.getInstance().getAction(ActionW.KEY_OBJECT);
+                if (koAction instanceof ComboItemListener) {
+                    ComboItemListener ko = (ComboItemListener) koAction;
+                    JPopupMenu popupMenu = ko.createGroupRadioMenu().createJPopupMenu();
+                    popupMenu.show(invoker, x, y);
+                }
+            }
+        }
+    }, new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png")));
+
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
 
@@ -144,14 +183,74 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         manager.addImageOperationAction(new FlipOperation());
 
         infoLayer = new InfoLayer(this);
-        DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
+        DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.CROSSLINES);
+        layer.setLocked(true);
         getLayerModel().addLayer(layer);
-        layer = new DragLayer(getLayerModel(), Tools.CROSSLINES.getId());
+        layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE);
         getLayerModel().addLayer(layer);
         TempLayer layerTmp = new TempLayer(getLayerModel());
         getLayerModel().addLayer(layerTmp);
 
         oldSize = new Dimension(0, 0);
+        viewButtons.add(PR_BUTTON);
+        viewButtons.add(KO_BUTTON);
+    }
+
+    @Override
+    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+        Rectangle rect = super.drawExtendedAtions(g2d);
+        ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
+        if (koAction instanceof ComboItemListener) {
+            ComboItemListener ko = (ComboItemListener) koAction;
+            if (ko.getModel().getSize() > 1) {
+                Icon icon = KO_BUTTON.getIcon();
+                int x = getWidth() - icon.getIconWidth() - 5;
+                int y;
+                if (rect == null) {
+                    y = (int) ((getHeight() - 1) * 0.5);
+                } else {
+                    // Draw above
+                    y = rect.y - 5 - icon.getIconHeight();
+                }
+                KO_BUTTON.x = x;
+                KO_BUTTON.y = y;
+                if (rect == null) {
+                    rect = KO_BUTTON.getBounds();
+                } else {
+                    rect.createUnion(KO_BUTTON.getBounds());
+                }
+
+                icon.paintIcon(this, g2d, x, y);
+
+                //      popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
+            }
+        }
+        ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
+        if (prAction instanceof ComboItemListener) {
+            ComboItemListener pr = (ComboItemListener) prAction;
+            if (pr.getModel().getSize() > 1) {
+                Icon icon = PR_BUTTON.getIcon();
+                int x = getWidth() - icon.getIconWidth() - 5;
+                int y;
+                if (rect == null) {
+                    y = (int) ((getHeight() - 1) * 0.5);
+                } else {
+                    // Draw above
+                    y = rect.y - 5 - icon.getIconHeight();
+                }
+                PR_BUTTON.x = x;
+                PR_BUTTON.y = y;
+                if (rect == null) {
+                    rect = KO_BUTTON.getBounds();
+                } else {
+                    rect.createUnion(KO_BUTTON.getBounds());
+                }
+                icon.paintIcon(this, g2d, x, y);
+                //   popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
+            }
+        }
+
+        return rect;
     }
 
     @Override
@@ -259,18 +358,30 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.PR_STATE.cmd(), val);
             actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
+            ArrayList<AbstractLayer.Identifier> dcmLayers =
+                (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PresentationStateReader.TAG_DICOM_LAYERS);
+            if (dcmLayers != null) {
+                PRManager.deleteDicomLayers(dcmLayers, getLayerModel());
+                actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
+            }
             DicomImageElement m = getImage();
+            if (m != null) {
+                // Restore the original image pixel size
+                double[] prPixSize = (double[]) actionsInView.get(PresentationStateReader.TAG_OLD_PIX_SIZE);
+                if (prPixSize != null && prPixSize.length == 2) {
+                    m.setPixelSize(prPixSize[0], prPixSize[1]);
+                    actionsInView.remove(PresentationStateReader.TAG_OLD_PIX_SIZE);
+                }
+                // Reset crop
+                final Rectangle modelArea = getImageBounds(m);
+                if (!modelArea.equals(getViewModel().getModelArea())) {
+                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                    getViewModel().setModelArea(modelArea);
+                }
+            }
             // If no Presentation State use the current image
             if (pr == null) {
                 initActionWState();
-                if (m != null) {
-                    final Rectangle modelArea = getImageBounds(m);
-                    if (!modelArea.equals(getViewModel().getModelArea())) {
-                        ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width,
-                            modelArea.height);
-                        getViewModel().setModelArea(modelArea);
-                    }
-                }
                 setShutter(m);
             } else {
                 applyPresentationState(pr, m);
@@ -279,8 +390,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             eventManager.updateComponentsListener(this);
             imageLayer.updateAllImageOperations();
             Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoom(zoomVal == null ? 1.0 : zoomVal);
-            center();
+            zoomVal = zoomVal == null ? 1.0 : zoomVal;
+            if (zoomVal <= 0.0) {
+                // TODO use same code view resize listener
+                zoom(0.0);
+                center();
+            } else {
+                zoom(zoomVal);
+            }
         }
     }
 
@@ -292,9 +409,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setShutter(reader.getDicom());
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
 
-        actionsInView.put("originalPixelSpacing", //$NON-NLS-1$
-            reader.getTagValue(TagW.PixelSpacing.getName(), new double[] { 1.0, 1.0 }));
-
+        double[] prPixSize = (double[]) reader.getTagValue(TagW.PixelSpacing.getName(), null);
+        if (prPixSize != null && prPixSize.length == 2) {
+            actionsInView.put(PresentationStateReader.TAG_OLD_PIX_SIZE, img.getDisplayPixelSize());
+            img.setPixelSize(prPixSize[0], prPixSize[1]);
+        }
         if (area != null) {
             Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
             if (shape != null) {
@@ -356,12 +475,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            getLayerModel().deleteAllGraphics();
             // All the action values are initialized again with the series changing
             initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null, null);
-            getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
             DicomImageElement media = selectedDicom;
@@ -481,10 +600,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
             if (pts != null && pts.size() > 0) {
                 Color color = fill ? Color.blue : Color.cyan;
-                PolygonGraphic graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
-                AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
-                if (layer != null) {
-                    layer.addGraphic(graphic);
+                try {
+                    PolygonGraphic graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
+                    AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
+                    if (layer != null) {
+                        layer.addGraphic(graphic);
+                    }
+                } catch (InvalidShapeException e) {
+                    LOGGER.error(e.getMessage());
                 }
             }
         }
@@ -965,7 +1088,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
+                        JDialog dialog = new MeasureDialog(View2d.this, list);
                         WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
                         dialog.setVisible(true);
                     }
@@ -1064,20 +1187,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // popupMenu.add(((ComboItemListener) viewingAction).createUnregisteredRadioMenu(Messages
         //                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
         // }
-        // ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
-        // if (koAction instanceof ComboItemListener) {
-        // ComboItemListener ko = (ComboItemListener) koAction;
-        // if (ko.getModel().getSize() > 1) {
-        //                            popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
-        // }
-        // }
-        // ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
-        // if (prAction instanceof ComboItemListener) {
-        // ComboItemListener pr = (ComboItemListener) prAction;
-        // if (pr.getModel().getSize() > 1) {
-        //                            popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
-        // }
-        // }
+
         WProperties p = BundleTools.SYSTEM_PREFERENCES;
         if (p.getBooleanProperty("weasis.contextmenu.presets", true)) {
             ActionState presetAction = eventManager.getAction(ActionW.PRESET);
@@ -1085,6 +1195,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 JMenu menu =
                     ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
                         .getString("View2dContainer.presets"));//$NON-NLS-1$
+                menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
                 for (Component mitem : menu.getMenuComponents()) {
                     RadioMenuItem ritem = ((RadioMenuItem) mitem);
                     PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
@@ -1096,12 +1207,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
         }
 
-        if (p.getBooleanProperty("weasis.contextmenu.lut", true)) {
-            ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
-            if (lutShapeAction instanceof ComboItemListener) {
-                popupMenu.add(((ComboItemListener) lutShapeAction).createMenu(ActionW.LUT_SHAPE.getTitle())); //$NON-NLS-1$
-            }
-        }
+        // if (p.getBooleanProperty("weasis.contextmenu.lut", true)) {
+        // ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
+        // if (lutShapeAction instanceof ComboItemListener) {
+        //                popupMenu.add(((ComboItemListener) lutShapeAction).createMenu(ActionW.LUT_SHAPE.getTitle())); //$NON-NLS-1$
+        // }
+        // }
 
         if (p.getBooleanProperty("weasis.contextmenu.sortstack", true)) {
             ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
@@ -1174,7 +1285,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         popupMenu.add(new JSeparator());
 
         if (p.getBooleanProperty("weasis.contextmenu.reset", true)) {
-            popupMenu.add(ResetTools.createUnregisteredJMenu());
+            JMenu menu = ResetTools.createUnregisteredJMenu();
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+            popupMenu.add(menu);
         }
 
         if (p.getBooleanProperty("weasis.contextmenu.close", true)) {

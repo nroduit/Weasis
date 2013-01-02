@@ -46,6 +46,19 @@ public class EllipseGraphic extends RectangleGraphic {
         super(lineThickness, paint, labelVisible);
     }
 
+    public EllipseGraphic(Rectangle2D rect, float lineThickness, Color paint, boolean labelVisible, boolean filled)
+        throws InvalidShapeException {
+        super(lineThickness, paint, labelVisible, filled);
+        if (rect == null) {
+            throw new InvalidShapeException("Rectangle2D is null!");
+        }
+        setHandlePointList(rect);
+        if (!isShapeValid()) {
+            throw new InvalidShapeException("This shape cannot be drawn");
+        }
+        buildShape(null);
+    }
+
     @Override
     public Icon getIcon() {
         return ICON;
@@ -57,7 +70,7 @@ public class EllipseGraphic extends RectangleGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
+    protected void buildShape(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = new Rectangle2D.Double();
         rectangle.setFrameFromDiagonal(getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
 

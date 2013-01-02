@@ -24,6 +24,8 @@ import javax.media.jai.iterator.RandomIterFactory;
 import org.weasis.core.api.image.OperationsManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.graphic.model.AbstractLayer;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.core.ui.graphic.model.Layer;
 
 /**
@@ -41,6 +43,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     private boolean buildIterator = false;
     private RenderedImage displayImage;
     private boolean visible = true;
+    private final Identifier identifier;
 
     // private final Image2DViewer view2DPane;
 
@@ -52,6 +55,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         if (manager == null) {
             throw new IllegalArgumentException("OperationsManager argument cannot be null"); //$NON-NLS-1$
         }
+        this.identifier = AbstractLayer.IMAGE;
         this.operations = manager;
         // tileListener = new TileListener();
         this.sourceImage = image;
@@ -423,6 +427,11 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     @Override
     public void setTransform(AffineTransform transform) {
         // Does handle affine transform for image, already in operation manager
+    }
+
+    @Override
+    public Identifier getIdentifier() {
+        return identifier;
     }
 
 }

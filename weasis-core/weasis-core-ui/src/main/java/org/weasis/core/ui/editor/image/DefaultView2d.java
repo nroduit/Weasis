@@ -95,7 +95,6 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.DragPoint;
 import org.weasis.core.ui.graphic.DragPoint.STATE;
 import org.weasis.core.ui.graphic.DragSequence;
@@ -108,7 +107,6 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
-import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -292,12 +290,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            getLayerModel().deleteAllGraphics();
             // All the action values are initialized again with the series changing
             initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null, null);
-            getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
             E media = selectedMedia;
@@ -374,16 +372,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (img != null && !img.equals(oldImage)) {
             actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
             final Rectangle modelArea = getImageBounds(img);
-            DragLayer layer = getLayerModel().getMeasureLayer();
-            synchronized (this) {
-                GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                if (list != null) {
-                    // TODO handle graphics without shape, exclude them!
-                    layer.setGraphics(list);
-                } else {
-                    GraphicList graphics = new GraphicList();
-                    img.setTag(TagW.MeasurementGraphics, graphics);
-                    layer.setGraphics(graphics);
+            AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
+            if (layer != null) {
+                synchronized (this) {
+                    GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                    if (list != null) {
+                        // TODO handle graphics without shape, exclude them!
+                        layer.setGraphics(list);
+                    } else {
+                        GraphicList graphics = new GraphicList();
+                        img.setTag(TagW.MeasurementGraphics, graphics);
+                        layer.setGraphics(graphics);
+                    }
                 }
             }
             setShutter(img);
@@ -605,7 +605,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         g2d.setStroke(oldStroke);
     }
 
-    protected void drawExtendedAtions(Graphics2D g2d) {
+    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+        return null;
     }
 
     @Override
@@ -690,11 +691,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setShutter(MediaElement media) {
-        if (media != null) {
-            actionsInView.put(TagW.ShutterFinalShape.getName(), media.getTagValue(TagW.ShutterFinalShape));
-            actionsInView.put(TagW.ShutterPSValue.getName(), media.getTagValue(TagW.ShutterPSValue));
-            actionsInView.put(TagW.ShutterRGBColor.getName(), media.getTagValue(TagW.ShutterRGBColor));
-        }
+        // If no image, reset the shutter
+        boolean noMedia = media == null;
+        actionsInView.put(TagW.ShutterFinalShape.getName(), noMedia ? null : media.getTagValue(TagW.ShutterFinalShape));
+        actionsInView.put(TagW.ShutterPSValue.getName(), noMedia ? null : media.getTagValue(TagW.ShutterPSValue));
+        actionsInView.put(TagW.ShutterRGBColor.getName(), noMedia ? null : media.getTagValue(TagW.ShutterRGBColor));
+
     }
 
     public Object getLensActionValue(String action) {
@@ -725,7 +727,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
             MediaObjectEvent value = (MediaObjectEvent) evt.getNewValue();
-            AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
+            AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
             if (layer != null) {
                 layer.deleteAllGraphic();
             }
@@ -1059,13 +1061,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Avoid any dragging on selection when Shift Button is Down
             if (!mouseEvt.isShiftDown()) {
-
                 // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor consequently
-                List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
                 Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
 
                 if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
                     AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+                    List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
 
                     if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
 
@@ -1292,11 +1293,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 if (!mouseEvt.isShiftDown()) {
                     // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-                    List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
                     Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
 
                     if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
                         AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+                        List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
 
                         if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
 

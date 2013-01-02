@@ -11,6 +11,7 @@
 package org.weasis.core.api.gui.util;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
@@ -22,41 +23,30 @@ import javax.swing.text.NumberFormatter;
  */
 public class DecFormater {
 
-    private static DecimalFormat df1 = new DecimalFormat("#,##0.##"); // 2 decimals //$NON-NLS-1$
-    private static DecimalFormat df2 = new DecimalFormat("#,##0.####"); // 4 decimals //$NON-NLS-1$
-    private static DecimalFormat df3 = new DecimalFormat("#,###"); // non decimal //$NON-NLS-1$
-    private static DecimalFormat df4 = new DecimalFormat("0.####E0"); // Sientific format with 4 decimals //$NON-NLS-1$
+    private static NumberFormat df1 = NumberFormat.getNumberInstance(); // 1 decimals
+    private static NumberFormat df2 = NumberFormat.getNumberInstance(); // 2 decimals
+    private static NumberFormat df4 = NumberFormat.getNumberInstance(); // 4 decimals
+    static {
+        df1.setMaximumFractionDigits(1);
+        df2.setMaximumFractionDigits(2);
+        df4.setMaximumFractionDigits(4);
+    }
+    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 decimals //$NON-NLS-1$
 
-    private static DecimalFormat df5 = new DecimalFormat("###0.0"); //$NON-NLS-1$
-    private static DecimalFormat df6 = new DecimalFormat("#,##0.########"); //8 decimals//$NON-NLS-1$
-    private static DecimalFormat df7 = new DecimalFormat("###0.##"); //$NON-NLS-1$
-
-    public static String twoDecimal(double val) {
+    public static String oneDecimal(Number val) {
         return df1.format(val);
     }
 
-    public static String fourDecimal(double val) {
+    public static String twoDecimal(Number val) {
         return df2.format(val);
     }
 
-    public static String zeroDecimal(double val) {
-        return df3.format(val);
-    }
-
-    public static String scientificFormat(double val) {
+    public static String fourDecimal(Number val) {
         return df4.format(val);
     }
 
-    public static String oneDecimalUngroup(double val) {
-        return df5.format(val);
-    }
-
-    public static String heightDecimal(double val) {
-        return df6.format(val);
-    }
-
-    public static String twoDecimalUngroup(double val) {
-        return df7.format(val);
+    public static String scientificFormat(Number val) {
+        return dfSci.format(val);
     }
 
     public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {

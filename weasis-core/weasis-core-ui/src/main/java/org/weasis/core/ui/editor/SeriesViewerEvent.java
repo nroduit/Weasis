@@ -16,7 +16,7 @@ import org.weasis.core.api.media.data.Series;
 public class SeriesViewerEvent {
 
     public enum EVENT {
-        SELECT, ADD, LAYOUT, SELECT_VIEW, ANONYM, TOOGLE_INFO
+        SELECT, ADD, LAYOUT, SELECT_VIEW, ANONYM, TOOGLE_INFO, ADD_LAYER, REMOVE_LAYER
     };
 
     private final SeriesViewer seriesViewer;
@@ -24,6 +24,7 @@ public class SeriesViewerEvent {
     private final MediaElement mediaElement;
 
     private final EVENT eventType;
+    private Object sharedObject;
 
     public SeriesViewerEvent(SeriesViewer seriesViewer, Series series, MediaElement mediaElement, EVENT eventType) {
         if (seriesViewer == null) {
@@ -33,6 +34,14 @@ public class SeriesViewerEvent {
         this.series = series;
         this.mediaElement = mediaElement;
         this.eventType = eventType;
+    }
+
+    public Object getSharedObject() {
+        return sharedObject;
+    }
+
+    public void setShareObject(Object sharedObject) {
+        this.sharedObject = sharedObject;
     }
 
     public SeriesViewer getSeriesViewer() {

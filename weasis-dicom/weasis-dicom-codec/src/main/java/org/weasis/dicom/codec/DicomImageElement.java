@@ -602,6 +602,10 @@ public class DicomImageElement extends ImageElement {
         }
     }
 
+    public double[] getDisplayPixelSize() {
+        return new double[] { pixelSizeX, pixelSizeY };
+    }
+
     public float getFullDynamicWidth(boolean pixelPadding) {
         return getMaxValue(pixelPadding) - getMinValue(pixelPadding);
     }

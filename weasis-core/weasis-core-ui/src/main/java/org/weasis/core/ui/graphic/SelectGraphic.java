@@ -93,14 +93,13 @@ public class SelectGraphic extends RectangleGraphic {
         return true;
     }
 
-    // Overriding is necessary not to compute any inherited mesureTools
+    // Do not draw any labels
     @Override
     public void updateLabel(Object source, DefaultView2d view2d) {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer,
-        boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
         return null;
     };
 

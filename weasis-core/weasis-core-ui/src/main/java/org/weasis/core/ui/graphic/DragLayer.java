@@ -33,8 +33,8 @@ public class DragLayer extends AbstractLayer {
 
     private static final long serialVersionUID = 8576601524359423997L;
 
-    public DragLayer(LayerModel canvas1, int drawMode) {
-        super(canvas1, drawMode);
+    public DragLayer(LayerModel canvas1, Identifier layerID) {
+        super(canvas1, layerID);
     }
 
     /**
@@ -42,8 +42,9 @@ public class DragLayer extends AbstractLayer {
      */
     @Override
     public void paint(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bounds) {
-        if (graphics == null)
+        if (graphics == null) {
             return;
+        }
 
         for (Graphic graphic : graphics) {
             if (bounds != null) {
@@ -186,15 +187,17 @@ public class DragLayer extends AbstractLayer {
 
                     AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.get(j);
 
-                    if (dragGraph.isOnGraphicLabel(mouseEvt))
+                    if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                         return dragGraph;
+                    }
 
                     // Improve speed by checking if mousePoint is inside repaintBound before checking if inside Area
                     Rectangle2D repaintBound = dragGraph.getRepaintBounds(mouseEvt);
                     if (repaintBound != null && repaintBound.contains(mousePt)) {
                         if ((dragGraph.getHandlePointIndex(mouseEvt) >= 0)
-                            || (dragGraph.getArea(mouseEvt).contains(mousePt)))
+                            || (dragGraph.getArea(mouseEvt).contains(mousePt))) {
                             return dragGraph;
+                        }
                     }
                 }
             }

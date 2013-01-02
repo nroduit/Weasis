@@ -72,7 +72,6 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -912,7 +911,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {
                         DefaultView2d<DicomImageElement> pane = panes.get(i);
-                        AbstractLayer layer = pane.getLayerModel().getLayer(Tools.CROSSLINES.getId());
+                        AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
                         if (layer != null) {
                             layer.deleteAllGraphic();
                         }
@@ -940,7 +939,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
-                            AbstractLayer layer = pane.getLayerModel().getLayer(Tools.CROSSLINES.getId());
+                            AbstractLayer layer = pane.getLayerModel().getLayer(AbstractLayer.CROSSLINES);
                             if (layer != null) {
                                 layer.deleteAllGraphic();
                             }

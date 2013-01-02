@@ -21,6 +21,9 @@ import org.weasis.core.api.media.data.TagW;
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
+    public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing";
+    public static final String TAG_DICOM_LAYERS = "dicom.layers";
+
     private final MediaElement dicom;
     private final DicomObject dcmobj;
     private final HashMap<String, Object> tags = new HashMap<String, Object>();
@@ -170,14 +173,15 @@ public class PresentationStateReader {
                             tlhc[1] = 0;
 
                         }
-                        tags.put(ActionW.CROP.cmd(), new Rectangle(tlhc[0], tlhc[1], brhc[0] - tlhc[0], brhc[1]
-                            - tlhc[1]));
+                        Rectangle rect = new Rectangle();
+                        rect.setFrameFromDiagonal(tlhc[0], tlhc[1], brhc[0], brhc[1]);
+                        tags.put(ActionW.CROP.cmd(), rect);
                     }
                     tags.put("presentationMode", presentationMode); //$NON-NLS-1$
                     if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(), 0.0);
                     } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(), dam.getPresentationPixelMagnificationRatio());
+                        tags.put(ActionW.ZOOM.cmd(), (double) dam.getPresentationPixelMagnificationRatio());
                     } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
                         // be
@@ -191,40 +195,6 @@ public class PresentationStateReader {
         }
     }
 
-    /**
-     * Converts a string contain LF, CR/LF, LF/CR or CR into a set of lines by themselves.
-     * 
-     * @param unformatted
-     * @return Array of strings, one per line.
-     */
-    public static String[] convertToLines(String unformatted) {
-        if (unformatted == null) {
-            return new String[0];
-        }
-        int lfPos = unformatted.indexOf('\n');
-        int crPos = unformatted.indexOf('\r');
-        if (crPos < 0 && lfPos < 0) {
-            return new String[] { unformatted };
-        }
-        String regex;
-        if (lfPos == -1) {
-            regex = "\r"; //$NON-NLS-1$
-        } else if (crPos == -1) {
-            regex = "\n"; //$NON-NLS-1$
-        } else if (crPos < lfPos) {
-            regex = "\r\n"; //$NON-NLS-1$
-        } else {
-            regex = "\n\r"; //$NON-NLS-1$
-        }
-        String[] ret = unformatted.split(regex);
-        return ret;
-    }
-
-    /**
-     * Converts the gray or colour values to RGB values . TODO implement this correctly.
-     * 
-     * @return String representation of the colour.
-     */
     public static Color getRGBColor(int pGray, float[] labColour, int[] rgbColour) {
         int r, g, b;
         if (labColour != null) {

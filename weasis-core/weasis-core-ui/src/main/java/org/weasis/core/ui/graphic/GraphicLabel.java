@@ -31,7 +31,7 @@ public class GraphicLabel implements Cloneable {
      * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
      * paintFontOutline grows of 1 pixel all string painting
      */
-    protected static final int GROWING_BOUND = 3;
+    public static final int GROWING_BOUND = 3;
     protected String[] labelStringArray;
 
     protected Rectangle2D labelBounds;

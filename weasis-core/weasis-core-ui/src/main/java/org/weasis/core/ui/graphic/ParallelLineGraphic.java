@@ -135,7 +135,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
 
         updateTool();
 

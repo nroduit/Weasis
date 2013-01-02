@@ -11,16 +11,14 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.LayerModel;
-import org.weasis.core.ui.graphic.model.Tools;
 
 /**
  * The Class TempLayer.
@@ -31,12 +29,12 @@ public class TempLayer extends DragLayer {
 
     private static final long serialVersionUID = 3600434231972858782L;
     // private transient AbstractLayer layer = null;
-    private transient Color color = null;
-    private transient Font font = FontTools.getFont10();
+    // private transient Color color = null;
+    // private transient Font font = FontTools.getFont10();
     private transient ArrayList<Point> points = null;
 
-    public TempLayer(LayerModel canvas1) {
-        super(canvas1, Tools.TEMPDRAGLAYER.getId());
+    public TempLayer(LayerModel layerModel) {
+        super(layerModel, AbstractLayer.TEMPDRAGLAYER);
     }
 
     public ArrayList<Point> getPoints() {
@@ -114,11 +112,11 @@ public class TempLayer extends DragLayer {
     // }
     // }
 
-    public void setFont(Font font) {
-        this.font = font;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
+    // public void setFont(Font font) {
+    // this.font = font;
+    // }
+    //
+    // public void setColor(Color color) {
+    // this.color = color;
+    // }
 }

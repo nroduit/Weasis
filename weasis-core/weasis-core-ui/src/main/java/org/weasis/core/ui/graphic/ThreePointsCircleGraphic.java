@@ -68,7 +68,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
         Shape newShape = null;
 

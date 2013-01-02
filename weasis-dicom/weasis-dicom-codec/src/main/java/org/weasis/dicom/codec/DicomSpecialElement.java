@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,35 +18,35 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.weasis.core.api.gui.util.ActionState;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.TagW;
 
-public class DicomSpecialElement extends MediaElement<URI> {
+public class DicomSpecialElement extends MediaElement {
 
-    public static final Filter<DicomSpecialElement> PR = new Filter<DicomSpecialElement>() {
-        @Override
-        public boolean passes(DicomSpecialElement dicom) {
-            return "PR".equals(dicom.getTagValue(TagW.Modality)); //$NON-NLS-1$
-        }
-    };
+    private final String label;
 
-    public DicomSpecialElement(MediaReader mediaIO, Object key) {
+    public DicomSpecialElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
+        DicomObject dicom = mediaIO.getDicomObject();
+        String clabel = dicom.getString(Tag.ContentLabel);
+        if (clabel == null) {
+            clabel = dicom.getString(Tag.ContentDescription);
+            if (clabel == null) {
+                clabel = (String) getTagValue(TagW.SeriesDescription);
+                if (clabel == null) {
+                    clabel = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber); //$NON-NLS-1$
+                }
+            }
+        }
+        if (clabel.length() > 50) {
+            clabel = clabel.substring(0, 47) + "..."; //$NON-NLS-1$
+        }
+        this.label = clabel;
     }
 
     @Override
     public String toString() {
-        String desc = (String) getTagValue(TagW.SeriesDescription);
-        if (desc == null) {
-            desc = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber); //$NON-NLS-1$
-        } else {
-            if (desc.length() > 30) {
-                desc = desc.substring(0, 27) + "..."; //$NON-NLS-1$
-            }
-        }
-        return desc;
+        return label;
     }
 
     @Override

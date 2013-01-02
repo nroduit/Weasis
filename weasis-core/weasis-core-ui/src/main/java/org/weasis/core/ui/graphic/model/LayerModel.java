@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.ui.graphic.Graphic;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 /**
  * The Interface LayerModel.
@@ -34,13 +35,13 @@ public interface LayerModel {
     int getLayerCount();
 
     /**
-     * Gets the layer at the specified index.
+     * Gets the layer from its identifier.
      * 
-     * @param index
-     *            the zero-based layer index
-     * @return the layer at the given index, never null
+     * @param layerID
+     * 
+     * @return the layer or null if not found
      */
-    AbstractLayer getLayer(int index);
+    AbstractLayer getLayer(Identifier layerID);
 
     /**
      * Adds a new layer to this model.

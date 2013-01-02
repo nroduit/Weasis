@@ -19,7 +19,6 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -32,14 +31,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -70,7 +67,6 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.ImageStatistics;
-import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.MeasureItem;
 import org.weasis.core.ui.graphic.Measurement;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
@@ -316,20 +312,20 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         JPanel panel_1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$
-        btnGerenralOptions.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (selectedGraphic != null && selectedGraphic.size() > 0) {
-                    JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(MeasureTool.this), selectedGraphic);
-                    Point location = btnGerenralOptions.getLocation();
-                    SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
-                    WinUtil.adjustLocationToFitScreen(dialog, location);
-                    dialog.setVisible(true);
-                }
-            }
-        });
-        panel_1.add(btnGerenralOptions);
+        //        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.chg_prop")); //$NON-NLS-1$
+        // btnGerenralOptions.addActionListener(new ActionListener() {
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        // if (selectedGraphic != null && selectedGraphic.size() > 0) {
+        // JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(MeasureTool.this), selectedGraphic);
+        // Point location = btnGerenralOptions.getLocation();
+        // SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
+        // WinUtil.adjustLocationToFitScreen(dialog, location);
+        // dialog.setVisible(true);
+        // }
+        // }
+        // });
+        // panel_1.add(btnGerenralOptions);
         transform.add(panel_1);
         transform.add(Box.createVerticalStrut(5));
         jtable = createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));

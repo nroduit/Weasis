@@ -46,7 +46,7 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
@@ -106,8 +106,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.PIXEL, true));
         rootNode.add(dicomInfo);
         drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
-        drawings.add(new DefaultMutableTreeNode(Tools.MEASURE, true));
-        drawings.add(new DefaultMutableTreeNode(Tools.CROSSLINES, true));
+        drawings.add(new DefaultMutableTreeNode(AbstractLayer.MEASURE, true));
+        drawings.add(new DefaultMutableTreeNode(AbstractLayer.CROSSLINES, true));
         rootNode.add(drawings);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
@@ -200,10 +200,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                             }
                         } else if (drawings.equals(parent)) {
                             if (selObject instanceof DefaultMutableTreeNode) {
-                                if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Tools) {
-                                    Tools tool = (Tools) ((DefaultMutableTreeNode) selObject).getUserObject();
+                                if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Identifier) {
+                                    Identifier layerID =
+                                        (Identifier) ((DefaultMutableTreeNode) selObject).getUserObject();
                                     for (DefaultView2d<DicomImageElement> v : views) {
-                                        AbstractLayer layer = v.getLayerModel().getLayer(tool);
+                                        AbstractLayer layer = v.getLayerModel().getLayer(layerID);
                                         if (layer != null) {
                                             if (layer.isVisible() != selected) {
                                                 layer.setVisible(selected);
@@ -284,10 +285,17 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             while (en.hasMoreElements()) {
                 Object node = en.nextElement();
                 if (node instanceof DefaultMutableTreeNode
-                    && ((DefaultMutableTreeNode) node).getUserObject() instanceof Tools) {
+                    && ((DefaultMutableTreeNode) node).getUserObject() instanceof Identifier) {
                     DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
-                    AbstractLayer l = view.getLayerModel().getLayer((Tools) checkNode.getUserObject());
-                    if (layer != null) {
+                    AbstractLayer l = view.getLayerModel().getLayer((Identifier) checkNode.getUserObject());
+                    if (layer == null) {
+                        // Remove from display if the layer does not exist any more
+                        TreeNode parent = checkNode.getParent();
+                        int index = parent.getIndex(checkNode);
+                        checkNode.removeFromParent();
+                        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
+                        dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { checkNode });
+                    } else {
                         initPathSelection(getTreePath(checkNode), l.isVisible());
                     }
                 }
@@ -331,6 +339,32 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         } else if (EVENT.TOOGLE_INFO.equals(e)) {
             TreeCheckingModel model = tree.getCheckingModel();
             model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));
+        } else if (EVENT.ADD_LAYER.equals(e)) {
+            Object obj = event.getSharedObject();
+            if (obj instanceof Identifier) {
+                DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
+                DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
+                drawings.add(node);
+                dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
+            }
+        } else if (EVENT.REMOVE_LAYER.equals(e)) {
+            Object obj = event.getSharedObject();
+            if (obj instanceof Identifier) {
+                Identifier id = (Identifier) obj;
+                Enumeration en = drawings.children();
+                while (en.hasMoreElements()) {
+                    Object node = en.nextElement();
+                    if (node instanceof DefaultMutableTreeNode
+                        && id.equals(((DefaultMutableTreeNode) node).getUserObject())) {
+                        DefaultMutableTreeNode n = (DefaultMutableTreeNode) node;
+                        TreeNode parent = n.getParent();
+                        int index = parent.getIndex(n);
+                        n.removeFromParent();
+                        DefaultTreeModel dtm = (DefaultTreeModel) tree.getModel();
+                        dtm.nodesWereRemoved(parent, new int[] { index }, new TreeNode[] { n });
+                    }
+                }
+            }
         }
     }
 

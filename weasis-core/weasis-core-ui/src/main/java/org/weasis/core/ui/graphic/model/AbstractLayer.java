@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -35,11 +36,21 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     private static final long serialVersionUID = -6113490831569841167L;
 
+    public static final Identifier IMAGE = new Identifier(20, "Image");
+    public static final Identifier CROSSLINES = new Identifier(100, Messages.getString("Tools.cross"));//$NON-NLS-1$ 
+    public static final Identifier ANNOTATION = new Identifier(200, Messages.getString("Tools.Anno"));//$NON-NLS-1$ 
+    // public static final Identifier DRAW = new Identifier(400, "Graphic Annotation");
+    public static final Identifier MEASURE = new Identifier(500, Messages.getString("Tools.meas"));//$NON-NLS-1$ 
+    //  public static final Identifier OBJECTEXTRACT = new Identifier(600, Messages.getString("Tools.seg"));//$NON-NLS-1$ 
+    public static final Identifier TEMPDRAGLAYER = new Identifier(1000, Messages.getString("Tools.deco"));//$NON-NLS-1$ 
+
     protected final PropertyChangeListener pcl;
-    protected final transient ArrayList<LayerModel> canvas = new ArrayList<LayerModel>();
+    protected final transient LayerModel layerModel;
     private boolean masked;
+    private boolean locked;
+    // Layers are sorted by level number (ascending order)
     private int level;
-    private final int drawType;
+    private final Identifier identifier;
     protected volatile GraphicList graphics;
 
     /**
@@ -49,7 +60,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
      */
     class PropertyChangeHandler implements PropertyChangeListener, Serializable {
 
-        // This method gets called when a bound property is changed, inherite by PropertyChangeListener
+        // This method is called when a property is changed (fired from a graphic)
         @Override
         public void propertyChange(PropertyChangeEvent propertychangeevent) {
             Object obj = propertychangeevent.getSource();
@@ -81,18 +92,30 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    public AbstractLayer(LayerModel canvas1, int drawMode) {
-        this.drawType = drawMode;
-        level = drawMode;
-        this.canvas.add(canvas1);
-        graphics = new GraphicList();
-        pcl = new PropertyChangeHandler();
+    public AbstractLayer(LayerModel layerModel, Identifier identifier) {
+        if (layerModel == null || identifier == null) {
+            throw new IllegalArgumentException();
+        }
+        this.layerModel = layerModel;
+        this.identifier = identifier;
+        this.level = identifier.getDefaultLevel();
+        this.graphics = new GraphicList();
+        this.pcl = new PropertyChangeHandler();
+        this.locked = false;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public void setLocked(boolean locked) {
+        this.locked = locked;
     }
 
     public void addGraphic(Graphic graphic) {
         if (graphics != null && !graphics.contains(graphic)) {
             graphics.add(graphic);
-            graphic.setLayerID(drawType);
+            graphic.setLayerID(identifier);
             graphic.addPropertyChangeListener(pcl);
             ArrayList<AbstractLayer> layers = graphics.getLayers();
             if (layers != null) {
@@ -119,7 +142,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                 for (Graphic graphic : this.graphics) {
                     graphic.removePropertyChangeListener(pcl);
                 }
-                getShowDrawing().setSelectedGraphics(null);
+                layerModel.setSelectedGraphics(null);
             }
             if (graphics == null) {
                 this.graphics = new GraphicList();
@@ -141,16 +164,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    public void setShowDrawing(LayerModel canvas1) {
-        if (canvas != null) {
-            if (!canvas.contains(canvas1)) {
-                this.canvas.add(canvas1);
-            }
-        }
-    }
-
-    public LayerModel getShowDrawing() {
-        return canvas.get(0);
+    public LayerModel getLayerModel() {
+        return layerModel;
     }
 
     @Override
@@ -173,14 +188,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         return level;
     }
 
-    // private AffineTransform getAffineTransform() {
     protected AffineTransform getAffineTransform() {
-        LayerModel layerModel = getShowDrawing();
-        if (layerModel != null) {
-            GraphicsPane graphicsPane = layerModel.getGraphicsPane();
-            if (graphicsPane != null) {
-                return graphicsPane.getAffineTransform();
-            }
+        GraphicsPane graphicsPane = layerModel.getGraphicsPane();
+        if (graphicsPane != null) {
+            return graphicsPane.getAffineTransform();
         }
         return null;
     }
@@ -193,7 +204,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         repaint(graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
 
         if (graphic.isSelected()) {
-            getShowDrawing().getSelectedGraphics().remove(graphic);
+            getLayerModel().getSelectedGraphics().remove(graphic);
         }
     }
 
@@ -203,7 +214,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
         graphic.removePropertyChangeListener(pcl);
         if (graphic.isSelected()) {
-            getShowDrawing().getSelectedGraphics().remove(graphic);
+            getLayerModel().getSelectedGraphics().remove(graphic);
         }
     }
 
@@ -227,7 +238,6 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     // public abstract void paintSVG(SVGGraphics2D g2);
 
-    // interface comparable, permet de trier par ordre croissant les layers
     @Override
     public int compareTo(Object obj) {
         int thisVal = this.getLevel();
@@ -237,16 +247,12 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void repaint(Rectangle rectangle) {
         if (rectangle != null) {
-            for (int i = 0; i < canvas.size(); i++) {
-                canvas.get(i).repaint(rectangle);
-            }
+            layerModel.repaint(rectangle);
         }
     }
 
     public void repaint() {
-        for (int i = 0; i < canvas.size(); i++) {
-            canvas.get(i).repaint();
-        }
+        layerModel.repaint();
     }
 
     protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
@@ -318,8 +324,9 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
-    public int getDrawType() {
-        return drawType;
+    @Override
+    public Identifier getIdentifier() {
+        return identifier;
     }
 
     public void deleteAllGraphic() {
@@ -335,4 +342,26 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         }
     }
 
+    public static class Identifier {
+        private final int defaultLevel;
+        private final String title;
+
+        public Identifier(int defaultLevel, String title) {
+            this.defaultLevel = defaultLevel;
+            this.title = title;
+        }
+
+        public int getDefaultLevel() {
+            return defaultLevel;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public String toString() {
+            return title;
+        }
+    }
 }

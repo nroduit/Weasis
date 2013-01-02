@@ -54,15 +54,24 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
-        super(8, paintColor, lineThickness, labelVisible);
+        this(lineThickness, paintColor, labelVisible, false);
     }
 
-    public RectangleGraphic(Rectangle2D rect, float lineThickness, Color paintColor, boolean labelVisible) {
-        super(8, paintColor, lineThickness, labelVisible);
-        if (rect != null) {
-            setHandlePointList(rect);
-            updateShapeOnDrawing(null);
+    public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible, boolean filled) {
+        super(8, paintColor, lineThickness, labelVisible, filled);
+    }
+
+    public RectangleGraphic(Rectangle2D rect, float lineThickness, Color paintColor, boolean labelVisible,
+        boolean filled) throws InvalidShapeException {
+        super(8, paintColor, lineThickness, labelVisible, filled);
+        if (rect == null) {
+            throw new InvalidShapeException("Rectangle2D is null!");
         }
+        setHandlePointList(rect);
+        if (!isShapeValid()) {
+            throw new InvalidShapeException("This shape cannot be drawn");
+        }
+        buildShape(null);
     }
 
     @Override
@@ -153,7 +162,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseevent) {
+    protected void buildShape(MouseEventDouble mouseevent) {
         Rectangle2D rectangle = null;
 
         if (handlePointList.size() > 1) {

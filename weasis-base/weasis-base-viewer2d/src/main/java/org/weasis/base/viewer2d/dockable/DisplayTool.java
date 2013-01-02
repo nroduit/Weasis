@@ -47,7 +47,7 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.Tools;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 
 import bibliothek.gui.dock.common.CLocation;
 
@@ -97,7 +97,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         info.add(new DefaultMutableTreeNode(AnnotationsLayer.PIXEL, true));
         rootNode.add(info);
         drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
-        drawings.add(new DefaultMutableTreeNode(Tools.MEASURE, true));
+        drawings.add(new DefaultMutableTreeNode(AbstractLayer.MEASURE, true));
         rootNode.add(drawings);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
@@ -172,10 +172,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                             }
                         } else if (drawings.equals(parent)) {
                             if (selObject instanceof DefaultMutableTreeNode) {
-                                if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Tools) {
-                                    Tools tool = (Tools) ((DefaultMutableTreeNode) selObject).getUserObject();
+                                if (((DefaultMutableTreeNode) selObject).getUserObject() instanceof Identifier) {
+                                    Identifier layerID =
+                                        (Identifier) ((DefaultMutableTreeNode) selObject).getUserObject();
                                     for (DefaultView2d<ImageElement> v : views) {
-                                        AbstractLayer layer = v.getLayerModel().getLayer(tool);
+                                        AbstractLayer layer = v.getLayerModel().getLayer(layerID);
                                         if (layer != null) {
                                             if (layer.isVisible() != selected) {
                                                 layer.setVisible(selected);
@@ -236,9 +237,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             while (en.hasMoreElements()) {
                 Object node = en.nextElement();
                 if (node instanceof DefaultMutableTreeNode
-                    && ((DefaultMutableTreeNode) node).getUserObject() instanceof Tools) {
+                    && ((DefaultMutableTreeNode) node).getUserObject() instanceof Identifier) {
                     DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
-                    AbstractLayer l = view.getLayerModel().getLayer((Tools) checkNode.getUserObject());
+                    AbstractLayer l = view.getLayerModel().getLayer((Identifier) checkNode.getUserObject());
                     if (layer != null) {
                         initPathSelection(getTreePath(checkNode), l.isVisible());
                     }

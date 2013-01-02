@@ -39,7 +39,8 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
     public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
         Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement REFLEX_ANGLE = new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement REFLEX_ANGLE = new Measurement(
+        Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////
     Point2D ptA, ptO, ptB; // Let AOB be the triangle that represents the measured angle, O being the intersection point
@@ -67,7 +68,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
 
         Shape newShape = null;
@@ -82,7 +83,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
         }
 
         if (lineOAvalid && lineOBvalid && !lineColinear) {
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(2));
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 2));
             aShape.addShape(path);
 
             // Let arcAngle be the partial section of the ellipse that represents the measured angle
@@ -97,7 +98,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
             double rMax = Math.min(ptO.distance(ptA), ptO.distance(ptB)) * 2 / 3;
             double scalingMin = radius / rMax;
 
-            aShape.addInvShape(arcAngle, ptO, scalingMin, true);
+            aShape.addScaleInvShape(arcAngle, ptO, scalingMin, true);
 
         } else if (path.getCurrentPoint() != null) {
             newShape = path;

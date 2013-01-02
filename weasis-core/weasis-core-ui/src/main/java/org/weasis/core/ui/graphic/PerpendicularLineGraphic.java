@@ -122,7 +122,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
 
         updateTool();
 
@@ -139,7 +139,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
         if (lineABvalid && lineCDvalid) {
 
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(3));
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 3));
             aShape.addShape(path);
 
             if (!ptD.equals(ptA) && !ptD.equals(ptB)) {
@@ -157,7 +157,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
             Point2D F = GeomUtil.getMidPoint(ptA, ptB);
             Shape cornerShape = GeomUtil.getCornerShape(F, ptD, ptC, cornerLength);
             if (cornerShape != null) {
-                aShape.addInvShape(cornerShape, ptD, scalingMin, getStroke(1.0f), true);
+                aShape.addScaleInvShape(cornerShape, ptD, scalingMin, getStroke(1.0f), true);
             }
 
         } else if (path.getCurrentPoint() != null) {

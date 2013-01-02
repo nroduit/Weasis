@@ -52,8 +52,30 @@ public class PolylineGraphic extends AbstractDragGraphic {
         super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
     }
 
-    public PolylineGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible) {
+    public PolylineGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible)
+        throws InvalidShapeException {
         super(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
+        if (handlePointList == null || handlePointList.size() < 2) {
+            throw new InvalidShapeException("Polyline must have at least 2 points!");
+        }
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
+
+        if (!isShapeValid()) {
+            int lastPointIndex = handlePointList.size() - 1;
+            if (lastPointIndex > 0) {
+                Point2D checkPoint = handlePointList.get(lastPointIndex);
+                // Must not have two points with the same position at the end of the list (convention to have a
+                // uncompleted shape when drawing)
+                if (checkPoint.equals(handlePointList.get(lastPointIndex - 1))) {
+                    handlePointList.remove(lastPointIndex - 1);
+                }
+            }
+            if (!isShapeValid() || handlePointList.size() < 2) {
+                throw new IllegalStateException("This Polyline cannot be drawn");
+            }
+        }
+        buildShape(null);
     }
 
     @Override
@@ -67,7 +89,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
         Shape newShape = null;
         Point2D firstHandlePoint = (handlePointList.size() > 1) ? getHandlePoint(0) : null;
 
@@ -92,6 +114,23 @@ public class PolylineGraphic extends AbstractDragGraphic {
     }
 
     @Override
+    public boolean isShapeValid() {
+        if (!isGraphicComplete()) {
+            return false;
+        }
+
+        int lastPointIndex = handlePointList.size() - 1;
+
+        if (lastPointIndex > 0) {
+            Point2D checkPoint = handlePointList.get(lastPointIndex);
+            if (checkPoint.equals(handlePointList.get(--lastPointIndex))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
 
         if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
@@ -102,7 +141,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
                 double ratio = adapter.getCalibRatio();
                 String unitStr = adapter.getUnit();
-                // Get copy to be sure point value are not modified any more and filter point egal to null.
+                // Get copy to be sure that point value are not modified any more and filter point equal to null.
                 List<Point2D> handlePointListcopy = new ArrayList<Point2D>(handlePointList.size());
                 for (Point2D handlePt : handlePointList) {
                     if (handlePt != null) {

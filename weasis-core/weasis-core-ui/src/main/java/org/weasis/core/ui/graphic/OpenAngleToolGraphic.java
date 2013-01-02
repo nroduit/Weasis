@@ -40,7 +40,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
     public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
         Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
-    public static final Measurement REFLEX_ANGLE = new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
+    public static final Measurement REFLEX_ANGLE = new Measurement(
+        Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two line segments
@@ -80,7 +81,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
 
         updateTool();
 
@@ -99,7 +100,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
         if (lineABvalid && lineCDvalid && !linesParallel && Math.abs(angleDeg) > 0.1) {
 
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(5));
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 5));
             aShape.addShape(path);
 
             // Let arcAngle be the partial section of the ellipse that represents the measured angle
@@ -146,7 +147,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
             intersectPtShape.append(new Arc2D.Double(intersecPtBounds, 0, 360, Arc2D.OPEN), false);
 
-            aShape.addInvShape(intersectPtShape, ptP, getStroke(0.5f), true);
+            aShape.addScaleInvShape(intersectPtShape, ptP, getStroke(0.5f), true);
 
         } else if (path.getCurrentPoint() != null) {
             newShape = path;

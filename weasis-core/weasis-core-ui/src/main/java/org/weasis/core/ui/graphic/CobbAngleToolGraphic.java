@@ -34,7 +34,8 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
-    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+    public static final Measurement COMPLEMENTARY_ANGLE = new Measurement(
+        Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Let O be center of perpendicular projections in Cobb's angle
@@ -110,7 +111,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
 
         Shape newShape = null;
@@ -126,7 +127,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
         if (lineABvalid && lineCDvalid && ptO != null) {
 
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(10));
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 10));
             aShape.addShape(path);
 
             double ax = ptA.getX(), ay = ptA.getY();
@@ -160,11 +161,11 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
             double cLength = 10;
 
             double cImax = (2.0 / 3.0) * Math.min(ptO.distance(ptI), Math.max(ptI.distance(ptA), ptI.distance(ptB)));
-            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptA, ptB), ptI, ptO, cLength), ptI, cLength
+            aShape.addScaleInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptA, ptB), ptI, ptO, cLength), ptI, cLength
                 / cImax, getStroke(1.0f), true);
 
             double cJmax = (2.0 / 3.0) * Math.min(ptO.distance(ptJ), Math.max(ptJ.distance(ptC), ptJ.distance(ptD)));
-            aShape.addInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptC, ptD), ptJ, ptO, cLength), ptJ, cLength
+            aShape.addScaleInvShape(GeomUtil.getCornerShape(GeomUtil.getMidPoint(ptC, ptD), ptJ, ptO, cLength), ptJ, cLength
                 / cJmax, getStroke(1.0f), true);
 
             if (!linesParallel) {
@@ -177,10 +178,10 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                 Point2D ptL = GeomUtil.getColinearPointWithLength(ptJ, ptO, ptO.distance(ptJ) + extSegLength);
 
                 double distOKmax = (1.0 / 2.0) * ptO.distance(ptI);
-                aShape.addInvShape(new Line2D.Double(ptO, ptK), ptO, extSegLength / distOKmax, false);
+                aShape.addScaleInvShape(new Line2D.Double(ptO, ptK), ptO, extSegLength / distOKmax, false);
 
                 double distOLmax = (1.0 / 2.0) * ptO.distance(ptJ);
-                aShape.addInvShape(new Line2D.Double(ptO, ptL), ptO, extSegLength / distOLmax, false);
+                aShape.addScaleInvShape(new Line2D.Double(ptO, ptL), ptO, extSegLength / distOLmax, false);
 
                 // Let arcAngle be the partial section of the ellipse that represents the measured angle
                 double startingAngle =
@@ -196,7 +197,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
                 Arc2D arcAngle = new Arc2D.Double(arcAngleBounds, startingAngle, angularExtent, Arc2D.OPEN);
 
                 double rMax = (ptK.getY() > ptL.getY() ? distOKmax : distOLmax) * 2 / 3;
-                aShape.addInvShape(arcAngle, ptO, radius / rMax, false);
+                aShape.addScaleInvShape(arcAngle, ptO, radius / rMax, false);
             }
 
         } else if (path.getCurrentPoint() != null) {

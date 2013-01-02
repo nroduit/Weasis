@@ -54,8 +54,10 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         Messages.getString("measure.topx"), 5, true, true, false); //$NON-NLS-1$
     public static final Measurement TOP_LEFT_POINT_Y = new Measurement(
         Messages.getString("measure.topy"), 6, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_X = new Measurement(Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
-    public static final Measurement CENTROID_Y = new Measurement(Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_X = new Measurement(
+        Messages.getString("measure.centerx"), 7, true, true, false); //$NON-NLS-1$
+    public static final Measurement CENTROID_Y = new Measurement(
+        Messages.getString("measure.centery"), 8, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,8 +66,33 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     public PolygonGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible,
-        boolean filled) {
+        boolean filled) throws InvalidShapeException {
         super(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, filled);
+        if (handlePointList == null || handlePointList.size() < 3) {
+            throw new InvalidShapeException("Polygon must have at least 3 points!");
+        }
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
+
+        if (!isShapeValid()) {
+            int lastPointIndex = handlePointList.size() - 1;
+            if (lastPointIndex > 1) {
+                Point2D checkPoint = handlePointList.get(lastPointIndex);
+                // Must not have two points with the same position at the end of the list (convention to have a
+                // uncompleted shape when drawing)
+                if (checkPoint.equals(handlePointList.get(lastPointIndex - 1))) {
+                    handlePointList.remove(lastPointIndex - 1);
+                }
+                // Not necessary to close the shape
+                if (checkPoint.equals(handlePointList.get(0))) {
+                    handlePointList.remove(0);
+                }
+            }
+            if (!isShapeValid() || handlePointList.size() < 3) {
+                throw new InvalidShapeException("This Polygon cannot be drawn");
+            }
+        }
+        buildShape(null);
     }
 
     @Override
@@ -79,7 +106,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
 
         Shape newShape = null;
         Point2D firstHandlePoint = (handlePointList.size() > 1) ? getHandlePoint(0) : null;
@@ -105,6 +132,23 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         setShape(newShape, mouseEvent);
         updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
 
+    }
+
+    @Override
+    public boolean isShapeValid() {
+        if (!isGraphicComplete()) {
+            return false;
+        }
+
+        int lastPointIndex = handlePointList.size() - 1;
+
+        if (lastPointIndex > 0) {
+            Point2D checkPoint = handlePointList.get(lastPointIndex);
+            if (checkPoint.equals(handlePointList.get(--lastPointIndex))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

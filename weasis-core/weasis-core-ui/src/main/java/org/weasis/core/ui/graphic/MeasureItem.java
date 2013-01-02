@@ -12,15 +12,15 @@ package org.weasis.core.ui.graphic;
 
 public class MeasureItem {
     private final Measurement measurement;
-    private final Double value;
+    private final Object value;
     private final String unit;
     private final String labelExtension;
 
-    public MeasureItem(Measurement measurement, Double value, String unit) {
+    public MeasureItem(Measurement measurement, Object value, String unit) {
         this(measurement, null, value, unit);
     }
 
-    public MeasureItem(Measurement measurement, String labelExtension, Double value, String unit) {
+    public MeasureItem(Measurement measurement, String labelExtension, Object value, String unit) {
         if (measurement == null) {
             throw new IllegalArgumentException("Measurement cannot be null!"); //$NON-NLS-1$
         }
@@ -34,7 +34,7 @@ public class MeasureItem {
         return measurement;
     }
 
-    public Double getValue() {
+    public Object getValue() {
         return value;
     }
 

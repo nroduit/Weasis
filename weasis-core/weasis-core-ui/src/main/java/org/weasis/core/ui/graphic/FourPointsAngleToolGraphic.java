@@ -81,7 +81,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    protected void updateShapeOnDrawing(MouseEventDouble mouseEvent) {
+    protected void buildShape(MouseEventDouble mouseEvent) {
         updateTool();
 
         Shape newShape = null;
@@ -115,7 +115,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         // Can cause stack overflow BUG on paint method when drawing infinite line with DashStroke
         if (lineIJvalid && lineKLvalid && !lineParallel && Math.abs(angleDeg) > 0.1) {
 
-            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(4));
+            AdvancedShape aShape = (AdvancedShape) (newShape = new AdvancedShape(this, 4));
             aShape.addShape(path);
 
             // Let arcAngle be the partial section of the ellipse that represents the measured angle
@@ -130,7 +130,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
             double rMax = Math.min(ptP.distance(lineIJP[0]), ptP.distance(lineKLP[0])) * 2 / 3;
             double scalingMin = radius / rMax;
 
-            aShape.addInvShape(arcAngle, ptP, scalingMin, true);
+            aShape.addScaleInvShape(arcAngle, ptP, scalingMin, true);
 
             if (!intersectIJsegment) {
                 aShape.addShape(new Line2D.Double(ptP, lineIJP[1]), getDashStroke(1.0f), true);

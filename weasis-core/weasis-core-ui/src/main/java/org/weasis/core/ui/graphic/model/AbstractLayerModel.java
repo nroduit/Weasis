@@ -37,11 +37,10 @@ import org.weasis.core.api.image.util.LayoutUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.GraphicClipboard;
 import org.weasis.core.ui.graphic.SelectGraphic;
-import org.weasis.core.ui.graphic.TempLayer;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -62,6 +61,7 @@ public class AbstractLayerModel implements LayerModel {
     protected Cursor cursor = DEFAULT_CURSOR;
 
     protected final GraphicsPane canvas;
+    /* List of layers (sorted by level number, ascending order, the highest number is the latest painted layer) */
     private final ArrayList<AbstractLayer> layers;
 
     private SelectGraphic selectGraphic;
@@ -71,13 +71,14 @@ public class AbstractLayerModel implements LayerModel {
     private final ArrayList<LayerModelChangeListener> listenerList;
     private boolean layerModelChangeFireingSuspended;
 
-    private float alpha;
+    // private float alpha;
 
     public final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
     public final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
-    private Object antialiasing;
 
-    private final boolean crossHairMode = false;
+    // private Object antialiasing;
+
+    // private final boolean crossHairMode = false;
 
     public AbstractLayerModel(GraphicsPane canvas) {
         this.canvas = canvas;
@@ -86,28 +87,26 @@ public class AbstractLayerModel implements LayerModel {
 
         listenerList = new ArrayList<LayerModelChangeListener>();
         selectedGraphicsListener = new ArrayList<GraphicsListener>();
-        setAlpha(0f);
-        setAntialiasing(false);
+        // setAlpha(0f);
+        // setAntialiasing(false);
     }
 
     public AbstractDragGraphic createDragGraphic(MouseEventDouble mouseevent) {
         Graphic newGraphic = getCreateGraphic();
-        Tools tool = null;
+        Identifier layerID = null;
 
         if (newGraphic == null) {
             newGraphic = MeasureToolBar.selectionGraphic;
         }
         if (newGraphic instanceof SelectGraphic) {
-            tool = Tools.TEMPDRAGLAYER;
+            layerID = AbstractLayer.TEMPDRAGLAYER;
         } else if (newGraphic instanceof AbstractDragGraphic) {
-            tool = Tools.MEASURE;
+            layerID = newGraphic.getLayerID();
         } else {
             return null;
         }
 
-        newGraphic = ((AbstractDragGraphic) newGraphic).clone();
-
-        AbstractLayer layer = getLayer(tool);
+        AbstractLayer layer = getLayer(layerID);
         if (layer != null) {
             if (!layer.isVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAW.cmd())) {
                 JOptionPane
@@ -115,18 +114,18 @@ public class AbstractLayerModel implements LayerModel {
                         canvas,
                         Messages.getString("AbstractLayerModel.msg_not_vis"), Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$ //$NON-NLS-2$
                         JOptionPane.ERROR_MESSAGE);
-                return null;
+            } else {
+                newGraphic = ((AbstractDragGraphic) newGraphic).clone();
+                layer.addGraphic(newGraphic);
+                return (AbstractDragGraphic) newGraphic;
             }
-            layer.addGraphic(newGraphic);
         }
 
-        return (AbstractDragGraphic) newGraphic;
-
+        return null;
     }
 
     @Override
     public void repaint() {
-        // repaint du composant ImageDisplay
         canvas.repaint();
     }
 
@@ -158,8 +157,6 @@ public class AbstractLayerModel implements LayerModel {
 
     public void resetCursor() {
         setCursor(DEFAULT_CURSOR);
-        // this.cursor = DEFAULT_CURSOR;
-        // canvas.setCursor(cursor);
     }
 
     private void layerVisibilityChanged(AbstractLayer layer) {
@@ -220,10 +217,13 @@ public class AbstractLayerModel implements LayerModel {
         canvas.repaint(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
     }
 
+    public void SortLayersFromLevel() {
+        Collections.sort(layers);
+    }
+
     @Override
     public void addLayer(AbstractLayer layer) {
         layers.add(layer);
-        layer.setShowDrawing(this);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class AbstractLayerModel implements LayerModel {
         ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
-            if (layer.isVisible()) {
+            if (layer.isVisible() && !layer.isLocked()) {
                 selectedGraphicList.addAll(layer.getGraphicsSurfaceInArea(rectangle, transform));
             }
         }
@@ -286,7 +286,7 @@ public class AbstractLayerModel implements LayerModel {
         ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
-            if (layer.isVisible()) {
+            if (layer.isVisible() && !layer.isLocked()) {
                 selectedGraphicList.addAll(layer.getGraphicsSurfaceInArea(rectangle, transform, onlyFrontGraphic));
             }
         }
@@ -314,7 +314,7 @@ public class AbstractLayerModel implements LayerModel {
 
         for (int i = layers.size() - 1; i >= 0; i--) {
             AbstractLayer layer = layers.get(i);
-            if (layer.isVisible()) {
+            if (layer.isVisible() && !layer.isLocked()) {
                 // Graphic graph = layer.getGraphicContainPoint(mouseevent);
                 List<Graphic> graphList = layer.getGraphicListContainPoint(mouseevent);
                 if (graphList != null) {
@@ -428,13 +428,13 @@ public class AbstractLayerModel implements LayerModel {
         this.layerModelChangeFireingSuspended = layerModelChangeFireingSuspended;
     }
 
-    public void setAlpha(float alpha) {
-        this.alpha = alpha;
-    }
+    // public void setAlpha(float alpha) {
+    // this.alpha = alpha;
+    // }
 
-    public void setAntialiasing(boolean antialiasing) {
-        this.antialiasing = antialiasing ? antialiasingOn : antialiasingOff;
-    }
+    // public void setAntialiasing(boolean antialiasing) {
+    // this.antialiasing = antialiasing ? antialiasingOn : antialiasingOff;
+    // }
 
     /**
      * Gets all layer manager listeners of this layer.
@@ -512,62 +512,16 @@ public class AbstractLayerModel implements LayerModel {
         return image;
     }
 
-    public void setActiveLayer(int drawType) {
+    @Override
+    public AbstractLayer getLayer(Identifier layerID) {
         for (int j = layers.size() - 1; j >= 0; j--) {
             AbstractLayer l = layers.get(j);
-            if (l.getDrawType() == drawType) {
-                l.setLevel(100000);
-            } else if (l.getLevel() != drawType) {
-                // reset previous active layer
-                l.setLevel(drawType);
+            if (l.getIdentifier() == layerID) {
+                return l;
             }
         }
-        Collections.sort(layers);
-        repaint();
+        return null;
     }
-
-    public AbstractLayer getLayer(Tools tool) {
-        if (tool.isLayer()) {
-            return getLayer(tool.getId());
-        }
-        return getLayer(Tools.TEMPDRAGLAYER);
-    }
-
-    @Override
-    public AbstractLayer getLayer(int drawType) {
-        for (int j = layers.size() - 1; j >= 0; j--) {
-            AbstractLayer layerTemp = layers.get(j);
-            if (layerTemp.getDrawType() == drawType) {
-                return layerTemp;
-            }
-        }
-        return getLayer(Tools.TEMPDRAGLAYER);
-    }
-
-    public DragLayer getMeasureLayer() {
-        return (DragLayer) getLayer(Tools.MEASURE);
-    }
-
-    public DragLayer getNoteLayer() {
-        return (DragLayer) getLayer(Tools.NOTE);
-    }
-
-    public TempLayer getTemporyDragLayer() {
-        return (TempLayer) getLayer(Tools.TEMPDRAGLAYER);
-    }
-
-    //
-    // public ObjectsLayer getObjectExtractLayer() {
-    // return (ObjectsLayer) getLayer(Tools.OBJECTEXTRACT);
-    // }
-    //
-    // public TempClassLayer getTemporyClassifLayer() {
-    // return (TempClassLayer) getLayer(Tools.TEMPCLASSIFLAYER);
-    // }
-    //
-    // public RoiLayer getRoiLayer() {
-    // return (RoiLayer) getLayer(Tools.DELIMIT);
-    // }
 
     // public void paintSVG(SVGGraphics2D g2) {
     // for (int i = 0; i < layers.size(); i++) {

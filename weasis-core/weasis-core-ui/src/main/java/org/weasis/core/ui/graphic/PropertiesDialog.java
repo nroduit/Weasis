@@ -27,6 +27,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.border.EmptyBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.ui.Messages;
@@ -62,6 +63,7 @@ public abstract class PropertiesDialog extends JDialog {
     }
 
     private void jbInit() throws Exception {
+        panel1.setBorder(new EmptyBorder(0, 15, 0, 15));
         panel1.setLayout(borderLayout1);
         jButtonOk.setText(Messages.getString("PropertiesDialog.ok")); //$NON-NLS-1$
         jButtonOk.addActionListener(new java.awt.event.ActionListener() {

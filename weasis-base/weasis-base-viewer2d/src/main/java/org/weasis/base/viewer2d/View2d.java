@@ -64,7 +64,6 @@ import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 
@@ -83,7 +82,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         manager.addImageOperationAction(new FlipOperation());
 
         infoLayer = new InfoLayer(this);
-        DragLayer layer = new DragLayer(getLayerModel(), Tools.MEASURE.getId());
+        DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE);
         getLayerModel().addLayer(layer);
         TempLayer layerTmp = new TempLayer(getLayerModel());
         getLayerModel().addLayer(layerTmp);
@@ -134,12 +133,12 @@ public class View2d extends DefaultView2d<ImageElement> {
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            getLayerModel().deleteAllGraphics();
             // All the action values are initialized again with the series changing
             initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null, null);
-            getLayerModel().deleteAllGraphics();
         } else {
             ImageElement media = selectedImage;
             if (selectedImage == null) {
@@ -450,7 +449,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(View2d.this), list);
+                        JDialog dialog = new MeasureDialog(View2d.this, list);
                         WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
                         dialog.setVisible(true);
                     }
@@ -523,6 +522,9 @@ public class View2d extends DefaultView2d<ImageElement> {
                             }
                             for (Graphic g : graphs) {
                                 AbstractLayer layer = View2d.this.getLayerModel().getLayer(g.getLayerID());
+                                if (layer == null) {
+                                    layer = View2d.this.getLayerModel().getLayer(AbstractLayer.MEASURE);
+                                }
                                 if (layer != null) {
                                     Graphic graph = g.deepCopy();
                                     if (graph != null) {

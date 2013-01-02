@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic.model;
 
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
+
 public interface Layer {
 
     void setVisible(boolean flag);
@@ -19,5 +21,7 @@ public interface Layer {
     void setLevel(int i);
 
     int getLevel();
+
+    Identifier getIdentifier();
 
 }

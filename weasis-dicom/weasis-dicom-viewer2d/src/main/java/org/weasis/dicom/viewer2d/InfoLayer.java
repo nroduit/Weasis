@@ -50,6 +50,8 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.GraphicLabel;
+import org.weasis.core.ui.graphic.model.AbstractLayer;
+import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.display.CornerDisplay;
@@ -81,9 +83,11 @@ public class InfoLayer implements AnnotationsLayer {
     private int border = BORDER;
     private double thickLength = 15.0;
     private boolean showBottomScale = true;
+    private final Identifier identifier;
 
     public InfoLayer(DefaultView2d view2DPane) {
         this.view2DPane = view2DPane;
+        this.identifier = AbstractLayer.ANNOTATION;
         displayPreferences.put(ANNOTATIONS, true);
         displayPreferences.put(ANONYM_ANNOTATIONS, false);
         displayPreferences.put(IMAGE_ORIENTATION, true);
@@ -1302,5 +1306,10 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public void setPixelInfo(String pixelInfo) {
         this.pixelInfo = pixelInfo;
+    }
+
+    @Override
+    public Identifier getIdentifier() {
+        return identifier;
     }
 }

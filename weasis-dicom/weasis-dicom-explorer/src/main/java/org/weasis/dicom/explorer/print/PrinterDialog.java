@@ -150,6 +150,9 @@ public class PrinterDialog extends JDialog {
         gbc_portLabel.gridy = 2;
         content.add(portLabel, gbc_portLabel);
         NumberFormat myFormat = NumberFormat.getInstance();
+        myFormat.setMinimumIntegerDigits(0);
+        myFormat.setMaximumIntegerDigits(65535);
+        myFormat.setMaximumFractionDigits(0);
         portTf = new JFormattedTextField(new NumberFormatter(myFormat));
         portTf.setColumns(5);
         JMVUtils.setPreferredWidth(portTf, 60);

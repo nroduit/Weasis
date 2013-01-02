@@ -37,6 +37,7 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
+import org.weasis.core.ui.graphic.AnnotationGraphic;
 import org.weasis.core.ui.graphic.CobbAngleToolGraphic;
 import org.weasis.core.ui.graphic.EllipseGraphic;
 import org.weasis.core.ui.graphic.FourPointsAngleToolGraphic;
@@ -73,6 +74,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
         Color.YELLOW, true);
     public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
+    public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, new Color(166, 196, 231), true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
     public static final ArrayList<Graphic> graphicList = new ArrayList<Graphic>();
@@ -117,8 +119,13 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (p.getBooleanProperty("weasis.measure.cobbangle", true)) {
             graphicList.add(cobbAngleToolGraphic);
         }
+        if (p.getBooleanProperty("weasis.measure.textGrahic", true)) {
+            graphicList.add(textGrahic);
+        }
+
     }
     protected final JButton jButtondelete = new JButton();
+    protected final JButton jButtonText = new JButton();
     protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
     protected final DropDownButton measureButton;
     protected final ImageViewerEventManager<E> eventManager;
@@ -130,8 +137,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
         this.eventManager = eventManager;
 
-        // Do not apply to selectionGraphic
-        for (int i = 1; i < graphicList.size(); i++) {
+        // Do not apply to selectionGraphic and textGrahic
+        for (int i = 1; i < graphicList.size() - 1; i++) {
             applyDefaultSetting(MeasureTool.viewSetting, graphicList.get(i));
         }
 
@@ -145,9 +152,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         measureButton = new DropDownButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu) {
             @Override
             protected JPopupMenu getPopupMenu() {
-                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                menu.setInvoker(this);
-                return menu;
+                JPopupMenu m = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                m.setInvoker(this);
+                return m;
             }
         };
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
@@ -180,6 +187,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         add(measureButton);
 
         // add(measureButtonGap);
+
         jButtondelete.setToolTipText(Messages.getString("MeasureToolBar.del")); //$NON-NLS-1$
         jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png"))); //$NON-NLS-1$
         jButtondelete.addActionListener(new java.awt.event.ActionListener() {
