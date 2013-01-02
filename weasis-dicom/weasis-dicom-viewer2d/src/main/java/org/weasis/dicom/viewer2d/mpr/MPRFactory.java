@@ -24,7 +24,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Type;
 public class MPRFactory implements SeriesViewerFactory {
 
     public static final String NAME = "MPR";
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/dicom-3d.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(MPRFactory.class.getResource("/icon/16x16/mpr.png")); //$NON-NLS-1$
 
     public MPRFactory() {
     }

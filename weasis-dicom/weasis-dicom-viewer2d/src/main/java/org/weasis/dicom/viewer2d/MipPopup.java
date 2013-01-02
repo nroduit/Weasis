@@ -33,9 +33,6 @@ import org.weasis.core.ui.editor.image.ShowPopup;
 public class MipPopup implements ShowPopup {
     private final Logger LOGGER = LoggerFactory.getLogger(MipPopup.class);
 
-    /**
-     * @wbp.parser.entryPoint
-     */
     public JDialog buildDialog(final MipView view) {
         if (view == null) {
             return null;

@@ -24,9 +24,8 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     public Basic3DToolBar() {
         super("Basic 3D Tools", TYPE.tool);
 
-        final JButton mprButton = new JButton("MPR");
+        final JButton mprButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));//$NON-NLS-1$
         mprButton.setToolTipText("Build Orthogonal MPR from the selected view");
-        mprButton.setIcon(new ImageIcon(MediaSeries.class.getResource("/icon/22x22/dicom-3d.png"))); //$NON-NLS-1$
         mprButton.addActionListener(new ActionListener() {
 
             @Override
@@ -49,9 +48,8 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
         });
         add(mprButton);
 
-        final JButton mipButton = new JButton("MIP");
+        final JButton mipButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mip.png"))); //$NON-NLS-1$
         mipButton.setToolTipText("Build MIP from the selected view");
-        mipButton.setIcon(new ImageIcon(MediaSeries.class.getResource("/icon/22x22/dicom-3d.png"))); //$NON-NLS-1$
         mipButton.addActionListener(new ActionListener() {
 
             @Override

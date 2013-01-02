@@ -2,6 +2,7 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -19,10 +22,10 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
-import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -31,6 +34,8 @@ import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.viewer2d.View2d;
 
 public class MprView extends View2d {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
+
     public enum Type {
         AXIAL, CORONAL, SAGITTAL
     };
@@ -126,7 +131,7 @@ public class MprView extends View2d {
 
     private void computeCrosshair(Point3d p3) {
         DicomImageElement image = this.getImage();
-        AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
+        AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
         if (image != null && layer != null) {
             layer.deleteAllGraphic();
             GeometryOfSlice sliceGeometry = image.getSliceGeometry();
@@ -183,11 +188,21 @@ public class MprView extends View2d {
                 // }
                 // }
 
-                LineGraphic line1 = new LineGraphic(pts, 1.0f, color, false);
-                layer.addGraphic(line1);
+                LineGraphic line1;
+                try {
+                    line1 = new LineGraphic(pts.get(0), pts.get(1), 1.0f, color, false);
+                    layer.addGraphic(line1);
+                } catch (InvalidShapeException e) {
+                    LOGGER.error(e.getMessage());
+                }
             } else {
-                PolygonGraphic graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
-                layer.addGraphic(graphic);
+                PolygonGraphic graphic;
+                try {
+                    graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
+                    layer.addGraphic(graphic);
+                } catch (InvalidShapeException e) {
+                    LOGGER.error(e.getMessage());
+                }
             }
         }
     }
@@ -207,18 +222,18 @@ public class MprView extends View2d {
     }
 
     @Override
-    protected void drawExtendedAtions(Graphics2D g2d) {
-        super.drawExtendedAtions(g2d);
+    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+        Rectangle rect = super.drawExtendedAtions(g2d);
         // To avoid concurrency issue
         final JProgressBar bar = progressBar;
         if (bar != null && bar.isVisible()) {
-            // Draw in the bottom right corner of thumbnail space;
             int shiftx = getWidth() / 2 - bar.getWidth() / 2;
             int shifty = getHeight() / 2 - bar.getHeight() / 2;
             g2d.translate(shiftx, shifty);
             bar.paint(g2d);
             g2d.translate(-shiftx, -shifty);
         }
+        return rect;
     }
 
     public void setProgressBar(JProgressBar bar) {

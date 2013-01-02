@@ -2,6 +2,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -65,7 +66,7 @@ public class MipView extends View2d {
     };
 
     private static final ViewButton MIP_BUTTON = new ViewButton(new MipPopup(), new ImageIcon(
-        MediaSeries.class.getResource("/icon/22x22/dicom-3d.png")));
+        MipView.class.getResource("/icon/22x22/mip-setting.png")));
 
     private final JProgressBar progressBar;
     private volatile Thread process;
@@ -104,7 +105,7 @@ public class MipView extends View2d {
     }
 
     @Override
-    protected void drawExtendedAtions(Graphics2D g2d) {
+    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
         Icon icon = MIP_BUTTON.getIcon();
         int x = getWidth() - icon.getIconWidth() - 5;
         int y = (int) ((getHeight() - 1) * 0.5);
@@ -113,13 +114,13 @@ public class MipView extends View2d {
         icon.paintIcon(this, g2d, x, y);
 
         if (progressBar.isVisible()) {
-            // Draw in the bottom right corner of thumbnail space;
             int shiftx = getWidth() / 2 - progressBar.getWidth() / 2;
             int shifty = getHeight() / 2 - progressBar.getHeight() / 2;
             g2d.translate(shiftx, shifty);
             progressBar.paint(g2d);
             g2d.translate(-shiftx, -shifty);
         }
+        return MIP_BUTTON.getBounds();
     }
 
     public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
