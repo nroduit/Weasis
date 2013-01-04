@@ -812,10 +812,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(RotationOperation.name);
             updateAffineTransform();
+        } else if (command.equals(ActionW.RESET.cmd())) {
+            reset();
         } else if (command.equals(ActionW.ZOOM.cmd())) {
             double zoomFactor = (Double) evt.getNewValue();
             zoom(zoomFactor);
-
         } else if (command.equals(ActionW.LENSZOOM.cmd())) {
             if (lens != null) {
                 lens.setActionInView(ActionW.ZOOM.cmd(), evt.getNewValue());

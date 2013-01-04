@@ -571,7 +571,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (pts != null && pts.size() > 0) {
                 Color color = fill ? Color.blue : Color.cyan;
                 try {
-                    PolygonGraphic graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
+                    Graphic graphic =
+                        pts.size() == 2 ? new LineGraphic(pts.get(0), pts.get(1), 1.0f, color, false)
+                            : new PolygonGraphic(pts, color, 1.0f, false, false);
                     AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
                     if (layer != null) {
                         layer.addGraphic(graphic);

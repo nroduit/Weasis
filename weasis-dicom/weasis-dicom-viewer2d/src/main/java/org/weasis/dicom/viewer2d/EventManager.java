@@ -33,6 +33,7 @@ import org.weasis.core.api.command.Options;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -174,6 +175,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
         iniAction(crosshairAction = newCrosshairAction());
+        iniAction(new BasicActionState(ActionW.RESET));
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
@@ -686,12 +688,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private void resetAllActions() {
-        if (selectedView2dContainer != null) {
-            DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
-            if (viewPane != null) {
-                viewPane.reset();
-            }
-        }
+        firePropertyChange(ActionW.RESET.cmd(), null, true);
     }
 
     public void reset(ResetTools action) {
