@@ -82,6 +82,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
         HashMap<ActionW, Boolean> actions = new HashMap<ActionW, Boolean>();
         actions.put(ActionW.SCROLL_SERIES, true);
+        actions.put(ActionW.RESET, true);
         actions.put(ActionW.ZOOM, true);
         actions.put(ActionW.WINDOW, true);
         actions.put(ActionW.LEVEL, true);
