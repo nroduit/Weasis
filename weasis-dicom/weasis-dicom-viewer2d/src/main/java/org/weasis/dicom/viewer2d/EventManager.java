@@ -747,16 +747,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         updateWindowLevelComponentsListener(view2d.getImage(), view2d);
 
         lutAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT.cmd()));
-
         inverseLutAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSELUT.cmd()));
-
         filterAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.FILTER.cmd()));
-
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
             .getActionValue(ActionW.ZOOM.cmd()))));
-
         rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
-
         flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
 
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
@@ -837,6 +832,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 addPropertyChangeListeners(viewPane);
                 if (viewPane instanceof MipView) {
                     propertySupport.removePropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), viewPane);
+                    synchView = SynchView.NONE;
                 }
                 final ArrayList<DefaultView2d<DicomImageElement>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
@@ -896,10 +892,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                                 .addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
                                         }
                                     } else {
-                                        boolean mpr = pane instanceof MprView;
-                                        pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), mpr);
-                                        pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), !mpr);
-                                        if (mpr) {
+                                        pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), false);
+                                        pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
+                                        if (pane instanceof MprView) {
                                             addPropertyChangeListeners(pane, synchView);
                                         } else {
                                             propertySupport
@@ -917,8 +912,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     } else if (Mode.Tile.equals(synchView.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
-                            boolean specialView = pane instanceof MipView;
-                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), !specialView);
+                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListeners(pane, synchView);
                         }

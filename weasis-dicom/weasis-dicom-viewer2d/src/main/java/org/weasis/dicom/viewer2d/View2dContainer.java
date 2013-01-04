@@ -27,6 +27,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -352,6 +353,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             newView2d.setMIPSeries(s, null);
                             replaceView(selView, newView2d);
                             newView2d.applyMipParameters();
+                            JDialog dialog = MipPopup.buildDialog(newView2d);
+                            dialog.pack();
+                            JMVUtils.showCenterScreen(dialog);
                         }
                     }
                 }

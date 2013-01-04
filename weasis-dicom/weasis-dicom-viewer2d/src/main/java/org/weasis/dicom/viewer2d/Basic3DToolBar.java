@@ -5,10 +5,12 @@ import java.awt.event.ActionListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -67,6 +69,9 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             newView2d.setMIPSeries(s, null);
                             container.replaceView(selView, newView2d);
                             newView2d.applyMipParameters();
+                            JDialog dialog = MipPopup.buildDialog(newView2d);
+                            dialog.pack();
+                            JMVUtils.showCenterScreen(dialog);
                         }
                     }
                 }
@@ -75,5 +80,4 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
         add(mipButton);
 
     }
-
 }

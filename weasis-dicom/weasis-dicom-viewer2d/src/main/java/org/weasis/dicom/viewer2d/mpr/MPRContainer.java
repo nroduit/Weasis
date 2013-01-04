@@ -64,6 +64,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.More2DToolBar;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
@@ -80,6 +81,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         SYNCH_LIST.add(SynchView.NONE);
 
         HashMap<ActionW, Boolean> actions = new HashMap<ActionW, Boolean>();
+        actions.put(ActionW.SCROLL_SERIES, true);
+        actions.put(ActionW.ZOOM, true);
         actions.put(ActionW.WINDOW, true);
         actions.put(ActionW.LEVEL, true);
         actions.put(ActionW.PRESET, true);
@@ -140,6 +143,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ViewerToolBar bar = (ViewerToolBar) View2dContainer.TOOLBARS.get(0);
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
+            More2DToolBar more2dBar = new More2DToolBar<DicomImageElement>();
+            TOOLBARS.add(2, more2dBar);
         }
     }
 
@@ -531,6 +536,16 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         final MprView view = selectLayoutPositionForAddingSeries(sequence);
         if (view != null) {
             view.setSeries(sequence);
+
+            String title = (String) sequence.getTagValue(TagW.PatientName);
+            if (title != null) {
+                if (title.length() > 30) {
+                    this.setToolTipText(title);
+                    title = title.substring(0, 30);
+                    title = title.concat("..."); //$NON-NLS-1$
+                }
+                this.setPluginName(title);
+            }
             view.repaint();
             process = new Thread("Building MPR views") {
                 @Override

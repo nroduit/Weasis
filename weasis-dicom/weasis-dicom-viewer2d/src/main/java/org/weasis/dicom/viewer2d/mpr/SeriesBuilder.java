@@ -24,6 +24,7 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.TransposeDescriptor;
 import javax.media.jai.operator.TransposeType;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.vecmath.Vector3d;
 
@@ -365,12 +366,12 @@ public class SeriesBuilder {
     private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, TransposeType rotate, final MprView view, Thread thread) throws IOException {
         boolean abort = false;
+        boolean byPassSpaceIssue = false;
         final JProgressBar bar = view.getProgressBar();
         try {
             for (int i = 0; i < newSeries.length; i++) {
                 newSeries[i] = new RawImage(File.createTempFile("mpr_", ".raw", MPR_CACHE_DIR));//$NON-NLS-1$ //$NON-NLS-2$);
             }
-            // synchronized (series) {
             double epsilon = 1e-3;
             double lastPos = 0.0;
             double lastSpace = 0.0;
@@ -383,15 +384,30 @@ public class SeriesBuilder {
                 DicomImageElement dcm = iter.next();
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
                 if (sp == null) {
-                    abort = true;
-                    throw new IllegalStateException("Slice doesn't have a 3D position!");
+                    int usrChoice =
+                        JOptionPane.showConfirmDialog(view,
+                            "Space between slices is unpredictable!\n Do you want to continue anyway?",
+                            MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    if (usrChoice == JOptionPane.NO_OPTION) {
+                        abort = true;
+                        throw new IllegalStateException("Slices don't have 3D position!");
+                    }
+                    byPassSpaceIssue = true;
+
                 } else {
                     double pos = (sp[0] + sp[1] + sp[2]);
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
                         if (space == 0.0 || (index > 1 && lastSpace - space > epsilon)) {
-                            abort = true;
-                            throw new IllegalStateException("Space between slices is not constant!");
+                            int usrChoice =
+                                JOptionPane.showConfirmDialog(view,
+                                    "Space between slices is not regular!\n Do you want to continue anyway?",
+                                    MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (usrChoice == JOptionPane.NO_OPTION) {
+                                abort = true;
+                                throw new IllegalStateException("Space between slices is not regular!");
+                            }
+                            byPassSpaceIssue = true;
                         }
                         lastSpace = space;
                     }
@@ -418,7 +434,6 @@ public class SeriesBuilder {
                 writeRasterInRaw(getRotateImage(image, rotate), newSeries);
             }
             return lastSpace;
-            // }
         } finally {
             for (int i = 0; i < newSeries.length; i++) {
                 if (newSeries[i] != null) {

@@ -12,7 +12,6 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -128,4 +127,5 @@ public class MPRFactory implements SeriesViewerFactory {
     public boolean canExternalizeSeries() {
         return true;
     }
+
 }

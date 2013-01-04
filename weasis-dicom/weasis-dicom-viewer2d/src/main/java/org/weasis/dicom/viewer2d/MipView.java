@@ -24,11 +24,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
 import org.dcm4che2.data.UID;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
@@ -45,7 +43,8 @@ import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.mpr.SeriesBuilder;
 
 public class MipView extends View2d {
-
+    public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
+        MipView.class.getResource("/icon/22x22/mip-setting.png"));
     public static final ActionW MIP = new ActionW("MIP", "mip", 0, 0, null);
     public static final ActionW MIP_MIN_SLICE = new ActionW("Min Slice: ", "mip_min", 0, 0, null);
     public static final ActionW MIP_MAX_SLICE = new ActionW("Max Slice: ", "mip_max", 0, 0, null);
@@ -72,41 +71,24 @@ public class MipView extends View2d {
 
     public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
-        this.mip_button =
-            new ViewButton(new MipPopup(), new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")));
+        this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
         viewButtons.add(mip_button);
         progressBar = new JProgressBar();
         progressBar.setVisible(false);
-        // TODO PREPROCESSING conflict with PR, handle globally?
-        // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
-        // imageLayer.setPreprocessing(manager);
     }
 
     @Override
     protected void initActionWState() {
         super.initActionWState();
-
-        actionsInView.put(MIP.cmd(), Type.MAX);
-        int index = 7;
-        ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
-        if (sequence instanceof SliderCineListener) {
-            SliderCineListener cineAction = (SliderCineListener) sequence;
-            cineAction.stop();
-            int val = cineAction.getValue();
-            if (val > 7) {
-                index = val;
-            }
-            // TODO handle scroll position with index
-            // actionsInView.put(ActionW.SCROLL_SERIES.cmd(), index);
-        }
         // Force to extend VOI LUT to pixel allocated
         actionsInView.put(DicomImageElement.FILL_OUTSIDE_LUT, true);
-        actionsInView.put(MIP_MIN_SLICE.cmd(), index - 7);
-        actionsInView.put(MIP_MAX_SLICE.cmd(), index + 7);
+        actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
+        actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
     }
 
     @Override
     protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+        // Does not allow to use PR or KO
         Icon icon = mip_button.getIcon();
         int x = getWidth() - icon.getIconWidth() - 5;
         int y = (int) ((getHeight() - 1) * 0.5);

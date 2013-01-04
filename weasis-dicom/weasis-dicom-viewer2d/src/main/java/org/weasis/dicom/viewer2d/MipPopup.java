@@ -33,12 +33,13 @@ import org.weasis.core.ui.editor.image.ShowPopup;
 public class MipPopup implements ShowPopup {
     private final Logger LOGGER = LoggerFactory.getLogger(MipPopup.class);
 
-    public JDialog buildDialog(final MipView view) {
+    static JDialog buildDialog(final MipView view) {
         if (view == null) {
             return null;
         }
         final JDialog dialog =
             new JDialog(WinUtil.getParentWindow(view), "MIP Options", ModalityType.APPLICATION_MODAL);
+        dialog.setIconImage(MipView.MIP_ICON_SETTING.getImage());
         final Container panel_1 = dialog.getContentPane();
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
@@ -111,8 +112,10 @@ public class MipPopup implements ShowPopup {
             panel_1.add(frameSliderMin.getParent());
             final JSliderW frameSliderMax = createSlider("Max Slice", 4, false, cineAction.getModel());
             panel_1.add(frameSliderMax.getParent());
-            frameSliderMin.setValue((Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd()));
-            frameSliderMax.setValue((Integer) view.getActionValue(MipView.MIP_MAX_SLICE.cmd()));
+            Integer minSlice = (Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd());
+            frameSliderMin.setValue(minSlice == null ? 1 : minSlice);
+            Integer maxSlice = (Integer) view.getActionValue(MipView.MIP_MAX_SLICE.cmd());
+            frameSliderMax.setValue(maxSlice == null ? 15 : maxSlice);
 
             frameSliderMin.addChangeListener(new ChangeListener() {
 
@@ -170,7 +173,7 @@ public class MipPopup implements ShowPopup {
 
     }
 
-    public JSliderW createSlider(String title, int labelDivision, boolean displayOnlyValue,
+    static JSliderW createSlider(String title, int labelDivision, boolean displayOnlyValue,
         DefaultBoundedRangeModel model) {
         final JPanel palenSlider1 = new JPanel();
         palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
@@ -187,7 +190,7 @@ public class MipPopup implements ShowPopup {
         return slider;
     }
 
-    public static void updateSliderProoperties(JSliderW slider, String title) {
+    static void updateSliderProoperties(JSliderW slider, String title) {
         JPanel panel = (JPanel) slider.getParent();
         if (!slider.isDisplayOnlyValue() && panel != null && panel.getBorder() instanceof TitledBorder) {
             ((TitledBorder) panel.getBorder()).setTitle(title);

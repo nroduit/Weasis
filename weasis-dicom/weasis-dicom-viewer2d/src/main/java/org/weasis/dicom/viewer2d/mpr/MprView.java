@@ -22,15 +22,15 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
-import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.LineWithGapGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.viewer2d.View2d;
 
 public class MprView extends View2d {
@@ -124,9 +124,7 @@ public class MprView extends View2d {
                     }
                 }
             }
-
         }
-
     }
 
     private void computeCrosshair(Point3d p3) {
@@ -138,78 +136,38 @@ public class MprView extends View2d {
             if (sliceGeometry != null) {
                 Point2D p = sliceGeometry.getImagePosition(p3);
                 Tuple3d dimensions = sliceGeometry.getDimensions();
+                boolean axial = Type.AXIAL.equals(this.getType());
+                double y = axial ? p.getY() - p.getX() : p.getY();
+                Point2D centerPt = new Point2D.Double(p.getX(), y);
 
                 List<Point2D> pts = new ArrayList<Point2D>();
                 pts.add(new Point2D.Double(p.getX(), 0.0));
                 pts.add(new Point2D.Double(p.getX(), dimensions.x));
 
                 Color color1 = Type.SAGITTAL.equals(this.getType()) ? Color.GREEN : Color.BLUE;
-                addMPRline(layer, pts, color1);
+                addMPRline(layer, pts, color1, centerPt);
 
                 List<Point2D> pts2 = new ArrayList<Point2D>();
-                boolean axial = Type.AXIAL.equals(this.getType());
                 Color color2 = axial ? Color.GREEN : Color.RED;
-                double y = axial ? p.getY() - p.getX() : p.getY();
                 pts2.add(new Point2D.Double(0.0, y));
                 pts2.add(new Point2D.Double(dimensions.y, y));
-                addMPRline(layer, pts2, color2);
+                addMPRline(layer, pts2, color2, centerPt);
             }
         }
     }
 
-    private void addMPRline(AbstractLayer layer, List<Point2D> pts, Color color) {
+    private void addMPRline(AbstractLayer layer, List<Point2D> pts, Color color, Point2D center) {
         if (pts != null && pts.size() > 0 && layer != null) {
-            if (pts.size() == 2) {
-
-                // TODO cut the central part of the line
-                // Point2D pt1 = pts.get(0);
-                // Point2D pt2 = pts.get(1);
-                // if (pt1.getY() - pt2.getY() < 0.0001) {
-                // double l1b = p.getX() - 50.0;
-                // double l2a = p.getX() + 50.0;
-                // if (pt1.getX() > pt2.getX()) {
-                // Point2D tmp = pt2;
-                // pt2 = pt1;
-                // pt1 = tmp;
-                // }
-                // if (pt1.getX() < l1b) {
-                // pts.set(0, new Point2D.Double(pt1.getX(), pt1.getY()));
-                // pts.set(1, new Point2D.Double(l1b, pt1.getY()));
-                //
-                // if (l2a < pt2.getX()) {
-                // List<Point2D> pts2 = new ArrayList<Point2D>(2);
-                // pts2.add(new Point2D.Double(l2a, pt2.getY()));
-                // pts2.add(new Point2D.Double(pt2.getX(), pt2.getY()));
-                // LineGraphic line2 = new LineGraphic(pts2, 1.0f, color, false);
-                // layer.addGraphic(line2);
-                // }
-                // } else {
-                //
-                // }
-                // }
-
-                LineGraphic line1;
-                try {
-                    line1 = new LineGraphic(pts.get(0), pts.get(1), 1.0f, color, false);
-                    layer.addGraphic(line1);
-                } catch (InvalidShapeException e) {
-                    LOGGER.error(e.getMessage());
-                }
-            } else {
-                PolygonGraphic graphic;
-                try {
-                    graphic = new PolygonGraphic(pts, color, 1.0f, false, false);
-                    layer.addGraphic(graphic);
-                } catch (InvalidShapeException e) {
-                    LOGGER.error(e.getMessage());
-                }
+            try {
+                Graphic graphic =
+                    pts.size() == 2 ? new LineWithGapGraphic(pts.get(0), pts.get(1), 1.0f, color, false, center, 75)
+                        : new PolygonGraphic(pts, color, 1.0f, false, false);
+                layer.addGraphic(graphic);
+            } catch (InvalidShapeException e) {
+                LOGGER.error(e.getMessage());
             }
-        }
-    }
 
-    @Override
-    protected void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
-        // Do not display crosslines
+        }
     }
 
     @Override
