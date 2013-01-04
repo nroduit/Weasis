@@ -688,7 +688,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private void resetAllActions() {
-        firePropertyChange(ActionW.RESET.cmd(), null, true);
+            firePropertyChange(ActionW.RESET.cmd(), null, true);
     }
 
     public void reset(ResetTools action) {

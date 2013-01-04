@@ -538,6 +538,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setActionsInView(String action, Object value) {
+        setActionsInView(action, value, false);
+    }
+
+    public void setActionsInView(String action, Object value, boolean repaint) {
         if (action != null) {
             actionsInView.put(action, value);
             repaint();
