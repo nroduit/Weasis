@@ -53,6 +53,7 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -375,6 +376,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
             if (layer != null) {
                 synchronized (this) {
+                    // TODO Handle several layers
                     GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
                     if (list != null) {
                         // TODO handle graphics without shape, exclude them!
@@ -606,7 +608,29 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected Rectangle drawExtendedAtions(Graphics2D g2d) {
-        return null;
+        Rectangle rect = null;
+        int height = 0;
+        for (ViewButton b : viewButtons) {
+            height += b.getIcon().getIconHeight() + 5;
+        }
+        // TODO implement to draw in two columns when height > getHeight() * 2 / 3
+        int starty = (int) (getHeight() * 0.5 - (height - 5) * 0.5);
+
+        for (ViewButton b : viewButtons) {
+            Icon icon = b.getIcon();
+            int x = getWidth() - icon.getIconWidth() - 5;
+            int y = starty;
+            b.x = x;
+            b.y = y;
+            if (rect == null) {
+                rect = b.getBounds();
+            } else {
+                rect.createUnion(b.getBounds());
+            }
+            starty = y + icon.getIconHeight() + 5;
+            icon.paintIcon(this, g2d, x, y);
+        }
+        return rect;
     }
 
     @Override
@@ -1427,6 +1451,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
         }
         return null;
+    }
+
+    public void reset() {
+        initActionWState();
+        setDefautWindowLevel(getImage());
+        zoom(0.0);
+        center();
+        eventManager.updateComponentsListener(this);
     }
 
 }

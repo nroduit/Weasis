@@ -288,7 +288,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     && ((DefaultMutableTreeNode) node).getUserObject() instanceof Identifier) {
                     DefaultMutableTreeNode checkNode = (DefaultMutableTreeNode) node;
                     AbstractLayer l = view.getLayerModel().getLayer((Identifier) checkNode.getUserObject());
-                    if (layer == null) {
+                    if (l == null) {
                         // Remove from display if the layer does not exist any more
                         TreeNode parent = checkNode.getParent();
                         int index = parent.getIndex(checkNode);

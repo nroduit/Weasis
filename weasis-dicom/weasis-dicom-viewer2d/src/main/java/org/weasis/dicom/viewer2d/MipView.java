@@ -65,15 +65,16 @@ public class MipView extends View2d {
         }
     };
 
-    private static final ViewButton MIP_BUTTON = new ViewButton(new MipPopup(), new ImageIcon(
-        MipView.class.getResource("/icon/22x22/mip-setting.png")));
+    private final ViewButton mip_button;
 
     private final JProgressBar progressBar;
     private volatile Thread process;
 
     public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
-        viewButtons.add(MIP_BUTTON);
+        this.mip_button =
+            new ViewButton(new MipPopup(), new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")));
+        viewButtons.add(mip_button);
         progressBar = new JProgressBar();
         progressBar.setVisible(false);
         // TODO PREPROCESSING conflict with PR, handle globally?
@@ -106,11 +107,11 @@ public class MipView extends View2d {
 
     @Override
     protected Rectangle drawExtendedAtions(Graphics2D g2d) {
-        Icon icon = MIP_BUTTON.getIcon();
+        Icon icon = mip_button.getIcon();
         int x = getWidth() - icon.getIconWidth() - 5;
         int y = (int) ((getHeight() - 1) * 0.5);
-        MIP_BUTTON.x = x;
-        MIP_BUTTON.y = y;
+        mip_button.x = x;
+        mip_button.y = y;
         icon.paintIcon(this, g2d, x, y);
 
         if (progressBar.isVisible()) {
@@ -120,7 +121,7 @@ public class MipView extends View2d {
             progressBar.paint(g2d);
             g2d.translate(-shiftx, -shifty);
         }
-        return MIP_BUTTON.getBounds();
+        return mip_button.getBounds();
     }
 
     public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {

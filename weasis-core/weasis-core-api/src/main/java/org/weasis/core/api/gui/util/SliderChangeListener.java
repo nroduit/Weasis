@@ -76,7 +76,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     }
 
     public synchronized void setMinMaxValue(int min, int max, int value) {
-        if (min < max) {
+        if (min <= max) {
             // Adjust the value to min and max to avoid the model to change the min and the max
             value = value > max ? max : value < min ? min : value;
             model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
@@ -89,7 +89,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     }
 
     public synchronized void setMinMaxValueWithoutTriggerAction(int min, int max, int value) {
-        if (min < max) {
+        if (min <= max) {
             // Adjust the value to min and max to avoid the model to change the min and the max
             value = (value > max) ? max : ((value < min) ? min : value);
             triggerAction = false;

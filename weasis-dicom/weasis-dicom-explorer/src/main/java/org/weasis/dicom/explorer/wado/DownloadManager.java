@@ -224,7 +224,8 @@ public class DownloadManager {
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
         Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false);
         String name =
-            DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(), DicomMediaIO.NO_VALUE));
+            DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
+                DicomMediaIO.NO_VALUE));
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, birthdate);
 
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
@@ -270,10 +271,13 @@ public class DownloadManager {
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
             study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, studyUID, TagW.StudyDate);
-            study.setTagNoNull(TagW.StudyDate,
-                TagW.getDicomDate(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)));
             study.setTagNoNull(TagW.StudyTime,
                 TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyTime.getTagName(), null)));
+            // Merge date and time, used in display
+            study.setTagNoNull(TagW.StudyDate, TagW.dateTime(
+                TagW.getDicomTime(getTagAttribute(xmler, TagW.StudyDate.getTagName(), null)),
+                (Date) study.getTagValue(TagW.StudyTime)));
+
             study.setTagNoNull(TagW.StudyDescription, getTagAttribute(xmler, TagW.StudyDescription.getTagName(), null));
             study.setTagNoNull(TagW.AccessionNumber, getTagAttribute(xmler, TagW.AccessionNumber.getTagName(), null));
             study.setTagNoNull(TagW.StudyID, getTagAttribute(xmler, TagW.StudyID.getTagName(), null));

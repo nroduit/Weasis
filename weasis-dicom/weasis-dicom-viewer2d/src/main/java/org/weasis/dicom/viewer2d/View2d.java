@@ -13,7 +13,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -37,7 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -94,7 +92,6 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
-import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -136,35 +133,8 @@ import org.weasis.dicom.explorer.MimeSystemAppFactory;
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 
-    private static final ViewButton PR_BUTTON = new ViewButton(new ShowPopup() {
-
-        @Override
-        public void showPopup(Component invoker, int x, int y) {
-            if (invoker instanceof View2d) {
-                ActionState prAction = EventManager.getInstance().getAction(ActionW.PR_STATE);
-                if (prAction instanceof ComboItemListener) {
-                    ComboItemListener pr = (ComboItemListener) prAction;
-                    JPopupMenu popupMenu = pr.createGroupRadioMenu().createJPopupMenu();
-                    popupMenu.show(invoker, x, y);
-                }
-            }
-        }
-    }, new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png")));
-
-    private static final ViewButton KO_BUTTON = new ViewButton(new ShowPopup() {
-
-        @Override
-        public void showPopup(Component invoker, int x, int y) {
-            if (invoker instanceof View2d) {
-                ActionState koAction = EventManager.getInstance().getAction(ActionW.KEY_OBJECT);
-                if (koAction instanceof ComboItemListener) {
-                    ComboItemListener ko = (ComboItemListener) koAction;
-                    JPopupMenu popupMenu = ko.createGroupRadioMenu().createJPopupMenu();
-                    popupMenu.show(invoker, x, y);
-                }
-            }
-        }
-    }, new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png")));
+    public static final ImageIcon KO_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png"));
+    public static final ImageIcon PR_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png"));
 
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -192,65 +162,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         getLayerModel().addLayer(layerTmp);
 
         oldSize = new Dimension(0, 0);
-        viewButtons.add(PR_BUTTON);
-        viewButtons.add(KO_BUTTON);
-    }
-
-    @Override
-    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
-        Rectangle rect = super.drawExtendedAtions(g2d);
-        ActionState koAction = eventManager.getAction(ActionW.KEY_OBJECT);
-        if (koAction instanceof ComboItemListener) {
-            ComboItemListener ko = (ComboItemListener) koAction;
-            if (ko.getModel().getSize() > 1) {
-                Icon icon = KO_BUTTON.getIcon();
-                int x = getWidth() - icon.getIconWidth() - 5;
-                int y;
-                if (rect == null) {
-                    y = (int) ((getHeight() - 1) * 0.5);
-                } else {
-                    // Draw above
-                    y = rect.y - 5 - icon.getIconHeight();
-                }
-                KO_BUTTON.x = x;
-                KO_BUTTON.y = y;
-                if (rect == null) {
-                    rect = KO_BUTTON.getBounds();
-                } else {
-                    rect.createUnion(KO_BUTTON.getBounds());
-                }
-
-                icon.paintIcon(this, g2d, x, y);
-
-                //      popupMenu.add(ko.createUnregisteredRadioMenu(ActionW.KEY_OBJECT.getTitle())); //$NON-NLS-1$
-            }
-        }
-        ActionState prAction = eventManager.getAction(ActionW.PR_STATE);
-        if (prAction instanceof ComboItemListener) {
-            ComboItemListener pr = (ComboItemListener) prAction;
-            if (pr.getModel().getSize() > 1) {
-                Icon icon = PR_BUTTON.getIcon();
-                int x = getWidth() - icon.getIconWidth() - 5;
-                int y;
-                if (rect == null) {
-                    y = (int) ((getHeight() - 1) * 0.5);
-                } else {
-                    // Draw above
-                    y = rect.y - 5 - icon.getIconHeight();
-                }
-                PR_BUTTON.x = x;
-                PR_BUTTON.y = y;
-                if (rect == null) {
-                    rect = KO_BUTTON.getBounds();
-                } else {
-                    rect.createUnion(KO_BUTTON.getBounds());
-                }
-                icon.paintIcon(this, g2d, x, y);
-                //   popupMenu.add(pr.createUnregisteredRadioMenu(ActionW.PR_STATE.getTitle())); //$NON-NLS-1$
-            }
-        }
-
-        return rect;
     }
 
     @Override
@@ -345,60 +256,79 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
             sortStack(getCurrentSortComparator());
-        } else if (command.equals(ActionW.KEY_OBJECT.cmd())) {
-            KeyObjectReader ko =
-                val instanceof DicomSpecialElement ? new KeyObjectReader((DicomSpecialElement) val) : null;
-            actionsInView.put(ActionW.KEY_OBJECT.cmd(), val);
-            actionsInView.put(ActionW.FILTERED_SERIES.cmd(), ko == null ? null : ko.getFilter());
-            setSeries(series);
-        } else if (command.equals(ActionW.PR_STATE.cmd())) {
-            // TODO use PR reader for other frame when changing image of the series
-            PresentationStateReader pr =
-                val instanceof DicomSpecialElement ? new PresentationStateReader((DicomSpecialElement) val) : null;
-            actionsInView.put(ActionW.PR_STATE.cmd(), val);
-            actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+        }
+    }
 
-            ArrayList<AbstractLayer.Identifier> dcmLayers =
-                (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PresentationStateReader.TAG_DICOM_LAYERS);
-            if (dcmLayers != null) {
-                PRManager.deleteDicomLayers(dcmLayers, getLayerModel());
-                actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
+    @Override
+    public void reset() {
+        setPresentationState(null);
+    }
+
+    void setKeyObjectSelection(Object val) {
+        KeyObjectReader ko = val instanceof DicomSpecialElement ? new KeyObjectReader((DicomSpecialElement) val) : null;
+        actionsInView.put(ActionW.KEY_OBJECT.cmd(), val);
+        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), ko == null ? null : ko.getFilter());
+        setSeries(series);
+    }
+
+    void setPresentationState(Object val) {
+        // TODO use PR reader for other frame when changing image of the series
+        PresentationStateReader pr =
+            val instanceof DicomSpecialElement ? new PresentationStateReader((DicomSpecialElement) val) : null;
+        actionsInView.put(ActionW.PR_STATE.cmd(), val);
+        actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+
+        ArrayList<AbstractLayer.Identifier> dcmLayers =
+            (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PresentationStateReader.TAG_DICOM_LAYERS);
+        if (dcmLayers != null) {
+            PRManager.deleteDicomLayers(dcmLayers, getLayerModel());
+            actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
+        }
+        DicomImageElement m = getImage();
+        if (m != null) {
+            // Restore the original image pixel size
+            double[] prPixSize = (double[]) actionsInView.get(PresentationStateReader.TAG_OLD_PIX_SIZE);
+            if (prPixSize != null && prPixSize.length == 2) {
+                m.setPixelSize(prPixSize[0], prPixSize[1]);
+                actionsInView.remove(PresentationStateReader.TAG_OLD_PIX_SIZE);
             }
-            DicomImageElement m = getImage();
-            if (m != null) {
-                // Restore the original image pixel size
-                double[] prPixSize = (double[]) actionsInView.get(PresentationStateReader.TAG_OLD_PIX_SIZE);
-                if (prPixSize != null && prPixSize.length == 2) {
-                    m.setPixelSize(prPixSize[0], prPixSize[1]);
-                    actionsInView.remove(PresentationStateReader.TAG_OLD_PIX_SIZE);
-                }
-                // Reset crop
-                final Rectangle modelArea = getImageBounds(m);
-                if (!modelArea.equals(getViewModel().getModelArea())) {
-                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                    getViewModel().setModelArea(modelArea);
-                }
-            }
-            // If no Presentation State use the current image
-            if (pr == null) {
-                initActionWState();
-                setShutter(m);
-            } else {
-                applyPresentationState(pr, m);
-            }
-            imageLayer.setPreprocessing((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
-            eventManager.updateComponentsListener(this);
-            imageLayer.updateAllImageOperations();
-            Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoomVal = zoomVal == null ? 1.0 : zoomVal;
-            if (zoomVal <= 0.0) {
-                // TODO use same code view resize listener
-                zoom(0.0);
-                center();
-            } else {
-                zoom(zoomVal);
+            // Reset crop
+            final Rectangle modelArea = getImageBounds(m);
+            if (!modelArea.equals(getViewModel().getModelArea())) {
+                ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                getViewModel().setModelArea(modelArea);
             }
         }
+        // If no Presentation State use the current image
+        if (pr == null) {
+            // Keeps KO properties (series level)
+            Object ko = actionsInView.get(ActionW.KEY_OBJECT.cmd());
+            Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
+            initActionWState();
+            setActionsInView(ActionW.KEY_OBJECT.cmd(), ko);
+            setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
+            if (ActionState.NONE_SERIES.equals(val)) {
+                // Keeps no PS property (for all the series)
+                actionsInView.put(ActionW.PR_STATE.cmd(), val);
+            }
+            setDefautWindowLevel(getImage());
+            setShutter(m);
+        } else {
+            applyPresentationState(pr, m);
+        }
+        imageLayer.setPreprocessing((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        eventManager.updateComponentsListener(this);
+        imageLayer.updateAllImageOperations();
+        Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+        zoomVal = zoomVal == null ? 1.0 : zoomVal;
+        if (zoomVal <= 0.0) {
+            // TODO use same code view resize listener
+            zoom(0.0);
+            center();
+        } else {
+            zoom(zoomVal);
+        }
+        eventManager.updateComponentsListener(this);
     }
 
     private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
@@ -473,11 +403,25 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         MediaSeries<DicomImageElement> oldsequence = this.series;
         this.series = series;
+
         if (oldsequence != null && oldsequence != series) {
+            // Execute when series changes (old was not null and new series can be null)
             closingSeries(oldsequence);
             getLayerModel().deleteAllGraphics();
             // All the action values are initialized again with the series changing
             initActionWState();
+
+            // Remove old KO button
+            for (int i = viewButtons.size() - 1; i >= 0; i--) {
+                ViewButton vb = viewButtons.get(i);
+                if (vb != null && vb.getIcon() == View2d.KO_ICON) {
+                    viewButtons.remove(i);
+                }
+            }
+            ViewButton koButton = PRManager.buildKoSelection(this, series);
+            if (koButton != null) {
+                viewButtons.add(koButton);
+            }
         }
         if (series == null) {
             imageLayer.setImage(null, null);
@@ -506,6 +450,32 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // Set the sequence to the state OPEN
         if (series != null && oldsequence != series) {
             series.setOpen(true);
+        }
+    }
+
+    @Override
+    protected void setImage(DicomImageElement img, boolean bestFit) {
+        boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
+
+        super.setImage(img, bestFit);
+
+        if (img == null || newImg) {
+            // Remove old PR button
+            for (int i = viewButtons.size() - 1; i >= 0; i--) {
+                ViewButton vb = viewButtons.get(i);
+                if (vb != null && vb.getIcon() == View2d.PR_ICON) {
+                    viewButtons.remove(i);
+                }
+            }
+        }
+        if (newImg) {
+            Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
+            ViewButton prButton = PRManager.buildPrSelection(this, series, img);
+            if (prButton != null) {
+                viewButtons.add(prButton);
+            } else if (oldPR instanceof DicomSpecialElement) {
+                setPresentationState(null);
+            }
         }
     }
 
@@ -1198,7 +1168,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
                 for (Component mitem : menu.getMenuComponents()) {
                     RadioMenuItem ritem = ((RadioMenuItem) mitem);
-                    PresetWindowLevel preset = (PresetWindowLevel) ritem.getObject();
+                    PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
                     if (preset.getKeyCode() > 0) {
                         ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
                     }

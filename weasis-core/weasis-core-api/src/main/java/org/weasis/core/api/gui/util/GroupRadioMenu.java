@@ -98,7 +98,7 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         if (e.getSource() instanceof RadioMenuItem) {
             RadioMenuItem item = (RadioMenuItem) e.getSource();
             if (item.isSelected()) {
-                dataModel.setSelectedItem(item.getObject());
+                dataModel.setSelectedItem(item.getUserObject());
             }
         }
     };
@@ -109,9 +109,9 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         } else {
             for (int i = 0; i < itemList.size(); i++) {
                 RadioMenuItem item = itemList.get(i);
-                if (item.getObject() == selected) {
+                if (item.getUserObject() == selected) {
                     item.setSelected(true);// Do not trigger actionPerformed
-                    dataModel.setSelectedItem(item.getObject());
+                    dataModel.setSelectedItem(item.getUserObject());
                     return;
                 }
             }

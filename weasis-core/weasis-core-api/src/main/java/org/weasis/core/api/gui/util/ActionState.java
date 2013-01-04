@@ -15,6 +15,7 @@ import org.weasis.core.api.Messages;
 public interface ActionState {
 
     String NONE = Messages.getString("ActionState.none"); //$NON-NLS-1$
+    String NONE_SERIES = "None (all the series)";
 
     void enableAction(boolean enabled);
 

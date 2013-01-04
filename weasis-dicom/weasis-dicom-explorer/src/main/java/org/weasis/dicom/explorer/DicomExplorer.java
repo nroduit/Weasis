@@ -173,18 +173,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                 Date date2 = (Date) st2.getTagValue(TagW.StudyDate);
                 // LOGGER.debug("date1: {} date2: {}", date1, date2);
                 if (date1 != null && date2 != null) {
+                    // StudyDate combines StudyDate and StudyTime
                     // inverse time
-                    int res = date2.compareTo(date1);
-                    if (res == 0) {
-                        Date time1 = (Date) st1.getTagValue(TagW.StudyTime);
-                        Date time2 = (Date) st2.getTagValue(TagW.StudyTime);
-                        if (time1 != null && time2 != null) {
-                            // inverse time
-                            return time2.compareTo(time1);
-                        }
-                    } else {
-                        return res;
-                    }
+                    return date2.compareTo(date1);
                 }
 
                 String uid1 = (String) st1.getTagValue(TagW.StudyInstanceUID);

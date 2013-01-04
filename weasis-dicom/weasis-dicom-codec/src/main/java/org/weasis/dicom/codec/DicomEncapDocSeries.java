@@ -14,7 +14,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -90,7 +89,10 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        toolTips.append(Messages.getString("DicomSeries.date") + getDate() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+        toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$ 
+        toolTips.append(' ');
+        toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
+        toolTips.append("<br>"); //$NON-NLS-1$ 
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }
@@ -98,14 +100,6 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     @Override
     public String toString() {
         return (String) getTagValue(TagW.SubseriesInstanceUID);
-    }
-
-    public String getDate() {
-        Date seriesDate = (Date) getTagValue(TagW.SeriesDate);
-        if (seriesDate != null) {
-            return new SimpleDateFormat("dd/MM/yyyy").format(seriesDate); //$NON-NLS-1$
-        }
-        return ""; //$NON-NLS-1$
     }
 
     @Override

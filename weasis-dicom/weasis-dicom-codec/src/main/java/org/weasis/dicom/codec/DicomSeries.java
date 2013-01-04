@@ -102,10 +102,9 @@ public class DicomSeries extends Series<DicomImageElement> {
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagW.SeriesNumber); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagW.StudyDescription); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagW.SeriesDescription); //$NON-NLS-1$
-        String date = TagW.formatDate((Date) getTagValue(TagW.SeriesDate));
         toolTips.append(Messages.getString("DicomSeries.date")); //$NON-NLS-1$
         toolTips.append(' ');
-        toolTips.append(date == null ? "" : date); //$NON-NLS-1$
+        toolTips.append(TagW.formatDateTime((Date) getTagValue(TagW.SeriesDate)));
         toolTips.append("<br>"); //$NON-NLS-1$ 
         if (getFileSize() > 0.0) {
             toolTips.append(Messages.getString("DicomSeries.size")); //$NON-NLS-1$

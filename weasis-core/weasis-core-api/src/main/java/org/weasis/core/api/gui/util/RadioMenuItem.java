@@ -15,20 +15,23 @@ import javax.swing.JRadioButtonMenuItem;
 
 public class RadioMenuItem extends JRadioButtonMenuItem {
 
-    private final Object object;
+    private final Object userObject;
 
-    public RadioMenuItem(String text, Icon icon, Object object) {
-        super(text, icon);
-        this.object = object;
+    public RadioMenuItem(String text, Object userObject) {
+        this(text, null, userObject);
     }
 
-    public RadioMenuItem(String text, Object object) {
-        super(text);
-        this.object = object;
+    public RadioMenuItem(String text, Icon icon, Object userObject) {
+        this(text, icon, userObject, false);
     }
 
-    public Object getObject() {
-        return object;
+    public RadioMenuItem(String text, Icon icon, Object userObject, boolean selected) {
+        super(text, icon, selected);
+        this.userObject = userObject;
+    }
+
+    public Object getUserObject() {
+        return userObject;
     }
 
 }

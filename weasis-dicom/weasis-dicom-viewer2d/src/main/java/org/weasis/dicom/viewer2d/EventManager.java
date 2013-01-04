@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -44,11 +43,9 @@ import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
@@ -75,13 +72,11 @@ import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.internal.Activator;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 
@@ -129,8 +124,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
     private final ComboItemListener measureAction;
-    private final ComboItemListener koAction;
-    private final ComboItemListener prAction;
 
     private final PannerListener panAction;
     private final CrosshairListener crosshairAction;
@@ -181,9 +174,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
         iniAction(crosshairAction = newCrosshairAction());
-
-        iniAction(koAction = newKoAction());
-        iniAction(prAction = newPrAction());
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
@@ -247,27 +237,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (object instanceof KernelData) {
                     firePropertyChange(action.cmd(), null, object);
                 }
-            }
-        };
-    }
-
-    private ComboItemListener newKoAction() {
-        return new ComboItemListener(ActionW.KEY_OBJECT, new String[] { ActionState.NONE }) {
-
-            @Override
-            public void itemStateChanged(Object object) {
-                firePropertyChange(action.cmd(), null, object);
-
-            }
-        };
-    }
-
-    private ComboItemListener newPrAction() {
-        return new ComboItemListener(ActionW.PR_STATE, new String[] { ActionState.NONE }) {
-
-            @Override
-            public void itemStateChanged(Object object) {
-                firePropertyChange(action.cmd(), null, object);
             }
         };
     }
@@ -717,23 +686,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private void resetAllActions() {
-        firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
-
         if (selectedView2dContainer != null) {
             DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
             if (viewPane != null) {
-                viewPane.center();
+                viewPane.reset();
             }
         }
-
-        flipAction.setSelected(false);
-        rotateAction.setValue(0);
-        inverseLutAction.setSelected(false);
-        lutAction.setSelectedItem(ByteLut.defaultLUT);
-        filterAction.setSelectedItem(KernelData.NONE);
-        koAction.setSelectedItem(ActionState.NONE);
-        prAction.setSelectedItem(ActionState.NONE);
-        presetAction.setSelectedItem(presetAction.getFirstItem());
     }
 
     public void reset(ResetTools action) {
@@ -819,30 +777,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
         viewingProtocolAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.VIEWINGPROTOCOL.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
-
-        Object[] filteredList = null;
-        Object[] prList = null;
-        Object selKo = null;
-        Object selPr = null;
-        DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
-        if (model instanceof DicomModel) {
-            MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
-            List<DicomSpecialElement> list =
-                (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
-            filteredList =
-                DicomSpecialElement.getKoSeriesFilteredListWithNone(
-                    (String) series.getTagValue(TagW.SeriesInstanceUID), list);
-            selKo = view2d.getActionValue(ActionW.KEY_OBJECT.cmd());
-            prList =
-                DicomSpecialElement.getPrSeriesFilteredListWithNone(
-                    (String) series.getTagValue(TagW.SeriesInstanceUID), list);
-            selPr = view2d.getActionValue(ActionW.PR_STATE.cmd());
-        }
-        koAction.setDataListWithoutTriggerAction(filteredList);
-        koAction.setSelectedItemWithoutTriggerAction(selKo == null ? filteredList == null ? null : ActionState.NONE
-            : selKo);
-        prAction.setDataListWithoutTriggerAction(prList);
-        prAction.setSelectedItemWithoutTriggerAction(selPr == null ? prList == null ? null : ActionState.NONE : selPr);
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());

@@ -1,8 +1,11 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -10,18 +13,32 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JPopupMenu;
 
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.iod.module.pr.GraphicAnnotationModule;
 import org.dcm4che2.iod.module.pr.GraphicLayerModule;
 import org.dcm4che2.iod.module.pr.GraphicObject;
 import org.dcm4che2.iod.module.pr.TextObject;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.SeriesComparator;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.image.ShowPopup;
+import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.graphic.AnnotationGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.EllipseGraphic;
@@ -35,8 +52,12 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.Layer;
 import org.weasis.core.ui.graphic.model.LayerModel;
+import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KeyObjectReader;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.explorer.DicomModel;
 
 public class PRManager {
 
@@ -379,5 +400,194 @@ public class PRManager {
                 }
             }
         }
+    }
+
+    public static ViewButton buildKoSelection(final View2d view, MediaSeries<DicomImageElement> series) {
+        if (view != null && series != null) {
+            DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+            if (model instanceof DicomModel) {
+                MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
+                // TODO duplicate KO in model if multiple studies references
+                List<DicomSpecialElement> list =
+                    (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
+                if (list != null && list.size() > 0) {
+                    List<DicomSpecialElement> koList =
+                        DicomSpecialElement.getKOfromSopUID((String) series.getTagValue(TagW.SeriesInstanceUID), list);
+                    if (koList.size() > 0) {
+                        SeriesComparator<DicomSpecialElement> time = new SeriesComparator<DicomSpecialElement>() {
+
+                            @Override
+                            public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
+                                Date date1 = (Date) m1.getTagValue(TagW.SeriesDate);
+                                Date date2 = (Date) m2.getTagValue(TagW.SeriesDate);
+                                if (date1 != null && date2 != null) {
+                                    // inverse time
+                                    return date2.compareTo(date1);
+                                }
+
+                                Integer val1 = (Integer) m1.getTagValue(TagW.SeriesNumber);
+                                Integer val2 = (Integer) m2.getTagValue(TagW.SeriesNumber);
+                                if (val1 == null || val2 == null) {
+                                    return 0;
+                                }
+                                // inverse number
+                                return val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
+                            }
+                        };
+
+                        Collections.sort(koList, time);
+
+                        // Set the more recent KO by default
+                        DicomSpecialElement defaultKO = koList.get(0);
+                        view.setActionsInView(ActionW.KEY_OBJECT.cmd(), defaultKO);
+                        view.setActionsInView(ActionW.FILTERED_SERIES.cmd(), new KeyObjectReader(defaultKO).getFilter());
+
+                        final Object[] items = new Object[koList.size() + 1];
+                        items[0] = ActionState.NONE;
+                        for (int i = 1; i < items.length; i++) {
+                            items[i] = koList.get(i - 1);
+                        }
+
+                        return new ViewButton(new ShowPopup() {
+
+                            @Override
+                            public void showPopup(Component invoker, int x, int y) {
+                                Object ko = view.getActionValue(ActionW.KEY_OBJECT.cmd());
+                                if (ko == null) {
+                                    ko = ActionState.NONE;
+                                }
+                                JPopupMenu popupMenu = new JPopupMenu();
+                                TitleMenuItem itemTitle =
+                                    new TitleMenuItem(ActionW.KEY_OBJECT.getTitle(), popupMenu.getInsets());
+                                popupMenu.add(itemTitle);
+                                popupMenu.addSeparator();
+
+                                ButtonGroup groupButtons = new ButtonGroup();
+
+                                for (final Object obj : items) {
+                                    final RadioMenuItem menuItem =
+                                        new RadioMenuItem(obj.toString(), null, obj, obj == ko);
+                                    menuItem.addActionListener(new ActionListener() {
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            if (e.getSource() instanceof RadioMenuItem) {
+                                                RadioMenuItem item = (RadioMenuItem) e.getSource();
+                                                view.setKeyObjectSelection(item.getUserObject());
+                                            }
+                                        }
+                                    });
+                                    groupButtons.add(menuItem);
+                                    popupMenu.add(menuItem);
+                                }
+                                popupMenu.show(invoker, x, y);
+                            }
+                        }, View2d.KO_ICON);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static ViewButton buildPrSelection(final View2d view, MediaSeries<DicomImageElement> series,
+        DicomImageElement img) {
+        if (view != null && series != null && img != null) {
+            DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+            if (model instanceof DicomModel) {
+                MediaSeriesGroup study = ((DicomModel) model).getParent(series, DicomModel.study);
+                // TODO duplicate KO in model if multiple studies references
+                List<DicomSpecialElement> list =
+                    (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
+                if (list != null && list.size() > 0) {
+
+                    Object key = img.getKey();
+
+                    List<DicomSpecialElement> prList =
+                        DicomSpecialElement.getPRfromSopUID((String) series.getTagValue(TagW.SeriesInstanceUID),
+                            (String) img.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1
+                                : null, list);
+                    if (prList.size() > 0) {
+                        SeriesComparator<DicomSpecialElement> time = new SeriesComparator<DicomSpecialElement>() {
+
+                            @Override
+                            public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
+                                Date date1 = (Date) m1.getTagValue(TagW.SeriesDate);
+                                Date date2 = (Date) m2.getTagValue(TagW.SeriesDate);
+                                if (date1 != null && date2 != null) {
+                                    // inverse time
+                                    return date2.compareTo(date1);
+                                }
+
+                                Integer val1 = (Integer) m1.getTagValue(TagW.SeriesNumber);
+                                Integer val2 = (Integer) m2.getTagValue(TagW.SeriesNumber);
+                                if (val1 == null || val2 == null) {
+                                    return 0;
+                                }
+                                // inverse number
+                                return val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
+                            }
+                        };
+
+                        Collections.sort(prList, time);
+
+                        Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
+                        if (!ActionState.NONE_SERIES.equals(oldPR)) {
+                            int index = prList.indexOf(oldPR);
+                            index = index == -1 ? 0 : index;
+                            // Set the previous selected value, otherwise set the more recent PR by default
+                            view.setPresentationState(prList.get(index));
+                        }
+
+                        int offset = series.size(null) > 1 ? 2 : 1;
+                        final Object[] items = new Object[prList.size() + offset];
+                        items[0] = ActionState.NONE;
+                        if (offset == 2) {
+                            items[1] = ActionState.NONE_SERIES;
+                        }
+                        for (int i = offset; i < items.length; i++) {
+                            items[i] = prList.get(i - offset);
+                        }
+
+                        return new ViewButton(new ShowPopup() {
+
+                            @Override
+                            public void showPopup(Component invoker, int x, int y) {
+                                Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
+                                if (pr == null) {
+                                    pr = ActionState.NONE;
+                                }
+                                JPopupMenu popupMenu = new JPopupMenu();
+                                TitleMenuItem itemTitle =
+                                    new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
+                                popupMenu.add(itemTitle);
+                                popupMenu.addSeparator();
+                                ButtonGroup groupButtons = new ButtonGroup();
+
+                                for (Object dcm : items) {
+                                    final RadioMenuItem menuItem =
+                                        new RadioMenuItem(dcm.toString(), null, dcm, dcm == pr);
+                                    menuItem.addActionListener(new ActionListener() {
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            if (e.getSource() instanceof RadioMenuItem) {
+                                                RadioMenuItem item = (RadioMenuItem) e.getSource();
+                                                view.setPresentationState(item.getUserObject());
+                                            }
+                                        }
+                                    });
+                                    groupButtons.add(menuItem);
+                                    popupMenu.add(menuItem);
+                                }
+                                popupMenu.show(invoker, x, y);
+                            }
+                        }, View2d.PR_ICON);
+                    }
+
+                }
+            }
+        }
+        return null;
     }
 }

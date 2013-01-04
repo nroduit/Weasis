@@ -602,6 +602,13 @@ public class TagW implements Transferable, Serializable {
         return ""; //$NON-NLS-1$
     }
 
+    public static String formatDateTime(Date date) {
+        if (date != null) {
+            return DATETIME_FORMATTER.format(date);
+        }
+        return ""; //$NON-NLS-1$
+    }
+
     @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors.clone();
