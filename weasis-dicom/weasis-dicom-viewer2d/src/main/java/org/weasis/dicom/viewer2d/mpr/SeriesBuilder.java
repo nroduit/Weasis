@@ -366,6 +366,7 @@ public class SeriesBuilder {
     private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, TransposeType rotate, final MprView view, Thread thread) throws IOException {
         boolean abort = false;
+        // TODO should return the more frequent space!
         boolean byPassSpaceIssue = false;
         final JProgressBar bar = view.getProgressBar();
         try {
@@ -383,7 +384,7 @@ public class SeriesBuilder {
                 }
                 DicomImageElement dcm = iter.next();
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
-                if (sp == null) {
+                if (sp == null && !byPassSpaceIssue) {
                     int usrChoice =
                         JOptionPane.showConfirmDialog(view,
                             "Space between slices is unpredictable!\n Do you want to continue anyway?",
@@ -398,7 +399,7 @@ public class SeriesBuilder {
                     double pos = (sp[0] + sp[1] + sp[2]);
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
-                        if (space == 0.0 || (index > 1 && lastSpace - space > epsilon)) {
+                        if (!byPassSpaceIssue && (space == 0.0 || (index > 1 && lastSpace - space > epsilon))) {
                             int usrChoice =
                                 JOptionPane.showConfirmDialog(view,
                                     "Space between slices is not regular!\n Do you want to continue anyway?",
