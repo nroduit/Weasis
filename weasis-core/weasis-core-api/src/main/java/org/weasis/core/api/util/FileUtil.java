@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -27,7 +28,13 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.stream.ImageInputStream;
 import javax.xml.stream.XMLStreamException;
@@ -91,6 +98,19 @@ public final class FileUtil {
                 LOGGER.debug(e.getMessage());
             }
         }
+    }
+
+    public static File createTempDir(String prefix) {
+        File baseDir = new File(System.getProperty("java.io.tmpdir"));
+        String baseName = prefix + System.currentTimeMillis();
+
+        for (int counter = 0; counter < 1000; counter++) {
+            File tempDir = new File(baseDir, baseName + counter);
+            if (tempDir.mkdir()) {
+                return tempDir;
+            }
+        }
+        throw new IllegalStateException("Failed to create directory");
     }
 
     public static void deleteDirectoryContents(final File dir) {
@@ -354,6 +374,89 @@ public final class FileUtil {
             } finally {
                 FileUtil.safeClose(fout);
             }
+        }
+    }
+
+    public static void zip(File directory, File zipfile) throws IOException {
+        URI base = directory.toURI();
+        Deque<File> queue = new LinkedList<File>();
+        queue.push(directory);
+        OutputStream out = null;
+        ZipOutputStream zout = null;
+        try {
+            out = new FileOutputStream(zipfile);
+            zout = new ZipOutputStream(out);
+            while (!queue.isEmpty()) {
+                directory = queue.pop();
+                for (File entry : directory.listFiles()) {
+                    String name = base.relativize(entry.toURI()).getPath();
+                    if (entry.isDirectory()) {
+                        queue.push(entry);
+                        if (entry.list().length == 0) {
+                            name = name.endsWith("/") ? name : name + "/";
+                            zout.putNextEntry(new ZipEntry(name));
+                        }
+                    } else {
+                        zout.putNextEntry(new ZipEntry(name));
+                        copyZip(entry, zout);
+                        zout.closeEntry();
+                    }
+                }
+            }
+        } finally {
+            // Zip stream must be close before out stream.
+            safeClose(zout);
+            safeClose(out);
+        }
+    }
+
+    public static void unzip(File zipfile, File directory) throws IOException {
+        ZipFile zfile = new ZipFile(zipfile);
+        Enumeration<? extends ZipEntry> entries = zfile.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            File file = new File(directory, entry.getName());
+            if (entry.isDirectory()) {
+                file.mkdirs();
+            } else {
+                file.getParentFile().mkdirs();
+                InputStream in = zfile.getInputStream(entry);
+                try {
+                    copyZip(in, file);
+                } finally {
+                    in.close();
+                }
+            }
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        if (in == null || out == null) {
+            return;
+        }
+        byte[] buf = new byte[FILE_BUFFER];
+        int offset;
+        while ((offset = in.read(buf)) > 0) {
+            out.write(buf, 0, offset);
+        }
+        out.flush();
+    }
+
+    private static void copyZip(File file, OutputStream out) throws IOException {
+        InputStream in = new FileInputStream(file);
+        try {
+            copy(in, out);
+        } finally {
+            in.close();
+        }
+    }
+
+    private static void copyZip(InputStream in, File file) throws IOException {
+        OutputStream out = new FileOutputStream(file);
+        try {
+            copy(in, out);
+        } finally {
+            out.close();
         }
     }
 }
