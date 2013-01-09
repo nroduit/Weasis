@@ -58,6 +58,7 @@ import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -679,7 +680,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         ArrayList<LoadSeries> loadSeries = null;
                         File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
                         if (dcmDirFile.canRead()) {
-                            DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this);
+                            DicomDirLoader dirImport =
+                                new DicomDirLoader(dcmDirFile, DicomModel.this, DicomManager.getInstance()
+                                    .isPortableDirCache());
                             loadSeries = dirImport.readDicomDir();
                         }
                         if (loadSeries != null && loadSeries.size() > 0) {

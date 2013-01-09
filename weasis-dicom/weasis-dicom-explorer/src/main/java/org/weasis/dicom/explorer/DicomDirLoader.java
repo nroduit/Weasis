@@ -36,7 +36,6 @@ import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.ColorModelFactory;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
-import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -47,12 +46,14 @@ public class DicomDirLoader {
     private final DicomModel dicomModel;
     private final ArrayList<LoadSeries> seriesList;
     private final WadoParameters wadoParameters;
+    private final boolean writeInCache;
 
-    public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel) {
+    public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
         if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
         this.dicomModel = (DicomModel) explorerModel;
+        this.writeInCache = writeInCache;
         wadoParameters = new WadoParameters("", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
         seriesList = new ArrayList<LoadSeries>();
         try {
@@ -227,8 +228,7 @@ public class DicomDirLoader {
 
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
                     dicomSeries.setTag(TagW.ReadFromDicomdir, true);
-                    final LoadSeries loadSeries =
-                        new LoadSeries(dicomSeries, dicomModel, 1, DicomManager.getInstance().isPortableDirCache());
+                    final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, writeInCache);
 
                     DownloadPriority priority =
                         new DownloadPriority((String) patient.getTagValue(TagW.PatientName),

@@ -534,7 +534,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 } catch (Exception e) {
                     LOGGER.error("Cannot export DICOM ZIP file: ", exportDir); //$NON-NLS-1$
                 } finally {
-                    writeDir.delete();
+                    // FileUtil.delete(writeDir);
                 }
             }
         } finally {

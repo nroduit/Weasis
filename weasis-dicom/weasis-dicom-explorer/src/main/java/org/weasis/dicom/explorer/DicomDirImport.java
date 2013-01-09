@@ -24,7 +24,6 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
@@ -38,6 +37,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.dicom.explorer.internal.Activator;
+import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
@@ -45,7 +45,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     private static final String lastDICOMDIR = "lastDicomDir";//$NON-NLS-1$
 
-    private JCheckBox chckbxCache;
     private JLabel lblImportAFolder;
     private JTextField textField;
     private JButton btnSearch;
@@ -108,8 +107,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                     String path = dcmdir.getPath();
                     textField.setText(path);
                     Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
-                    // By default, copy images in cache for cdrom
-                    chckbxCache.setSelected(true);
                 }
             }
         });
@@ -121,20 +118,11 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_btnNewButton.gridy = 1;
         add(btncdrom, gbc_btnNewButton);
 
-        chckbxCache = new JCheckBox(Messages.getString("DicomDirImport.cache")); //$NON-NLS-1$
-        GridBagConstraints gbc_chckbxSearch = new GridBagConstraints();
-        gbc_chckbxSearch.gridwidth = 3;
-        gbc_chckbxSearch.insets = new Insets(5, 5, 5, 0);
-        gbc_chckbxSearch.anchor = GridBagConstraints.NORTHWEST;
-        gbc_chckbxSearch.gridx = 0;
-        gbc_chckbxSearch.gridy = 2;
-        add(chckbxCache, gbc_chckbxSearch);
-
         final JLabel label = new JLabel();
         final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
         gridBagConstraints_4.weighty = 1.0;
         gridBagConstraints_4.weightx = 1.0;
-        gridBagConstraints_4.gridy = 5;
+        gridBagConstraints_4.gridy = 4;
         gridBagConstraints_4.gridx = 2;
         add(label, gridBagConstraints_4);
 
@@ -238,10 +226,12 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
-                DicomDirLoader dirImport = new DicomDirLoader(file, dicomModel);
+                DicomDirLoader dirImport =
+                    new DicomDirLoader(file, dicomModel, DicomManager.getInstance().isPortableDirCache());
                 loadSeries = dirImport.readDicomDir();
             }
             if (loadSeries != null && loadSeries.size() > 0) {
+                // Copy images in cache if property weasis.portable.dicom.cache = true
                 DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
             } else {
                 LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$

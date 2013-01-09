@@ -135,6 +135,22 @@ public final class FileUtil {
         }
     }
 
+    public static boolean delete(File fileOrDirectory) {
+        if (fileOrDirectory == null || !fileOrDirectory.exists()) {
+            return false;
+        }
+
+        if (fileOrDirectory.isDirectory()) {
+            final File[] files = fileOrDirectory.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    delete(child);
+                }
+            }
+        }
+        return fileOrDirectory.delete();
+    }
+
     public static void safeClose(XMLStreamWriter writer) {
         if (writer != null) {
             try {

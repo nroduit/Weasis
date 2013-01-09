@@ -89,6 +89,7 @@ public class DicomImport extends AbstractWizardDialog {
     protected void initializePages() {
         pagesRoot.add(new DefaultMutableTreeNode(new LocalImport()));
         pagesRoot.add(new DefaultMutableTreeNode(new DicomDirImport()));
+        pagesRoot.add(new DefaultMutableTreeNode(new DicomZipImport()));
 
         try {
             prefs_tracker.open();
