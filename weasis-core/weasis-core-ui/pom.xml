@@ -23,7 +23,6 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Service-Component>OSGI-INF/LabelsPref.xml</Service-Component>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 							<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*</Export-Package>
 					</instructions>

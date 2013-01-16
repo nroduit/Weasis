@@ -79,7 +79,7 @@ public class ZoomSetting {
     }
 
     public int getInterpolation() {
-        // 0 : nearest neighbours, 1: bilinear, 2 : bicubic, 3 : bicubic2
+        // 0 : nearest neighbors, 1: bilinear, 2 : bicubic, 3 : bicubic2
         return interpolation;
     }
 

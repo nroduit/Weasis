@@ -45,6 +45,10 @@ public class PreferenceDialog extends AbstractWizardDialog {
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        list.add(new LabelsPrefView());
+        list.add(new ScreenPrefView());
+
         try {
             prefs_tracker.open();
 
@@ -53,7 +57,6 @@ public class PreferenceDialog extends AbstractWizardDialog {
         }
 
         final Object[] servicesPref = prefs_tracker.getServices();
-        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             if (servicesPref[i] instanceof PreferencesPageFactory) {
                 AbstractItemDialogPage page =

@@ -12,6 +12,7 @@ package org.weasis.core.ui.pref;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.osgi.service.prefs.Preferences;
@@ -32,6 +33,7 @@ public class ViewSetting {
     private int lineWidth;
     private boolean basicStatistics;
     private boolean moreStatistics;
+    private final List<Monitor> monitors = new ArrayList<Monitor>(2);
 
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
@@ -97,6 +99,21 @@ public class ViewSetting {
                 }
             }
         }
+    }
+
+    public List<Monitor> getMonitors() {
+        return monitors;
+    }
+
+    public Monitor getMonitor(String id) {
+        if (id != null) {
+            for (Monitor m : monitors) {
+                if (id.equals(m.getId())) {
+                    return m;
+                }
+            }
+        }
+        return null;
     }
 
     private boolean isTrueValue(String val) {

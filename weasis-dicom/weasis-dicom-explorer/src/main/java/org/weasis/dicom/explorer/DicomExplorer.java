@@ -1702,10 +1702,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
                                     final Rectangle b = config.getBounds();
                                     if (!b.contains(bound)) {
                                         Insets inset = toolkit.getScreenInsets(config);
-                                        b.x -= inset.left;
-                                        b.y -= inset.top;
-                                        b.width -= inset.right;
-                                        b.height -= inset.bottom;
+                                        b.x += inset.left;
+                                        b.y += inset.top;
+                                        b.width -= (inset.left + inset.right);
+                                        b.height -= (inset.top + inset.bottom);
                                         item4 =
                                             new JMenuItem("Open selected series in new tab " + gd[i].getIDstring(),
                                                 viewerFactory.getIcon());

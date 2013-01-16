@@ -139,8 +139,8 @@ public abstract class WinUtil {
             screenInsets = new Insets(0, 0, 0, 0);
             screenBounds = new Rectangle(toolkit.getScreenSize());
         }
-        int scrWidth = screenBounds.width - Math.abs(screenInsets.left + screenInsets.right);
-        int scrHeight = screenBounds.height - Math.abs(screenInsets.top + screenInsets.bottom);
+        int scrWidth = screenBounds.width - (screenInsets.left + screenInsets.right);
+        int scrHeight = screenBounds.height - (screenInsets.top + screenInsets.bottom);
         return new Dimension(scrWidth, scrHeight);
     }
 
@@ -158,10 +158,11 @@ public abstract class WinUtil {
                 if (intersect == null
                     || (intersect.width * intersect.height) < (intersection.width * intersection.height)) {
                     Insets inset = toolkit.getScreenInsets(config);
-                    b.x -= inset.left;
-                    b.y -= inset.top;
-                    b.width -= inset.right;
-                    b.height -= inset.bottom;
+                    b.x += inset.left;
+                    b.y += inset.top;
+                    b.width -= (inset.left + inset.right);
+                    b.height -= (inset.top + inset.bottom);
+
                     screenBounds = b;
                     intersect = intersection;
                 }
@@ -193,8 +194,8 @@ public abstract class WinUtil {
             screenInsets = new Insets(0, 0, 0, 0);
             screenBounds = new Rectangle(toolkit.getScreenSize());
         }
-        int scrWidth = screenBounds.width - Math.abs(screenInsets.left + screenInsets.right);
-        int scrHeight = screenBounds.height - Math.abs(screenInsets.top + screenInsets.bottom);
+        int scrWidth = screenBounds.width - (screenInsets.left + screenInsets.right);
+        int scrHeight = screenBounds.height - (screenInsets.top + screenInsets.bottom);
         Dimension size = cp.getPreferredSize();
         if ((p.x + size.width) > screenBounds.x + scrWidth) {
             p.x = screenBounds.x + scrWidth - (size.width + 2);
@@ -329,10 +330,10 @@ public abstract class WinUtil {
             GraphicsConfiguration config = gs[j].getDefaultConfiguration();
             Rectangle b = config.getBounds();
             Insets inset = kit.getScreenInsets(config);
-            b.x -= inset.left;
-            b.y -= inset.top;
-            b.width -= inset.right;
-            b.height -= inset.bottom;
+            b.x += inset.left;
+            b.y += inset.top;
+            b.width -= (inset.left + inset.right);
+            b.height -= (inset.top + inset.bottom);
             bounds[j] = b;
         }
         return bounds;

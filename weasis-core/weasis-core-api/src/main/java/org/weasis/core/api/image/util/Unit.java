@@ -48,7 +48,10 @@ public enum Unit {
      */
     KILOMETER(3, Messages.getString("Unit.kilo"), Messages.getString("Unit.kilo_s"), 1.0E+03), //$NON-NLS-1$ //$NON-NLS-2$
 
-    MICROINCH(10, Messages.getString("Unit.minch"), Messages.getString("Unit.minch_s"), 2.54E-08), //$NON-NLS-1$ //$NON-NLS-2$
+    // micro and mili iches are not official units because micro and mili comes from metric unit
+    MICROINCH(9, Messages.getString("Unit.minch"), Messages.getString("Unit.minch_s"), 2.54E-08), //$NON-NLS-1$ //$NON-NLS-2$
+
+    MILLIINCH(10, "milli-inches", "mil", 2.54E-05),
 
     INCH(11, Messages.getString("Unit.inch"), Messages.getString("Unit.inch_s"), 2.54E-02), //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -107,8 +110,9 @@ public enum Unit {
 
     public static Unit getCurrentIdUnit(int id) {
         for (Unit u : Unit.values()) {
-            if (id == u.getId())
+            if (id == u.getId()) {
                 return u;
+            }
         }
         return Unit.PIXEL;
     }
@@ -123,16 +127,18 @@ public enum Unit {
 
     public Unit getUpUnit() {
         for (Unit u : Unit.values()) {
-            if (u.getId() - getId() == 1)
+            if (u.getId() - getId() == 1) {
                 return u;
+            }
         }
         return null;
     }
 
     public Unit getDownUnit() {
         for (Unit u : Unit.values()) {
-            if (getId() - u.getId() == 1)
+            if (getId() - u.getId() == 1) {
                 return u;
+            }
         }
         return null;
     }

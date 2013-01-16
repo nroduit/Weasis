@@ -18,6 +18,7 @@ import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -598,16 +599,22 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // }
         // }
         GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
-        Rectangle b = config.getBounds();
-        Insets inset = kit.getScreenInsets(config);
-        b.x -= inset.left;
-        b.y -= inset.top;
-        b.width -= inset.right;
-        b.height -= inset.bottom;
+        Rectangle b;
+        if (config != null) {
+            b = config.getBounds();
+            Insets inset = kit.getScreenInsets(config);
+            b.x += inset.left;
+            b.y += inset.top;
+            b.width -= (inset.left + inset.right);
+            b.height -= (inset.top + inset.bottom);
+        } else {
+            b = new Rectangle(new Point(0, 0), kit.getScreenSize());
+        }
         bound = b;
 
         log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         setMaximizedBounds(bound);
+
         // set a valid size, insets of screen is often non consistent
         setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
         setVisible(true);
