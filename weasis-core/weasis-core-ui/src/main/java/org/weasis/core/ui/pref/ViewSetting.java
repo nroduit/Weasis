@@ -12,11 +12,16 @@ package org.weasis.core.ui.pref;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.graphic.Graphic;
@@ -102,18 +107,33 @@ public class ViewSetting {
     }
 
     public List<Monitor> getMonitors() {
-        return monitors;
+        return new ArrayList<Monitor>(monitors);
     }
 
-    public Monitor getMonitor(String id) {
-        if (id != null) {
-            for (Monitor m : monitors) {
-                if (id.equals(m.getId())) {
-                    return m;
-                }
+    public void initMonitors() {
+        monitors.clear();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gd = ge.getScreenDevices();
+
+        for (int i = 0; i < gd.length; i++) {
+            final GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+            if (config == null || gd[i].getType() != GraphicsDevice.TYPE_RASTER_SCREEN) {
+                continue;
             }
+
+            Monitor monitor = new Monitor(gd[i]);
+            StringBuffer buf = new StringBuffer("screen.");
+            buf.append(monitor.getMonitorID());
+            Rectangle b = monitor.getBounds();
+            buf.append(".");
+            buf.append(b.width);
+            buf.append("x");
+            buf.append(b.height);
+            buf.append(".pitch");
+            double pitch = BundleTools.LOCAL_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
+            monitor.setPitch(pitch);
+            monitors.add(monitor);
         }
-        return null;
     }
 
     private boolean isTrueValue(String val) {

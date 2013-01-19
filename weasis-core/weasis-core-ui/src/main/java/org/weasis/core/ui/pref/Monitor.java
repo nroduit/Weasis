@@ -1,51 +1,40 @@
 package org.weasis.core.ui.pref;
 
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.Rectangle;
+
 public class Monitor {
-    private final String id;
-    private int width;
-    private int height;
-    private double realScaleFactor;
+    private final GraphicsDevice graphicsDevice;
+    private double pitch;
 
-    public Monitor(String id, int width, int height) {
-        this.id = id;
-        this.width = width;
-        this.height = height;
-        this.realScaleFactor = 0.0;
+    public Monitor(GraphicsDevice graphicsDevice) {
+        this.pitch = 0.0;
+        this.graphicsDevice = graphicsDevice;
     }
 
-    public double getRealScaleFactor() {
-        return realScaleFactor;
+    public double getPitch() {
+        return pitch;
     }
 
-    public void setRealScaleFactor(double realScaleFactor) {
-        this.realScaleFactor = realScaleFactor;
+    public void setPitch(double realScaleFactor) {
+        this.pitch = realScaleFactor;
     }
 
-    public String getId() {
-        return id;
+    public String getMonitorID() {
+        return graphicsDevice.getIDstring();
     }
 
-    public int getWidth() {
-        return width;
+    public Rectangle getBounds() {
+        return graphicsDevice.getDefaultConfiguration().getBounds();
     }
 
-    public int getHeight() {
-        return height;
+    public GraphicsConfiguration getGraphicsConfiguration() {
+        return graphicsDevice.getDefaultConfiguration();
     }
 
-    public void changeResolution(int width, int height) {
-        if (realScaleFactor != 0.0) {
-            if (((double) this.width / this.height) - ((double) width / height) > 0.01) {
-                // If screen ratio changes, reset scale factor
-                realScaleFactor = 0.0;
-            } else {
-                // TODO validate
-                realScaleFactor *= (double) this.width / width;
-            }
-
-        }
-        this.width = width;
-        this.height = height;
+    public GraphicsDevice getGraphicsDevice() {
+        return graphicsDevice;
     }
 
 }

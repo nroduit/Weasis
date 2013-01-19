@@ -16,22 +16,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Insets;
 import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Stroke;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -41,6 +36,7 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -50,6 +46,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class ScreenPrefView extends AbstractItemDialogPage {
@@ -87,18 +84,10 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         panel1.add(panelList, BorderLayout.NORTH);
         panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
 
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gd = ge.getScreenDevices();
-
-        JFrame[] frames = new JFrame[gd.length];
-        for (int i = 0; i < gd.length; i++) {
-            final GraphicsConfiguration config = gd[i].getDefaultConfiguration();
-            if (config == null) {
-                continue;
-            }
-            final Rectangle b = config.getBounds();
-            String mID = gd[i].getIDstring();
+        List<Monitor> monitors = MeasureTool.viewSetting.getMonitors();
+        for (int i = 0; i < monitors.size(); i++) {
+            final Monitor monitor = monitors.get(i);
+            Rectangle mb = monitor.getBounds();
 
             JPanel p = new JPanel();
             p.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -109,61 +98,54 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             buf.append(i + 1);
             buf.append(". ");
             buf.append("Monitor");
-            buf.append(" ");
-            buf.append(b.width);
+            buf.append(": ");
+            buf.append(monitor.getMonitorID());
+            buf.append(".");
+            buf.append(mb.width);
             buf.append("x");
-            buf.append(b.height);
-            buf.append(" [");
-            buf.append(mID);
-            buf.append("] ");
+            buf.append(mb.height);
             final String title = buf.toString();
 
-            Monitor m = MeasureTool.viewSetting.getMonitor(mID);
-            final Monitor monitor;
-            if (m == null) {
-                monitor = new Monitor(mID, b.width, b.height);
-                MeasureTool.viewSetting.getMonitors().add(monitor);
-            } else {
-                monitor = m;
-            }
-
-            if (monitor.getWidth() != b.width || monitor.getHeight() != b.height) {
-                monitor.changeResolution(b.width, b.height);
-            }
-
-            if (monitor.getRealScaleFactor() > 0) {
+            if (monitor.getPitch() > 0) {
                 buf.append(" ");
-                buf.append((int) Math.round(b.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
+                buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
                 buf.append("x");
-                buf.append((int) Math.round(b.height * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
+                buf.append((int) Math.round(mb.height
+                    * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
                 buf.append(" ");
                 buf.append(Unit.MILLIMETER.getAbbreviation());
             }
             p.add(new JLabel(buf.toString()));
 
-            // Not available on X11 windowing systems
-            Insets inset = toolkit.getScreenInsets(config);
-            b.x += inset.left;
-            b.y += inset.top;
-            b.width -= (inset.left + inset.right);
-            b.height -= (inset.top + inset.bottom);
-
             JButton realZoomButton = new JButton("Spatial calibration");
             realZoomButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    /*
+                     * As screen insets are not available on all the systems (on X11 windowing systems), the only way to
+                     * get the maximum visible size desktop is to maximize a JFrame
+                     */
+                    JFrame frame = new JFrame(monitor.getGraphicsConfiguration());
+                    Rectangle bound = monitor.getBounds();
+                    frame.setMaximizedBounds(bound);
+                    frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
+                    frame.setVisible(true);
+                    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
+                    try {
+                        // Let time to maximize window
+                        Thread.sleep(500);
+                    } catch (InterruptedException e1) {
+                        // Do noting
+                    }
+
                     final CalibDialog dialog =
                         new CalibDialog(WinUtil.getParentWindow((Component) e.getSource()), title,
-                            ModalityType.APPLICATION_MODAL, config, b.getBounds(), monitor);
-                    // dialog.setMaximizedBounds(bound);
-                    //
-                    // // set a valid size, insets of screen is often non consistent
-                    // dialog.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
-                    // dialog.setVisible(true);
-                    //
-                    // dialog.setExtendedState((dialog.getExtendedState() & Frame.MAXIMIZED_BOTH) ==
-                    // Frame.MAXIMIZED_BOTH
-                    // ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+                            ModalityType.APPLICATION_MODAL, monitor);
+                    dialog.setBounds(frame.getBounds());
+                    frame.dispose();
+                    dialog.setVisible(true);
+
                 }
             });
             realZoomButton.setToolTipText("Calibrate screen for getting real size zoom");
@@ -185,14 +167,11 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     }
 
     static class Cross extends JLabel {
-        private final Rectangle bound;
         private final Monitor monitor;
         private int horizontalLength;
         private int verticalLength;
 
-        public Cross(Rectangle bound, Monitor monitor) {
-            super();
-            this.bound = bound;
+        public Cross(Monitor monitor) {
             this.monitor = monitor;
             this.horizontalLength = 0;
             this.verticalLength = 0;
@@ -221,31 +200,33 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             int offset = 50;
 
-            boolean horizontal = width > height;
-
             // Draw horizontal line
             int x1 = x + offset;
-            int y1 = y + getHeight() / 2;
-            int x2 = x + bound.width - offset - 20;
+            int y1 = y + height / 2;
+            int x2 = x + width - offset;
             int y2 = y1;
             horizontalLength = x2 - x1;
             g2d.drawLine(x1, y1, x2, y2);
 
             // Draw vertical line
-            int xv1 = x + getWidth() / 2;
-            int yv1 = y + offset - 20;
+            int xv1 = x + width / 2;
+            int yv1 = y + offset;
             int xv2 = xv1;
-            int yv2 = y + bound.height - offset - 30;
+            int yv2 = y + height - offset;
             verticalLength = yv2 - yv1;
             g2d.drawLine(xv1, yv1, xv2, yv2);
 
-            if (monitor.getRealScaleFactor() > 0) {
-                String length =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
+            if (monitor.getPitch() > 0) {
+                String hlength =
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch())
                         * horizontalLength)
                         + " " + Unit.MILLIMETER.getAbbreviation();
-                g2d.drawString(length, x2 - 70, y2 + 15);
-                g2d.drawString(length, x + 5, yv1 - 5);
+                String vlength =
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch())
+                        * verticalLength)
+                        + " " + Unit.MILLIMETER.getAbbreviation();
+                g2d.drawString(hlength, x2 - 70, y2 + 15);
+                g2d.drawString(vlength, xv1 + 10, yv2 - 5);
             }
 
             g2d.setPaint(oldColor);
@@ -264,37 +245,33 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
     static class CalibDialog extends JDialog {
         private final Monitor monitor;
-        private final Rectangle bound;
-        private final Rectangle originBound;
 
         private final Cross cross;
-        private final JPanel linePanel = new JPanel();
-        private final JPanel inputPanel = new JPanel();
         private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(
-            NumberFormat.getNumberInstance());
-        private final JComboBox jComboBoxType = new JComboBox(new String[] { "Horizontal line length",
-            "Vertical line length", "Screen size (diagonal)" });
+            NumberFormat.getIntegerInstance());
+        private final JComboBox jComboBoxType = new JComboBox(new String[] { "Displayed horizontal line length",
+            "Displayed vertical line length", "Screen size (diagonal)" });
         private final JComboBox jComboBoxUnit = new JComboBox(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER,
             Unit.MILLIINCH, Unit.INCH });
 
-        public CalibDialog(Window parentWindow, String title, ModalityType applicationModal,
-            GraphicsConfiguration config, Rectangle bounds, Monitor monitor) {
-            super(parentWindow, title, applicationModal, config);
+        public CalibDialog(Window parentWindow, String title, ModalityType applicationModal, Monitor monitor) {
+            super(parentWindow, title, applicationModal, monitor.getGraphicsConfiguration());
             this.monitor = monitor;
-            this.originBound = bounds;
-            this.bound = bounds.getBounds();
-            this.cross = new Cross(bounds.getBounds(), monitor);
+            this.cross = new Cross(monitor);
             init();
         }
 
         protected void init() {
+            final Container content = this.getContentPane();
 
-            jTextFieldLineWidth.setValue(0);
+            final JPanel inputPanel = new JPanel();
+            jTextFieldLineWidth.setValue(0L);
             JMVUtils.setPreferredWidth(jTextFieldLineWidth, 100);
-
+            inputPanel.add(new JLabel("Enter one of the following distance" + " :"));
             inputPanel.add(jComboBoxType);
             inputPanel.add(jTextFieldLineWidth);
             inputPanel.add(jComboBoxUnit);
+            inputPanel.add(Box.createHorizontalStrut(15));
             JButton apply = new JButton("Apply");
             apply.addActionListener(new ActionListener() {
 
@@ -305,72 +282,55 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             });
             inputPanel.add(apply);
-            inputPanel.add(Box.createHorizontalStrut(15));
 
-            changeOrientation(originBound.width >= originBound.height);
+            content.add(cross, BorderLayout.CENTER);
+            content.add(inputPanel, BorderLayout.SOUTH);
         }
 
         private void computeScaleFactor() {
             Object object = jTextFieldLineWidth.getValue();
             if (object instanceof Long) {
                 double val = ((Long) object).doubleValue();
-                Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
-                int index = jComboBoxType.getSelectedIndex();
-                if (index == 0) {
-                    int lineLength = cross.getHorizontalLength();
-                    if (lineLength > 100) {
-                        monitor.setRealScaleFactor(unit.getConvFactor() * val / lineLength);
+                if (val <= 0) {
+                    monitor.setPitch(0.0);
+                } else {
+                    Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
+                    int index = jComboBoxType.getSelectedIndex();
+                    if (index == 0) {
+                        int lineLength = cross.getHorizontalLength();
+                        if (lineLength > 100) {
+                            monitor.setPitch(unit.getConvFactor() * val / lineLength);
+                        }
+                    } else if (index == 1) {
+                        int lineLength = cross.getVerticalLength();
+                        if (lineLength > 100) {
+                            monitor.setPitch(unit.getConvFactor() * val / lineLength);
+                        }
+                    } else if (index == 2) {
+                        Rectangle bound = monitor.getBounds();
+                        double w = bound.getWidth() * bound.getWidth();
+                        double h = bound.getHeight() * bound.getHeight();
+                        double realHeight = Math.sqrt(val * val * h / (w + h));
+                        monitor.setPitch(unit.getConvFactor() * realHeight / bound.getHeight());
                     }
-                } else if (index == 1) {
-                    int lineLength = cross.getVerticalLength();
-                    if (lineLength > 100) {
-                        monitor.setRealScaleFactor(unit.getConvFactor() * val / lineLength);
-                    }
-                } else if (index == 2) {
-                    double w = (double) monitor.getWidth() * monitor.getWidth();
-                    double h = (double) monitor.getHeight() * monitor.getHeight();
-                    double realHeight = Math.sqrt(val * val * h / (w + h));
-                    monitor.setRealScaleFactor(unit.getConvFactor() * realHeight / monitor.getHeight());
                 }
                 cross.repaint();
+                JOptionPane
+                    .showMessageDialog(
+                        this,
+                        "To obtain a correct real zoom factor, make sure that the size of \nthe two white lines must match exactly with the real measurement",
+                        "Spatial calibration", JOptionPane.WARNING_MESSAGE);
+
+                StringBuffer buf = new StringBuffer("screen.");
+                buf.append(monitor.getMonitorID());
+                Rectangle b = monitor.getBounds();
+                buf.append(".");
+                buf.append(b.width);
+                buf.append("x");
+                buf.append(b.height);
+                buf.append(".pitch");
+                BundleTools.LOCAL_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getPitch());
             }
-
-        }
-
-        private void changeOrientation(boolean horizontal) {
-            if (horizontal) {
-                bound.x = originBound.x + 10;
-                bound.y = originBound.y + originBound.height / 2 - 10;
-                bound.height = 50;
-                bound.width = originBound.width - 20;
-            } else {
-                bound.x = originBound.x + originBound.width / 2 - 10;
-                bound.y = originBound.y + 10;
-                bound.width = 95;
-                bound.height = originBound.height - 20;
-            }
-            final Container content = this.getContentPane();
-            content.removeAll();
-
-            linePanel.removeAll();
-
-            Dimension dim = new Dimension(bound.width, bound.height);
-            cross.setLocation(0, 0);
-            cross.setMinimumSize(dim);
-            cross.setPreferredSize(dim);
-            cross.setSize(dim);
-            // Point p = new Point(bound.x, bound.y);
-            // SwingUtilities.convertPointFromScreen(p, line);
-            // line.setBounds(new Rectangle(0, 0, bound.width, bound.height));
-            linePanel.add(cross);
-            content.add(linePanel);
-
-            content.setLayout(new BoxLayout(content, horizontal ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-            if (horizontal) {
-                content.add(inputPanel);
-                this.setBounds(originBound.x, bound.y, originBound.width, bound.height);
-            }
-            this.pack();
         }
 
     }

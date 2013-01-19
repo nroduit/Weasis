@@ -123,27 +123,6 @@ public abstract class WinUtil {
         return gc;
     }
 
-    public static Dimension getRealScreenSize(Point p) {
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Rectangle screenBounds;
-        Insets screenInsets;
-        GraphicsConfiguration gc = getGraphicsDeviceConfig(p);
-        if (gc != null) {
-            // If we have GraphicsConfiguration use it to get
-            // screen bounds and insets
-            screenInsets = toolkit.getScreenInsets(gc);
-            screenBounds = gc.getBounds();
-        } else {
-            // If we don't have GraphicsConfiguration use primary screen
-            // and empty insets
-            screenInsets = new Insets(0, 0, 0, 0);
-            screenBounds = new Rectangle(toolkit.getScreenSize());
-        }
-        int scrWidth = screenBounds.width - (screenInsets.left + screenInsets.right);
-        int scrHeight = screenBounds.height - (screenInsets.top + screenInsets.bottom);
-        return new Dimension(scrWidth, scrHeight);
-    }
-
     public static Rectangle getClosedScreenBound(Rectangle bound) {
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -319,23 +298,4 @@ public abstract class WinUtil {
         JOptionPane.showMessageDialog(component, s);
     }
 
-    public static Rectangle[] getScreens() throws Exception {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        Toolkit kit = Toolkit.getDefaultToolkit();
-
-        // Get size of each screen
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        Rectangle[] bounds = new Rectangle[gs.length];
-        for (int j = 0; j < gs.length; j++) {
-            GraphicsConfiguration config = gs[j].getDefaultConfiguration();
-            Rectangle b = config.getBounds();
-            Insets inset = kit.getScreenInsets(config);
-            b.x += inset.left;
-            b.y += inset.top;
-            b.width -= (inset.left + inset.right);
-            b.height -= (inset.top + inset.bottom);
-            bounds[j] = b;
-        }
-        return bounds;
-    }
 }

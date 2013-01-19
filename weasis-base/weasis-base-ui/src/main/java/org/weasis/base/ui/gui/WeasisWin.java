@@ -573,31 +573,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     public void showWindow() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
-        // Rectangle maxBound = ge.getMaximumWindowBounds();
-        // TODO command line maximize screen: 0 => all screens, 1,2 => first,
-        // second screen or 1-2 for two screens, or 2-4
-        // three screens from the second one
-        // int minScreen = 0;
-        // int maxScreen = 0;
+
         Rectangle bound = null;
-        // Get size of each screen
-        // GraphicsDevice[] gs = ge.getScreenDevices();
-        // minScreen = minScreen < gs.length ? minScreen : gs.length - 1;
-        // maxScreen = maxScreen < minScreen ? minScreen : maxScreen < gs.length ? maxScreen : gs.length - 1;
-        // for (int j = minScreen; j <= maxScreen; j++) {
-        // GraphicsConfiguration config = gs[j].getDefaultConfiguration();
-        // Rectangle b = config.getBounds();
-        // Insets inset = kit.getScreenInsets(config);
-        // b.x -= inset.left;
-        // b.y -= inset.top;
-        // b.width -= inset.right;
-        // b.height -= inset.bottom;
-        // if (bound == null) {
-        // bound = b;
-        // } else {
-        // bound = bound.union(b);
-        // }
-        // }
+
         GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
         Rectangle b;
         if (config != null) {
@@ -622,7 +600,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         setExtendedState((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH ? JFrame.NORMAL
             : JFrame.MAXIMIZED_BOTH);
         log.info("End of loading the GUI..."); //$NON-NLS-1$
-
     }
 
     private JMenuBar createMenuBar() {

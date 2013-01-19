@@ -39,6 +39,7 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
         Activator.bundleContext = bundleContext;
+        MeasureTool.viewSetting.initMonitors();
         PREFERENCES.init(bundleContext);
         MeasureTool.viewSetting.applyPreferences(PREFERENCES.getDefaultPreferences());
 
