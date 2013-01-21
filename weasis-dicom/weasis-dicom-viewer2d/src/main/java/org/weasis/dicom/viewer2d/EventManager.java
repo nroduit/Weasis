@@ -721,7 +721,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         }
 
-        presetAction.setSelectedItem(presetAction.getFirstItem());
         flipAction.setSelected(false);
         rotateAction.setValue(0);
         inverseLutAction.setSelected(false);
@@ -729,6 +728,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         filterAction.setSelectedItem(KernelData.NONE);
         koAction.setSelectedItem(ActionState.NONE);
         prAction.setSelectedItem(ActionState.NONE);
+        presetAction.setSelectedItem(presetAction.getFirstItem());
     }
 
     public void reset(ResetTools action) {

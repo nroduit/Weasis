@@ -212,6 +212,12 @@ public abstract class ComboItemListener implements ListDataListener, ChangeListe
         return menu;
     }
 
+    public void createMenu(JMenu menu) {
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
+        radioMenu.fillMenu(menu);
+    }
+
     public GroupRadioMenu createGroupRadioMenu() {
         GroupRadioMenu radioMenu = new GroupRadioMenu();
         registerComponent(radioMenu);
