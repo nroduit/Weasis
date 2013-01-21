@@ -24,8 +24,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
@@ -51,7 +49,6 @@ import javax.swing.TransferHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -62,7 +59,6 @@ import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.CropOperation;
 import org.weasis.core.api.image.FilterOperation;
 import org.weasis.core.api.image.FlipOperation;
 import org.weasis.core.api.image.LutShape;
@@ -73,7 +69,6 @@ import org.weasis.core.api.image.ShutterOperation;
 import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -104,7 +99,6 @@ import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
-import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -112,10 +106,7 @@ import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
-import org.weasis.dicom.codec.KeyObjectReader;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.OverlayOperation;
@@ -130,7 +121,7 @@ import org.weasis.dicom.explorer.MimeSystemAppFactory;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
-    
+
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
 
@@ -173,8 +164,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     center();
                 }
                 if (lens != null) {
-                    lens.updateZoom();
-
                     int w = getWidth();
                     int h = getHeight();
                     if (w != 0 && h != 0) {
@@ -189,6 +178,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         oldSize.width = w;
                         oldSize.height = h;
                     }
+                    lens.updateZoom();
                 }
             }
         });
@@ -255,6 +245,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public void reset() {
+        ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
+        if (pane != null) {
+            pane.resetMaximizedSelectedImagePane(this);
+        }
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
         DicomImageElement m = getImage();
         // Keeps KO properties (series level)
@@ -265,20 +259,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
         setDefautWindowLevel(m);
         setShutter(m);
-        
-       imageLayer.updateAllImageOperations();
-        Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        zoomVal = zoomVal == null ? 1.0 : zoomVal;
-        if (zoomVal <= 0.0) {
-            // TODO use same code view resize listener
-            zoom(0.0);
-            center();
-        } else {
-            zoom(zoomVal);
-        }
+
+        imageLayer.updateAllImageOperations();
+        resetZoom();
         eventManager.updateComponentsListener(this);
     }
-
 
     @Override
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
@@ -417,10 +402,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     Graphic graphic =
                         pts.size() == 2 ? new LineGraphic(pts.get(0), pts.get(1), 1.0f, color, false)
                             : new PolygonGraphic(pts, color, 1.0f, false, false);
-                        AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
-                        if (layer != null) {
-                            layer.addGraphic(graphic);
-                        }
+                    AbstractLayer layer = getLayerModel().getLayer(Tools.CROSSLINES.getId());
+                    if (layer != null) {
+                        layer.addGraphic(graphic);
+                    }
                 } catch (InvalidShapeException e) {
                     LOGGER.error(e.getMessage());
                 }
@@ -1003,24 +988,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         //                            .getString("View2dContainer.view_protocols"))); //$NON-NLS-1$
         // }
 
-
-
-            ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-            if (presetAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.presets"));//$NON-NLS-1$
-                menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
-                for (Component mitem : menu.getMenuComponents()) {
-                    RadioMenuItem ritem = ((RadioMenuItem) mitem);
-                    PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
-                    if (preset.getKeyCode() > 0) {
-                        ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
-                    }
+        ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+        if (presetAction instanceof ComboItemListener) {
+            JMenu menu =
+                ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
+                    .getString("View2dContainer.presets"));//$NON-NLS-1$
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
+            for (Component mitem : menu.getMenuComponents()) {
+                RadioMenuItem ritem = ((RadioMenuItem) mitem);
+                PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
+                if (preset.getKeyCode() > 0) {
+                    ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
                 }
-                popupMenu.add(menu);
             }
-        
+            popupMenu.add(menu);
+        }
 
         // if (p.getBooleanProperty("weasis.contextmenu.lut", true)) {
         // ActionState lutShapeAction = eventManager.getAction(ActionW.LUT_SHAPE);
@@ -1029,91 +1011,87 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // }
         // }
 
-            ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
-            if (stackAction instanceof ComboItemListener) {
-                JMenu menu =
-                    ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
-                        .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
-                ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
-                if (invstackAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) invstackAction).createUnregiteredJCheckBoxMenuItem(Messages
-                        .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
-                }
-                popupMenu.add(menu);
+        ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
+        if (stackAction instanceof ComboItemListener) {
+            JMenu menu =
+                ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
+                    .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+            ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
+            if (invstackAction instanceof ToggleButtonListener) {
+                menu.add(new JSeparator());
+                menu.add(((ToggleButtonListener) invstackAction).createUnregiteredJCheckBoxMenuItem(Messages
+                    .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
             }
-        
-
-
-            ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-            if (rotateAction instanceof SliderChangeListener) {
-                popupMenu.add(new JSeparator());
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
-                JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-                final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue(0);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() - 90 + 360) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 90) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
-                menuItem.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        rotation.setValue((rotation.getValue() + 180) % 360);
-                    }
-                });
-                menu.add(menuItem);
-                ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-                if (flipAction instanceof ToggleButtonListener) {
-                    menu.add(new JSeparator());
-                    menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
-                        .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
-                }
-                popupMenu.add(menu);
-            }
-        
-
-        popupMenu.add(new JSeparator());
-
-
-            JMenu menu = ResetTools.createUnregisteredJMenu();
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
             popupMenu.add(menu);
-        
-            JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
-            close.addActionListener(new ActionListener() {
+        }
+
+        ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
+        if (rotateAction instanceof SliderChangeListener) {
+            popupMenu.add(new JSeparator());
+            JMenu menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+            JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+            final SliderChangeListener rotation = (SliderChangeListener) rotateAction;
+            menuItem.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    event.getSelectedView2dContainer();
-                    View2d.this.setSeries(null, null);
+                    rotation.setValue(0);
                 }
             });
-            popupMenu.add(close);
-        
+            menu.add(menuItem);
+            menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    rotation.setValue((rotation.getValue() - 90 + 360) % 360);
+                }
+            });
+            menu.add(menuItem);
+            menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    rotation.setValue((rotation.getValue() + 90) % 360);
+                }
+            });
+            menu.add(menuItem);
+            menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    rotation.setValue((rotation.getValue() + 180) % 360);
+                }
+            });
+            menu.add(menuItem);
+            ActionState flipAction = eventManager.getAction(ActionW.FLIP);
+            if (flipAction instanceof ToggleButtonListener) {
+                menu.add(new JSeparator());
+                menu.add(((ToggleButtonListener) flipAction).createUnregiteredJCheckBoxMenuItem(Messages
+                    .getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+            }
+            popupMenu.add(menu);
+        }
+
+        popupMenu.add(new JSeparator());
+
+        JMenu menu = ResetTools.createUnregisteredJMenu();
+        menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+        popupMenu.add(menu);
+
+        JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
+        close.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                event.getSelectedView2dContainer();
+                View2d.this.setSeries(null, null);
+            }
+        });
+        popupMenu.add(close);
+
         return popupMenu;
     }
 

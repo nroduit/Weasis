@@ -363,6 +363,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
     }
 
+    public void resetMaximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
+        if (layoutModel.getConstraints().size() > 1 && grid.getComponentCount() == 1) {
+            maximizedSelectedImagePane(defaultView2d);
+        }
+    }
+
     public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
         final LinkedHashMap<LayoutConstraints, JComponent> elements = layoutModel.getConstraints();
         if (elements.size() > 1) {

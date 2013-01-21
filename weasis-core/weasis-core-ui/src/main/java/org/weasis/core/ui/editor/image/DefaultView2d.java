@@ -1421,20 +1421,29 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return null;
     }
 
-    public void reset() {
-        initActionWState();
-        setDefautWindowLevel(getImage());
-
-        imageLayer.updateAllImageOperations();
+    public void resetZoom() {
         Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
         zoomVal = zoomVal == null ? 1.0 : zoomVal;
         if (zoomVal <= 0.0) {
-            // TODO use same code view resize listener
             zoom(0.0);
             center();
         } else {
             zoom(zoomVal);
         }
+    }
+
+    public void reset() {
+        ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
+        if (pane != null) {
+            pane.resetMaximizedSelectedImagePane(this);
+        }
+
+        initActionWState();
+        setDefautWindowLevel(getImage());
+
+        imageLayer.updateAllImageOperations();
+        resetZoom();
+
         eventManager.updateComponentsListener(this);
     }
 

@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.base.viewer2d;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -70,6 +72,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 
 public class View2d extends DefaultView2d<ImageElement> {
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
+    private final Dimension oldSize;
 
     public View2d(ImageViewerEventManager<ImageElement> eventManager) {
         super(eventManager);
@@ -88,6 +91,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         TempLayer layerTmp = new TempLayer(getLayerModel());
         getLayerModel().addLayer(layerTmp);
 
+        oldSize = new Dimension(0, 0);
     }
 
     @Override
@@ -99,13 +103,29 @@ public class View2d extends DefaultView2d<ImageElement> {
 
             @Override
             public void componentResized(ComponentEvent e) {
-                // TODO add preference keep image in best fit when resize
                 Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
                 // Resize in best fit window only if the previous value is also a best fit value.
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
+                    center();
                 }
-                center();
+                if (lens != null) {
+                    int w = getWidth();
+                    int h = getHeight();
+                    if (w != 0 && h != 0) {
+                        Rectangle bound = lens.getBounds();
+                        if (oldSize.width != 0 && oldSize.height != 0) {
+                            int centerx = bound.width / 2;
+                            int centery = bound.height / 2;
+                            bound.x = (bound.x + centerx) * w / oldSize.width - centerx;
+                            bound.y = (bound.y + centery) * h / oldSize.height - centery;
+                            lens.setLocation(bound.x, bound.y);
+                        }
+                        oldSize.width = w;
+                        oldSize.height = h;
+                    }
+                    lens.updateZoom();
+                }
             }
         });
         // enableMouseAndKeyListener(EventManager.getInstance().getMouseActions());
