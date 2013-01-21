@@ -179,8 +179,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     center();
                 }
                 if (lens != null) {
-                    lens.updateZoom();
-
                     int w = getWidth();
                     int h = getHeight();
                     if (w != 0 && h != 0) {
@@ -195,6 +193,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         oldSize.width = w;
                         oldSize.height = h;
                     }
+                    lens.updateZoom();
                 }
             }
         });
@@ -272,6 +271,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     void setPresentationState(Object val) {
+        ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
+        if (pane != null) {
+            pane.resetMaximizedSelectedImagePane(this);
+        }
         // TODO use PR reader for other frame when changing image of the series
         PresentationStateReader pr =
             val instanceof DicomSpecialElement ? new PresentationStateReader((DicomSpecialElement) val) : null;
@@ -285,6 +288,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
         }
         DicomImageElement m = getImage();
+
         if (m != null) {
             // Restore the original image pixel size
             double[] prPixSize = (double[]) actionsInView.get(PresentationStateReader.TAG_OLD_PIX_SIZE);
@@ -317,17 +321,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             applyPresentationState(pr, m);
         }
         imageLayer.setPreprocessing((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
-        eventManager.updateComponentsListener(this);
         imageLayer.updateAllImageOperations();
-        Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        zoomVal = zoomVal == null ? 1.0 : zoomVal;
-        if (zoomVal <= 0.0) {
-            // TODO use same code view resize listener
-            zoom(0.0);
-            center();
-        } else {
-            zoom(zoomVal);
-        }
+        resetZoom();
         eventManager.updateComponentsListener(this);
     }
 
