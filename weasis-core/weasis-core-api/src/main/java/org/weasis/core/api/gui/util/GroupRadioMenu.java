@@ -76,25 +76,29 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         return menu;
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         setSelected(dataModel.getSelectedItem());
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof RadioMenuItem) {
             RadioMenuItem item = (RadioMenuItem) e.getSource();
             if (item.isSelected()) {
-                dataModel.setSelectedItem(item.getObject());
+                dataModel.setSelectedItem(item.getUserObject());
             }
         }
     };
@@ -105,9 +109,9 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         } else {
             for (int i = 0; i < itemList.size(); i++) {
                 RadioMenuItem item = itemList.get(i);
-                if (item.getObject() == selected) {
+                if (item.getUserObject() == selected) {
                     item.setSelected(true);// Do not trigger actionPerformed
-                    dataModel.setSelectedItem(item.getObject());
+                    dataModel.setSelectedItem(item.getUserObject());
                     return;
                 }
             }
@@ -138,15 +142,15 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
 
     @Override
     public void setModel(ComboBoxModel dataModel) {
-        boolean changeListener = dataModel != null && dataModel != this.dataModel;
         if (this.dataModel != null) {
             this.dataModel.removeListDataListener(this);
         }
+        if (dataModel != null) {
+            dataModel.removeListDataListener(this);
+        }
         this.dataModel = dataModel == null ? new DefaultComboBoxModel() : dataModel;
         init();
-        if (changeListener) {
-            this.dataModel.addListDataListener(this);
-        }
+        this.dataModel.addListDataListener(this);
     }
 
     @Override

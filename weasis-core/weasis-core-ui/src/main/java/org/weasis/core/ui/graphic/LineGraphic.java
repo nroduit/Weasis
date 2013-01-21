@@ -56,6 +56,24 @@ public class LineGraphic extends AbstractDragGraphic {
         super(2, paintColor, lineThickness, labelVisible);
     }
 
+    public LineGraphic(Point2D ptStart, Point2D ptEnd, float lineThickness, Color paintColor, boolean labelVisible)
+        throws InvalidShapeException {
+        super(2, paintColor, lineThickness, labelVisible, false);
+        if (ptStart == null || ptEnd == null) {
+            throw new InvalidShapeException("Point2D is null!");
+        }
+        setHandlePointList(ptStart, ptEnd);
+        if (!isShapeValid()) {
+            throw new InvalidShapeException("This shape cannot be drawn");
+        }
+    }
+
+    protected void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
+        setHandlePoint(0, ptStart == null ? null : (Point2D) ptStart.clone());
+        setHandlePoint(1, ptEnd == null ? null : (Point2D) ptEnd.clone());
+        updateShapeOnDrawing(null);
+    }
+
     @Override
     public Icon getIcon() {
         return ICON;
@@ -135,12 +153,12 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public Point2D getStartPoint() {
         updateTool();
-        return ptA;
+        return ptA == null ? null : (Point2D) ptA.clone();
     }
 
     public Point2D getEndPoint() {
         updateTool();
-        return ptB;
+        return ptB == null ? null : (Point2D) ptB.clone();
     }
 
     @Override

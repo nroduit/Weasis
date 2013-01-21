@@ -21,6 +21,7 @@ import org.osgi.service.prefs.Preferences;
 import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -128,6 +129,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
         iniAction(panAction = newPanAction());
+        iniAction(new BasicActionState(ActionW.RESET));
 
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
         mouseActions.applyPreferences(pref);
@@ -287,22 +289,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     public void resetAllActions() {
-        if (selectedView2dContainer != null) {
-            DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-            ImageElement img = defaultView2d.getImage();
-            if (img != null) {
-                boolean pixelPadding =
-                    JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
-                windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
-                levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
-            }
-        }
-        flipAction.setSelected(false);
-        rotateAction.setValue(0);
-        inverseLutAction.setSelected(false);
-        lutAction.setSelectedItem(ByteLut.defaultLUT);
-        filterAction.setSelectedItem(KernelData.NONE);
-        firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+        firePropertyChange(ActionW.RESET.cmd(), null, true);
     }
 
     public void reset(ResetTools action) {

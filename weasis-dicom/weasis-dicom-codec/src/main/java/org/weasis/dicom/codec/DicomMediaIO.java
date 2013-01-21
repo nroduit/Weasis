@@ -1261,7 +1261,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     }
 
     private void resetLocal() {
-        System.err.println("Close stream: reset local");
+        // System.err.println("Close stream: reset local");
         FileUtil.safeClose(iis);
         iis = null;
         dis = null;
@@ -1412,7 +1412,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 // Reset must be called only after reading the header, because closing imageStream does not let through
                 // getTile(x,y) read image data.
                 // unlock file to be deleted on exit
-                System.err.println("Close stream: reading header");
+                // System.err.println("Close stream: reading header");
                 FileUtil.safeClose(iis);
                 iis = null;
             }

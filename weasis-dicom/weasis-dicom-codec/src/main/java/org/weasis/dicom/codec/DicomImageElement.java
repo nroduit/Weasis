@@ -434,6 +434,20 @@ public class DicomImageElement extends ImageElement {
         return windowingPresetCollection;
     }
 
+    public boolean containsPreset(PresetWindowLevel preset) {
+        if (preset != null) {
+            List<PresetWindowLevel> collection = getPresetList(false);
+            if (collection != null) {
+                for (PresetWindowLevel p : collection) {
+                    if (p == preset) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public Collection<LutShape> getLutShapeCollection(boolean pixelPadding) {
         if (lutShapeCollection != null) {
             return lutShapeCollection;

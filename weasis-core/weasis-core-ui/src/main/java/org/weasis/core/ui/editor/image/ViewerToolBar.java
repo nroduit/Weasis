@@ -16,6 +16,10 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
@@ -44,11 +48,12 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
-    public static final ActionW[] actionsButtons =
-    // ActionW.DRAW,
-        { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.MEASURE,
-            ActionW.CONTEXTMENU };
-    public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION };
+    public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<ActionW>(Arrays
+        .asList(new ActionW[] { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
+            ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION })));
+
+    public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
+        ActionW.NO_ACTION };
     public static final Icon MouseLeftIcon =
         new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png")); //$NON-NLS-1$
     public static final Icon MouseRightIcon = new ImageIcon(
@@ -199,24 +204,38 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return measureToolBar;
     }
 
+    public void removeMouseAction(ActionW action) {
+        if (action != null) {
+            actionsButtons.remove(action);
+            String cmd = action.cmd();
+            MouseActions actions = eventManager.getMouseActions();
+            if (cmd.equals(mouseLeft.getActionCommand())) {
+                ActionW last = actionsButtons.get(0);
+                actions.setAction(MouseActions.LEFT, last.cmd());
+                changeButtonState(MouseActions.LEFT, last.cmd());
+            }
+        }
+    }
+
     private JPopupMenu getPopupMenuButton(DropDownButton dropButton) {
         String type = dropButton.getType();
         String action = eventManager.getMouseActions().getAction(type);
         JPopupMenu popupMouseButtons = new JPopupMenu(type);
         popupMouseButtons.setInvoker(dropButton);
         ButtonGroup groupButtons = new ButtonGroup();
-        for (int i = 0; i < actionsButtons.length; i++) {
-            JRadioButtonMenuItem radio =
-                new JRadioButtonMenuItem(actionsButtons[i].getTitle(), actionsButtons[i].getIcon(), actionsButtons[i]
-                    .cmd().equals(action));
-            radio.setActionCommand(actionsButtons[i].cmd());
-            radio.addActionListener(this);
-            if (MouseActions.LEFT.equals(type)) {
-                radio.setAccelerator(KeyStroke.getKeyStroke(actionsButtons[i].getKeyCode(),
-                    actionsButtons[i].getModifier()));
+        synchronized (actionsButtons) {
+            for (int i = 0; i < actionsButtons.size(); i++) {
+                ActionW b = actionsButtons.get(i);
+                JRadioButtonMenuItem radio =
+                    new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+                radio.setActionCommand(b.cmd());
+                radio.addActionListener(this);
+                if (MouseActions.LEFT.equals(type)) {
+                    radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+                }
+                popupMouseButtons.add(radio);
+                groupButtons.add(radio);
             }
-            popupMouseButtons.add(radio);
-            groupButtons.add(radio);
         }
         return popupMouseButtons;
     }
@@ -295,7 +314,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private Icon buildMouseIcon(String type, String action) {
         final Icon mouseIcon = getMouseIcon(type);
         ActionW actionW = getAction(actionsButtons, action);
-        final Icon smallIcon = actionW == null ? null : actionW.getIcon();
+        final Icon smallIcon = actionW == null ? ActionW.NO_ACTION.getIcon() : actionW.getIcon();
+
         return new DropButtonIcon(new Icon() {
 
             @Override
@@ -333,15 +353,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             menu = new SynchGroupMenu();
             m.registerComponent(menu);
         }
-        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) { //$NON-NLS-1$
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                    menu.setInvoker(this);
-                    return menu;
-                }
+        final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                menu.setInvoker(this);
+                return menu;
+            }
 
-            };
+        };
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
         return button;
     }
@@ -386,11 +406,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return null;
     }
 
-    private ActionW getAction(ActionW[] actions, String command) {
-        if (actions != null) {
-            for (ActionW a : actions) {
-                if (a.cmd().equals(command)) {
-                    return a;
+    public ActionW getAction(List<ActionW> buttons, String command) {
+        if (buttons != null) {
+            synchronized (buttons) {
+                for (ActionW a : buttons) {
+                    if (a.cmd().equals(command)) {
+                        return a;
+                    }
                 }
             }
         }
@@ -410,15 +432,19 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         return MouseLeftIcon;
     }
 
-    public static final ActionW getNextCommand(ActionW[] actions, String command) {
-        if (actions != null && actions.length > 0) {
+    public static final ActionW getNextCommand(List<ActionW> buttons, String command) {
+        if (buttons != null && buttons.size() > 0) {
             int index = 0;
-            for (int i = 0; i < actions.length; i++) {
-                if (actions[i].cmd().equals(command)) {
-                    index = i == actions.length - 1 ? 0 : i + 1;
+            synchronized (buttons) {
+                for (int i = 0; i < buttons.size(); i++) {
+                    ActionW b = buttons.get(i);
+                    if (b.cmd().equals(command)) {
+                        index = (i == buttons.size() - 1) ? 0 : i + 1;
+                        break;
+                    }
                 }
+                return buttons.get(index);
             }
-            return actions[index];
         }
         return null;
     }

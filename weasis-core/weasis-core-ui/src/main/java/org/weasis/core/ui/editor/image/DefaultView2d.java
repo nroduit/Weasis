@@ -290,18 +290,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.series = series;
         if (oldsequence != null && oldsequence != series) {
             closingSeries(oldsequence);
+            getLayerModel().deleteAllGraphics();
             // All the action values are initialized again with the series changing
             initActionWState();
         }
         if (series == null) {
             imageLayer.setImage(null, null);
-            getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
             E media = selectedMedia;
             if (selectedMedia == null) {
-                series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                media =
+                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
 
             setDefautWindowLevel(media);
@@ -533,6 +534,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setActionsInView(String action, Object value) {
+        setActionsInView(action, value, false);
+    }
+
+    public void setActionsInView(String action, Object value, boolean repaint) {
         if (action != null) {
             actionsInView.put(action, value);
             repaint();
@@ -683,11 +688,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setShutter(MediaElement media) {
-        if (media != null) {
-            actionsInView.put(TagW.ShutterFinalShape.getName(), media.getTagValue(TagW.ShutterFinalShape));
-            actionsInView.put(TagW.ShutterPSValue.getName(), media.getTagValue(TagW.ShutterPSValue));
-            actionsInView.put(TagW.ShutterRGBColor.getName(), media.getTagValue(TagW.ShutterRGBColor));
-        }
+        // If no image, reset the shutter
+        boolean noMedia = media == null;
+        actionsInView.put(TagW.ShutterFinalShape.getName(), noMedia ? null : media.getTagValue(TagW.ShutterFinalShape));
+        actionsInView.put(TagW.ShutterPSValue.getName(), noMedia ? null : media.getTagValue(TagW.ShutterPSValue));
+        actionsInView.put(TagW.ShutterRGBColor.getName(), noMedia ? null : media.getTagValue(TagW.ShutterRGBColor));
+
     }
 
     public Object getLensActionValue(String action) {
@@ -779,10 +785,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateImageOperation(RotationOperation.name);
             updateAffineTransform();
+        } else if (command.equals(ActionW.RESET.cmd())) {
+            reset();
         } else if (command.equals(ActionW.ZOOM.cmd())) {
             double zoomFactor = (Double) evt.getNewValue();
             zoom(zoomFactor);
-
         } else if (command.equals(ActionW.LENSZOOM.cmd())) {
             if (lens != null) {
                 lens.setActionInView(ActionW.ZOOM.cmd(), evt.getNewValue());
@@ -1035,7 +1042,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0) {
+            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
                 return;
             }
 
@@ -1052,13 +1059,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Avoid any dragging on selection when Shift Button is Down
             if (!mouseEvt.isShiftDown()) {
-
                 // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor consequently
-                List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
                 Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
 
                 if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
                     AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+                    List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
 
                     if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
 
@@ -1257,7 +1263,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             // Check if extended modifier of mouse event equals the current buttonMask
             // Also asserts that Mouse adapter is not disable
-            if ((e.getModifiersEx() & buttonMask) == 0) {
+            if (e.isConsumed() || (e.getModifiersEx() & buttonMask) == 0) {
                 return;
             }
 
@@ -1285,11 +1291,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 if (!mouseEvt.isShiftDown()) {
                     // Evaluates if mouse is on a dragging position, and changes cursor image consequently
-                    List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
                     Graphic firstGraphicIntersecting = getLayerModel().getFirstGraphicIntersecting(mouseEvt);
 
                     if (firstGraphicIntersecting instanceof AbstractDragGraphic) {
                         AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+                        List<AbstractDragGraphic> selectedDragGraphList = getLayerModel().getSelectedDragableGraphics();
 
                         if (selectedDragGraphList != null && selectedDragGraphList.contains(dragGraph)) {
 
@@ -1327,12 +1333,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     class FocusHandler extends MouseActionAdapter {
 
         @Override
-        public void mousePressed(MouseEvent mouseevent) {
+        public void mousePressed(MouseEvent evt) {
             ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
             if (pane == null) {
                 return;
             }
-            if (mouseevent.getClickCount() == 2) {
+            if (evt.getClickCount() == 2) {
                 pane.maximizedSelectedImagePane(DefaultView2d.this);
                 return;
             }
@@ -1344,7 +1350,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             // request the focus even it is the same pane selected
             requestFocusInWindow();
-            int modifiers = mouseevent.getModifiersEx();
+            int modifiers = evt.getModifiersEx();
             MouseActions mouseActions = eventManager.getMouseActions();
             ActionW action = null;
             // left mouse button, always active
@@ -1413,6 +1419,23 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
         }
         return null;
+    }
+
+    public void reset() {
+        initActionWState();
+        setDefautWindowLevel(getImage());
+
+        imageLayer.updateAllImageOperations();
+        Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+        zoomVal = zoomVal == null ? 1.0 : zoomVal;
+        if (zoomVal <= 0.0) {
+            // TODO use same code view resize listener
+            zoom(0.0);
+            center();
+        } else {
+            zoom(zoomVal);
+        }
+        eventManager.updateComponentsListener(this);
     }
 
 }
