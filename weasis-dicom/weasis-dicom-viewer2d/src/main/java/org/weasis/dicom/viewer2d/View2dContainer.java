@@ -61,8 +61,10 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.PrintDialog;
@@ -121,16 +123,23 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             INI_COMPONENTS = true;
             // Add standard toolbars
             ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
-            TOOLBARS.add(0, bar);
-            TOOLBARS.add(1, bar.getMeasureToolBar());
-            More2DToolBar more2dBar = new More2DToolBar<DicomImageElement>();
-            TOOLBARS.add(2, more2dBar);
+            TOOLBARS.add(bar);
+            TOOLBARS.add(bar.getMeasureToolBar());
+            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
+            TOOLBARS.add(zoomBar);
+            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
+            TOOLBARS.add(rotationBar);
+            LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
+            TOOLBARS.add(lutdBar);
             CineToolBar cineBar = new CineToolBar<DicomImageElement>();
-            TOOLBARS.add(3, cineBar);
+            TOOLBARS.add(cineBar);
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
                 Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+                zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
+                rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), false));
+                lutdBar.setEnabled(prefNode.getBoolean(LutToolBar.class.getName(), true));
                 cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
             }
 

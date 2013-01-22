@@ -2,12 +2,9 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 
@@ -20,10 +17,10 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.ui.util.WtoolBar;
 
-public class More2DToolBar<DicomImageElement> extends WtoolBar {
+public class LutToolBar<DicomImageElement> extends WtoolBar {
 
-    public More2DToolBar() {
-        super("More 2D Tools", TYPE.tool);
+    public LutToolBar() {
+        super("Lookup Table Toolbar", TYPE.tool);
 
         GroupRadioMenu menu = null;
         ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
@@ -43,28 +40,54 @@ public class More2DToolBar<DicomImageElement> extends WtoolBar {
         presetButton.setToolTipText("Presets");
         add(presetButton);
 
+        GroupRadioMenu menuLut = null;
+        ActionState lutAction = EventManager.getInstance().getAction(ActionW.LUT);
+        if (lutAction instanceof ComboItemListener) {
+            menuLut = ((ComboItemListener) lutAction).createGroupRadioMenu();
+        }
+
+        final DropDownButton lutButton = new DropDownButton(ActionW.LUT.cmd(), buildLutIcon(), menuLut) { //$NON-NLS-1$
+                @Override
+                protected JPopupMenu getPopupMenu() {
+                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                    menu.setInvoker(this);
+                    return menu;
+                }
+            };
+
+        lutButton.setToolTipText("LUT selection");
+        add(lutButton);
+
         final JToggleButton invertButton = new JToggleButton();
         invertButton.setToolTipText("Invert Grayscale");
-        // TODO change ICON
         invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
         ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
         if (invlutAction instanceof ToggleButtonListener) {
             ((ToggleButtonListener) invlutAction).registerComponent(invertButton);
         }
         add(invertButton);
+    }
 
-        final JButton resetButton = new JButton();
-        resetButton.setToolTipText("Display Reset");
-        resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
-        resetButton.addActionListener(new ActionListener() {
+    private Icon buildLutIcon() {
+        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png")); //$NON-NLS-1$
+
+        return new DropButtonIcon(new Icon() {
 
             @Override
-            public void actionPerformed(ActionEvent e) {
-                EventManager.getInstance().reset(ResetTools.All);
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                mouseIcon.paintIcon(c, g, x, y);
+            }
+
+            @Override
+            public int getIconWidth() {
+                return mouseIcon.getIconWidth();
+            }
+
+            @Override
+            public int getIconHeight() {
+                return mouseIcon.getIconHeight();
             }
         });
-        add(resetButton);
-
     }
 
     private Icon buildWLIcon() {

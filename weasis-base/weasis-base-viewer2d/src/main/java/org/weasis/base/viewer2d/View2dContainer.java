@@ -24,8 +24,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
+import org.osgi.service.prefs.Preferences;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
+import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -45,8 +47,10 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 import org.weasis.core.ui.util.Toolbar;
@@ -76,8 +80,19 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             INI_COMPONENTS = true;
             // Add standard toolbars
             ViewerToolBar<ImageElement> bar = new ViewerToolBar<ImageElement>(EventManager.getInstance());
-            TOOLBARS.add(0, bar);
-            TOOLBARS.add(1, bar.getMeasureToolBar());
+            TOOLBARS.add(bar);
+            TOOLBARS.add(bar.getMeasureToolBar());
+            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
+            TOOLBARS.add(zoomBar);
+            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
+            TOOLBARS.add(rotationBar);
+
+            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            if (prefs != null) {
+                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+                zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
+                rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), true));
+            }
 
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
 

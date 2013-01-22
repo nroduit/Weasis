@@ -23,4 +23,6 @@ public interface Toolbar {
     String getBarName();
 
     WtoolBar getComponent();
+
+    boolean isEnabled();
 }
