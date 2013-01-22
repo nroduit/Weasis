@@ -55,7 +55,6 @@ public class More2DToolBar<DicomImageElement> extends WtoolBar {
 
         final JButton resetButton = new JButton();
         resetButton.setToolTipText("Display Reset");
-        // TODO change ICON
         resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
         resetButton.addActionListener(new ActionListener() {
 
@@ -69,8 +68,7 @@ public class More2DToolBar<DicomImageElement> extends WtoolBar {
     }
 
     private Icon buildWLIcon() {
-        // TODO change ICON
-        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/22x22/winLevel.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png")); //$NON-NLS-1$
 
         return new DropButtonIcon(new Icon() {
 
