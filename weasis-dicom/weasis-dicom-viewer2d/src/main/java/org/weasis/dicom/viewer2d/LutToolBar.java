@@ -69,7 +69,7 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
     }
 
     private Icon buildLutIcon() {
-        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/lut.png")); //$NON-NLS-1$
 
         return new DropButtonIcon(new Icon() {
 
