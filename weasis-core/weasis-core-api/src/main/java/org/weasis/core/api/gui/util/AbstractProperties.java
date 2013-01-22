@@ -46,7 +46,7 @@ public abstract class AbstractProperties {
          */
         APP_TEMP_DIR =
             new File(tdir,
-                "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
         try {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR);

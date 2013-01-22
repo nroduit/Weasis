@@ -993,7 +993,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             JMenu menu =
                 ((ComboItemListener) presetAction).createUnregisteredRadioMenu(Messages
                     .getString("View2dContainer.presets"));//$NON-NLS-1$
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png")));
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/winLevel.png"))); //$NON-NLS-1$
             for (Component mitem : menu.getMenuComponents()) {
                 RadioMenuItem ritem = ((RadioMenuItem) mitem);
                 PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
@@ -1078,7 +1078,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         popupMenu.add(new JSeparator());
 
         JMenu menu = ResetTools.createUnregisteredJMenu();
-        menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+        menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
         popupMenu.add(menu);
 
         JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$

@@ -222,7 +222,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
                 hasPixel = header.getInt(Tag.BitsStored, header.getInt(Tag.BitsAllocated, 0)) > 0;
                 if (hasPixel) {
-                    if (header.getString(Tag.TransferSyntaxUID, "").startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$ $NON-NLS-2$
+                    if (header.getString(Tag.TransferSyntaxUID, "").startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$ //$NON-NLS-2$ $NON-NLS-2$
                         // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
                         // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
                         // MPEG4 AVC/H.264 1.2.840.10008.1.2.4.102
@@ -288,7 +288,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     private void initCompressedImageReader(int imageIndex) throws IOException {
         ImageReaderFactory f = ImageReaderFactory.getInstance();
         this.reader = f.getReaderForTransferSyntax(tsuid);
-        if (!"1.2.840.10008.1.2.4.94".equals(tsuid)) {
+        if (!"1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
             this.itemParser = new ItemParser(dis, iis, numberOfFrame, tsuid);
             this.siis = new SegmentedImageInputStream(iis, itemParser);
         }
@@ -308,7 +308,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         RawImageInputStream riis =
             new RawImageInputStream(iis, createImageTypeSpecifier(), frameOffsets, imageDimensions);
         riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-        reader = ImageIO.getImageReadersByFormatName("RAW").next();
+        reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
         reader.setInput(riis);
     }
 
@@ -833,20 +833,20 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 return raster;
             }
             String pmi = (String) tags.get(TagW.PhotometricInterpretation);
-            if (pmi.endsWith("422") || pmi.endsWith("420")) {
-                LOGGER.debug("Using a 422/420 partial component image reader.");
+            if (pmi.endsWith("422") || pmi.endsWith("420")) { //$NON-NLS-1$ //$NON-NLS-2$
+                LOGGER.debug("Using a 422/420 partial component image reader."); //$NON-NLS-1$
                 if (param.getSourceXSubsampling() != 1 || param.getSourceYSubsampling() != 1
                     || param.getSourceRegion() != null) {
-                    LOGGER.warn("YBR_*_422 and 420 reader does not support source sub-sampling or source region.");
-                    throw new UnsupportedOperationException("Implement sub-sampling/soure region.");
+                    LOGGER.warn("YBR_*_422 and 420 reader does not support source sub-sampling or source region."); //$NON-NLS-1$
+                    throw new UnsupportedOperationException("Implement sub-sampling/soure region."); //$NON-NLS-1$
                 }
                 SampleModel sm = createSampleModel();
                 WritableRaster wr = Raster.createWritableRaster(sm, new Point());
                 DataBufferByte dbb = (DataBufferByte) wr.getDataBuffer();
                 byte[] data = dbb.getData();
                 int frameLength = calculateFrameLength();
-                LOGGER.debug("Seeking to " + (pixelDataPos + imageIndex * frameLength) + " and reading " + data.length
-                    + " bytes.");
+                LOGGER.debug("Seeking to " + (pixelDataPos + imageIndex * frameLength) + " and reading " + data.length //$NON-NLS-1$ //$NON-NLS-2$
+                    + " bytes."); //$NON-NLS-1$
                 iis.seek(pixelDataPos + imageIndex * frameLength);
                 iis.read(data, 0, frameLength);
                 if (swapByteOrder) {
@@ -906,12 +906,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     clampPixelValues(bi.getRaster());
                 }
                 postDecompress();
-                if ("PALETTE COLOR".equalsIgnoreCase(pmi) && bi.getColorModel().getNumComponents() == 1) {
+                if ("PALETTE COLOR".equalsIgnoreCase(pmi) && bi.getColorModel().getNumComponents() == 1) { //$NON-NLS-1$
                     bi =
                         new BufferedImage(ColorModelFactory.createColorModel(readMetaData(false)), bi.getRaster(),
                             false, null);
                 }
-            } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
+            } else if (pmi.endsWith("422") || pmi.endsWith("420")) { //$NON-NLS-1$ //$NON-NLS-2$
                 bi = readYbr400(imageIndex, param);
             } else {
                 bi = reader.read(imageIndex, param);
@@ -988,20 +988,20 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 //                    bi = JAI.create("ImageRead", pb, hints); //$NON-NLS-1$
                 // }
                 // }
-            } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
+            } else if (pmi.endsWith("422") || pmi.endsWith("420")) { //$NON-NLS-1$ //$NON-NLS-2$
                 bi = readYbr400(imageIndex, param);
                 if (bi != null) {
                     File outFile = File.createTempFile("img_", ".jpg", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                     ImageOutputStream out = null;
                     try {
-                        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");
+                        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG"); //$NON-NLS-1$
                         ImageWriter writer = null;
                         while (iter.hasNext()) {
                             ImageWriter w = iter.next();
                             // Other encoder do not write it correctly
                             // Workaround: overrides createSubsetSampleModel() in constructor of
                             // PartialComponentSampleModel
-                            if (w.getClass().getName().equals("com.sun.imageio.plugins.jpeg.JPEGImageWriter")) {
+                            if (w.getClass().getName().equals("com.sun.imageio.plugins.jpeg.JPEGImageWriter")) { //$NON-NLS-1$
                                 writer = w;
                                 break;
                             }
@@ -1079,7 +1079,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     protected void postDecompress() {
         // workaround for Bug in J2KImageReader and
         // J2KImageReaderCodecLib.setInput()
-        if (reader.getClass().getName().startsWith("com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader")) {
+        if (reader.getClass().getName().startsWith("com.sun.media.imageioimpl.plugins.jpeg2000.J2KImageReader")) { //$NON-NLS-1$
             reader.dispose();
             ImageReaderFactory f = ImageReaderFactory.getInstance();
             reader = f.getReaderForTransferSyntax(tsuid);
@@ -1208,7 +1208,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 return dis.readDicomObject();
 
             } else {
-                throw new Exception("Cannot read pixel data");
+                throw new Exception("Cannot read pixel data"); //$NON-NLS-1$
             }
         } finally {
             readingImage = false;
@@ -1233,7 +1233,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         resetLocal();
         if (input != null) {
             if (!(input instanceof ImageInputStream)) {
-                throw new IllegalArgumentException("Input not an ImageInputStream!");
+                throw new IllegalArgumentException("Input not an ImageInputStream!"); //$NON-NLS-1$
             }
             this.iis = (ImageInputStream) input;
         }
@@ -1342,7 +1342,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
 
             if (iis == null) {
-                throw new IllegalStateException("Input not set!");
+                throw new IllegalStateException("Input not set!"); //$NON-NLS-1$
             }
 
             /*
@@ -1386,14 +1386,14 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 swapByteOrder = bigEndian && dis.vr() == VR.OW && dataType == DataBuffer.TYPE_BYTE;
                 if (swapByteOrder && banded) {
                     throw new UnsupportedOperationException(
-                        "Big Endian color-by-plane with Pixel Data VR=OW not implemented");
+                        "Big Endian color-by-plane with Pixel Data VR=OW not implemented"); //$NON-NLS-1$
                 }
                 pixelDataPos = dis.getStreamPosition();
                 pixelDataLen = dis.valueLength();
                 compressed = pixelDataLen == -1;
                 if (compressed) {
                     ImageReaderFactory f = ImageReaderFactory.getInstance();
-                    LOGGER.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
+                    LOGGER.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass()); //$NON-NLS-1$ //$NON-NLS-2$
                     f.adjustDatasetForTransferSyntax(ds, tsuid);
                     clampPixelValues = allocated == 16 && bitsStored < 12 && UID.JPEGExtended24.equals(tsuid);
                 }
@@ -1425,12 +1425,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         int height = (Integer) getTagValue(TagW.Rows);
         int samples = (Integer) getTagValue(TagW.SamplesPerPixel);
         int allocated = (Integer) getTagValue(TagW.BitsAllocated);
-        if (pmi.endsWith("422") || pmi.endsWith("420")) {
+        if (pmi.endsWith("422") || pmi.endsWith("420")) { //$NON-NLS-1$ //$NON-NLS-2$
             int calcWidth = width;
             int calcHeight = height;
             int extraRowSamples = 0;
             int extraColSamples = 0;
-            if (pmi.endsWith("422")) {
+            if (pmi.endsWith("422")) { //$NON-NLS-1$
 
                 if (width % 2 != 0) {
                     // odd number of columns
@@ -1440,7 +1440,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 return (calcWidth * calcHeight * 2 + calcHeight * extraColSamples) * (allocated >> 3);
             }
 
-            if (pmi.endsWith("420")) {
+            if (pmi.endsWith("420")) { //$NON-NLS-1$
                 calcHeight = calcHeight / 2;
                 if (width % 2 != 0) {
                     // odd number of columns
@@ -1487,24 +1487,24 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             return new BandedSampleModel(dataType, width, height, width, OFFSETS_0_1_2, OFFSETS_0_0_0);
         }
 
-        if (pmi.endsWith("422")) {
+        if (pmi.endsWith("422")) { //$NON-NLS-1$
             return new PartialComponentSampleModel(width, height, 2, 1) {
                 @Override
                 public SampleModel createSubsetSampleModel(int[] bands) {
                     if (bands.length != 3) {
-                        throw new RasterFormatException("Accept only 3 bands");
+                        throw new RasterFormatException("Accept only 3 bands"); //$NON-NLS-1$
                     }
                     return this;
                 }
             };
         }
 
-        if ((!compressed) && pmi.endsWith("420")) {
+        if ((!compressed) && pmi.endsWith("420")) { //$NON-NLS-1$
             return new PartialComponentSampleModel(width, height, 2, 2) {
                 @Override
                 public SampleModel createSubsetSampleModel(int[] bands) {
                     if (bands.length != 3) {
-                        throw new RasterFormatException("Accept only 3 bands");
+                        throw new RasterFormatException("Accept only 3 bands"); //$NON-NLS-1$
                     }
                     return this;
                 }
