@@ -101,7 +101,7 @@ public final class FileUtil {
     }
 
     public static File createTempDir(String prefix) {
-        File baseDir = new File(System.getProperty("java.io.tmpdir"));
+        File baseDir = new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
         String baseName = prefix + System.currentTimeMillis();
 
         for (int counter = 0; counter < 1000; counter++) {
@@ -110,7 +110,7 @@ public final class FileUtil {
                 return tempDir;
             }
         }
-        throw new IllegalStateException("Failed to create directory");
+        throw new IllegalStateException("Failed to create directory"); //$NON-NLS-1$
     }
 
     public static void deleteDirectoryContents(final File dir) {
@@ -409,7 +409,7 @@ public final class FileUtil {
                     if (entry.isDirectory()) {
                         queue.push(entry);
                         if (entry.list().length == 0) {
-                            name = name.endsWith("/") ? name : name + "/";
+                            name = name.endsWith("/") ? name : name + "/"; //$NON-NLS-1$ //$NON-NLS-2$
                             zout.putNextEntry(new ZipEntry(name));
                         }
                     } else {

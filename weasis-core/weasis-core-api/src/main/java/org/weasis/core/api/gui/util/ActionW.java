@@ -24,7 +24,7 @@ import org.weasis.core.api.Messages;
 
 public class ActionW {
 
-    public static final ActionW NO_ACTION = new ActionW("No Action", "none", KeyEvent.VK_N, 0, null);
+    public static final ActionW NO_ACTION = new ActionW(Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final ActionW SYNCH = new ActionW(Messages.getString("ActionW.synch"), "synch", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW VIEW_MODE =

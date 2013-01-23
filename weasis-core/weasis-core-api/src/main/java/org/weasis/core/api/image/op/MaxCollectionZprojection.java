@@ -25,7 +25,7 @@ public class MaxCollectionZprojection {
 
     public MaxCollectionZprojection(List<ImageElement> sources, Component view, JProgressBar progressBar) {
         if (sources == null) {
-            throw new IllegalArgumentException("Sources cannot be null!");
+            throw new IllegalArgumentException("Sources cannot be null!"); //$NON-NLS-1$
         }
         this.sources = sources;
         this.view = view;

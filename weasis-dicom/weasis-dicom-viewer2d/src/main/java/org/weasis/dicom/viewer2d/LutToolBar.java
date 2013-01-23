@@ -20,7 +20,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class LutToolBar<DicomImageElement> extends WtoolBar {
 
     public LutToolBar() {
-        super("Lookup Table Toolbar", TYPE.tool);
+        super(Messages.getString("LutToolBar.lookupbar"), TYPE.tool); //$NON-NLS-1$
 
         GroupRadioMenu menu = null;
         ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
@@ -37,7 +37,7 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
                 }
             };
 
-        presetButton.setToolTipText("Presets");
+        presetButton.setToolTipText(Messages.getString("LutToolBar.presets")); //$NON-NLS-1$
         add(presetButton);
 
         GroupRadioMenu menuLut = null;
@@ -55,11 +55,11 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
                 }
             };
 
-        lutButton.setToolTipText("LUT selection");
+        lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection")); //$NON-NLS-1$
         add(lutButton);
 
         final JToggleButton invertButton = new JToggleButton();
-        invertButton.setToolTipText("Invert Grayscale");
+        invertButton.setToolTipText(Messages.getString("LutToolBar.invert")); //$NON-NLS-1$
         invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
         ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
         if (invlutAction instanceof ToggleButtonListener) {

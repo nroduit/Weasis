@@ -136,7 +136,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
 
         final JButton resetButton = new JButton();
-        resetButton.setToolTipText("Display Reset");
+        resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset")); //$NON-NLS-1$
         resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
         resetButton.addActionListener(new ActionListener() {
 
