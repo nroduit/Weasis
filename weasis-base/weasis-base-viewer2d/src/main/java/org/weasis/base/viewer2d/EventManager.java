@@ -48,6 +48,7 @@ import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.util.Toolbar;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -282,13 +283,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
     }
 
-    public void resetAllActions() {
-        firePropertyChange(ActionW.RESET.cmd(), null, true);
+    @Override
+    public void resetDisplay() {
+        reset(ResetTools.All);
     }
 
     public void reset(ResetTools action) {
         if (ResetTools.All.equals(action)) {
-            resetAllActions();
+            firePropertyChange(ActionW.RESET.cmd(), null, true);
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
             // value is adjusted by the BoundedRangeModel
@@ -395,6 +397,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 rotateAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
+
+            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
+            if (View2dContainer.TOOLBARS.size() > 2) {
+                for (int i = 2; i < View2dContainer.TOOLBARS.size(); i++) {
+                    Toolbar tb = View2dContainer.TOOLBARS.get(i);
+                    BundlePreferences.putBooleanPreferences(prefNode, tb.getClass().getName(), tb.isEnabled());
+                }
+            }
         }
     }
 }

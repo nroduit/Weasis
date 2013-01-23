@@ -50,9 +50,11 @@ import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
@@ -63,8 +65,8 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.More2DToolBar;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
@@ -144,8 +146,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ViewerToolBar bar = (ViewerToolBar) View2dContainer.TOOLBARS.get(0);
             TOOLBARS.add(0, bar);
             TOOLBARS.add(1, bar.getMeasureToolBar());
-            More2DToolBar more2dBar = new More2DToolBar<DicomImageElement>();
-            TOOLBARS.add(2, more2dBar);
+            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
+            TOOLBARS.add(zoomBar);
+            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
+            TOOLBARS.add(rotationBar);
+            LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
+            TOOLBARS.add(lutdBar);
         }
     }
 

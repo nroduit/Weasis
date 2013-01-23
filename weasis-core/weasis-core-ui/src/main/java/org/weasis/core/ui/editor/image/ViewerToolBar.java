@@ -29,7 +29,6 @@ import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.event.ListDataEvent;
 
@@ -39,10 +38,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
-import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
@@ -138,47 +134,20 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(synchButton);
             separtor = true;
         }
-        if (separtor) {
-            addSeparator(Toolbar.SEPARATOR_2x24);
-        }
-        final JButton jButtonActualZoom =
-            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-original.png"))); //$NON-NLS-1$
-        jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
-        jButtonActualZoom.addActionListener(new ActionListener() {
+
+        final JButton resetButton = new JButton();
+        resetButton.setToolTipText("Display Reset");
+        resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
+        resetButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ActionState zoom = eventManager.getAction(ActionW.ZOOM);
-                if (zoom instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoom).setValue(eventManager.viewScaleToSliderValue(1.0));
-                }
+                eventManager.resetDisplay();
             }
         });
-        add(jButtonActualZoom);
+        add(resetButton);
 
-        final JButton jButtonBestFit =
-            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-bestfit.png"))); //$NON-NLS-1$
-        jButtonBestFit.setToolTipText(Messages.getString("ViewerToolBar.zoom_b")); //$NON-NLS-1$
-        jButtonBestFit.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
-                // value is adjusted by the BoundedRangeModel
-                eventManager.firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
-                AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
-            }
-        });
-        add(jButtonBestFit);
-
-        final JToggleButton jButtonLens =
-            new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
-        jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
-        ActionState lens = eventManager.getAction(ActionW.LENS);
-        if (lens instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) lens).registerComponent(jButtonLens);
-        }
-        add(jButtonLens);
+        // addSeparator(WtoolBar.SEPARATOR_2x24);
 
         displayMeasureToobar();
     }

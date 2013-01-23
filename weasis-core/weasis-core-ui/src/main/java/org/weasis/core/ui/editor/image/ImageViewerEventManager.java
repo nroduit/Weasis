@@ -680,4 +680,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         }
     }
 
+    public abstract void resetDisplay();
+
 }

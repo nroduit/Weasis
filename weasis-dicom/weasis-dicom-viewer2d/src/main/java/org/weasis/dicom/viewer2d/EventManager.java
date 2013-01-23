@@ -687,14 +687,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
     }
 
-    private void resetAllActions() {
-            firePropertyChange(ActionW.RESET.cmd(), null, true);
+    @Override
+    public void resetDisplay() {
+        reset(ResetTools.All);
     }
 
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
-            resetAllActions();
+            firePropertyChange(ActionW.RESET.cmd(), null, true);
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
             // value is adjusted by the BoundedRangeModel
@@ -960,11 +961,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 zoomAction.getMouseSensivity());
 
             prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            for (Toolbar tb : View2dContainer.TOOLBARS) {
-                if (tb instanceof CineToolBar) {
-                    BundlePreferences.putBooleanPreferences(prefNode, CineToolBar.class.getName(),
-                        ((CineToolBar) tb).isEnabled());
-                    break;
+            if (View2dContainer.TOOLBARS.size() > 2) {
+                for (int i = 2; i < View2dContainer.TOOLBARS.size(); i++) {
+                    Toolbar tb = View2dContainer.TOOLBARS.get(i);
+                    BundlePreferences.putBooleanPreferences(prefNode, tb.getClass().getName(), tb.isEnabled());
                 }
             }
         }
@@ -1280,4 +1280,5 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         });
     }
+
 }

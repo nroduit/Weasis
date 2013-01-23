@@ -32,7 +32,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     public PreferenceDialog(Window parentWin) {
         super(parentWin,
-            Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
+            Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(700, 520)); //$NON-NLS-1$
         prefs_tracker = new ServiceTracker(Activator.getBundleContext(), PreferencesPageFactory.class.getName(), null);
         initializePages();
         pack();
