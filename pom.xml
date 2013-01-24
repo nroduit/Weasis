@@ -23,32 +23,6 @@
 		<developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git</developerConnection>
 		<url>https://github.com/nroduit/Weasis</url>
 	</scm>
-	<repositories>
-		<repository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
-		</repository>
-	</repositories>
-	<!-- Maven server for deploying releases -->
-	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
-		</repository>
-	</distributionManagement>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 	<modules>
 		<module>weasis-parent</module>
 		<module>weasis-core</module>
