@@ -7,10 +7,10 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.2.4-beta</version>
+	<version>1.2.4</version>
 	<properties>
 		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier>-SNAPSHOT</qualifier>
+		<qualifier></qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
 			in config.properties) -->
 		<dollar>$</dollar>
