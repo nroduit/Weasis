@@ -145,6 +145,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLBARS.add(rotationBar);
             LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
             TOOLBARS.add(lutdBar);
+            Basic3DToolBar b3dBar = new Basic3DToolBar<DicomImageElement>();
+            TOOLBARS.add(b3dBar);
             CineToolBar cineBar = new CineToolBar<DicomImageElement>();
             TOOLBARS.add(cineBar);
 
@@ -155,6 +157,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
                 rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), false));
                 lutdBar.setEnabled(prefNode.getBoolean(LutToolBar.class.getName(), true));
+                b3dBar.setEnabled(prefNode.getBoolean(Basic3DToolBar.class.getName(), true));
                 cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(),
                     BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.cinetoolbar.visible", false)));
 
