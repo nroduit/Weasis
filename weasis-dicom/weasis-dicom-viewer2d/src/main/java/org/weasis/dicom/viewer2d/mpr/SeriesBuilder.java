@@ -365,7 +365,10 @@ public class SeriesBuilder {
 
     private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, TransposeType rotate, final MprView view, Thread thread) throws IOException {
-        boolean abort = false;
+
+        //Needs to be final to be changed on"invoqueAndWhait" block.
+        final boolean[] abort = new boolean[] {false};
+
         // TODO should return the more frequent space!
         boolean byPassSpaceIssue = false;
         final JProgressBar bar = view.getProgressBar();
@@ -385,14 +388,20 @@ public class SeriesBuilder {
                 DicomImageElement dcm = iter.next();
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
                 if (sp == null && !byPassSpaceIssue) {
+                    GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                        @Override
+                        public void run() {
                     int usrChoice =
                         JOptionPane.showConfirmDialog(view,
                             "Space between slices is unpredictable!\n Do you want to continue anyway?",
                             MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (usrChoice == JOptionPane.NO_OPTION) {
-                        abort = true;
+                                abort[0] = true;
                         throw new IllegalStateException("Slices don't have 3D position!");
                     }
+                        }
+                    });
                     byPassSpaceIssue = true;
 
                 } else {
@@ -400,14 +409,20 @@ public class SeriesBuilder {
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
                         if (!byPassSpaceIssue && (space == 0.0 || (index > 1 && lastSpace - space > epsilon))) {
+                            GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                                @Override
+                                public void run() {
                             int usrChoice =
                                 JOptionPane.showConfirmDialog(view,
                                     "Space between slices is not regular!\n Do you want to continue anyway?",
                                     MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                             if (usrChoice == JOptionPane.NO_OPTION) {
-                                abort = true;
+                                        abort[0] = true;
                                 throw new IllegalStateException("Space between slices is not regular!");
                             }
+                                }
+                            });
                             byPassSpaceIssue = true;
                         }
                         lastSpace = space;
@@ -429,7 +444,7 @@ public class SeriesBuilder {
                 // time on Ubuntu)
                 PlanarImage image = dcm.getImage();
                 if (image == null) {
-                    abort = true;
+                    abort[0] = true;
                     throw new IIOException("Cannot read an image!");
                 }
                 writeRasterInRaw(getRotateImage(image, rotate), newSeries);
@@ -439,7 +454,7 @@ public class SeriesBuilder {
             for (int i = 0; i < newSeries.length; i++) {
                 if (newSeries[i] != null) {
                     newSeries[i].disposeOutputStream();
-                    if (abort) {
+                    if (abort[0]) {
                         newSeries[i].getFile().delete();
                     }
                 }
