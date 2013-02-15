@@ -78,7 +78,19 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
         if (s == null) {
             throw new UnsupportedOperationException("No Image Reader available for Transfer Syntax:" + tsuid);
         }
-		// TODO build a dynamic way to register TSUID
+
+        log.debug("Reader config property for Transfer Syntax {} is : {}", tsuid, s);
+
+        int delim = s.indexOf(',');
+        if (delim == -1) {
+            throw new ConfigurationError("Missing ',' in " + tsuid + "=" + s);
+        }
+
+        int delim2 = s.indexOf(',', delim + 1);
+        final String formatName = s.substring(0, delim);
+        final String className = s.substring(delim + 1, delim2 == -1 ? s.length() : delim2);
+
+        // TODO build a dynamic way to register TSUID
         if ("1.2.840.10008.1.2.4.80".equals(tsuid) || "1.2.840.10008.1.2.4.81".equals(tsuid)) {
             final String jpegls = "org.weasis.jpeg.NativeJLSImageReader";
             for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg-ls"); it.hasNext();) {
@@ -90,20 +102,14 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
             }
         }
 
-        int delim = s.indexOf(',');
-        if (delim == -1) {
-            throw new ConfigurationError("Missing ',' in " + tsuid + "=" + s);
-        }
         if ("1.2.840.10008.1.2.4.90".equals(tsuid) || "1.2.840.10008.1.2.4.91".equals(tsuid)) {
             ImageReader r = getJpeg2000Reader(config.getProperty("jpeg2000"));
-            if (s == null) {
+            if (r == null) {
                 throw new UnsupportedOperationException("No JPEG2000 Reader available");
             }
             return r;
         }
-        int delim2 = s.indexOf(',', delim + 1);
-        final String formatName = s.substring(0, delim);
-        final String className = s.substring(delim + 1, delim2 == -1 ? s.length() : delim2);
+
         for (Iterator it = ImageIO.getImageReadersByFormatName(formatName); it.hasNext();) {
             ImageReader r = (ImageReader) it.next();
             if (className.equals(r.getClass().getName())) {
@@ -112,6 +118,7 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
             }
             log.debug("Skipping image reader " + r.getClass().getName());
         }
+
         // Get default jpeg decoder for platforms where CLibJPEGImageReader is not available
         if ("1.2.840.10008.1.2.4.50".equals(tsuid)) {
             final String stdJpeg = "com.sun.imageio.plugins.jpeg.JPEGImageReader";
@@ -123,6 +130,7 @@ public class ImageReaderFactory extends ImageReaderWriterFactory {
                 }
             }
         }
+
         throw new ConfigurationError("No Image Reader of class " + className + " available for format:" + formatName);
     }
 

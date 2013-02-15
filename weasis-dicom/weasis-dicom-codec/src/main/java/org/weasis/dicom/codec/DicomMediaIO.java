@@ -309,6 +309,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             new RawImageInputStream(iis, createImageTypeSpecifier(), frameOffsets, imageDimensions);
         riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
         reader = ImageIO.getImageReadersByFormatName("RAW").next();
+        if (reader == null) {
+            throw new UnsupportedOperationException("No RAW Reader available");
+        }
         reader.setInput(riis);
     }
 
