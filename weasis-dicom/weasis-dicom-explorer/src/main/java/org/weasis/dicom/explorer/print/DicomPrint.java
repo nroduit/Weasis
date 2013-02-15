@@ -212,7 +212,8 @@ public class DicomPrint {
             dcmObj.putInt(Tag.BitsAllocated, VR.US, 8);
             dcmObj.putInt(Tag.BitsStored, VR.US, 8);
             dcmObj.putInt(Tag.HighBit, VR.US, 7);
-            dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
+            // Issue with some PrintSCP servers
+            // dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
             if (printInColor) {
                 // Must be PixelInterleavedSampleModel
                 dcmObj.putInt(Tag.PlanarConfiguration, VR.US, 0);
