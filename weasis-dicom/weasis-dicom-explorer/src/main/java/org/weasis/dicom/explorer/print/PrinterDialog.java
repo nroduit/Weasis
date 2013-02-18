@@ -68,7 +68,7 @@ public class PrinterDialog extends JDialog {
             descriptionTf.setText(dicomPrinter.getDescription());
             aeTitleTf.setText(dicomPrinter.getAeTitle());
             hostnameTf.setText(dicomPrinter.getHostname());
-            portTf.setText(dicomPrinter.getPort());
+            portTf.setValue(dicomPrinter.getPort());
             colorPrintSupportCheckBox.setSelected(dicomPrinter.isColorPrintSupported());
         }
         pack();
@@ -213,7 +213,7 @@ public class PrinterDialog extends JDialog {
         String desc = descriptionTf.getText();
         String aeTitle = aeTitleTf.getText();
         String hostname = hostnameTf.getText();
-        String port = portTf.getText();
+        Number port = JMVUtils.getFormattedValue(portTf);
 
         if (desc == null || "".equals(desc) || aeTitle == null || "".equals(aeTitle) || hostname == null //$NON-NLS-1$ //$NON-NLS-2$
             || "".equals(hostname) || port == null || "".equals(port)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -228,7 +228,7 @@ public class PrinterDialog extends JDialog {
         dicomPrinter.setDescription(desc);
         dicomPrinter.setAeTitle(aeTitle);
         dicomPrinter.setHostname(hostname);
-        dicomPrinter.setPort(port);
+        dicomPrinter.setPort(port.intValue());
         dicomPrinter.setColorPrintSupported(colorPrintSupportCheckBox.isSelected());
 
         DicomPrinter.savePrintersSettings(printersComboBox);

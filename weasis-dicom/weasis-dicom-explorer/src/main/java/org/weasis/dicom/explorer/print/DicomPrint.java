@@ -130,7 +130,7 @@ public class DicomPrint {
         ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
         ae.setTransferCapability(transferCapability);
 
-        remoteConn.setPort(Integer.parseInt(dicomPrintOptions.getDicomPrinter().getPort()));
+        remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
         remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
         remoteConn.setSocketCloseDelay(90);
 
