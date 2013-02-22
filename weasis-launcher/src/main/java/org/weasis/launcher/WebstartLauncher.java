@@ -34,6 +34,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
 
         // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15
         // If imageio.jar is located in the JRE ext directory, unregister imageio services.
+        // Launcher of the portable version has the VM parameter -Djava.ext.dirs=""
         IIORegistry registry = IIORegistry.getDefaultInstance();
         Iterator<Class<?>> categories = registry.getCategories();
         ArrayList toRemove = new ArrayList();
