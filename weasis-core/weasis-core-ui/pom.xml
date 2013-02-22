@@ -10,12 +10,10 @@
 	<artifactId>weasis-core-ui</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
-	<version>2.0.0-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>

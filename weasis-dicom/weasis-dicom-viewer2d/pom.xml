@@ -10,7 +10,6 @@
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>2D DICOM Viewer [${project.artifactId}]</name>
-	<version>2.0.0-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>

@@ -10,7 +10,6 @@
 	<artifactId>weasis-base-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>Media Explorer [${project.artifactId}]</name>
-	<version>2.0.0-SNAPSHOT</version>
 	<properties>
 		<bundle.namespace>org.weasis.base.explorer</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
