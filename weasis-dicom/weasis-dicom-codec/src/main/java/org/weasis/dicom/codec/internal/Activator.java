@@ -41,8 +41,8 @@ public class Activator implements BundleActivator {
         // org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        ImageioUtil.registry.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
-        ImageioUtil.registry.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
+        ImageioUtil.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
+        ImageioUtil.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
 
         ServiceReference configurationAdminReference =
             bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
@@ -71,8 +71,8 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext bundleContext) throws Exception {
         DicomPrefManager.getInstance().savePreferences();
         PREFERENCES.close();
-        ImageioUtil.registry.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
-        ImageioUtil.registry.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
+        ImageioUtil.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
+        ImageioUtil.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
         this.bundleContext = null;
     }
 
