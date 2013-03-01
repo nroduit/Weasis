@@ -4,11 +4,12 @@ import java.lang.reflect.Field;
 
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.IIOServiceProvider;
 
 public final class ImageioUtil {
 
     // Hack to get the default imageio registry, workaround to ensure to be thread safe.
-    public final static IIORegistry registry;
+    private final static IIORegistry registry;
     static {
         IIORegistry temp = null;
         try {
@@ -50,6 +51,20 @@ public final class ImageioUtil {
         Object spi = registry.getServiceProviderByClass(clazz);
         if (spi != null) {
             registry.deregisterServiceProvider(spi);
+        }
+    }
+
+    public static void registerServiceProvider(IIOServiceProvider serviceProvider) {
+        try {
+            registry.registerServiceProvider(serviceProvider);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deregisterServiceProvider(IIOServiceProvider serviceProvider) {
+        if (serviceProvider != null) {
+            registry.deregisterServiceProvider(serviceProvider);
         }
     }
 }
