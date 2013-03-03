@@ -23,6 +23,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -70,6 +71,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
+import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -103,7 +105,10 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.WrapLayout;
@@ -116,7 +121,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
-public class DicomExplorer extends PluginTool implements DataExplorerView {
+public class DicomExplorer extends PluginTool implements DataExplorerView, SeriesViewerListener {
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
 
@@ -1362,6 +1367,37 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
     }
 
     @Override
+    public void changingViewContentEvent(SeriesViewerEvent event) {
+        EVENT type = event.getEventType();
+        if (EVENT.SELECT_VIEW.equals(type) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
+            DefaultView2d pane = ((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane();
+            if (pane != null) {
+                MediaSeries s = pane.getSeries();
+                if (s != null) {
+                    if (patientContainer.isSeriesVisible(s)) {
+                        SeriesPane p = getSeriesPane(s);
+                        if (p != null) {
+                            JViewport vp = thumnailView.getViewport();
+                            Point pt2 =
+                                SwingUtilities.convertPoint(p, new Point(0, p.getHeight() / 2), patientContainer);
+                            pt2.x = vp.getViewPosition().x;
+                            pt2.y -= vp.getHeight() / 2;
+                            int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
+                            if (pt2.y < 0) {
+                                pt2.y = 0;
+                            } else if (pt2.y > maxHeight) {
+                                pt2.y = maxHeight;
+                            }
+                            vp.setViewPosition(pt2);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         // Get only event from the model of DicomExplorer
         if (evt instanceof ObservableEvent) {
@@ -2050,4 +2086,5 @@ public class DicomExplorer extends PluginTool implements DataExplorerView {
         actions.add(importCDAction);
         return actions;
     }
+
 }

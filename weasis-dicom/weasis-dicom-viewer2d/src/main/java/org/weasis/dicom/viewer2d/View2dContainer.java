@@ -195,6 +195,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 tool = new MeasureTool(eventManager);
                 TOOLS.add(tool);
             }
+
+            // Send event to synchronize the series selection.
+            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+            if (dicomView != null) {
+                eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
+            }
         }
     }
 
