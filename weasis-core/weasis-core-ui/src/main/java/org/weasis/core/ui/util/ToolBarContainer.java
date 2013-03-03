@@ -12,18 +12,16 @@ package org.weasis.core.ui.util;
 
 import java.awt.FlowLayout;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import javax.swing.JComponent;
 import javax.swing.JPanel;
-
-import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 public class ToolBarContainer extends JPanel {
     public static final Toolbar EMPTY = ToolBarFactory.buildEmptyToolBar("empty"); //$NON-NLS-1$
-    private final Map<String, Toolbar> toolBarsByName = new HashMap<String, Toolbar>();
+    private final List<Toolbar> bars = new ArrayList<Toolbar>();
 
     public ToolBarContainer() {
         setOpaque(false);
@@ -33,82 +31,64 @@ public class ToolBarContainer extends JPanel {
     /**
      * Registers a new ToolBar.
      */
-    public void registerToolBar(Toolbar toolbar) {
-        if (toolbar == null || toolbar.getComponent() == null) {
-            return;
+    public void registerToolBar(List<Toolbar> toolBar) {
+        unregisterAll();
+        if (toolBar == null) {
+            toolBar = new ArrayList<Toolbar>(1);
+            toolBar.add(ToolBarContainer.EMPTY);
         }
-        TYPE type = toolbar.getType();
-        String name = TYPE.main.equals(type) ? type.name() : toolbar.getClass().getName();
-        Toolbar oldBar = toolBarsByName.get(name);
-        toolBarsByName.put(name, toolbar);
-        boolean visible = toolbar.getComponent().isEnabled();
-        if (oldBar == null) {
-            if (visible) {
-                add(toolbar.getComponent());
-            }
-        } else {
-            int index = getComponentIndex(oldBar.getComponent());
-            if (index >= 0) {
-                super.remove(index);
-            } else {
-                index = this.getComponentCount();
-            }
-            if (visible) {
-                add(toolbar.getComponent(), index);
-            }
-        }
-    }
 
-    public void showToolbar(WtoolBar bar) {
-        boolean show = bar.getComponent().isEnabled();
-        int index = getComponentIndex(bar);
-        if (index >= 0) {
-            super.remove(index);
-        } else {
-            index = this.getComponentCount();
+        // Sort toolbars according the index
+        Collections.sort(toolBar, new Comparator<Toolbar>() {
+
+            @Override
+            public int compare(Toolbar t1, Toolbar t2) {
+                int val1 = t1.getIndex();
+                int val2 = t2.getIndex();
+                return val1 < val2 ? -1 : (val1 == val2 ? 0 : 1);
+            }
+        });
+
+        for (Toolbar b : toolBar) {
+            WtoolBar bar = b.getComponent();
+            if (bar.isEnabled()) {
+                add(bar);
+            }
+            bars.add(b);
         }
-        if (show) {
-            add(bar, index);
-        }
+
         revalidate();
         repaint();
     }
 
-    private int getComponentIndex(JComponent bar) {
-        synchronized (this) {
-            int size = this.getComponentCount();
-            for (int i = 0; i < size; i++) {
-                if (bar == getComponent(i)) {
-                    return i;
+    public void displayToolbar(WtoolBar bar, boolean show) {
+        if (show != bar.getComponent().isEnabled()) {
+            if (show) {
+                int barIndex = bar.getIndex();
+                int insert = 0;
+                for (Iterator<Toolbar> iterator = bars.iterator(); iterator.hasNext();) {
+                    Toolbar b = iterator.next();
+                    if (b.isEnabled() && b.getIndex() < barIndex) {
+                        insert++;
+                    }
                 }
+                if (insert >= getComponentCount()) {
+                    // -1 => inserting after the last component
+                    insert = -1;
+                }
+                add(bar, insert);
+            } else {
+                super.remove(bar);
             }
+            bar.getComponent().setEnabled(show);
+            revalidate();
+            repaint();
         }
-        return -1;
     }
 
-    /**
-     * Unregisters a ToolBar.
-     */
-    public void unregisterToolBar(Toolbar toolbar) {
-        if (toolbar == null || toolbar.getComponent() == null) {
-            return;
-        }
-        TYPE type = toolbar.getType();
-        String name = TYPE.main.equals(type) ? type.name() : toolbar.getClass().getName();
-        toolBarsByName.remove(name);
-        remove(toolbar.getComponent());
-    }
-
-    public void unregisterAll() {
-        toolBarsByName.clear();
+    private void unregisterAll() {
+        bars.clear();
         removeAll();
-    }
-
-    /**
-     * Returns the registered toolbar associated with the given name, or null if not found
-     */
-    public Toolbar getToolBarByName(String name) {
-        return toolBarsByName.get(name);
     }
 
     /**
@@ -118,7 +98,7 @@ public class ToolBarContainer extends JPanel {
      * returns a new list at each invocation.
      */
     public List<Toolbar> getRegisteredToolBars() {
-        return new ArrayList<Toolbar>(toolBarsByName.values());
+        return new ArrayList<Toolbar>(bars);
     }
 
 }

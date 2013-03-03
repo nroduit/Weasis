@@ -25,4 +25,10 @@ public interface Toolbar {
     WtoolBar getComponent();
 
     boolean isEnabled();
+
+    void setEnabled(boolean boolean1);
+
+    public int getIndex();
+
+    public void setIndex(int index);
 }

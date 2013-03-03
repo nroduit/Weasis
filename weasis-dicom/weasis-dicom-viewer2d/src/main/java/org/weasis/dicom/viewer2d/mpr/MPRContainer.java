@@ -23,6 +23,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -49,6 +50,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -70,6 +72,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
+import org.weasis.dicom.viewer2d.internal.Activator;
 import org.weasis.dicom.viewer2d.mpr.MprView.Type;
 
 public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -143,15 +146,19 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             // Add standard toolbars
             WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
             props.putBooleanProperty("weasis.toolbar.synchbouton", false);
-            ViewerToolBar bar = (ViewerToolBar) View2dContainer.TOOLBARS.get(0);
-            TOOLBARS.add(0, bar);
-            TOOLBARS.add(1, bar.getMeasureToolBar());
-            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
-            TOOLBARS.add(zoomBar);
-            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
-            TOOLBARS.add(rotationBar);
-            LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
-            TOOLBARS.add(lutdBar);
+
+            EventManager evtMg = EventManager.getInstance();
+            TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
+            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+
+            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            if (prefs != null) {
+                String className = this.getClass().getSimpleName().toLowerCase();
+                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
+            }
         }
     }
 

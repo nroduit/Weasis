@@ -17,20 +17,20 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
 import org.osgi.service.prefs.PreferencesService;
 import org.osgi.util.tracker.ServiceTracker;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
 
 public class BundlePreferences {
 
     private ServiceTracker tracker;
     private File dataFolder;
+    private String bundleSymbolicName = "";
 
     public synchronized void init(final BundleContext context) throws Exception {
         if (tracker != null) {
             tracker.close();
         }
-        dataFolder =
-            new File(AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+        bundleSymbolicName = context.getBundle().getSymbolicName();
+        dataFolder = new File(AbstractProperties.WEASIS_PATH + File.separator + "data", bundleSymbolicName); //$NON-NLS-1$
         tracker = new ServiceTracker(context, PreferencesService.class.getName(), null);
         tracker.open();
     }
@@ -40,6 +40,10 @@ public class BundlePreferences {
             tracker.close();
             tracker = null;
         }
+    }
+
+    public String getBundleSymbolicName() {
+        return bundleSymbolicName;
     }
 
     public PreferencesService getPreferencesService() {

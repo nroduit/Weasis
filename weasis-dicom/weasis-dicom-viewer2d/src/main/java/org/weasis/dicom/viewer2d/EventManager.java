@@ -71,7 +71,7 @@ import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
-import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
@@ -79,6 +79,7 @@ import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.internal.Activator;
+import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 
 /**
@@ -960,13 +961,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
-            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            if (View2dContainer.TOOLBARS.size() > 2) {
-                for (int i = 2; i < View2dContainer.TOOLBARS.size(); i++) {
-                    Toolbar tb = View2dContainer.TOOLBARS.get(i);
-                    BundlePreferences.putBooleanPreferences(prefNode, tb.getClass().getName(), tb.isEnabled());
-                }
-            }
+            WtoolBar.savePreferences(View2dContainer.TOOLBARS,
+                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()));
+
+            WtoolBar.savePreferences(MPRContainer.TOOLBARS,
+                prefs.node(MPRContainer.class.getSimpleName().toLowerCase()));
         }
     }
 

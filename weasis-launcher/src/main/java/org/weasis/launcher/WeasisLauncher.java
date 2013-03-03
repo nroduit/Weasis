@@ -688,6 +688,8 @@ public class WeasisLauncher {
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
+        System.setProperty("weasis.name", config.getProperty("weasis.name", "Weasis"));
+        System.setProperty("weasis.profile", config.getProperty("weasis.profile", "default"));
         System.setProperty(P_WEASIS_PATH, dir);
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         if (REMOTE_PREFS == null && user != null) {
@@ -929,11 +931,12 @@ public class WeasisLauncher {
                         Object[] options =
                             { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
+                        String appName = System.getProperty("weasis.name");
                         int response =
                             JOptionPane.showOptionDialog(
                                 loader.getWindow(),
-                                Messages.getString("WeasisLauncher.msg"), //$NON-NLS-1$
-                                Messages.getString("WeasisLauncher.first"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
+                                String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
+                                String.format(Messages.getString("WeasisLauncher.first"), appName), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
                                 null, options, null);
                         if (response == 1) {
                             // delete the properties file to ask again
@@ -946,7 +949,9 @@ public class WeasisLauncher {
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
-            message.append(String.format(Messages.getString("WeasisLauncher.change.version"), versionOld, versionNew)); //$NON-NLS-1$
+            message
+                .append(String.format(
+                    Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$
 
             EventQueue.invokeLater(new Runnable() {
                 @Override

@@ -29,6 +29,8 @@ public abstract class AbstractProperties {
 
     public static final String WEASIS_VERSION = System.getProperty("weasis.version"); //$NON-NLS-1$
     public static final String WEASIS_PATH = System.getProperty("weasis.path"); //$NON-NLS-1$
+    public static final String WEASIS_NAME = System.getProperty("weasis.name"); //$NON-NLS-1$
+    public static final String WEASIS_PROFILE = System.getProperty("weasis.profile"); //$NON-NLS-1$
     public static final File APP_TEMP_DIR;
 
     static {

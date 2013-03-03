@@ -39,7 +39,6 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.Toolbar;
@@ -68,15 +67,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private DropDownButton mouseRight;
     private DropDownButton mouseWheel;
     private DropDownButton synchButton;
-    private final MeasureToolBar<E> measureToolBar;
 
-    public ViewerToolBar(final ImageViewerEventManager<E> eventManager, int activeMouse, WProperties props) {
-        super("Viewer2d Main Bar", TYPE.main); //$NON-NLS-1$
+    public ViewerToolBar(final ImageViewerEventManager<E> eventManager, int activeMouse, WProperties props, int index) {
+        super("Viewer2d Main Bar", TYPE.main, index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
         this.eventManager = eventManager;
-        measureToolBar = new MeasureToolBar<E>(eventManager);
 
         MouseActions actions = eventManager.getMouseActions();
 
@@ -111,7 +108,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             addSeparator(Toolbar.SEPARATOR_2x24);
         }
 
-        boolean separtor = false;
         if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
             final DropDownButton layout =
                 new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
@@ -124,7 +120,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 };
             layout.setToolTipText(Messages.getString("ViewerToolBar.layout")); //$NON-NLS-1$
             add(layout);
-            separtor = true;
         }
 
         if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) {
@@ -132,7 +127,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
             synchButton = buildSynchButton();
             add(synchButton);
-            separtor = true;
         }
 
         final JButton resetButton = new JButton();
@@ -146,10 +140,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             }
         });
         add(resetButton);
-
-        // addSeparator(WtoolBar.SEPARATOR_2x24);
-
-        displayMeasureToobar();
     }
 
     private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {
@@ -182,10 +172,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             }
         }
         return popupMouseButtons;
-    }
-
-    public MeasureToolBar getMeasureToolBar() {
-        return measureToolBar;
     }
 
     public void removeMouseAction(ActionW action) {
@@ -262,18 +248,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
     }
 
-    private void displayMeasureToobar() {
-        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.measure.alwaysvisible", false)) {
-            if (isCommandActive(ActionW.MEASURE.cmd())) {
-                measureToolBar.setVisible(true);
-            } else {
-                measureToolBar.setVisible(false);
-            }
-        }
-        revalidate();
-        repaint();
-    }
-
     public boolean isCommandActive(String cmd) {
         int active = eventManager.getMouseActions().getActiveButtons();
         if (cmd != null
@@ -293,7 +267,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             Icon icon = buildMouseIcon(type, action);
             button.setIcon(icon);
             button.setActionCommand(action);
-            displayMeasureToobar();
         }
     }
 

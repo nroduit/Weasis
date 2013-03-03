@@ -65,7 +65,8 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
     private final JScrollPane jScrollPane3 = new JScrollPane();
 
     public WeasisAboutBox() {
-        super(WeasisWin.getInstance(), Messages.getString("WeasisAboutBox.title"), true); //$NON-NLS-1$
+        super(WeasisWin.getInstance(), String.format(
+            Messages.getString("WeasisAboutBox.about"), AbstractProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
             sysTable =
                 new JTable(
@@ -102,7 +103,9 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
 
         jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
-        final StringBuffer message = new StringBuffer("<div align=\"center\"><H2>Weasis "); //$NON-NLS-1$
+        final StringBuffer message = new StringBuffer("<div align=\"center\"><H2>"); //$NON-NLS-1$
+        message.append(AbstractProperties.WEASIS_NAME); //$NON-NLS-1$
+        message.append(" "); //$NON-NLS-1$
         message.append(AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
         message.append("</H2>"); //$NON-NLS-1$
 
@@ -111,15 +114,15 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
             BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); //$NON-NLS-1$ //$NON-NLS-2$
 
         message.append("<BR>"); //$NON-NLS-1$
-        message.append("Copyright © 2009-2011,"); //$NON-NLS-1$
-        message.append("<BR>"); //$NON-NLS-1$
-        message.append("Weasis Team</div>"); //$NON-NLS-1$
+        message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); //$NON-NLS-1$
+        message.append("</div>"); //$NON-NLS-1$
         jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
+        // TODO allow to change the splash screen
         jLabel1.setIcon(new ImageIcon(getClass().getResource("/about.png"))); //$NON-NLS-1$
         jPanel3.setLayout(borderLayout3);
 
-        jTabbedPane1.add(jPanel3, Messages.getString("WeasisAboutBox.title")); //$NON-NLS-1$
+        jTabbedPane1.add(jPanel3, this.getTitle()); //$NON-NLS-1$
         jPanel3.add(jPanel1, BorderLayout.NORTH);
         jPanel1.add(jLabel1, null);
         jPanel3.add(jScrollPane3, BorderLayout.CENTER);

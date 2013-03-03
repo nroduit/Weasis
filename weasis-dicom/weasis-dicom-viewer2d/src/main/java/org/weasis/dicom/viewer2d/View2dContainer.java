@@ -64,6 +64,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -132,35 +133,20 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
-
-            int active = EventManager.getInstance().getMouseActions().getActiveButtons();
-            ViewerToolBar<DicomImageElement> bar =
-                new ViewerToolBar<DicomImageElement>(EventManager.getInstance(), EventManager.getInstance()
-                    .getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES);
-            TOOLBARS.add(bar);
-            TOOLBARS.add(bar.getMeasureToolBar());
-            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
-            TOOLBARS.add(zoomBar);
-            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
-            TOOLBARS.add(rotationBar);
-            LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
-            TOOLBARS.add(lutdBar);
-            Basic3DToolBar b3dBar = new Basic3DToolBar<DicomImageElement>();
-            TOOLBARS.add(b3dBar);
-            CineToolBar cineBar = new CineToolBar<DicomImageElement>();
-            TOOLBARS.add(cineBar);
+            EventManager evtMg = EventManager.getInstance();
+            TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                BundleTools.SYSTEM_PREFERENCES, 10));
+            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+            TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
+            TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
-                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-                // TODO add in config default state of the bar and for each which buttons are visible
-                zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
-                rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), false));
-                lutdBar.setEnabled(prefNode.getBoolean(LutToolBar.class.getName(), true));
-                b3dBar.setEnabled(prefNode.getBoolean(Basic3DToolBar.class.getName(), true));
-                cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(),
-                    BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.cinetoolbar.visible", false)));
-
+                String className = this.getClass().getSimpleName().toLowerCase();
+                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
             }
 
             PluginTool tool = null;
@@ -196,20 +182,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.imagestools", true)) {
                 tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
-                // tool.registerToolAsDockable();
                 TOOLS.add(tool);
             }
 
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.display", true)) {
                 tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-                // tool.registerToolAsDockable();
                 TOOLS.add(tool);
                 eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
             }
 
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.measuretools", true)) {
                 tool = new MeasureTool(eventManager);
-                // tool.registerToolAsDockable();
                 TOOLS.add(tool);
             }
         }

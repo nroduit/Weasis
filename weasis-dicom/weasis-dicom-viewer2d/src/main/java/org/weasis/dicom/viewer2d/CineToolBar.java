@@ -18,8 +18,8 @@ import org.weasis.core.ui.util.WtoolBar;
 public class CineToolBar<DicomImageElement> extends WtoolBar {
     private final Logger LOGGER = LoggerFactory.getLogger(CineToolBar.class);
 
-    public CineToolBar() {
-        super(Messages.getString("CineToolBar.name"), TYPE.tool); //$NON-NLS-1$
+    public CineToolBar(int index) {
+        super(Messages.getString("CineToolBar.name"), TYPE.tool, index); //$NON-NLS-1$
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {

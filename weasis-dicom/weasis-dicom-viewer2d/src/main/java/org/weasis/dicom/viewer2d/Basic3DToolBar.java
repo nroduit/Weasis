@@ -23,8 +23,8 @@ import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     private final Logger LOGGER = LoggerFactory.getLogger(Basic3DToolBar.class);
 
-    public Basic3DToolBar() {
-        super("Basic 3D Tools", TYPE.tool);
+    public Basic3DToolBar(int index) {
+        super("Basic 3D Tools", TYPE.tool, index);
 
         final JButton mprButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));//$NON-NLS-1$
         mprButton.setToolTipText("Build Orthogonal MPR from the selected view");

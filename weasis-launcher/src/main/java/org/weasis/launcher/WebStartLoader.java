@@ -30,11 +30,10 @@ import org.osgi.framework.BundleContext;
 
 public class WebStartLoader {
 
-    private static final long serialVersionUID = 2275651212116198327L;
-
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
-    public static final String FRM_TITLE = Messages.getString("WebStartLoader.title"); //$NON-NLS-1$
+    public static final String FRM_TITLE = String.format(
+        Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
     private volatile Window window;
@@ -79,10 +78,12 @@ public class WebStartLoader {
         cancelButton.setText(Messages.getString("WebStartLoader.cancel")); //$NON-NLS-1$
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 closing();
             }
         });
+        // TODO allow to change the splash screen
         JLabel imagePane =
             new JLabel(FRM_TITLE, new ImageIcon(getClass().getResource("/splash.png")), SwingConstants.CENTER); //$NON-NLS-1$
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
@@ -119,6 +120,7 @@ public class WebStartLoader {
         }
         EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 downloadProgress.setMaximum(max);
             }
@@ -134,6 +136,7 @@ public class WebStartLoader {
         }
         EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
                 downloadProgress.setValue(val);
@@ -155,6 +158,7 @@ public class WebStartLoader {
         try {
             EventQueue.invokeAndWait(new Runnable() {
 
+                @Override
                 public void run() {
                     if (window == null) {
                         initGUI();
@@ -175,6 +179,7 @@ public class WebStartLoader {
         }
         EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 window.setVisible(false);
                 window.dispose();
