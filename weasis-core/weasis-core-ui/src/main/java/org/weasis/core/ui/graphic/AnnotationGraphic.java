@@ -28,6 +28,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.AdvancedShape.ScaleInvariantShape;
@@ -133,7 +134,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             float py = (float) (pt.getY() - rect.getHeight() / 2 + GraphicLabel.GROWING_BOUND);
 
             for (String label : labelStringArray) {
-                if (label.length() > 0) {
+                if (StringUtil.hasText(label)) {
                     py += labelHeight;
                     GraphicLabel.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
                 }
@@ -236,7 +237,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         } else {
             double maxWidth = 0;
             for (String label : labelStringArray) {
-                if (label.length() > 0) {
+                if (StringUtil.hasText(label)) {
                     TextLayout layout = new TextLayout(label, defaultFont, fontRenderContext);
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }

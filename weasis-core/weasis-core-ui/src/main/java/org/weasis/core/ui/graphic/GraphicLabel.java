@@ -24,6 +24,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
 public class GraphicLabel implements Cloneable {
@@ -153,7 +154,7 @@ public class GraphicLabel implements Cloneable {
         } else {
             double maxWidth = 0;
             for (String label : labelStringArray) {
-                if (label.length() > 0) {
+                if (StringUtil.hasText(label)) {
                     TextLayout layout = new TextLayout(label, defaultFont, fontRenderContext);
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
@@ -183,7 +184,7 @@ public class GraphicLabel implements Cloneable {
             float py = (float) pt.getY() + GROWING_BOUND;
 
             for (String label : labelStringArray) {
-                if (label.length() > 0) {
+                if (StringUtil.hasText(label)) {
                     py += labelHeight;
                     paintColorFontOutline(g2d, label, px, py, Color.WHITE);
                 }

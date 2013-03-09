@@ -46,6 +46,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -181,7 +182,7 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2, y,
                 Color.RED);
             String tsuid = (String) image.getTagValue(TagW.TransferSyntaxUID);
-            if (tsuid != null) {
+            if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + " " + tsuid; //$NON-NLS-1$ //$NON-NLS-2$
                 y += fontHeight;
                 GraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2, y,
@@ -191,7 +192,7 @@ public class InfoLayer implements AnnotationsLayer {
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
                 for (String str : desc) {
-                    if (str != null) {
+                    if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         GraphicLabel.paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y,
                             Color.RED);
@@ -292,8 +293,11 @@ public class InfoLayer implements AnnotationsLayer {
                 if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
-                        GraphicLabel.paintFontOutline(g2, infos[j].getFormattedText(value), border, drawY);
-                        drawY += fontHeight;
+                        String str = infos[j].getFormattedText(value);
+                        if (StringUtil.hasText(str)) {
+                            GraphicLabel.paintFontOutline(g2, str, border, drawY);
+                            drawY += fontHeight;
+                        }
                     }
                 }
             }
@@ -305,9 +309,11 @@ public class InfoLayer implements AnnotationsLayer {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
-                        GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
-                            - border, drawY);
-                        drawY += fontHeight;
+                        if (StringUtil.hasText(str)) {
+                            GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
+                                - border, drawY);
+                            drawY += fontHeight;
+                        }
                     }
                 }
             }
@@ -319,9 +325,11 @@ public class InfoLayer implements AnnotationsLayer {
                     Object value = getTagValue(infos[j], patient, study, series, dcm);
                     if (value != null) {
                         String str = infos[j].getFormattedText(value);
-                        GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
-                            - border, drawY);
-                        drawY -= fontHeight;
+                        if (StringUtil.hasText(str)) {
+                            GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
+                                - border, drawY);
+                            drawY -= fontHeight;
+                        }
                     }
                 }
             }
@@ -1046,7 +1054,7 @@ public class InfoLayer implements AnnotationsLayer {
             }
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             String pixSizeDesc = image.getPixelSizeCalibrationDescription();
-            if (pixSizeDesc != null) {
+            if (StringUtil.hasText(pixSizeDesc)) {
                 GraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy
                     - fontHeight);
             }
