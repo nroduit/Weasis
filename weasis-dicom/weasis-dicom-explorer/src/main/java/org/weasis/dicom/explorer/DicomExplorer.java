@@ -2048,6 +2048,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     @Override
+    public void importFiles(File[] files, boolean recursive) {
+        if (files != null) {
+            DicomModel.loadingExecutor.execute(new LoadLocalDicom(files, recursive, model));
+        }
+    }
+
+    @Override
     public List<Action> getOpenExportDialogAction() {
         ArrayList<Action> actions = new ArrayList<Action>(1);
         actions.add(exportAction);

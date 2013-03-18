@@ -608,13 +608,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         return VIEWS_1x1;
     }
 
-    public void addSeriesList(List<MediaSeries<E>> seriesList, boolean removeOldSeries) {
+    public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
         if (seriesList != null && seriesList.size() > 0) {
             if (SynchView.Mode.Tile.equals(synchView.getMode())) {
                 addSeries(seriesList.get(0));
                 return;
             }
-            if (removeOldSeries) {
+            if (bestDefaultLayout) {
                 changeLayoutModel(getBestDefaultViewLayout(seriesList.size()));
 
                 // If the layout is larger than the list of series, clean other views.

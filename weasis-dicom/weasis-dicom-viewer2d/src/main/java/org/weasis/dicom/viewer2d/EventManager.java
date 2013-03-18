@@ -272,7 +272,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             series.getMedia(index,
                                 (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
                                 view2d.getCurrentSortComparator());
-                        mediaEvent = new MediaObjectEvent(image, index);
+                        mediaEvent = new MediaObjectEvent(series, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
                             image.getImage();
@@ -357,7 +357,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
 
-                firePropertyChange(action.cmd(), null, mediaEvent);
+                firePropertyChange(getActionW().cmd(), null, mediaEvent);
 
                 if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,

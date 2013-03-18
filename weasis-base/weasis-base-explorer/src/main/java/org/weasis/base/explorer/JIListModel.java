@@ -9,40 +9,39 @@ package org.weasis.base.explorer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JList;
 
-import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class JIListModel extends AbstractListModel implements JIFileModel {
 
-    /** 
-	 *
-	 */
-    private static final long serialVersionUID = -6616279538578529897L;
+    public static final File EXPLORER_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+        AbstractProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
 
     private final OrderedFileList sortedList;
 
     private JIExplorerContext reloadContext;
     private boolean loading = false;
     private final JList list;
+    private final Map<String, String> cacheFiles;
 
     public JIListModel(final JList list) {
-        this.list = list;
-        this.sortedList = new OrderedFileList();
+        this(list, new OrderedFileList());
     }
 
     public JIListModel(final JList list, final OrderedFileList delegate) {
         this.list = list;
         this.sortedList = delegate;
+        this.cacheFiles = new HashMap<String, String>();
     }
 
     public synchronized boolean loading() {
@@ -83,6 +82,19 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
         return this.sortedList.subList(0, sortedList.size());
     }
 
+    public void putFileInCache(String key, String value) {
+        if (key != null && value != null) {
+            cacheFiles.put(key, value);
+        }
+    }
+
+    public String getFileInCache(String key) {
+        if (key != null) {
+            return cacheFiles.get(key);
+        }
+        return null;
+    }
+
     @Override
     public void setData() {
         if (this.loading) {
@@ -96,7 +108,6 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
             synchronized (this) {
                 this.loading = true;
             }
-            ;
             this.list.getSelectionModel().setValueIsAdjusting(true);
             this.list.requestFocusInWindow();
             getData(this.reloadContext.getSelectedDirNodes());
@@ -156,20 +167,6 @@ public class JIListModel extends AbstractListModel implements JIFileModel {
             }
         }
         return;
-    }
-
-    public MediaReader getMedia(File file) {
-        if (file != null && file.canRead()) {
-            String mimeType = MimeInspector.getMimeType(file);
-            if (mimeType != null) {
-                // TODO should be in data explorer model
-                Codec codec = BundleTools.getCodec(mimeType, null);
-                if (codec != null) {
-                    return codec.getMediaIO(file.toURI(), mimeType, null);
-                }
-            }
-        }
-        return null;
     }
 
     /**

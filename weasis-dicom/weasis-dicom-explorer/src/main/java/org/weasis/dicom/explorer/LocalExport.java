@@ -397,7 +397,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             if (!more8bits) {
                                 image = img.getRenderedImage(image);
                             }
-                            ImageFiler.writeTIFF(new File(destinationDir, instance + ".tif"), image); //$NON-NLS-1$
+                            ImageFiler.writeTIFF(
+                                new File(destinationDir, instance + ".tif"), image, false, false, false); //$NON-NLS-1$
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
                         }

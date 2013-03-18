@@ -20,4 +20,9 @@ public interface ActionState {
     void enableAction(boolean enabled);
 
     ActionW getActionW();
+
+    public boolean registerActionState(Object c);
+
+    public void unregisterActionState(Object c);
+
 }

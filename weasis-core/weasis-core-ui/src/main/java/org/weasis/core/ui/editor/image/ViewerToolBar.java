@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -30,6 +31,7 @@ import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
 
 import org.weasis.core.api.gui.util.ActionState;
@@ -139,6 +141,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 eventManager.resetDisplay();
             }
         });
+        ActionState layout = eventManager.getAction(ActionW.RESET);
+        if (layout != null) {
+            layout.registerActionState(resetButton);
+        }
         add(resetButton);
     }
 
@@ -279,11 +285,28 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
-                mouseIcon.paintIcon(c, g, x, y);
-                if (smallIcon != null) {
-                    x += mouseIcon.getIconWidth() - smallIcon.getIconWidth();
-                    y += mouseIcon.getIconHeight() - smallIcon.getIconHeight();
-                    smallIcon.paintIcon(c, g, x, y);
+                if (c instanceof AbstractButton) {
+                    AbstractButton model = (AbstractButton) c;
+                    Icon icon = null;
+                    if (!model.isEnabled()) {
+                        icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
+                    }
+                    if (icon == null) {
+                        icon = mouseIcon;
+                    }
+                    icon.paintIcon(c, g, x, y);
+                    if (smallIcon != null) {
+                        Icon sIcon = null;
+                        if (!model.isEnabled()) {
+                            sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
+                        }
+                        if (sIcon == null) {
+                            sIcon = smallIcon;
+                        }
+                        x += mouseIcon.getIconWidth() - sIcon.getIconWidth();
+                        y += mouseIcon.getIconHeight() - sIcon.getIconHeight();
+                        sIcon.paintIcon(c, g, x, y);
+                    }
                 }
             }
 
@@ -310,7 +333,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 synchView = (SynchView) sel;
             }
             menu = new SynchGroupMenu();
-            m.registerComponent(menu);
+            m.registerActionState(menu);
         }
         final DropDownButton button = new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
             @Override
@@ -322,6 +345,9 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
         };
         button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
+        if (synch != null) {
+            synch.registerActionState(button);
+        }
         return button;
     }
 
@@ -332,12 +358,29 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
-                if (smallIcon != null) {
-                    int x2 = x + mouseIcon.getIconWidth() / 2 - smallIcon.getIconWidth() / 2;
-                    int y2 = y + mouseIcon.getIconHeight() / 2 - smallIcon.getIconHeight() / 2;
-                    smallIcon.paintIcon(c, g, x2, y2);
+                if (c instanceof AbstractButton) {
+                    AbstractButton model = (AbstractButton) c;
+                    Icon icon = null;
+                    if (!model.isEnabled()) {
+                        icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
+                    }
+                    if (icon == null) {
+                        icon = mouseIcon;
+                    }
+                    if (smallIcon != null) {
+                        Icon sIcon = null;
+                        if (!model.isEnabled()) {
+                            sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
+                        }
+                        if (sIcon == null) {
+                            sIcon = smallIcon;
+                        }
+                        int x2 = x + mouseIcon.getIconWidth() / 2 - sIcon.getIconWidth() / 2;
+                        int y2 = y + mouseIcon.getIconHeight() / 2 - sIcon.getIconHeight() / 2;
+                        sIcon.paintIcon(c, g, x2, y2);
+                    }
+                    icon.paintIcon(c, g, x, y);
                 }
-                mouseIcon.paintIcon(c, g, x, y);
             }
 
             @Override

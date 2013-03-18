@@ -57,6 +57,7 @@ public class TagW implements Transferable, Serializable {
 
     };
 
+    public static final TagW Group = new TagW("Group", TagType.String, 1);
     // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an institution,
     // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used simultaneously to
     // enforce the unique behavior)

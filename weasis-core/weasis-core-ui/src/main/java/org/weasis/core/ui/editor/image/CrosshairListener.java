@@ -19,27 +19,36 @@ import java.awt.geom.Point2D;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.service.AuditLog;
 
 public abstract class CrosshairListener extends MouseActionAdapter implements ActionState, KeyListener {
 
-    protected final ActionW action;
-    private boolean enable;
+    private final BasicActionState basicState;
     private final boolean triggerAction = true;
     private Point pickPoint;
 
     private Point2D point;
 
     public CrosshairListener(ActionW action, Point2D point) {
-        this.action = action;
+        this.basicState = new BasicActionState(action);
         this.point = point == null ? new Point2D.Double() : point;
-        enable = true;
     }
 
     @Override
     public void enableAction(boolean enabled) {
-        this.enable = enabled;
+        basicState.enableAction(enabled);
+    }
+
+    @Override
+    public boolean registerActionState(Object c) {
+        return basicState.registerActionState(c);
+    }
+
+    @Override
+    public void unregisterActionState(Object c) {
+        basicState.unregisterActionState(c);
     }
 
     public Point2D getPoint() {
@@ -50,7 +59,8 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (point != null) {
             this.point = point;
             pointChanged(point);
-            AuditLog.LOGGER.info("action:{} val:{},{}", new Object[] { action.cmd(), point.getX(), point.getY() }); //$NON-NLS-1$
+            AuditLog.LOGGER.info(
+                "action:{} val:{},{}", new Object[] { basicState.getActionW().cmd(), point.getX(), point.getY() }); //$NON-NLS-1$
         }
     }
 
@@ -60,7 +70,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
 
     @Override
     public ActionW getActionW() {
-        return action;
+        return basicState.getActionW();
     }
 
     public String getValueToDisplay() {
@@ -71,7 +81,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
 
     @Override
     public String toString() {
-        return action.getTitle();
+        return basicState.getActionW().getTitle();
     }
 
     private DefaultView2d getDefaultView2d(InputEvent e) {

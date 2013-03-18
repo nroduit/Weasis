@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.gui.util.ActionState;
@@ -34,6 +35,7 @@ import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -48,6 +50,7 @@ import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 /**
@@ -62,7 +65,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     /** The single instance of this singleton class. */
     private static EventManager instance;
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
-        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU };
+        ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
 
     private final SliderCineListener moveTroughSliceAction;
     private final SliderChangeListener windowAction;
@@ -113,8 +116,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(showLensAction = newLensAction());
         iniAction(drawOnceAction = newDrawOnlyOnceAction());
 
-        iniAction(lutAction = getLutAction());
-        iniAction(filterAction = getFilterAction());
+        iniAction(lutAction = newLutAction());
+        iniAction(filterAction = newFilterAction());
         iniAction(layoutAction =
             newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
                 .size()])));
@@ -127,6 +130,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(new BasicActionState(ActionW.RESET));
 
         Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
+        zoomSetting.applyPreferences(pref);
         mouseActions.applyPreferences(pref);
         if (pref != null) {
             Preferences prefNode = pref.node("mouse.sensivity"); //$NON-NLS-1$
@@ -147,7 +151,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         enableActions(false);
     }
 
-    private ComboItemListener getFilterAction() {
+
+    private ComboItemListener newFilterAction() {
         return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
 
             @Override
@@ -159,7 +164,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         };
     }
 
-    private ComboItemListener getLutAction() {
+    private ComboItemListener newLutAction() {
         List<ByteLut> luts = ByteLutCollection.getLutCollection();
         return new ComboItemListener(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
 
@@ -253,8 +258,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             moveTroughSliceAction.stop();
 
         }
+        ImageViewerPlugin<ImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
+            if (oldContainer != null) {
+                if (!oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
+                    synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
+                    layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
+                }
+            }
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
             updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
@@ -289,6 +301,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     public void reset(ResetTools action) {
+        AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
             firePropertyChange(ActionW.RESET.cmd(), null, true);
         } else if (ResetTools.Zoom.equals(action)) {
@@ -331,8 +344,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (selectedView2dContainer == null || view2d != selectedView2dContainer.getSelectedImagePane()) {
             return false;
         }
-        // System.out.println(v.getId() + ": udpate");
-        // selectedView2dContainer.setSelectedImagePane(v);
+
         clearAllPropertyChangeListeners();
         if (view2d.getSourceImage() == null) {
             enableActions(false);
@@ -384,6 +396,17 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     public void savePreferences() {
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+        // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
+        try {
+            if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {
+                Preferences oldPref = prefs.node(ViewSetting.PREFERENCE_NODE);
+                oldPref.removeNode();
+            }
+        } catch (BackingStoreException e) {
+            // Do nothing
+        }
+        zoomSetting.savePreferences(prefs);
+        // Mouse buttons preferences
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
             Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$

@@ -23,6 +23,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.AbstractUIAction;
@@ -71,7 +72,18 @@ public class OpenDicomAction extends AbstractUIAction {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
                         if (reader != null) {
-                            MediaSeries s = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader);
+                            if (reader.getMediaElement() == null) {
+                                // DICOM is not readable
+                                continue;
+                            }
+                            String sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
+                            String gUID = (String) reader.getTagValue(TagW.PatientID);
+                            TagW tname = TagW.PatientName;
+                            String tvalue = (String) reader.getTagValue(TagW.PatientName);
+
+                            MediaSeries s =
+                                ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+
                             if (s != null && !list.contains(s)) {
                                 list.add(s);
                             }
@@ -80,10 +92,11 @@ public class OpenDicomAction extends AbstractUIAction {
                 }
                 if (list.size() > 0) {
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(list, ViewerPluginBuilder.DefaultDataModel, true,
-                        false);
+                        true);
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                    JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), getDescription(), //$NON-NLS-1$
+                    JOptionPane.showMessageDialog(c,
+                        Messages.getString("OpenDicomAction.open_err_msg"), getDescription(), //$NON-NLS-1$
                         JOptionPane.WARNING_MESSAGE);
                 }
             }

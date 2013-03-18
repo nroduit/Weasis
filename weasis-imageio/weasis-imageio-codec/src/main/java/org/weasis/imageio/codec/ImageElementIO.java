@@ -98,7 +98,7 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
             }
 
             // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-            img = ImageFiler.getReadableImage(img);
+            img = PlanarImage.wrapRenderedImage(ImageFiler.getReadableImage(img));
             return img;
         }
         return null;
@@ -136,8 +136,15 @@ public class ImageElementIO implements MediaReader<PlanarImage> {
 
     @Override
     public MediaSeries<ImageElement> getMediaSeries() {
-        MediaSeries<ImageElement> series =
-            new Series<ImageElement>(TagW.SubseriesInstanceUID, uri == null ? "unknown" : uri.toString(), TagW.FileName) { //$NON-NLS-1$
+        String sUID = null;
+        MediaElement element = getSingleImage();
+        if (element != null) {
+            sUID = (String) element.getTagValue(TagW.SeriesInstanceUID);
+        }
+        if (sUID == null) {
+            sUID = uri == null ? "unknown" : uri.toString();
+        }
+        MediaSeries<ImageElement> series = new Series<ImageElement>(TagW.SubseriesInstanceUID, sUID, TagW.FileName) { //$NON-NLS-1$
 
                 @Override
                 public String getMimeType() {

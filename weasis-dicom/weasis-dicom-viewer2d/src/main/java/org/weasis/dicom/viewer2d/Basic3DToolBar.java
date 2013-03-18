@@ -10,6 +10,8 @@ import javax.swing.JDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.ActionState;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -79,5 +81,11 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
         });
         add(mipButton);
 
+        // Attach 3D functions to the SCROLL_SERIES actions
+        ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+        if (scrollAction != null) {
+            scrollAction.registerActionState(mprButton);
+            scrollAction.registerActionState(mipButton);
+        }
     }
 }

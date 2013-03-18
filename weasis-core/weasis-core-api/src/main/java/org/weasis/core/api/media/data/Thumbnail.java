@@ -79,6 +79,8 @@ import org.weasis.core.api.util.FontTools;
 
 public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureListener, DragSourceListener,
     DragSourceMotionListener, FocusListener {
+    public static final File THUMBNAIL_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+        AbstractProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
     public static final ExecutorService THUMB_LOADER = Executors.newFixedThreadPool(1);
     public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
         RenderingHints.VALUE_RENDER_QUALITY);
@@ -124,6 +126,16 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         ToolTipManager.sharedInstance().registerComponent(this);
         buildThumbnail();
         setBorder(outMouseOverBorder);
+    }
+
+    public static RenderedImage buildThumbnail(RenderedImage source) {
+        if (source == null) {
+            return null;
+        }
+        final double scale =
+            Math.min(Thumbnail.MAX_SIZE / (double) source.getHeight(), Thumbnail.MAX_SIZE / (double) source.getWidth());
+        return scale < 1.0 ? SubsampleAverageDescriptor.create(source, scale, scale, Thumbnail.DownScaleQualityHints)
+            .getRendering() : source;
     }
 
     public JProgressBar getProgressBar() {
@@ -304,14 +316,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                             if (imgPl != null) {
                                 // RenderedImage img = ImageToolkit.getDefaultRenderedImage(image, imgPl);
                                 RenderedImage img = image.getRenderedImage(imgPl);
-                                final double scale =
-                                    Math.min(MAX_SIZE / (double) img.getHeight(), MAX_SIZE / (double) img.getWidth());
-                                final PlanarImage thumb =
-                                    scale < 1.0 ? SubsampleAverageDescriptor.create(img, scale, scale,
-                                        DownScaleQualityHints).getRendering() : PlanarImage.wrapRenderedImage(img);
+                                final RenderedImage thumb = buildThumbnail(img);
                                 try {
-                                    thumbnailPath =
-                                        File.createTempFile("tumb_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                    thumbnailPath = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -330,8 +337,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                                         // out of memory
                                     }
 
-                                } else {
-                                    thumbnail = thumb.getAsBufferedImage();
+                                } else if (thumb instanceof PlanarImage) {
+                                    thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
                                 }
                                 if (thumbnail == null
                                     && (thumbnailPath != null || series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE,

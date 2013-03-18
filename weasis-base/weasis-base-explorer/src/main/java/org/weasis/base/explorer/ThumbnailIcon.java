@@ -6,10 +6,6 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.Icon;
 
-/**
- * 
- * @author rem
- */
 public final class ThumbnailIcon implements Icon {
 
     private final BufferedImage image;

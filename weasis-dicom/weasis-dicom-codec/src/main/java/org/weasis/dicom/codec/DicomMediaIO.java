@@ -77,7 +77,6 @@ import org.dcm4che2.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -90,6 +89,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -122,14 +122,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     private static final int[] OFFSETS_0 = { 0 };
     private static final int[] OFFSETS_0_0_0 = { 0, 0, 0 };
     private static final int[] OFFSETS_0_1_2 = { 0, 1, 2 };
-    public static final File DICOM_CACHE_DIR = new File(AbstractProperties.APP_TEMP_DIR, "cache"); //$NON-NLS-1$
-    static {
-        try {
-            DICOM_CACHE_DIR.mkdirs();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
     private static final SoftHashMap<DicomMediaIO, DicomObject> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomObject>() {
 
@@ -1005,7 +998,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             } else if (pmi.endsWith("422") || pmi.endsWith("420")) {
                 bi = readYbr400(imageIndex, param);
                 if (bi != null) {
-                    File outFile = File.createTempFile("img_", ".jpg", DICOM_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                    File outFile = File.createTempFile("img_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                     ImageOutputStream out = null;
                     try {
                         Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");

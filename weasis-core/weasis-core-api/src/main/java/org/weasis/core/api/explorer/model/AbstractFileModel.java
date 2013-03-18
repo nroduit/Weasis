@@ -28,14 +28,14 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
     public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
     public static final String NAME = "All Files"; //$NON-NLS-1$
-    public static final TreeModelNode series = new TreeModelNode(1, 0, TagW.SubseriesInstanceUID);
-    public static final TreeModelNode file = new TreeModelNode(2, 0, TagW.SubseriesInstanceUID);
+    public static final TreeModelNode group = new TreeModelNode(1, 0, TagW.Group);
+    public static final TreeModelNode series = new TreeModelNode(2, 0, TagW.SubseriesInstanceUID);
 
     public static final ArrayList<TreeModelNode> modelStrucure = new ArrayList<TreeModelNode>(5);
     static {
         modelStrucure.add(root);
+        modelStrucure.add(group);
         modelStrucure.add(series);
-        modelStrucure.add(file);
     }
 
     private final Tree<MediaSeriesGroup> model;
@@ -168,16 +168,30 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
         }
     }
 
-    public void removeSeries(MediaSeriesGroup dicomSeries) {
-        if (dicomSeries != null) {
-            // remove first series in UI (Dicom Explorer, Viewer using this series)
+    public void removeTopGroup(MediaSeriesGroup topGroup) {
+        if (topGroup != null) {
             firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null,
-                dicomSeries));
+                topGroup));
+            Collection<MediaSeriesGroup> seriesList = getChildren(topGroup);
+            for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
+                MediaSeriesGroup s = it.next();
+                s.dispose();
+            }
+            removeHierarchyNode(rootNode, topGroup);
+            LOGGER.info("Remove Group: {}", topGroup); //$NON-NLS-1$
+        }
+    }
+
+    public void removeSeries(MediaSeriesGroup seriesGroup) {
+        if (seriesGroup != null) {
+            // remove first series in UI (Viewer using this series)
+            firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Remove, AbstractFileModel.this, null,
+                seriesGroup));
             // remove in the data model
-            MediaSeriesGroup studyGroup = getParent(dicomSeries, AbstractFileModel.root);
-            removeHierarchyNode(studyGroup, dicomSeries);
-            LOGGER.info("Remove Series: {}", dicomSeries); //$NON-NLS-1$
-            dicomSeries.dispose();
+            MediaSeriesGroup topGroup = getParent(seriesGroup, AbstractFileModel.group);
+            removeHierarchyNode(topGroup, seriesGroup);
+            LOGGER.info("Remove Series: {}", seriesGroup); //$NON-NLS-1$
+            seriesGroup.dispose();
         }
     }
 
@@ -210,15 +224,17 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
                 firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, AbstractFileModel.this,
                     null, AbstractFileModel.this));
                 if (opt.isSet("all")) { //$NON-NLS-1$
-                    for (MediaSeriesGroup seriesGroup : model.getSuccessors(rootNode)) {
-                        removeSeries(seriesGroup);
+                    for (MediaSeriesGroup g : model.getSuccessors(rootNode)) {
+                        removeTopGroup(g);
                     }
                 } else if (opt.isSet("series")) { //$NON-NLS-1$
                     for (String seriesUID : args) {
-                        MediaSeriesGroup series = getHierarchyNode(rootNode, seriesUID);
-                        if (series instanceof Series) {
-                            removeSeries(series);
-                            break;
+                        for (MediaSeriesGroup topGroup : model.getSuccessors(rootNode)) {
+                            MediaSeriesGroup s = getHierarchyNode(topGroup, seriesUID);
+                            if (s instanceof Series) {
+                                removeSeries(s);
+                                break;
+                            }
                         }
                     }
                 }
@@ -228,7 +244,7 @@ public class AbstractFileModel implements TreeModel, DataExplorerModel {
 
     @Override
     public TreeModelNode getTreeModelNodeForNewPlugin() {
-        return series;
+        return group;
     }
 
 }
