@@ -312,7 +312,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                openSeriesInViewerPlugin(factory, model, group, series, builder.isRemoveOldSeries(),
+                                openSeriesInViewerPlugin(factory, model, group, series, builder.isBestDefaultLayout(),
                                     builder.getScreenBound());
                             } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
@@ -323,7 +323,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     MediaSeriesGroup group = entry.getKey();
                                     List<MediaSeries> seriesList = entry.getValue();
                                     openSeriesInViewerPlugin(factory, model, group, seriesList,
-                                        builder.isRemoveOldSeries(), builder.getScreenBound());
+                                        builder.isBestDefaultLayout(), builder.getScreenBound());
                                 }
                             }
 
@@ -377,7 +377,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
-        List<MediaSeries> seriesList, boolean removeOldSeries, Rectangle screenBound) {
+        List<MediaSeries> seriesList, boolean bestDefaultLayout, Rectangle screenBound) {
         if (factory == null || seriesList == null || seriesList.size() == 0) {
             return;
         }
@@ -388,7 +388,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         && group.equals(p.getGroupID())) {
 
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
-                        viewer.addSeriesList(seriesList, removeOldSeries);
+                        viewer.addSeriesList(seriesList, bestDefaultLayout);
                         return;
                     }
                 }
@@ -407,9 +407,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         } else if (seriesViewer instanceof ViewerPlugin) {
             ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
+            String title;
+            if (group == null && model instanceof TreeModel && seriesList.size() > 0
+                && model.getTreeModelNodeForNewPlugin() != null) {
+                TreeModel treeModel = (TreeModel) model;
+                MediaSeries s = seriesList.get(0);
+                group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
+            }
             if (group != null) {
+                title = group.toString();
                 viewer.setGroupID(group);
-                String title = group.toString();
                 if (title.length() > 30) {
                     viewer.setToolTipText(title);
                     title = title.substring(0, 30);
@@ -417,6 +424,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 }
                 viewer.setPluginName(title);
             }
+
             boolean isregistered;
             if (screenBound != null) {
                 isregistered = registerDetachWindow(viewer, screenBound);

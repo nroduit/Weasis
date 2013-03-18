@@ -37,6 +37,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                     }
                 });
                 add(rwdButton);
+                sequence.registerActionState(rwdButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.prev", true)) {
@@ -52,6 +53,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                     }
                 });
                 add(prevButton);
+                sequence.registerActionState(prevButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.pause", true)) {
@@ -61,6 +63,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 pauseButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-pause.png"))); //$NON-NLS-1$
                 pauseButton.addActionListener(EventManager.getInstance());
                 add(pauseButton);
+                sequence.registerActionState(pauseButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.start", true)) {
@@ -70,6 +73,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                 startButton.setIcon(new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-play.png"))); //$NON-NLS-1$
                 startButton.addActionListener(EventManager.getInstance());
                 add(startButton);
+                sequence.registerActionState(startButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.stop", true)) {
@@ -85,6 +89,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                     }
                 });
                 add(stopButton);
+                sequence.registerActionState(stopButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.next", true)) {
@@ -100,6 +105,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                     }
                 });
                 add(nextButton);
+                sequence.registerActionState(nextButton);
             }
 
             if (p.getBooleanProperty("weasis.cinetoolbar.gotoend", true)) {
@@ -115,6 +121,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
                     }
                 });
                 add(fwdButton);
+                sequence.registerActionState(fwdButton);
             }
         }
     }

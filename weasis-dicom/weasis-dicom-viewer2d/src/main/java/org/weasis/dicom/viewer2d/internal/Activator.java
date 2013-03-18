@@ -54,6 +54,11 @@ public class Activator implements BundleActivator, ServiceListener {
 
         GuiExecutor.instance().execute(new Runnable() {
 
+            /*
+             * (non-Javadoc)
+             * 
+             * @see java.lang.Runnable#run()
+             */
             @Override
             public void run() {
                 Dictionary<String, Object> dict = new Hashtable<String, Object>();
@@ -87,7 +92,6 @@ public class Activator implements BundleActivator, ServiceListener {
                                 Object service = context.getService(scrServiceRef[i]);
                                 if (service instanceof DockableTool && !View2dContainer.TOOLS.contains(service)) {
                                     View2dContainer.TOOLS.add((DockableTool) service);
-                                    // ((DockableTool) service).registerToolAsDockable();
                                 }
                             }
                         }
@@ -96,12 +100,13 @@ public class Activator implements BundleActivator, ServiceListener {
                     e1.printStackTrace();
                 }
 
-                // Register the service for new event, but look with context.getServiceReferences() for services
-                // previously
-                // registered
+                /*
+                 * Register services for new events after getting those previously registered from
+                 * context.getServiceReferences()
+                 */
                 try {
                     context.addServiceListener(Activator.this, TOOLBAR_FILTER);
-                    // context.addServiceListener(Activator.this, TOOL_FILTER);
+                    context.addServiceListener(Activator.this, TOOL_FILTER);
                 } catch (InvalidSyntaxException e) {
                     e.printStackTrace();
                 }

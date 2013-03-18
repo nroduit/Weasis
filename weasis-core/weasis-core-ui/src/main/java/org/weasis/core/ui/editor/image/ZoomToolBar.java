@@ -53,16 +53,20 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
             }
         });
         add(jButtonBestFit);
+        ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
+        if (zoomAction != null) {
+            zoomAction.registerActionState(jButtonActualZoom);
+            zoomAction.registerActionState(jButtonBestFit);
+        }
 
         final JToggleButton jButtonLens =
             new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
         jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
         ActionState lens = eventManager.getAction(ActionW.LENS);
         if (lens instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) lens).registerComponent(jButtonLens);
+            ((ToggleButtonListener) lens).registerActionState(jButtonLens);
         }
         add(jButtonLens);
-
     }
 
 }

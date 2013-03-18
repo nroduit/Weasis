@@ -80,16 +80,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
 
-    public static final File DICOM_EXPORT_DIR = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
-    public static final File DICOM_TMP_DIR = new File(AbstractProperties.APP_TEMP_DIR, "tmp"); //$NON-NLS-1$
-    static {
-        try {
-            DICOM_TMP_DIR.mkdirs();
-            DICOM_EXPORT_DIR.mkdir();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirecotry("dicom"); //$NON-NLS-1$
+    public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirecotry("downloading"); //$NON-NLS-1$
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -460,11 +452,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
                         if (thumURL != null) {
                             try {
-                                if (thumURL.startsWith(AbstractProperties.APP_TEMP_DIR.getPath())) {
+                                if (thumURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.getPath())) {
                                     file = new File(thumURL);
                                 } else {
                                     File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
-                                        AbstractProperties.APP_TEMP_DIR);
+                                        Thumbnail.THUMBNAIL_CACHE_DIR);
                                     int resp =
                                         FileUtil.writeFile(new URL(wadoParameters.getWadoURL() + thumURL), outFile);
                                     if (resp == -1) {
@@ -615,7 +607,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         OutputStream out = null;
         InputStream in = null;
 
-        File outFile = File.createTempFile("tumb_", ".jpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+        File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             out = new BufferedOutputStream(new FileOutputStream(outFile));
             in = httpCon.getInputStream();

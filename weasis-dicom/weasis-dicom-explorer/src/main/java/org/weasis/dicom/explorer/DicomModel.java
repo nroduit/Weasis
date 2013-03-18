@@ -316,9 +316,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
             for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                 MediaSeriesGroup group = it.next();
-                if (group instanceof DicomSeries) {
-                    ((DicomSeries) group).dispose();
-                }
+                group.dispose();
             }
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
             removeHierarchyNode(patientGroup, studyGroup);

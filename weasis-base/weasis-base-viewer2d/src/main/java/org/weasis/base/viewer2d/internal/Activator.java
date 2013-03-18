@@ -12,18 +12,87 @@ package org.weasis.base.viewer2d.internal;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceReference;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.View2dContainer;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.ui.util.WtoolBar;
 
-public class Activator implements BundleActivator {
+public class Activator implements BundleActivator, ServiceListener {
 
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
+    private static final String TOOLBAR_FILTER = String.format(
+        "(%s=%s)", Constants.OBJECTCLASS, Toolbar.class.getName()); //$NON-NLS-1$
+    private static final String TOOL_FILTER = String.format(
+        "(%s=%s)", Constants.OBJECTCLASS, DockableTool.class.getName()); //$NON-NLS-1$
+
+    private BundleContext context = null;
 
     @Override
     public void start(final BundleContext context) throws Exception {
+        this.context = context;
         PREFERENCES.init(context);
+
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    ServiceReference[] scrServiceRef = context.getServiceReferences(Toolbar.class.getName(), null);
+                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
+                        synchronized (View2dContainer.TOOLBARS) {
+                            // The container should referenced as a property in the provided service
+                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
+                                Object service = context.getService(scrServiceRef[i]);
+                                if (service instanceof Toolbar && !View2dContainer.TOOLBARS.contains(service)) {
+                                    View2dContainer.TOOLBARS.add((Toolbar) service);
+                                }
+                            }
+                        }
+                    }
+                } catch (InvalidSyntaxException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    ServiceReference[] scrServiceRef = context.getServiceReferences(DockableTool.class.getName(), null);
+                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
+                        synchronized (View2dContainer.TOOLS) {
+                            // The container should referenced as a property in the provided service
+                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
+                                Object service = context.getService(scrServiceRef[i]);
+                                if (service instanceof DockableTool && !View2dContainer.TOOLS.contains(service)) {
+                                    View2dContainer.TOOLS.add((DockableTool) service);
+                                }
+                            }
+                        }
+                    }
+                } catch (InvalidSyntaxException e1) {
+                    e1.printStackTrace();
+                }
+
+                /*
+                 * Register services for new events after getting those previously registered from
+                 * context.getServiceReferences()
+                 */
+                try {
+                    context.addServiceListener(Activator.this, TOOLBAR_FILTER);
+                    context.addServiceListener(Activator.this, TOOL_FILTER);
+                } catch (InvalidSyntaxException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
@@ -34,4 +103,67 @@ public class Activator implements BundleActivator {
         UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 
+    @Override
+    public synchronized void serviceChanged(final ServiceEvent event) {
+        // Instantiate in the EDT (necessary for UI components with Substance)
+        GuiExecutor.instance().execute(new Runnable() {
+
+            @Override
+            public void run() {
+
+                final ServiceReference m_ref = event.getServiceReference();
+                Object service = context.getService(m_ref);
+                if (service != null) {
+                    if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                        if (service instanceof WtoolBar) {
+                            final WtoolBar bar = (WtoolBar) service;
+                            synchronized (View2dContainer.TOOLBARS) {
+                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                                    if (event.getType() == ServiceEvent.REGISTERED) {
+                                        if (!View2dContainer.TOOLBARS.contains(bar)) {
+                                            View2dContainer.TOOLBARS.add(bar);
+                                            updateToolbarView();
+                                        }
+                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                                        if (View2dContainer.TOOLBARS.contains(bar)) {
+                                            View2dContainer.TOOLBARS.remove(bar);
+                                            updateToolbarView();
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (service instanceof DockableTool) {
+                            final DockableTool tool = (DockableTool) service;
+                            synchronized (View2dContainer.TOOLS) {
+                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                                    if (event.getType() == ServiceEvent.REGISTERED) {
+                                        if (!View2dContainer.TOOLS.contains(tool)) {
+                                            View2dContainer.TOOLS.add(tool);
+                                        }
+                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                                        if (View2dContainer.TOOLS.contains(tool)) {
+                                            View2dContainer.TOOLS.remove(tool);
+                                            tool.closeDockable();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private static void updateToolbarView() {
+        ImageViewerPlugin<ImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
+        if (view instanceof View2dContainer) {
+            // DataExplorerView dicomView = UIManager.getExplorerplugin(name);
+            // if (dicomView.getDataExplorerModel() instanceof DicomModel) {
+            // DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+            // model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UpdateToolbars, view, null,
+            // view));
+            // }
+        }
+    }
 }

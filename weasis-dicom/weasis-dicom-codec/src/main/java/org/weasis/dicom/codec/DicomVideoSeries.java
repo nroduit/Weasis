@@ -62,7 +62,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                 if (mpeg != null) {
                     OutputStream tempFileStream = null;
                     try {
-                        File videoFile = File.createTempFile("video_", ".mpg", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        File videoFile = File.createTempFile("video_", ".mpg", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         tempFileStream = new BufferedOutputStream(new FileOutputStream(videoFile));
                         tempFileStream.write(mpeg);
                         DicomVideoElement dicom = (DicomVideoElement) media;

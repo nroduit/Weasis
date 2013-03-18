@@ -88,24 +88,27 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
         slider.setPaintTicks(true);
         slider.setPreferredSize(new Dimension(35, 250));
-        action.registerSlider(slider);
+        action.registerActionState(slider);
         return slider;
     }
 
     @Override
     protected void changeToolWindowAnchor(CLocation clocation) {
-        // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
-        boolean vertical = getHeight() > getWidth();
-        if (vertical != slider.getInverted()) {
-            // UIManager.DOCKING_CONTROL.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.LEFT_OF_DOCKABLE);
+        int w = getWidth();
+        int h = getHeight();
+        if (w != 0 && h != 0) {
+            boolean vertical = h >= w;
+            if (vertical != slider.getInverted()) {
+                // UIManager.DOCKING_CONTROL.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.LEFT_OF_DOCKABLE);
 
-            setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-            slider.getParent().setLayout(
-                new BoxLayout(slider.getParent(), vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-            slider.setInverted(vertical);
-            slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
-            slider.revalidate();
-            slider.repaint();
+                setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+                slider.getParent().setLayout(
+                    new BoxLayout(slider.getParent(), vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+                slider.setInverted(vertical);
+                slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
+                slider.revalidate();
+                slider.repaint();
+            }
         }
     }
 
@@ -139,10 +142,10 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
                     return;
                 }
                 if (currentAction != null) {
-                    currentAction.unregisterSlider(slider);
+                    currentAction.unregisterActionState(slider);
                 }
                 if (newAction != null) {
-                    newAction.registerSlider(slider);
+                    newAction.registerActionState(slider);
                     // SliderChangeListener.setSliderLabelValues(slider, newAction.getMin(), newAction.getMax());
                 }
                 currentAction = newAction;

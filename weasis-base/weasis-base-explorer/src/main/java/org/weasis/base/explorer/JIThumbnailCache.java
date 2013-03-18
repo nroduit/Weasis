@@ -2,6 +2,8 @@ package org.weasis.base.explorer;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,9 +15,13 @@ import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.Icon;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnail;
+
+import com.sun.media.jai.codec.FileSeekableStream;
+import com.sun.media.jai.codec.ImageCodec;
+import com.sun.media.jai.codec.ImageDecoder;
 
 public final class JIThumbnailCache {
 
@@ -30,19 +36,13 @@ public final class JIThumbnailCache {
 
         this.cachedThumbnails = Collections.synchronizedMap(new LinkedHashMap<String, ThumbnailIcon>(80) {
 
-            /**
-			 *
-			 */
-            private static final long serialVersionUID = 6299868061343240330L;
-            private static final int MAX_ENTRIES = 500;
+            private static final int MAX_ENTRIES = 30;
 
             @Override
             protected boolean removeEldestEntry(final Map.Entry eldest) {
                 return size() > MAX_ENTRIES;
             }
         });
-
-        // ImageIO.setUseCache(false);
     }
 
     public static JIThumbnailCache getInstance() {
@@ -83,18 +83,66 @@ public final class JIThumbnailCache {
 
                 @Override
                 public void run() {
-                    // final BufferedImage tIcon = JIUtility.createThumbnailRetry(diskObject);
-                    RenderedImage img =
-                        ImageToolkit.getDefaultRenderedImage(diskObject, diskObject.getImage(null), true);
+                    RenderedImage img = null;
+                    String mime = diskObject.getMimeType();
+                    if (mime == null) {
+                        mime = "";
+                    }
+                    String cfile = diskObject.getFile().getAbsolutePath();
+                    String tiled_File = thumbnailList.getThumbnailListModel().getFileInCache(cfile);
+                    if (tiled_File != null || "image/tiff".equals(mime) || "image/x-tiff".equals(mime)) {
+                        try {
+                            ImageDecoder dec =
+                                ImageCodec.createImageDecoder("tiff", new FileSeekableStream(tiled_File == null
+                                    ? diskObject.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, tiled_File)),
+                                    null);
+                            int count = dec.getNumPages();
+                            if (count == 2) {
+                                RenderedImage src2 = dec.decodeAsRenderedImage(1);
+                                if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
+                                    img = src2;
+                                }
+                            }
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+
+                    if (img == null) {
+                        img = diskObject.getRenderedImage(diskObject.getImage(null));
+                    }
                     if (img == null) {
                         return;
                     }
+
+                    if (tiled_File == null) {
+
+                        /*
+                         * Make an image cache with its thumbnail when the image size is larger than a tile size and if
+                         * not DICOM file
+                         */
+
+                        if ((img.getWidth() > ImageFiler.TILESIZE || img.getHeight() > ImageFiler.TILESIZE)
+                            && !mime.contains("dicom")) {
+                            File imgCacheFile = null;
+                            try {
+                                imgCacheFile = File.createTempFile("tiled_", ".tif", JIListModel.EXPLORER_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            if (ImageFiler.writeTIFF(imgCacheFile, img, true, true, false)) {
+                                thumbnailList.getThumbnailListModel().putFileInCache(cfile, imgCacheFile.getName());
+                            }
+                        }
+                    }
+
                     final double scale =
-                        Math.min((double) ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
-                            (double) ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
+                        Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
+                            ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
 
                     final BufferedImage tIcon =
-                        scale < 1.0 ? scale > 0.005 ? SubsampleAverageDescriptor.create(img, scale, scale,
+                        scale <= 1.0 ? scale > 0.005 ? SubsampleAverageDescriptor.create(img, scale, scale,
                             Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null : PlanarImage
                             .wrapRenderedImage(img).getAsBufferedImage();
 
@@ -121,5 +169,4 @@ public final class JIThumbnailCache {
             // log.debug(exp);
         }
     }
-
 }

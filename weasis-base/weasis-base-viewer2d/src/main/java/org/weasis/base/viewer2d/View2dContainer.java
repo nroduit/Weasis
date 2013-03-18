@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.base.viewer2d;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -18,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -34,9 +37,11 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -55,6 +60,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -73,6 +79,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         LAYOUT_LIST.add(VIEWS_1x1);
         LAYOUT_LIST.add(VIEWS_1x2);
         LAYOUT_LIST.add(VIEWS_2x1);
+        LAYOUT_LIST.add(VIEWS_2x2_f2);
+        LAYOUT_LIST.add(VIEWS_2_f1x2);
         LAYOUT_LIST.add(VIEWS_2x2);
         LAYOUT_LIST.add(VIEWS_3x2);
         LAYOUT_LIST.add(VIEWS_3x3);
@@ -151,6 +159,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             menuRoot.removeAll();
             menuRoot.setText(ViewerFactory.NAME);
 
+            List<Action> actions = getPrintActions();
+            if (actions != null) {
+                JMenu printMenu = new JMenu("Print");
+                for (Action action : actions) {
+                    JMenuItem item = new JMenuItem(action);
+                    printMenu.add(item);
+                }
+                menuRoot.add(printMenu);
+            }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
                 JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$
@@ -234,7 +251,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     @Override
-    public synchronized List<DockableTool> getToolPanel() {
+    public List<DockableTool> getToolPanel() {
         return TOOLS;
     }
 
@@ -415,8 +432,20 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public List<Action> getPrintActions() {
-        // TODO Auto-generated method stub
-        return null;
+        ArrayList<Action> actions = new ArrayList<Action>(1);
+        final String title = "Print 2D viewer layout";
+        AbstractAction printStd =
+            new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
+                    JMVUtils.showCenterScreen(dialog, parent);
+                }
+            };
+        actions.add(printStd);
+        return actions;
     }
 
     @Override

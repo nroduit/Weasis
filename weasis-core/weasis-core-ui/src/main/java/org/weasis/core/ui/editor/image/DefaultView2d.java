@@ -369,63 +369,69 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setImage(E img, boolean bestFit) {
-        E oldImage = imageLayer.getSourceImage();
-        if (img != null && !img.equals(oldImage)) {
-            actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
-            final Rectangle modelArea = getImageBounds(img);
-            AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
-            if (layer != null) {
-                synchronized (this) {
-                    // TODO Handle several layers
-                    GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                    if (list != null) {
-                        // TODO handle graphics without shape, exclude them!
-                        layer.setGraphics(list);
-                    } else {
-                        GraphicList graphics = new GraphicList();
-                        img.setTag(TagW.MeasurementGraphics, graphics);
-                        layer.setGraphics(graphics);
-                    }
-                }
-            }
-            setShutter(img);
-
-            // Fix issue with W/L values updated when scrolling image of the same series with Preset set to null
-            // Note : if setDefautWindowLevel is called here, every times setImage is called will render image with
-            // default W/L. This shouldn't behaves this way for instance when ActionW.SCROLL_SERIES propertyChange
-            // invoke setImage with custom W/L values
-
-            // setDefautWindowLevel(img);
-
-            Rectangle2D area = getViewModel().getModelArea();
-            if (!modelArea.equals(area)) {
-                ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                getViewModel().setModelArea(modelArea);
-                // setPreferredSize(modelArea.getSize());
-                center();
-            }
-            if (bestFit) {
-                actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
-            }
-            imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
-
-            if (AuditLog.LOGGER.isInfoEnabled()) {
-                PlanarImage image = img.getImage();
-                if (image != null) {
-                    StringBuffer pixSize = new StringBuffer();
-                    SampleModel sm = image.getSampleModel();
-                    if (sm != null) {
-                        int[] spsize = sm.getSampleSize();
-                        if (spsize != null && spsize.length > 0) {
-                            pixSize.append(spsize[0]);
-                            for (int i = 1; i < spsize.length; i++) {
-                                pixSize.append(',');
-                                pixSize.append(spsize[i]);
-                            }
+        if (img == null) {
+            imageLayer.setImage(null, null);
+            getLayerModel().deleteAllGraphics();
+            closeLens();
+        } else {
+            E oldImage = imageLayer.getSourceImage();
+            if (img != null && !img.equals(oldImage)) {
+                actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+                final Rectangle modelArea = getImageBounds(img);
+                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
+                if (layer != null) {
+                    synchronized (this) {
+                        // TODO Handle several layers
+                        GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                        if (list != null) {
+                            // TODO handle graphics without shape, exclude them!
+                            layer.setGraphics(list);
+                        } else {
+                            GraphicList graphics = new GraphicList();
+                            img.setTag(TagW.MeasurementGraphics, graphics);
+                            layer.setGraphics(graphics);
                         }
                     }
-                    AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
-                        new Object[] { image.getWidth(), image.getHeight(), pixSize.toString() });
+                }
+                setShutter(img);
+
+                // Fix issue with W/L values updated when scrolling image of the same series with Preset set to null
+                // Note : if setDefautWindowLevel is called here, every times setImage is called will render image with
+                // default W/L. This shouldn't behaves this way for instance when ActionW.SCROLL_SERIES propertyChange
+                // invoke setImage with custom W/L values
+
+                // setDefautWindowLevel(img);
+
+                Rectangle2D area = getViewModel().getModelArea();
+                if (!modelArea.equals(area)) {
+                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                    getViewModel().setModelArea(modelArea);
+                    // setPreferredSize(modelArea.getSize());
+                    center();
+                }
+                if (bestFit) {
+                    actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
+                }
+                imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+                if (AuditLog.LOGGER.isInfoEnabled()) {
+                    PlanarImage image = img.getImage();
+                    if (image != null) {
+                        StringBuffer pixSize = new StringBuffer();
+                        SampleModel sm = image.getSampleModel();
+                        if (sm != null) {
+                            int[] spsize = sm.getSampleSize();
+                            if (spsize != null && spsize.length > 0) {
+                                pixSize.append(spsize[0]);
+                                for (int i = 1; i < spsize.length; i++) {
+                                    pixSize.append(',');
+                                    pixSize.append(spsize[i]);
+                                }
+                            }
+                        }
+                        AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
+                            new Object[] { image.getWidth(), image.getHeight(), pixSize.toString() });
+                    }
                 }
             }
         }
@@ -760,38 +766,37 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 layer.deleteAllGraphic();
             }
 
-            E imgElement = null;
+            E imgElement = getImage();
             if (value != null) {
-                if (value.getLocation() != null) {
+                if (value.getSeries() == series) {
+                    if (tileOffset != 0) {
+                        // Index could have changed when loading series.
+                        imgElement =
+                            series.getMedia(value.getSeriesIndex() + tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
+                    } else if (value.getMedia() instanceof ImageElement) {
+                        imgElement = (E) value.getMedia();
+                    }
+                } else if (value.getLocation() != null) {
                     Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                     if (cutlines != null && cutlines) {
                         // Compute cutlines from the location of selected image
                         computeCrosslines(value.getLocation().doubleValue());
                     } else {
                         double location = value.getLocation().doubleValue();
-                        // TODO add a way in GUI to resynchronize series
-                        Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-                        if (offset != null) {
-                            location += offset;
-                        }
+                        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related to
+                        // a specific series
+                        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+                        // if (offset != null) {
+                        // location += offset;
+                        // }
                         imgElement =
                             series.getNearestImage(location, tileOffset,
                                 (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                                 getCurrentSortComparator());
 
                         AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
-                    }
-                } else {
-                    if (value.getMedia() instanceof ImageElement) {
-                        imgElement = (E) value.getMedia();
-                    }
-
-                    if (tileOffset != 0) {
-                        // Index could have changed when loading images.
-                        imgElement =
-                            series.getMedia(value.getSeriesIndex() + tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
                     }
                 }
             }

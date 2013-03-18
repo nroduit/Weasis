@@ -64,7 +64,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 if (doc != null) {
                     OutputStream tempFileStream = null;
                     try {
-                        File file = File.createTempFile("encap_", "." + extension, AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        File file = File.createTempFile("encap_", "." + extension, AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         tempFileStream = new BufferedOutputStream(new FileOutputStream(file));
                         tempFileStream.write(doc);
                         DicomEncapDocElement dicom = (DicomEncapDocElement) media;

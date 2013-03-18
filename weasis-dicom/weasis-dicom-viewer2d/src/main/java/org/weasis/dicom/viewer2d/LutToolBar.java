@@ -3,10 +3,12 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Component;
 import java.awt.Graphics;
 
+import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
+import javax.swing.UIManager;
 
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -39,6 +41,9 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
 
         presetButton.setToolTipText(Messages.getString("LutToolBar.presets")); //$NON-NLS-1$
         add(presetButton);
+        if (presetAction != null) {
+            presetAction.registerActionState(presetButton);
+        }
 
         GroupRadioMenu menuLut = null;
         ActionState lutAction = EventManager.getInstance().getAction(ActionW.LUT);
@@ -57,13 +62,16 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
 
         lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection")); //$NON-NLS-1$
         add(lutButton);
+        if (lutAction != null) {
+            lutAction.registerActionState(lutButton);
+        }
 
         final JToggleButton invertButton = new JToggleButton();
         invertButton.setToolTipText(Messages.getString("LutToolBar.invert")); //$NON-NLS-1$
         invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
         ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERSELUT);
         if (invlutAction instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) invlutAction).registerComponent(invertButton);
+            ((ToggleButtonListener) invlutAction).registerActionState(invertButton);
         }
         add(invertButton);
     }
@@ -75,7 +83,17 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
-                mouseIcon.paintIcon(c, g, x, y);
+                if (c instanceof AbstractButton) {
+                    AbstractButton model = (AbstractButton) c;
+                    Icon icon = null;
+                    if (!model.isEnabled()) {
+                        icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
+                    }
+                    if (icon == null) {
+                        icon = mouseIcon;
+                    }
+                    icon.paintIcon(c, g, x, y);
+                }
             }
 
             @Override
@@ -97,7 +115,17 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
-                mouseIcon.paintIcon(c, g, x, y);
+                if (c instanceof AbstractButton) {
+                    AbstractButton model = (AbstractButton) c;
+                    Icon icon = null;
+                    if (!model.isEnabled()) {
+                        icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
+                    }
+                    if (icon == null) {
+                        icon = mouseIcon;
+                    }
+                    icon.paintIcon(c, g, x, y);
+                }
             }
 
             @Override

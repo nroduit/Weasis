@@ -17,11 +17,13 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
+import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
+import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
 
 import org.weasis.core.api.gui.util.ActionState;
@@ -147,7 +149,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (measure instanceof ComboItemListener) {
             ComboItemListener m = (ComboItemListener) measure;
             menu = new MeasureGroupMenu();
-            m.registerComponent(menu);
+            m.registerActionState(menu);
         }
         measureButton = new DropDownButton(ActionW.DRAW_MEASURE.cmd(), buildIcon(selectionGraphic), menu) {
             @Override
@@ -157,6 +159,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 return m;
             }
         };
+        if (measure != null) {
+            measure.registerActionState(measureButton);
+        }
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
 
         // when user press the measure icon, set the action to measure
@@ -202,6 +207,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
                 }
             }
         });
+        if (measure != null) {
+            measure.registerActionState(jButtondelete);
+        }
         add(jButtondelete);
     }
 
@@ -227,13 +235,30 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
 
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
-                MeasureIcon.paintIcon(c, g, x, y);
-                if (graphic != null) {
-                    Icon smallIcon = graphic.getIcon();
-                    if (smallIcon != null) {
-                        x += MeasureIcon.getIconWidth() - smallIcon.getIconWidth() - 1;
-                        y += MeasureIcon.getIconHeight() - smallIcon.getIconHeight() - 1;
-                        smallIcon.paintIcon(c, g, x, y);
+                if (c instanceof AbstractButton) {
+                    AbstractButton model = (AbstractButton) c;
+                    Icon icon = null;
+
+                    if (!model.isEnabled()) {
+                        icon = UIManager.getLookAndFeel().getDisabledIcon(model, MeasureIcon);
+                    }
+                    if (icon == null) {
+                        icon = MeasureIcon;
+                    }
+                    icon.paintIcon(c, g, x, y);
+                    if (graphic != null) {
+                        Icon smallIcon = null;
+                        if (!model.isEnabled()) {
+                            smallIcon = UIManager.getLookAndFeel().getDisabledIcon(model, graphic.getIcon());
+                        }
+                        if (smallIcon == null) {
+                            smallIcon = graphic.getIcon();
+                        }
+                        if (smallIcon != null) {
+                            x += MeasureIcon.getIconWidth() - smallIcon.getIconWidth() - 1;
+                            y += MeasureIcon.getIconHeight() - smallIcon.getIconHeight() - 1;
+                            smallIcon.paintIcon(c, g, x, y);
+                        }
                     }
                 }
             }

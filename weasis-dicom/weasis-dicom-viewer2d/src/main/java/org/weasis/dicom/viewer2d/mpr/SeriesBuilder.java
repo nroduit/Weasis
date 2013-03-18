@@ -54,14 +54,8 @@ import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.Type;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = new File(AbstractProperties.APP_TEMP_DIR, "mpr"); //$NON-NLS-1$
-    static {
-        try {
-            MPR_CACHE_DIR.mkdirs();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    public static final File MPR_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+        AbstractProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
     public static void createMissingSeries(Thread thread, MPRContainer mprContainer, final MprView view)
         throws Exception {
@@ -366,8 +360,8 @@ public class SeriesBuilder {
     private static double writeBlock(RawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, TransposeType rotate, final MprView view, Thread thread) throws IOException {
 
-        //Needs to be final to be changed on"invoqueAndWhait" block.
-        final boolean[] abort = new boolean[] {false};
+        // Needs to be final to be changed on"invoqueAndWhait" block.
+        final boolean[] abort = new boolean[] { false };
 
         // TODO should return the more frequent space!
         boolean byPassSpaceIssue = false;
@@ -392,14 +386,14 @@ public class SeriesBuilder {
 
                         @Override
                         public void run() {
-                    int usrChoice =
-                        JOptionPane.showConfirmDialog(view,
-                            "Space between slices is unpredictable!\n Do you want to continue anyway?",
-                            MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (usrChoice == JOptionPane.NO_OPTION) {
+                            int usrChoice =
+                                JOptionPane.showConfirmDialog(view,
+                                    "Space between slices is unpredictable!\n Do you want to continue anyway?",
+                                    MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (usrChoice == JOptionPane.NO_OPTION) {
                                 abort[0] = true;
-                        throw new IllegalStateException("Slices don't have 3D position!");
-                    }
+                                throw new IllegalStateException("Slices don't have 3D position!");
+                            }
                         }
                     });
                     byPassSpaceIssue = true;
@@ -413,14 +407,14 @@ public class SeriesBuilder {
 
                                 @Override
                                 public void run() {
-                            int usrChoice =
-                                JOptionPane.showConfirmDialog(view,
-                                    "Space between slices is not regular!\n Do you want to continue anyway?",
-                                    MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                            if (usrChoice == JOptionPane.NO_OPTION) {
+                                    int usrChoice =
+                                        JOptionPane.showConfirmDialog(view,
+                                            "Space between slices is not regular!\n Do you want to continue anyway?",
+                                            MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                    if (usrChoice == JOptionPane.NO_OPTION) {
                                         abort[0] = true;
-                                throw new IllegalStateException("Space between slices is not regular!");
-                            }
+                                        throw new IllegalStateException("Space between slices is not regular!");
+                                    }
                                 }
                             });
                             byPassSpaceIssue = true;

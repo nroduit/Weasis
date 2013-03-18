@@ -17,7 +17,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
-import java.util.Vector;
 
 import javax.media.jai.BorderExtenderConstant;
 import javax.media.jai.Interpolation;
@@ -53,81 +52,28 @@ public class ImageToolkit {
         return JAI.create("LoadImage", file); //$NON-NLS-1$
     }
 
-    private static PlanarImage getFileloadOp(PlanarImage image) {
+    private static RenderedImage getFileloadOp(RenderedImage image) {
         return getImageOp(image, "LoadImage"); //$NON-NLS-1$
     }
 
-    public static PlanarImage getImageOp(PlanarImage image, String opName) {
+    public static RenderedImage getImageOp(RenderedImage image, String opName) {
         if (image instanceof RenderedOp) {
             RenderedOp op = (RenderedOp) image;
             if (op.getOperationName().equalsIgnoreCase(opName)) {
                 return image;
             }
-            while (image.getNumSources() > 0) {
+            while (op.getNumSources() > 0) {
                 try {
-                    image = image.getSourceImage(0);
-                    op = (RenderedOp) image;
-                    if (op.getOperationName().equalsIgnoreCase(opName)) {
-                        return image;
+                    PlanarImage img = op.getSourceImage(0);
+                    if (image instanceof RenderedOp) {
+                        RenderedOp op2 = (RenderedOp) img;
+                        if (op2.getOperationName().equalsIgnoreCase(opName)) {
+                            return img;
+                        }
                     }
                 } catch (Exception ex) {
                     return null;
                 }
-            }
-        }
-        return null;
-    }
-
-    // private static FileSeekableStream getImageStreamFromLoadImage(PlanarImage
-    // image) {
-    // image = getFileloadOp(image);
-    // FileSeekableStream stream = null;
-    // if (image instanceof RenderedOp) {
-    // try {
-    // RenderedOp img = (RenderedOp) ((RenderedOp) image).getRendering();
-    // img = (RenderedOp) getImageOp(img, "stream");
-    // stream = (FileSeekableStream)
-    // img.getParameterBlock().getParameters().get(0);
-    // }
-    // catch (Exception ex) {
-    // }
-    // }
-    // return stream;
-    // }
-
-    // public static void closeLoadImageStream(PlanarImage image) {
-    // try {
-    // FileSeekableStream stream = getImageStreamFromLoadImage(image);
-    // if (stream != null) {
-    // stream.close();
-    // }
-    // }
-    // catch (IOException ex1) {
-    // }
-    // }
-
-    private static File getFilePath(Vector ParameterBlock, String opName) {
-        if (ParameterBlock != null && ParameterBlock.size() >= 1 && opName.equalsIgnoreCase("LoadImage")) { //$NON-NLS-1$
-            try {
-                return (File) (ParameterBlock.get(0));
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-        return null;
-    }
-
-    public static File getFileNameOfSource(PlanarImage image) {
-        if (image instanceof RenderedOp) {
-            RenderedOp img = (RenderedOp) image;
-            Vector sources = img.getSources();
-            if (sources.size() == 0) {
-                return getFilePath(img.getParameterBlock().getParameters(), img.getOperationName());
-            } else if (sources.size() >= 1) {
-                if (sources.get(0) instanceof PlanarImage) {
-                    return getFileNameOfSource((PlanarImage) sources.get(0));
-                }
-
             }
         }
         return null;

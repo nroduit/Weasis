@@ -6,34 +6,39 @@ import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URI;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JList;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
-import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.TitleMenuItem;
 
 public final class JIThumbnailList extends JList implements JIObservable {
 
@@ -45,13 +50,6 @@ public final class JIThumbnailList extends JList implements JIObservable {
     private final int editingIndex = -1;
 
     private final FileTreeModel model;
-    private final JScrollPane viewport;
-
-    private final JMenuItem jMenuItemOpen;
-    private final JMenuItem jMenuItemOpenWith;
-    private final JMenuItem jMenuItemRefreshList;
-    private final JMenuItem jMenuItemMetadata;
-    private final JPopupMenu jDesktopPopupMenu;
 
     private final ToggleSelectionModel selectionModel;
 
@@ -59,16 +57,15 @@ public final class JIThumbnailList extends JList implements JIObservable {
 
     private MediaElement lastSelectedDiskObject = null;
 
-    public JIThumbnailList(final FileTreeModel model, final JScrollPane viewport) {
-        this(model, viewport, VERTICAL_WRAP, null);
+    public JIThumbnailList(final FileTreeModel model) {
+        this(model, VERTICAL_WRAP, null);
     }
 
-    public JIThumbnailList(final FileTreeModel model, final JScrollPane viewport, final OrderedFileList dObjList) {
-        this(model, viewport, VERTICAL_WRAP, dObjList);
+    public JIThumbnailList(final FileTreeModel model, final OrderedFileList dObjList) {
+        this(model, VERTICAL_WRAP, dObjList);
     }
 
-    public JIThumbnailList(final FileTreeModel model, final JScrollPane viewport, final int scrollMode,
-        final OrderedFileList dObjList) {
+    public JIThumbnailList(final FileTreeModel model, final int scrollMode, final OrderedFileList dObjList) {
         super();
 
         boolean useSelection = false;
@@ -80,15 +77,7 @@ public final class JIThumbnailList extends JList implements JIObservable {
         }
 
         this.model = model;
-        this.viewport = viewport;
-
         this.changed = false;
-
-        this.jMenuItemOpen = new JMenuItem();
-        this.jMenuItemOpenWith = new JMenu();
-        this.jMenuItemRefreshList = new JMenuItem();
-        this.jMenuItemMetadata = new JMenuItem();
-        this.jDesktopPopupMenu = new JPopupMenu();
 
         this.selectionModel = new ToggleSelectionModel();
         this.setBackground(new Color(242, 242, 242));
@@ -105,8 +94,7 @@ public final class JIThumbnailList extends JList implements JIObservable {
 
         setLayoutOrientation(HORIZONTAL_WRAP);
 
-        initActions();
-
+        addMouseListener(new PopupTrigger());
         addKeyListener(new JIThumbnailKeyAdapter());
 
         if (useSelection) {
@@ -121,16 +109,8 @@ public final class JIThumbnailList extends JList implements JIObservable {
         return (JIListModel) getModel();
     }
 
-    // public final void setFrame() {
-    // this.listCellEditor = new JIListCellEditor(this);
-    // }
-
     public Frame getFrame() {
         return null;
-    }
-
-    public JViewport getViewPort() {
-        return this.viewport.getViewport();
     }
 
     public boolean isEditing() {
@@ -194,18 +174,132 @@ public final class JIThumbnailList extends JList implements JIObservable {
         setLayoutOrientation(HORIZONTAL_WRAP);
 
         ((JIListModel) getModel()).reload();
-        initOpenWith();
         setVisibleRowCount(-1);
         clearSelection();
         ensureIndexIsVisible(0);
     }
 
     public void openSelection() {
-        final int index = getSelectedIndex();
-        final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
-        imageList.setCurrentIndex(index);
+        Object object = getSelectedValue();
+        if (object instanceof MediaElement) {
+            MediaElement mediaElement = (MediaElement) object;
+            openSelection(new MediaElement[] { mediaElement }, true, true);
+        }
+    }
 
-        // new JIViewer(imageList);
+    public void openSelection(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
+        if (medias != null) {
+            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
+            for (MediaElement mediaElement : medias) {
+                String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
+                File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
+                MediaReader reader = ViewerPluginBuilder.getMedia(file);
+                if (reader != null && file != null) {
+                    String sUID;
+                    String gUID;
+                    TagW tname;
+                    String tvalue;
+
+                    Codec codec = reader.getCodec();
+                    if (codec != null && codec.isMimeTypeSupported("application/dicom")) {
+                        if (reader.getMediaElement() == null) {
+                            // DICOM is not readable
+                            return;
+                        }
+                        sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
+                        gUID = (String) reader.getTagValue(TagW.PatientID);
+                        tname = TagW.PatientName;
+                        tvalue = (String) reader.getTagValue(TagW.PatientName);
+                    } else {
+                        sUID = mediaElement.getFile().getAbsolutePath();
+                        gUID = sUID;
+                        tname = TagW.FileName;
+                        tvalue = mediaElement.getFile().getName();
+                    }
+
+                    MediaSeries s =
+                        ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+                    if (s != null && !list.contains(s)) {
+                        list.add(s);
+                    }
+                }
+            }
+            if (list.size() > 0) {
+                ViewerPluginBuilder.openSequenceInDefaultPlugin(list, ViewerPluginBuilder.DefaultDataModel,
+                    compareEntryToBuildNewViewer, bestDefaultLayout);
+            }
+        }
+    }
+
+    public void openGroup(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
+        boolean modeLayout) {
+        if (medias != null) {
+            String groupUID = null;
+
+            if (modeLayout) {
+                groupUID = UUID.randomUUID().toString();
+            }
+            Map<SeriesViewerFactory, List<MediaSeries>> plugins = new HashMap<SeriesViewerFactory, List<MediaSeries>>();
+            for (MediaElement m : medias) {
+                String mime = m.getMimeType();
+                if (mime != null) {
+                    SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+                    if (plugin != null) {
+                        List<MediaSeries> list = plugins.get(plugin);
+                        if (list == null) {
+                            list = new ArrayList<MediaSeries>(modeLayout ? 1 : 10);
+                            plugins.put(plugin, list);
+                        }
+
+                        // Get only application readers from files
+                        String cfile = getThumbnailListModel().getFileInCache(m.getFile().getAbsolutePath());
+                        File file = cfile == null ? m.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
+                        MediaReader mreader = ViewerPluginBuilder.getMedia(file, false);
+                        if (mreader != null) {
+                            if (modeLayout) {
+                                MediaSeries series =
+                                    ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null,
+                                        null);
+                                if (series != null) {
+                                    list.add(series);
+                                }
+                            } else {
+                                MediaSeries series = null;
+                                if (list.size() == 0) {
+                                    series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
+                                    if (series != null) {
+                                        list.add(series);
+                                    }
+                                } else {
+                                    series = list.get(0);
+                                    if (series != null) {
+                                        MediaElement[] ms = mreader.getMediaElement();
+                                        if (ms != null) {
+                                            for (MediaElement media : ms) {
+                                                media.setTag(TagW.SeriesInstanceUID,
+                                                    series.getTagValue(series.getTagID()));
+                                                URI uri = media.getMediaURI();
+                                                media.setTag(TagW.SOPInstanceUID, uri == null ? UUID.randomUUID()
+                                                    .toString() : uri.toString());
+                                                series.addMedia(media);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries>>> iterator = plugins.entrySet().iterator(); iterator
+                .hasNext();) {
+                Entry<SeriesViewerFactory, List<MediaSeries>> item = iterator.next();
+                ViewerPluginBuilder.openSequenceInPlugin(item.getKey(), item.getValue(),
+                    ViewerPluginBuilder.DefaultDataModel, compareEntryToBuildNewViewer, bestDefaultLayout);
+            }
+        }
     }
 
     public void nextPage(final KeyEvent e) {
@@ -269,137 +363,9 @@ public final class JIThumbnailList extends JList implements JIObservable {
         }
     }
 
-    private void openMedia(SeriesViewerFactory factory, MediaElement media) {
-        // TODO should be the SeriesViewer type
-        ViewerPlugin view = (ViewerPlugin) factory.createSeriesViewer(null);
-
-        if (view != null) {
-
-            model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, view));
-
-            Object patient = media.getTagValue(TagW.PatientName);
-
-            if (patient != null) {
-                view.setPluginName(patient.toString());
-            }
-            MediaSeries series = media.getMediaReader().getMediaSeries();
-            series.dispose();
-            boolean multiPatient = false;
-            MediaElement[] values = getSelectedValues();
-            for (MediaElement element : values) {
-                if (media.getClass().isAssignableFrom(element.getClass())) {
-                    series.add(element);
-                    if (patient != null) {
-                        if (!patient.equals(element.getTagValue(TagW.PatientName))) {
-                            multiPatient = true;
-                        }
-                    }
-                }
-            }
-            if (multiPatient) {
-                view.setPluginName("Multi-Patient");
-            }
-            view.setSelectedAndGetFocus();
-            view.addSeries(series);
-
-        }
-    }
-
-    private void initOpenWith() {
-        // Open With
-        this.jMenuItemOpenWith.removeAll();
-        this.jMenuItemOpenWith.setText("Open With");
-
-        final int index = getSelectedIndex();
-        if (index == -1) {
-            return;
-        }
-
-        final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
-        imageList.setCurrentIndex(index);
-
-        final MediaElement media = imageList.get(index);
-        if (media == null) {
-            return;
-        }
-
-        final String mimeType = media.getMimeType();
-
-        synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-            List<SeriesViewerFactory> viewerPlugins = UIManager.SERIES_VIEWER_FACTORIES;
-            for (final SeriesViewerFactory factory : viewerPlugins) {
-                if (factory.canReadMimeType(mimeType)) {
-                    final JMenuItem item4 = new JMenuItem(factory.getUIName(), factory.getIcon());
-                    item4.addActionListener(new ActionListener() {
-
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            openMedia(factory, media);
-                        }
-                    });
-                    this.jMenuItemOpenWith.add(item4);
-                }
-            }
-        }
-    }
-
-    private void initActions() {
-
-        // Open
-        this.jMenuItemOpen.setText("Open");
-        this.jMenuItemOpen.setAction(new AbstractAction("Open") {
-
-            /**
-			 *
-			 */
-            private static final long serialVersionUID = 7770033253414532608L;
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final Thread runner = new Thread() {
-
-                    @Override
-                    public void run() {
-                        Runnable runnable = new Runnable() {
-
-                            @Override
-                            public void run() {
-                                // final int index = getSelectedIndex();
-                                // if (index < 0) {
-                                // return;
-                                // }
-                                // final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
-                                // imageList.setCurrentIndex(index);
-
-                                for (MediaElement mediaElement : getSelectedValues()) {
-                                    ViewerPluginBuilder.openSequenceInDefaultPlugin(mediaElement.getFile());
-                                }
-                                // final MediaElement media = imageList.get(index);
-                                // if (media == null) {
-                                // return;
-                                // }
-                                // MediaSeries series = media.getMediaReader().getMediaSeries();
-                                // ViewerPluginBuilder.openSequenceInDefaultPlugin(series,
-                                // ViewerPluginBuilder.DefaultDataModel, true, true);
-                            }
-                        };
-                        SwingUtilities.invokeLater(runnable);
-                    }
-                };
-                runner.start();
-            }
-        });
-
-        initOpenWith();
-
-        // Refresh List
-        this.jMenuItemRefreshList.setText("Refresh List");
-        this.jMenuItemRefreshList.setAction(new AbstractAction("Refresh List") {
-
-            /**
-			 *
-			 */
-            private static final long serialVersionUID = -7251048462021844506L;
+    private Action refreshAction() {
+        // TODO set this action in toolbar
+        return new AbstractAction("Refresh List") {
 
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -419,9 +385,7 @@ public final class JIThumbnailList extends JList implements JIObservable {
                 };
                 runner.start();
             }
-        });
-
-        addMouseListener(new PopupTrigger());
+        };
     }
 
     @Override
@@ -461,104 +425,98 @@ public final class JIThumbnailList extends JList implements JIObservable {
         clearChanged();
     }
 
-    public void listMouseClicked(final MouseEvent e) {
-        final int index = this.locationToIndex(e.getPoint());
+    public JPopupMenu buidContexMenu(final MouseEvent e) {
 
-        if (getSelectionModel().isSelectedIndex(index)) {
-            long clickTime = new Date().getTime();
+        try {
+            final MediaElement[] medias = getSelectedValues();
 
-            final MediaElement selectedObject = (MediaElement) this.getModel().getElementAt(index);
+            if (medias == null || medias.length == 0) {
+                return null;
+            } else {
+                JPopupMenu popupMenu = new JPopupMenu();
+                TitleMenuItem itemTitle = new TitleMenuItem("Selection Menu", popupMenu.getInsets());
+                popupMenu.add(itemTitle);
+                popupMenu.addSeparator();
+                JMenuItem menuItem = new JMenuItem(new AbstractAction("Open") {
 
-            File selectedFile;
-            if (selectedObject == null) {
-                selectedFile = null;
-                clearSelection();
-                return;
-            }
-
-            ensureIndexIsVisible(index);
-
-            selectedFile = selectedObject.getFile();
-            if (SwingUtilities.isLeftMouseButton(e) && (e.getClickCount() == 2)) {
-                final int indexSel = getSelectedIndex();
-                final OrderedFileList imageList = ((JIListModel) getModel()).getDiskObjectList();
-                imageList.setCurrentIndex(indexSel);
-
-                final MediaElement media = imageList.get(indexSel);
-                if (media == null) {
-                    return;
-                }
-                MediaSeries series = media.getMediaReader().getMediaSeries();
-                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, model, true, true);
-                e.consume();
-            }
-        }
-    }
-
-    public void listMouseEvent(final MouseEvent e) {
-        if (SwingUtilities.isRightMouseButton(e)) {
-            try {
-                final Object obj = getSelectedValue();
-
-                if (obj == null) {
-                    this.jDesktopPopupMenu.removeAll();
-                    this.jDesktopPopupMenu.add(this.jMenuItemRefreshList);
-
-                } else {
-                    final File selectedFile = ((MediaElement) getSelectedValue()).getFile();
-                    if (!selectedFile.isDirectory()) {
-                        this.jDesktopPopupMenu.removeAll();
-                        this.jDesktopPopupMenu.add(this.jMenuItemOpen);
-                        this.jDesktopPopupMenu.addSeparator();
-                        // if ((JIThumbnailService.getInstance().getOpenWith() != null)
-                        // && (JIThumbnailService.getInstance().getOpenWith().size() > 0)) {
-                        initOpenWith();
-                        this.jDesktopPopupMenu.add(this.jMenuItemOpenWith);
-                        this.jDesktopPopupMenu.addSeparator();
-                        // }
-                        this.jDesktopPopupMenu.add(this.jMenuItemRefreshList);
-
-                        this.jDesktopPopupMenu.addSeparator();
-                        this.jDesktopPopupMenu.add(this.jMenuItemMetadata);
-
-                        this.jDesktopPopupMenu.show(this, e.getX(), e.getY());
-
+                    @Override
+                    public void actionPerformed(final ActionEvent e) {
+                        openSelection(medias, true, true);
                     }
+                });
+
+                popupMenu.add(menuItem);
+
+                menuItem = new JMenuItem(new AbstractAction("Open in a new viewer") {
+
+                    @Override
+                    public void actionPerformed(final ActionEvent e) {
+                        openSelection(medias, false, true);
+                    }
+                });
+
+                popupMenu.add(menuItem);
+
+                if (medias.length > 1) {
+                    popupMenu.addSeparator();
+                    menuItem = new JMenuItem(new AbstractAction("Open in Series") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, true, true, false);
+                        }
+
+                    });
+                    popupMenu.add(menuItem);
+
+                    menuItem = new JMenuItem(new AbstractAction("Open in Layout") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, true, false, true);
+                        }
+
+                    });
+                    popupMenu.add(menuItem);
                 }
-            } catch (final Exception exp) {
-            } finally {
-                e.consume();
+                return popupMenu;
+
             }
+        } catch (final Exception exp) {
+        } finally {
+            e.consume();
         }
+        return null;
+
     }
 
     final class PopupTrigger extends MouseAdapter {
 
         @Override
-        public void mousePressed(final MouseEvent e) {
-            final int index = JIThumbnailList.this.locationToIndex(e.getPoint());
-            if (index < selectionModel.getMinSelectionIndex() || index > selectionModel.getMaxSelectionIndex()) {
-                JIThumbnailList.this.setSelectedIndex(index);
-
+        public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) {
+                openSelection();
             }
-
-            // final MediaElement selectedObject = (MediaElement) JIThumbnailList.this.getModel().getElementAt(index);
-            // if ((selectedObject != null) && (selectedObject instanceof MediaElement)) {
-            // // DefaultExplorer.getTreeContext().setSelectedDiskObjects(this.getSelectedValues(),
-            // // JIThumbnailList.this.lastSelectedDiskObject);
-            // JIThumbnailList.this.lastSelectedDiskObject = selectedObject;
-            // }
-            // listMouseEvent(e);
         }
 
         @Override
-        public void mouseClicked(final MouseEvent e) {
-            // listMouseClicked(e);
+        public void mousePressed(final MouseEvent evt) {
+            showPopup(evt);
         }
 
         @Override
-        public void mouseReleased(final MouseEvent e) {
-            listMouseEvent(e);
+        public void mouseReleased(final MouseEvent evt) {
+            showPopup(evt);
+        }
+
+        private void showPopup(final MouseEvent evt) {
+            // Context menu
+            if (SwingUtilities.isRightMouseButton(evt)) {
+                JPopupMenu popupMenu = JIThumbnailList.this.buidContexMenu(evt);
+                if (popupMenu != null) {
+                    popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+                }
+            }
         }
     }
 

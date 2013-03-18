@@ -106,6 +106,10 @@ public class ImageTool extends PluginTool {
             }
         });
         panel_2.add(resetButton);
+        ActionState resetAction = EventManager.getInstance().getAction(ActionW.RESET);
+        if (resetAction != null) {
+            resetAction.registerActionState(resetButton);
+        }
         return panel_2;
     }
 
@@ -141,6 +145,7 @@ public class ImageTool extends PluginTool {
             startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png"))); //$NON-NLS-1$
             startButton.addActionListener(EventManager.getInstance());
             panel_3.add(startButton);
+            cineAction.registerActionState(startButton);
 
             final JButton stopButton = new JButton();
             stopButton.setActionCommand(ActionW.CINESTOP.cmd());
@@ -149,6 +154,7 @@ public class ImageTool extends PluginTool {
             stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png"))); //$NON-NLS-1$
             stopButton.addActionListener(EventManager.getInstance());
             panel_3.add(stopButton);
+            cineAction.registerActionState(stopButton);
             framePanel.add(panel_3);
         }
         return framePanel;

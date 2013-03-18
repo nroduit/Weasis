@@ -95,7 +95,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                             series.getMedia(index,
                                 (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
                                 view2d.getCurrentSortComparator());
-                        mediaEvent = new MediaObjectEvent(image, index);
+                        mediaEvent = new MediaObjectEvent(series, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
                             image.getImage();
@@ -114,7 +114,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // }
                 // }
 
-                firePropertyChange(action.cmd(), null, mediaEvent);
+                firePropertyChange(getActionW().cmd(), null, mediaEvent);
                 if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));
@@ -259,7 +259,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.cmd(), null, model.getValue());
+                firePropertyChange(getActionW().cmd(), null, model.getValue());
             }
         };
     }
@@ -269,7 +269,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.cmd(), null, model.getValue());
+                firePropertyChange(getActionW().cmd(), null, model.getValue());
 
             }
         };
@@ -280,7 +280,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.cmd(), null, model.getValue());
+                firePropertyChange(getActionW().cmd(), null, model.getValue());
             }
 
             @Override
@@ -295,7 +295,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.cmd(), null, sliderValueToViewScale(model.getValue()));
+                firePropertyChange(getActionW().cmd(), null, sliderValueToViewScale(model.getValue()));
             }
 
             @Override
@@ -311,8 +311,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(action.cmd(), null, point);
+                firePropertyChange(getActionW().cmd(), null, point);
             }
+
         };
     }
 
@@ -321,7 +322,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(action.cmd(), null, point);
+                firePropertyChange(getActionW().cmd(), null, point);
             }
         };
     }
@@ -364,7 +365,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(action.cmd(), null, sliderValueToViewScale(model.getValue()));
+                firePropertyChange(getActionW().cmd(), null, sliderValueToViewScale(model.getValue()));
             }
 
             @Override

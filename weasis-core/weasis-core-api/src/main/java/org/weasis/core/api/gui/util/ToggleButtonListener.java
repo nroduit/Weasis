@@ -12,26 +12,21 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JToggleButton.ToggleButtonModel;
 
 import org.weasis.core.api.service.AuditLog;
 
-public abstract class ToggleButtonListener implements ActionListener, ActionState {
+public abstract class ToggleButtonListener extends BasicActionState implements ActionListener {
 
-    protected final ArrayList<AbstractButton> itemList;
     protected ButtonModel model;
-    protected final ActionW action;
 
     public ToggleButtonListener(ActionW action, boolean selected) {
-        this.action = action;
-        this.itemList = new ArrayList<AbstractButton>();
+        super(action);
         model = new ToggleButtonModel();
         model.setSelected(selected);
         model.addActionListener(this);
@@ -79,20 +74,15 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
         return model.isSelected();
     }
 
-    /**
-     * Register a component and add at the same the ItemListener
-     * 
-     * @param slider
-     */
-    public void registerComponent(AbstractButton component) {
-        if (!itemList.contains(component)) {
-            itemList.add(component);
-            component.setModel(model);
+    @Override
+    public boolean registerActionState(Object c) {
+        if (super.registerActionState(c)) {
+            if (c instanceof AbstractButton) {
+                ((AbstractButton) c).setModel(model);
+            }
+            return true;
         }
-    }
-
-    public void unregisterComponent(JComponent component) {
-        itemList.remove(component);
+        return false;
     }
 
     public JCheckBoxMenuItem createUnregiteredJCheckBoxMenuItem(String text) {
@@ -103,13 +93,13 @@ public abstract class ToggleButtonListener implements ActionListener, ActionStat
 
     public JCheckBox createCheckBox(String title) {
         final JCheckBox check = new JCheckBox(title);
-        registerComponent(check);
+        registerActionState(check);
         return check;
     }
 
     public JCheckBoxMenuItem createMenu(String title) {
         final JCheckBoxMenuItem menu = new JCheckBoxMenuItem(title);
-        registerComponent(menu);
+        registerActionState(menu);
         return menu;
     }
 }

@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.imageio.IIOImage;
@@ -28,6 +30,8 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
@@ -35,14 +39,24 @@ import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TiledImage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractBufferHandler;
+import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 
+import com.sun.media.jai.codec.FileSeekableStream;
 import com.sun.media.jai.codec.ImageCodec;
+import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.ImageEncoder;
 import com.sun.media.jai.codec.JPEGEncodeParam;
 import com.sun.media.jai.codec.PNGEncodeParam;
+import com.sun.media.jai.codec.TIFFDirectory;
 import com.sun.media.jai.codec.TIFFEncodeParam;
+import com.sun.media.jai.codec.TIFFField;
 import com.sun.media.jai.util.ImageUtil;
 
 /**
@@ -51,6 +65,8 @@ import com.sun.media.jai.util.ImageUtil;
  * @author Nicolas Roduit
  */
 public class ImageFiler extends AbstractBufferHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageFiler.class);
 
     public static final String[] OUTPUT_TYPE = { "Binary", "Gray Levels", "Color" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     public static final int TILESIZE = 512;
@@ -82,45 +98,17 @@ public class ImageFiler extends AbstractBufferHandler {
         return true;
     }
 
-    public static PlanarImage getImage(String filename) {
-        PlanarImage src = null;
-        if (filename != null) {
-            File f = new File(filename);
-            if (!f.exists() || !f.canRead()) {
-                // JOptionPane.showMessageDialog(JMVisionWin.getInstance(), "Unable to find or read " + f.getName(),
-                // "ImageJai
-                // Path", 0);
-            } else {
-                src = JAI.create("LoadImage", f, null); //$NON-NLS-1$
-            }
-            /*
-             * try { ImageInputStream in = new FileImageInputStream(new RandomAccessFile(filename, "r")); // Tile image
-             * while reading to handle large images ImageLayout layout = new ImageLayout();
-             * layout.setTileWidth(TILESIZE); layout.setTileHeight(TILESIZE); RenderingHints hints = new
-             * RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout); ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead");
-             * pb.setParameter("Input", in); src = JAI.create("ImageRead", pb, hints); //to avoid problem with alpha
-             * channel and png encoded in 24 and 32 bits src = getReadableImage(src); } catch (Exception ex) { }
-             */
-        }
-        return src;
-    }
-
-    /**
-     * Sauvegarde d'une image au format TIFF.
-     * 
-     * @param fichier
-     *            le nom du fichier
-     */
-    public static boolean writeOptimizedTIFF(File file, RenderedImage source) {
+    public static boolean writeTIFF(File file, RenderedImage source, boolean tiled, boolean addThumb,
+        boolean jpegCompression) {
         if (file.exists() && !file.canWrite()) {
             return false;
         }
         OutputStream os = null;
         try {
             os = new FileOutputStream(file);
-            writeOptimizedTIFF(os, source);
+            writeTIFF(os, source, tiled, addThumb, jpegCompression);
         } catch (OutOfMemoryError e) {
-            // JMVisionWin.setOutOfMemoryMessage();
+            LOGGER.error(e.getMessage());
             return false;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -133,6 +121,25 @@ public class ImageFiler extends AbstractBufferHandler {
             }
         }
         return true;
+    }
+
+    public static RenderedImage loadImage(String filename) {
+        RenderedImage src = null;
+        if (filename != null) {
+            try {
+                ImageInputStream in = new FileImageInputStream(new RandomAccessFile(filename, "r"));
+                ImageLayout layout = new ImageLayout();
+                layout.setTileWidth(TILESIZE);
+                layout.setTileHeight(TILESIZE);
+                RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+                ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead");
+                pb.setParameter("Input", in);
+                src = JAI.create("ImageRead", pb, hints);
+                src = getReadableImage(src);
+            } catch (Exception ex) {
+            }
+        }
+        return src;
     }
 
     // public static PlanarImage loadImage2(InputStream stream) {
@@ -165,63 +172,132 @@ public class ImageFiler extends AbstractBufferHandler {
     // return null;
     // }
 
-    public static boolean writeOptimizedTIFF(String fichier, RenderedImage source) throws Exception {
-        return writeOptimizedTIFF(new File(fichier), source);
+    public static boolean writeTIFF(String fichier, RenderedImage source, boolean tiled, boolean addThumb,
+        boolean jpegCompression) throws Exception {
+        return writeTIFF(new File(fichier), source, tiled, addThumb, jpegCompression);
     }
 
-    private static void writeOptimizedTIFF(OutputStream os, RenderedImage source) throws Exception {
+    private static void writeTIFF(OutputStream os, RenderedImage source, boolean tiled, boolean addThumb,
+        boolean jpegCompression) throws Exception {
         TIFFEncodeParam param = new TIFFEncodeParam();
-        param.setWriteTiled(true);
-        param.setTileSize(TILESIZE, TILESIZE);
+        if (tiled) {
+            param.setWriteTiled(true);
+            param.setTileSize(TILESIZE, TILESIZE);
+        }
         if (ImageUtil.isBinary(source.getSampleModel())) {
             param.setCompression(TIFFEncodeParam.COMPRESSION_GROUP4);
-        } else {
+        } else if (jpegCompression) {
             param.setCompression(TIFFEncodeParam.COMPRESSION_JPEG_TTN2);
             JPEGEncodeParam wparam = new JPEGEncodeParam();
             wparam.setQuality(1.0f);
             param.setJPEGEncodeParam(wparam);
         }
-        ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param); //$NON-NLS-1$
+        if (addThumb) {
+            ArrayList<TIFFField> extraFields = new ArrayList<TIFFField>(6);
+            int fileVal = getResolutionInDpi(source);
+            if (fileVal > 0) {
+                TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory");
+                TIFFField f;
+                f = dir.getField(282);
+                long[][] l_xRes = f.getAsRationals();
+                f = dir.getField(283);
+                long[][] l_yRes = f.getAsRationals();
+                f = dir.getField(296);
+                char[] l_resUnit = f.getAsChars();
+                f = dir.getField(271);
+                if (f != null) {
+                    extraFields.add(new TIFFField(271, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
+                }
+                f = dir.getField(272);
+                if (f != null) {
+                    extraFields.add(new TIFFField(272, TIFFField.TIFF_ASCII, 1, new String[] { f.getAsString(0) }));
+                }
+                extraFields.add(new TIFFField(282, TIFFField.TIFF_RATIONAL, l_xRes.length, l_xRes));
+                extraFields.add(new TIFFField(283, TIFFField.TIFF_RATIONAL, l_yRes.length, l_yRes));
+                extraFields.add(new TIFFField(296, TIFFField.TIFF_SHORT, l_resUnit.length, l_resUnit));
+
+            }
+            extraFields
+                .add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AbstractProperties.WEASIS_NAME }));
+            param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
+
+            ArrayList list = new ArrayList();
+            list.add(Thumbnail.buildThumbnail(getReadableImage(source)));
+
+            param.setExtraImages(list.iterator());
+        }
+
+        ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param);
         enc.encode(source);
     }
 
-    public static boolean writeTIFF(File file, RenderedImage source) {
-        if (file.exists() && !file.canWrite()) {
-            return false;
-        }
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(file);
-            writeTIFF(os, source);
-        } catch (OutOfMemoryError e) {
-            // JMVisionWin.setOutOfMemoryMessage();
-            return false;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return false;
-        } finally {
+    public static RenderedImage getThumbnailInTiff(ImageElement img) {
+        RenderedImage thumbnail = null;
+        if (img != null && img.getFile() != null) {
             try {
-                os.flush();
-                os.close();
-            } catch (IOException ex1) {
+                String mime = img.getMimeType();
+
+                if ("image/tiff".equals(mime) || "image/x-tiff".equals(mime)) {
+                    ImageDecoder dec =
+                        ImageCodec.createImageDecoder("tiff", new FileSeekableStream(img.getFile()), null);
+                    int count = dec.getNumPages();
+                    if (count == 2) {
+                        RenderedImage src2 = dec.decodeAsRenderedImage(1);
+                        if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
+                            thumbnail = src2;
+                        }
+                    }
+                }
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                return null;
             }
         }
-        return true;
+        return thumbnail;
     }
 
-    public static boolean writeTIFF(String fichier, RenderedImage source) throws Exception {
-        File file = new File(fichier);
-        return writeTIFF(file, source);
-    }
+    public static RenderedImage getThumbnailInTiff(File file) {
+        RenderedImage thumbnail = null;
+        try {
+            String mimeType = MimeInspector.getMimeType(file);
+            if (mimeType != null && (mimeType.equals("image/tiff") || mimeType.equals("image/x-tiff"))) {
+                ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+                int count = dec.getNumPages();
+                if (count == 2) {
+                    RenderedImage src2 = dec.decodeAsRenderedImage(1);
+                    if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
+                        thumbnail = src2;
+                    }
+                }
+            }
 
-    private static void writeTIFF(OutputStream os, RenderedImage source) throws Exception {
-        TIFFEncodeParam param = new TIFFEncodeParam();
-        param.setWriteTiled(false);
-        if (ImageUtil.isBinary(source.getSampleModel())) {
-            param.setCompression(TIFFEncodeParam.COMPRESSION_GROUP4);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
         }
-        ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param); //$NON-NLS-1$
-        enc.encode(source);
+        return thumbnail;
+    }
+
+    private static int getResolutionInDpi(RenderedImage source) {
+        if (source.getProperty("tiff_directory") instanceof TIFFDirectory) {
+            TIFFDirectory dir = (TIFFDirectory) source.getProperty("tiff_directory");
+            TIFFField fieldx = dir.getField(282); // 282 is X_resolution
+            TIFFField fieldy = dir.getField(283); // 283 is Y_resolution
+            TIFFField fieldUnit = dir.getField(296); // 296 is unit
+            if (fieldx != null && fieldUnit != null) {
+                char c = fieldUnit.getAsChars()[0];
+                if (c == '2' || c == '\u0002') {
+                    int resolutionx = (int) fieldx.getAsDouble(0); // this is the magic step, no idea why it is needed,
+                                                                   // but numbers are wrong otherwise
+                    int resolutiony = (int) fieldy.getAsDouble(0);
+                    if (resolutionx == resolutiony) {
+                        return resolutionx;
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
     public static boolean writePNG(File file, RenderedImage source) {
@@ -298,31 +374,31 @@ public class ImageFiler extends AbstractBufferHandler {
         return writePNG(file, source);
     }
 
-    public static PlanarImage getReadableImage(PlanarImage src) {
-        PlanarImage dst = null;
-        if (src != null && src.getSampleModel() != null) {
-            if (ImageUtil.isBinary(src.getSampleModel())) {
-                dst = src;
-                if (src.getColorModel() instanceof IndexColorModel) {
-                    IndexColorModel icm = (IndexColorModel) src.getColorModel();
+    public static RenderedImage getReadableImage(RenderedImage source) {
+        RenderedImage dst = null;
+        if (source != null && source.getSampleModel() != null) {
+            if (ImageUtil.isBinary(source.getSampleModel())) {
+                dst = source;
+                if (source.getColorModel() instanceof IndexColorModel) {
+                    IndexColorModel icm = (IndexColorModel) source.getColorModel();
                     byte[] table_data = new byte[icm.getMapSize()];
                     icm.getReds(table_data);
                     if (table_data[0] != (byte) 0x00) {
                         ImageLayout layout = new ImageLayout();
-                        layout.setSampleModel(LayoutUtil.createBinarySampelModel(src.getTileWidth(),
-                            src.getTileHeight()));
+                        layout.setSampleModel(LayoutUtil.createBinarySampelModel(source.getTileWidth(),
+                            source.getTileHeight()));
                         layout.setColorModel(LayoutUtil.createBinaryIndexColorModel());
                         RenderingHints hints = new RenderingHints(JAI.KEY_TRANSFORM_ON_COLORMAP, Boolean.FALSE);
                         hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
                         ParameterBlock pb = new ParameterBlock();
-                        pb.addSource(src);
+                        pb.addSource(source);
                         return JAI.create("NotBinary", pb, hints); //$NON-NLS-1$
                     }
                 }
-            } else if (src.getColorModel() instanceof IndexColorModel) {
-                dst = PlanarImage.wrapRenderedImage(ImageToolkit.convertIndexColorToRGBColor(src));
+            } else if (source.getColorModel() instanceof IndexColorModel) {
+                dst = PlanarImage.wrapRenderedImage(ImageToolkit.convertIndexColorToRGBColor(source));
             } else {
-                dst = src;
+                dst = source;
             }
             int numBands = dst.getSampleModel().getNumBands();
             if (numBands == 2) {
