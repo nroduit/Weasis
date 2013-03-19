@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.imageio.codec.internal;
 
+import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import javax.media.jai.JAI;
 
@@ -43,6 +44,9 @@ public class Activator implements BundleActivator {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
+        // Do not use cache. Images must be download locally before reading them.
+        ImageIO.setUseCache(false);
+
         // SPI Issue Resolution
         // Register imageio SPI with the classloader of this bundle
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
@@ -58,6 +62,7 @@ public class Activator implements BundleActivator {
         for (Class c : jaiCodecs) {
             ImageioUtil.registerServiceProvider(c);
         }
+
         // Register the ImageRead and ImageWrite operation for JAI
         new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
     }
