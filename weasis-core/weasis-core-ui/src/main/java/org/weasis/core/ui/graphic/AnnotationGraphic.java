@@ -31,6 +31,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -164,7 +165,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             // * (ratio - 1.0f)));
 
             for (String label : labelStringArray) {
-                if (label.length() > 0) {
+                if (StringUtil.hasText(label)) {
                     py += labelHeight;
                     GraphicLabel.paintFontOutline(g2d, label, px, py);
                 }

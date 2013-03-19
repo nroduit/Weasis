@@ -27,6 +27,7 @@ import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.graphic.GraphicLabel;
@@ -99,7 +100,7 @@ public class InfoLayer implements AnnotationsLayer {
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
                 for (String str : desc) {
-                    if (str != null) {
+                    if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         GraphicLabel.paintColorFontOutline(g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2, y,
                             Color.RED);
@@ -307,7 +308,7 @@ public class InfoLayer implements AnnotationsLayer {
             }
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             String pixSizeDesc = image.getPixelSizeCalibrationDescription();
-            if (pixSizeDesc != null) {
+            if (StringUtil.hasText(pixSizeDesc)) {
                 GraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy
                     - fontHeight);
             }
