@@ -15,6 +15,7 @@ import javax.media.jai.JAI;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.weasis.core.api.service.ImageioUtil;
 
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageWriterSpi;
@@ -45,7 +46,7 @@ public class Activator implements BundleActivator {
         // SPI Issue Resolution
         // Register imageio SPI with the classloader of this bundle
         // and unregister imageio SPI if imageio.jar is also in the jre/lib/ext folder
-        IIORegistry registry = IIORegistry.getDefaultInstance();
+
         Class[] jaiCodecs =
             { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
                 CLibPNGImageReaderSpi.class, J2KImageReaderSpi.class, J2KImageReaderCodecLibSpi.class,
@@ -55,7 +56,7 @@ public class Activator implements BundleActivator {
                 GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
-            registerServiceProvider(registry, c);
+            ImageioUtil.registerServiceProvider(c);
         }
         // Register the ImageRead and ImageWrite operation for JAI
         new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
@@ -63,7 +64,6 @@ public class Activator implements BundleActivator {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        IIORegistry registry = IIORegistry.getDefaultInstance();
 
         Class[] jaiCodecs =
             { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class, CLibJPEGImageReaderSpi.class,
@@ -74,7 +74,7 @@ public class Activator implements BundleActivator {
                 GIFImageWriterSpi.class, PNMImageWriterSpi.class, RawImageWriterSpi.class, TIFFImageWriterSpi.class };
 
         for (Class c : jaiCodecs) {
-            unRegisterServiceProvider(registry, c);
+            ImageioUtil.unRegisterServiceProvider(c);
         }
 
     }

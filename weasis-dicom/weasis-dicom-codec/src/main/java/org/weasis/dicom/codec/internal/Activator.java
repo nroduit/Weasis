@@ -13,8 +13,6 @@ package org.weasis.dicom.codec.internal;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-import javax.imageio.spi.IIORegistry;
-
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -22,6 +20,7 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.ImageioUtil;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
@@ -42,9 +41,8 @@ public class Activator implements BundleActivator {
         // org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        IIORegistry registry = IIORegistry.getDefaultInstance();
-        registry.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
-        registry.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
+        ImageioUtil.registry.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
+        ImageioUtil.registry.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
 
         ServiceReference configurationAdminReference =
             bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
@@ -73,9 +71,8 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext bundleContext) throws Exception {
         DicomPrefManager.getInstance().savePreferences();
         PREFERENCES.close();
-        IIORegistry registry = IIORegistry.getDefaultInstance();
-        registry.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
-        registry.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
+        ImageioUtil.registry.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
+        ImageioUtil.registry.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
         this.bundleContext = null;
     }
 
