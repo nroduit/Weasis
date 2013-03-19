@@ -314,7 +314,10 @@ public class WeasisLauncher {
                             }
                         }
                         // Clean temp folder.
-                        FileUtil.deleteDirectoryContents(FileUtil.getApplicationTempDir());
+                        String dir = System.getProperty("weasis.tmp.dir");
+                        if (dir != null) {
+                            FileUtil.deleteDirectoryContents(new File(dir));
+                        }
                         Runtime.getRuntime().halt(exitStatus);
                     }
                 }

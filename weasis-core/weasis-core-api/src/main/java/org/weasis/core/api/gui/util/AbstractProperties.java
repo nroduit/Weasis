@@ -47,18 +47,15 @@ public abstract class AbstractProperties {
         APP_TEMP_DIR =
             new File(tdir,
                 "weasis-" + System.getProperty("user.name", "tmp") + "." + System.getProperty("weasis.source.id", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+        System.setProperty("weasis.tmp.dir", APP_TEMP_DIR.getAbsolutePath());
         try {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR);
         } catch (Exception e1) {
         }
-        try {
-            APP_TEMP_DIR.mkdirs();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
+    public static final File FILE_CACHE_DIR = buildAccessibleTempDirecotry("cache"); //$NON-NLS-1$
+
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$;
 
     /** This array contains the 16 hex digits '0'-'F'. */
@@ -80,6 +77,24 @@ public abstract class AbstractProperties {
         result = s_prop.getProperty(key, defaultValue);
         s_prop.setProperty(key, result);
         return result;
+    }
+
+    public static File buildAccessibleTempDirecotry(String... subFolderName) {
+        if (subFolderName != null) {
+            StringBuffer buf = new StringBuffer();
+            for (String s : subFolderName) {
+                buf.append(s);
+                buf.append(File.separator);
+            }
+            File file = new File(AbstractProperties.APP_TEMP_DIR, buf.toString());
+            try {
+                file.mkdirs();
+                return file;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return AbstractProperties.APP_TEMP_DIR;
     }
 
     public static boolean isMacNativeLookAndFeel() {
