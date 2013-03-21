@@ -108,10 +108,12 @@ public class ViewerPluginBuilder {
         for (MediaSeries m : series) {
             nbImg += m.size(null);
         }
+
+        // TODO is this bug still exist
         // Do not add series without medias. BUG WEA-100
-        if (nbImg == 0) {
-            return;
-        }
+        // if (nbImg == 0) {
+        // return;
+        // }
         ViewerPluginBuilder builder =
             new ViewerPluginBuilder(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries);
         builder.setScreenBound(screenBound);

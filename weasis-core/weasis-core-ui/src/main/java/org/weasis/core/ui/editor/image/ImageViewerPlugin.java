@@ -315,30 +315,33 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             }
         }
         grid.revalidate();
-        selectedImagePane = view2ds.get(0);
 
-        MouseActions mouseActions = eventManager.getMouseActions();
-        for (int i = 0; i < view2ds.size(); i++) {
-            DefaultView2d<E> v = view2ds.get(i);
-            // Close lens because update does not work
-            v.closeLens();
-            if (SynchView.Mode.Tile.equals(synchView)) {
-                v.setTileOffset(i);
-                v.setSeries(selectedImagePane.getSeries(), null);
+        if (view2ds.size() > 0) {
+            selectedImagePane = view2ds.get(0);
+
+            MouseActions mouseActions = eventManager.getMouseActions();
+            for (int i = 0; i < view2ds.size(); i++) {
+                DefaultView2d<E> v = view2ds.get(i);
+                // Close lens because update does not work
+                v.closeLens();
+                if (SynchView.Mode.Tile.equals(synchView)) {
+                    v.setTileOffset(i);
+                    v.setSeries(selectedImagePane.getSeries(), null);
+                }
+                v.enableMouseAndKeyListener(mouseActions);
             }
-            v.enableMouseAndKeyListener(mouseActions);
-        }
-        Graphic graphic = null;
-        ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
-        if (action instanceof ComboItemListener) {
-            graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-        }
-        setDrawActions(graphic);
-        selectedImagePane.setSelected(true);
-        eventManager.updateComponentsListener(selectedImagePane);
-        if (selectedImagePane.getSeries() instanceof Series) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
-                selectedImagePane.getImage(), EVENT.LAYOUT));
+            Graphic graphic = null;
+            ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            setDrawActions(graphic);
+            selectedImagePane.setSelected(true);
+            eventManager.updateComponentsListener(selectedImagePane);
+            if (selectedImagePane.getSeries() instanceof Series) {
+                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane
+                    .getSeries(), selectedImagePane.getImage(), EVENT.LAYOUT));
+            }
         }
     }
 
