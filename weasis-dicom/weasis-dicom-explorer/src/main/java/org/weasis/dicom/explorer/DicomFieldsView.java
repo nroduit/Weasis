@@ -58,7 +58,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         TagW.PatientBirthDate };
     private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
     private static final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
-        TagW.ReferringPhysicianName, TagW.StudyDescription, TagW.StudyComments };
+        TagW.StudyDescription, TagW.StudyComments };
     private static final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
         TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
     private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID,

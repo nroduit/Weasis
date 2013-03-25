@@ -30,7 +30,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 
 public class SRView extends JScrollPane implements SeriesViewerListener {
 
-    private final JTextPane jTextPane1 = new JTextPane();
+    private final JTextPane htmlPanel = new JTextPane();
     private Series series;
 
     public SRView() {
@@ -41,22 +41,26 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        jTextPane1.setBorder(new EmptyBorder(5, 5, 5, 5));
-        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
-        jTextPane1.setEditable(false);
-        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+        htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        htmlPanel.setContentType("text/html"); //$NON-NLS-1$
+        htmlPanel.setEditable(false);
+        StyleSheet ss = ((HTMLEditorKit) htmlPanel.getEditorKit()).getStyleSheet();
         ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
-            + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + Integer.toHexString((htmlPanel.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
         setPreferredSize(new Dimension(1024, 1024));
         setSeries(series);
     }
 
-    public Series getSeries() {
+    public JTextPane getHtmlPanel() {
+        return htmlPanel;
+    }
+
+    public synchronized Series getSeries() {
         return series;
     }
 
-    public void setSeries(Series series) {
+    public synchronized void setSeries(Series series) {
         this.series = series;
         if (series != null) {
             Object dicomObject = series.getTagValue(TagW.DicomSpecialElement);
@@ -78,11 +82,11 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
         StringBuffer html = new StringBuffer();
         if (media != null) {
-            SRReader reader = new SRReader(media);
-            reader.readDocumentGeneralModule(series, html);
+            SRReader reader = new SRReader(series, media);
+            reader.readDocumentGeneralModule(html);
         }
-        jTextPane1.setText(html.toString());
-        this.setViewportView(jTextPane1);
+        htmlPanel.setText(html.toString());
+        this.setViewportView(htmlPanel);
     }
 
     public void dispose() {

@@ -696,7 +696,35 @@ public class DicomMediaUtils {
         if (name.trim().equals("")) { //$NON-NLS-1$
             name = DicomMediaIO.NO_VALUE;
         }
-        return name.replace("^", " "); //$NON-NLS-1$ //$NON-NLS-2$
+        return buildPersonName(name);
+    }
+
+    public static String buildPersonName(String name) {
+        if (name == null) {
+            return null;
+        }
+        int index = name.indexOf('^');
+        if (index != -1) {
+            /*
+             * In DICOM “family name^given name^middle name^prefix^suffix”
+             * 
+             * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
+             */
+            String[] vals = name.split("\\^");
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < vals.length; i++) {
+                if (!"".equals(vals[i])) {
+                    if (i >= 3) {
+                        buf.append(", ");
+                    } else {
+                        buf.append(" ");
+                    }
+                }
+                buf.append(vals[i]);
+            }
+            return buf.toString().trim();
+        }
+        return name;
     }
 
     public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName,
@@ -796,7 +824,8 @@ public class DicomMediaUtils {
 
             group.setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
             group.setTagNoNull(TagW.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
-            group.setTagNoNull(TagW.ReferringPhysicianName, header.getString(Tag.ReferringPhysicianName));
+            group.setTagNoNull(TagW.ReferringPhysicianName,
+                buildPersonName(header.getString(Tag.ReferringPhysicianName)));
             group.setTagNoNull(TagW.InstitutionName, header.getString(Tag.InstitutionName));
             group.setTagNoNull(TagW.InstitutionalDepartmentName, header.getString(Tag.InstitutionalDepartmentName));
             group.setTagNoNull(TagW.StationName, header.getString(Tag.StationName));

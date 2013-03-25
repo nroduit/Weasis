@@ -33,14 +33,12 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 
@@ -152,14 +150,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             ObservableEvent event = (ObservableEvent) evt;
             ObservableEvent.BasicAction action = event.getActionCommand();
             Object newVal = event.getNewValue();
-            if (ObservableEvent.BasicAction.Update.equals(action)) {
-                if (newVal instanceof Series) {
-                    Series series = (Series) newVal;
-                    if (srview != null && srview.getSeries() != series) {
-                        srview.setSeries(series);
-                    }
-                }
-            }
+            // if (ObservableEvent.BasicAction.Update.equals(action)) {
+            // if (newVal instanceof Series) {
+            // Series series = (Series) newVal;
+            // if (srview != null && srview.getSeries() != series) {
+            // srview.setSeries(series);
+            // }
+            // }
+            // }
             if (ObservableEvent.BasicAction.Remove.equals(action)) {
                 if (newVal instanceof DicomSeries) {
                     if (srview != null && srview.getSeries() == newVal) {
@@ -257,24 +255,15 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    Window parent = WinUtil.getParentWindow(SRContainer.this);
-                    PrintDialog dialog = new PrintDialog(parent, title, eventManager);
-                    JMVUtils.showCenterScreen(dialog, parent);
+                    if (srview != null) {
+                        Window parent = WinUtil.getParentWindow(SRContainer.this);
+                        PreviewDialog dialog = new PreviewDialog(parent, srview.getHtmlPanel());
+                        JMVUtils.showCenterScreen(dialog, parent);
+                    }
                 }
             };
         actions.add(printStd);
 
-        final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
-        AbstractAction printStd2 = new AbstractAction(title2, null) {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Window parent = WinUtil.getParentWindow(SRContainer.this);
-                DicomPrintDialog dialog = new DicomPrintDialog(parent, title2, eventManager);
-                JMVUtils.showCenterScreen(dialog, parent);
-            }
-        };
-        actions.add(printStd2);
         return actions;
     }
 

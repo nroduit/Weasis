@@ -326,8 +326,9 @@ public class DownloadManager {
                 getIntegerTagAttribute(xmler, TagW.SeriesNumber.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.SeriesDescription,
                 getTagAttribute(xmler, TagW.SeriesDescription.getTagName(), null));
-            dicomSeries.setTagNoNull(TagW.ReferringPhysicianName,
-                getTagAttribute(xmler, TagW.ReferringPhysicianName.getTagName(), null));
+            dicomSeries
+                .setTagNoNull(TagW.ReferringPhysicianName, DicomMediaUtils.buildPersonName(getTagAttribute(xmler,
+                    TagW.ReferringPhysicianName.getTagName(), null)));
             dicomSeries.setTagNoNull(TagW.WadoTransferSyntaxUID,
                 getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.WadoCompressionRate,
