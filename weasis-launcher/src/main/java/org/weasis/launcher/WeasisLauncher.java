@@ -274,6 +274,8 @@ public class WeasisLauncher {
             configProps.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
         }
 
+        // Define the sourceID for the temp and cache directory. The portable version will always have the same
+        // sourceID.
         String sourceID =
             toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode());
         System.setProperty("weasis.source.id", sourceID);
@@ -692,15 +694,38 @@ public class WeasisLauncher {
 
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
         System.setProperty("weasis.name", config.getProperty("weasis.name", "Weasis"));
-        System.setProperty("weasis.profile", config.getProperty("weasis.profile", "default"));
+        String profileName = config.getProperty("weasis.profile", "default");
+        System.setProperty("weasis.profile", profileName);
         System.setProperty(P_WEASIS_PATH, dir);
+
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
+        boolean localSessionUser = user == null;
+        if (user == null) {
+            user = System.getProperty("user.name", "local");
+        }
+        System.setProperty("weasis.user", user);
+        StringBuffer bufDir = new StringBuffer(dir);
+        bufDir.append(File.separator);
+        bufDir.append("preferences");
+        bufDir.append(File.separator);
+        bufDir.append(user);
+        bufDir.append(File.separator);
+        bufDir.append(profileName);
+        File basdir = new File(bufDir.toString());
+        try {
+            basdir.mkdirs();
+        } catch (Exception e) {
+            basdir = new File(dir);
+            e.printStackTrace();
+        }
+        System.out.println("Preferences directory: " + basdir.getPath()); //$NON-NLS-1$
+
         if (REMOTE_PREFS == null && user != null) {
             ServiceLoader<RemotePreferences> prefs = ServiceLoader.load(RemotePreferences.class);
             Iterator<RemotePreferences> commandsIterator = prefs.iterator();
             while (commandsIterator.hasNext()) {
                 REMOTE_PREFS = commandsIterator.next();
-                REMOTE_PREFS.initialize(user, dir + File.separator + "preferences" + File.separator + user); //$NON-NLS-1$
+                REMOTE_PREFS.initialize(user, localSessionUser, profileName, bufDir.toString()); //$NON-NLS-1$
                 System.out.println("Loading remote preferences for : " + user); //$NON-NLS-1$
                 break;
             }
@@ -720,23 +745,8 @@ public class WeasisLauncher {
                 .setProperty("weasis.portable.dicom.directory", config.getProperty("weasis.portable.dicom.directory")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        File basdir;
-        if (user == null) {
-            basdir = new File(dir);
-        } else {
-            basdir = new File(dir + File.separator + "preferences" + File.separator //$NON-NLS-1$
-                + user);
-            try {
-                basdir.mkdirs();
-            } catch (Exception e) {
-                basdir = new File(dir);
-                e.printStackTrace();
-            }
-        }
-        System.out.println("Installation directory: " + basdir.getPath()); //$NON-NLS-1$
-
-        File common_file = new File(basdir, APP_PROPERTY_FILE);
-        Properties s_prop = readProperties(common_file);
+        File profile_props = new File(basdir, APP_PROPERTY_FILE);
+        Properties s_prop = readProperties(profile_props);
         // General Preferences priority order:
         // 1) Last value (does not exist for first launch of Weasis in an operating system session).
         // 2) Java System property
@@ -850,14 +860,8 @@ public class WeasisLauncher {
         s_prop.put("weasis.look", look); //$NON-NLS-1$
         System.out.println("weasis.look: " + look); //$NON-NLS-1$
 
-        Properties common_prop;
-        if (basdir.getPath().equals(dir)) {
-            common_prop = s_prop;
-        } else {
-            FileUtil.storeProperties(common_file, s_prop, null);
-            common_file = new File(dir, APP_PROPERTY_FILE);
-            common_prop = readProperties(common_file);
-        }
+        File sourceID_props = new File(dir, System.getProperty("weasis.source.id") + ".properties");
+        Properties common_prop = readProperties(sourceID_props);
 
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
         System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
@@ -886,19 +890,13 @@ public class WeasisLauncher {
                 Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
                 if (vOld.getMajor() < 2) {
                     // Force to change some properties when the old version < 2.x
-                    if (basdir.getPath().equals(dir)) {
-                        common_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
-                        update = true;
-                    } else {
-                        s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
-                        File file = new File(basdir, APP_PROPERTY_FILE);
-                        FileUtil.storeProperties(file, s_prop, null);
-                    }
+                    s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
                 }
             } catch (Exception e) {
                 System.err.println("Cannot read old Weasis version!"); //$NON-NLS-1$
             }
         }
+        FileUtil.storeProperties(profile_props, s_prop, null);
 
         // Clean cache if Weasis has crashed during the previous launch
         boolean cleanCache = Boolean.parseBoolean(config.getProperty("weasis.clean.previous.version")); //$NON-NLS-1$
@@ -918,11 +916,10 @@ public class WeasisLauncher {
         }
 
         if (update) {
-            common_prop.put("weasis.look", look); //$NON-NLS-1$
-            FileUtil.storeProperties(common_file, common_prop, null);
+            FileUtil.storeProperties(sourceID_props, common_prop, null);
         }
 
-        final File file = common_file;
+        final File file = sourceID_props;
         // Test if it is the first time launch
         if (versionOld == null) {
             String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$

@@ -42,20 +42,22 @@ public class BundleTools {
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
     static {
-        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
-        if (user == null) {
-            propsFile = new File(AbstractProperties.WEASIS_PATH, "weasis.properties"); //$NON-NLS-1$
-        } else {
-            File dir = new File(AbstractProperties.WEASIS_PATH + File.separator + "preferences" + File.separator //$NON-NLS-1$
-                + user);
-            try {
-                dir.mkdirs();
-            } catch (Exception e) {
-                dir = new File(AbstractProperties.WEASIS_PATH);
-                e.printStackTrace();
-            }
-            propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
+        StringBuffer bufDir = new StringBuffer(AbstractProperties.WEASIS_PATH);
+        bufDir.append(File.separator);
+        bufDir.append("preferences");
+        bufDir.append(File.separator);
+        bufDir.append(AbstractProperties.WEASIS_USER);
+        bufDir.append(File.separator);
+        bufDir.append(AbstractProperties.WEASIS_PROFILE);
+
+        File dir = new File(bufDir.toString());
+        try {
+            dir.mkdirs();
+        } catch (Exception e) {
+            dir = new File(AbstractProperties.WEASIS_PATH);
+            e.printStackTrace();
         }
+        propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$
     }
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     public static final WProperties LOCAL_PERSISTENCE = new WProperties();
