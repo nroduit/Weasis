@@ -74,6 +74,6 @@ then
 	echo Java Home: $JAVA_HOME/bin/java
 	curPath=$(dirname "`readlink -f "$0"`")
 	echo Weasis launcher directory: $curPath
-	$JAVA_HOME/bin/java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Djava.ext.dirs="" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
+	$JAVA_HOME/bin/java -Xms64m -Xmx512m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
 else echo 'Weasis requires Java Runtime '$REQUIRED_TEXT_VERSION' or higher, please install it'
 fi
