@@ -27,11 +27,31 @@ import org.weasis.core.api.util.FileUtil;
  */
 public abstract class AbstractProperties {
 
+    /**
+     * The version of the application (for display)
+     */
     public static final String WEASIS_VERSION = System.getProperty("weasis.version"); //$NON-NLS-1$
+    /**
+     * The path of the directory “.weasis” (containing the installation and the preferences)
+     */
     public static final String WEASIS_PATH = System.getProperty("weasis.path"); //$NON-NLS-1$
+    /**
+     * The name of the application (for display)
+     */
     public static final String WEASIS_NAME = System.getProperty("weasis.name"); //$NON-NLS-1$
+    /**
+     * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
+     * operating system session if the property is null)
+     */
     public static final String WEASIS_USER = System.getProperty("weasis.user"); //$NON-NLS-1$
+    /**
+     * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
+     * property allows to have separated preferences (in a new directory).
+     */
     public static final String WEASIS_PROFILE = System.getProperty("weasis.profile"); //$NON-NLS-1$
+    /**
+     * The directory for writing temporary files
+     */
     public static final File APP_TEMP_DIR;
 
     static {
