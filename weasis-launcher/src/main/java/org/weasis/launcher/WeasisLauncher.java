@@ -936,59 +936,63 @@ public class WeasisLauncher {
                 });
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
-            message.append(String.format(Messages.getString("WeasisLauncher.change.version"), versionOld, versionNew)); //$NON-NLS-1$
+            String val = getGeneralProperty("weasis.show.release", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            if (Boolean.valueOf(val)) {
+                final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
+                message.append(String.format(
+                    Messages.getString("WeasisLauncher.change.version"), versionOld, versionNew)); //$NON-NLS-1$
 
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    JTextPane jTextPane1 = new JTextPane();
-                    jTextPane1.setContentType("text/html"); //$NON-NLS-1$
-                    jTextPane1.setEditable(false);
-                    jTextPane1.addHyperlinkListener(new HyperlinkListener() {
-                        @Override
-                        public void hyperlinkUpdate(HyperlinkEvent e) {
-                            JTextPane pane = (JTextPane) e.getSource();
-                            if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                                pane.setToolTipText(e.getDescription());
-                            } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                                pane.setToolTipText(null);
-                            } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    try {
-                                        String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
-                                        Runtime.getRuntime().exec(cmd);
-                                    } catch (IOException e1) {
-                                        System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
-                                        e1.printStackTrace();
-                                    }
-                                } else if (Desktop.isDesktopSupported()) {
-                                    final Desktop desktop = Desktop.getDesktop();
-                                    if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JTextPane jTextPane1 = new JTextPane();
+                        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
+                        jTextPane1.setEditable(false);
+                        jTextPane1.addHyperlinkListener(new HyperlinkListener() {
+                            @Override
+                            public void hyperlinkUpdate(HyperlinkEvent e) {
+                                JTextPane pane = (JTextPane) e.getSource();
+                                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                                    pane.setToolTipText(e.getDescription());
+                                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                                    pane.setToolTipText(null);
+                                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                    if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                                         try {
-                                            desktop.browse(e.getURL().toURI());
-
-                                        } catch (Exception ex) {
+                                            String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
+                                            Runtime.getRuntime().exec(cmd);
+                                        } catch (IOException e1) {
                                             System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
+                                            e1.printStackTrace();
+                                        }
+                                    } else if (Desktop.isDesktopSupported()) {
+                                        final Desktop desktop = Desktop.getDesktop();
+                                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                                            try {
+                                                desktop.browse(e.getURL().toURI());
+
+                                            } catch (Exception ex) {
+                                                System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    });
-                    jTextPane1.setBackground(Color.WHITE);
-                    StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                    ss.addRule("p {font-size:12}"); //$NON-NLS-1$
-                    message.append("<BR>"); //$NON-NLS-1$
-                    String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                    message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
-                        "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10686")); //$NON-NLS-1$
-                    message.append("</P>"); //$NON-NLS-1$
-                    jTextPane1.setText(message.toString());
-                    JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
-                        Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
-                }
-            });
+                        });
+                        jTextPane1.setBackground(Color.WHITE);
+                        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+                        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
+                        message.append("<BR>"); //$NON-NLS-1$
+                        String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
+                        message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
+                            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10686")); //$NON-NLS-1$
+                        message.append("</P>"); //$NON-NLS-1$
+                        jTextPane1.setText(message.toString());
+                        JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
+                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
+                    }
+                });
+            }
         }
         System.out.println("***** End of Configuration *****"); //$NON-NLS-1$
         return loader;
