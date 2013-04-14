@@ -46,7 +46,7 @@ public class DragLayer extends AbstractLayer {
             return;
         }
 
-        for (Graphic graphic : graphics) {
+        for (Graphic graphic : graphics.list) {
             if (bounds != null) {
                 Rectangle repaintBounds = graphic.getRepaintBounds(transform);
 
@@ -54,14 +54,13 @@ public class DragLayer extends AbstractLayer {
                     graphic.paint(g2d, transform);
                 } else {
                     GraphicLabel graphicLabel = graphic.getGraphicLabel();
-                    Rectangle2D labelBounds = (graphicLabel != null) ? graphicLabel.getBounds(transform) : null;
-
-                    if (labelBounds != null && labelBounds.intersects(bounds)) {
-                        graphic.paintLabel(g2d, transform);
-                        // TODO would be simpler to integrate intersect check inside graphic instance
+                    if (graphicLabel != null && graphicLabel.getLabels() != null) {
+                        Rectangle2D labelBounds = graphicLabel.getBounds(transform);
+                        if (labelBounds.intersects(bounds)) {
+                            graphic.paintLabel(g2d, transform);
+                        }
                     }
                 }
-
             } else {
                 // convention is when bounds equals null graphic is repaint
                 graphic.paint(g2d, transform);
@@ -82,9 +81,9 @@ public class DragLayer extends AbstractLayer {
     public List<Graphic> getGraphicsSurfaceInArea(Rectangle selectGraphic, AffineTransform transform) {
         ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
 
-        if (graphics != null && graphics.size() > 0 && selectGraphic != null) {
+        if (graphics != null && graphics.list.size() > 0 && selectGraphic != null) {
 
-            for (Graphic graphic : graphics) {
+            for (Graphic graphic : graphics.list) {
                 Rectangle graphBounds = graphic.getBounds(transform);
 
                 if (graphBounds != null && graphBounds.intersects(selectGraphic)) {
@@ -97,7 +96,7 @@ public class DragLayer extends AbstractLayer {
                 }
 
                 GraphicLabel graphicLabel = graphic.getGraphicLabel();
-                if (graphicLabel != null && graphic.isLabelVisible()) {
+                if (graphic.isLabelVisible() && graphicLabel != null && graphicLabel.getLabels() != null) {
                     Area selectionArea = graphicLabel.getArea(transform);
 
                     if (selectionArea != null && selectionArea.intersects(selectGraphic)) {
@@ -113,10 +112,10 @@ public class DragLayer extends AbstractLayer {
     public List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform, boolean firstGraphicOnly) {
         ArrayList<Graphic> selectedGraphicList = new ArrayList<Graphic>();
 
-        if (graphics != null && graphics.size() > 0 && rect != null) {
+        if (graphics != null && graphics.list.size() > 0 && rect != null) {
             List<Area> selectedAreaList = new ArrayList<Area>();
 
-            ListIterator<Graphic> graphicsIt = graphics.listIterator(graphics.size());
+            ListIterator<Graphic> graphicsIt = graphics.list.listIterator(graphics.list.size());
 
             while (graphicsIt.hasPrevious()) {
                 Graphic selectedGraphic = graphicsIt.previous(); // starts from top level Front graphic
@@ -130,7 +129,7 @@ public class DragLayer extends AbstractLayer {
                     }
 
                     GraphicLabel graphicLabel = selectedGraphic.getGraphicLabel();
-                    if (graphicLabel != null) {
+                    if (graphicLabel != null && graphicLabel.getLabels() != null) {
                         Area labelArea = graphicLabel.getArea(transform);
                         if (labelArea != null) {
                             if (selectedArea != null) {
@@ -163,8 +162,8 @@ public class DragLayer extends AbstractLayer {
     public List<Graphic> getGraphicsBoundsInArea(Rectangle rect) {
         ArrayList<Graphic> arraylist = new ArrayList<Graphic>();
         if (graphics != null && rect != null) {
-            for (int j = graphics.size() - 1; j >= 0; j--) {
-                Graphic graphic = graphics.get(j);
+            for (int j = graphics.list.size() - 1; j >= 0; j--) {
+                Graphic graphic = graphics.list.get(j);
                 Rectangle2D graphicBounds = graphic.getRepaintBounds(getAffineTransform());
                 if (graphicBounds != null && graphicBounds.intersects(rect)) {
                     arraylist.add(graphic);
@@ -182,10 +181,10 @@ public class DragLayer extends AbstractLayer {
 
         if (graphics != null && mousePt != null) {
 
-            for (int j = graphics.size() - 1; j >= 0; j--) {
-                if (graphics.get(j) instanceof AbstractDragGraphic) {
+            for (int j = graphics.list.size() - 1; j >= 0; j--) {
+                if (graphics.list.get(j) instanceof AbstractDragGraphic) {
 
-                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.get(j);
+                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.list.get(j);
 
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                         return dragGraph;
@@ -216,10 +215,10 @@ public class DragLayer extends AbstractLayer {
 
             selectedGraphicList = new ArrayList<Graphic>();
 
-            for (int j = graphics.size() - 1; j >= 0; j--) {
-                if (graphics.get(j) instanceof AbstractDragGraphic) {
+            for (int j = graphics.list.size() - 1; j >= 0; j--) {
+                if (graphics.list.get(j) instanceof AbstractDragGraphic) {
 
-                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.get(j);
+                    AbstractDragGraphic dragGraph = (AbstractDragGraphic) graphics.list.get(j);
 
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                         selectedGraphicList.add(dragGraph);

@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 import static java.lang.Double.NaN;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
@@ -29,6 +30,10 @@ import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
@@ -40,6 +45,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
  * 
  * @author Nicolas Roduit,Benoit Jacquemoud
  */
+@Root(name = "polygon")
 public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png")); //$NON-NLS-1$
@@ -65,14 +71,22 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible);
     }
 
-    public PolygonGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible,
-        boolean filled) throws InvalidShapeException {
-        super(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, filled);
+    public PolygonGraphic(List<Point2D.Double> handlePointList, Color paintColor, float lineThickness,
+        boolean labelVisible, boolean filled) throws InvalidShapeException {
+        this(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, filled);
+    }
+
+    protected PolygonGraphic(
+        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
+        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
+        @Element(name = "paint", required = false) Paint paintColor,
+        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
+        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
         if (handlePointList == null || handlePointList.size() < 3) {
             throw new InvalidShapeException("Polygon must have at least 3 points!");
         }
-        // Do not draw points any more
-        this.handlePointTotalNumber = handlePointList.size();
+        buildShape(null);
 
         if (!isShapeValid()) {
             int lastPointIndex = handlePointList.size() - 1;
@@ -91,8 +105,10 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             if (!isShapeValid() || handlePointList.size() < 3) {
                 throw new InvalidShapeException("This Polygon cannot be drawn");
             }
+            buildShape(null);
         }
-        buildShape(null);
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
     }
 
     @Override

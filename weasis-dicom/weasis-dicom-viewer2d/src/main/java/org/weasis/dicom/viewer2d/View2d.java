@@ -562,7 +562,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void addCrossline(DicomImageElement selImage, LocalizerPoster localizer, boolean fill) {
         GeometryOfSlice sliceGeometry = selImage.getSliceGeometry();
         if (sliceGeometry != null) {
-            List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
+            List<Point2D.Double> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
             if (pts != null && pts.size() > 0) {
                 Color color = fill ? Color.blue : Color.cyan;
                 try {

@@ -151,14 +151,14 @@ public class MprView extends View2d {
                 double y = axial ? p.getY() - p.getX() : p.getY();
                 Point2D centerPt = new Point2D.Double(p.getX(), y);
 
-                List<Point2D> pts = new ArrayList<Point2D>();
+                List<Point2D.Double> pts = new ArrayList<Point2D.Double>();
                 pts.add(new Point2D.Double(p.getX(), 0.0));
                 pts.add(new Point2D.Double(p.getX(), dimensions.x));
 
                 Color color1 = Type.SAGITTAL.equals(this.getType()) ? Color.GREEN : Color.BLUE;
                 addMPRline(layer, pts, color1, centerPt);
 
-                List<Point2D> pts2 = new ArrayList<Point2D>();
+                List<Point2D.Double> pts2 = new ArrayList<Point2D.Double>();
                 Color color2 = axial ? Color.GREEN : Color.RED;
                 pts2.add(new Point2D.Double(0.0, y));
                 pts2.add(new Point2D.Double(dimensions.y, y));
@@ -167,7 +167,7 @@ public class MprView extends View2d {
         }
     }
 
-    private void addMPRline(AbstractLayer layer, List<Point2D> pts, Color color, Point2D center) {
+    private void addMPRline(AbstractLayer layer, List<Point2D.Double> pts, Color color, Point2D center) {
         if (pts != null && pts.size() > 0 && layer != null) {
             try {
                 Graphic graphic =

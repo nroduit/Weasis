@@ -12,6 +12,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -19,21 +20,29 @@ import java.util.List;
 
 import javax.swing.Icon;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.util.MouseEventDouble;
 
+@Root(name = "lineWithGap")
 public class LineWithGapGraphic extends AbstractDragGraphic {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected Point2D ptA, ptB; // Let AB be a simple a line segment
     protected boolean lineABvalid; // estimate if line segment is valid or not
+
+    @Element(name = "centerGap", required = false)
     protected Point2D centerGap;
+    @Element(name = "gapSize")
     protected int gapSize;
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public LineWithGapGraphic(Point2D ptStart, Point2D ptEnd, float lineThickness, Color paintColor,
+    public LineWithGapGraphic(Point2D.Double ptStart, Point2D.Double ptEnd, float lineThickness, Color paintColor,
         boolean labelVisible, Point2D centerGap, int gapSize) throws InvalidShapeException {
         super(2, paintColor, lineThickness, labelVisible, false);
         if (ptStart == null || ptEnd == null) {
@@ -46,11 +55,28 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
         if (!isShapeValid()) {
             throw new InvalidShapeException("This shape cannot be drawn");
         }
+        buildShape(null);
     }
 
-    protected void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
-        setHandlePoint(0, ptStart == null ? null : (Point2D) ptStart.clone());
-        setHandlePoint(1, ptEnd == null ? null : (Point2D) ptEnd.clone());
+    protected LineWithGapGraphic(
+        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
+        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
+        @Element(name = "paint", required = false) Paint paintColor,
+        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
+        @Element(name = "centerGap", required = false) Point2D centerGap, @Element(name = "gapSize") int gapSize)
+        throws InvalidShapeException {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
+        if (handlePointTotalNumber != 2) {
+            throw new InvalidShapeException("Not a valid LineWithGapGraphic!");
+        }
+        this.gapSize = gapSize;
+        this.centerGap = centerGap;
+        buildShape(null);
+    }
+
+    protected void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {
+        setHandlePoint(0, ptStart == null ? null : (Point2D.Double) ptStart.clone());
+        setHandlePoint(1, ptEnd == null ? null : (Point2D.Double) ptEnd.clone());
         buildShape(null);
     }
 

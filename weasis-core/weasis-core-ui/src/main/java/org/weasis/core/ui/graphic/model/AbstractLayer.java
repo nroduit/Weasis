@@ -21,6 +21,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
@@ -46,7 +48,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     protected final PropertyChangeListener pcl;
     protected final transient LayerModel layerModel;
-    private boolean masked;
+
+    private boolean visible;
     private boolean locked;
     // Layers are sorted by level number (ascending order)
     private int level;
@@ -101,6 +104,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         this.level = identifier.getDefaultLevel();
         this.graphics = new GraphicList();
         this.pcl = new PropertyChangeHandler();
+        this.visible = true;
         this.locked = false;
     }
 
@@ -113,8 +117,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public void addGraphic(Graphic graphic) {
-        if (graphics != null && !graphics.contains(graphic)) {
-            graphics.add(graphic);
+        if (graphics != null && !graphics.list.contains(graphic)) {
+            graphics.list.add(graphic);
             graphic.setLayerID(identifier);
             graphic.addPropertyChangeListener(pcl);
             ArrayList<AbstractLayer> layers = graphics.getLayers();
@@ -129,8 +133,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void toFront(Graphic graphic) {
         if (graphics != null) {
-            graphics.remove(graphic);
-            graphics.add(graphic);
+            graphics.list.remove(graphic);
+            graphics.list.add(graphic);
             repaint(graphic.getRepaintBounds(getAffineTransform()));
         }
     }
@@ -139,7 +143,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         if (this.graphics != graphics) {
             if (this.graphics != null) {
                 this.graphics.removeLayer(this);
-                for (Graphic graphic : this.graphics) {
+                for (Graphic graphic : this.graphics.list) {
                     graphic.removePropertyChangeListener(pcl);
                 }
                 layerModel.setSelectedGraphics(null);
@@ -149,8 +153,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             } else {
                 this.graphics = graphics;
                 this.graphics.addLayer(this);
-                for (Graphic graphic : this.graphics) {
-                    graphic.addPropertyChangeListener(pcl);
+                synchronized (this.graphics.list) {
+                    for (Graphic graphic : this.graphics.list) {
+                        graphic.addPropertyChangeListener(pcl);
+                    }
                 }
             }
         }
@@ -158,8 +164,8 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void toBack(Graphic graphic) {
         if (graphics != null) {
-            graphics.remove(graphic);
-            graphics.add(0, graphic);
+            graphics.list.remove(graphic);
+            graphics.list.add(0, graphic);
             repaint(graphic.getRepaintBounds(getAffineTransform()));
         }
     }
@@ -170,12 +176,12 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     @Override
     public void setVisible(boolean flag) {
-        this.masked = !flag;
+        this.visible = flag;
     }
 
     @Override
     public boolean isVisible() {
-        return !masked;
+        return visible;
     }
 
     @Override
@@ -198,7 +204,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void removeGraphicAndRepaint(Graphic graphic) {
         if (graphics != null) {
-            graphics.remove(graphic);
+            graphics.list.remove(graphic);
         }
         graphic.removePropertyChangeListener(pcl);
         repaint(graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
@@ -210,7 +216,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
 
     public void removeGraphic(Graphic graphic) {
         if (graphics != null) {
-            graphics.remove(graphic);
+            graphics.list.remove(graphic);
         }
         graphic.removePropertyChangeListener(pcl);
         if (graphic.isSelected()) {
@@ -219,7 +225,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
     }
 
     public java.util.List<Graphic> getGraphics() {
-        return graphics;
+        return graphics.list;
     }
 
     public abstract List<Graphic> getGraphicsSurfaceInArea(Rectangle rect, AffineTransform transform);
@@ -293,8 +299,10 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
         AffineTransform transform) {
 
         if (graphic != null) {
-            if (oldLabel == null) {
-                if (newLabel != null) {
+            boolean oldNull = oldLabel == null || oldLabel.getLabels() == null;
+            boolean newNull = newLabel == null || newLabel.getLabels() == null;
+            if (oldNull) {
+                if (!newNull) {
                     Rectangle2D rect = graphic.getTransformedBounds(newLabel, transform);
                     GeomUtil.growRectangle(rect, 2);
                     if (rect != null) {
@@ -302,7 +310,7 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
                     }
                 }
             } else {
-                if (newLabel == null) {
+                if (newNull) {
                     Rectangle2D rect = graphic.getTransformedBounds(oldLabel, transform);
                     GeomUtil.growRectangle(rect, 2);
                     if (rect != null) {
@@ -334,15 +342,17 @@ public abstract class AbstractLayer implements Comparable, Serializable, Layer {
             if (graphics.getLayerSize() >= 0) {
                 setGraphics(null);
             } else {
-                for (int i = graphics.size() - 1; i >= 0; i--) {
-                    removeGraphic(graphics.get(i));
+                for (int i = graphics.list.size() - 1; i >= 0; i--) {
+                    removeGraphic(graphics.list.get(i));
                 }
             }
             repaint();
         }
     }
 
+    @Root
     public static class Identifier {
+        @Attribute(name = "id")
         private final int defaultLevel;
         private final String title;
 

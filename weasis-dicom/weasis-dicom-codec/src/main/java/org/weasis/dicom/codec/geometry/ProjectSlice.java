@@ -36,7 +36,7 @@ public class ProjectSlice extends LocalizerPoster {
     }
 
     @Override
-    public List<Point2D> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
+    public List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
         Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions) {
 
         Point3d[] sourceCorners = getCornersOfSourceRectangleInSourceSpace(row, column, tlhc, voxelSpacing, dimensions);
@@ -94,7 +94,7 @@ public class ProjectSlice extends LocalizerPoster {
         if (shapes != null && shapes.size() > 0) {
             // shapes.remove(shapes.size() - 1);
             int size = shapes.size();
-            List<Point2D> pts = new ArrayList<Point2D>(size);
+            List<Point2D.Double> pts = new ArrayList<Point2D.Double>(size);
             for (int i = 0; i < size; ++i) {
                 Line2D.Double line = (Line2D.Double) shapes.get(i);
                 pts.add(new Point2D.Double(line.getX2(), line.getY2()));

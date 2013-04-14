@@ -69,6 +69,8 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.ui.graphic.model.GraphicList;
+import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -97,6 +99,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private JComboBox comboBoxImgFormat;
     private JButton btnNewButton;
+    private JCheckBox chckbxGraphics;
 
     public LocalExport(DicomModel dicomModel, ExportTree exportTree) {
         super(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
@@ -130,6 +133,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             }
         });
         panel.add(btnNewButton);
+
+        chckbxGraphics = new JCheckBox("Graphics", true);
+
+        panel.add(chckbxGraphics);
         add(exportTree, BorderLayout.CENTER);
     }
 
@@ -413,6 +420,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean keepNames;
         boolean writeDicomdir;
         boolean cdCompatible;
+        boolean gx = chckbxGraphics.isSelected();
 
         File writeDir;
 
@@ -486,6 +494,17 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                         File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
+
+                            GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                            if (list != null && list.list.size() > 0) {
+                                File gpxFile = new File(destinationDir, iuid + "-gpx.xml");
+                                try {
+                                    DefaultSerializer.getInstance().getSerializer().write(list, gpxFile);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
                             if (writer != null) {
                                 DicomInputStream in = null;
                                 try {

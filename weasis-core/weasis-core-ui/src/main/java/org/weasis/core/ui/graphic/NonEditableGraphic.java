@@ -24,6 +24,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 /**
  * @author Nicolas Roduit
  */
+
 public class NonEditableGraphic extends BasicGraphic {
 
     public NonEditableGraphic(Shape path, float lineThickness, Color paintColor, boolean labelVisible, boolean filled)

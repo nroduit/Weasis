@@ -382,10 +382,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (layer != null) {
                     synchronized (this) {
                         // TODO Handle several layers
-                        GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                        if (list != null) {
+                        GraphicList gl = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
+                        if (gl != null) {
                             // TODO handle graphics without shape, exclude them!
-                            layer.setGraphics(list);
+                            layer.setGraphics(gl);
+                            synchronized (gl.list) {
+                                for (Graphic graphic : gl.list) {
+                                    graphic.updateLabel(img, this);
+                                }
+                            }
                         } else {
                             GraphicList graphics = new GraphicList();
                             img.setTag(TagW.MeasurementGraphics, graphics);

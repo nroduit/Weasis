@@ -20,6 +20,11 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
+import org.simpleframework.xml.convert.Convert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -34,26 +39,45 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
+import org.weasis.core.ui.serialize.ColorConverter;
+import org.weasis.core.ui.serialize.Point2DConverter;
 import org.weasis.core.ui.util.MouseEventDouble;
 
+@Root
 public abstract class BasicGraphic implements Graphic {
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractDragGraphic.class);
     public static final int UNDEFINED = -1;
+
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractDragGraphic.class);
+    protected static final int HANDLE_SIZE = 6;
+    protected static final int SELECTION_SIZE = 10;
+
+    protected final boolean variablePointsNumber;
+
+    // TODO make it work in deserialization
+    // @Element(name = "layer", required = false)
+    private Identifier layerID = AbstractLayer.MEASURE;
+
     protected PropertyChangeSupport pcs;
     protected Shape shape;
-    protected int handlePointTotalNumber;
-    protected List<Point2D> handlePointList;
-    protected int handleSize = 6;
-    protected int selectionSize = 10;
-    protected Paint colorPaint;
-    protected float lineThickness;
-    protected boolean filled;
-    protected boolean labelVisible;
-    protected GraphicLabel graphicLabel;
     protected boolean selected = false;
-    protected final boolean variablePointsNumber;
-    private Identifier layerID = AbstractLayer.MEASURE;
+
+    @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class)
+    @Convert(Point2DConverter.class)
+    protected List<Point2D.Double> handlePointList;
+    @Attribute(name = "handle_pts_nb")
+    protected int handlePointTotalNumber;
+    @Element(name = "paint", required = false)
+    @Convert(ColorConverter.class)
+    protected Paint colorPaint;
+    @Attribute(name = "thickness", required = false)
+    protected float lineThickness;
+    @Attribute(name = "fill", required = false)
+    protected boolean filled;
+    @Attribute(name = "label_visible", required = false)
+    protected boolean labelVisible;
+    @Element(name = "label", required = false)
+    protected GraphicLabel graphicLabel;
 
     public BasicGraphic() {
         this(0);
@@ -63,16 +87,16 @@ public abstract class BasicGraphic implements Graphic {
         this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
-    public BasicGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible) {
+    public BasicGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible) {
         this(handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
     }
 
-    public BasicGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible,
+    public BasicGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible,
         boolean filled) {
         this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
 
-    public BasicGraphic(List<Point2D> handlePointList, int handlePointTotalNumber, Color paintColor,
+    public BasicGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
         float lineThickness, boolean labelVisible, boolean filled) {
         if (paintColor == null) {
             paintColor = Color.YELLOW;
@@ -80,14 +104,12 @@ public abstract class BasicGraphic implements Graphic {
         this.variablePointsNumber = handlePointTotalNumber == UNDEFINED;
         this.handlePointTotalNumber = handlePointTotalNumber;
         this.handlePointList =
-            handlePointList == null ? new ArrayList<Point2D>(handlePointTotalNumber == UNDEFINED ? 10
+            handlePointList == null ? new ArrayList<Point2D.Double>(handlePointTotalNumber == UNDEFINED ? 10
                 : handlePointTotalNumber) : handlePointList;
         this.colorPaint = paintColor;
         this.lineThickness = lineThickness;
         this.labelVisible = labelVisible;
         this.filled = filled;
-
-        buildShape();
     }
 
     protected abstract void buildShape();
@@ -123,7 +145,7 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     public int getHandleSize() {
-        return handleSize;
+        return HANDLE_SIZE;
     }
 
     public boolean isFilled() {
@@ -145,20 +167,19 @@ public abstract class BasicGraphic implements Graphic {
         return graphicLabel;
     }
 
-    @Override
-    public String[] getLabel() {
-        return graphicLabel != null ? graphicLabel.getLabels() : null;
+    protected boolean isLabelDisplayable() {
+        return labelVisible && graphicLabel != null && graphicLabel.labelBounds != null;
     }
 
     public boolean isGraphicComplete() {
         return handlePointList.size() == handlePointTotalNumber;
     }
 
-    public Point2D getHandlePoint(int index) {
-        Point2D handlePoint = null;
+    public Point2D.Double getHandlePoint(int index) {
+        Point2D.Double handlePoint = null;
         if (index >= 0 && index < handlePointList.size()) {
             if ((handlePoint = handlePointList.get(index)) != null) {
-                handlePoint = (Point2D) handlePoint.clone();
+                handlePoint = (Point2D.Double) handlePoint.clone();
             }
         }
         return handlePoint;
@@ -175,7 +196,7 @@ public abstract class BasicGraphic implements Graphic {
 
     }
 
-    public void setHandlePoint(int index, Point2D newPoint) {
+    public void setHandlePoint(int index, Point2D.Double newPoint) {
         if (index >= 0 && index <= handlePointList.size()) {
             if (index == handlePointList.size()) {
                 handlePointList.add(newPoint);
@@ -206,7 +227,7 @@ public abstract class BasicGraphic implements Graphic {
         if (shape instanceof AdvancedShape) {
             return ((AdvancedShape) shape).getArea(transform);
         } else {
-            double growingSize = Math.max(selectionSize, handleSize);
+            double growingSize = Math.max(SELECTION_SIZE, HANDLE_SIZE);
             growingSize = Math.max(growingSize, lineThickness);
             growingSize /= GeomUtil.extractScalingFactor(transform);
 
@@ -281,7 +302,7 @@ public abstract class BasicGraphic implements Graphic {
         Rectangle2D bounds = shape.getBounds2D();
 
         // Add pixel tolerance to ensure that the graphic is correctly repainted
-        double growingSize = Math.max(handleSize * 1.5 / 2.0, lineThickness / 2.0) + 2;
+        double growingSize = Math.max(HANDLE_SIZE * 1.5 / 2.0, lineThickness / 2.0) + 2;
         growingSize /= GeomUtil.extractScalingFactor(transform);
         GeomUtil.growRectangle(bounds, growingSize);
 
@@ -330,7 +351,8 @@ public abstract class BasicGraphic implements Graphic {
 
         if (mousePoint != null && handlePointList.size() > 0) {
             double minHandleDistance = Double.MAX_VALUE;
-            double maxHandleDistance = handleSize * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
+            double maxHandleDistance =
+                HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
 
             for (int index = 0; index < handlePointList.size(); index++) {
                 Point2D handlePoint = handlePointList.get(index);
@@ -351,7 +373,8 @@ public abstract class BasicGraphic implements Graphic {
         final Point2D mousePoint = (mouseEvent != null) ? mouseEvent.getImageCoordinates() : null;
 
         if (mousePoint != null && handlePointList.size() > 0) {
-            double maxHandleDistance = handleSize * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
+            double maxHandleDistance =
+                HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
 
             for (int index = 0; index < handlePointList.size(); index++) {
                 Point2D handlePoint = handlePointList.get(index);
@@ -375,7 +398,7 @@ public abstract class BasicGraphic implements Graphic {
         }
 
         AffineTransform transform = getAffineTransform(mouseevent);
-        if (transform != null && labelVisible && graphicLabel != null) {
+        if (transform != null && isLabelDisplayable()) {
             Area labelArea = graphicLabel.getArea(transform);
             if (labelArea != null && labelArea.contains(mouseevent.getImageCoordinates())) {
                 return true;
@@ -500,10 +523,9 @@ public abstract class BasicGraphic implements Graphic {
     }
 
     public void moveLabel(double deltaX, double deltaY) {
-        if (graphicLabel != null && (deltaX != 0 || deltaY != 0)) {
-            GraphicLabel oldLabel = (graphicLabel != null) ? graphicLabel.clone() : null;
+        if (isLabelDisplayable() && (deltaX != 0 || deltaY != 0)) {
             graphicLabel.move(deltaX, deltaY);
-            fireLabelChanged(oldLabel);
+            fireLabelChanged(graphicLabel.clone());
         }
     }
 
@@ -648,14 +670,14 @@ public abstract class BasicGraphic implements Graphic {
 
     @Override
     public void paintLabel(Graphics2D g2d, AffineTransform transform) {
-        if (labelVisible && graphicLabel != null) {
+        if (isLabelDisplayable()) {
             graphicLabel.paint(g2d, transform, selected);
         }
     }
 
     protected void paintHandles(Graphics2D g2d, AffineTransform transform) {
         if (handlePointList.size() > 0) {
-            double size = handleSize;
+            double size = HANDLE_SIZE;
             double halfSize = size / 2;
 
             ArrayList<Point2D> handlePts = new ArrayList<Point2D>(handlePointList.size());
@@ -702,7 +724,7 @@ public abstract class BasicGraphic implements Graphic {
         while (lastPointIndex > 0) {
             Point2D checkPoint = handlePointList.get(lastPointIndex);
 
-            ListIterator<Point2D> listIt = handlePointList.listIterator(lastPointIndex--);
+            ListIterator<Point2D.Double> listIt = handlePointList.listIterator(lastPointIndex--);
 
             while (listIt.hasPrevious()) {
                 if (checkPoint != null && checkPoint.equals(listIt.previous())) {
@@ -830,7 +852,7 @@ public abstract class BasicGraphic implements Graphic {
         newGraphic.pcs = null;
         newGraphic.shape = null;
         newGraphic.handlePointList =
-            new ArrayList<Point2D>(handlePointTotalNumber == UNDEFINED ? 10 : handlePointTotalNumber);
+            new ArrayList<Point2D.Double>(handlePointTotalNumber == UNDEFINED ? 10 : handlePointTotalNumber);
         newGraphic.graphicLabel = null;
         newGraphic.selected = false;
         return newGraphic;
@@ -843,7 +865,7 @@ public abstract class BasicGraphic implements Graphic {
             return null;
         }
         for (Point2D p : handlePointList) {
-            newGraphic.handlePointList.add(p != null ? (Point2D) p.clone() : null);
+            newGraphic.handlePointList.add(p != null ? (Point2D.Double) p.clone() : null);
         }
         newGraphic.buildShape();
         return newGraphic;

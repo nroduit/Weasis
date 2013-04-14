@@ -254,7 +254,7 @@ public class PRManager {
                 int size = points.length / 2;
                 if (size >= 2) {
                     if (canBeEdited) {
-                        List<Point2D> handlePointList = new ArrayList<Point2D>(size);
+                        List<Point2D.Double> handlePointList = new ArrayList<Point2D.Double>(size);
                         for (int i = 0; i < size; i++) {
                             double x = isDisp ? points[i * 2] * width : points[i * 2];
                             double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
