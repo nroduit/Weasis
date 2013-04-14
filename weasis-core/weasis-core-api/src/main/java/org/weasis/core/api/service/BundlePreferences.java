@@ -52,11 +52,7 @@ public class BundlePreferences {
     }
 
     public Preferences getDefaultPreferences() {
-        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
-        if (user == null) {
-            return getSystemPreferences();
-        }
-        return getUserPreferences(user);
+        return getUserPreferences(AbstractProperties.WEASIS_USER);
     }
 
     public Preferences getSystemPreferences() {
@@ -75,20 +71,7 @@ public class BundlePreferences {
     }
 
     public static Preferences getDefaultPreferences(final BundleContext context) {
-        String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
-        if (user == null) {
-            return getSystemPreferences(context);
-        }
-        return getUserPreferences(context, user);
-    }
-
-    public static Preferences getSystemPreferences(final BundleContext context) {
-        ServiceTracker track = new ServiceTracker(context, PreferencesService.class.getName(), null);
-        track.open();
-        PreferencesService service = (PreferencesService) track.getService();
-        Preferences pref = service == null ? null : service.getSystemPreferences();
-        track.close();
-        return pref;
+        return getUserPreferences(context, AbstractProperties.WEASIS_USER);
     }
 
     public static Preferences getUserPreferences(final BundleContext context, String name) {

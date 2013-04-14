@@ -2,10 +2,14 @@ package org.weasis.launcher;
 
 public abstract class RemotePreferences {
     private String user = null;
+    private String profile = null;
     private String localPrefsDir = null;
+    private boolean localSessionUser;
 
-    final void initialize(String user, String preferencesDirectory) {
+    final void initialize(String user, boolean localSessionUser, String profile, String preferencesDirectory) {
         this.user = user;
+        this.localSessionUser = localSessionUser;
+        this.profile = profile;
         this.localPrefsDir = preferencesDirectory;
     }
 
@@ -19,6 +23,14 @@ public abstract class RemotePreferences {
 
     public final String getLocalPrefsDir() {
         return localPrefsDir;
+    }
+
+    public String getProfile() {
+        return profile;
+    }
+
+    public boolean isLocalSessionUser() {
+        return localSessionUser;
     }
 
 }

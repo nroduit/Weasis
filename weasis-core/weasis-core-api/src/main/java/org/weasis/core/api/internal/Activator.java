@@ -166,9 +166,8 @@ public class Activator implements BundleActivator, ServiceListener {
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         String audit = bundleContext.getProperty(loggerKey);
         if (audit != null && audit.equalsIgnoreCase("true")) { //$NON-NLS-1$
-            String user = System.getProperty("weasis.user", System.getProperty("user.name", "local")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             AuditLog.createOrUpdateLogger(loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
-                + File.separator + "log" + File.separator + "audit-" + user + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                + File.separator + "log" + File.separator + "audit-" + AbstractProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {

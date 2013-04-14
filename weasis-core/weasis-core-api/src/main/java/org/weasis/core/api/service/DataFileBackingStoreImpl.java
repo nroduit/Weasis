@@ -39,14 +39,19 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
 
     private final BundleContext context;
     private final File prefRootDirectory;
-    private final String user;
 
     public DataFileBackingStoreImpl(BundleContext context) {
         super(context);
         this.context = context;
-        this.prefRootDirectory = new File(AbstractProperties.WEASIS_PATH + File.separator, "preferences"); //$NON-NLS-1$
+        StringBuffer bufDir = new StringBuffer(AbstractProperties.WEASIS_PATH);
+        bufDir.append(File.separator);
+        bufDir.append("preferences");
+        bufDir.append(File.separator);
+        bufDir.append(AbstractProperties.WEASIS_USER);
+        bufDir.append(File.separator);
+        bufDir.append(AbstractProperties.WEASIS_PROFILE);
+        this.prefRootDirectory = new File(bufDir.toString());
         prefRootDirectory.mkdirs();
-        this.user = System.getProperty("weasis.user", null); //$NON-NLS-1$
     }
 
     /**
@@ -83,20 +88,11 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
         // parse the file name to get: bundle id, user|system identifier
         if (fileName.endsWith(".xml")) { //$NON-NLS-1$
             final String key = fileName.substring(0, fileName.length() - 4);
-            String identifier = null;
-            File parent = file.getParentFile();
-            if (parent != null) {
-                String folder = file.getName();
-                if (!"preferences".equals(folder)) { //$NON-NLS-1$
-                    identifier = folder;
-                }
-            }
-            if (identifier == user) {
-                Bundle[] bundles = context.getBundles();
-                for (Bundle bundle : bundles) {
-                    if (bundle.getSymbolicName().equals(key)) {
-                        return new PreferencesDescription(bundle.getBundleId(), identifier);
-                    }
+
+            Bundle[] bundles = context.getBundles();
+            for (Bundle bundle : bundles) {
+                if (bundle.getSymbolicName().equals(key)) {
+                    return new PreferencesDescription(bundle.getBundleId(), AbstractProperties.WEASIS_USER);
                 }
             }
         }
@@ -118,7 +114,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     public PreferencesImpl[] loadAll(BackingStoreManager manager, Long bundleId) throws BackingStoreException {
         this.checkAccess();
 
-        PreferencesImpl pref = load(manager, new PreferencesDescription(bundleId, user));
+        PreferencesImpl pref = load(manager, new PreferencesDescription(bundleId, AbstractProperties.WEASIS_USER));
 
         return pref == null ? new PreferencesImpl[0] : new PreferencesImpl[] { pref };
     }
@@ -190,10 +186,6 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
         Bundle bundle = context.getBundle(desc.getBundleId());
         if (bundle == null) {
             return null;
-        }
-        if (desc.getIdentifier() != null) {
-            return new File(this.prefRootDirectory + File.separator + desc.getIdentifier(), bundle.getSymbolicName()
-                + ".xml"); //$NON-NLS-1$
         }
         return new File(this.prefRootDirectory, bundle.getSymbolicName() + ".xml"); //$NON-NLS-1$
     }
