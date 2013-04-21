@@ -151,7 +151,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         enableActions(false);
     }
 
-
     private ComboItemListener newFilterAction() {
         return new ComboItemListener(ActionW.FILTER, KernelData.ALL_FILTERS) {
 
@@ -313,12 +312,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
                 DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-                ImageElement img = defaultView2d.getImage();
-                if (img != null) {
-                    boolean pixelPadding =
-                        JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
-                    windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
-                    levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
+                if (defaultView2d != null) {
+                    ImageElement img = defaultView2d.getImage();
+                    if (img != null) {
+                        boolean pixelPadding =
+                            JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING
+                                .cmd()));
+                        windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
+                        levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
+                    }
                 }
             }
         } else if (ResetTools.Pan.equals(action)) {

@@ -104,21 +104,10 @@ public class ViewerPluginBuilder {
         if (factory == null || series == null || model == null) {
             return;
         }
-        int nbImg = 0;
-        for (MediaSeries m : series) {
-            nbImg += m.size(null);
-        }
-
-        // TODO is this bug still exist
-        // Do not add series without medias. BUG WEA-100
-        // if (nbImg == 0) {
-        // return;
-        // }
         ViewerPluginBuilder builder =
             new ViewerPluginBuilder(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries);
         builder.setScreenBound(screenBound);
         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, builder));
-
     }
 
     public static void openSequenceInDefaultPlugin(List<MediaSeries> series, DataExplorerModel model,
