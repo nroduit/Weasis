@@ -1,7 +1,7 @@
 package org.weasis.dicom.viewer2d.sr;
 
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -42,7 +42,7 @@ public class SRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
+    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = SRContainer.VIEWS_1x1;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());

@@ -12,8 +12,8 @@ package org.weasis.dicom.explorer;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -102,7 +102,7 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
+    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
         return mimeSystemViewer;
     }
 
@@ -115,8 +115,8 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     public List<Action> getOpenActions() {
         return null;
     }
-    
-        @Override
+
+    @Override
     public boolean canAddSeries() {
         return false;
     }

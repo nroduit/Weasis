@@ -167,7 +167,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     public void addSequenceElement(DicomElement element, DefaultListModel listModel) {
-        for (int i = 0, n = element.countItems(); i < n; ++i) {
+        for (int i = 0; i < element.countItems(); i++) {
             DicomObject dcmObj = element.getDicomObject(i);
             String[] val = dcmObj.toString().split("\n"); //$NON-NLS-1$
             for (int j = 0; j < val.length; j++) {

@@ -112,7 +112,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW TransferSyntaxUID = new TagW(0x00020010, "Transfer Syntax UID", TagType.String); //$NON-NLS-1$
 
     public static final TagW PatientName = new TagW(0x00100010, "Patient Name", TagType.String, 1); //$NON-NLS-1$
-    public static final TagW PatientID = new TagW(0x00100020, "PatientID", TagType.String, 1); //$NON-NLS-1$
+    public static final TagW PatientID = new TagW(0x00100020, "Patient ID", TagType.String, 1); //$NON-NLS-1$
 
     public static final TagW IssuerOfPatientID = new TagW(0x00100021, "Issuer Of PatientID", TagType.String, 1); //$NON-NLS-1$
     public static final TagW PatientBirthDate = new TagW(0x00100030, "Patient Birth Date", TagType.Date, 1); //$NON-NLS-1$
@@ -599,6 +599,13 @@ public class TagW implements Transferable, Serializable {
     public static String formatDate(Date date) {
         if (date != null) {
             return DATE_FORMATTER.format(date);
+        }
+        return ""; //$NON-NLS-1$
+    }
+
+    public static String formatTime(Date date) {
+        if (date != null) {
+            return TIME_FORMATTER.format(date);
         }
         return ""; //$NON-NLS-1$
     }

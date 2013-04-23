@@ -316,8 +316,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
                         boolean pixelPadding =
-                            JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING
-                                .cmd()));
+                            JMVUtils.getNULLtoTrue(defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
                         windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
                         levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
                     }
@@ -357,7 +356,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
         ImageElement image = view2d.getImage();
         MediaSeries<ImageElement> series = view2d.getSeries();
-        boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+        boolean pixelPadding = JMVUtils.getNULLtoTrue(view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
 
         windowAction.setMinMaxValueWithoutTriggerAction(0,
             (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)),

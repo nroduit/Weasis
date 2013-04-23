@@ -1,9 +1,9 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Component;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -44,7 +44,7 @@ public class MPRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
+    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = MPRContainer.VIEWS_2x1_mpr;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());

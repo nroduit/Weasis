@@ -316,7 +316,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset = (PresetWindowLevel) presetAction.getSelectedItem();
                     PresetWindowLevel newPreset = null;
                     boolean pixelPadding =
-                        JMVUtils.getNULLtoTrue((Boolean) view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                        JMVUtils.getNULLtoTrue(view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
                     // Assume the image cannot display when win =1 and level = 0
                     if (oldPreset != null || (windowAction.getValue() <= 1 && levelAction.getValue() == 0)) {
@@ -789,7 +789,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
         LutShape lutShapeItem = (LutShape) view2d.getActionValue(ActionW.LUT_SHAPE.cmd());
         Boolean defaultPreset = (Boolean) view2d.getActionValue(ActionW.DEFAULT_PRESET.cmd());
-        boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+        boolean pixelPadding = JMVUtils.getNULLtoTrue(view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
 
         defaultPresetAction.setSelectedWithoutTriggerAction(defaultPreset);
 

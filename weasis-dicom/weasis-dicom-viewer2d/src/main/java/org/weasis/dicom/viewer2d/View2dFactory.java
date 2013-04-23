@@ -11,9 +11,9 @@
 package org.weasis.dicom.viewer2d;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -60,7 +60,7 @@ public class View2dFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
+    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -153,8 +153,8 @@ public class View2dFactory implements SeriesViewerFactory {
         // In case DICOM explorer has been loaded get the first import action
         return dicomView.getOpenImportDialogAction().subList(0, 1);
     }
-    
-        @Override
+
+    @Override
     public boolean canAddSeries() {
         return true;
     }

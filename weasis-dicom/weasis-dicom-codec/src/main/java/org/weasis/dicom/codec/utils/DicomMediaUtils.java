@@ -703,15 +703,26 @@ public class DicomMediaUtils {
         if (name == null) {
             return null;
         }
-        int index = name.indexOf('^');
-        if (index != -1) {
+        /*
+         * Further internationalization issues arise in countries where the language has a phonetic or ideographic
+         * representation, such as in Japan and Korea. For these situations, DICOM allows up to three “component
+         * groups,” the first a single-byte representation as is used for western languages, then an ideographic (Kanji
+         * or Hanga) representation and then a phonetic representation (Hiragana or Hangul). These are separated by ‘=’
+         * (0x3d) characters.
+         */
+        StringBuffer buf = new StringBuffer();
+        String[] names = name.split("=");
+        for (int k = 0; k < names.length; k++) {
+            if (k > 0) {
+                buf.append("=");
+            }
             /*
              * In DICOM “family name^given name^middle name^prefix^suffix”
              * 
              * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
              */
-            String[] vals = name.split("\\^");
-            StringBuffer buf = new StringBuffer();
+            String[] vals = names[k].split("\\^");
+
             for (int i = 0; i < vals.length; i++) {
                 if (!"".equals(vals[i])) {
                     if (i >= 3) {
@@ -722,9 +733,9 @@ public class DicomMediaUtils {
                 }
                 buf.append(vals[i]);
             }
-            return buf.toString().trim();
+
         }
-        return name;
+        return buf.toString().trim();
     }
 
     public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName,

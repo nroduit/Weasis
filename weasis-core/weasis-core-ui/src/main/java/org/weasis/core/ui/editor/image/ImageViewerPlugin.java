@@ -632,6 +632,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 addSeries(seriesList.get(0));
                 return;
             }
+            setSelectedAndGetFocus();
             if (bestDefaultLayout) {
                 changeLayoutModel(getBestDefaultViewLayout(seriesList.size()));
 
@@ -646,15 +647,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         getNextSelectedImagePane();
                     }
                 }
-
-                setSelectedAndGetFocus();
-                int pos = view2ds.size() - seriesList.size();
-                setSelectedImagePane(view2ds.get(0));
+                if (view2ds.size() > 0) {
+                    setSelectedImagePane(view2ds.get(0));
+                }
                 for (MediaSeries mediaSeries : seriesList) {
                     addSeries(mediaSeries);
                 }
-                setSelected(true);
-                repaint();
             } else {
                 int emptyView = 0;
                 for (DefaultView2d v : view2ds) {
@@ -664,7 +662,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 }
                 if (emptyView < seriesList.size()) {
                     changeLayoutModel(getBestDefaultViewLayout(view2ds.size() + seriesList.size()));
-                    setSelectedAndGetFocus();
                 }
                 int index = 0;
                 for (DefaultView2d v : view2ds) {
@@ -674,9 +671,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         index++;
                     }
                 }
-                setSelected(true);
-                repaint();
             }
+            // setSelected(true);
+            repaint();
         }
     }
 

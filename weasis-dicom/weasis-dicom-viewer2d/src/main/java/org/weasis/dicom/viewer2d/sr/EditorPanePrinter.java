@@ -311,7 +311,6 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
 
     protected static Shape getAllocation(View v, JEditorPane edit) {
         Insets ins = edit.getInsets();
-        View root = edit.getUI().getRootView(edit);
         View vParent = v.getParent();
         int x = ins.left;
         int y = ins.top;
