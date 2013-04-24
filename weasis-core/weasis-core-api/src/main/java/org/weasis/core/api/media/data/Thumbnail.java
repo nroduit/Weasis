@@ -40,7 +40,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -49,10 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.imageio.ImageIO;
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
 import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.SubsampleAverageDescriptor;
 import javax.swing.Icon;
@@ -274,21 +270,6 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         return thumbnailPath;
     }
 
-    private PlanarImage loadImage(File path) throws Exception {
-        // Imageio issue with native library in multi-thread environment
-        // (https://jai-imageio-core.dev.java.net/issues/show_bug.cgi?id=126)
-        // For this reason, the thumbnails are loaded sequentially.
-        ImageInputStream in = new FileImageInputStream(new RandomAccessFile(path, "r")); //$NON-NLS-1$
-        ParameterBlockJAI pb = new ParameterBlockJAI("ImageRead"); //$NON-NLS-1$
-        pb.setParameter("Input", in); //$NON-NLS-1$
-        return JAI.create("ImageRead", pb, null); //$NON-NLS-1$
-        // // stream to unlock the file when it is not used any more
-        // FileSeekableStream fileStream = new FileSeekableStream(path);
-        // PlanarImage img = JAI.create("stream", fileStream);
-        // // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-        // return ImageFiler.getReadableImage(img);
-    }
-
     public synchronized BufferedImage getImage() {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             readable = false;
@@ -490,7 +471,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     @Override
     public void focusGained(FocusEvent e) {
         if (!e.isTemporary()) {
-            setBorder(onMouseOverBorder);
+            // setBorder(onMouseOverBorder);
             JPanel container = getScrollPane();
             if (container != null) {
                 Rectangle bound = this.getBounds();
@@ -508,9 +489,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
 
     @Override
     public void focusLost(FocusEvent e) {
-        if (!e.isTemporary()) {
-            setBorder(outMouseOverBorder);
-        }
+        // if (!e.isTemporary()) {
+        // setBorder(outMouseOverBorder);
+        // }
     }
 
     private JPanel getScrollPane() {
@@ -530,6 +511,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     }
 
     public void paintSeriesState(Graphics2D g2d, int x, int y, int width, int height) {
+        setBorder(series.isSelected() ? onMouseOverBorder : outMouseOverBorder);
         if (series.isOpen()) {
             g2d.setPaint(Color.green);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -537,9 +519,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
         }
         g2d.setPaint(Color.ORANGE);
-        if (series.isSelected()) {
-            g2d.drawRect(x + 12, y + 3, 5, 5);
-        }
+        // if (series.isSelected()) {
+        // g2d.drawRect(x + 12, y + 3, 5, 5);
+        // }
         Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
         g2d.setFont(FontTools.getFont10());
         int hbleft = y + height - 2;

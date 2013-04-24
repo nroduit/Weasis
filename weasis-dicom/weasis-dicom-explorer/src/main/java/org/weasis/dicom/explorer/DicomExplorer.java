@@ -916,14 +916,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         private final MediaSeriesGroup sequence;
         private final JLabel label;
-        private final boolean selected;
 
         public SeriesPane(MediaSeriesGroup sequence) {
             if (sequence == null) {
                 throw new IllegalArgumentException("Series cannot be null"); //$NON-NLS-1$
             }
+            // To handle selection color with all L&Fs
+            this.setUI(new javax.swing.plaf.PanelUI() {
+            });
+            this.setOpaque(true);
+            this.setBackground(SeriesSelectionModel.BACKROUND);
             this.sequence = sequence;
-            this.selected = false;
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             int thumbnailSize = slider.getValue();
             if (sequence instanceof Series) {
@@ -944,6 +947,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             this.setFocusable(false);
             updateSize(thumbnailSize);
             this.add(label);
+
         }
 
         public void updateSize(int thumbnailSize) {
@@ -1661,9 +1665,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                     List<SeriesViewerFactory> plugins =
                         UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
-                    if (!selList.contains(series)) {
-                        selList.add(series);
-                    }
+                    // if (!selList.contains(series)) {
+                    // selList.add(series);
+                    // }
                     // Is the selection has multiple mime types
                     boolean multipleMimes = false;
                     String mime = series.getMimeType();
@@ -1996,6 +2000,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
                         true, true);
+                    e.consume();
                 }
             }
         };

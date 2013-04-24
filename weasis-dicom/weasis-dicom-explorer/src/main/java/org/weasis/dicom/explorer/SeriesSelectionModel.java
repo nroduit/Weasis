@@ -22,7 +22,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesSelectionModel extends ArrayList<Series> {
-    private static final Color selectedColor = new Color(82, 152, 219);
+
+    public static final Color BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$ 
+    public static final Color SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
 
     public SeriesSelectionModel(int initialCapacity) {
         super(initialCapacity);
@@ -119,8 +121,6 @@ public class SeriesSelectionModel extends ArrayList<Series> {
             if (thumb != null) {
                 Container parent = thumb.getParent();
                 if (parent instanceof JPanel) {
-                    Color color = selected ? selectedColor : (Color) javax.swing.UIManager.get("Panel.background"); //$NON-NLS-1$
-                    parent.setBackground(color);
                 }
             }
         }
