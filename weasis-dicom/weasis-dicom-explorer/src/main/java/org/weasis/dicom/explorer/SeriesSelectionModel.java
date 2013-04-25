@@ -121,6 +121,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
             if (thumb != null) {
                 Container parent = thumb.getParent();
                 if (parent instanceof JPanel) {
+                    parent.setBackground(selected ? SELECTION_BACKROUND : BACKROUND);
                 }
             }
         }

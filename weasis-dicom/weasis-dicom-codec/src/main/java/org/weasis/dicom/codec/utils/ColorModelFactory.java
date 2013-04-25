@@ -54,14 +54,14 @@ public class ColorModelFactory {
 
     private static final Logger log = LoggerFactory.getLogger(ColorModelFactory.class);
 
-    private static final String MONOCHROME1 = "MONOCHROME1"; //$NON-NLS-1$
-    private static final String MONOCHROME2 = "MONOCHROME2"; //$NON-NLS-1$
-    private static final String PALETTE_COLOR = "PALETTE COLOR"; //$NON-NLS-1$
-    private static final String RGB = "RGB"; //$NON-NLS-1$
-    private static final String YBR_FULL = "YBR_FULL"; //$NON-NLS-1$
-    private static final String YBR_FULL_422 = "YBR_FULL_422"; //$NON-NLS-1$
-    private static final String YBR_PARTIAL_422 = "YBR_PARTIAL_422"; //$NON-NLS-1$
-    private static final String YBR_PARTIAL_420 = "YBR_PARTIAL_420"; //$NON-NLS-1$
+    public static final String MONOCHROME1 = "MONOCHROME1"; //$NON-NLS-1$
+    public static final String MONOCHROME2 = "MONOCHROME2"; //$NON-NLS-1$
+    public static final String PALETTE_COLOR = "PALETTE COLOR"; //$NON-NLS-1$
+    public static final String RGB = "RGB"; //$NON-NLS-1$
+    public static final String YBR_FULL = "YBR_FULL"; //$NON-NLS-1$
+    public static final String YBR_FULL_422 = "YBR_FULL_422"; //$NON-NLS-1$
+    public static final String YBR_PARTIAL_422 = "YBR_PARTIAL_422"; //$NON-NLS-1$
+    public static final String YBR_PARTIAL_420 = "YBR_PARTIAL_420"; //$NON-NLS-1$
 
     public static ColorModel createColorModel(DicomObject ds) {
         int samples = ds.getInt(Tag.SamplesPerPixel, 1);

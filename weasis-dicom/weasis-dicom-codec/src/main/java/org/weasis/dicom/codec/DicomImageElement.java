@@ -676,6 +676,17 @@ public class DicomImageElement extends ImageElement {
             RenderedImage imageModalityTransformed =
                 modalityLookup == null ? imageSource : LookupDescriptor.create(imageSource, modalityLookup, null);
 
+            /*
+             * C.11.2.1.2 Window center and window width
+             * 
+             * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
+             * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
+             */
+            if (!isPhotometricInterpretationMonochrome()) {
+                // If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
+                // PALETTE_COLOR.
+                return imageModalityTransformed;
+            }
             LookupTableJAI voiLookup =
                 getVOILookup(modalityLookup, window, level, lutShape, fillLutOutside, pixelPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
