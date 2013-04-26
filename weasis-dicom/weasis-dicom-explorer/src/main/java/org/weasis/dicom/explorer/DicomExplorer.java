@@ -1673,9 +1673,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                     List<SeriesViewerFactory> plugins =
                         UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
-                    // if (!selList.contains(series)) {
-                    // selList.add(series);
-                    // }
+                    if (!selList.contains(series)) {
+                        selList.clear();
+                        selList.add(series);
+                    }
                     // Is the selection has multiple mime types
                     boolean multipleMimes = false;
                     String mime = series.getMimeType();
