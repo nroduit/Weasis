@@ -359,7 +359,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public static boolean isSpecialModality(Series series) {
         String modality = series == null ? null : (String) series.getTagValue(TagW.Modality);
-        return (modality != null && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {

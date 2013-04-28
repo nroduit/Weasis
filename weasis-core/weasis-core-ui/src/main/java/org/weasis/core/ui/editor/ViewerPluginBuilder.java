@@ -13,7 +13,10 @@ package org.weasis.core.ui.editor;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -33,27 +36,27 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 
 public class ViewerPluginBuilder {
+    public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer";
+    public static final String BEST_DEF_LAYOUT = "best.def.layout";
+    public static final String SCREEN_BOUND = "screen.bound";
+    public static final String KOS = "dicom.ko";
+    public static final String PR = "dicom.pr";
+
     public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
     private final SeriesViewerFactory factory;
     private final List<MediaSeries> series;
     private final DataExplorerModel model;
-    private final boolean compareEntryToBuildNewViewer;
-    private final boolean bestDefaultLayout;
-    private Rectangle screenBound;
-
-    public ViewerPluginBuilder(SeriesViewerFactory factory, List<MediaSeries> series, DataExplorerModel model) {
-        this(factory, series, model, true, true);
-
-    }
+    private final Map<String, Object> properties;
 
     public ViewerPluginBuilder(SeriesViewerFactory factory, List<MediaSeries> series, DataExplorerModel model,
-        boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
+        Map<String, Object> props) {
+        if (factory == null || series == null || model == null) {
+            throw new IllegalArgumentException();
+        }
         this.factory = factory;
         this.series = series;
         this.model = model;
-        this.compareEntryToBuildNewViewer = compareEntryToBuildNewViewer;
-        this.bestDefaultLayout = bestDefaultLayout;
-        this.screenBound = null;
+        this.properties = props == null ? Collections.synchronizedMap(new HashMap<String, Object>()) : props;
     }
 
     public SeriesViewerFactory getFactory() {
@@ -68,20 +71,8 @@ public class ViewerPluginBuilder {
         return model;
     }
 
-    public boolean isCompareEntryToBuildNewViewer() {
-        return compareEntryToBuildNewViewer;
-    }
-
-    public boolean isBestDefaultLayout() {
-        return bestDefaultLayout;
-    }
-
-    public Rectangle getScreenBound() {
-        return screenBound;
-    }
-
-    public void setScreenBound(Rectangle screenBound) {
-        this.screenBound = screenBound;
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 
     public static void openSequenceInPlugin(SeriesViewerFactory factory, MediaSeries series, DataExplorerModel model,
@@ -104,19 +95,20 @@ public class ViewerPluginBuilder {
         if (factory == null || series == null || model == null) {
             return;
         }
-        int nbImg = 0;
-        for (MediaSeries m : series) {
-            nbImg += m.size(null);
-        }
-        // Do not add series without medias. BUG WEA-100
-        if (nbImg == 0) {
+        Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+        props.put(CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
+        props.put(BEST_DEF_LAYOUT, removeOldSeries);
+        props.put(SCREEN_BOUND, screenBound);
+        ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, series, model, props);
+        model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, builder));
+    }
+
+    public static void openSequenceInPlugin(ViewerPluginBuilder builder) {
+        if (builder == null) {
             return;
         }
-        ViewerPluginBuilder builder =
-            new ViewerPluginBuilder(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries);
-        builder.setScreenBound(screenBound);
+        DataExplorerModel model = builder.getModel();
         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, builder));
-
     }
 
     public static void openSequenceInDefaultPlugin(List<MediaSeries> series, DataExplorerModel model,

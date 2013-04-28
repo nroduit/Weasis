@@ -35,9 +35,10 @@ public class ToolBarContainer extends JPanel {
         unregisterAll();
         if (toolBar == null) {
             toolBar = new ArrayList<Toolbar>(1);
+        }
+        if (toolBar.isEmpty()) {
             toolBar.add(ToolBarContainer.EMPTY);
         }
-
         // Sort toolbars according the index
         Collections.sort(toolBar, new Comparator<Toolbar>() {
 

@@ -172,21 +172,25 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         return selectedImagePane;
     }
 
-    /** Get the layout of this view panel. */
-
+    /**
+     * Get the layout of this panel.
+     * 
+     * @return the layoutModel
+     */
     public GridBagLayoutModel getLayoutModel() {
         return layoutModel;
     }
 
     public GridBagLayoutModel getOriginalLayoutModel() {
+        // Get the non clone layout from the list
         ActionState layout = eventManager.getAction(ActionW.LAYOUT);
         if (layout instanceof ComboItemListener) {
-            ((ComboItemListener) layout).getAllItem();
             for (Object element : ((ComboItemListener) layout).getAllItem()) {
                 if (element instanceof GridBagLayoutModel) {
-                    if ((layoutModel.getIcon() != null && ((GridBagLayoutModel) element).getIcon() == layoutModel
-                        .getIcon()) || layoutModel.toString().equals(element.toString())) {
-                        return (GridBagLayoutModel) element;
+                    GridBagLayoutModel gbm = (GridBagLayoutModel) element;
+                    if ((layoutModel.getIcon() != null && gbm.getIcon() == layoutModel.getIcon())
+                        || layoutModel.toString().equals(gbm.toString())) {
+                        return gbm;
                     }
                 }
             }
@@ -198,7 +202,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public void addSeries(MediaSeries<E> sequence) {
         // TODO set series in specific place and if does not exist in
         // the first free place
-        if (sequence != null) {
+        if (sequence != null && selectedImagePane != null) {
             if (SynchView.Mode.Tile.equals(synchView.getMode())) {
                 selectedImagePane.setSeries(sequence, null);
                 updateSynchView();
@@ -251,7 +255,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      * in the property file.
      */
 
-    protected void setLayoutModel(GridBagLayoutModel layoutModel) {
+    protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
         this.layoutModel = layoutModel == null ? VIEWS_1x1 : layoutModel;
         try {
             this.layoutModel = (GridBagLayoutModel) this.layoutModel.clone();
@@ -315,30 +319,34 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             }
         }
         grid.revalidate();
-        selectedImagePane = view2ds.get(0);
 
-        MouseActions mouseActions = eventManager.getMouseActions();
-        for (int i = 0; i < view2ds.size(); i++) {
-            DefaultView2d<E> v = view2ds.get(i);
-            // Close lens because update does not work
-            v.closeLens();
-            if (SynchView.Mode.Tile.equals(synchView)) {
-                v.setTileOffset(i);
-                v.setSeries(selectedImagePane.getSeries(), null);
+        if (view2ds.size() > 0) {
+            selectedImagePane = view2ds.get(0);
+
+            MouseActions mouseActions = eventManager.getMouseActions();
+            boolean tiledMode = SynchView.Mode.Tile.equals(synchView);
+            for (int i = 0; i < view2ds.size(); i++) {
+                DefaultView2d<E> v = view2ds.get(i);
+                // Close lens because update does not work
+                v.closeLens();
+                if (tiledMode) {
+                    v.setTileOffset(i);
+                    v.setSeries(selectedImagePane.getSeries(), null);
+                }
+                v.enableMouseAndKeyListener(mouseActions);
             }
-            v.enableMouseAndKeyListener(mouseActions);
-        }
-        Graphic graphic = null;
-        ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
-        if (action instanceof ComboItemListener) {
-            graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-        }
-        setDrawActions(graphic);
-        selectedImagePane.setSelected(true);
-        eventManager.updateComponentsListener(selectedImagePane);
-        if (selectedImagePane.getSeries() instanceof Series) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
-                selectedImagePane.getImage(), EVENT.LAYOUT));
+            Graphic graphic = null;
+            ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
+            if (action instanceof ComboItemListener) {
+                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+            }
+            setDrawActions(graphic);
+            selectedImagePane.setSelected(true);
+            eventManager.updateComponentsListener(selectedImagePane);
+            if (selectedImagePane.getSeries() instanceof Series) {
+                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane
+                    .getSeries(), selectedImagePane.getImage(), EVENT.LAYOUT));
+            }
         }
     }
 
@@ -370,25 +378,31 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             }
             grid.revalidate();
 
-            MouseActions mouseActions = eventManager.getMouseActions();
-            for (int i = 0; i < view2ds.size(); i++) {
-                DefaultView2d<E> v = view2ds.get(i);
-                // Close lens because update does not work
-                v.closeLens();
-                if (SynchView.Mode.Tile.equals(synchView)) {
-                    v.setTileOffset(i);
-                    v.setSeries(selectedImagePane.getSeries(), null);
+            if (view2ds.size() > 0) {
+                if (selectedImagePane == null) {
+                    selectedImagePane = view2ds.get(0);
                 }
-                v.enableMouseAndKeyListener(mouseActions);
+                MouseActions mouseActions = eventManager.getMouseActions();
+                boolean tiledMode = SynchView.Mode.Tile.equals(synchView);
+                for (int i = 0; i < view2ds.size(); i++) {
+                    DefaultView2d<E> v = view2ds.get(i);
+                    // Close lens because update does not work
+                    v.closeLens();
+                    if (tiledMode) {
+                        v.setTileOffset(i);
+                        v.setSeries(selectedImagePane.getSeries(), null);
+                    }
+                    v.enableMouseAndKeyListener(mouseActions);
+                }
+                Graphic graphic = null;
+                ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
+                if (action instanceof ComboItemListener) {
+                    graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
+                }
+                setDrawActions(graphic);
+                selectedImagePane.setSelected(true);
+                eventManager.updateComponentsListener(selectedImagePane);
             }
-            Graphic graphic = null;
-            ActionState action = eventManager.getAction(ActionW.DRAW_MEASURE);
-            if (action instanceof ComboItemListener) {
-                graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
-            }
-            setDrawActions(graphic);
-            selectedImagePane.setSelected(true);
-            eventManager.updateComponentsListener(selectedImagePane);
         }
     }
 
@@ -397,19 +411,23 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     public void setSelectedImagePane(DefaultView2d<E> defaultView2d) {
-        if (this.selectedImagePane.getSeries() != null) {
+        if (this.selectedImagePane != null && this.selectedImagePane.getSeries() != null) {
             this.selectedImagePane.getSeries().setSelected(false, null);
         }
         if (defaultView2d != null && defaultView2d.getSeries() != null) {
             defaultView2d.getSeries().setSelected(true, defaultView2d.getImage());
         }
-        if (this.selectedImagePane != defaultView2d && defaultView2d != null) {
-            this.selectedImagePane.setSelected(false);
+
+        boolean newView = this.selectedImagePane != defaultView2d && defaultView2d != null;
+        if (newView) {
+            if (this.selectedImagePane != null) {
+                this.selectedImagePane.setSelected(false);
+            }
             defaultView2d.setSelected(true);
             this.selectedImagePane = defaultView2d;
             eventManager.updateComponentsListener(defaultView2d);
         }
-        if (defaultView2d != null && defaultView2d.getSeries() instanceof Series) {
+        if (newView && defaultView2d.getSeries() instanceof Series) {
             eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
                 selectedImagePane.getImage(), EVENT.SELECT));
         }
@@ -526,7 +544,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     protected void updateSynchView() {
-        if (SynchView.Mode.Tile.equals(synchView.getMode())) {
+        if (SynchView.Mode.Tile.equals(synchView.getMode()) && selectedImagePane != null) {
             MediaSeries<E> series = null;
             DefaultView2d<E> selectedView = selectedImagePane;
             if (selectedImagePane.getSeries() != null) {
@@ -614,6 +632,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 addSeries(seriesList.get(0));
                 return;
             }
+            setSelectedAndGetFocus();
             if (bestDefaultLayout) {
                 changeLayoutModel(getBestDefaultViewLayout(seriesList.size()));
 
@@ -621,19 +640,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 if (view2ds.size() > seriesList.size()) {
                     setSelectedImagePane(view2ds.get(seriesList.size()));
                     for (int i = seriesList.size(); i < view2ds.size(); i++) {
-                        getSelectedImagePane().setSeries(null, null);
+                        DefaultView2d<E> viewPane = getSelectedImagePane();
+                        if (viewPane != null) {
+                            viewPane.setSeries(null, null);
+                        }
                         getNextSelectedImagePane();
                     }
                 }
-
-                setSelectedAndGetFocus();
-                int pos = view2ds.size() - seriesList.size();
-                setSelectedImagePane(view2ds.get(0));
+                if (view2ds.size() > 0) {
+                    setSelectedImagePane(view2ds.get(0));
+                }
                 for (MediaSeries mediaSeries : seriesList) {
                     addSeries(mediaSeries);
                 }
-                setSelected(true);
-                repaint();
             } else {
                 int emptyView = 0;
                 for (DefaultView2d v : view2ds) {
@@ -643,7 +662,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                 }
                 if (emptyView < seriesList.size()) {
                     changeLayoutModel(getBestDefaultViewLayout(view2ds.size() + seriesList.size()));
-                    setSelectedAndGetFocus();
                 }
                 int index = 0;
                 for (DefaultView2d v : view2ds) {
@@ -653,9 +671,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         index++;
                     }
                 }
-                setSelected(true);
-                repaint();
             }
+            // setSelected(true);
+            repaint();
         }
     }
 

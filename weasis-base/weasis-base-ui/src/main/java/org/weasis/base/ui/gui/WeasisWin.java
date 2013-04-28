@@ -33,9 +33,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.Action;
@@ -302,18 +302,17 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         registerPlugin((ViewerPlugin) source);
                     } else if (source instanceof ViewerPluginBuilder) {
                         ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
-                        SeriesViewerFactory factory = builder.getFactory();
                         DataExplorerModel model = builder.getModel();
                         List<MediaSeries> series = builder.getSeries();
-
-                        if (series != null && builder.isCompareEntryToBuildNewViewer()
+                        Map<String, Object> props = builder.getProperties();
+                        if (series != null
+                            && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                openSeriesInViewerPlugin(factory, model, group, series, builder.isBestDefaultLayout(),
-                                    builder.getScreenBound());
+                                openSeriesInViewerPlugin(builder, group);
                             } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
                                     getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
@@ -322,16 +321,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
                                     List<MediaSeries> seriesList = entry.getValue();
-                                    openSeriesInViewerPlugin(factory, model, group, seriesList,
-                                        builder.isBestDefaultLayout(), builder.getScreenBound());
+                                    openSeriesInViewerPlugin(builder, group);
                                 }
                             }
 
                         } else {
-                            openSeriesInViewerPlugin(factory, model, null, series, true, builder.getScreenBound());
-
+                            openSeriesInViewerPlugin(builder, null);
                         }
-
                     }
                 } else if (ObservableEvent.BasicAction.Unregister.equals(action)) {
                     if (source instanceof SeriesViewerFactory) {
@@ -376,17 +372,23 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         return map;
     }
 
-    private void openSeriesInViewerPlugin(SeriesViewerFactory factory, DataExplorerModel model, MediaSeriesGroup group,
-        List<MediaSeries> seriesList, boolean bestDefaultLayout, Rectangle screenBound) {
-        if (factory == null || seriesList == null || seriesList.size() == 0) {
+    private void openSeriesInViewerPlugin(ViewerPluginBuilder builder, MediaSeriesGroup group) {
+        if (builder == null) {
             return;
         }
+        SeriesViewerFactory factory = builder.getFactory();
+        DataExplorerModel model = builder.getModel();
+        List<MediaSeries> seriesList = builder.getSeries();
+        Map<String, Object> props = builder.getProperties();
+
+        Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
+
         if (screenBound == null && factory != null && group != null) {
+            boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
-
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
                         viewer.addSeriesList(seriesList, bestDefaultLayout);
                         return;
@@ -395,12 +397,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         }
         // Pass the DataExplorerModel to the viewer
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.put(DataExplorerModel.class.getName(), model);
+        props.put(DataExplorerModel.class.getName(), model);
         if (seriesList.size() > 1) {
-            properties.put(DefaultView2d.class.getName(), seriesList.size());
+            props.put(DefaultView2d.class.getName(), seriesList.size());
         }
-        SeriesViewer seriesViewer = factory.createSeriesViewer(properties);
+        SeriesViewer seriesViewer = factory.createSeriesViewer(props);
         if (seriesViewer instanceof MimeSystemAppViewer) {
             for (MediaSeries m : seriesList) {
                 seriesViewer.addSeries(m);
@@ -942,12 +943,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             if (factory.canReadMimeType(seq.getMimeType())) {
                                 DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                                 if (model instanceof TreeModel) {
-                                    TreeModel treeModel = (TreeModel) model;
-                                    MediaSeriesGroup group =
-                                        treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
                                     ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
                                     list.add(seq);
-                                    openSeriesInViewerPlugin(factory, model, group, list, true, null);
+                                    ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
+                                    openSeriesInViewerPlugin(builder,
+                                        ((TreeModel) model).getParent(seq, model.getTreeModelNodeForNewPlugin()));
                                 }
                                 break;
                             }
@@ -973,4 +973,5 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             return false;
         }
     }
+
 }

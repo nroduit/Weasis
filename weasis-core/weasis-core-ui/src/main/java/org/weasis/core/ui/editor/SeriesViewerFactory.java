@@ -10,8 +10,8 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor;
 
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 
@@ -19,17 +19,17 @@ import org.weasis.core.api.gui.util.GUIEntry;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
-    SeriesViewer createSeriesViewer(Hashtable<String, Object> properties);
+    SeriesViewer createSeriesViewer(Map<String, Object> properties);
 
     boolean canReadMimeType(String mimeType);
 
     boolean isViewerCreatedByThisFactory(SeriesViewer viewer);
 
     int getLevel();
-    
+
     boolean canAddSeries();
 
     boolean canExternalizeSeries();
-    
+
     List<Action> getOpenActions();
 }

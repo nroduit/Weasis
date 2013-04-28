@@ -45,6 +45,7 @@ import org.weasis.core.ui.graphic.EllipseGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.NonEditableGraphic;
+import org.weasis.core.ui.graphic.PointGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.PolylineGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -150,7 +151,7 @@ public class PRManager {
                         for (GraphicObject go : gos) {
                             Graphic graphic;
                             try {
-                                graphic = buildGraphicFromPR(go, rgb, false, width, height, true, inverse);
+                                graphic = buildGraphicFromPR(go, rgb, false, width, height, true, inverse, false);
                                 if (graphic != null) {
                                     layer.addGraphic(graphic);
                                 }
@@ -236,10 +237,23 @@ public class PRManager {
     }
 
     public static Graphic buildGraphicFromPR(GraphicObject go, Color color, boolean labelVisible, double width,
-        double height, boolean canBeEdited, AffineTransform inverse) throws InvalidShapeException {
-        // Graphic Type: POINT, POLYLINE, INTERPOLATED, CIRCLE and ELLIPSE
-        // MATRIX not implemented
-        boolean isDisp = ("DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits()));
+        double height, boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
+        /*
+         * For DICOM SR
+         * 
+         * Graphic Type: POINT, POLYLINE (always closed), MULTIPOINT, CIRCLE and ELLIPSE
+         * 
+         * Coordinates are always pixel coordinates
+         */
+
+        /*
+         * For DICOM PR
+         * 
+         * Graphic Type: POINT, POLYLINE, INTERPOLATED, CIRCLE and ELLIPSE
+         * 
+         * MATRIX not implemented
+         */
+        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits());
 
         String type = go.getGraphicType();
         Graphic shape = null;
@@ -260,6 +274,12 @@ public class PRManager {
                             double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
                             handlePointList.add(new Point2D.Double(x, y));
                         }
+                        if (dcmSR) {
+                            // Always close polyline for DICOM SR
+                            if (!handlePointList.get(0).equals(handlePointList.get(size - 1))) {
+                                handlePointList.add((Point2D) handlePointList.get(0).clone());
+                            }
+                        }
                         // Closed when the first point is the same as the last point
                         if (handlePointList.get(0).equals(handlePointList.get(size - 1))) {
                             shape =
@@ -267,6 +287,7 @@ public class PRManager {
                         } else {
                             shape = new PolylineGraphic(handlePointList, color, 1.0f, labelVisible);
                         }
+
                     } else {
                         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
                         double x = isDisp ? points[0] * width : points[0];
@@ -276,6 +297,10 @@ public class PRManager {
                             x = isDisp ? points[i * 2] * width : points[i * 2];
                             y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
                             path.lineTo(x, y);
+                        }
+                        if (dcmSR) {
+                            // Always close polyline for DICOM SR
+                            path.closePath();
                         }
                         shape = new NonEditableGraphic(path, 1.0f, color, labelVisible, go.getGraphicFilled());
                     }
@@ -332,15 +357,31 @@ public class PRManager {
                 double x = isDisp ? points[0] * width : points[0];
                 double y = isDisp ? points[1] * height : points[1];
                 int pointSize = 3;
-                Ellipse2D ellipse =
-                    new Ellipse2D.Double(x - pointSize / 2.0f, y - pointSize / 2.0f, pointSize, pointSize);
-                shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, true);
+
                 if (canBeEdited) {
-                    // TODO implement
+                    shape = new PointGraphic(new Point2D.Double(x, y), 1.0f, color, labelVisible, true, pointSize);
+                } else {
+                    Ellipse2D ellipse =
+                        new Ellipse2D.Double(x - pointSize / 2.0f, y - pointSize / 2.0f, pointSize, pointSize);
+                    shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, true);
                 }
-                // shape = new PointGraphic(new Point2D.Double(points[0], points[1]), 3.0f, color, labelVisible);
             }
-        } else if (GraphicObject.INTERPOLATED.equalsIgnoreCase(type)) { //$NON-NLS-1$
+        } else if ("MULTIPOINT".equalsIgnoreCase(type)) { //$NON-NLS-1$
+            if (points != null && points.length >= 2) {
+                int size = points.length / 2;
+                int pointSize = 3;
+                Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
+
+                for (int i = 0; i < size; i++) {
+                    double x = isDisp ? points[i * 2] * width : points[i * 2];
+                    double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
+                    Ellipse2D ellipse =
+                        new Ellipse2D.Double(x - pointSize / 2.0f, y - pointSize / 2.0f, pointSize, pointSize);
+                    path.append(ellipse, false);
+                }
+                shape = new NonEditableGraphic(path, 1.0f, color, labelVisible, true);
+            }
+        } else if (GraphicObject.INTERPOLATED.equalsIgnoreCase(type)) {
             if (points != null && points.length >= 2) {
                 // Only non editable graphic (required control point tool)
                 if (points != null) {

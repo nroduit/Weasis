@@ -54,19 +54,19 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
-    private final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
+    private static final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
         TagW.PatientBirthDate };
-    private final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
-    private final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
-        TagW.ReferringPhysicianName, TagW.StudyDescription, TagW.StudyComments };
-    private final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
+    private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
+    private static final TagW[] STUDY = { TagW.StudyInstanceUID, TagW.StudyDate, TagW.StudyID, TagW.AccessionNumber,
+        TagW.StudyDescription, TagW.StudyComments };
+    private static final TagW[] SERIES = { TagW.SeriesInstanceUID, TagW.SeriesDate, TagW.SeriesNumber, TagW.Modality,
         TagW.ReferringPhysicianName, TagW.InstitutionName, TagW.InstitutionalDepartmentName, TagW.BodyPartExamined };
-    private final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID, TagW.InstanceNumber,
-        TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation, TagW.SamplesPerPixel,
-        TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight, TagW.ImageDepth,
-        TagW.BitsAllocated, TagW.BitsStored };
-    private final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
-    private final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
+    private static final TagW[] IMAGE = { TagW.SOPInstanceUID, TagW.ImageType, TagW.TransferSyntaxUID,
+        TagW.InstanceNumber, TagW.ImageComments, TagW.ImageLaterality, TagW.PhotometricInterpretation,
+        TagW.SamplesPerPixel, TagW.PixelRepresentation, TagW.Columns, TagW.Rows, TagW.ImageWidth, TagW.ImageHeight,
+        TagW.ImageDepth, TagW.BitsAllocated, TagW.BitsStored };
+    private static final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
+    private static final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
     private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
 
@@ -167,7 +167,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     public void addSequenceElement(DicomElement element, DefaultListModel listModel) {
-        for (int i = 0, n = element.countItems(); i < n; ++i) {
+        for (int i = 0; i < element.countItems(); i++) {
             DicomObject dcmObj = element.getDicomObject(i);
             String[] val = dcmObj.toString().split("\n"); //$NON-NLS-1$
             for (int j = 0; j < val.length; j++) {
