@@ -144,7 +144,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final HashMap<MediaSeriesGroup, List<SeriesPane>> study2series =
         new HashMap<MediaSeriesGroup, List<SeriesPane>>();
     private final JScrollPane thumnailView = new JScrollPane();
-    private final SeriesSelectionModel selectionList = new SeriesSelectionModel();
+    private final SeriesSelectionModel selectionList;
     private final ArrayList<ExplorerTask> tasks = new ArrayList<ExplorerTask>();
 
     private final DicomModel model;
@@ -307,11 +307,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         setDockableWidth(180);
         dockable.setMaximizable(true);
         this.model = model == null ? new DicomModel() : model;
-        Color panelBckColor = (Color) javax.swing.UIManager.get("Panel.background"); //$NON-NLS-1$
-        if (panelBckColor == null) {
-            javax.swing.UIManager.put("Panel.background", this.getBackground()); //$NON-NLS-1$
-        }
-
+        this.selectionList = new SeriesSelectionModel(patientContainer);
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
         changeToolWindowAnchor(getDockable().getBaseLocation());
@@ -628,7 +624,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             setLayout(new GridBagLayout());
         }
 
-        private List<PatientPane> getPatientPaneList() {
+        List<PatientPane> getPatientPaneList() {
             ArrayList<PatientPane> patientPaneList = new ArrayList<PatientPane>();
             for (Component c : this.getComponents()) {
                 if (c instanceof PatientPane) {
@@ -775,7 +771,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             return false;
         }
 
-        private List<StudyPane> getStudyPaneList() {
+        List<StudyPane> getStudyPaneList() {
             ArrayList<StudyPane> studyPaneList = new ArrayList<StudyPane>();
             for (Component c : this.getComponents()) {
                 if (c instanceof StudyPane) {
@@ -867,7 +863,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             return false;
         }
 
-        private List<SeriesPane> getSeriesPaneList() {
+        List<SeriesPane> getSeriesPaneList() {
             ArrayList<SeriesPane> seriesPaneList = new ArrayList<SeriesPane>();
             for (Component c : this.getComponents()) {
                 if (c instanceof SeriesPane) {
@@ -917,14 +913,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         private final MediaSeriesGroup sequence;
         private final JLabel label;
-        private final boolean selected;
 
         public SeriesPane(MediaSeriesGroup sequence) {
             if (sequence == null) {
                 throw new IllegalArgumentException("Series cannot be null"); //$NON-NLS-1$
             }
+            // To handle selection color with all L&Fs
+            this.setUI(new javax.swing.plaf.PanelUI() {
+            });
+            this.setOpaque(true);
+            this.setBackground(SeriesSelectionModel.BACKROUND);
             this.sequence = sequence;
-            this.selected = false;
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             int thumbnailSize = slider.getValue();
             if (sequence instanceof Series) {
@@ -945,6 +944,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             this.setFocusable(false);
             updateSize(thumbnailSize);
             this.add(label);
+
         }
 
         public void updateSize(int thumbnailSize) {
@@ -1645,10 +1645,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                    if (explorer instanceof DicomExplorer) {
-                        ((DicomExplorer) explorer).getSelectionList().clear();
-                    }
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(series, dicomModel, true, true);
                 }
             }
@@ -1660,9 +1656,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     c.requestFocusInWindow();
                 }
                 DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                final SeriesSelectionModel selList =
-                    explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                        : new SeriesSelectionModel(1);
+                final SeriesSelectionModel selList = getSeriesSelectionModel();
 
                 if (SwingUtilities.isRightMouseButton(mouseevent)) {
                     JPopupMenu popupMenu = new JPopupMenu();
@@ -1670,7 +1664,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     List<SeriesViewerFactory> plugins =
                         UIManager.getViewerFactoryList(new String[] { series.getMimeType() });
                     if (!selList.contains(series)) {
-                        selList.add(series);
+                        selList.setSelectionInterval(series, series);
                     }
                     // Is the selection has multiple mime types
                     boolean multipleMimes = false;
@@ -1701,7 +1695,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                selList.clear();
                                 ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
                                     true);
                             }
@@ -1716,7 +1709,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    selList.clear();
                                     ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
                                         true, false);
                                 }
@@ -1749,7 +1741,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                                             @Override
                                             public void actionPerformed(ActionEvent e) {
-                                                selList.clear();
                                                 ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
                                                     dicomModel, true, true, b);
                                             }
@@ -1807,6 +1798,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                                 }
                                             }
                                         }
+                                        selList.addSelectionInterval(series, series);
                                     }
                                 }
                             });
@@ -1834,6 +1826,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                                 }
                                             }
                                         }
+                                        selList.addSelectionInterval(series, series);
                                     }
                                 }
                             });
@@ -1977,51 +1970,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
 
                 } else {
-                    if (selList.contains(series)) {
-                        if (mouseevent.isControlDown()) {
-                            selList.remove(series);
-                        } else {
-                            selList.clear();
-                            selList.add(series);
-                        }
-                    } else {
-                        if (mouseevent.isControlDown() || selList.size() < 1) {
-                            selList.add(series);
-                        } else if (mouseevent.isShiftDown()) {
-                            if (explorer instanceof DicomExplorer) {
-                                ArrayList<Series> seriesList = new ArrayList<Series>();
-                                DicomExplorer exp = (DicomExplorer) explorer;
-                                for (PatientPane p : exp.patientContainer.getPatientPaneList()) {
-                                    for (StudyPane studyPane : p.getStudyPaneList()) {
-                                        for (SeriesPane series : studyPane.getSeriesPaneList()) {
-                                            if (series.getSequence() instanceof Series) {
-                                                seriesList.add((Series) series.getSequence());
-                                            }
-                                        }
-                                    }
-                                }
-                                int lastIndex = seriesList.indexOf(selList.get(selList.size() - 1));
-                                int newIndex = seriesList.indexOf(series);
-                                if (lastIndex >= 0 && newIndex >= 0) {
-                                    if (lastIndex > newIndex) {
-                                        int temp = lastIndex;
-                                        lastIndex = newIndex;
-                                        newIndex = temp;
-                                    }
-                                    for (int i = lastIndex; i <= newIndex; i++) {
-                                        selList.add(seriesList.get(i));
-                                    }
-                                } else {
-                                    selList.add(series);
-                                }
-                            } else {
-                                selList.add(series);
-                            }
-                        } else {
-                            selList.clear();
-                            selList.add(series);
-                        }
-                    }
+                    selList.adjustSelection(mouseevent, series);
                 }
             }
         };
@@ -2032,19 +1981,42 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
-                    final SeriesSelectionModel selList =
-                        explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
-                            : new SeriesSelectionModel(1);
+                int code = e.getKeyCode();
+                if (code == KeyEvent.VK_ENTER) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
                     if (selList.size() == 0) {
                         selList.add(series);
                     }
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
                         true, true);
+                    e.consume();
+                } else if (code == KeyEvent.VK_DOWN) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
+                    selList.adjustSelection(e, selList.getNextElement(series));
+                } else if (code == KeyEvent.VK_UP) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
+                    selList.adjustSelection(e, selList.getPreviousElement(series));
+                } else if (e.isControlDown() && code == KeyEvent.VK_A) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
+                    selList.setSelectionInterval(selList.getFirstElement(), selList.getLastElement());
+                } else if (code == KeyEvent.VK_PAGE_DOWN || code == KeyEvent.VK_END) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
+                    Series val = selList.getLastElement();
+                    selList.setSelectionInterval(val, val);
+                } else if (code == KeyEvent.VK_PAGE_UP || code == KeyEvent.VK_HOME) {
+                    SeriesSelectionModel selList = getSeriesSelectionModel();
+                    Series val = selList.getFirstElement();
+                    selList.setSelectionInterval(val, val);
                 }
             }
+
         };
+    }
+
+    static SeriesSelectionModel getSeriesSelectionModel() {
+        DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+        return explorer instanceof DicomExplorer ? ((DicomExplorer) explorer).getSelectionList()
+            : new SeriesSelectionModel(null);
     }
 
     @Override

@@ -1397,7 +1397,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 }
                 pixelDataPos = dis.getStreamPosition();
                 pixelDataLen = dis.valueLength();
+
                 compressed = pixelDataLen == -1;
+                if (!compressed && tsuid.startsWith("1.2.840.10008.1.2.4")) {
+                    // Corrupted image where missing the encapsulated part for the identification the compressed dataset
+                    compressed = true;
+                }
                 if (compressed) {
                     ImageReaderFactory f = ImageReaderFactory.getInstance();
                     LOGGER.debug("Transfer syntax for image is " + tsuid + " with image reader class " + f.getClass());
