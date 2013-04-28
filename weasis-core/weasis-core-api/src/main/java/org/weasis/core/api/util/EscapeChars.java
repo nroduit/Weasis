@@ -175,6 +175,9 @@ public final class EscapeChars {
      * five</em> of the above characters.
      */
     public static String forHTML(String aText) {
+        if (aText == null) {
+            return "";
+        }
         final StringBuilder result = new StringBuilder();
         final StringCharacterIterator iterator = new StringCharacterIterator(aText);
         char character = iterator.current();

@@ -723,7 +723,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 // Ensure to load image before calling the default preset that (requires pixel min and max)
                 img.getImage();
             }
-            boolean pixelPadding = JMVUtils.getNULLtoTrue((Boolean) getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+            boolean pixelPadding = JMVUtils.getNULLtoTrue(getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
             actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
             actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
         }

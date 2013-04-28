@@ -11,7 +11,6 @@ import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.iod.module.general.SeriesAndInstanceReference;
 import org.dcm4che2.iod.module.macro.ImageSOPInstanceReference;
-import org.dcm4che2.iod.module.macro.SOPInstanceReference;
 import org.dcm4che2.iod.module.pr.DisplayedAreaModule;
 import org.dcm4che2.iod.module.pr.SpatialTransformationModule;
 import org.weasis.core.api.gui.util.ActionW;
@@ -66,28 +65,6 @@ public class PresentationStateReader {
             return new SeriesAndInstanceReference(dcmobj);
         }
         return null;
-    }
-
-    public boolean isPresentationStateAppicable(DicomImageElement img) {
-        if (dcmobj != null && img != null) {
-            SeriesAndInstanceReference refs = new SeriesAndInstanceReference(dcmobj);
-            String suid = refs.getSeriesInstanceUID();
-            if (suid != null && suid.equals(img.getTagValue(TagW.SeriesInstanceUID))) {
-                SOPInstanceReference[] sops = refs.getReferencedInstances();
-                if (sops == null) {
-                    return true;
-                }
-                String imgSop = (String) img.getTagValue(TagW.SOPInstanceUID);
-                if (imgSop != null) {
-                    for (SOPInstanceReference sop : sops) {
-                        if (imgSop.equals(sop.getReferencedSOPInstanceUID())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     private boolean isModuleAppicable(ImageSOPInstanceReference[] sops, DicomImageElement img) {

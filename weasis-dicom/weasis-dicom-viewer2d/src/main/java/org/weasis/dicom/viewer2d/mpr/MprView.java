@@ -100,6 +100,9 @@ public class MprView extends View2d {
                                 Vector3d vn = v.getImage().getSliceGeometry().getNormal();
                                 vn.absolute();
                                 double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                                // if (MprView.Type.SAGITTAL == ((MprView) v).type) {
+                                // location = -location;
+                                // }
                                 DicomImageElement img =
                                     v.getSeries().getNearestImage(location, 0,
                                         (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),

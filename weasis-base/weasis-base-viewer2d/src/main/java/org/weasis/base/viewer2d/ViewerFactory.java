@@ -11,9 +11,9 @@
 package org.weasis.base.viewer2d;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -55,7 +55,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Hashtable<String, Object> properties) {
+    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -141,8 +141,8 @@ public class ViewerFactory implements SeriesViewerFactory {
         actions.add(OpenImageAction.getInstance());
         return actions;
     }
-    
-        @Override
+
+    @Override
     public boolean canAddSeries() {
         return true;
     }

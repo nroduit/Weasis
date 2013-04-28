@@ -134,7 +134,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                             views = container.getImagePanels();
                         } else {
                             views = new ArrayList<DefaultView2d<ImageElement>>(1);
-                            views.add(container.getSelectedImagePane());
+                            DefaultView2d<ImageElement> view = container.getSelectedImagePane();
+                            if (view != null) {
+                                views.add(view);
+                            }
                         }
                     }
                     if (views != null) {

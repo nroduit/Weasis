@@ -71,13 +71,13 @@ public class JMVUtils {
 
     public static final Color lightGray = new Color(237, 237, 237);
 
-    public static boolean getNULLtoFalse(Boolean val) {
+    public static boolean getNULLtoFalse(Object val) {
         return Boolean.TRUE.equals(val);
     }
 
-    public static boolean getNULLtoTrue(Boolean val) {
+    public static boolean getNULLtoTrue(Object val) {
         if (val instanceof Boolean) {
-            return val.booleanValue();
+            return ((Boolean) val).booleanValue();
         }
         return true;
     }
