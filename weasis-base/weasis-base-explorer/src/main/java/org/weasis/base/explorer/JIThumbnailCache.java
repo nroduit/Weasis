@@ -36,7 +36,7 @@ public final class JIThumbnailCache {
 
         this.cachedThumbnails = Collections.synchronizedMap(new LinkedHashMap<String, ThumbnailIcon>(80) {
 
-            private static final int MAX_ENTRIES = 30;
+            private static final int MAX_ENTRIES = 50;
 
             @Override
             protected boolean removeEldestEntry(final Map.Entry eldest) {
@@ -90,7 +90,7 @@ public final class JIThumbnailCache {
                     }
                     String cfile = diskObject.getFile().getAbsolutePath();
                     String tiled_File = thumbnailList.getThumbnailListModel().getFileInCache(cfile);
-                    if (tiled_File != null || "image/tiff".equals(mime) || "image/x-tiff".equals(mime)) {
+                    if (tiled_File != null) {
                         try {
                             ImageDecoder dec =
                                 ImageCodec.createImageDecoder("tiff", new FileSeekableStream(tiled_File == null
@@ -133,7 +133,10 @@ public final class JIThumbnailCache {
 
                             if (ImageFiler.writeTIFF(imgCacheFile, img, true, true, false)) {
                                 thumbnailList.getThumbnailListModel().putFileInCache(cfile, imgCacheFile.getName());
+                            } else {
+                                // TODO make it invalid
                             }
+                            return;
                         }
                     }
 

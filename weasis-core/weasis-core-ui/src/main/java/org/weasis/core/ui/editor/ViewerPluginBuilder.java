@@ -38,6 +38,7 @@ import org.weasis.core.ui.docking.UIManager;
 public class ViewerPluginBuilder {
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer";
     public static final String BEST_DEF_LAYOUT = "best.def.layout";
+    public static final String OPEN_IN_SELECTED_VIEW = "add.in.selected.view"; // For non DICOM images
     public static final String SCREEN_BOUND = "screen.bound";
     public static final String KOS = "dicom.ko";
     public static final String PR = "dicom.pr";

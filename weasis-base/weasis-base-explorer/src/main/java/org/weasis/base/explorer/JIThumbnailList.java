@@ -13,6 +13,7 @@ import java.io.File;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JList;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
@@ -40,7 +42,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-public final class JIThumbnailList extends JList implements JIObservable {
+public final class JIThumbnailList extends JList<MediaElement> implements JIObservable {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
@@ -183,25 +185,29 @@ public final class JIThumbnailList extends JList implements JIObservable {
         Object object = getSelectedValue();
         if (object instanceof MediaElement) {
             MediaElement mediaElement = (MediaElement) object;
-            openSelection(new MediaElement[] { mediaElement }, true, true);
+            openSelection(new MediaElement[] { mediaElement }, true, true, false);
         }
     }
 
-    public void openSelection(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
+    public void openSelection(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
+        boolean inSelView) {
         if (medias != null) {
+            boolean oneFile = medias.length == 1;
+            String sUID = null;
+            String gUID = null;
             ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
             for (MediaElement mediaElement : medias) {
                 String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
                 File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
                 MediaReader reader = ViewerPluginBuilder.getMedia(file);
                 if (reader != null && file != null) {
-                    String sUID;
-                    String gUID;
+
                     TagW tname;
                     String tvalue;
 
                     Codec codec = reader.getCodec();
-                    if (codec != null && codec.isMimeTypeSupported("application/dicom")) {
+                    if ("application/dicom".equals(mediaElement.getMimeType()) && codec != null
+                        && codec.isMimeTypeSupported("application/dicom")) {
                         if (reader.getMediaElement() == null) {
                             // DICOM is not readable
                             return;
@@ -211,10 +217,12 @@ public final class JIThumbnailList extends JList implements JIObservable {
                         tname = TagW.PatientName;
                         tvalue = (String) reader.getTagValue(TagW.PatientName);
                     } else {
-                        sUID = mediaElement.getFile().getAbsolutePath();
+                        sUID =
+                            oneFile ? mediaElement.getFile().getAbsolutePath() : sUID == null ? UUID.randomUUID()
+                                .toString() : sUID;
                         gUID = sUID;
                         tname = TagW.FileName;
-                        tvalue = mediaElement.getFile().getName();
+                        tvalue = oneFile ? mediaElement.getFile().getName() : sUID;
                     }
 
                     MediaSeries s =
@@ -225,14 +233,41 @@ public final class JIThumbnailList extends JList implements JIObservable {
                 }
             }
             if (list.size() > 0) {
-                ViewerPluginBuilder.openSequenceInDefaultPlugin(list, ViewerPluginBuilder.DefaultDataModel,
-                    compareEntryToBuildNewViewer, bestDefaultLayout);
+                Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
+                props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
+                props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
+                if (inSelView) {
+                    props.put(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW, true);
+                }
+
+                ArrayList<String> mimes = new ArrayList<String>();
+                for (MediaSeries s : list) {
+                    String mime = s.getMimeType();
+                    if (mime != null && !mimes.contains(mime)) {
+                        mimes.add(mime);
+                    }
+                }
+                for (String mime : mimes) {
+                    SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+                    if (plugin != null) {
+                        ArrayList<MediaSeries> seriesList = new ArrayList<MediaSeries>();
+                        for (MediaSeries s : list) {
+                            if (mime.equals(s.getMimeType())) {
+                                seriesList.add(s);
+                            }
+                        }
+                        ViewerPluginBuilder builder =
+                            new ViewerPluginBuilder(plugin, list, ViewerPluginBuilder.DefaultDataModel, props);
+                        ViewerPluginBuilder.openSequenceInPlugin(builder);
+                    }
+                }
             }
         }
     }
 
     public void openGroup(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
-        boolean modeLayout) {
+        boolean modeLayout, boolean inSelView) {
         if (medias != null) {
             String groupUID = null;
 
@@ -247,7 +282,7 @@ public final class JIThumbnailList extends JList implements JIObservable {
                     if (plugin != null) {
                         List<MediaSeries> list = plugins.get(plugin);
                         if (list == null) {
-                            list = new ArrayList<MediaSeries>(modeLayout ? 1 : 10);
+                            list = new ArrayList<MediaSeries>(modeLayout ? 10 : 1);
                             plugins.put(plugin, list);
                         }
 
@@ -287,17 +322,25 @@ public final class JIThumbnailList extends JList implements JIObservable {
                                     }
                                 }
                             }
-
                         }
                     }
                 }
             }
 
+            Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+            props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
+            props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
+            props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
+            if (inSelView) {
+                props.put(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW, true);
+            }
+
             for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries>>> iterator = plugins.entrySet().iterator(); iterator
                 .hasNext();) {
                 Entry<SeriesViewerFactory, List<MediaSeries>> item = iterator.next();
-                ViewerPluginBuilder.openSequenceInPlugin(item.getKey(), item.getValue(),
-                    ViewerPluginBuilder.DefaultDataModel, compareEntryToBuildNewViewer, bestDefaultLayout);
+                ViewerPluginBuilder builder =
+                    new ViewerPluginBuilder(item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, props);
+                ViewerPluginBuilder.openSequenceInPlugin(builder);
             }
         }
     }
@@ -414,7 +457,7 @@ public final class JIThumbnailList extends JList implements JIObservable {
 
     protected void listValueChanged(final ListSelectionEvent e) {
         if (this.lastSelectedDiskObject == null) {
-            this.lastSelectedDiskObject = (MediaElement) getModel().getElementAt(e.getLastIndex());
+            this.lastSelectedDiskObject = getModel().getElementAt(e.getLastIndex());
         }
         DefaultExplorer.getTreeContext().setSelectedDiskObjects(this.getSelectedValues(), this.lastSelectedDiskObject);
 
@@ -428,56 +471,106 @@ public final class JIThumbnailList extends JList implements JIObservable {
     public JPopupMenu buidContexMenu(final MouseEvent e) {
 
         try {
-            final MediaElement[] medias = getSelectedValues();
 
-            if (medias == null || medias.length == 0) {
+            MediaElement[] selMedias = getSelectedValues();
+            if (selMedias == null || selMedias.length == 0) {
                 return null;
             } else {
+                int index = locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    MediaElement selectedMedia = getModel().getElementAt(index);
+                    if (selectedMedia != null) {
+                        boolean isSelected = false;
+                        for (MediaElement m : selMedias) {
+                            if (m == selectedMedia) {
+                                isSelected = true;
+                                break;
+                            }
+                        }
+                        if (!isSelected) {
+                            selMedias = new MediaElement[] { selectedMedia };
+                            setSelectedValue(selectedMedia, false);
+                        }
+                    }
+                }
+                final MediaElement[] medias = selMedias;
+
                 JPopupMenu popupMenu = new JPopupMenu();
                 TitleMenuItem itemTitle = new TitleMenuItem("Selection Menu", popupMenu.getInsets());
                 popupMenu.add(itemTitle);
                 popupMenu.addSeparator();
-                JMenuItem menuItem = new JMenuItem(new AbstractAction("Open") {
 
-                    @Override
-                    public void actionPerformed(final ActionEvent e) {
-                        openSelection(medias, true, true);
-                    }
-                });
-
-                popupMenu.add(menuItem);
-
-                menuItem = new JMenuItem(new AbstractAction("Open in a new viewer") {
-
-                    @Override
-                    public void actionPerformed(final ActionEvent e) {
-                        openSelection(medias, false, true);
-                    }
-                });
-
-                popupMenu.add(menuItem);
-
-                if (medias.length > 1) {
-                    popupMenu.addSeparator();
-                    menuItem = new JMenuItem(new AbstractAction("Open in Series") {
+                if (medias.length == 1) {
+                    JMenuItem menuItem = new JMenuItem(new AbstractAction("Open") {
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, true, true, false);
+                            openSelection(medias, true, true, false);
                         }
-
                     });
                     popupMenu.add(menuItem);
 
-                    menuItem = new JMenuItem(new AbstractAction("Open in Layout") {
+                    menuItem = new JMenuItem(new AbstractAction("Open in a new window") {
 
                         @Override
                         public void actionPerformed(final ActionEvent e) {
-                            openGroup(medias, true, false, true);
+                            openSelection(medias, false, true, false);
+                        }
+                    });
+
+                    popupMenu.add(menuItem);
+
+                    menuItem = new JMenuItem(new AbstractAction("Add to the selected Window") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openSelection(medias, true, false, true);
+                        }
+                    });
+                    popupMenu.add(menuItem);
+                } else {
+                    JMenu menu = new JMenu("Open in a new window");
+                    JMenuItem menuItem = new JMenuItem(new AbstractAction("in stack mode") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, false, true, false, false);
                         }
 
                     });
-                    popupMenu.add(menuItem);
+                    menu.add(menuItem);
+                    menuItem = new JMenuItem(new AbstractAction("in layout mode") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, false, true, true, false);
+                        }
+
+                    });
+                    menu.add(menuItem);
+                    popupMenu.add(menu);
+
+                    menu = new JMenu("Add to the selected Window");
+                    menuItem = new JMenuItem(new AbstractAction("in stack mode") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, true, false, false, true);
+                        }
+
+                    });
+                    menu.add(menuItem);
+                    menuItem = new JMenuItem(new AbstractAction("in layout mode") {
+
+                        @Override
+                        public void actionPerformed(final ActionEvent e) {
+                            openGroup(medias, true, false, true, true);
+                        }
+
+                    });
+                    menu.add(menuItem);
+                    popupMenu.add(menu);
+
                 }
                 return popupMenu;
 

@@ -277,7 +277,7 @@ public class PRManager {
                         if (dcmSR) {
                             // Always close polyline for DICOM SR
                             if (!handlePointList.get(0).equals(handlePointList.get(size - 1))) {
-                                handlePointList.add((Point2D) handlePointList.get(0).clone());
+                                handlePointList.add((Point2D.Double) handlePointList.get(0).clone());
                             }
                         }
                         // Closed when the first point is the same as the last point

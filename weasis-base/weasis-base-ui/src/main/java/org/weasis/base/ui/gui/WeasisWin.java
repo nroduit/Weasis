@@ -309,9 +309,17 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
+                            boolean inSelView =
+                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW))
+                                    && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
+
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
+                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) {
+                                    // Change the group attribution. DO NOT use it with DICOM.
+                                    group = selectedPlugin.getGroupID();
+                                }
                                 openSeriesInViewerPlugin(builder, group);
                             } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
@@ -320,7 +328,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     map.entrySet().iterator(); iterator.hasNext();) {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
-                                    List<MediaSeries> seriesList = entry.getValue();
+
+                                    if (inSelView) {
+                                        List<MediaSeries> seriesList = entry.getValue();
+                                        if (seriesList.size() > 0) {
+                                            // Change the group attribution. DO NOT use it with DICOM.
+                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) {
+                                                group = selectedPlugin.getGroupID();
+                                            }
+                                        }
+                                    }
                                     openSeriesInViewerPlugin(builder, group);
                                 }
                             }

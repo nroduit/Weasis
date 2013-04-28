@@ -3,6 +3,7 @@ package org.weasis.base.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -93,8 +94,15 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         tree.setDragEnabled(false);
 
         // gotoLastDirectory();
+        JScrollPane treePane = new JScrollPane(tree);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treePane, jilist);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(200);
+        // Provide minimum sizes for the two components in the split pane
+        Dimension minimumSize = new Dimension(150, 150);
+        treePane.setMinimumSize(minimumSize);
+        treePane.setMinimumSize(minimumSize);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(tree), jilist);
         // jRootPanel.setPreferredSize(new Dimension(500, 700));
         jRootPanel.setLayout(new BorderLayout());
         jRootPanel.add(splitPane, BorderLayout.CENTER);
