@@ -91,13 +91,6 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         this.dockable.setCloseable(true);
         this.dockable.setMinimizable(false);
         this.dockable.setExternalizable(false);
-        // LocationHint hint = new LocationHint(LocationHint.DOCKABLE, LocationHint.RIGHT_OF_ALL);
-        // DefaultDockActionSource source = new DefaultDockActionSource(hint);
-        // source.add(setupDropDownMenu(dockable));
-        // source.addSeparator();
-        // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
-        // this.dockable.setActionOffers(source);
-
     }
 
     @Override

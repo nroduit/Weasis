@@ -117,39 +117,45 @@ public abstract class PluginTool extends JPanel implements DockableTool {
             @Override
             public void run() {
                 if (!dockable.isVisible()) {
+                    UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                     Component component = getToolComponent();
-                    dockable.add(component);
-                    dockable.setFocusComponent(component);
+                    if (dockable.getFocusComponent() == component) {
+                        UIManager.DOCKING_CONTROL.addDockable(dockable);
+                        dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
+                    } else {
+                        dockable.add(component);
+                        dockable.setFocusComponent(component);
 
-                    UIManager.DOCKING_CONTROL.addDockable(dockable);
-                    // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
-                    POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
-                    ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
-                    CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
+                        UIManager.DOCKING_CONTROL.addDockable(dockable);
+                        // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
+                        POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
+                        ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
+                        CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
 
-                    CLocation minimizeLocation =
-                        pos == POSITION.EAST ? base.minimalEast() : pos == POSITION.WEST ? base.minimalWest()
-                            : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
-                    dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
+                        CLocation minimizeLocation =
+                            pos == POSITION.EAST ? base.minimalEast() : pos == POSITION.WEST ? base.minimalWest()
+                                : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
+                        dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
 
-                    double w = UIManager.BASE_AREA.getWidth();
-                    if (w > 0) {
-                        double ratio = dockableWidth / w;
-                        if (ratio > 0.9) {
-                            ratio = 0.9;
+                        double w = UIManager.BASE_AREA.getWidth();
+                        if (w > 0) {
+                            double ratio = dockableWidth / w;
+                            if (ratio > 0.9) {
+                                ratio = 0.9;
+                            }
+                            // Set default size and position for NORMALIZED mode
+                            CLocation normalizedLocation =
+                                pos == POSITION.EAST ? base.normalEast(ratio) : pos == POSITION.WEST ? base
+                                    .normalWest(ratio) : pos == POSITION.NORTH ? base.normalNorth(ratio) : base
+                                    .normalSouth(ratio);
+                            dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
                         }
-                        // Set default size and position for NORMALIZED mode
-                        CLocation normalizedLocation =
-                            pos == POSITION.EAST ? base.normalEast(ratio) : pos == POSITION.WEST ? base
-                                .normalWest(ratio) : pos == POSITION.NORTH ? base.normalNorth(ratio) : base
-                                .normalSouth(ratio);
-                        dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
+                        // Set default size for FlapLayout
+                        dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
+                        dockable.setExtendedMode(mode);
                     }
-                    // Set default size for FlapLayout
-                    dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
-                    dockable.setExtendedMode(mode);
-
                     dockable.setVisible(true);
+                    UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                 }
             }
         });
@@ -161,7 +167,9 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
             @Override
             public void run() {
+                UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                 UIManager.DOCKING_CONTROL.removeDockable(dockable);
+                UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
             }
         });
     }

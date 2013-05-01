@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JViewport;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
@@ -56,6 +57,7 @@ public class ImageTool extends PluginTool {
     public static final Font TITLE_FONT = FontTools.getFont12Bold();
     public static final Color TITLE_COLOR = Color.GRAY;
 
+    private final JScrollPane rootPane = new JScrollPane();
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public ImageTool(String pluginName, Icon icon) {
@@ -82,7 +84,15 @@ public class ImageTool extends PluginTool {
 
     @Override
     public Component getToolComponent() {
-        return new JScrollPane(this);
+        JViewport viewPort = rootPane.getViewport();
+        if (viewPort == null) {
+            viewPort = new JViewport();
+            rootPane.setViewport(viewPort);
+        }
+        if (viewPort.getView() != this) {
+            viewPort.setView(this);
+        }
+        return rootPane;
     }
 
     public JPanel getResetPanel() {

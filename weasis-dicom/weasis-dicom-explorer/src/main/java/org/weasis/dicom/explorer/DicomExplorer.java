@@ -17,15 +17,11 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -1688,9 +1684,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         seriesList = new ArrayList<MediaSeries>(selList);
                     }
                     for (final SeriesViewerFactory viewerFactory : plugins) {
-                        JMenuItem item4 =
-                            new JMenuItem(
-                                Messages.getString("DicomExplorer.open_series") + " " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$ //$NON-NLS-2$
+                        JMenu menuFactory = new JMenu(viewerFactory.getUIName());
+                        menuFactory.setIcon(viewerFactory.getIcon());
+
+                        JMenuItem item4 = new JMenuItem("Open");
                         item4.addActionListener(new ActionListener() {
 
                             @Override
@@ -1699,12 +1696,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                     true);
                             }
                         });
-                        popupMenu.add(item4);
+                        menuFactory.add(item4);
+
+                        item4 = new JMenuItem("Open in new window");
+                        item4.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false,
+                                    true);
+                            }
+                        });
+                        menuFactory.add(item4);
+
                         if (viewerFactory.canAddSeries()) {
-                            item4 =
-                                new JMenuItem(
-                                    Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$
-                                    viewerFactory.getIcon());
+                            item4 = new JMenuItem("Add");
                             item4.addActionListener(new ActionListener() {
 
                                 @Override
@@ -1713,44 +1719,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                         true, false);
                                 }
                             });
-                            popupMenu.add(item4);
+                            menuFactory.add(item4);
                         }
-                        if (viewerFactory.canExternalizeSeries()) {
 
-                            Toolkit toolkit = Toolkit.getDefaultToolkit();
-                            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                            GraphicsDevice[] gd = ge.getScreenDevices();
-                            if (gd.length > 1) {
-                                Rectangle bound =
-                                    WinUtil.getClosedScreenBound(WinUtil.getParentFrame((Component) explorer)
-                                        .getBounds());
+                        popupMenu.add(menuFactory);
 
-                                for (int i = 0; i < gd.length; i++) {
-                                    GraphicsConfiguration config = gd[i].getDefaultConfiguration();
-                                    final Rectangle b = config.getBounds();
-                                    if (!b.contains(bound)) {
-                                        Insets inset = toolkit.getScreenInsets(config);
-                                        b.x += inset.left;
-                                        b.y += inset.top;
-                                        b.width -= (inset.left + inset.right);
-                                        b.height -= (inset.top + inset.bottom);
-                                        item4 =
-                                            new JMenuItem("Open selected series in new tab " + gd[i].getIDstring(),
-                                                viewerFactory.getIcon());
-                                        item4.addActionListener(new ActionListener() {
-
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
-                                                    dicomModel, true, true, b);
-                                            }
-                                        });
-                                        popupMenu.add(item4);
-                                    }
-                                }
-                            }
-
-                        }
                         if (viewerFactory instanceof MimeSystemAppFactory) {
                             final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
                             item5.addActionListener(new ActionListener() {

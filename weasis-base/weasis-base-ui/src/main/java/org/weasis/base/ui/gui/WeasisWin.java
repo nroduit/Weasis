@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
@@ -100,6 +101,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
+import bibliothek.gui.dock.util.DockUtilities;
 import bibliothek.gui.dock.util.Priority;
 import bibliothek.gui.dock.util.color.ColorManager;
 import bibliothek.gui.dock.util.laf.LookAndFeelColors;
@@ -132,7 +134,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         @Override
         public void focusLost(CDockable dockable) {
-            // TODO Auto-generated method stub
         }
     };
 
@@ -205,6 +206,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // initToolWindowManager();
         this.setGlassPane(AbstractProperties.glassPane);
 
+        // Do not disable check when debugging
+        if (System.getProperty("maven.localRepository") == null) {
+            DockUtilities.disableCheckLayoutLocked();
+        }
         CControl control = UIManager.DOCKING_CONTROL;
         control.setRootWindow(new DirectWindowProvider(this));
         destroyOnClose(control);
@@ -426,6 +431,40 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         } else if (seriesViewer instanceof ViewerPlugin) {
             ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
             String title;
+
+            if (factory.canExternalizeSeries()) {
+                Toolkit toolkit = Toolkit.getDefaultToolkit();
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                GraphicsDevice[] gd = ge.getScreenDevices();
+                if (gd.length > 1) {
+                    viewer.getDockable().setExternalizable(true);
+                    Rectangle bound = WinUtil.getClosedScreenBound(WinUtil.getParentFrame(this).getBounds());
+                    // LocationHint hint =
+                    // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
+                    // DefaultDockActionSource source = new DefaultDockActionSource(hint);
+                    // source.add(setupDropDownMenu(viewer.getDockable()));
+                    // source.addSeparator();
+
+                    for (int i = 0; i < gd.length; i++) {
+                        GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+                        final Rectangle b = config.getBounds();
+                        if (!b.contains(bound)) {
+                            // Insets inset = toolkit.getScreenInsets(config);
+                            // b.x += inset.left;
+                            // b.y += inset.top;
+                            // b.width -= (inset.left + inset.right);
+                            // b.height -= (inset.top + inset.bottom);
+
+                            viewer.getDockable().setDefaultLocation(ExtendedMode.EXTERNALIZED,
+                                CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
+
+                            // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
+                            break;
+                        }
+                    }
+                }
+
+            }
             if (group == null && model instanceof TreeModel && seriesList.size() > 0
                 && model.getTreeModelNodeForNewPlugin() != null) {
                 TreeModel treeModel = (TreeModel) model;
@@ -465,7 +504,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
-        if (screenBound != null) {
+        if (plugin != null && screenBound != null) {
             ViewerPlugin oldWin = null;
             synchronized (UIManager.VIEWER_PLUGINS) {
                 Dialog old = null;
@@ -495,7 +534,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     @Override
                     public void run() {
                         if (dock.isVisible()) {
+                            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                             dock.setExtendedMode(ExtendedMode.MAXIMIZED);
+                            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                         }
                     }
                 });

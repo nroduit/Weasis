@@ -37,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
+import javax.swing.JViewport;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -95,6 +96,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
     protected final ImageViewerEventManager eventManager;
+    private final JScrollPane rootPane;
     private JPanel tableContainer;
     private JTable jtable;
 
@@ -103,6 +105,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
     public MeasureTool(ImageViewerEventManager eventManager) {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.TYPE.tool);
         this.eventManager = eventManager;
+        this.rootPane = new JScrollPane();
         dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
         setDockableWidth(DockableWidth);
         jbInit();
@@ -349,7 +352,15 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
 
     @Override
     public Component getToolComponent() {
-        return new JScrollPane(this);
+        JViewport viewPort = rootPane.getViewport();
+        if (viewPort == null) {
+            viewPort = new JViewport();
+            rootPane.setViewport(viewPort);
+        }
+        if (viewPort.getView() != this) {
+            viewPort.setView(this);
+        }
+        return rootPane;
     }
 
     @Override
