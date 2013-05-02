@@ -38,6 +38,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
 
     private Series anchorSelection;
     private Series leadSelection;
+    private boolean openningSeries = false;
 
     public SeriesSelectionModel(PatientContainerPane patientContainer) {
         this.patientContainer = patientContainer;
@@ -341,4 +342,13 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         }
         return null;
     }
+
+    public boolean isOpenningSeries() {
+        return openningSeries;
+    }
+
+    public void setOpenningSeries(boolean openningSeries) {
+        this.openningSeries = openningSeries;
+    }
+
 }

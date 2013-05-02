@@ -1373,7 +1373,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             if (pane != null) {
                 MediaSeries s = pane.getSeries();
                 if (s != null) {
-                    if (patientContainer.isSeriesVisible(s)) {
+                    if (!getSelectionList().isOpenningSeries() && patientContainer.isSeriesVisible(s)) {
                         SeriesPane p = getSeriesPane(s);
                         if (p != null) {
                             JViewport vp = thumnailView.getViewport();
@@ -1637,7 +1637,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
+                    final SeriesSelectionModel selList = getSeriesSelectionModel();
+                    selList.setOpenningSeries(true);
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(series, dicomModel, true, true);
+                    selList.setOpenningSeries(false);
                 }
             }
 
@@ -1687,8 +1690,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                selList.setOpenningSeries(true);
                                 ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
                                     true);
+                                selList.setOpenningSeries(false);
                             }
                         });
                         popupMenu.add(item4);
@@ -1701,8 +1706,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                selList.setOpenningSeries(true);
                                 ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
                                     false);
+                                selList.setOpenningSeries(false);
                             }
                         });
                         popupMenu.add(item4);
@@ -1923,7 +1930,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         }
                     }
                     popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
-
                 } else {
                     selList.adjustSelection(mouseevent, series);
                 }
@@ -1942,8 +1948,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (selList.size() == 0) {
                         selList.add(series);
                     }
+                    selList.setOpenningSeries(true);
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
                         true, true);
+                    selList.setOpenningSeries(false);
                     e.consume();
                 } else if (code == KeyEvent.VK_DOWN) {
                     SeriesSelectionModel selList = getSeriesSelectionModel();
