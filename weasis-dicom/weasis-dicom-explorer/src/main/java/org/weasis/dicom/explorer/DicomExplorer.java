@@ -56,6 +56,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -621,9 +622,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         public PatientContainerPane() {
             modelPatient.removeAllElements();
-            // root of the focus cycle of the patient's thumbnails
-            this.setFocusCycleRoot(true);
-            this.setFocusTraversalPolicyProvider(true);
             // do not use addElement
             // modelPatient.insertElementAt(ALL_PATIENTS, 0);
             setLayout(new GridBagLayout());
@@ -1952,6 +1950,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
                         true, true);
                     selList.setOpenningSeries(false);
+                    if (e.getSource() instanceof JComponent) {
+                        ((JComponent) e.getSource()).requestFocusInWindow();
+                    }
                     e.consume();
                 } else if (code == KeyEvent.VK_DOWN) {
                     SeriesSelectionModel selList = getSeriesSelectionModel();

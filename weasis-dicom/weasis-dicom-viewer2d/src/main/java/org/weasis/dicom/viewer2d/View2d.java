@@ -118,6 +118,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.SeriesSelectionModel;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
@@ -658,7 +659,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 }
                 return dropDicomFiles(files, model);
             }
-
+            SeriesSelectionModel selList = ((DicomExplorer) dicomView).getSelectionList();
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
@@ -667,6 +668,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     return false;
                 }
                 if (seq instanceof DicomSeries) {
+                    selList.setOpenningSeries(true);
+
                     MediaSeriesGroup p1 = model.getParent(seq, DicomModel.patient);
                     MediaSeriesGroup p2 = null;
                     ViewerPlugin openPlugin = null;
@@ -693,11 +696,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             ViewerPluginBuilder.openSequenceInPlugin(plugin, seq, model, true, true);
 
                         }
+                        selList.setOpenningSeries(false);
                         return false;
                     } else if (openPlugin != null) {
                         openPlugin.setSelectedAndGetFocus();
                         openPlugin.addSeries(seq);
                         openPlugin.setSelected(true);
+                        selList.setOpenningSeries(false);
                         return false;
                     }
                 } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
@@ -708,13 +713,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 return false;
             }
             ImageViewerPlugin<DicomImageElement> pane = EventManager.getInstance().getSelectedView2dContainer();
-            if (SynchView.Mode.Tile.equals(pane.getSynchView().getMode())) {
+            if (pane != null && SynchView.Mode.Tile.equals(pane.getSynchView().getMode())) {
                 pane.addSeries(seq);
+                selList.setOpenningSeries(false);
                 return true;
             }
 
             setSeries(seq);
-            requestFocusInWindow();
+            // Getting the focus has a delay and so it will trigger the view selection later
+            // requestFocusInWindow();
+            if (pane != null && pane.isContainingView(View2d.this)) {
+                pane.setSelectedImagePaneFromFocus(View2d.this);
+            }
+            selList.setOpenningSeries(false);
             return true;
         }
 
