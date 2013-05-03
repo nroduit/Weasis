@@ -1383,12 +1383,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 pt2.y = maxHeight;
                             }
                             vp.setViewPosition(pt2);
+                            // Clear the selection when another view is selected
+                            getSelectionList().clear();
                         }
                     }
                 }
             }
         }
-
     }
 
     @Override
