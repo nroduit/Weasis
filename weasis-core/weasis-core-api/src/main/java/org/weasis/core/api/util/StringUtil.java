@@ -37,7 +37,7 @@ public class StringUtil {
             try {
                 return Integer.parseInt(val.trim());
             } catch (NumberFormatException e) {
-                System.out.print("Cannot convert " + val + " to int");
+                System.out.print("Cannot convert " + val + " to int"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
         return 0;

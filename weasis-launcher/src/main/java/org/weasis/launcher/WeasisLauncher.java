@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
-import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
@@ -314,7 +313,7 @@ public class WeasisLauncher {
                             }
                         }
                         // Clean temp folder.
-                        String dir = System.getProperty("weasis.tmp.dir");
+                        String dir = System.getProperty("weasis.tmp.dir"); //$NON-NLS-1$
                         if (dir != null) {
                             FileUtil.deleteDirectoryContents(new File(dir));
                         }
@@ -979,13 +978,14 @@ public class WeasisLauncher {
                                 }
                             }
                         });
-                        jTextPane1.setBackground(Color.WHITE);
                         StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
+                        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
+                            + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000)
+                                .substring(1) + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
                         message.append("<BR>"); //$NON-NLS-1$
                         String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                        message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
-                            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10686")); //$NON-NLS-1$
+                        message.append(String.format("<a href=\"%s\">" + rn + "</a>", //$NON-NLS-1$ //$NON-NLS-2$
+                            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10783")); //$NON-NLS-1$
                         message.append("</P>"); //$NON-NLS-1$
                         jTextPane1.setText(message.toString());
                         JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,

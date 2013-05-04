@@ -33,6 +33,8 @@ import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
@@ -96,20 +98,25 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jPanelInfoSys.setLayout(borderLayout2);
 
         jPanelAbout.setLayout(gridBagLayout1);
+
         jTextPane1.setContentType("text/html"); //$NON-NLS-1$
         jTextPane1.setEditable(false);
-
-        jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
+
+        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
+            + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+            + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
+
         final StringBuffer message = new StringBuffer("<div align=\"center\"><H2>Weasis "); //$NON-NLS-1$
         message.append(AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
         message.append("</H2>"); //$NON-NLS-1$
 
         String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
         message.append(String.format("<a href=\"%s\">" + rn + "</a>", //$NON-NLS-1$ //$NON-NLS-2$
-            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10686")); //$NON-NLS-1$
+            "http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=10783")); //$NON-NLS-1$
         message.append("<BR>"); //$NON-NLS-1$
-        message.append("Copyright © 2009-2011,"); //$NON-NLS-1$
+        message.append("Copyright © 2009-2013,"); //$NON-NLS-1$
         message.append("<BR>"); //$NON-NLS-1$
         message.append("Weasis Team</div>"); //$NON-NLS-1$
         jTextPane1.setText(message.toString());

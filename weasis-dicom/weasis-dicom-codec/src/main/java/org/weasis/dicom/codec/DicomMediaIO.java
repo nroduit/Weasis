@@ -1392,7 +1392,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 pixelDataLen = dis.valueLength();
 
                 compressed = pixelDataLen == -1;
-                if (!compressed && tsuid.startsWith("1.2.840.10008.1.2.4")) {
+                if (!compressed && tsuid.startsWith("1.2.840.10008.1.2.4")) { //$NON-NLS-1$
                     // Corrupted image where missing the encapsulated part for the identification the compressed dataset
                     compressed = true;
                 }
