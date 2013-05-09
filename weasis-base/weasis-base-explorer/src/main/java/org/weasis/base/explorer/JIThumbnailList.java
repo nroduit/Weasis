@@ -238,7 +238,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
                 props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
                 if (inSelView) {
-                    props.put(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW, true);
+                    props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
                 }
 
                 ArrayList<String> mimes = new ArrayList<String>();
@@ -332,7 +332,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
             props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
             props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
             if (inSelView) {
-                props.put(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW, true);
+                props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
             }
 
             for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries>>> iterator = plugins.entrySet().iterator(); iterator

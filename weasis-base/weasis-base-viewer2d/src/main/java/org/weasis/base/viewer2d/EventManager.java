@@ -63,9 +63,9 @@ import org.weasis.core.ui.util.WtoolBar;
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 
     /** The single instance of this singleton class. */
-    private static EventManager instance;
     private static ActionW[] keyEventActions = { ActionW.ZOOM, ActionW.SCROLL_SERIES, ActionW.ROTATION,
         ActionW.WINLEVEL, ActionW.PAN, ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION };
+    private static EventManager instance;
 
     private final SliderCineListener moveTroughSliceAction;
     private final SliderChangeListener windowAction;
@@ -265,6 +265,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
                     layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
                 }
+                DefaultView2d<ImageElement> pane = oldContainer.getSelectedImagePane();
+                if (pane != null) {
+                    pane.setFocused(false);
+                }
             }
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
@@ -276,6 +280,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
             }
             selectedView2dContainer.setDrawActions(graphic);
+            DefaultView2d<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+            if (pane != null) {
+                pane.setFocused(true);
+            }
         }
     }
 

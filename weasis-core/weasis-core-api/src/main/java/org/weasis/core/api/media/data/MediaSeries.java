@@ -60,11 +60,15 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     boolean isSelected();
 
+    boolean isFocused();
+
     String getMimeType();
 
     void setOpen(boolean b);
 
     void setSelected(boolean b, E selectedMedia);
+
+    void setFocused(boolean b);
 
     E getNearestImage(double location, int offset, Filter<E> filter, Comparator<E> sort);
 

@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -98,6 +99,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -1642,7 +1644,22 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 if (e.getClickCount() == 2) {
                     final SeriesSelectionModel selList = getSeriesSelectionModel();
                     selList.setOpenningSeries(true);
-                    ViewerPluginBuilder.openSequenceInDefaultPlugin(series, dicomModel, true, true);
+                    Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
+                    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+                    props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
+
+                    String mime = series.getMimeType();
+                    SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+                    if (plugin == null) {
+                        plugin = DefaultMimeAppFactory.getInstance();
+                    }
+
+                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                    list.add(series);
+                    ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
+                    ViewerPluginBuilder.openSequenceInPlugin(builder);
+
                     selList.setOpenningSeries(false);
                 }
             }

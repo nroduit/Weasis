@@ -657,6 +657,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     synchAction.setDataListWithoutTriggerAction(selectedView2dContainer.getSynchList().toArray());
                     layoutAction.setDataListWithoutTriggerAction(selectedView2dContainer.getLayoutList().toArray());
                 }
+                DefaultView2d<DicomImageElement> pane = oldContainer.getSelectedImagePane();
+                if (pane != null) {
+                    pane.setFocused(false);
+                }
             }
             synchAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView());
             layoutAction.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getOriginalLayoutModel());
@@ -668,6 +672,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 graphic = (Graphic) ((ComboItemListener) action).getSelectedItem();
             }
             selectedView2dContainer.setDrawActions(graphic);
+            DefaultView2d<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+            if (pane != null) {
+                pane.setFocused(true);
+                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.SELECT_VIEW));
+            }
         }
     }
 

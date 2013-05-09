@@ -116,9 +116,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
 
-    protected final FocusHandler focusHandler = new FocusHandler();
-    protected final MouseHandler mouseClickHandler = new MouseHandler();
-
     static final Shape[] pointer;
     static {
         pointer = new Shape[5];
@@ -128,13 +125,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
+    protected static final Color focusColor = Color.orange;
+    protected static final Color lostFocusColor = new Color(255, 224, 178);
+
+    protected final FocusHandler focusHandler = new FocusHandler();
+    protected final MouseHandler mouseClickHandler = new MouseHandler();
 
     protected Point highlightedPosition = null;
-    private int pointerType = 0;
-    private final Color pointerColor1 = Color.black;
-    private final Color pointerColor2 = Color.white;
-    private final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
-    private final Border focusBorder = new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
+    protected int pointerType = 0;
+    protected final Color pointerColor1 = Color.black;
+    protected final Color pointerColor2 = Color.white;
+    protected final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
+    protected final Border focusBorder = new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
+    protected final Border lostFocusBorder = new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
 
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
@@ -142,7 +145,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final List<ViewButton> viewButtons;
 
     protected MediaSeries<E> series = null;
-    protected static final Color focusColor = Color.orange;
     protected AnnotationsLayer infoLayer;
     protected int tileOffset;
 
@@ -343,6 +345,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         series.setOpen(open);
         series.setSelected(false, null);
+        series.setFocused(false);
+    }
+
+    public void setFocused(boolean focused) {
+        if (series != null) {
+            series.setFocused(focused);
+        }
+        if (focused && getBorder() == lostFocusBorder) {
+            setBorder(focusBorder);
+        } else if (!focused && getBorder() == focusBorder) {
+            setBorder(lostFocusBorder);
+        }
     }
 
     protected int getImageSize(E img, TagW tag1, TagW tag2) {

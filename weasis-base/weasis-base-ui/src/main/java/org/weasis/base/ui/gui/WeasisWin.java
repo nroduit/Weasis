@@ -292,12 +292,15 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     // MediaSeriesGroup
                     else if (source instanceof MediaSeriesGroup) {
                         MediaSeriesGroup group = (MediaSeriesGroup) source;
-                        synchronized (UIManager.VIEWER_PLUGINS) {
-                            for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
-                                if (group.equals(p.getGroupID())) {
-                                    p.setSelectedAndGetFocus();
-                                    break;
+                        // If already selected do not reselect or select a second window
+                        if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
+                            synchronized (UIManager.VIEWER_PLUGINS) {
+                                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                                    ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                                    if (group.equals(p.getGroupID())) {
+                                        p.setSelectedAndGetFocus();
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -315,7 +318,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
                             boolean inSelView =
-                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTED_VIEW))
+                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
                                     && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
 
                             if (series.size() == 1) {
@@ -404,6 +407,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
+        boolean setInSelection = JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
 
         if (screenBound == null && factory != null && group != null) {
             boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
@@ -412,7 +416,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
-                        viewer.addSeriesList(seriesList, bestDefaultLayout);
+                        if (setInSelection && seriesList.size() == 1) {
+                            viewer.addSeries(seriesList.get(0));
+                        } else {
+                            viewer.addSeriesList(seriesList, bestDefaultLayout);
+                        }
                         return;
                     }
                 }
@@ -491,7 +499,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             if (isregistered) {
                 viewer.setSelectedAndGetFocus();
                 if (seriesViewer instanceof ImageViewerPlugin) {
-                    ((ImageViewerPlugin) viewer).selectLayoutPositionForAddingSeries(seriesList);
+                    if (!setInSelection) {
+                        ((ImageViewerPlugin) viewer).selectLayoutPositionForAddingSeries(seriesList);
+                    }
                 }
                 for (MediaSeries m : seriesList) {
                     viewer.addSeries(m);
