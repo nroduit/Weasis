@@ -29,12 +29,10 @@ public class Activator implements BundleActivator {
     private static final String LOGGER_KEY = "always.info.ItemParser";
     private static final String LOGGER_VAL = "org.dcm4che2.imageio.ItemParser";
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
-    private BundleContext bundleContext = null;
 
     // @Override
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-        this.bundleContext = bundleContext;
         PREFERENCES.init(bundleContext);
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
@@ -73,7 +71,6 @@ public class Activator implements BundleActivator {
         PREFERENCES.close();
         ImageioUtil.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
-        this.bundleContext = null;
     }
 
 }

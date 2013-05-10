@@ -19,12 +19,12 @@ import java.util.Hashtable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.internal.Activator;
 
 public class PreferenceDialog extends AbstractWizardDialog {
 
@@ -33,7 +33,9 @@ public class PreferenceDialog extends AbstractWizardDialog {
     public PreferenceDialog(Window parentWin) {
         super(parentWin,
             Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(700, 520)); //$NON-NLS-1$
-        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), PreferencesPageFactory.class.getName(), null);
+        prefs_tracker =
+            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
+                PreferencesPageFactory.class.getName(), null);
         initializePages();
         pack();
         showPageFirstPage();

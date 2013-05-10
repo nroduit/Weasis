@@ -22,11 +22,11 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
@@ -40,7 +40,9 @@ public class DicomExport extends AbstractWizardDialog {
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(dicomModel);
-        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomExportFactory.class.getName(), null);
+        prefs_tracker =
+            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
+                DicomExportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
