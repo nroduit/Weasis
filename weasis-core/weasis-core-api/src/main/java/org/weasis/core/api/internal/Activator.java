@@ -27,6 +27,7 @@ import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -55,11 +56,10 @@ public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
     private static final String codecFilter = String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()); //$NON-NLS-1$
-    private static BundleContext bundleContext;
+    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
     @Override
-    public void start(final BundleContext context) throws Exception {
-        Activator.bundleContext = context;
+    public void start(final BundleContext bundleContext) throws Exception {
         context.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(context), null);
         context.addServiceListener(this, codecFilter);
         ServiceTracker m_tracker = new ServiceTracker(context, Codec.class.getName(), null);
@@ -105,7 +105,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        Activator.bundleContext = null;
     }
 
     public static JAI getJAI() {
@@ -133,7 +132,7 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
         ServiceReference m_ref = event.getServiceReference();
-        Codec codec = (Codec) bundleContext.getService(m_ref);
+        Codec codec = (Codec) context.getService(m_ref);
         if (codec == null) {
             return;
         }
@@ -150,13 +149,9 @@ public class Activator implements BundleActivator, ServiceListener {
                 LOGGER.info("Unregister Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
                 BundleTools.CODEC_PLUGINS.remove(codec);
                 // Unget service object and null references.
-                bundleContext.ungetService(m_ref);
+                context.ungetService(m_ref);
             }
         }
-    }
-
-    public static BundleContext getBundleContext() {
-        return bundleContext;
     }
 
     private void initLoggerAndAudit() throws IOException {
@@ -164,18 +159,17 @@ public class Activator implements BundleActivator, ServiceListener {
         String loggerKey = "audit.log"; //$NON-NLS-1$
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
-        String audit = bundleContext.getProperty(loggerKey);
+        String audit = context.getProperty(loggerKey);
         if (audit != null && audit.equalsIgnoreCase("true")) { //$NON-NLS-1$
-            AuditLog.createOrUpdateLogger(loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
+            AuditLog.createOrUpdateLogger(context, loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
                 + File.separator + "log" + File.separator + "audit-" + AbstractProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
             ServiceReference configurationAdminReference =
-                bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
+                context.getServiceReference(ConfigurationAdmin.class.getName());
             if (configurationAdminReference != null) {
-                ConfigurationAdmin confAdmin =
-                    (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
+                ConfigurationAdmin confAdmin = (ConfigurationAdmin) context.getService(configurationAdminReference);
                 if (confAdmin != null) {
 
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);

@@ -38,6 +38,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -50,7 +51,6 @@ import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
-import org.weasis.core.ui.internal.Activator;
 
 public class GeneralSetting extends AbstractItemDialogPage {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
@@ -257,7 +257,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     protected void initialize(boolean afirst) {
-        BundleContext ctx = Activator.getBundleContext();
+        BundleContext ctx = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
         chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE,
             Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE))));//$NON-NLS-1$
@@ -422,8 +422,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
-
-        AuditLog.createOrUpdateLogger("default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        AuditLog.createOrUpdateLogger(context,
+            "default.log", new String[] { "org" }, level.toString(), logFile, null, fileNb, //$NON-NLS-1$ //$NON-NLS-2$
             fileSize);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
@@ -459,7 +460,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        BundleContext ctx = Activator.getBundleContext();
+        BundleContext ctx = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
         BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(BundleTools.CONFIRM_CLOSE,
             Boolean.valueOf(ctx.getProperty("def." + BundleTools.CONFIRM_CLOSE))); //$NON-NLS-1$

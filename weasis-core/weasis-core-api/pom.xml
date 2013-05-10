@@ -34,6 +34,21 @@
 			<artifactId>org.apache.felix.prefs</artifactId>
 			<version>1.0.4</version>
 			<scope>provided</scope>
+			<exclusions>
+				<!-- exclude these dependencies to avoid a mix with recent versions -->
+				<exclusion>
+					<artifactId>org.osgi.core</artifactId>
+					<groupId>org.apache.felix</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>javax.servlet</artifactId>
+					<groupId>org.apache.felix</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>org.osgi.foundation</artifactId>
+					<groupId>org.apache.felix</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 </project>
