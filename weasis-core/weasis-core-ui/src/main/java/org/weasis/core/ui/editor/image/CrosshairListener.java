@@ -126,7 +126,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if ((e.getModifiers() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
-                panner.setPointerType(0);
+                // panner.resetPointerType(DefaultView2d.CENTER_POINTER);
                 panner.repaint();
             }
         }

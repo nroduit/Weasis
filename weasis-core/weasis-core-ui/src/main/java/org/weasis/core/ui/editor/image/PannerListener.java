@@ -22,7 +22,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.ui.graphic.DragPoint;
+import org.weasis.core.ui.graphic.PanPoint;
 
 public abstract class PannerListener extends MouseActionAdapter implements ActionState, KeyListener {
 
@@ -101,7 +101,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
             if (panner != null) {
                 pickPoint = e.getPoint();
                 double scale = panner.getViewModel().getViewScale();
-                setPoint(new DragPoint(DragPoint.STATE.Started, -(pickPoint.getX() / scale),
+                setPoint(new PanPoint(PanPoint.STATE.DragStart, -(pickPoint.getX() / scale),
                     -(pickPoint.getY() / scale)));
             }
         }
@@ -115,9 +115,9 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
             if (panner != null) {
                 if (pickPoint != null) {
                     double scale = panner.getViewModel().getViewScale();
-                    setPoint(new DragPoint(DragPoint.STATE.Dragged, -((e.getX() - pickPoint.getX()) / scale),
+                    setPoint(new PanPoint(PanPoint.STATE.Dragging, -((e.getX() - pickPoint.getX()) / scale),
                         -((e.getY() - pickPoint.getY()) / scale)));
-                    panner.setPointerType(1);
+                    panner.addPointerType(DefaultView2d.CENTER_POINTER);
                 }
             }
         }
@@ -129,7 +129,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
-                panner.setPointerType(0);
+                panner.resetPointerType(DefaultView2d.CENTER_POINTER);
                 panner.repaint();
             }
         }
@@ -142,13 +142,13 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            setPoint(new Point(5, 0));
+            setPoint(new PanPoint(PanPoint.STATE.Move, 5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-            setPoint(new Point(0, 5));
+            setPoint(new PanPoint(PanPoint.STATE.Move, 0, 5));
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            setPoint(new Point(-5, 0));
+            setPoint(new PanPoint(PanPoint.STATE.Move, -5, 0));
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            setPoint(new Point(0, -5));
+            setPoint(new PanPoint(PanPoint.STATE.Move, 0, -5));
         }
     }
 

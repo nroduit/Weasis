@@ -96,11 +96,11 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.graphic.DragPoint;
-import org.weasis.core.ui.graphic.DragPoint.STATE;
 import org.weasis.core.ui.graphic.DragSequence;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
+import org.weasis.core.ui.graphic.PanPoint;
+import org.weasis.core.ui.graphic.PanPoint.STATE;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.SelectGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -116,6 +116,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
 
+    public static final int CENTER_POINTER = 1 << 1;
+    public static final int HIGHLIGHTED_POINTER = 1 << 2;
     static final Shape[] pointer;
     static {
         pointer = new Shape[5];
@@ -131,8 +133,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected final FocusHandler focusHandler = new FocusHandler();
     protected final MouseHandler mouseClickHandler = new MouseHandler();
 
-    protected Point highlightedPosition = null;
-    protected int pointerType = 0;
+    private final PanPoint highlightedPosition = new PanPoint(STATE.Center);
+    private final PanPoint startedDragPoint = new PanPoint(STATE.DragStart);
+    private int pointerType = 0;
+
     protected final Color pointerColor1 = Color.black;
     protected final Color pointerColor2 = Color.white;
     protected final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
@@ -149,8 +153,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected int tileOffset;
 
     protected final ImageViewerEventManager<E> eventManager;
-
-    private final DragPoint startedDragPoint = new DragPoint(STATE.Started);
 
     public DefaultView2d(ImageViewerEventManager<E> eventManager) {
         this(eventManager, null, null);
@@ -537,11 +539,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setOrigin(getViewModel().getModelOffsetX() + x, getViewModel().getModelOffsetY() + y);
     }
 
-    public final void moveOrigin(DragPoint point) {
+    public final void moveOrigin(PanPoint point) {
         if (point != null) {
-            if (DragPoint.STATE.Started.equals(point.getState())) {
+            if (PanPoint.STATE.Center.equals(point.getState())) {
+                highlightedPosition.setHighlightedPosition(point.isHighlightedPosition());
+                highlightedPosition.setLocation(point);
+                setCenter(point.getX(), point.getY());
+            } else if (PanPoint.STATE.Move.equals(point.getState())) {
+                moveOrigin(point.getX(), point.getY());
+            } else if (PanPoint.STATE.DragStart.equals(point.getState())) {
                 startedDragPoint.setLocation(getViewModel().getModelOffsetX(), getViewModel().getModelOffsetY());
-            } else {
+            } else if (PanPoint.STATE.Dragging.equals(point.getState())) {
                 setOrigin(startedDragPoint.getX() + point.getX(), startedDragPoint.getY() + point.getY());
             }
         }
@@ -877,11 +885,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             //
             // }
             // }
-            if (point instanceof DragPoint) {
-                moveOrigin((DragPoint) evt.getNewValue());
-            } else if (point instanceof Point) {
-                Point p = (Point) point;
-                moveOrigin(p.getX(), p.getY());
+            if (point instanceof PanPoint) {
+                moveOrigin((PanPoint) evt.getNewValue());
             }
 
         } else if (command.equals(ActionW.FLIP.cmd())) {
@@ -1028,13 +1033,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (pointerType < 1) {
             return;
         }
-        if (pointerType == 1) {
+        if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
             drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
-        } else if (pointerType == 3) {
-            if (highlightedPosition != null) {
-                // plus 0.5 pour être toujours centrer au milieu du pixel (surtout avec un fort zoom)
-                drawPointer(g, highlightedPosition.x + 0.5, highlightedPosition.y + 0.5);
-            }
+        }
+        if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER && highlightedPosition.isHighlightedPosition()) {
+            // Display the position on the center of the pixel (constant position even with a high zoom factor)
+            drawPointer(g, modelToViewX(highlightedPosition.getX() + 0.5),
+                modelToViewY(highlightedPosition.getY() + 0.5));
         }
     }
 
@@ -1044,6 +1049,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public void setPointerType(int pointerType) {
         this.pointerType = pointerType;
+    }
+
+    public void addPointerType(int i) {
+        this.pointerType |= i;
+    }
+
+    public void resetPointerType(int i) {
+        this.pointerType &= ~i;
+    }
+
+    public Point2D getHighlightedPosition() {
+        return highlightedPosition;
     }
 
     public void drawPointer(Graphics2D g, double x, double y) {

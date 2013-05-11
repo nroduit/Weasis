@@ -12,23 +12,25 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.geom.Point2D;
 
-public class DragPoint extends Point2D {
+public class PanPoint extends Point2D {
     public enum STATE {
-        None, Started, Dragged, Ended
+        Move, Center, DragStart, Dragging, DragEnd
     }
 
     private double x;
     private double y;
     private final STATE state;
+    private boolean highlightedPosition;
 
-    public DragPoint(STATE state) {
+    public PanPoint(STATE state) {
         this(state, 0.0, 0.0);
     }
 
-    public DragPoint(STATE state, double x, double y) {
+    public PanPoint(STATE state, double x, double y) {
         this.x = x;
         this.y = y;
         this.state = state;
+        this.highlightedPosition = false;
     }
 
     public STATE getState() {
@@ -50,4 +52,13 @@ public class DragPoint extends Point2D {
         this.x = x;
         this.y = y;
     }
+
+    public boolean isHighlightedPosition() {
+        return highlightedPosition;
+    }
+
+    public void setHighlightedPosition(boolean highlightedPosition) {
+        this.highlightedPosition = highlightedPosition;
+    }
+
 }
