@@ -15,6 +15,7 @@ import java.io.File;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -34,11 +35,10 @@ public class Activator implements BundleActivator, ServiceListener {
         "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
-    private static BundleContext bundleContext = null;
+    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
     @Override
-    public void start(final BundleContext bundleContext) throws Exception {
-        Activator.bundleContext = bundleContext;
+    public void start(BundleContext bundleContext) throws Exception {
         PREFERENCES.init(bundleContext);
         MeasureTool.viewSetting.applyPreferences(PREFERENCES.getDefaultPreferences());
 
@@ -48,7 +48,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
-                ServiceTracker m_tracker = new ServiceTracker(bundleContext, SeriesViewerFactory.class.getName(), null);
+                ServiceTracker m_tracker = new ServiceTracker(context, SeriesViewerFactory.class.getName(), null);
                 m_tracker.open();
                 Object[] services = m_tracker.getServices();
                 for (int i = 0; (services != null) && (i < services.length); i++) {
@@ -80,7 +80,6 @@ public class Activator implements BundleActivator, ServiceListener {
             FileUtil.prepareToWriteFile(file);
             FileUtil.storeProperties(file, BundleTools.LOCAL_PERSISTENCE, null);//$NON-NLS-1$
         }
-        Activator.bundleContext = null;
     }
 
     @Override
@@ -91,34 +90,28 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
-                if (bundleContext != null) {
-                    ServiceReference m_ref = event.getServiceReference();
-                    SeriesViewerFactory viewerFactory = (SeriesViewerFactory) bundleContext.getService(m_ref);
-                    if (viewerFactory == null) {
-                        return;
-                    }
+                ServiceReference m_ref = event.getServiceReference();
+                SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(m_ref);
+                if (viewerFactory == null) {
+                    return;
+                }
 
-                    // TODO manage when several identical MimeType, register the default one
-                    if (event.getType() == ServiceEvent.REGISTERED) {
-                        if (!UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                            UIManager.SERIES_VIEWER_FACTORIES.add(viewerFactory);
-                            // Activator.log(LogService.LOG_INFO, "Register viewer Plug-in: " + m_ref.toString());
-                        }
-                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                        if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                            // Activator.log(LogService.LOG_INFO, "Unregister viewer Plug-in: " + m_ref.toString());
-                            UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
-                            // Unget service object and null references.
-                            bundleContext.ungetService(m_ref);
-                        }
+                // TODO manage when several identical MimeType, register the default one
+                if (event.getType() == ServiceEvent.REGISTERED) {
+                    if (!UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
+                        UIManager.SERIES_VIEWER_FACTORIES.add(viewerFactory);
+                        // Activator.log(LogService.LOG_INFO, "Register viewer Plug-in: " + m_ref.toString());
+                    }
+                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                    if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
+                        // Activator.log(LogService.LOG_INFO, "Unregister viewer Plug-in: " + m_ref.toString());
+                        UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
+                        // Unget service object and null references.
+                        context.ungetService(m_ref);
                     }
                 }
             }
         });
-    }
-
-    public static BundleContext getBundleContext() {
-        return bundleContext;
     }
 
 }

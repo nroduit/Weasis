@@ -17,6 +17,7 @@ import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
@@ -35,11 +36,10 @@ public class Activator implements BundleActivator, ServiceListener {
     private static final String dataExplorerViewFilter = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DataExplorerView.class.getName()); //$NON-NLS-1$
 
-    private BundleContext context = null;
+    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
     @Override
-    public void start(final BundleContext context) throws Exception {
-        this.context = context;
+    public void start(final BundleContext bundleContext) throws Exception {
 
         // WeasisWin must be instantiate in the EDT
         GuiExecutor.instance().invokeAndWait(new Runnable() {
@@ -114,7 +114,6 @@ public class Activator implements BundleActivator, ServiceListener {
     public void stop(BundleContext bundleContext) throws Exception {
         // UnRegister default model
         ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWin.getInstance());
-        this.context = null;
     }
 
     @Override

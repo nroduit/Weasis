@@ -17,6 +17,7 @@ import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
@@ -44,11 +45,10 @@ public class Activator implements BundleActivator, ServiceListener {
     private static final String TOOL_FILTER = String.format(
         "(%s=%s)", Constants.OBJECTCLASS, DockableTool.class.getName()); //$NON-NLS-1$
 
-    private BundleContext context = null;
+    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
     @Override
-    public void start(final BundleContext context) throws Exception {
-        this.context = context;
+    public void start(final BundleContext bundleContext) throws Exception {
         PREFERENCES.init(context);
 
         GuiExecutor.instance().execute(new Runnable() {
@@ -123,7 +123,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
-
                 final ServiceReference m_ref = event.getServiceReference();
                 Object service = context.getService(m_ref);
                 if (service != null) {

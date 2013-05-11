@@ -11,7 +11,6 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.internal.Activator;
 
 public class AuditLog {
 
@@ -36,50 +35,47 @@ public class AuditLog {
         }
     };
 
-    public static void createOrUpdateLogger(String loggerKey, String[] loggerVal, String level, String logFile,
-        String pattern, String nbFiles, String logSize) {
-        if (loggerKey != null && loggerVal != null && loggerVal.length > 0) {
-            BundleContext bundleContext = Activator.getBundleContext();
-            if (bundleContext != null) {
-                ServiceReference configurationAdminReference =
-                    bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
-                if (configurationAdminReference != null) {
-                    ConfigurationAdmin confAdmin =
-                        (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
-                    if (confAdmin != null) {
-                        try {
-                            Dictionary<String, Object> loggingProperties;
-                            Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            if (logConfiguration == null) {
-                                logConfiguration =
-                                    confAdmin.createFactoryConfiguration(
-                                        "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
-                                loggingProperties = new Hashtable<String, Object>();
-                                loggingProperties.put(LOG_LOGGERS, loggerVal);
-                                // add this property to give us something unique to re-find this configuration
-                                loggingProperties.put(loggerKey, loggerVal[0]);
-                            } else {
-                                loggingProperties = logConfiguration.getProperties();
-                            }
-                            loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level); //$NON-NLS-1$
-                            if (logFile != null) {
-                                loggingProperties.put(LOG_FILE, logFile);
-                            }
-                            if (nbFiles != null) {
-                                loggingProperties.put(LOG_FILE_NUMBER, nbFiles);
-                            }
-                            if (logSize != null) {
-                                loggingProperties.put(LOG_FILE_SIZE, logSize);
-                            }
-                            if (pattern != null) {
-                                loggingProperties.put(LOG_PATTERN, pattern);
-                            }
-                            // org.apache.sling.commons.log.pattern={0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4} {1}* [{2}] {3}
-                            // {5}
-                            logConfiguration.update(loggingProperties);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+    public static void createOrUpdateLogger(BundleContext bundleContext, String loggerKey, String[] loggerVal,
+        String level, String logFile, String pattern, String nbFiles, String logSize) {
+        if (bundleContext != null && loggerKey != null && loggerVal != null && loggerVal.length > 0) {
+            ServiceReference configurationAdminReference =
+                bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
+            if (configurationAdminReference != null) {
+                ConfigurationAdmin confAdmin =
+                    (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
+                if (confAdmin != null) {
+                    try {
+                        Dictionary<String, Object> loggingProperties;
+                        Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        if (logConfiguration == null) {
+                            logConfiguration =
+                                confAdmin.createFactoryConfiguration(
+                                    "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                            loggingProperties = new Hashtable<String, Object>();
+                            loggingProperties.put(LOG_LOGGERS, loggerVal);
+                            // add this property to give us something unique to re-find this configuration
+                            loggingProperties.put(loggerKey, loggerVal[0]);
+                        } else {
+                            loggingProperties = logConfiguration.getProperties();
                         }
+                        loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level); //$NON-NLS-1$
+                        if (logFile != null) {
+                            loggingProperties.put(LOG_FILE, logFile);
+                        }
+                        if (nbFiles != null) {
+                            loggingProperties.put(LOG_FILE_NUMBER, nbFiles);
+                        }
+                        if (logSize != null) {
+                            loggingProperties.put(LOG_FILE_SIZE, logSize);
+                        }
+                        if (pattern != null) {
+                            loggingProperties.put(LOG_PATTERN, pattern);
+                        }
+                        // org.apache.sling.commons.log.pattern={0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4} {1}* [{2}] {3}
+                        // {5}
+                        logConfiguration.update(loggingProperties);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }

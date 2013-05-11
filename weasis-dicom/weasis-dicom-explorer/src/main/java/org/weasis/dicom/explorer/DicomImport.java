@@ -21,9 +21,9 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
 
@@ -34,7 +34,9 @@ public class DicomImport extends AbstractWizardDialog {
         super(parent,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        prefs_tracker = new ServiceTracker(Activator.getBundleContext(), DicomImportFactory.class.getName(), null);
+        prefs_tracker =
+            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
+                DicomImportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);

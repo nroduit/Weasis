@@ -12,6 +12,7 @@ package org.weasis.base.viewer2d.internal;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.service.BundlePreferences;
@@ -20,9 +21,10 @@ import org.weasis.core.ui.docking.UIManager;
 public class Activator implements BundleActivator {
 
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
+    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 
     @Override
-    public void start(final BundleContext context) throws Exception {
+    public void start(BundleContext bundleContext) throws Exception {
         PREFERENCES.init(context);
     }
 

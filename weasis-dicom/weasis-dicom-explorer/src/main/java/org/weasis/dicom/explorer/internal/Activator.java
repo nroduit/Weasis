@@ -27,11 +27,9 @@ public class Activator implements BundleActivator {
 
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
     public static final Properties IMPORT_EXPORT_PERSISTENCE = new Properties();
-    private static BundleContext bundleContext;
 
     @Override
     public void start(final BundleContext context) throws Exception {
-        bundleContext = context;
         PREFERENCES.init(context);
         String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
         DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
@@ -52,9 +50,5 @@ public class Activator implements BundleActivator {
             // Remove image in viewers, in image cache and close the image stream
             ((DicomModel) dexp.getDataExplorerModel()).dispose();
         }
-    }
-
-    public static BundleContext getBundleContext() {
-        return bundleContext;
     }
 }
