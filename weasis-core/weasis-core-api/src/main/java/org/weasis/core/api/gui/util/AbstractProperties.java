@@ -81,9 +81,6 @@ public abstract class AbstractProperties {
 
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$;
 
-    /** This array contains the 16 hex digits '0'-'F'. */
-    public static final char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F' };
     /** Container for Properties */
     protected static Properties s_prop = new Properties();
     public static final GhostGlassPane glassPane = new GhostGlassPane();
@@ -162,7 +159,7 @@ public abstract class AbstractProperties {
     }
 
     public static void setProperty(String key, Color c) {
-        setProperty(key, c2hex(c));
+        setProperty(key, color2Hexadecimal(c));
     }
 
     public static String getProperty(String key) {
@@ -268,33 +265,23 @@ public abstract class AbstractProperties {
     }
 
     public static Color getPropertyColor(String key) {
-        int i = getInt(key, 0xaaa);
-        if (i == 0xaaa) {
-            return new Color(128, 128, 128);
-        }
-        return new Color((i >> 16) & 0xFF, (i >> 8) & 0xFF, i & 0xFF);
+        return hexadecimal2Color(s_prop.getProperty(key));
     }
 
-    protected static int getInt(String key, int defaultValue) {
-        String s = s_prop.getProperty(key);
-        if (s != null) {
+    public static String color2Hexadecimal(Color c) {
+        int val = c == null ? 0 : c.getRGB() & 0x00ffffff;
+        return Integer.toHexString(val);
+    }
+
+    public static Color hexadecimal2Color(String hexColor) {
+        int intValue = 0;
+        if (hexColor != null) {
             try {
-                return Integer.decode(s).intValue();
+                intValue = Integer.parseInt(hexColor, 16);
             } catch (NumberFormatException e) {
             }
         }
-        return defaultValue;
-    }
-
-    protected static String c2hex(Color c) {
-        int i = c.getRGB();
-        char[] buf7 = new char[7];
-        buf7[0] = '#';
-        for (int pos = 6; pos >= 1; pos--) {
-            buf7[pos] = hexDigits[i & 0xf];
-            i >>>= 4;
-        }
-        return new String(buf7);
+        return new Color(intValue);
     }
 
     protected static String boolToText(boolean[] value) {

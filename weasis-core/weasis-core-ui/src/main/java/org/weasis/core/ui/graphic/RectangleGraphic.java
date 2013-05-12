@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.ui.graphic;
 
-import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -22,6 +22,10 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
@@ -32,6 +36,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
  * 
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
+@Root(name = "rectangle")
 public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
@@ -53,15 +58,15 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
+    public RectangleGraphic(float lineThickness, Paint paintColor, boolean labelVisible) {
         this(lineThickness, paintColor, labelVisible, false);
     }
 
-    public RectangleGraphic(float lineThickness, Color paintColor, boolean labelVisible, boolean filled) {
+    public RectangleGraphic(float lineThickness, Paint paintColor, boolean labelVisible, boolean filled) {
         super(8, paintColor, lineThickness, labelVisible, filled);
     }
 
-    public RectangleGraphic(Rectangle2D rect, float lineThickness, Color paintColor, boolean labelVisible,
+    public RectangleGraphic(Rectangle2D rect, float lineThickness, Paint paintColor, boolean labelVisible,
         boolean filled) throws InvalidShapeException {
         super(8, paintColor, lineThickness, labelVisible, filled);
         if (rect == null) {
@@ -70,6 +75,19 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         setHandlePointList(rect);
         if (!isShapeValid()) {
             throw new InvalidShapeException("This shape cannot be drawn");
+        }
+        buildShape(null);
+    }
+
+    protected RectangleGraphic(
+        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
+        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
+        @Element(name = "paint", required = false) Paint paintColor,
+        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
+        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
+        if (handlePointTotalNumber != 8) {
+            throw new InvalidShapeException("Not a valid RectangleGraphic!");
         }
         buildShape(null);
     }

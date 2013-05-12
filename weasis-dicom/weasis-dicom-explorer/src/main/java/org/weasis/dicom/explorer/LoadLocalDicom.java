@@ -31,6 +31,8 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.graphic.model.GraphicList;
+import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomMediaIO;
 
 public class LoadLocalDicom extends ExplorerTask {
@@ -93,6 +95,19 @@ public class LoadLocalDicom extends ExplorerTask {
                             Thumbnail t = buildDicomStructure(loader, openPlugin);
                             if (t != null) {
                                 thumbs.add(t);
+                            }
+
+                            File gpxFile = new File(file[i].getPath() + "-gpx.xml");
+
+                            if (gpxFile.canRead()) {
+                                try {
+                                    GraphicList list =
+                                        DefaultSerializer.getInstance().getSerializer()
+                                            .read(GraphicList.class, gpxFile);
+                                    loader.setTag(TagW.MeasurementGraphics, list);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }

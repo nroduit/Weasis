@@ -24,6 +24,8 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CWorkingArea;
+import bibliothek.gui.dock.common.event.CVetoFocusListener;
+import bibliothek.gui.dock.common.intern.CDockable;
 
 public class UIManager {
 
@@ -34,6 +36,19 @@ public class UIManager {
         .synchronizedList(new ArrayList<DataExplorerView>());
     public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES = Collections
         .synchronizedList(new ArrayList<SeriesViewerFactory>());
+
+    public static final CVetoFocusListener DOCKING_VETO_FOCUS = new CVetoFocusListener() {
+
+        @Override
+        public boolean willLoseFocus(CDockable dockable) {
+            return false;
+        }
+
+        @Override
+        public boolean willGainFocus(CDockable dockable) {
+            return false;
+        }
+    };
 
     public static final CControl DOCKING_CONTROL = new CControl();
     public static final CContentArea BASE_AREA = DOCKING_CONTROL.getContentArea();

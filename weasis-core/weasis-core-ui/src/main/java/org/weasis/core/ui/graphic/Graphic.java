@@ -18,6 +18,7 @@ import java.awt.geom.Area;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -28,13 +29,12 @@ import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
  * 
  * @author Nicolas Roduit , Benoit Jacquemoud
  */
+@Root()
 public interface Graphic extends GUIEntry, Cloneable {
 
     Graphic deepCopy();
 
     Area getArea(AffineTransform transform);
-
-    String[] getLabel();
 
     void setLabel(String[] label, DefaultView2d view2d);
 

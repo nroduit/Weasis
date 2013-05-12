@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
 
@@ -389,14 +390,29 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public boolean isSelected() {
-        Boolean selected = (Boolean) getTagValue(TagW.SeriesSelected);
-        return selected == null ? false : selected;
+        return JMVUtils.getNULLtoFalse(getTagValue(TagW.SeriesSelected));
     }
 
     @Override
     public void setSelected(boolean selected, E selectedImage) {
         if (this.isSelected() != selected) {
             setTag(TagW.SeriesSelected, selected);
+            Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
+            if (thumb != null) {
+                thumb.repaint();
+            }
+        }
+    }
+
+    @Override
+    public boolean isFocused() {
+        return JMVUtils.getNULLtoFalse(getTagValue(TagW.SeriesFocused));
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+        if (this.isFocused() != focused) {
+            setTag(TagW.SeriesFocused, focused);
             Thumbnail thumb = (Thumbnail) getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.repaint();

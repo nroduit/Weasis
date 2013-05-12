@@ -11,6 +11,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -22,6 +23,10 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -29,6 +34,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
+@Root(name = "ParallelLine")
 public class ParallelLineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(
@@ -42,14 +48,27 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
         Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected Point2D ptA, ptB, ptC, ptD; // Let AB & CD two parallel line segments
-    protected Point2D ptE, ptF; // Let E,F middle points of AB & CD
+    protected Point2D.Double ptA, ptB, ptC, ptD; // Let AB & CD two parallel line segments
+    protected Point2D.Double ptE, ptF; // Let E,F middle points of AB & CD
 
     protected boolean lineABvalid, lineCDvalid; // estimate if line segments are valid or not
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////
     public ParallelLineGraphic(float lineThickness, Color paintColor, boolean labelVisible) {
         super(6, paintColor, lineThickness, labelVisible);
+    }
+
+    protected ParallelLineGraphic(
+        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
+        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
+        @Element(name = "paint", required = false) Paint paintColor,
+        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible,
+        @Attribute(name = "fill") boolean filled) throws InvalidShapeException {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
+        if (handlePointTotalNumber != 6) {
+            throw new InvalidShapeException("Not a valid ParallelLineGraphic!");
+        }
+        buildShape(null);
     }
 
     @Override
@@ -91,8 +110,8 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
                 } else if (handlePointIndex == 2 || handlePointIndex == 3) {
                     // drag point is C or D
 
-                    Point2D pt1 = (handlePointIndex == 2) ? ptC : ptD;
-                    Point2D pt2 = (handlePointIndex == 2) ? ptD : ptC;
+                    Point2D.Double pt1 = (handlePointIndex == 2) ? ptC : ptD;
+                    Point2D.Double pt2 = (handlePointIndex == 2) ? ptD : ptC;
                     int hIndex = (handlePointIndex == 2) ? 3 : 2;
 
                     Point2D ptI = GeomUtil.getPerpendicularPointToLine(ptA, ptB, pt1);
@@ -108,9 +127,9 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
                 } else if (handlePointIndex == 4 || handlePointIndex == 5) {
                     // drag point is E middle of AB or F middle of CD
-                    Point2D pt0 = (handlePointIndex == 4) ? ptE : ptF;
-                    Point2D pt1 = (handlePointIndex == 4) ? ptA : ptC;
-                    Point2D pt2 = (handlePointIndex == 4) ? ptB : ptD;
+                    Point2D.Double pt0 = (handlePointIndex == 4) ? ptE : ptF;
+                    Point2D.Double pt1 = (handlePointIndex == 4) ? ptA : ptC;
+                    Point2D.Double pt2 = (handlePointIndex == 4) ? ptB : ptD;
                     int hIndex1 = (handlePointIndex == 4) ? 0 : 2;
                     int hIndex2 = (handlePointIndex == 4) ? 1 : 3;
 

@@ -37,6 +37,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.sr.SRContainer;
 
 public class Activator implements BundleActivator, ServiceListener {
 
@@ -121,6 +122,7 @@ public class Activator implements BundleActivator, ServiceListener {
         PREFERENCES.close();
         UIManager.closeSeriesViewerType(MPRContainer.class);
         UIManager.closeSeriesViewerType(View2dContainer.class);
+        UIManager.closeSeriesViewerType(SRContainer.class);
     }
 
     @Override

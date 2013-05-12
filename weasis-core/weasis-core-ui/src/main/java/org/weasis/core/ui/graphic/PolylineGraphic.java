@@ -11,6 +11,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -20,6 +21,10 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.ui.Messages;
@@ -31,6 +36,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
  * 
  * @author Nicolas Roduit
  */
+@Root(name = "polyline")
 public class PolylineGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
@@ -52,14 +58,22 @@ public class PolylineGraphic extends AbstractDragGraphic {
         super(AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
     }
 
-    public PolylineGraphic(List<Point2D> handlePointList, Color paintColor, float lineThickness, boolean labelVisible)
+    public PolylineGraphic(List<Point2D.Double> handlePointList, Color color, float f, boolean labelVisible)
+        throws InvalidShapeException {
+        this(handlePointList, AbstractDragGraphic.UNDEFINED, color, f, labelVisible);
+    }
+
+    protected PolylineGraphic(
+        @ElementList(name = "pts", entry = "pt", type = Point2D.Double.class) List<Point2D.Double> handlePointList,
+        @Attribute(name = "handle_pts_nb") int handlePointTotalNumber,
+        @Element(name = "paint", required = false) Paint paintColor,
+        @Attribute(name = "thickness") float lineThickness, @Attribute(name = "label_visible") boolean labelVisible)
         throws InvalidShapeException {
         super(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, false);
         if (handlePointList == null || handlePointList.size() < 2) {
             throw new InvalidShapeException("Polyline must have at least 2 points!");
         }
-        // Do not draw points any more
-        this.handlePointTotalNumber = handlePointList.size();
+        buildShape(null);
 
         if (!isShapeValid()) {
             int lastPointIndex = handlePointList.size() - 1;
@@ -74,8 +88,10 @@ public class PolylineGraphic extends AbstractDragGraphic {
             if (!isShapeValid() || handlePointList.size() < 2) {
                 throw new IllegalStateException("This Polyline cannot be drawn");
             }
+            buildShape(null);
         }
-        buildShape(null);
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
     }
 
     @Override

@@ -17,7 +17,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.geom.Point2D;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -40,6 +39,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.model.GraphicList;
 
 public class CalibrationView extends JPanel {
 
@@ -192,10 +192,12 @@ public class CalibrationView extends JPanel {
                         } else {
                             image.setPixelSize(newRatio);
                         }
-                        List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
-                        if (list != null) {
-                            for (Graphic graphic : list) {
-                                graphic.updateLabel(image, view2d);
+                        GraphicList gl = (GraphicList) image.getTagValue(TagW.MeasurementGraphics);
+                        if (gl != null) {
+                            synchronized (gl.list) {
+                                for (Graphic graphic : gl.list) {
+                                    graphic.updateLabel(image, view2d);
+                                }
                             }
                         }
                         view2d.repaint();
@@ -206,10 +208,12 @@ public class CalibrationView extends JPanel {
     }
 
     private void updateLabel(ImageElement image, DefaultView2d view2d) {
-        List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
-        if (list != null) {
-            for (Graphic graphic : list) {
-                graphic.updateLabel(image, view2d);
+        GraphicList gl = (GraphicList) image.getTagValue(TagW.MeasurementGraphics);
+        if (gl != null) {
+            synchronized (gl.list) {
+                for (Graphic graphic : gl.list) {
+                    graphic.updateLabel(image, view2d);
+                }
             }
         }
     }

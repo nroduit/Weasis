@@ -12,6 +12,7 @@
 package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
+import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Point2D;
@@ -38,18 +39,18 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
         this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
-    public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor, float lineThickness,
+    public AbstractDragGraphicArea(int handlePointTotalNumber, Paint paintColor, float lineThickness,
         boolean labelVisible) {
         this(handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
     }
 
-    public AbstractDragGraphicArea(int handlePointTotalNumber, Color paintColor, float lineThickness,
+    public AbstractDragGraphicArea(int handlePointTotalNumber, Paint paintColor, float lineThickness,
         boolean labelVisible, boolean filled) {
         this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
 
     }
 
-    public AbstractDragGraphicArea(List<Point2D> handlePointList, int handlePointTotalNumber, Color paintColor,
+    public AbstractDragGraphicArea(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
         float lineThickness, boolean labelVisible, boolean filled) {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }

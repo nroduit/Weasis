@@ -28,7 +28,7 @@ public class IntersectVolume extends LocalizerPoster {
     }
 
     @Override
-    public List<Point2D> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
+    public List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
         Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions) {
         // System.err.println("IntersectVolume.getOutlineOnLocalizerForThisGeometry()");
         Point3d[] corners =
@@ -49,7 +49,7 @@ public class IntersectVolume extends LocalizerPoster {
         if (intersections != null && intersections.size() > 0) {
             Point3d[] cor = (Point3d[]) intersections.toArray(new Point3d[intersections.size()]);
 
-            List<Point2D> pts = new ArrayList<Point2D>(cor.length);
+            List<Point2D.Double> pts = new ArrayList<Point2D.Double>(cor.length);
             for (int i = 0; i < cor.length; ++i) {
                 Point2D.Double thisPoint = transformPointInLocalizerPlaneIntoImageSpace(cor[i]);
                 pts.add(thisPoint);

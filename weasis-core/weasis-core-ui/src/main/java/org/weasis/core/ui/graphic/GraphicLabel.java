@@ -23,10 +23,13 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 
+@Root(name = "label")
 public class GraphicLabel implements Cloneable {
     /**
      * GROWING_BOUND min value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting, and
@@ -39,8 +42,20 @@ public class GraphicLabel implements Cloneable {
     protected double labelWidth;
     protected double labelHeight;
 
-    protected double offsetX = 0;
-    protected double offsetY = 0;
+    @Attribute(name = "offsetX")
+    protected double offsetX;
+    @Attribute(name = "offsetY")
+    protected double offsetY;
+
+    public GraphicLabel() {
+        this(0.0, 0.0);
+    }
+
+    public GraphicLabel(@Attribute(name = "offsetX") double offsetX, @Attribute(name = "offsetY") double offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        reset();
+    }
 
     protected void reset() {
         labelStringArray = null;

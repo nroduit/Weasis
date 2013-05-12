@@ -16,7 +16,7 @@ import java.awt.geom.Point2D;
 
 public class MouseEventDouble extends MouseEvent {
 
-    final Point2D point2d;
+    final Point2D.Double point2d;
 
     public MouseEventDouble(MouseEvent e, int x, int y) {
         this((Component) e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), x, y, e.getXOnScreen(), e
@@ -42,8 +42,8 @@ public class MouseEventDouble extends MouseEvent {
         point2d.setLocation(x, y);
     }
 
-    public Point2D getImageCoordinates() {
-        return (Point2D) point2d.clone();
+    public Point2D.Double getImageCoordinates() {
+        return (Point2D.Double) point2d.clone();
     }
 
     public double getImageX() {

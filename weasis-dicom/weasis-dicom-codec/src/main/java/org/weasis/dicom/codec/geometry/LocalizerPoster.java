@@ -85,12 +85,15 @@ public abstract class LocalizerPoster {
      *                thrown if not
      */
     public static void validateDirectionCosines(Vector3d row, Vector3d column) throws IllegalArgumentException {
-        if (Math.abs(row.lengthSquared() - 1) > 0.001)
+        if (Math.abs(row.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Row not a unit vector"); //$NON-NLS-1$
-        if (Math.abs(column.lengthSquared() - 1) > 0.001)
+        }
+        if (Math.abs(column.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
-        if (row.dot(column) > 0.001)
+        }
+        if (row.dot(column) > 0.001) {
             throw new IllegalArgumentException("Row and column vectors are not orthogonal"); //$NON-NLS-1$
+        }
     }
 
     /**
@@ -109,18 +112,24 @@ public abstract class LocalizerPoster {
      */
     public static void validateDirectionCosines(Vector3d row, Vector3d column, Vector3d normal)
         throws IllegalArgumentException {
-        if (Math.abs(row.lengthSquared() - 1) > 0.001)
+        if (Math.abs(row.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Row not a unit vector"); //$NON-NLS-1$
-        if (Math.abs(column.lengthSquared() - 1) > 0.001)
+        }
+        if (Math.abs(column.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
-        if (Math.abs(normal.lengthSquared() - 1) > 0.001)
+        }
+        if (Math.abs(normal.lengthSquared() - 1) > 0.001) {
             throw new IllegalArgumentException("Normal not a unit vector"); //$NON-NLS-1$
-        if (row.dot(column) > 0.001)
+        }
+        if (row.dot(column) > 0.001) {
             throw new IllegalArgumentException("Row and column vectors are not orthogonal = " + row.dot(column)); //$NON-NLS-1$
-        if (row.dot(normal) > 0.001)
+        }
+        if (row.dot(normal) > 0.001) {
             throw new IllegalArgumentException("Row and normal vectors are not orthogonal = " + row.dot(normal)); //$NON-NLS-1$
-        if (column.dot(normal) > 0.001)
+        }
+        if (column.dot(normal) > 0.001) {
             throw new IllegalArgumentException("Column and normal vectors are not orthogonal = " + column.dot(normal)); //$NON-NLS-1$
+        }
     }
 
     /**
@@ -730,8 +739,8 @@ public abstract class LocalizerPoster {
      * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
      *         coordinates
      */
-    public abstract List<Point2D> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column, Point3d tlhc,
-        Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions);
+    public abstract List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(Vector3d row, Vector3d column,
+        Point3d tlhc, Tuple3d voxelSpacing, double sliceThickness, Tuple3d dimensions);
 
     /**
      * <p>
@@ -742,7 +751,7 @@ public abstract class LocalizerPoster {
      * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
      *         coordinates
      */
-    public final List<Point2D> getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
+    public final List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
         return getOutlineOnLocalizerForThisGeometry(geometry.getRow(), geometry.getColumn(), geometry.getTLHC(),
             geometry.getVoxelSpacing(), geometry.getSliceThickness(), geometry.getDimensions());
     }

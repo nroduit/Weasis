@@ -11,11 +11,20 @@
 package org.weasis.core.ui.graphic.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+import org.simpleframework.xml.Root;
 import org.weasis.core.ui.graphic.Graphic;
 
-public class GraphicList extends ArrayList<Graphic> {
+@Root()
+public class GraphicList {
+    public final List<Graphic> list;
     private ArrayList<AbstractLayer> layers = null;
+
+    public GraphicList() {
+        list = Collections.synchronizedList(new ArrayList<Graphic>());
+    }
 
     public ArrayList<AbstractLayer> getLayers() {
         return layers;

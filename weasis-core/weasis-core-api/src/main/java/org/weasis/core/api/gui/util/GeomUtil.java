@@ -112,7 +112,7 @@ public final class GeomUtil {
     /**
      * @return midPoint or null if any argument is invalid
      */
-    public static Point2D getMidPoint(Point2D ptA, Point2D ptB) {
+    public static Point2D.Double getMidPoint(Point2D ptA, Point2D ptB) {
         if (ptA != null && ptB != null) {
             return new Point2D.Double((ptA.getX() + ptB.getX()) / 2.0, (ptA.getY() + ptB.getY()) / 2.0);
         }
@@ -131,7 +131,7 @@ public final class GeomUtil {
      *            If >0 && < AB , ptC point will be interior of AB<br>
      * @return New point ptC coordinates or null if any argument is invalid
      */
-    public static Point2D getColinearPointWithLength(Point2D ptA, Point2D ptB, double newLength) {
+    public static Point2D.Double getColinearPointWithLength(Point2D ptA, Point2D ptB, double newLength) {
         if (ptA != null && ptB != null) {
             return getColinearPointWithRatio(ptA, ptB, newLength / ptA.distance(ptB));
         }
@@ -150,7 +150,7 @@ public final class GeomUtil {
      *            If >0 && <AB , ptC point will be interior of AB<br>
      * @return New point ptC coordinates or null if any argument is invalid
      */
-    public static Point2D getColinearPointWithRatio(Point2D ptA, Point2D ptB, double k) {
+    public static Point2D.Double getColinearPointWithRatio(Point2D ptA, Point2D ptB, double k) {
         if (ptA != null && ptB != null) {
             return new Point2D.Double(ptB.getX() * k + ptA.getX() * (1 - k), ptB.getY() * k + ptA.getY() * (1 - k));
         }
@@ -160,7 +160,7 @@ public final class GeomUtil {
     /**
      * @return median line or null if any argument is invalid
      */
-    public static Line2D getMedianLine(Line2D line1, Line2D line2) {
+    public static Line2D.Double getMedianLine(Line2D line1, Line2D line2) {
         if (line1 == null || line2 == null) {
             return null;
         }
@@ -188,7 +188,7 @@ public final class GeomUtil {
      * @return median line or null if any argument is invalid
      */
 
-    public static Line2D getMedianLine(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+    public static Line2D.Double getMedianLine(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
         if (ptA == null || ptB == null || ptC == null || ptD == null) {
             return null;
         }
@@ -200,12 +200,12 @@ public final class GeomUtil {
      * 
      * @return null if segment lines are parallel
      */
-    public static Point2D getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+    public static Point2D.Double getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
         if (ptA == null || ptB == null || ptC == null || ptD == null) {
             return null;
         }
 
-        Point2D ptP = null;
+        Point2D.Double ptP = null;
 
         double denominator =
             (ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY()) - (ptB.getY() - ptA.getY())
@@ -290,7 +290,7 @@ public final class GeomUtil {
     /**
      * @return
      */
-    public static Point2D getPerpendicularPointToLine(Point2D ptA, Point2D ptB, Point2D ptC) {
+    public static Point2D.Double getPerpendicularPointToLine(Point2D ptA, Point2D ptB, Point2D ptC) {
         if (ptA == null || ptB == null || ptA.equals(ptB) || ptC == null) {
             return null;
         }
@@ -304,7 +304,7 @@ public final class GeomUtil {
         return new Point2D.Double(ax + r * (bx - ax), ay + r * (by - ay));
     }
 
-    public static Point2D getPerpendicularPointToLine(Line2D line, Point2D ptC) {
+    public static Point2D.Double getPerpendicularPointToLine(Line2D line, Point2D ptC) {
         if (line == null || ptC == null) {
             return null;
         }
@@ -374,7 +374,7 @@ public final class GeomUtil {
      * @param ptList
      * @return
      */
-    public static Point2D getCircleCenter(List<Point2D> ptList) {
+    public static Point2D.Double getCircleCenter(List<Point2D.Double> ptList) {
         if (ptList == null) {
             return null;
         }
@@ -393,7 +393,7 @@ public final class GeomUtil {
     /**
      * @return
      */
-    public static Point2D getCircleCenter(Point2D ptA, Point2D ptB, Point2D ptC) {
+    public static Point2D.Double getCircleCenter(Point2D ptA, Point2D ptB, Point2D ptC) {
         if (ptA == null || ptB == null || ptC == null) {
             return null;
         }

@@ -13,6 +13,7 @@ package org.weasis.core.ui.graphic;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Robot;
 import java.awt.geom.AffineTransform;
@@ -38,16 +39,16 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
         this(handlePointTotalNumber, Color.YELLOW, 1f, true);
     }
 
-    public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible) {
+    public AbstractDragGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible) {
         this(handlePointTotalNumber, paintColor, lineThickness, labelVisible, false);
     }
 
-    public AbstractDragGraphic(int handlePointTotalNumber, Color paintColor, float lineThickness, boolean labelVisible,
+    public AbstractDragGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible,
         boolean filled) {
         this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
 
-    public AbstractDragGraphic(List<Point2D> handlePointList, int handlePointTotalNumber, Color paintColor,
+    public AbstractDragGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
         float lineThickness, boolean labelVisible, boolean filled) {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
@@ -71,7 +72,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
     public void forceToAddPoints(int fromPtIndex) {
         if (variablePointsNumber && fromPtIndex >= 0 && fromPtIndex < handlePointList.size()) {
             if (fromPtIndex < handlePointList.size() - 1) {
-                List<Point2D> list = handlePointList.subList(fromPtIndex + 1, handlePointList.size());
+                List<Point2D.Double> list = handlePointList.subList(fromPtIndex + 1, handlePointList.size());
                 for (int i = 0; i <= fromPtIndex; i++) {
                     list.add(handlePointList.get(i));
                 }

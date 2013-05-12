@@ -17,15 +17,11 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -47,6 +43,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -60,6 +57,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -101,6 +99,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -616,9 +615,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         public PatientContainerPane() {
             modelPatient.removeAllElements();
-            // root of the focus cycle of the patient's thumbnails
-            this.setFocusCycleRoot(true);
-            this.setFocusTraversalPolicyProvider(true);
             // do not use addElement
             // modelPatient.insertElementAt(ALL_PATIENTS, 0);
             setLayout(new GridBagLayout());
@@ -1374,7 +1370,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             if (pane != null) {
                 MediaSeries s = pane.getSeries();
                 if (s != null) {
-                    if (patientContainer.isSeriesVisible(s)) {
+                    if (!getSelectionList().isOpenningSeries() && patientContainer.isSeriesVisible(s)) {
                         SeriesPane p = getSeriesPane(s);
                         if (p != null) {
                             JViewport vp = thumnailView.getViewport();
@@ -1389,12 +1385,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                 pt2.y = maxHeight;
                             }
                             vp.setViewPosition(pt2);
+                            // Clear the selection when another view is selected
+                            getSelectionList().clear();
                         }
                     }
                 }
             }
         }
-
     }
 
     @Override
@@ -1645,7 +1642,25 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    ViewerPluginBuilder.openSequenceInDefaultPlugin(series, dicomModel, true, true);
+                    final SeriesSelectionModel selList = getSeriesSelectionModel();
+                    selList.setOpenningSeries(true);
+                    Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
+                    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+                    props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
+
+                    String mime = series.getMimeType();
+                    SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+                    if (plugin == null) {
+                        plugin = DefaultMimeAppFactory.getInstance();
+                    }
+
+                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                    list.add(series);
+                    ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
+                    ViewerPluginBuilder.openSequenceInPlugin(builder);
+
+                    selList.setOpenningSeries(false);
                 }
             }
 
@@ -1688,69 +1703,52 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         seriesList = new ArrayList<MediaSeries>(selList);
                     }
                     for (final SeriesViewerFactory viewerFactory : plugins) {
-                        JMenuItem item4 =
-                            new JMenuItem(
-                                Messages.getString("DicomExplorer.open_series") + " " + viewerFactory.getUIName(), viewerFactory.getIcon()); //$NON-NLS-1$ //$NON-NLS-2$
+                        JMenu menuFactory = new JMenu(viewerFactory.getUIName());
+                        menuFactory.setIcon(viewerFactory.getIcon());
+
+                        JMenuItem item4 = new JMenuItem("Open");
                         item4.addActionListener(new ActionListener() {
 
                             @Override
                             public void actionPerformed(ActionEvent e) {
+                                selList.setOpenningSeries(true);
                                 ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true,
                                     true);
+                                selList.setOpenningSeries(false);
                             }
                         });
-                        popupMenu.add(item4);
+                        menuFactory.add(item4);
+
+                        item4 = new JMenuItem("Open in new window");
+                        item4.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                selList.setOpenningSeries(true);
+                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false,
+                                    true);
+                                selList.setOpenningSeries(false);
+                            }
+                        });
+                        menuFactory.add(item4);
+
                         if (viewerFactory.canAddSeries()) {
-                            item4 =
-                                new JMenuItem(
-                                    Messages.getString("DicomExplorer.add_sel_series") + " " + viewerFactory.getUIName(), //$NON-NLS-1$
-                                    viewerFactory.getIcon());
+                            item4 = new JMenuItem("Add");
                             item4.addActionListener(new ActionListener() {
 
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
+                                    selList.setOpenningSeries(true);
                                     ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
                                         true, false);
+                                    selList.setOpenningSeries(false);
                                 }
                             });
-                            popupMenu.add(item4);
+                            menuFactory.add(item4);
                         }
-                        if (viewerFactory.canExternalizeSeries()) {
 
-                            Toolkit toolkit = Toolkit.getDefaultToolkit();
-                            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                            GraphicsDevice[] gd = ge.getScreenDevices();
-                            if (gd.length > 1) {
-                                Rectangle bound =
-                                    WinUtil.getClosedScreenBound(WinUtil.getParentFrame((Component) explorer)
-                                        .getBounds());
+                        popupMenu.add(menuFactory);
 
-                                for (int i = 0; i < gd.length; i++) {
-                                    GraphicsConfiguration config = gd[i].getDefaultConfiguration();
-                                    final Rectangle b = config.getBounds();
-                                    if (!b.contains(bound)) {
-                                        Insets inset = toolkit.getScreenInsets(config);
-                                        b.x += inset.left;
-                                        b.y += inset.top;
-                                        b.width -= (inset.left + inset.right);
-                                        b.height -= (inset.top + inset.bottom);
-                                        item4 =
-                                            new JMenuItem("Open selected series in new tab " + gd[i].getIDstring(),
-                                                viewerFactory.getIcon());
-                                        item4.addActionListener(new ActionListener() {
-
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList,
-                                                    dicomModel, true, true, b);
-                                            }
-                                        });
-                                        popupMenu.add(item4);
-                                    }
-                                }
-                            }
-
-                        }
                         if (viewerFactory instanceof MimeSystemAppFactory) {
                             final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
                             item5.addActionListener(new ActionListener() {
@@ -1968,7 +1966,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         }
                     }
                     popupMenu.show(mouseevent.getComponent(), mouseevent.getX() - 5, mouseevent.getY() - 5);
-
                 } else {
                     selList.adjustSelection(mouseevent, series);
                 }
@@ -1987,8 +1984,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (selList.size() == 0) {
                         selList.add(series);
                     }
+                    selList.setOpenningSeries(true);
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
                         true, true);
+                    selList.setOpenningSeries(false);
+                    if (e.getSource() instanceof JComponent) {
+                        ((JComponent) e.getSource()).requestFocusInWindow();
+                    }
                     e.consume();
                 } else if (code == KeyEvent.VK_DOWN) {
                     SeriesSelectionModel selList = getSeriesSelectionModel();

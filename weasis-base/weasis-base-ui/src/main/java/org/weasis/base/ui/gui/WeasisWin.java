@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
@@ -100,6 +101,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
+import bibliothek.gui.dock.util.DockUtilities;
 import bibliothek.gui.dock.util.Priority;
 import bibliothek.gui.dock.util.color.ColorManager;
 import bibliothek.gui.dock.util.laf.LookAndFeelColors;
@@ -132,7 +134,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         @Override
         public void focusLost(CDockable dockable) {
-            // TODO Auto-generated method stub
         }
     };
 
@@ -205,6 +206,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // initToolWindowManager();
         this.setGlassPane(AbstractProperties.glassPane);
 
+        // Do not disable check when debugging
+        if (System.getProperty("maven.localRepository") == null) {
+            DockUtilities.disableCheckLayoutLocked();
+        }
         CControl control = UIManager.DOCKING_CONTROL;
         control.setRootWindow(new DirectWindowProvider(this));
         destroyOnClose(control);
@@ -287,12 +292,15 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     // MediaSeriesGroup
                     else if (source instanceof MediaSeriesGroup) {
                         MediaSeriesGroup group = (MediaSeriesGroup) source;
-                        synchronized (UIManager.VIEWER_PLUGINS) {
-                            for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                                ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
-                                if (group.equals(p.getGroupID())) {
-                                    p.setSelectedAndGetFocus();
-                                    break;
+                        // If already selected do not reselect or select a second window
+                        if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
+                            synchronized (UIManager.VIEWER_PLUGINS) {
+                                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
+                                    ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                                    if (group.equals(p.getGroupID())) {
+                                        p.setSelectedAndGetFocus();
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -309,9 +317,17 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
+                            boolean inSelView =
+                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
+                                    && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
+
                             if (series.size() == 1) {
                                 MediaSeries s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
+                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) {
+                                    // Change the group attribution. DO NOT use it with DICOM.
+                                    group = selectedPlugin.getGroupID();
+                                }
                                 openSeriesInViewerPlugin(builder, group);
                             } else if (series.size() > 1) {
                                 HashMap<MediaSeriesGroup, List<MediaSeries>> map =
@@ -320,7 +336,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                     map.entrySet().iterator(); iterator.hasNext();) {
                                     Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
-                                    List<MediaSeries> seriesList = entry.getValue();
+
+                                    if (inSelView) {
+                                        List<MediaSeries> seriesList = entry.getValue();
+                                        if (seriesList.size() > 0) {
+                                            // Change the group attribution. DO NOT use it with DICOM.
+                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) {
+                                                group = selectedPlugin.getGroupID();
+                                            }
+                                        }
+                                    }
                                     openSeriesInViewerPlugin(builder, group);
                                 }
                             }
@@ -382,6 +407,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
+        boolean setInSelection = JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
 
         if (screenBound == null && factory != null && group != null) {
             boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
@@ -390,7 +416,11 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     if (p instanceof ImageViewerPlugin && p.getName().equals(factory.getUIName())
                         && group.equals(p.getGroupID())) {
                         ImageViewerPlugin viewer = ((ImageViewerPlugin) p);
-                        viewer.addSeriesList(seriesList, bestDefaultLayout);
+                        if (setInSelection && seriesList.size() == 1) {
+                            viewer.addSeries(seriesList.get(0));
+                        } else {
+                            viewer.addSeriesList(seriesList, bestDefaultLayout);
+                        }
                         return;
                     }
                 }
@@ -409,6 +439,40 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         } else if (seriesViewer instanceof ViewerPlugin) {
             ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
             String title;
+
+            if (factory.canExternalizeSeries()) {
+                Toolkit toolkit = Toolkit.getDefaultToolkit();
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                GraphicsDevice[] gd = ge.getScreenDevices();
+                if (gd.length > 1) {
+                    viewer.getDockable().setExternalizable(true);
+                    Rectangle bound = WinUtil.getClosedScreenBound(WinUtil.getParentFrame(this).getBounds());
+                    // LocationHint hint =
+                    // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
+                    // DefaultDockActionSource source = new DefaultDockActionSource(hint);
+                    // source.add(setupDropDownMenu(viewer.getDockable()));
+                    // source.addSeparator();
+
+                    for (int i = 0; i < gd.length; i++) {
+                        GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+                        final Rectangle b = config.getBounds();
+                        if (!b.contains(bound)) {
+                            // Insets inset = toolkit.getScreenInsets(config);
+                            // b.x += inset.left;
+                            // b.y += inset.top;
+                            // b.width -= (inset.left + inset.right);
+                            // b.height -= (inset.top + inset.bottom);
+
+                            viewer.getDockable().setDefaultLocation(ExtendedMode.EXTERNALIZED,
+                                CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
+
+                            // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
+                            break;
+                        }
+                    }
+                }
+
+            }
             if (group == null && model instanceof TreeModel && seriesList.size() > 0
                 && model.getTreeModelNodeForNewPlugin() != null) {
                 TreeModel treeModel = (TreeModel) model;
@@ -435,7 +499,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             if (isregistered) {
                 viewer.setSelectedAndGetFocus();
                 if (seriesViewer instanceof ImageViewerPlugin) {
-                    ((ImageViewerPlugin) viewer).selectLayoutPositionForAddingSeries(seriesList);
+                    if (!setInSelection) {
+                        ((ImageViewerPlugin) viewer).selectLayoutPositionForAddingSeries(seriesList);
+                    }
                 }
                 for (MediaSeries m : seriesList) {
                     viewer.addSeries(m);
@@ -448,7 +514,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private boolean registerDetachWindow(final ViewerPlugin plugin, Rectangle screenBound) {
-        if (screenBound != null) {
+        if (plugin != null && screenBound != null) {
             ViewerPlugin oldWin = null;
             synchronized (UIManager.VIEWER_PLUGINS) {
                 Dialog old = null;
@@ -478,7 +544,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     @Override
                     public void run() {
                         if (dock.isVisible()) {
+                            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                             dock.setExtendedMode(ExtendedMode.MAXIMIZED);
+                            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                         }
                     }
                 });

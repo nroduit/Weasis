@@ -48,8 +48,8 @@ public class TempLayer extends DragLayer {
     @Override
     public void paint(Graphics2D g2, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D bound) {
         if (graphics != null) {
-            for (int i = 0; i < graphics.size(); i++) {
-                Graphic graphic = graphics.get(i);
+            for (int i = 0; i < graphics.list.size(); i++) {
+                Graphic graphic = graphics.list.get(i);
                 Rectangle2D graphicBounds = graphic != null ? graphic.getRepaintBounds(transform) : null;
 
                 if (bound == null || (graphicBounds != null && bound.intersects(graphicBounds))) {

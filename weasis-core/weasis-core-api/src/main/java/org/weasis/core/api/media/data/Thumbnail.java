@@ -93,8 +93,10 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     private int thumbnailSize;
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
     // Get the closest cursor size regarding to the platform
-    private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
+    private final Border onMouseOverBorderFocused = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
         Color.orange, 2));
+    private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(new Color(
+        255, 224, 178), 2));
     private final Border outMouseOverBorder = new EmptyBorder(4, 4, 2, 4);
     private JProgressBar progressBar;
     private final MediaSeries<E> series;
@@ -518,7 +520,8 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
     }
 
     public void paintSeriesState(Graphics2D g2d, int x, int y, int width, int height) {
-        setBorder(series.isSelected() ? onMouseOverBorder : outMouseOverBorder);
+        setBorder(series.isSelected() ? series.isFocused() ? onMouseOverBorderFocused : onMouseOverBorder
+            : outMouseOverBorder);
         if (series.isOpen()) {
             g2d.setPaint(Color.green);
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
