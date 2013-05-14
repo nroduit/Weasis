@@ -88,9 +88,9 @@ public class ExportTree extends JScrollPane {
                                             buffer.append(val);
                                             buffer.append("] "); //$NON-NLS-1$
                                         }
-                                        String desc = (String) d.getTagValue(TagW.SOPInstanceUID);
-                                        if (desc != null) {
-                                            buffer.append(desc);
+                                        String sopUID = (String) d.getTagValue(TagW.SOPInstanceUID);
+                                        if (sopUID != null) {
+                                            buffer.append(sopUID);
                                         }
                                         return buffer.toString();
                                     }
