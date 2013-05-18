@@ -38,6 +38,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -282,6 +284,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             selectedView2dContainer.setDrawActions(graphic);
             DefaultView2d<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
+                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.SELECT_VIEW));
                 pane.setFocused(true);
             }
         }

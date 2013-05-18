@@ -18,7 +18,8 @@ import org.dcm4che2.iod.module.sr.MeasuredValue;
 import org.dcm4che2.iod.module.sr.SRDocumentContent;
 import org.dcm4che2.iod.module.sr.SRDocumentContentModule;
 import org.dcm4che2.iod.module.sr.VerifyingObserver;
-import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -29,7 +30,6 @@ import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.PRManager;
 
@@ -47,23 +47,44 @@ public class SRReader {
         if (dicomSR.getMediaReader() instanceof DicomMediaIO) {
             DicomMediaIO dicomImageLoader = (DicomMediaIO) dicomSR.getMediaReader();
             dcmobj = dicomImageLoader.getDicomObject();
-            DataExplorerView dicomView = org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
-            DicomModel model = null;
-            if (dicomView != null) {
-                model = (DicomModel) dicomView.getDataExplorerModel();
-            }
-            if (model != null) {
-                MediaSeriesGroup study = model.getParent(series, DicomModel.study);
-                MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
-                tags.put(TagW.PatientName, patient.getTagValue(TagW.PatientName));
-                tags.put(TagW.PatientID, patient.getTagValue(TagW.PatientID));
-                tags.put(TagW.PatientBirthDate, patient.getTagValue(TagW.PatientBirthDate));
-                tags.put(TagW.PatientSex, patient.getTagValue(TagW.PatientSex));
+            DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+            if (model instanceof TreeModel) {
+                TreeModel treeModel = (TreeModel) model;
+                MediaSeriesGroup patient = treeModel.getParent(series, model.getTreeModelNodeForNewPlugin());
+                if (patient == null) {
+                    String patientID = dcmobj.getString(Tag.PatientID, DicomMediaIO.NO_VALUE);
+                    tags.put(TagW.PatientID, patientID);
+                    String name = DicomMediaUtils.buildPatientName(dcmobj.getString(Tag.PatientName));
+                    tags.put(TagW.PatientName, name);
+                    Date birthdate = DicomMediaUtils.getDateFromDicomElement(dcmobj, Tag.PatientBirthDate, null);
+                    DicomMediaUtils.setTagNoNull(tags, TagW.PatientBirthDate, birthdate);
+                    // Global Identifier for the patient.
+                    tags.put(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(patientID,
+                        dcmobj.getString(Tag.IssuerOfPatientID), name, birthdate));
+                    tags.put(TagW.PatientSex, DicomMediaUtils.buildPatientSex(dcmobj.getString(Tag.PatientSex)));
 
-                tags.put(TagW.StudyDate, study.getTagValue(TagW.StudyDate));
-                tags.put(TagW.StudyID, study.getTagValue(TagW.StudyID));
-                tags.put(TagW.AccessionNumber, study.getTagValue(TagW.AccessionNumber));
-                tags.put(TagW.ReferringPhysicianName, series.getTagValue(TagW.ReferringPhysicianName));
+                } else {
+                    tags.put(TagW.PatientName, patient.getTagValue(TagW.PatientName));
+                    tags.put(TagW.PatientID, patient.getTagValue(TagW.PatientID));
+                    tags.put(TagW.PatientBirthDate, patient.getTagValue(TagW.PatientBirthDate));
+                    tags.put(TagW.PatientSex, patient.getTagValue(TagW.PatientSex));
+                }
+
+                MediaSeriesGroup study = treeModel.getParent(series, DicomModel.study);
+                if (study == null) {
+                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyID, dcmobj.getString(Tag.StudyID));
+                    DicomMediaUtils.setTagNoNull(tags, TagW.StudyDate, TagW.dateTime(
+                        DicomMediaUtils.getDateFromDicomElement(dcmobj, Tag.StudyDate, null),
+                        DicomMediaUtils.getDateFromDicomElement(dcmobj, Tag.StudyTime, null)));
+                    DicomMediaUtils.setTagNoNull(tags, TagW.AccessionNumber, dcmobj.getString(Tag.AccessionNumber));
+                    DicomMediaUtils.setTagNoNull(tags, TagW.ReferringPhysicianName,
+                        DicomMediaUtils.buildPersonName(dcmobj.getString(Tag.ReferringPhysicianName)));
+                } else {
+                    tags.put(TagW.StudyDate, study.getTagValue(TagW.StudyDate));
+                    tags.put(TagW.StudyID, study.getTagValue(TagW.StudyID));
+                    tags.put(TagW.AccessionNumber, study.getTagValue(TagW.AccessionNumber));
+                    tags.put(TagW.ReferringPhysicianName, series.getTagValue(TagW.ReferringPhysicianName));
+                }
             }
         } else {
             dcmobj = null;

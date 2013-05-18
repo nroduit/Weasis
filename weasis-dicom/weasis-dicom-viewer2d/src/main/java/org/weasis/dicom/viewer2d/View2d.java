@@ -51,6 +51,8 @@ import javax.swing.TransferHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -795,11 +797,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (!canImport(support)) {
                 return false;
             }
-            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-            if (dicomView == null) {
-                return false;
-            }
-            DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
+
             Transferable transferable = support.getTransferable();
 
             List<File> files = null;
@@ -810,7 +808,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return dropDicomFiles(files, model);
+                return dropDicomFiles(files);
             }
             // When dragging a file or group of files from a Gnome or Kde environment
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
@@ -823,9 +821,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return dropDicomFiles(files, model);
+                return dropDicomFiles(files);
             }
-            SeriesSelectionModel selList = ((DicomExplorer) dicomView).getSelectionList();
+
+            DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+            DataExplorerModel model = null;
+            SeriesSelectionModel selList = null;
+            if (dicomView != null) {
+                selList = ((DicomExplorer) dicomView).getSelectionList();
+            }
+
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
@@ -833,17 +838,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (seq == null || seq.size(null) == 0) {
                     return false;
                 }
-                if (seq instanceof DicomSeries) {
-                    selList.setOpenningSeries(true);
+                model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
+                if (seq instanceof DicomSeries && model instanceof TreeModel) {
+                    TreeModel treeModel = (TreeModel) model;
+                    if (selList != null) {
+                        selList.setOpenningSeries(true);
+                    }
 
-                    MediaSeriesGroup p1 = model.getParent(seq, DicomModel.patient);
+                    MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
                     MediaSeriesGroup p2 = null;
                     ViewerPlugin openPlugin = null;
                     synchronized (UIManager.VIEWER_PLUGINS) {
                         plugin: for (final ViewerPlugin<? extends MediaElement> p : UIManager.VIEWER_PLUGINS) {
                             if (p instanceof View2dContainer) {
                                 for (MediaSeries s : p.getOpenSeries()) {
-                                    p2 = model.getParent(s, DicomModel.patient);
+                                    p2 = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
                                     if (p1.equals(p2)) {
                                         if (!((View2dContainer) p).isContainingView(View2d.this)) {
                                             openPlugin = p;
@@ -862,26 +871,36 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             ViewerPluginBuilder.openSequenceInPlugin(plugin, seq, model, true, true);
 
                         }
-                        selList.setOpenningSeries(false);
                         return false;
                     } else if (openPlugin != null) {
                         openPlugin.setSelectedAndGetFocus();
                         openPlugin.addSeries(seq);
                         // openPlugin.setSelected(true);
-                        selList.setOpenningSeries(false);
                         return false;
                     }
                 } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
                     ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
                     return true;
+                } else {
+                    // Not a DICOM Series
+                    return false;
                 }
             } catch (Exception e) {
                 return false;
+            } finally {
+                if (selList != null) {
+                    selList.setOpenningSeries(false);
+                }
+            }
+            if (selList != null) {
+                selList.setOpenningSeries(true);
             }
             ImageViewerPlugin<DicomImageElement> pane = EventManager.getInstance().getSelectedView2dContainer();
             if (pane != null && SynchView.Mode.Tile.equals(pane.getSynchView().getMode())) {
                 pane.addSeries(seq);
-                selList.setOpenningSeries(false);
+                if (selList != null) {
+                    selList.setOpenningSeries(false);
+                }
                 return true;
             }
 
@@ -891,12 +910,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (pane != null && pane.isContainingView(View2d.this)) {
                 pane.setSelectedImagePaneFromFocus(View2d.this);
             }
-            selList.setOpenningSeries(false);
+            if (selList != null) {
+                selList.setOpenningSeries(false);
+            }
             return true;
         }
 
-        private boolean dropDicomFiles(List<File> files, DicomModel model) {
+        private boolean dropDicomFiles(List<File> files) {
             if (files != null) {
+                DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                if (dicomView == null) {
+                    return false;
+                }
+                DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
                 LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
                 DicomModel.loadingExecutor.execute(dicom);
                 return true;

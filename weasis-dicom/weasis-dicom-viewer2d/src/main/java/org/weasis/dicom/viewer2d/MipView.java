@@ -37,7 +37,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewButton;
-import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.mpr.SeriesBuilder;
@@ -320,16 +319,6 @@ public class MipView extends View2d {
                             @Override
                             public void run() {
                                 progressBar.setVisible(false);
-                                DicomImageElement image = imageLayer.getSourceImage();
-                                if (image != null) {
-                                    // Update statistics
-                                    List<Graphic> list = (List<Graphic>) image.getTagValue(TagW.MeasurementGraphics);
-                                    if (list != null) {
-                                        for (Graphic graphic : list) {
-                                            graphic.updateLabel(true, MipView.this);
-                                        }
-                                    }
-                                }
                             }
                         });
 

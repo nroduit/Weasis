@@ -524,8 +524,9 @@ public abstract class BasicGraphic implements Graphic {
 
     public void moveLabel(double deltaX, double deltaY) {
         if (isLabelDisplayable() && (deltaX != 0 || deltaY != 0)) {
+            GraphicLabel oldLabel = graphicLabel.clone();
             graphicLabel.move(deltaX, deltaY);
-            fireLabelChanged(graphicLabel.clone());
+            fireLabelChanged(oldLabel);
         }
     }
 

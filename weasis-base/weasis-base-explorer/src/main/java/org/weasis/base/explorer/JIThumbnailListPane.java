@@ -23,6 +23,7 @@ public class JIThumbnailListPane extends JScrollPane implements DiskFileList {
             list = new JIThumbnailList(model);
         }
         this.list.addListSelectionListener(new JIListSelectionAdapter());
+        this.list.registerListeners();
         this.setViewportView(list);
         this.setAutoscrolls(true);
     }

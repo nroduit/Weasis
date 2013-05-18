@@ -22,14 +22,12 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -72,7 +70,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
@@ -86,7 +83,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
@@ -205,7 +201,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     public void createMainPanel() throws Exception {
         // initToolWindowManager();
         this.setGlassPane(AbstractProperties.glassPane);
-
         // Do not disable check when debugging
         if (System.getProperty("maven.localRepository") == null) {
             DockUtilities.disableCheckLayoutLocked();
@@ -257,6 +252,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // control.setDefaultLocation(UIManager.BASE_AREA.
         // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
         this.add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
         UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
         UIManager.MAIN_AREA.setVisible(true);
 
@@ -653,7 +649,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         bound = b;
 
         log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
-        setMaximizedBounds(bound);
+        // setMaximizedBounds(bound);
 
         // set a valid size, insets of screen is often non consistent
         setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
@@ -948,12 +944,6 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         @Override
         public Transferable createTransferable(JComponent comp) {
-            if (comp instanceof Thumbnail) {
-                MediaSeries t = ((Thumbnail) comp).getSeries();
-                if (t instanceof Series) {
-                    return t;
-                }
-            }
             return null;
         }
 
@@ -962,12 +952,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             if (!support.isDrop()) {
                 return false;
             }
-            if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
-                || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
-                return true;
-            }
-            return false;
+            return support.isDataFlavorSupported(Series.sequenceDataFlavor);
         }
 
         @Override
@@ -975,36 +960,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             if (!canImport(support)) {
                 return false;
             }
-
-            Transferable transferable = support.getTransferable();
-
-            List<File> files = null;
-            // Not supported on Linux
-            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                try {
-                    files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return dropFiles(files, null);
-            }
-            // When dragging a file or group of files from a Gnome or Kde environment
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
-                try {
-                    // Files with spaces in the filename trigger an error
-                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
-                    files = UriListFlavor.textURIListToFileList(val);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return dropFiles(files, null);
-            }
-
-            Series seq;
             try {
-                seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                Transferable transferable = support.getTransferable();
+                Series seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
                 if (seq != null) {
                     synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
                         for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
@@ -1026,19 +984,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             } catch (Exception e) {
                 return false;
             }
-
             return true;
 
-        }
-
-        private boolean dropFiles(List<File> files, DataExplorerView explorer) {
-            // TODO get the current explorer
-            if (files != null) {
-                // LoadLocalDicom dicom = new LoadLocalDicom(files.toArray(new File[files.size()]), true, model);
-                // DicomModel.loadingExecutor.execute(dicom);
-                return true;
-            }
-            return false;
         }
     }
 

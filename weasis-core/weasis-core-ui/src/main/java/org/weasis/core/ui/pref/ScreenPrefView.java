@@ -110,8 +110,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 buf.append(" ");
                 buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
                 buf.append("x");
-                buf.append((int) Math.round(mb.height
-                    * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
+                buf.append((int) Math.round(mb.height * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
                 buf.append(" ");
                 buf.append(Unit.MILLIMETER.getAbbreviation());
             }
@@ -127,7 +126,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                      */
                     JFrame frame = new JFrame(monitor.getGraphicsConfiguration());
                     Rectangle bound = monitor.getBounds();
-                    frame.setMaximizedBounds(bound);
+                    // frame.setMaximizedBounds(bound);
                     frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
                     frame.setVisible(true);
                     frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -218,12 +217,10 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             if (monitor.getPitch() > 0) {
                 String hlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch())
-                        * horizontalLength)
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch()) * horizontalLength)
                         + " " + Unit.MILLIMETER.getAbbreviation();
                 String vlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch())
-                        * verticalLength)
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch()) * verticalLength)
                         + " " + Unit.MILLIMETER.getAbbreviation();
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);

@@ -459,4 +459,10 @@ public class JMVUtils {
         };
     }
 
+    public static Color getComplementaryColor(Color color) {
+        float[] c = new float[3];
+        Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), c);
+        return Color.getHSBColor(c[0] + 0.5F, c[1], c[2]);
+    }
+
 }

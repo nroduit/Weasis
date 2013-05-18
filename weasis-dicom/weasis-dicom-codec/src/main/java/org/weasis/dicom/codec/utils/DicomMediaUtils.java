@@ -699,6 +699,12 @@ public class DicomMediaUtils {
         return buildPersonName(name);
     }
 
+    public static String buildPatientSex(String val) {
+        // Sex attribute can have the following values: M(male), F(female), or O(other)
+        String name = val == null ? "O" : val;
+        return name.startsWith("F") ? Messages.getString("DicomMediaIO.female") : name.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    }
+
     public static String buildPersonName(String name) {
         if (name == null) {
             return null;
@@ -783,12 +789,7 @@ public class DicomMediaUtils {
 
             group.setTagNoNull(TagW.PatientBirthDate, getDateFromDicomElement(header, Tag.PatientBirthDate, null));
             group.setTagNoNull(TagW.PatientBirthTime, getDateFromDicomElement(header, Tag.PatientBirthTime, null));
-            // Sex attribute can have the following values: M(male), F(female), or O(other)
-            String val = header.getString(Tag.PatientSex, "O"); //$NON-NLS-1$
-            group
-                .setTag(
-                    TagW.PatientSex,
-                    val.startsWith("F") ? Messages.getString("DicomMediaIO.female") : val.startsWith("M") ? Messages.getString("DicomMediaIO.Male") : Messages.getString("DicomMediaIO.other")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            group.setTag(TagW.PatientSex, DicomMediaUtils.buildPatientSex(header.getString(Tag.PatientSex)));
             group.setTagNoNull(TagW.IssuerOfPatientID, header.getString(Tag.IssuerOfPatientID));
             group.setTagNoNull(TagW.PatientWeight, getFloatFromDicomElement(header, Tag.PatientWeight, null));
             group.setTagNoNull(TagW.PatientComments, header.getString(Tag.PatientComments));

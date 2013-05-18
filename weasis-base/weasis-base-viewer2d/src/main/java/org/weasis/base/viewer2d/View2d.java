@@ -12,6 +12,8 @@ package org.weasis.base.viewer2d;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -21,10 +23,12 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -33,7 +37,10 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
+import javax.swing.TransferHandler;
 
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
@@ -50,13 +57,21 @@ import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
@@ -68,6 +83,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.core.ui.util.UriListFlavor;
 
 public class View2d extends DefaultView2d<ImageElement> {
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -96,7 +112,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     @Override
     public void registerDefaultListeners() {
         super.registerDefaultListeners();
-        // setTransferHandler(new SequenceHandler());
+        setTransferHandler(new SequenceHandler());
 
         addComponentListener(new ComponentAdapter() {
 
@@ -649,4 +665,129 @@ public class View2d extends DefaultView2d<ImageElement> {
         }
     }
 
+    private class SequenceHandler extends TransferHandler {
+
+        public SequenceHandler() {
+            super("series"); //$NON-NLS-1$
+        }
+
+        @Override
+        public Transferable createTransferable(JComponent comp) {
+            return null;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            if (!support.isDrop()) {
+                return false;
+            }
+            if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
+                || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            Transferable transferable = support.getTransferable();
+
+            List<File> files = null;
+            // Not supported on Linux
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                try {
+                    files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropDicomFiles(files);
+            }
+            // When dragging a file or group of files from a Gnome or Kde environment
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
+            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                try {
+                    // Files with spaces in the filename trigger an error
+                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
+                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    files = UriListFlavor.textURIListToFileList(val);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropDicomFiles(files);
+            }
+            Series seq;
+            try {
+                seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                // Do not add series without medias. BUG WEA-100
+                if (seq == null || seq.size(null) == 0) {
+                    return false;
+                }
+                DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
+                if (seq.getMedia(0, null, null) instanceof ImageElement && model instanceof TreeModel) {
+                    TreeModel treeModel = (TreeModel) model;
+
+                    MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
+                    MediaSeriesGroup p2 = null;
+                    ViewerPlugin openPlugin = null;
+                    if (p1 != null) {
+                        synchronized (UIManager.VIEWER_PLUGINS) {
+                            plugin: for (final ViewerPlugin<? extends MediaElement> p : UIManager.VIEWER_PLUGINS) {
+                                if (p instanceof View2dContainer) {
+                                    for (MediaSeries s : p.getOpenSeries()) {
+                                        p2 = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
+                                        if (p1.equals(p2)) {
+                                            if (!((View2dContainer) p).isContainingView(View2d.this)) {
+                                                openPlugin = p;
+                                            }
+                                            break plugin;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (openPlugin != null) {
+                        openPlugin.setSelectedAndGetFocus();
+                        openPlugin.addSeries(seq);
+                        // openPlugin.setSelected(true);
+                        return false;
+                    }
+                } else {
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model == null
+                        ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+                    return true;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+            ImageViewerPlugin<ImageElement> pane = EventManager.getInstance().getSelectedView2dContainer();
+            if (pane != null && SynchView.Mode.Tile.equals(pane.getSynchView().getMode())) {
+                pane.addSeries(seq);
+                return true;
+            }
+
+            setSeries(seq);
+            // Getting the focus has a delay and so it will trigger the view selection later
+            // requestFocusInWindow();
+            if (pane != null && pane.isContainingView(View2d.this)) {
+                pane.setSelectedImagePaneFromFocus(View2d.this);
+            }
+            return true;
+        }
+
+        private boolean dropDicomFiles(List<File> files) {
+            if (files != null) {
+                for (File file : files) {
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
+                }
+                return true;
+            }
+            return false;
+        }
+    }
 }

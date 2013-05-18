@@ -1,10 +1,20 @@
 package org.weasis.base.explorer;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceEvent;
+import java.awt.dnd.DragSourceListener;
+import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -24,6 +34,8 @@ import java.util.UUID;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -32,7 +44,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
+import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -42,7 +57,8 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-public final class JIThumbnailList extends JList<MediaElement> implements JIObservable {
+public final class JIThumbnailList extends JList<MediaElement> implements JIObservable, DragGestureListener,
+    DragSourceListener, DragSourceMotionListener {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
@@ -50,14 +66,14 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
         intGroupFormat.setGroupingUsed(true);
     }
     private final int editingIndex = -1;
-
     private final FileTreeModel model;
-
     private final ToggleSelectionModel selectionModel;
 
     private boolean changed;
-
+    private Point dragPressed = null;
+    private DragSource dragSource = null;
     private MediaElement lastSelectedDiskObject = null;
+    private JLabel label = new JLabel();
 
     public JIThumbnailList(final FileTreeModel model) {
         this(model, VERTICAL_WRAP, null);
@@ -85,7 +101,6 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
         this.setBackground(new Color(242, 242, 242));
 
         setSelectionModel(this.selectionModel);
-        setDragEnabled(true);
         // setTransferHandler(new ListTransferHandler());
         ThumbnailRenderer panel = new ThumbnailRenderer();
         Dimension dim = panel.getPreferredSize();
@@ -96,15 +111,24 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
 
         setLayoutOrientation(HORIZONTAL_WRAP);
 
-        addMouseListener(new PopupTrigger());
-        addKeyListener(new JIThumbnailKeyAdapter());
-
         if (useSelection) {
             // JIExplorer.instance().getContext();
         }
 
         setVerifyInputWhenFocusTarget(false);
         JIThumbnailCache.getInstance().invalidate();
+    }
+
+    public void registerListeners() {
+        if (dragSource != null) {
+            dragSource.removeDragSourceListener(this);
+            dragSource.removeDragSourceMotionListener(this);
+        }
+        addMouseListener(new PopupTrigger());
+        addKeyListener(new JIThumbnailKeyAdapter());
+        dragSource = DragSource.getDefaultDragSource();
+        dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
+        dragSource.addDragSourceMotionListener(this);
     }
 
     public JIListModel getThumbnailListModel() {
@@ -181,6 +205,41 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
         ensureIndexIsVisible(0);
     }
 
+    private MediaSeries buildSeriesFromMediaElement(MediaElement mediaElement) {
+        if (mediaElement != null) {
+            String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
+            File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
+            MediaReader reader = ViewerPluginBuilder.getMedia(file);
+            if (reader != null && file != null) {
+
+                TagW tname;
+                String tvalue;
+
+                Codec codec = reader.getCodec();
+                String sUID;
+                String gUID;
+                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {
+                    if (reader.getMediaElement() == null) {
+                        // DICOM is not readable
+                        return null;
+                    }
+                    sUID = (String) reader.getTagValue(TagW.SeriesInstanceUID);
+                    gUID = (String) reader.getTagValue(TagW.PatientID);
+                    tname = TagW.PatientName;
+                    tvalue = (String) reader.getTagValue(TagW.PatientName);
+                } else {
+                    sUID = mediaElement.getFile().getAbsolutePath();
+                    gUID = sUID;
+                    tname = TagW.FileName;
+                    tvalue = mediaElement.getFile().getName();
+                }
+
+                return ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+            }
+        }
+        return null;
+    }
+
     public void openSelection() {
         Object object = getSelectedValue();
         if (object instanceof MediaElement) {
@@ -206,8 +265,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
                     String tvalue;
 
                     Codec codec = reader.getCodec();
-                    if ("application/dicom".equals(mediaElement.getMimeType()) && codec != null
-                        && codec.isMimeTypeSupported("application/dicom")) {
+                    if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {
                         if (reader.getMediaElement() == null) {
                             // DICOM is not readable
                             return;
@@ -343,6 +401,16 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
                 ViewerPluginBuilder.openSequenceInPlugin(builder);
             }
         }
+    }
+
+    private boolean isDicomMedia(MediaElement mediaElement) {
+        if (mediaElement != null) {
+            String mime = mediaElement.getMimeType();
+            if (mime != null) {
+                return mime.indexOf("dicom") != -1;
+            }
+        }
+        return false;
     }
 
     public void nextPage(final KeyEvent e) {
@@ -730,6 +798,82 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
         public void keyReleased(final KeyEvent e) {
             JIThumbnailList.this.selectionModel.setShiftKey(false);
             JIThumbnailList.this.selectionModel.setCntrlKey(false);
+        }
+    }
+
+    // --- DragGestureListener methods -----------------------------------
+
+    @Override
+    public void dragGestureRecognized(DragGestureEvent dge) {
+        Component comp = dge.getComponent();
+        try {
+            if (comp instanceof JIThumbnailList) {
+                int index = getSelectedIndex();
+                MediaElement media = getSelectedValue();
+                MediaSeries series = buildSeriesFromMediaElement(media);
+                if (series != null) {
+                    GhostGlassPane glassPane = AbstractProperties.glassPane;
+                    Icon icon = null;
+                    if (media instanceof ImageElement) {
+                        icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) media, this, index);
+                    }
+                    if (icon == null) {
+                        icon = JIUtility.getSystemIcon(media);
+                    }
+                    glassPane.setIcon(icon);
+                    dragPressed = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
+                    Point p = (Point) dge.getDragOrigin().clone();
+                    SwingUtilities.convertPointToScreen(p, comp);
+                    drawGlassPane(p);
+                    glassPane.setVisible(true);
+                    dge.startDrag(null, series, this);
+                }
+            }
+            return;
+        } catch (RuntimeException re) {
+        }
+
+    }
+
+    @Override
+    public void dragMouseMoved(DragSourceDragEvent dsde) {
+        drawGlassPane(dsde.getLocation());
+    }
+
+    // --- DragSourceListener methods -----------------------------------
+
+    @Override
+    public void dragEnter(DragSourceDragEvent dsde) {
+    }
+
+    @Override
+    public void dragOver(DragSourceDragEvent dsde) {
+    }
+
+    @Override
+    public void dragExit(DragSourceEvent dsde) {
+
+    }
+
+    @Override
+    public void dragDropEnd(DragSourceDropEvent dsde) {
+        GhostGlassPane glassPane = AbstractProperties.glassPane;
+        dragPressed = null;
+        glassPane.setImagePosition(null);
+        glassPane.setIcon(null);
+        glassPane.setVisible(false);
+    }
+
+    @Override
+    public void dropActionChanged(DragSourceDragEvent dsde) {
+    }
+
+    public void drawGlassPane(Point p) {
+        if (dragPressed != null) {
+            GhostGlassPane glassPane = AbstractProperties.glassPane;
+            SwingUtilities.convertPointFromScreen(p, glassPane);
+            p.translate(-dragPressed.x, -dragPressed.y);
+            glassPane.setImagePosition(p);
         }
     }
 }
