@@ -358,11 +358,21 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     StringBuffer buffer = new StringBuffer();
                     if (keepNames) {
                         TreeNode[] objects = node.getPath();
-                        if (objects.length > 2) {
-                            for (int i = 1; i < objects.length - 1; i++) {
-                                buffer.append(FileUtil.getValidFileName(objects[i].toString()));
-                                buffer.append(File.separator);
+                        if (objects.length > 3) {
+                            buffer.append(FileUtil.getValidFileName(objects[1].toString()));
+                            buffer.append(File.separator);
+                            buffer.append(FileUtil.getValidFileName(objects[2].toString()));
+                            buffer.append(File.separator);
+                            String seriesName = FileUtil.getValidFileName(objects[3].toString());
+                            if (seriesName.length() > 30) {
+                                buffer.append(seriesName, 0, 27);
+                                buffer.append("...");
+                            } else {
+                                buffer.append(seriesName);
                             }
+                            buffer.append('-');
+                            // Hash of UID to guaranty the unique behavior of the name (can have only series number).
+                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
                         }
                     } else {
                         buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
