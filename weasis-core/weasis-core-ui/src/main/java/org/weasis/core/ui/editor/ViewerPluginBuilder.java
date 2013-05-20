@@ -25,6 +25,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -34,6 +35,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.serialize.DefaultSerializer;
 
 public class ViewerPluginBuilder {
     public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer";
@@ -241,6 +243,13 @@ public class ViewerPluginBuilder {
                 if (medias != null) {
                     for (MediaElement media : medias) {
                         series.addMedia(media);
+                    }
+                }
+            }
+            if (medias != null) {
+                for (MediaElement media : medias) {
+                    if (media instanceof ImageElement) {
+                        DefaultSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
                     }
                 }
             }

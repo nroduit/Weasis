@@ -50,6 +50,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
 
@@ -438,11 +439,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void resetMaximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
         if (layoutModel.getConstraints().size() > 1 && grid.getComponentCount() == 1) {
-            maximizedSelectedImagePane(defaultView2d);
+            maximizedSelectedImagePane(defaultView2d, null);
         }
     }
 
-    public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
+    public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d, MouseEvent evt) {
         final LinkedHashMap<LayoutConstraints, Component> elements = layoutModel.getConstraints();
         if (elements.size() > 1) {
             // Prevent conflict with double click for stopping to draw a graphic (like polyline)
@@ -452,6 +453,15 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     if (g.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
                         return;
                     }
+                }
+            }
+            if (evt != null) {
+                // Do not maximize when click hits a graphic
+                MouseEventDouble mouseEvt = new MouseEventDouble(evt);
+                mouseEvt.setImageCoordinates(defaultView2d.getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
+                Graphic firstGraphicIntersecting = defaultView2d.getLayerModel().getFirstGraphicIntersecting(mouseEvt);
+                if (firstGraphicIntersecting != null) {
+                    return;
                 }
             }
 

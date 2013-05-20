@@ -69,7 +69,6 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -345,6 +344,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         int jpegQuality = JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false")); //$NON-NLS-1$
+        boolean writeGraphics = chckbxGraphics.isSelected();
 
         synchronized (tree) {
             TreePath[] paths = tree.getTree().getCheckingPaths();
@@ -371,7 +371,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 buffer.append(seriesName);
                             }
                             buffer.append('-');
-                            // Hash of UID to guaranty the unique behavior of the name (can have only series number).
+                            // Hash of UID to guaranty the unique behavior of the name.
                             buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
                         }
                     } else {
@@ -393,8 +393,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
-                            ImageFiler.writeJPG(
-                                new File(destinationDir, instance + ".jpg"), image, jpegQuality / 100.0f); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".jpg");
+                            ImageFiler.writeJPG(destinationFile, image, jpegQuality / 100.0f); //$NON-NLS-1$
+                            if (writeGraphics) {
+                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                            }
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
                         }
@@ -404,7 +407,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             image = img.getRenderedImage(image);
                         }
                         if (image != null) {
-                            ImageFiler.writePNG(new File(destinationDir, instance + ".png"), image); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".png");
+                            ImageFiler.writePNG(destinationFile, image); //$NON-NLS-1$
+                            if (writeGraphics) {
+                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                            }
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
                         }
@@ -414,8 +421,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             if (!more8bits) {
                                 image = img.getRenderedImage(image);
                             }
-                            ImageFiler.writeTIFF(
-                                new File(destinationDir, instance + ".tif"), image, false, false, false); //$NON-NLS-1$
+                            File destinationFile = new File(destinationDir, instance + ".tif");
+                            ImageFiler.writeTIFF(destinationFile, image, false, false, false); //$NON-NLS-1$
+                            if (writeGraphics) {
+                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
+                            }
                         } else {
                             LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
                         }
@@ -430,7 +440,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean keepNames;
         boolean writeDicomdir;
         boolean cdCompatible;
-        boolean gx = chckbxGraphics.isSelected();
+        boolean writeGraphics = chckbxGraphics.isSelected();
 
         File writeDir;
 
@@ -505,14 +515,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
 
-                            GraphicList list = (GraphicList) img.getTagValue(TagW.MeasurementGraphics);
-                            if (list != null && list.list.size() > 0) {
-                                File gpxFile = new File(destinationDir, iuid + "-gpx.xml");
-                                try {
-                                    DefaultSerializer.getInstance().getSerializer().write(list, gpxFile);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                            if (writeGraphics) {
+                                DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
 
                             if (writer != null) {
@@ -526,8 +530,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                     DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
 
                                     // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series.
-                                    // It
-                                    // may or may not correspond to one of the images of the Series.
+                                    // It may or may not correspond to one of the images of the Series.
                                     if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
                                         DicomImageElement midImage =
                                             ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())

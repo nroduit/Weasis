@@ -18,10 +18,13 @@ import java.awt.Point;
 import java.awt.Robot;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -238,7 +241,16 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                     resizingOrMoving = false;
                     shape = null;
                     buildShape(mouseEvent);
-
+                    if (mouseEvent.getClickCount() == 2) {
+                        DefaultView2d<?> graphPane = getDefaultView2d(mouseEvent);
+                        if (graphPane != null) {
+                            final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+                            list.add(AbstractDragGraphic.this);
+                            JDialog dialog = new MeasureDialog(graphPane, list);
+                            WinUtil.adjustLocationToFitScreen(dialog, mouseEvent.getLocationOnScreen());
+                            dialog.setVisible(true);
+                        }
+                    }
                     return true;
                 }
             }

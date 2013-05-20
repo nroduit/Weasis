@@ -18,6 +18,7 @@ import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -36,6 +37,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.graphic.AdvancedShape.BasicShape;
 import org.weasis.core.ui.graphic.AdvancedShape.ScaleInvariantShape;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -190,6 +192,27 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         setHandlePoint(0, ptAnchor == null ? null : (Point2D.Double) ptAnchor.clone());
         setHandlePoint(1, ptBox == null ? null : (Point2D.Double) ptBox.clone());
         buildShape(null);
+    }
+
+    @Override
+    public Area getArea(AffineTransform transform) {
+        if (shape == null) {
+            return new Area();
+        }
+        if (shape instanceof AdvancedShape) {
+            AdvancedShape s = ((AdvancedShape) shape);
+            Area area = s.getArea(transform);
+            List<BasicShape> list = s.getShapeList();
+            if (list.size() > 0) {
+                BasicShape b = list.get(list.size() - 1);
+                // Allow to move inside the box, not only around stroke.
+                area.add(new Area(b.getRealShape()));
+            }
+
+            return area;
+        } else {
+            return super.getArea(transform);
+        }
     }
 
     @Override

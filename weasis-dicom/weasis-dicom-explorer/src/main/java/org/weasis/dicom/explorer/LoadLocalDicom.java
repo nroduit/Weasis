@@ -97,7 +97,7 @@ public class LoadLocalDicom extends ExplorerTask {
                                 thumbs.add(t);
                             }
 
-                            File gpxFile = new File(file[i].getPath() + "-gpx.xml");
+                            File gpxFile = new File(file[i].getPath() + ".xml");
 
                             if (gpxFile.canRead()) {
                                 try {

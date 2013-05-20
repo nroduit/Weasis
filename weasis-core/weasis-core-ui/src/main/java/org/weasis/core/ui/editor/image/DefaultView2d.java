@@ -1411,7 +1411,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 return;
             }
             if (evt.getClickCount() == 2) {
-                pane.maximizedSelectedImagePane(DefaultView2d.this);
+                pane.maximizedSelectedImagePane(DefaultView2d.this, evt);
                 return;
             }
             if (pane.isContainingView(DefaultView2d.this)) {
