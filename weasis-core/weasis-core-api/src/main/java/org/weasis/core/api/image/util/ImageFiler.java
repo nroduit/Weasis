@@ -222,7 +222,7 @@ public class ImageFiler extends AbstractBufferHandler {
             param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
 
             ArrayList list = new ArrayList();
-            list.add(Thumbnail.buildThumbnail(getReadableImage(source)));
+            list.add(Thumbnail.createThumbnail(getReadableImage(source)));
 
             param.setExtraImages(list.iterator());
         }

@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
@@ -21,6 +20,7 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -30,9 +30,6 @@ import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
 public class SeriesSelectionModel extends ArrayList<Series<?>> {
-
-    public static final Color BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$ 
-    public static final Color SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
 
     private final PatientContainerPane patientContainer;
 
@@ -144,7 +141,7 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
             if (thumb != null) {
                 Container parent = thumb.getParent();
                 if (parent instanceof JPanel) {
-                    parent.setBackground(selected ? SELECTION_BACKROUND : BACKROUND);
+                    parent.setBackground(selected ? JMVUtils.TREE_SELECTION_BACKROUND : JMVUtils.TREE_BACKROUND);
                 }
             }
         }

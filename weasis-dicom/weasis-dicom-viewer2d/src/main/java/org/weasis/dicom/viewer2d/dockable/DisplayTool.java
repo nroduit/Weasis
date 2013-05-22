@@ -37,6 +37,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -45,6 +47,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -72,6 +75,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private DefaultMutableTreeNode dicomInfo;
     private DefaultMutableTreeNode drawings;
     private TreePath rootPath;
+    private JPanel panel_foot;
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.TYPE.mainTool);
@@ -232,6 +236,14 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
+
+        panel_foot = new JPanel();
+        // To handle selection color with all L&Fs
+        panel_foot.setUI(new javax.swing.plaf.PanelUI() {
+        });
+        panel_foot.setOpaque(true);
+        panel_foot.setBackground(JMVUtils.TREE_BACKROUND);
+        add(panel_foot, BorderLayout.SOUTH);
     }
 
     private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
@@ -304,6 +316,31 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     }
                 }
             }
+            ImageElement img = view.getImage();
+            if (img != null) {
+                Panner<?> panner = view.getPanner();
+                if (panner != null) {
+
+                    // int cps = panel_foot.getComponentCount();
+                    // if (cps > 0) {
+                    // Component cp = panel_foot.getComponent(0);
+                    // if (cp != panner) {
+                    // if (cp instanceof Thumbnail) {
+                    // ((Thumbnail) cp).removeMouseAndKeyListener();
+                    // }
+                    // panner.registerListeners();
+                    // panel_foot.removeAll();
+                    // panel_foot.add(panner);
+                    // panner.revalidate();
+                    // panner.repaint();
+                    // }
+                    // } else {
+                    // panner.registerListeners();
+                    // panel_foot.add(panner);
+                    // }
+                }
+            }
+
             initPathSelection = false;
         }
     }

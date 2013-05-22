@@ -1,7 +1,5 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
- * Copyright (c) 2010 Nicolas Roduit.
- * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -45,6 +43,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -87,8 +86,8 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
@@ -164,6 +163,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     protected final KOViewButton koStarButton;
 
+    private JLayeredPane layeredPane;
+
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         OperationsManager manager = imageLayer.getOperationsManager();
@@ -190,6 +191,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         viewButtons.add(KOManager.buildKoSelectionButton(this));
         koStarButton = KOManager.buildKoStarButton(this);
+
+        // TODO add panner
+        // this.layeredPane = new JLayeredPane();
+        // layeredPane.setPreferredSize(new Dimension(1024, 1024));
+        // this.add(layeredPane);
     }
 
     @Override
@@ -205,6 +211,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
                     center();
+                }
+                if (panner != null) {
+                    panner.updateImageSize();
                 }
                 if (lens != null) {
                     int w = getWidth();
@@ -735,6 +744,23 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         super.setSeries(series, selectedDicom);
 
+        // TODO
+        // JFrame frame = new JFrame();
+        // frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        // JPanel pane = new JPanel();
+
+        // layeredPane.setPreferredSize(new Dimension(200, 200));
+        // pane.remove(layeredPane);
+        // layeredPane.removeAll();
+        // panner.setSize(200, 200);
+        // layeredPane.add(panner, JLayeredPane.DEFAULT_LAYER);
+        // pane.add(layeredPane);
+        // panner.setBounds(0, 0, 200, 200);
+        // pane.setBounds(0, 0, 200, 200);
+        // frame.add(pane);
+        // frame.pack();
+        // frame.setVisible(true);
+
         if (series != null) {
             AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(), //$NON-NLS-1$
                 series.getTagValue(TagW.Modality));
@@ -1077,8 +1103,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         @Override
         public Transferable createTransferable(JComponent comp) {
-            if (comp instanceof Thumbnail) {
-                MediaSeries t = ((Thumbnail) comp).getSeries();
+            if (comp instanceof SeriesThumbnail) {
+                MediaSeries<?> t = ((SeriesThumbnail) comp).getSeries();
                 if (t instanceof Series) {
                     return t;
                 }

@@ -56,7 +56,7 @@ public class ShutterOperation extends AbstractOperation {
                 result = ShutterDescriptor.create(source, new ROIShape(area), getShutterColor(imageOperation), null);
             } else {
                 result =
-                    combineTwoImagesOperation.combineTwoImages(source,
+                    CombineTwoImagesOperation.combineTwoImages(source,
                         ImageFiler.getEmptyImage(color, source.getWidth(), source.getHeight()),
                         getAsImage(area, source));
             }

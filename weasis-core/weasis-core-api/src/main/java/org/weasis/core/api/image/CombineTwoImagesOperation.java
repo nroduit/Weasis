@@ -31,8 +31,8 @@ import com.sun.media.jai.util.ImageUtil;
  * 
  * @version $Rev$ $Date$
  */
-public class combineTwoImagesOperation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(combineTwoImagesOperation.class);
+public class CombineTwoImagesOperation extends AbstractOperation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CombineTwoImagesOperation.class);
 
     public static final String name = "CombineImage"; //$NON-NLS-1$
 
@@ -48,7 +48,7 @@ public class combineTwoImagesOperation extends AbstractOperation {
             result = source;
             LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
         } else {
-            result = combineTwoImagesOperation.combineTwoImages(source, source2, 255);
+            result = CombineTwoImagesOperation.combineTwoImages(source, source2, 255);
         }
         return result;
     }

@@ -26,6 +26,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
@@ -77,7 +78,7 @@ public class LoadLocalDicom extends ExplorerTask {
         if (file == null || file.length < 1) {
             return;
         }
-        final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
+        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
         for (int i = 0; i < file.length; i++) {
             if (file[i] == null) {
@@ -92,7 +93,7 @@ public class LoadLocalDicom extends ExplorerTask {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.isReadableDicom()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                            Thumbnail t = buildDicomStructure(loader, openPlugin);
+                            SeriesThumbnail t = buildDicomStructure(loader, openPlugin);
                             if (t != null) {
                                 thumbs.add(t);
                             }
@@ -114,7 +115,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
             }
         }
-        for (final Thumbnail t : thumbs) {
+        for (final SeriesThumbnail t : thumbs) {
             MediaSeries series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.size(null) > 2) {
@@ -133,8 +134,8 @@ public class LoadLocalDicom extends ExplorerTask {
         }
     }
 
-    private Thumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
-        Thumbnail thumb = null;
+    private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
+        SeriesThumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
@@ -171,7 +172,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
 
                 // Load image and create thumbnail in this Thread
-                Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);

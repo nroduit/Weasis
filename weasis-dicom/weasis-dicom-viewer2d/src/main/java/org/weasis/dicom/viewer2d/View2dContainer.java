@@ -865,9 +865,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
-        // if (MprView.class.getName().equals(classType)) {
-        // return new MprView(eventManager, VIEWS_2x2_mpr);
-        // }
         return new View2d(eventManager);
     }
 

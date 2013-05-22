@@ -123,6 +123,9 @@ public class View2d extends DefaultView2d<ImageElement> {
                     zoom(0.0);
                     center();
                 }
+                if (panner != null) {
+                    panner.updateImageSize();
+                }
                 if (lens != null) {
                     int w = getWidth();
                     int h = getHeight();

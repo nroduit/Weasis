@@ -94,6 +94,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
@@ -918,7 +919,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             this.setUI(new javax.swing.plaf.PanelUI() {
             });
             this.setOpaque(true);
-            this.setBackground(SeriesSelectionModel.BACKROUND);
+            this.setBackground(JMVUtils.TREE_BACKROUND);
             this.sequence = sequence;
             this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             int thumbnailSize = slider.getValue();
@@ -948,7 +949,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             if (max == null || max.width != thumbnailSize) {
                 if (sequence instanceof Series) {
                     Series series = (Series) sequence;
-                    Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                    SeriesThumbnail thumb = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                     if (thumb != null) {
                         thumb.setThumbnailSize(thumbnailSize);
                     }
@@ -1202,7 +1203,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 repaintStudy = true;
             }
 
-            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            SeriesThumbnail thumb = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 thumb.reBuildThumbnail();
             }
@@ -1590,13 +1591,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
     }
 
-    public static Thumbnail createThumbnail(final Series series, final DicomModel dicomModel, final int thumbnailSize) {
+    public static SeriesThumbnail createThumbnail(final Series series, final DicomModel dicomModel,
+        final int thumbnailSize) {
 
-        Callable callable = new Callable<Thumbnail>() {
+        Callable callable = new Callable<SeriesThumbnail>() {
 
             @Override
-            public Thumbnail call() throws Exception {
-                final Thumbnail thumb = new Thumbnail(series, thumbnailSize);
+            public SeriesThumbnail call() throws Exception {
+                final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize);
                 thumb.addMouseListener(createThumbnailMouseAdapter(series, dicomModel, null));
                 thumb.addKeyListener(createThumbnailKeyListener(series, dicomModel));
                 thumb.registerListeners();
@@ -1613,9 +1615,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 return thumb;
             }
         };
-        FutureTask<Thumbnail> future = new FutureTask<Thumbnail>(callable);
+        FutureTask<SeriesThumbnail> future = new FutureTask<SeriesThumbnail>(callable);
         GuiExecutor.instance().invokeAndWait(future);
-        Thumbnail result = null;
+        SeriesThumbnail result = null;
         try {
             result = future.get();
         } catch (InterruptedException e) {
@@ -1922,7 +1924,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
-                                        Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                        SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                                         if (t != null) {
                                             t.reBuildThumbnail(MEDIA_POSITION.FIRST);
                                         }
@@ -1934,7 +1936,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
-                                        Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                        SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                                         if (t != null) {
                                             t.reBuildThumbnail(MEDIA_POSITION.MIDDLE);
                                         }
@@ -1946,7 +1948,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
-                                        Thumbnail t = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+                                        SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                                         if (t != null) {
                                             t.reBuildThumbnail(MEDIA_POSITION.LAST);
                                         }

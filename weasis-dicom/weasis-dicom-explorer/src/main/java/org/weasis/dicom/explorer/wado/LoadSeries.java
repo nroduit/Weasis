@@ -57,6 +57,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -188,7 +189,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     protected void done() {
         if (!isStopped()) {
             LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
-            final Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
                 if (thumbnail.getThumbnailPath() == null
@@ -415,9 +416,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 @Override
                 public void run() {
 
-                    Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                    SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                     if (thumbnail == null) {
-                        thumbnail = new Thumbnail(dicomSeries, null, Thumbnail.DEFAULT_SIZE);
+                        thumbnail = new SeriesThumbnail(dicomSeries, Thumbnail.DEFAULT_SIZE);
                     }
                     // In case series is downloaded or canceled
                     if (LoadSeries.this.isDone()) {
@@ -481,7 +482,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                             @Override
                             public void run() {
-                                Thumbnail thumbnail = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                                SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumbnail != null) {
                                     thumbnail.reBuildThumbnail(finalfile, MediaSeries.MEDIA_POSITION.MIDDLE);
                                 }

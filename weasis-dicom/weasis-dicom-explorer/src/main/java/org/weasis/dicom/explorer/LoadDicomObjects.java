@@ -25,6 +25,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
@@ -80,21 +81,21 @@ public class LoadDicomObjects extends ExplorerTask {
 
         openPlugin = true;
 
-        final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>(dicomObjectsToLoad.length);
+        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>(dicomObjectsToLoad.length);
 
         for (DicomObject dicom : dicomObjectsToLoad) {
             DicomMediaIO loader = new DicomMediaIO(dicom);
 
             if (loader.isReadableDicom()) {
                 // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                Thumbnail t = buildDicomStructure(loader);
+                SeriesThumbnail t = buildDicomStructure(loader);
                 if (t != null) {
                     thumbs.add(t);
                 }
             }
         }
 
-        for (final Thumbnail t : thumbs) {
+        for (final SeriesThumbnail t : thumbs) {
             MediaSeries series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
             if (series != null && series.size(null) > 2) {
@@ -109,9 +110,9 @@ public class LoadDicomObjects extends ExplorerTask {
         }
     }
 
-    private Thumbnail buildDicomStructure(DicomMediaIO dicomReader) {
+    private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {
 
-        Thumbnail thumb = null;
+        SeriesThumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
         if (patient == null) {
@@ -148,7 +149,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 }
 
                 // Load image and create thumbnail in this Thread
-                Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);

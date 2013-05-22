@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOperation;
-import org.weasis.core.api.image.combineTwoImagesOperation;
+import org.weasis.core.api.image.CombineTwoImagesOperation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -62,7 +62,7 @@ public class OverlayOperation extends AbstractOperation {
                     e.printStackTrace();
                 }
             }
-            result = imgOverlay == null ? source : combineTwoImagesOperation.combineTwoImages(source, imgOverlay, 255);
+            result = imgOverlay == null ? source : CombineTwoImagesOperation.combineTwoImages(source, imgOverlay, 255);
         } else {
             result = source;
         }

@@ -145,6 +145,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
+    protected final Panner<?> panner;
     protected ZoomWin<E> lens;
     protected final List<ViewButton> viewButtons;
 
@@ -174,6 +175,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setBorder(normalBorder);
         setFocusable(true);
         setPreferredSize(new Dimension(1024, 1024));
+
+        panner = new Panner(this);
     }
 
     public void registerDefaultListeners() {
@@ -276,6 +279,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return true;
         }
 
+    }
+
+    public Panner getPanner() {
+        return panner;
     }
 
     protected void closeLens() {
@@ -439,6 +446,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
+                panner.updateImage();
+
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
                     if (image != null) {
@@ -555,6 +564,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 startedDragPoint.setLocation(getViewModel().getModelOffsetX(), getViewModel().getModelOffsetY());
             } else if (PanPoint.STATE.Dragging.equals(point.getState())) {
                 setOrigin(startedDragPoint.getX() + point.getX(), startedDragPoint.getY() + point.getY());
+            }
+            if (panner != null) {
+                panner.updateImageSize();
             }
         }
     }
@@ -731,6 +743,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         super.zoom(Math.abs(viewScale));
         imageLayer.updateImageOperation(ZoomOperation.name);
         updateAffineTransform();
+        if (panner != null) {
+            panner.updateImageSize();
+        }
     }
 
     protected void updateAffineTransform() {

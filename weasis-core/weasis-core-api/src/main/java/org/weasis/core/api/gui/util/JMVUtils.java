@@ -69,7 +69,8 @@ import org.weasis.core.api.Messages;
  */
 public class JMVUtils {
 
-    public static final Color lightGray = new Color(237, 237, 237);
+    public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$ 
+    public static final Color TREE_SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
 
     public static boolean getNULLtoFalse(Object val) {
         return Boolean.TRUE.equals(val);
