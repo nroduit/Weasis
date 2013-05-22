@@ -100,6 +100,7 @@ public class InfoLayer implements AnnotationsLayer {
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PRELOADING_BAR, true);
+        displayPreferences.put(KEY_OBJECT, false);
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
 
@@ -217,7 +218,7 @@ public class InfoLayer implements AnnotationsLayer {
                 GraphicLabel.paintColorFontOutline(g2, Messages.getString("InfoLayer.lossy") //$NON-NLS-1$
                     + " " //$NON-NLS-1$
                     + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                        + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ 
                 drawY -= fontHeight;
             }
         }
@@ -317,6 +318,35 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
             }
+
+            // ////////////////////// draw a STAR for KO objects
+
+            // double starCenterX = bound.width - (fontHeight / 2.0) - border;
+            // double starCenterY = drawY - (fontHeight / 2.0);
+            // Shape starShape = createStar(5, starCenterX, starCenterY, fontHeight, fontHeight / 2.0);
+            // double outerRadius = (0.8 * fontHeight) / 2;
+            // double xPos = bound.width - (0.8 * fontHeight) - border;
+            // double yPos = drawY - (0.8 * fontHeight);
+            // Shape starShape = generateStar(xPos, yPos, outerRadius / 2.0, outerRadius, 5);
+            //
+            // DicomImageElement dicomImage = view2DPane.getImage();
+            // String sopInstanceUID = null;
+            // if (dicomImage != null && dicomImage.getTagValue(TagW.SOPInstanceUID) != null) {
+            // sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
+            //
+            // boolean isKOselected = model.KOsopInstanceUIDSet.contains(sopInstanceUID);
+            //
+            // Color previousColor = g2.getColor();
+            // g2.setColor(Color.ORANGE);
+            // g2.draw(starShape);
+            // if (isKOselected) {
+            // g2.fill(starShape);
+            // }
+            // g2.setColor(previousColor);
+            // }
+
+            // /////////////////////
+
             corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
             drawY = bound.height - border - 1.5f; // -1.5 for outline
             infos = corner.getInfos();

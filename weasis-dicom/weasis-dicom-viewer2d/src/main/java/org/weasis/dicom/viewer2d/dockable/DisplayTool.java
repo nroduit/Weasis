@@ -104,6 +104,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.ROTATION, true));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.FRAME, true));
         dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.PIXEL, true));
+        dicomInfo.add(new DefaultMutableTreeNode(AnnotationsLayer.KEY_OBJECT, false));
         rootNode.add(dicomInfo);
         drawings = new DefaultMutableTreeNode(ActionW.DRAW, true);
         drawings.add(new DefaultMutableTreeNode(AbstractLayer.MEASURE, true));

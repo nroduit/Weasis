@@ -49,9 +49,10 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
         infoLayer.setVisible(view2d.getInfoLayer().isVisible());
         infoLayer.setShowBottomScale(false);
-        // For exporting view, remove Pixel value, Preloading bar
+        // For exporting view, remove Pixel value, Preloading bar, Key Object
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PIXEL, false);
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
+        infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, false);
 
         // Copy image operations from view2d
         OperationsManager operations = imageLayer.getOperationsManager();

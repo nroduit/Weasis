@@ -140,6 +140,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
         };
 
+    // The above softReference HEADER_CACHE shall be used instead of the following dicomObject variable to get access to
+    // the current DicomObject unless it's virtual and then URI doesn't exit. This case appends when the dicomObject is
+    // created within the application and is given to the ImageReader constructor
+    private DicomObject dicomObject = null;
+
     private URI uri;
     private int numberOfFrame;
     private final HashMap<TagW, Object> tags;
@@ -186,6 +191,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         this(url.toURI());
     }
 
+    public DicomMediaIO(DicomObject dicomObject) {
+        this((URI) null);
+        this.dicomObject = dicomObject;
+    }
+
     @Override
     public synchronized void replaceURI(URI uri) {
         if (uri != null && !uri.equals(this.uri)) {
@@ -195,11 +205,15 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     }
 
+    public boolean isWritableDicom() {
+        return (dicomObject != null && uri == null);
+    }
+
     public boolean isReadableDicom() {
         if (UNREADABLE.equals(mimeType)) {
             return true;
         }
-        if (uri == null) {
+        if (uri == null && dicomObject == null) {
             return false;
         }
 
@@ -413,12 +427,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         if (pr) {
             // Set the series list for applying the PR
             setTagNoNull(TagW.ReferencedSeriesSequence, header.get(Tag.ReferencedSeriesSequence));
-            // Set other required fields
-            setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
         } else if (ko) {
             // Set the series list for applying the KO
-            setTagNoNull(TagW.CurrentRequestedProcedureEvidenceSequence,
-                header.get(Tag.CurrentRequestedProcedureEvidenceSequence));
+            // setTagNoNull(TagW.CurrentRequestedProcedureEvidenceSequence,
+            // header.get(Tag.CurrentRequestedProcedureEvidenceSequence));
         }
         if (pr || ko) {
             // Set other required fields
@@ -672,12 +684,13 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         }
                     } else {
                         String modality = (String) getTagValue(TagW.Modality);
-                        boolean ps =
-                            modality != null
-                                && ("PR".equals(modality) || "KO".equals(modality) || "SR".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        if (ps) {
+
+                        if (modality != null && "KO".equals(modality)) {
                             image = new MediaElement[1];
-                            image[0] = new DicomSpecialElement(this, null);
+                            image[0] = new KOSpecialElement(this);
+                        } else if (modality != null && ("PR".equals(modality) || "SR".equals(modality))) {
+                            image = new MediaElement[1];
+                            image[0] = new DicomSpecialElement(this);
                         } else {
                             // Corrupted image => should have one frame
                             image = new MediaElement[0];
@@ -1331,8 +1344,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
      */
     private synchronized DicomObject readMetaData(boolean readImageAfter) throws IOException {
         DicomObject header = HEADER_CACHE.get(this);
-        if (header != null && !readImageAfter) {
-            return header;
+        if (header != null) {
+            if (!readImageAfter) {
+                return header;
+            }
+        } else if (dicomObject != null) {
+            return dicomObject;
         }
 
         try {

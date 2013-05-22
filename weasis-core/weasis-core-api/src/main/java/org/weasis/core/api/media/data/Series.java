@@ -423,10 +423,15 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         return null;
     }
 
+    @Override
+    public int getNearestImageIndex(double location, int offset, Filter<E> filter, Comparator<E> sort) {
+        return -1;
+    }
+
     public synchronized void setFileSize(double size) {
         fileSize = size;
     }
-
+    
     @Override
     public synchronized double getFileSize() {
         return fileSize;

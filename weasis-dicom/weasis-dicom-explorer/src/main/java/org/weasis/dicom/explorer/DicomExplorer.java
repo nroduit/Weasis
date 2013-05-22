@@ -114,7 +114,6 @@ import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -1285,22 +1284,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     }
 
-    private void addSpecialModalityToStudy(Series series) {
-        DicomSpecialElement dicomObject = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
-        MediaSeriesGroup study = model.getParent(series, DicomModel.study);
-        List<DicomSpecialElement> list = (List<DicomSpecialElement>) study.getTagValue(TagW.DicomSpecialElementList);
-        if (list == null) {
-            list = new ArrayList<DicomSpecialElement>();
-            study.setTag(TagW.DicomSpecialElementList, list);
-        }
-        if (dicomObject != null && !list.contains(dicomObject)) {
-            list.add(dicomObject);
-        }
-    }
-
     private void addDicomSeries(Series series) {
         if (DicomModel.isSpecialModality(series)) {
-            addSpecialModalityToStudy(series);
+            // Up to now nothing has to be done in the explorer view about specialModality
+
+            // model.addSpecialModality(series);
+            // addSpecialModalityToStudy(series);
             return;
         }
         LOGGER.info("Add series: {}", series); //$NON-NLS-1$
@@ -1459,7 +1448,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (newVal instanceof Series) {
                         Series dcm = (Series) newVal;
                         if (DicomModel.isSpecialModality(dcm)) {
-                            addSpecialModalityToStudy(dcm);
+                            // model.addSpecialModality(dcm);
+                            // addSpecialModalityToStudy(dcm);
                         } else {
                             Integer splitNb = (Integer) dcm.getTagValue(TagW.SplitSeriesNumber);
                             if (splitNb != null) {
@@ -2048,7 +2038,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             JOptionPane
                                 .showConfirmDialog(
                                     WinUtil.getParentWindow(DicomExplorer.this),
-                                    "Cannot find DICOMDIR on media device, do you want to import manually?", (String) this.getValue(AbstractAction.NAME),//$NON-NLS-1$ 
+                                    "Cannot find DICOMDIR on media device, do you want to import manually?", (String) this.getValue(Action.NAME),//$NON-NLS-1$ 
                                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
