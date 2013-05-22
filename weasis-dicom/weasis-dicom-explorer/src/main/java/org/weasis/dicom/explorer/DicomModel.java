@@ -52,10 +52,13 @@ import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.wado.DicomManager;
@@ -357,9 +360,104 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
+    /**
+     * DicomSpecialElement are added at patientGroupLevel since StudyInstanceUID and SeriesInstanceUID are not relevant
+     * with the CurrentRequestedProcedureEvidenceSequence which may referenced SOPInstance of any study and series of
+     * the current Patient
+     * 
+     * @param series
+     */
+    public void addSpecialModality(Series series) {
+
+        DicomSpecialElement specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
+        if (specialElement == null) {
+            return;
+        }
+
+        synchronized (model) {
+            MediaSeriesGroup patientGroup = getParent(series, DicomModel.patient);
+
+            if (patientGroup == null) {
+                return;
+            }
+
+            List<DicomSpecialElement> specialElementList =
+                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+
+            if (specialElementList == null) {
+                patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
+                    new ArrayList<DicomSpecialElement>());
+            }
+            if (!specialElementList.contains(specialElement)) {
+                specialElementList.add(specialElement);
+            }
+        }
+    }
+
     public static boolean isSpecialModality(Series series) {
         String modality = series == null ? null : (String) series.getTagValue(TagW.Modality);
         return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+
+    public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
+
+        // Get all DicomSpecialElement at patient level
+        List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
+
+        if (specialElementList != null) {
+            String referencedSeriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            return DicomSpecialElement.getKoSpecialElements(specialElementList, referencedSeriesInstanceUID);
+        }
+        return null;
+    }
+
+    // public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
+    // return getKoSpecialElements(dicomSeries, true);
+    // }
+
+    // public static Collection<KOSpecialElement> getNewCreatedKoSpecialElements(MediaSeries<DicomImageElement>
+    // dicomSeries) {
+    //
+    // // Get all DicomSpecialElement at patient level
+    // List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
+    //
+    // if (specialElementList != null) {
+    // return DicomSpecialElement.getNewCreatedKoSpecialElements(specialElementList);
+    // }
+    // return null;
+    // }
+
+    public static List<DicomSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
+
+        List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
+
+        if (specialElementList != null) {
+            List<DicomSpecialElement> prs = new ArrayList<DicomSpecialElement>(specialElementList.size());
+            for (DicomSpecialElement sp : specialElementList) {
+                if ("PR".equals(sp.getTagValue(TagW.Modality))) {
+                    prs.add(sp);
+                }
+            }
+            return prs;
+        }
+        return null;
+    }
+
+    public static List<DicomSpecialElement> getSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
+        if (dicomSeries == null) {
+            return null;
+        }
+
+        DataExplorerModel model = (DataExplorerModel) dicomSeries.getTagValue(TagW.ExplorerModel);
+
+        if (model instanceof DicomModel) {
+            MediaSeriesGroup patientGroup = ((DicomModel) model).getParent(dicomSeries, DicomModel.patient);
+
+            if (patientGroup != null) {
+                return (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+            }
+        }
+        return null;
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {

@@ -199,7 +199,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
         actionsInView.put(ActionW.IMAGE_SHUTTER.cmd(), true);
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
-        actionsInView.put(ActionW.KEY_OBJECT.cmd(), null);
+
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
     }
 
@@ -567,7 +567,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return ((Series<E>) series).getImageIndex(imageLayer.getSourceImage(),
                 (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
         }
-        return 0;
+        return -1;
     }
 
     public void setActionsInView(String action, Object value) {
@@ -638,22 +638,56 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
         }
-        drawExtendedAtions(g2d);
+        drawExtendedActions(g2d);
+
         g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
     }
 
-    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+    protected Rectangle drawExtendedActions(Graphics2D g2d) {
         Rectangle rect = null;
         int height = 0;
         for (ViewButton b : viewButtons) {
-            height += b.getIcon().getIconHeight() + 5;
+            if (b.isVisible()) {
+                height += b.getIcon().getIconHeight() + 5;
+            }
         }
         // TODO implement to draw in two columns when height > getHeight() * 2 / 3
         int starty = (int) (getHeight() * 0.5 - (height - 5) * 0.5);
 
         for (ViewButton b : viewButtons) {
+            if (b.isVisible()) {
+                Icon icon = b.getIcon();
+                int x = getWidth() - icon.getIconWidth() - 5;
+                int y = starty;
+                b.x = x;
+                b.y = y;
+                if (rect == null) {
+                    rect = b.getBounds();
+                } else {
+                    rect.createUnion(b.getBounds());
+                }
+                starty = y + icon.getIconHeight() + 5;
+                icon.paintIcon(this, g2d, x, y);
+            }
+        }
+        return rect;
+    }
+
+    protected Rectangle getExtendedActionsBound() {
+        Rectangle rect = null;
+        int height = 0;
+        for (ViewButton b : viewButtons) {
+            // if (b.isVisible()) {
+            height += b.getIcon().getIconHeight() + 5;
+            // }
+        }
+        // TODO implement to draw in two columns when height > getHeight() * 2 / 3
+        int starty = (int) (getHeight() * 0.5 - (height - 5) * 0.5);
+
+        for (ViewButton b : viewButtons) {
+            // if (b.isVisible()) {
             Icon icon = b.getIcon();
             int x = getWidth() - icon.getIconWidth() - 5;
             int y = starty;
@@ -665,9 +699,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 rect.createUnion(b.getBounds());
             }
             starty = y + icon.getIconHeight() + 5;
-            icon.paintIcon(this, g2d, x, y);
+            // icon.paintIcon(this, g2d, x, y);
+            // }
         }
         return rect;
+
     }
 
     @Override
@@ -1439,8 +1475,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 && ((mouseActions.getActiveButtons() & InputEvent.BUTTON3_DOWN_MASK) != 0)) {
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
+
             for (ViewButton b : viewButtons) {
-                if (b.contains(evt.getPoint())) {
+                if (b.isVisible() && b.contains(evt.getPoint())) {
                     evt.consume();
                     b.showPopup(evt.getComponent(), evt.getX(), evt.getY());
                     action = null;

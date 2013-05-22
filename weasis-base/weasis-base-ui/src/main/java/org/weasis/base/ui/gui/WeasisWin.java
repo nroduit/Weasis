@@ -710,7 +710,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             }
         });
         helpMenuItem.add(websiteMenuItem);
-        final JMenuItem aboutMenuItem = new JMenuItem(Messages.getString("WeasisAboutBox.about")); //$NON-NLS-1$
+        final JMenuItem aboutMenuItem =
+            new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AbstractProperties.WEASIS_NAME)); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 
             @Override

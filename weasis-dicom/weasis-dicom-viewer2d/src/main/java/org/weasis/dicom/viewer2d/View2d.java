@@ -1,5 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010 Nicolas Roduit.
+ * Copyright (c) 2010 Nicolas Roduit.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +15,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -32,10 +35,13 @@ import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -51,6 +57,7 @@ import javax.swing.TransferHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.ImageOperation;
@@ -62,6 +69,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOperation;
@@ -85,9 +93,13 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -99,6 +111,7 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.graphic.BasicGraphic;
 import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
@@ -118,10 +131,13 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
-import org.weasis.dicom.codec.KeyObjectReader;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.display.CornerDisplay;
+import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.OverlayOperation;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -132,6 +148,9 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
+import org.weasis.dicom.explorer.pref.ModalityPrefView;
+import org.weasis.dicom.viewer2d.KOManager.KOViewButton;
+import org.weasis.dicom.viewer2d.KOManager.KOViewButton.eState;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
@@ -141,6 +160,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
+
+    protected final FocusHandler focusHandler = new FocusHandler();
+
+    protected final KOViewButton koStarButton;
 
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
@@ -165,6 +188,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         getLayerModel().addLayer(layerTmp);
 
         oldSize = new Dimension(0, 0);
+
+        viewButtons.add(KOManager.buildKoSelectionButton(this));
+        koStarButton = KOManager.buildKoStarButton(this);
     }
 
     @Override
@@ -214,8 +240,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
         actionsInView.put(ActionW.PR_STATE.cmd(), null);
+        actionsInView.put(ActionW.KO_FILTER.cmd(), false);
+
+        // Set the more recent KO by default
+        Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
+        Object defaultKO = (koElements != null && koElements.size() >= 0) ? koElements.iterator().next() : null;
+        actionsInView.put(ActionW.KEY_OBJECT.cmd(), defaultKO);
+
         // Preprocessing
         actionsInView.put(ActionW.CROP.cmd(), null);
+    }
+
+    @Override
+    public synchronized void iniDefaultMouseListener() {
+        super.iniDefaultMouseListener();
+        this.addMouseListener(focusHandler);
+        this.addMouseMotionListener(focusHandler);
     }
 
     @Override
@@ -266,11 +306,41 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setPresentationState(null);
     }
 
-    void setKeyObjectSelection(Object val) {
-        KeyObjectReader ko = val instanceof DicomSpecialElement ? new KeyObjectReader((DicomSpecialElement) val) : null;
-        actionsInView.put(ActionW.KEY_OBJECT.cmd(), val);
-        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), ko == null ? null : ko.getFilter());
-        setSeries(series);
+    public void setKeyObjectSelection(Object newVal) {
+
+        Filter<DicomImageElement> sopInstanceUIDFilter = null;
+
+        if (JMVUtils.getNULLtoFalse(getActionValue(ActionW.KO_FILTER.cmd()))) {
+            sopInstanceUIDFilter =
+                (newVal instanceof KOSpecialElement) ? ((KOSpecialElement) newVal).getSOPInstanceUIDFilter() : null;
+        }
+
+        actionsInView.put(ActionW.KEY_OBJECT.cmd(), newVal);
+        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+
+        updateKOSelectionChange();
+
+        // eventManager.updateComponentsListener(this); // needed to take care of the FILTERED_SERIES changes
+        // setSeries(series, getImage());
+    }
+
+    public void setKeyObjectSelectionFilterState(Boolean newState) {
+
+        Filter<DicomImageElement> sopInstanceUIDFilter = null;
+        if (newState) {
+            Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+            sopInstanceUIDFilter =
+                (selectedKO instanceof KOSpecialElement) ? ((KOSpecialElement) selectedKO).getSOPInstanceUIDFilter()
+                    : null;
+        }
+
+        actionsInView.put(ActionW.KO_FILTER.cmd(), newState);
+        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+
+        updateKOSelectionChange();
+
+        // eventManager.updateComponentsListener(this);
+        // setSeries(series, getImage());
     }
 
     void setPresentationState(Object val) {
@@ -397,30 +467,245 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     }
 
+    void updateKOButtonVisibleState() {
+
+        Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
+        boolean koElementExist = (koElements != null && koElements.size() > 0);
+
+        boolean needToRepaint = false;
+
+        for (ViewButton vb : viewButtons) {
+            if (vb != null && vb.getIcon() == View2d.KO_ICON) {
+                if (vb.isVisible() != koElementExist) {
+                    vb.setVisible(koElementExist);
+                    // repaint(getExtendedActionsBound());
+                    needToRepaint = true;
+                }
+                break;
+            }
+        }
+
+        if (koStarButton.isVisible() != koElementExist) {
+            koStarButton.setVisible(koElementExist);
+
+            // Force the KO annotation preference to be set visible or not depending if a KO object is loaded with any
+            // reference on the series in this view, or if new KO were created for this patient
+            infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, koElementExist);
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
+                null, null, EVENT.SELECT_VIEW)); // call iniTreeValues in DisplayTool to update checkBox
+
+            needToRepaint = true;
+        }
+
+        if (koElementExist) {
+            needToRepaint = updateKOselectedState();
+        }
+
+        // if (needToRepaint) {
+        repaint();
+        // }
+    }
+
+    /**
+     * @return true if the state has changed and if the view or at least the KO button need to be repaint
+     */
+    protected boolean updateKOselectedState() {
+
+        eState previousState = koStarButton.getState();
+
+        // evaluate koSelection status for every Image change
+        KOViewButton.eState newSelectionState = eState.UNSELECTED;
+
+        Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+        DicomImageElement dicomImage = getImage();
+
+        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
+        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
+
+        if (dicomImage != null && sopInstanceUID != null && seriesInstanceUID != null) {
+
+            if ((selectedKO instanceof KOSpecialElement)) {
+                KOSpecialElement koElement = (KOSpecialElement) selectedKO;
+                Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+
+                if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
+                    newSelectionState = eState.SELECTED;
+                }
+            } else {
+                Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
+
+                if (koElements != null && koElements.size() > 0) {
+                    for (KOSpecialElement koElement : koElements) {
+                        Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+
+                        if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
+                            newSelectionState = eState.EXIST;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        koStarButton.setState(newSelectionState);
+
+        return (previousState != newSelectionState);
+    }
+
+    protected Rectangle getKOStarButtonBound(Graphics2D g2d) {
+
+        // /////////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO - find a better way to get infoLayer TOP-RIGHT available position for drawing something else
+
+        Modality mod = Modality.getModality((String) getSeries().getTagValue(TagW.Modality));
+        ModalityInfoData infoData = ModalityPrefView.getModlatityInfos(mod);
+        CornerInfoData corner = infoData.getCornerInfo(CornerDisplay.TOP_RIGHT);
+
+        final float fontHeight = FontTools.getAccurateFontHeight(g2d);
+        boolean anonymize = infoLayer.getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
+
+        float drawY = 0;
+        TagW[] infos = corner.getInfos();
+        for (TagW tag : infos) {
+            if (tag != null && (!anonymize || tag.getAnonymizationType() != 1)) {
+                drawY += fontHeight;
+            }
+        }
+
+        // /////////////////////////////////////////////////////////////////////////////////////////////////
+
+        Icon koStarIcon = koStarButton.getIcon();
+
+        int xPos = getWidth() - koStarIcon.getIconWidth() - infoLayer.getBorder();
+        int yPos = (int) (Math.round(drawY) + (0.3 * fontHeight));
+
+        return new Rectangle(xPos, yPos, koStarIcon.getIconWidth(), koStarIcon.getIconHeight());
+    }
+
+    @Override
+    protected Rectangle drawExtendedActions(Graphics2D g2d) {
+        Rectangle rect = super.drawExtendedActions(g2d);
+
+        if (infoLayer.isVisible() //
+            && infoLayer.getDisplayPreferences(AnnotationsLayer.ANNOTATIONS)
+            && infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT)) {
+
+            // TODO - shouldn't be called in infoLayer.paint() instead
+            Rectangle koRectBound = getKOStarButtonBound(g2d);
+            Icon koStarIcon = koStarButton.getIcon();
+            koStarButton.x = koRectBound.x;
+            koStarButton.y = koRectBound.y;
+            koStarIcon.paintIcon(this, g2d, koRectBound.x, koRectBound.y);
+        }
+
+        return rect;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void updateKOSelectionChange() {
+
+        // TODO should not be called here but from event manager or view2dContainer !!!!
+        // !!!!! this call must be done only from a the selected viewPane
+
+        DicomSeries dicomSeries = (DicomSeries) getSeries();
+        DicomImageElement currentImg = getImage();
+
+        Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+
+        if (currentImg != null && dicomSeries != null && selectedKO instanceof KOSpecialElement) {
+
+            ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+            SliderCineListener sliceAction = null;
+            if (seqAction instanceof SliderCineListener) {
+                sliceAction = (SliderCineListener) seqAction;
+            } else {
+                return;
+            }
+
+            if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
+
+                int newImageIndex = getFrameIndex();
+                // The getFrameIndex() return a valid index for the current image displayed according to the current
+                // FILTERED_SERIES and the current SortComparator
+
+                // If the current image is not part anymore of the KO FILTERED_SERIES then it has been removed from the
+                // selection. Hence, another image should be selected, that is the nearest.
+
+                Filter<DicomImageElement> dicomFilter =
+                    (Filter<DicomImageElement>) getActionValue(ActionW.FILTERED_SERIES.cmd());
+
+                if (newImageIndex < 0) {
+
+                    double[] val = (double[]) currentImg.getTagValue(TagW.SlicePosition);
+                    double location = val[0] + val[1] + val[2];
+                    Double offset = (Double) getActionValue(ActionW.STACK_OFFSET.cmd());
+                    if (offset != null) {
+                        location += offset;
+                    }
+
+                    if (dicomSeries.size(dicomFilter) > 0) {
+
+                        newImageIndex =
+                            dicomSeries.getNearestImageIndex(location, getTileOffset(), dicomFilter,
+                                getCurrentSortComparator());
+                    } else {
+                        // If there is no more image in KO series filtered then disable the KO_FILTER
+                        dicomFilter = null;
+                        actionsInView.put(ActionW.KO_FILTER.cmd(), false);
+                        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), dicomFilter);
+                        newImageIndex = getFrameIndex();
+                    }
+                }
+
+                // Update the sliceAction component for the current selected View which fire a SCROLL_SERIES changeEvent
+                // (see EventManager -> stateChanged()). This change will be handled by any DefaultView2d
+                // object that listen this event change if the synchview Action is Enable
+
+                // In case a new KO selction has been added the FILTERED_SERIES size will be updated in consequence
+                // This avoids to call eventManager.updateComponentsListener since only moveTroughSliceAction should be
+                // updated
+
+                sliceAction.setMinMaxValue(1, dicomSeries.size(dicomFilter), newImageIndex + 1);
+            }
+
+            DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
+
+            // Fire an event since any view in the View2dContainner may have its KO selected state changed
+            dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
+                selectedKO));
+        }
+
+        updateKOButtonVisibleState();
+    }
+
     @Override
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         MediaSeries<DicomImageElement> oldsequence = this.series;
         this.series = series;
 
-        if (oldsequence != null && oldsequence != series) {
-            // Execute when series changes (old was not null and new series can be null)
-            closingSeries(oldsequence);
-            getLayerModel().deleteAllGraphics();
-            // All the action values are initialized again with the series changing
-            initActionWState();
+        if (oldsequence != series) {
+            if (oldsequence != null) {
+                // Execute when series changes (old was not null and new series can be null)
+                closingSeries(oldsequence);
+                getLayerModel().deleteAllGraphics();
+                // All the action values are initialized again with the series changing
+                initActionWState();
 
-            // Remove old KO button
-            for (int i = viewButtons.size() - 1; i >= 0; i--) {
-                ViewButton vb = viewButtons.get(i);
-                if (vb != null && vb.getIcon() == View2d.KO_ICON) {
-                    viewButtons.remove(i);
-                }
-            }
-            ViewButton koButton = PRManager.buildKoSelection(this, series);
-            if (koButton != null) {
-                viewButtons.add(koButton);
+                // Remove old KO button
+                // for (int i = viewButtons.size() - 1; i >= 0; i--) {
+                // ViewButton vb = viewButtons.get(i);
+                // if (vb != null && vb.getIcon() == View2d.KO_ICON) {
+                // viewButtons.remove(i);
+                // }
+                // }
+            } else {
+                // ViewButton koButton = KOManager.buildKoSelection(this);
+                // if (koButton != null) {
+                // viewButtons.add(koButton);
+                // }
             }
         }
+
         if (series == null) {
             imageLayer.setImage(null, null);
             closeLens();
@@ -441,6 +726,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
+
         }
 
         eventManager.updateComponentsListener(this);
@@ -449,6 +735,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (series != null && oldsequence != series) {
             series.setOpen(true);
         }
+
+        updateKOButtonVisibleState();
     }
 
     @Override
@@ -694,6 +982,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         return null;
     }
 
+    class FocusHandler extends MouseActionAdapter {
+        @Override
+        public void mousePressed(MouseEvent evt) {
+
+            if (infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT) && koStarButton.contains(evt.getPoint())) {
+                evt.consume();
+                koStarButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+                View2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+            }
+        }
+    }
+
     @Override
     public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imgLayer) {
         DicomImageElement dicom = imgLayer.getSourceImage();
@@ -749,6 +1049,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public void handleLayerChanged(ImageLayer layer) {
+        if (infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT)) {
+            updateKOselectedState();
+        }
         repaint();
     }
 
@@ -931,7 +1234,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    protected JPopupMenu buidGraphicContextMenu(final MouseEvent evt, final ArrayList<Graphic> selected) {
+    protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final ArrayList<Graphic> selected) {
         if (selected != null) {
             final JPopupMenu popupMenu = new JPopupMenu();
             TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
@@ -984,7 +1287,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                 popupMenu.add(menuItem);
                                 popupMenu.add(new JSeparator());
                             }
-                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
+                        } else if (ds != null && absgraph.getHandlePointTotalNumber() == BasicGraphic.UNDEFINED) {
                             final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
                             item2.addActionListener(new ActionListener() {
 
@@ -1103,7 +1406,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         return null;
     }
 
-    protected JPopupMenu buidContexMenu(final MouseEvent evt) {
+    protected JPopupMenu buildContexMenu(final MouseEvent evt) {
         JPopupMenu popupMenu = new JPopupMenu();
         TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.left_mouse"), popupMenu.getInsets()); //$NON-NLS-1$
         popupMenu.add(itemTitle);
@@ -1327,9 +1630,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 final ArrayList<Graphic> selected =
                     new ArrayList<Graphic>(View2d.this.getLayerModel().getSelectedGraphics());
                 if (selected.size() > 0) {
-                    popupMenu = View2d.this.buidGraphicContextMenu(evt, selected);
+                    popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
                 } else if (View2d.this.getSourceImage() != null) {
-                    popupMenu = View2d.this.buidContexMenu(evt);
+                    popupMenu = View2d.this.buildContexMenu(evt);
                 }
                 if (popupMenu != null) {
                     popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());

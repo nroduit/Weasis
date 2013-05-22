@@ -12,6 +12,7 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 
+@Deprecated
 public class KeyObjectReader {
     private final DicomObject dcmobj;
     private final HashMap<String, Object> tags = new HashMap<String, Object>();
@@ -20,7 +21,7 @@ public class KeyObjectReader {
         if (dicom == null) {
             throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
         }
-        if (dicom.getMediaReader() instanceof DicomMediaIO) {
+        if ("KO".equals(dicom.getTagValue(TagW.Modality)) && (dicom.getMediaReader() instanceof DicomMediaIO)) {
             DicomMediaIO dicomImageLoader = (DicomMediaIO) dicom.getMediaReader();
             dcmobj = dicomImageLoader.getDicomObject();
         } else {
@@ -76,4 +77,28 @@ public class KeyObjectReader {
         }
         return null;
     }
+
+    public HashSet<String> getSOPInstanceUIDSet() {
+        KODocumentModule koModule = getKODocumentModule();
+
+        if (koModule != null) {
+            final HierachicalSOPInstanceReference[] refs = koModule.getCurrentRequestedProcedureEvidences();
+            final HashSet<String> sopInstanceUIDSet = new HashSet<String>();
+
+            for (HierachicalSOPInstanceReference ref : refs) {
+                SeriesAndInstanceReference[] series = ref.getReferencedSeries();
+
+                for (SeriesAndInstanceReference s : series) {
+                    SOPInstanceReferenceAndMAC[] sops = s.getReferencedInstances();
+
+                    for (SOPInstanceReferenceAndMAC sop : sops) {
+                        sopInstanceUIDSet.add(sop.getReferencedSOPInstanceUID());
+                    }
+                }
+            }
+            return sopInstanceUIDSet;
+        }
+        return null;
+    }
+
 }

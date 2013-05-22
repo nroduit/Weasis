@@ -194,8 +194,8 @@ public class MprView extends View2d {
     }
 
     @Override
-    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
-        Rectangle rect = super.drawExtendedAtions(g2d);
+    protected Rectangle drawExtendedActions(Graphics2D g2d) {
+        Rectangle rect = super.drawExtendedActions(g2d);
         // To avoid concurrency issue
         final JProgressBar bar = progressBar;
         if (bar != null && bar.isVisible()) {

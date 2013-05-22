@@ -10,17 +10,16 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.dcm4che2.data.DicomObject;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -31,34 +30,38 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.graphic.model.GraphicList;
-import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomMediaIO;
 
-public class LoadLocalDicom extends ExplorerTask {
+/**
+ * @note This class is a pure copy of LoadLocalDicom taking care only of the DicomObject and not the file
+ * 
+ * @version $Rev$ $Date$
+ */
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadLocalDicom.class);
-    private final File[] files;
+public class LoadDicomObjects extends ExplorerTask {
+
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadDicomObjects.class);
+    private final DicomObject[] dicomObjectsToLoad;
     private final DicomModel dicomModel;
-    private final boolean recursive;
-    private boolean openPlugin;
 
-    public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
+    private boolean openPlugin = true;
+
+    public LoadDicomObjects(DataExplorerModel explorerModel, DicomObject... dcmObjects) {
         super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
-        if (files == null || !(explorerModel instanceof DicomModel)) {
+
+        if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
+
         this.dicomModel = (DicomModel) explorerModel;
-        this.files = files;
-        this.recursive = recursive;
-        this.openPlugin = true;
+        this.dicomObjectsToLoad = dcmObjects;
     }
 
     @Override
     protected Boolean doInBackground() throws Exception {
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
             this));
-        addSelectionAndnotify(files, true);
+        addSelectionAndnotify();
         return true;
     }
 
@@ -66,54 +69,31 @@ public class LoadLocalDicom extends ExplorerTask {
     protected void done() {
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel, null,
             this));
-        writeInfo(Messages.getString("LoadLocalDicom.end")); //$NON-NLS-1$
+        writeInfo(Messages.getString("LoadDicomObjects.end")); //$NON-NLS-1$
     }
 
     private void writeInfo(String text) {
         log.info(text);
     }
 
-    public void addSelectionAndnotify(File[] file, boolean firstLevel) {
-        if (file == null || file.length < 1) {
-            return;
-        }
-        final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>();
-        final ArrayList<File> folders = new ArrayList<File>();
-        for (int i = 0; i < file.length; i++) {
-            if (file[i] == null) {
-                continue;
-            } else if (file[i].isDirectory()) {
-                if (firstLevel || recursive) {
-                    folders.add(file[i]);
-                }
-            } else {
-                if (file[i].canRead()) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
-                        DicomMediaIO loader = new DicomMediaIO(file[i]);
-                        if (loader.isReadableDicom()) {
-                            // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                            Thumbnail t = buildDicomStructure(loader, openPlugin);
-                            if (t != null) {
-                                thumbs.add(t);
-                            }
+    public void addSelectionAndnotify() {
 
-                            File gpxFile = new File(file[i].getPath() + ".xml");
+        openPlugin = true;
 
-                            if (gpxFile.canRead()) {
-                                try {
-                                    GraphicList list =
-                                        DefaultSerializer.getInstance().getSerializer()
-                                            .read(GraphicList.class, gpxFile);
-                                    loader.setTag(TagW.MeasurementGraphics, list);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
+        final ArrayList<Thumbnail> thumbs = new ArrayList<Thumbnail>(dicomObjectsToLoad.length);
+
+        for (DicomObject dicom : dicomObjectsToLoad) {
+            DicomMediaIO loader = new DicomMediaIO(dicom);
+
+            if (loader.isReadableDicom()) {
+                // Issue: must handle adding image to viewer and building thumbnail (middle image)
+                Thumbnail t = buildDicomStructure(loader);
+                if (t != null) {
+                    thumbs.add(t);
                 }
             }
         }
+
         for (final Thumbnail t : thumbs) {
             MediaSeries series = t.getSeries();
             // Avoid to rebuild most of CR series thumbnail
@@ -124,16 +104,13 @@ public class LoadLocalDicom extends ExplorerTask {
                     public void run() {
                         t.reBuildThumbnail();
                     }
-
                 });
             }
         }
-        for (int i = 0; i < folders.size(); i++) {
-            addSelectionAndnotify(folders.get(i).listFiles(), false);
-        }
     }
 
-    private Thumbnail buildDicomStructure(DicomMediaIO dicomReader, boolean open) {
+    private Thumbnail buildDicomStructure(DicomMediaIO dicomReader) {
+
         Thumbnail thumb = null;
         String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
         MediaSeriesGroup patient = dicomModel.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
@@ -141,7 +118,7 @@ public class LoadLocalDicom extends ExplorerTask {
             patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, TagW.PatientName);
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(TreeModel.rootNode, patient);
-            writeInfo(Messages.getString("LoadLocalDicom.add_pat") + " " + patient); //$NON-NLS-1$ //$NON-NLS-2$
+            writeInfo(Messages.getString("LoadDicomObjects.add_pat") + " " + patient); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagW.StudyInstanceUID);
@@ -194,7 +171,7 @@ public class LoadLocalDicom extends ExplorerTask {
                         null, dicomSeries));
                 }
 
-                if (open) {
+                if (openPlugin) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
                     if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;

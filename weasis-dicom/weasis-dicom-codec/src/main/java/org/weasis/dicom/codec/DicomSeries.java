@@ -109,7 +109,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         if (getFileSize() > 0.0) {
             toolTips.append(Messages.getString("DicomSeries.size")); //$NON-NLS-1$
             toolTips.append(' ');
-            toolTips.append(FileUtil.formatSize(getFileSize())); //$NON-NLS-1$
+            toolTips.append(FileUtil.formatSize(getFileSize()));
             toolTips.append("<br>"); //$NON-NLS-1$ 
         }
         toolTips.append("</html>"); //$NON-NLS-1$
@@ -173,6 +173,34 @@ public class DicomSeries extends Series<DicomImageElement> {
             return getMedia(bestIndex + offset, filter, sort);
         }
         return nearest;
+    }
+
+    @Override
+    public int getNearestImageIndex(double location, int offset, Filter<DicomImageElement> filter,
+        Comparator<DicomImageElement> sort) {
+        Iterable<DicomImageElement> mediaList = getMedias(filter, sort);
+        int index = 0;
+        int bestIndex = -1;
+        synchronized (this) {
+            double bestDiff = Double.MAX_VALUE;
+            for (Iterator<DicomImageElement> iter = mediaList.iterator(); iter.hasNext();) {
+                DicomImageElement dcm = iter.next();
+                double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
+                if (val != null) {
+                    double diff = Math.abs(location - (val[0] + val[1] + val[2]));
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        bestIndex = index;
+                        if (diff == 0.0) {
+                            break;
+                        }
+                    }
+                }
+                index++;
+            }
+        }
+
+        return (offset > 0) ? (bestIndex + offset) : bestIndex;
     }
 
     public static synchronized void startPreloading(DicomSeries series, List<DicomImageElement> imageList,

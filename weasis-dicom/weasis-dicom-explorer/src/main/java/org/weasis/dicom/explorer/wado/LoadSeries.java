@@ -198,6 +198,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 thumbnail.repaint();
 
             }
+
+            if (DicomModel.isSpecialModality(dicomSeries)) {
+                dicomModel.addSpecialModality(dicomSeries);
+            }
+
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
             Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
             if (splitNb != null || dicomObject != null) {
@@ -375,9 +380,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
                 @Override
                 public int compare(DicomInstance dcm1, DicomInstance dcm2) {
-                    int nubmer1 = dcm1.getInstanceNumber();
-                    int nubmer2 = dcm2.getInstanceNumber();
-                    if (nubmer1 == -1 && nubmer2 == -1) {
+                    int number1 = dcm1.getInstanceNumber();
+                    int number2 = dcm2.getInstanceNumber();
+                    if (number1 == -1 && number2 == -1) {
                         String str1 = dcm1.getSopInstanceUID();
                         String str2 = dcm2.getSopInstanceUID();
                         int length1 = str1.length();
@@ -399,7 +404,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         }
                         return str1.compareTo(str2);
                     } else {
-                        return (nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1));
+                        return (number1 < number2 ? -1 : (number1 == number2 ? 0 : 1));
                     }
                 }
             });

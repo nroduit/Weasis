@@ -71,6 +71,7 @@ public class MipView extends View2d {
     public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
         this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
+        mip_button.setVisible(true);
         viewButtons.add(mip_button);
         progressBar = new JProgressBar();
         progressBar.setVisible(false);
@@ -86,7 +87,7 @@ public class MipView extends View2d {
     }
 
     @Override
-    protected Rectangle drawExtendedAtions(Graphics2D g2d) {
+    protected Rectangle drawExtendedActions(Graphics2D g2d) {
         // Does not allow to use PR or KO
         Icon icon = mip_button.getIcon();
         int x = getWidth() - icon.getIconWidth() - 5;

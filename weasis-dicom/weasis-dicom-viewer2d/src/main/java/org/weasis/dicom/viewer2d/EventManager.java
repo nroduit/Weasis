@@ -240,6 +240,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 if (object instanceof KernelData) {
                     firePropertyChange(action.cmd(), null, object);
                 }
+
             }
         };
     }

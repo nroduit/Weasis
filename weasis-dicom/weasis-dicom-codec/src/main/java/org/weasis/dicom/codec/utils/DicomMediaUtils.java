@@ -17,6 +17,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +25,15 @@ import java.util.Map;
 
 import javax.media.jai.LookupTableJAI;
 
+import org.dcm4che2.data.BasicDicomObject;
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.dcm4che2.data.VR;
 import org.dcm4che2.iod.module.pr.DisplayShutterModule;
+import org.dcm4che2.iod.module.sr.HierachicalSOPInstanceReference;
+import org.dcm4che2.iod.module.sr.KODocumentModule;
+import org.dcm4che2.iod.value.Modality;
 import org.dcm4che2.util.ByteUtils;
 import org.dcm4che2.util.TagUtils;
 import org.slf4j.Logger;
@@ -1110,4 +1115,102 @@ public class DicomMediaUtils {
         return false;
     }
 
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static DicomObject createDicomKeyObject(DicomObject dicomObject, String studyInstanceUID,
+         String description) {
+        if (description == null || "".equals(description)) {
+            description = "new KO selection";
+        }
+
+        String patientID = dicomObject.getString(Tag.PatientID);
+        String patientName = dicomObject.getString(Tag.PatientName);
+        Date patientBirthdate = dicomObject.getDate(Tag.PatientBirthDate);
+
+        DicomObject newDicomKeyObject =
+            createDicomKeyObject(patientID, patientName, patientBirthdate, studyInstanceUID, description);
+
+        HierachicalSOPInstanceReference[] referencedStudySequence =
+            new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
+
+        new KODocumentModule(newDicomKeyObject).setCurrentRequestedProcedureEvidences(referencedStudySequence);
+
+        return newDicomKeyObject;
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static DicomObject createDicomKeyObject(String patientID, String patientName, Date patientBirthdate,
+        String studyInstanceUID, String description) {
+
+        DicomObject newDicomKeyObject = new BasicDicomObject();
+
+        if (description == null || "".equals(description)) {
+            description = "new KO selection";
+        }
+
+        newDicomKeyObject.putString(Tag.SeriesDescription, VR.LO, description);
+
+        newDicomKeyObject.putString(Tag.Modality, VR.CS, Modality.KO);
+
+        Date dateTimeNow = Calendar.getInstance().getTime();
+        newDicomKeyObject.putDate(Tag.ContentDate, VR.DA, dateTimeNow);
+        newDicomKeyObject.putDate(Tag.ContentTime, VR.TM, dateTimeNow);
+
+        newDicomKeyObject.putString(Tag.PatientID, VR.LO, patientID);
+        newDicomKeyObject.putString(Tag.PatientName, VR.PN, patientName);
+        newDicomKeyObject.putDate(Tag.PatientBirthDate, VR.DA, patientBirthdate);
+
+        // TODO - replace this generator with some public code
+        UIDGenerator gen = new UIDGenerator();
+
+        // String studyInstanceUID = gen.getNewUID();
+
+        /**
+         * @see DICOM standard PS 3.3
+         * 
+         *      C.17.6 Key Object Selection Modules && C.17.6.2.1 Identical Documents
+         * 
+         *      The Unique identifier for the Study (studyInstanceUID) is supposed to be the same as to one of the
+         *      referenced image but it's not necessary. Standard says that if the Current Requested Procedure Evidence
+         *      Sequence (0040,A375) references SOP Instances both in the current study and in one or more other
+         *      studies, this document shall be duplicated into each of those other studies, and the duplicates shall be
+         *      referenced in the Identical Documents Sequence (0040,A525).
+         */
+
+        newDicomKeyObject.putString(Tag.StudyInstanceUID, VR.UI, studyInstanceUID);
+
+        try {
+            String newSeriesInstanceUID = gen.getNewSeriesInstanceUID(studyInstanceUID, new UIDGenerator().getNewUID());
+            newDicomKeyObject.putString(Tag.SeriesInstanceUID, VR.UI, newSeriesInstanceUID);
+            String newSopInstanceUid =
+                gen.getNewSOPInstanceUID(studyInstanceUID, newSeriesInstanceUID, new UIDGenerator().getNewUID());
+            newDicomKeyObject.putString(Tag.SOPInstanceUID, VR.UI, newSopInstanceUid);
+
+        } catch (DicomException e) {
+            e.printStackTrace();
+        }
+
+        newDicomKeyObject.putString(Tag.TransferSyntaxUID, VR.UI, "1.2.840.10008.1.2");
+        newDicomKeyObject.putString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.88.59");
+
+        newDicomKeyObject.putString(Tag.SeriesNumber, VR.IS, "1");
+        newDicomKeyObject.putString(Tag.InstanceNumber, VR.IS, "1");
+
+        newDicomKeyObject.putString(Tag.ValueType, VR.CS, "CONTAINER");
+
+        // SeriesAndInstanceReference referencedSeries = new SeriesAndInstanceReference();
+        // referencedSeries.setSeriesInstanceUID(referencedSeriesInstanceUID);
+        //
+        // HierachicalSOPInstanceReference hierachicalDicom = new HierachicalSOPInstanceReference();
+        // hierachicalDicom.setStudyInstanceUID(studyInstanceUID);
+        // hierachicalDicom.setReferencedSeries(new SeriesAndInstanceReference[] { referencedSeries });
+        //
+        // new KODocumentModule(newDicomKeyObject)
+        // .setCurrentRequestedProcedureEvidences(new HierachicalSOPInstanceReference[] { hierachicalDicom });
+        // Note : only reference study and serie UID but no sopInstanceUID at this point
+
+        newDicomKeyObject.putSequence(Tag.CurrentRequestedProcedureEvidenceSequence);
+
+        return newDicomKeyObject;
+    }
 }
