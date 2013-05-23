@@ -116,7 +116,7 @@ public class KOManager {
                 }
 
                 final JCheckBoxMenuItem menuItem =
-                    new JCheckBoxMenuItem(ActionW.KO_FILTER.getTitle(), JMVUtils.getNULLtoFalse((Boolean) koFilter));
+                    new JCheckBoxMenuItem(ActionW.KO_FILTER.getTitle(), JMVUtils.getNULLtoFalse(koFilter));
 
                 menuItem.addActionListener(new ActionListener() {
                     @Override
@@ -215,12 +215,15 @@ public class KOManager {
                 } else {
 
                     // Is there any new created dicom KO for this study or any empty one?
-                    for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(currentDicomSeries)) {
-                        if (koElement.getMediaReader().isWritableDicom()) {
-                            if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
-                                || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
-                                dicomKO = koElement;
-                                break;
+                    Collection<KOSpecialElement> kos = DicomModel.getKoSpecialElements(currentDicomSeries);
+                    if (kos != null) {
+                        for (KOSpecialElement koElement : kos) {
+                            if (koElement.getMediaReader().isWritableDicom()) {
+                                if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
+                                    || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
+                                    dicomKO = koElement;
+                                    break;
+                                }
                             }
                         }
                     }
