@@ -35,7 +35,6 @@ import java.util.UUID;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -57,8 +56,8 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-public final class JIThumbnailList extends JList<MediaElement> implements JIObservable, DragGestureListener,
-    DragSourceListener, DragSourceMotionListener {
+public final class JIThumbnailList extends JList implements JIObservable, DragGestureListener, DragSourceListener,
+    DragSourceMotionListener {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
     private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
@@ -72,8 +71,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
     private boolean changed;
     private Point dragPressed = null;
     private DragSource dragSource = null;
-    private MediaElement lastSelectedDiskObject = null;
-    private JLabel label = new JLabel();
+    private MediaElement<?> lastSelectedDiskObject = null;
 
     public JIThumbnailList(final FileTreeModel model) {
         this(model, VERTICAL_WRAP, null);
@@ -525,7 +523,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
 
     protected void listValueChanged(final ListSelectionEvent e) {
         if (this.lastSelectedDiskObject == null) {
-            this.lastSelectedDiskObject = getModel().getElementAt(e.getLastIndex());
+            this.lastSelectedDiskObject = (MediaElement) getModel().getElementAt(e.getLastIndex());
         }
         DefaultExplorer.getTreeContext().setSelectedDiskObjects(this.getSelectedValues(), this.lastSelectedDiskObject);
 
@@ -546,7 +544,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
             } else {
                 int index = locationToIndex(e.getPoint());
                 if (index >= 0) {
-                    MediaElement selectedMedia = getModel().getElementAt(index);
+                    MediaElement selectedMedia = (MediaElement) getModel().getElementAt(index);
                     if (selectedMedia != null) {
                         boolean isSelected = false;
                         for (MediaElement m : selMedias) {
@@ -809,7 +807,7 @@ public final class JIThumbnailList extends JList<MediaElement> implements JIObse
         try {
             if (comp instanceof JIThumbnailList) {
                 int index = getSelectedIndex();
-                MediaElement media = getSelectedValue();
+                MediaElement media = (MediaElement) getSelectedValue();
                 MediaSeries series = buildSeriesFromMediaElement(media);
                 if (series != null) {
                     GhostGlassPane glassPane = AbstractProperties.glassPane;
