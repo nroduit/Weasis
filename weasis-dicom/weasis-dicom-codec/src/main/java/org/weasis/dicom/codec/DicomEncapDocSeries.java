@@ -44,7 +44,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     }
 
     @Override
-    public void addMedia(MediaElement media) {
+    public <T extends MediaElement<?>> void addMedia(T media) {
         if (media instanceof DicomEncapDocElement) {
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
@@ -115,4 +115,5 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
         }
         return null;
     }
+
 }

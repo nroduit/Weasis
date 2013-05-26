@@ -66,6 +66,7 @@ import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -252,6 +253,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // control.setDefaultLocation(UIManager.BASE_AREA.
         // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
         this.add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        // Allow to drop series into the empty main area
         UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
         UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
         UIManager.MAIN_AREA.setVisible(true);
@@ -307,7 +309,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     } else if (source instanceof ViewerPluginBuilder) {
                         ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
                         DataExplorerModel model = builder.getModel();
-                        List<MediaSeries> series = builder.getSeries();
+                        List<MediaSeries<? extends MediaElement<?>>> series = builder.getSeries();
                         Map<String, Object> props = builder.getProperties();
                         if (series != null
                             && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
@@ -326,15 +328,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                                 }
                                 openSeriesInViewerPlugin(builder, group);
                             } else if (series.size() > 1) {
-                                HashMap<MediaSeriesGroup, List<MediaSeries>> map =
+                                HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
                                     getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
-                                for (Iterator<Entry<MediaSeriesGroup, List<MediaSeries>>> iterator =
+                                for (Iterator<Entry<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>> iterator =
                                     map.entrySet().iterator(); iterator.hasNext();) {
-                                    Entry<MediaSeriesGroup, List<MediaSeries>> entry = iterator.next();
+                                    Entry<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> entry =
+                                        iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
 
                                     if (inSelView) {
-                                        List<MediaSeries> seriesList = entry.getValue();
+                                        List<MediaSeries<? extends MediaElement<?>>> seriesList = entry.getValue();
                                         if (seriesList.size() > 0) {
                                             // Change the group attribution. DO NOT use it with DICOM.
                                             if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) {
@@ -353,10 +356,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 } else if (ObservableEvent.BasicAction.Unregister.equals(action)) {
                     if (source instanceof SeriesViewerFactory) {
                         SeriesViewerFactory viewerFactory = (SeriesViewerFactory) source;
-                        final List<ViewerPlugin> pluginsToRemove = new ArrayList<ViewerPlugin>();
+                        final List<ViewerPlugin<?>> pluginsToRemove = new ArrayList<ViewerPlugin<?>>();
                         String name = viewerFactory.getUIName();
                         synchronized (UIManager.VIEWER_PLUGINS) {
-                            for (final ViewerPlugin plugin : UIManager.VIEWER_PLUGINS) {
+                            for (final ViewerPlugin<?> plugin : UIManager.VIEWER_PLUGINS) {
                                 if (name.equals(plugin.getName())) {
                                     // Do not close Series directly, it can produce deadlock.
                                     pluginsToRemove.add(plugin);
@@ -376,15 +379,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
-    private HashMap<MediaSeriesGroup, List<MediaSeries>> getSeriesByEntry(TreeModel treeModel,
-        List<MediaSeries> series, TreeModelNode entry) {
-        HashMap<MediaSeriesGroup, List<MediaSeries>> map = new HashMap<MediaSeriesGroup, List<MediaSeries>>();
+    private HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(
+        TreeModel treeModel, List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
+        HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
+            new HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>();
         if (series != null && treeModel != null && entry != null) {
-            for (MediaSeries s : series) {
+            for (MediaSeries<? extends MediaElement<?>> s : series) {
                 MediaSeriesGroup entry1 = treeModel.getParent(s, entry);
-                List<MediaSeries> seriesList = map.get(entry1);
+                List<MediaSeries<? extends MediaElement<?>>> seriesList = map.get(entry1);
                 if (seriesList == null) {
-                    seriesList = new ArrayList<MediaSeries>();
+                    seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>();
                 }
                 seriesList.add(s);
                 map.put(entry1, seriesList);
@@ -399,7 +403,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
         SeriesViewerFactory factory = builder.getFactory();
         DataExplorerModel model = builder.getModel();
-        List<MediaSeries> seriesList = builder.getSeries();
+        List<MediaSeries<? extends MediaElement<?>>> seriesList = builder.getSeries();
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
@@ -970,7 +974,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                             if (factory.canReadMimeType(seq.getMimeType())) {
                                 DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
                                 if (model instanceof TreeModel) {
-                                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                                    ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+                                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
                                     list.add(seq);
                                     ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
                                     openSeriesInViewerPlugin(builder,

@@ -247,7 +247,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
     }
 
-    public void mergeSeries(List<MediaSeries> seriesList) {
+    public void mergeSeries(List<MediaSeries<? extends MediaElement<?>>> seriesList) {
         if (seriesList != null && seriesList.size() > 1) {
             String uid = (String) seriesList.get(0).getTagValue(TagW.SeriesInstanceUID);
             boolean sameOrigin = true;

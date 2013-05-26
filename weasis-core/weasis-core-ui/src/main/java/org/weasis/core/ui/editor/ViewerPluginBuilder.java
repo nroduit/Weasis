@@ -48,12 +48,12 @@ public class ViewerPluginBuilder {
 
     public static final AbstractFileModel DefaultDataModel = new AbstractFileModel();
     private final SeriesViewerFactory factory;
-    private final List<MediaSeries> series;
+    private final List<MediaSeries<? extends MediaElement<?>>> series;
     private final DataExplorerModel model;
     private final Map<String, Object> properties;
 
-    public ViewerPluginBuilder(SeriesViewerFactory factory, List<MediaSeries> series, DataExplorerModel model,
-        Map<String, Object> props) {
+    public ViewerPluginBuilder(SeriesViewerFactory factory, List<MediaSeries<? extends MediaElement<?>>> series,
+        DataExplorerModel model, Map<String, Object> props) {
         if (factory == null || series == null || model == null) {
             throw new IllegalArgumentException();
         }
@@ -67,7 +67,7 @@ public class ViewerPluginBuilder {
         return factory;
     }
 
-    public List<MediaSeries> getSeries() {
+    public List<MediaSeries<? extends MediaElement<?>>> getSeries() {
         return series;
     }
 
@@ -79,23 +79,26 @@ public class ViewerPluginBuilder {
         return properties;
     }
 
-    public static void openSequenceInPlugin(SeriesViewerFactory factory, MediaSeries series, DataExplorerModel model,
-        boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
+    public static void openSequenceInPlugin(SeriesViewerFactory factory, MediaSeries<? extends MediaElement<?>> series,
+        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
         if (factory == null || series == null || model == null) {
             return;
         }
-        ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+        ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+            new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
         list.add(series);
         openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
     }
 
-    public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
-        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
+    public static void openSequenceInPlugin(SeriesViewerFactory factory,
+        List<MediaSeries<? extends MediaElement<?>>> series, DataExplorerModel model,
+        boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
         openSequenceInPlugin(factory, series, model, compareEntryToBuildNewViewer, removeOldSeries, null);
     }
 
-    public static void openSequenceInPlugin(SeriesViewerFactory factory, List<MediaSeries> series,
-        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries, Rectangle screenBound) {
+    public static void openSequenceInPlugin(SeriesViewerFactory factory,
+        List<MediaSeries<? extends MediaElement<?>>> series, DataExplorerModel model,
+        boolean compareEntryToBuildNewViewer, boolean removeOldSeries, Rectangle screenBound) {
         if (factory == null || series == null || model == null) {
             return;
         }
@@ -115,10 +118,10 @@ public class ViewerPluginBuilder {
         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Register, model, null, builder));
     }
 
-    public static void openSequenceInDefaultPlugin(List<MediaSeries> series, DataExplorerModel model,
-        boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
+    public static void openSequenceInDefaultPlugin(List<MediaSeries<? extends MediaElement<?>>> series,
+        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
         ArrayList<String> mimes = new ArrayList<String>();
-        for (MediaSeries s : series) {
+        for (MediaSeries<? extends MediaElement<?>> s : series) {
             String mime = s.getMimeType();
             if (mime != null && !mimes.contains(mime)) {
                 mimes.add(mime);
@@ -127,8 +130,9 @@ public class ViewerPluginBuilder {
         for (String mime : mimes) {
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
             if (plugin != null) {
-                ArrayList<MediaSeries> seriesList = new ArrayList<MediaSeries>();
-                for (MediaSeries s : series) {
+                ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
+                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+                for (MediaSeries<? extends MediaElement<?>> s : series) {
                     if (mime.equals(s.getMimeType())) {
                         seriesList.add(s);
                     }
@@ -138,8 +142,8 @@ public class ViewerPluginBuilder {
         }
     }
 
-    public static void openSequenceInDefaultPlugin(MediaSeries series, DataExplorerModel model,
-        boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
+    public static void openSequenceInDefaultPlugin(MediaSeries<? extends MediaElement<?>> series,
+        DataExplorerModel model, boolean compareEntryToBuildNewViewer, boolean removeOldSeries) {
         if (series != null) {
             String mime = series.getMimeType();
             SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
@@ -152,7 +156,7 @@ public class ViewerPluginBuilder {
 
     }
 
-    public static void openSequenceInDefaultPlugin(MediaElement media, DataExplorerModel model,
+    public static void openSequenceInDefaultPlugin(MediaElement<?> media, DataExplorerModel model,
         boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
         if (media != null) {
             openSequenceInDefaultPlugin(media.getMediaReader().getMediaSeries(), model, compareEntryToBuildNewViewer,
@@ -162,18 +166,18 @@ public class ViewerPluginBuilder {
 
     public static void openSequenceInDefaultPlugin(File file, boolean compareEntryToBuildNewViewer,
         boolean bestDefaultLayout) {
-        MediaReader reader = getMedia(file);
+        MediaReader<?> reader = getMedia(file);
         if (reader != null) {
-            MediaSeries s = buildMediaSeriesWithDefaultModel(reader);
+            MediaSeries<? extends MediaElement<?>> s = buildMediaSeriesWithDefaultModel(reader);
             openSequenceInDefaultPlugin(s, DefaultDataModel, compareEntryToBuildNewViewer, bestDefaultLayout);
         }
     }
 
-    public static MediaReader getMedia(File file) {
+    public static MediaReader<?> getMedia(File file) {
         return getMedia(file, true);
     }
 
-    public static MediaReader getMedia(File file, boolean systemReader) {
+    public static MediaReader<?> getMedia(File file, boolean systemReader) {
         if (file != null && file.canRead()) {
             String mimeType = MimeInspector.getMimeType(file);
             if (mimeType != null) {
@@ -183,29 +187,29 @@ public class ViewerPluginBuilder {
                 }
             }
             if (systemReader) {
-                return new DefaultMimeIO(file.toURI(), null);
+                return new DefaultMimeIO<File>(file.toURI(), null);
             }
         }
         return null;
     }
 
-    public static MediaSeries buildMediaSeriesWithDefaultModel(MediaReader reader) {
+    public static MediaSeries<? extends MediaElement<?>> buildMediaSeriesWithDefaultModel(MediaReader<?> reader) {
         return buildMediaSeriesWithDefaultModel(reader, null, null, null);
     }
 
-    public static MediaSeries buildMediaSeriesWithDefaultModel(MediaReader reader, String groupUID, TagW groupName,
-        String groupValue) {
+    public static MediaSeries<? extends MediaElement<?>> buildMediaSeriesWithDefaultModel(MediaReader<?> reader,
+        String groupUID, TagW groupName, String groupValue) {
         return buildMediaSeriesWithDefaultModel(reader, groupUID, groupName, groupValue, null);
     }
 
-    public static MediaSeries buildMediaSeriesWithDefaultModel(MediaReader reader, String groupUID, TagW groupName,
-        String groupValue, String seriesUID) {
+    public static MediaSeries<? extends MediaElement<?>> buildMediaSeriesWithDefaultModel(MediaReader<?> reader,
+        String groupUID, TagW groupName, String groupValue, String seriesUID) {
         if (reader instanceof DefaultMimeIO) {
             return reader.getMediaSeries();
         }
-        MediaSeries series = null;
+        MediaSeries<? extends MediaElement<?>> series = null;
         // Require to read the header
-        MediaElement[] medias = reader.getMediaElement();
+        MediaElement<?>[] medias = reader.getMediaElement();
         if (medias == null) {
             return null;
         }
@@ -225,7 +229,7 @@ public class ViewerPluginBuilder {
 
         MediaSeriesGroup group2 = DefaultDataModel.getHierarchyNode(group1, sUID);
         if (group2 instanceof Series) {
-            series = (Series) group2;
+            series = (Series<?>) group2;
         }
 
         try {
@@ -237,17 +241,18 @@ public class ViewerPluginBuilder {
             } else {
                 // Test if SOPInstanceUID already exists
                 if (series instanceof Series
-                    && ((Series) series).hasMediaContains(TagW.SOPInstanceUID, reader.getTagValue(TagW.SOPInstanceUID))) {
+                    && ((Series<?>) series).hasMediaContains(TagW.SOPInstanceUID,
+                        reader.getTagValue(TagW.SOPInstanceUID))) {
                     return series;
                 }
                 if (medias != null) {
-                    for (MediaElement media : medias) {
+                    for (MediaElement<?> media : medias) {
                         series.addMedia(media);
                     }
                 }
             }
             if (medias != null) {
-                for (MediaElement media : medias) {
+                for (MediaElement<?> media : medias) {
                     if (media instanceof ImageElement) {
                         DefaultSerializer.readMeasurementGraphics((ImageElement) media, media.getFile());
                     }

@@ -270,7 +270,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     @Override
     public void addSeries(MediaSeries<DicomImageElement> sequence) {
         if (srview != null && sequence instanceof Series && srview.getSeries() != sequence) {
-            srview.setSeries((Series) sequence);
+            srview.setSeries((Series<DicomImageElement>) sequence);
         }
     }
 

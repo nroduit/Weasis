@@ -16,14 +16,15 @@ import java.util.Map;
 import javax.swing.Action;
 
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.media.data.MediaElement;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
-    SeriesViewer createSeriesViewer(Map<String, Object> properties);
+    SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties);
 
     boolean canReadMimeType(String mimeType);
 
-    boolean isViewerCreatedByThisFactory(SeriesViewer viewer);
+    boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer);
 
     int getLevel();
 

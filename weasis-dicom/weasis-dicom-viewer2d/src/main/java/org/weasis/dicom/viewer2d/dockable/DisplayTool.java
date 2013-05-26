@@ -339,7 +339,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     public void changingViewContentEvent(SeriesViewerEvent event) {
         EVENT e = event.getEventType();
         if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-            iniTreeValues(((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane());
+            iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         } else if (EVENT.TOOGLE_INFO.equals(e)) {
             TreeCheckingModel model = tree.getCheckingModel();
             model.toggleCheckingPath(new TreePath(dicomInfo.getPath()));

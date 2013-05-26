@@ -29,15 +29,15 @@ import org.weasis.dicom.explorer.DicomExplorer.PatientPane;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
-public class SeriesSelectionModel extends ArrayList<Series> {
+public class SeriesSelectionModel extends ArrayList<Series<?>> {
 
     public static final Color BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$ 
     public static final Color SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
 
     private final PatientContainerPane patientContainer;
 
-    private Series anchorSelection;
-    private Series leadSelection;
+    private Series<?> anchorSelection;
+    private Series<?> leadSelection;
     private boolean openningSeries = false;
 
     public SeriesSelectionModel(PatientContainerPane patientContainer) {
@@ -45,7 +45,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     }
 
     @Override
-    public void add(int index, Series element) {
+    public void add(int index, Series<?> element) {
         if (!contains(element)) {
             super.add(index, element);
             setBackgroundColor(element, false);
@@ -53,7 +53,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     }
 
     @Override
-    public boolean add(Series e) {
+    public boolean add(Series<?> e) {
         if (!contains(e)) {
             setBackgroundColor(e, true);
             return super.add(e);
@@ -62,26 +62,26 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     }
 
     @Override
-    public boolean addAll(Collection<? extends Series> c) {
-        for (Series series : c) {
+    public boolean addAll(Collection<? extends Series<?>> c) {
+        for (Series<?> series : c) {
             setBackgroundColor(series, true);
         }
         return super.addAll(c);
     }
 
     @Override
-    public boolean addAll(int index, Collection<? extends Series> c) {
-        for (Series series : c) {
+    public boolean addAll(int index, Collection<? extends Series<?>> c) {
+        for (Series<?> series : c) {
             setBackgroundColor(series, true);
         }
         return super.addAll(index, c);
     }
 
-    public Series getAnchorSelection() {
+    public Series<?> getAnchorSelection() {
         return anchorSelection;
     }
 
-    public Series getLeadSelection() {
+    public Series<?> getLeadSelection() {
         return leadSelection;
     }
 
@@ -89,15 +89,15 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     public void clear() {
         this.anchorSelection = null;
         this.leadSelection = null;
-        for (Series s : this) {
+        for (Series<?> s : this) {
             setBackgroundColor(s, false);
         }
         super.clear();
     }
 
     @Override
-    public Series remove(int index) {
-        Series s = super.remove(index);
+    public Series<?> remove(int index) {
+        Series<?> s = super.remove(index);
         if (s != null) {
             setBackgroundColor(s, false);
         }
@@ -107,7 +107,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     @Override
     public boolean remove(Object o) {
         if (o instanceof Series) {
-            setBackgroundColor((Series) o, false);
+            setBackgroundColor((Series<?>) o, false);
         }
         return super.remove(o);
     }
@@ -119,7 +119,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
             int end = toIndex > seriesSize ? seriesSize : toIndex;
             int start = fromIndex < 0 ? 0 : fromIndex;
             for (int i = start; i < end; i++) {
-                Series val = this.get(i);
+                Series<?> val = this.get(i);
                 setBackgroundColor(val, false);
             }
             super.removeRange(start, end);
@@ -127,8 +127,8 @@ public class SeriesSelectionModel extends ArrayList<Series> {
     }
 
     @Override
-    public Series set(int index, Series element) {
-        Series s = super.set(index, element);
+    public Series<?> set(int index, Series<?> element) {
+        Series<?> s = super.set(index, element);
         if (s != null) {
             setBackgroundColor(s, false);
         }
@@ -138,7 +138,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         return s;
     }
 
-    private void setBackgroundColor(Series series, boolean selected) {
+    private void setBackgroundColor(Series<?> series, boolean selected) {
         if (series != null) {
             Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
@@ -150,7 +150,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         }
     }
 
-    private void requestFocus(Series series) {
+    private void requestFocus(Series<?> series) {
         if (series != null) {
             Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
@@ -161,11 +161,11 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         }
     }
 
-    void adjustSelection(InputEvent e, Series series) {
+    void adjustSelection(InputEvent e, Series<?> series) {
         if (e != null && series != null) {
             boolean anchorSelected;
-            Series anchor = anchorSelection;
-            Series row = series;
+            Series<?> anchor = anchorSelection;
+            Series<?> row = series;
             if (anchor == null) {
                 anchorSelected = false;
             } else {
@@ -194,12 +194,12 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         }
     }
 
-    void setSelectionInterval(Series anchorIndex, Series row) {
+    void setSelectionInterval(Series<?> anchorIndex, Series<?> row) {
         this.clear();
         addSelectionInterval(anchorIndex, row);
     }
 
-    void removeSelectionInterval(Series anchorIndex, Series row) {
+    void removeSelectionInterval(Series<?> anchorIndex, Series<?> row) {
         if (anchorIndex == null || row == null) {
             return;
         }
@@ -207,7 +207,7 @@ public class SeriesSelectionModel extends ArrayList<Series> {
         int fromIndex = -1;
         int toIndex = -1;
         for (int i = 0; i < this.size(); i++) {
-            Series val = this.get(i);
+            Series<?> val = this.get(i);
             if (anchorIndex == val) {
                 if (fromIndex == -1) {
                     fromIndex = i;

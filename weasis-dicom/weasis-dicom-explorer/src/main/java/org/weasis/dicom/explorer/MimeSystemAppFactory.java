@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -97,12 +98,12 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
         return false;
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         return mimeSystemViewer;
     }
 

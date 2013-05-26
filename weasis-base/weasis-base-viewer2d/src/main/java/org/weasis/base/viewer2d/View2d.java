@@ -57,7 +57,6 @@ import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -720,6 +719,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                 }
                 return dropDicomFiles(files);
             }
+
+            ImageViewerPlugin<ImageElement> selPlugin = eventManager.getSelectedView2dContainer();
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
@@ -735,17 +736,18 @@ public class View2d extends DefaultView2d<ImageElement> {
                     MediaSeriesGroup p2 = null;
                     ViewerPlugin openPlugin = null;
                     if (p1 != null) {
-                        synchronized (UIManager.VIEWER_PLUGINS) {
-                            plugin: for (final ViewerPlugin<? extends MediaElement> p : UIManager.VIEWER_PLUGINS) {
-                                if (p instanceof View2dContainer) {
-                                    for (MediaSeries s : p.getOpenSeries()) {
-                                        p2 = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                        if (p1.equals(p2)) {
-                                            if (!((View2dContainer) p).isContainingView(View2d.this)) {
-                                                openPlugin = p;
-                                            }
-                                            break plugin;
+                        if (selPlugin instanceof View2dContainer
+                            && ((View2dContainer) selPlugin).isContainingView(View2d.this)
+                            && p1.equals(selPlugin.getGroupID())) {
+                            p2 = p1;
+                        } else {
+                            synchronized (UIManager.VIEWER_PLUGINS) {
+                                plugin: for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+                                    if (p1.equals(p.getGroupID())) {
+                                        if (!((View2dContainer) p).isContainingView(View2d.this)) {
+                                            openPlugin = p;
                                         }
+                                        break plugin;
                                     }
                                 }
                             }
@@ -765,17 +767,17 @@ public class View2d extends DefaultView2d<ImageElement> {
             } catch (Exception e) {
                 return false;
             }
-            ImageViewerPlugin<ImageElement> pane = EventManager.getInstance().getSelectedView2dContainer();
-            if (pane != null && SynchView.Mode.Tile.equals(pane.getSynchView().getMode())) {
-                pane.addSeries(seq);
+
+            if (selPlugin != null && SynchView.Mode.Tile.equals(selPlugin.getSynchView().getMode())) {
+                selPlugin.addSeries(seq);
                 return true;
             }
 
             setSeries(seq);
             // Getting the focus has a delay and so it will trigger the view selection later
             // requestFocusInWindow();
-            if (pane != null && pane.isContainingView(View2d.this)) {
-                pane.setSelectedImagePaneFromFocus(View2d.this);
+            if (selPlugin != null && selPlugin.isContainingView(View2d.this)) {
+                selPlugin.setSelectedImagePaneFromFocus(View2d.this);
             }
             return true;
         }

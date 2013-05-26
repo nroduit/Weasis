@@ -88,6 +88,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -1355,7 +1356,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public void changingViewContentEvent(SeriesViewerEvent event) {
         EVENT type = event.getEventType();
         if (EVENT.SELECT_VIEW.equals(type) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-            DefaultView2d pane = ((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane();
+            DefaultView2d<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
             if (pane != null) {
                 MediaSeries s = pane.getSeries();
                 if (s != null) {
@@ -1645,7 +1646,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         plugin = DefaultMimeAppFactory.getInstance();
                     }
 
-                    ArrayList<MediaSeries> list = new ArrayList<MediaSeries>(1);
+                    ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
                     list.add(series);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -1680,17 +1682,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             break;
                         }
                     }
-                    final List<MediaSeries> seriesList;
+                    final List<MediaSeries<? extends MediaElement<?>>> seriesList;
                     if (multipleMimes) {
                         // Filter the list to have only one mime type
-                        seriesList = new ArrayList<MediaSeries>();
+                        seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>();
                         for (Series s : selList) {
                             if (mime.equals(s.getMimeType())) {
                                 seriesList.add(s);
                             }
                         }
                     } else {
-                        seriesList = new ArrayList<MediaSeries>(selList);
+                        seriesList = new ArrayList<MediaSeries<? extends MediaElement<?>>>(selList);
                     }
                     for (final SeriesViewerFactory viewerFactory : plugins) {
                         JMenu menuFactory = new JMenu(viewerFactory.getUIName());
@@ -1975,8 +1977,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         selList.add(series);
                     }
                     selList.setOpenningSeries(true);
-                    ViewerPluginBuilder.openSequenceInDefaultPlugin(new ArrayList<MediaSeries>(selList), dicomModel,
-                        true, true);
+                    ViewerPluginBuilder.openSequenceInDefaultPlugin(
+                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(selList), dicomModel, true, true);
                     selList.setOpenningSeries(false);
                     if (e.getSource() instanceof JComponent) {
                         ((JComponent) e.getSource()).requestFocusInWindow();

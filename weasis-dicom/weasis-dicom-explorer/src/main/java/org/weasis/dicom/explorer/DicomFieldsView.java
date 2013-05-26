@@ -78,8 +78,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private final JScrollPane allPane = new JScrollPane();
     private final JScrollPane limitedPane = new JScrollPane();
     private final JTextPane jTextPane1 = new JTextPane();
-    private MediaElement currentMedia;
-    private Series currentSeries;
+    private MediaElement<?> currentMedia;
+    private Series<?> currentSeries;
     private boolean anonymize = false;
 
     public DicomFieldsView() {
@@ -184,7 +184,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             currentMedia = event.getMediaElement();
             currentSeries = event.getSeries();
             if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-                DefaultView2d sel = ((ImageViewerPlugin) event.getSeriesViewer()).getSelectedImagePane();
+                DefaultView2d<?> sel = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
                 if (sel != null) {
                     anonymize = sel.getInfoLayer().getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
                 }
@@ -193,7 +193,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void changeDicomInfo(Series series, MediaElement media) {
+    private void changeDicomInfo(Series<?> series, MediaElement<?> media) {
         int index = getSelectedIndex();
         if (index == 0) {
             displayLimitedDicomInfo(series, media);
@@ -202,7 +202,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void displayAllDicomInfo(Series series, MediaElement media) {
+    private void displayAllDicomInfo(Series<?> series, MediaElement<?> media) {
         DefaultListModel listModel = new DefaultListModel();
         if (media != null) {
             MediaReader loader = media.getMediaReader();
@@ -233,7 +233,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         allPane.setViewportView(jListElement);
     }
 
-    private void displayLimitedDicomInfo(Series series, MediaElement media) {
+    private void displayLimitedDicomInfo(Series<?> series, MediaElement<?> media) {
 
         StyledDocument doc = jTextPane1.getStyledDocument();
         try {

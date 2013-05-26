@@ -25,7 +25,7 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     List<E> getSortedMedias(Comparator<E> comparator);
 
-    void addMedia(MediaElement media);
+    <T extends MediaElement<?>> void addMedia(T media);
 
     void add(E media);
 

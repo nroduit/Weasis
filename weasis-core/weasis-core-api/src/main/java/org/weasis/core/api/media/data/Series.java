@@ -33,7 +33,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 
-public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
+public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroupNode implements MediaSeries<E> {
 
     private static final Random RANDOM = new Random();
     public static DataFlavor sequenceDataFlavor;
@@ -243,7 +243,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public void dispose() {
         synchronized (this) {
-            for (MediaElement media : medias) {
+            for (MediaElement<?> media : medias) {
                 if (media instanceof ImageElement) {
                     // Removing from cache will close the image stream
                     ((ImageElement) media).removeImageFromCache();
@@ -447,7 +447,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     public synchronized void setFileSize(double size) {
         fileSize = size;
     }
-    
+
     @Override
     public synchronized double getFileSize() {
         return fileSize;

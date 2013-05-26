@@ -325,18 +325,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected void closingSeries(MediaSeries<E> series) {
-        if (series == null) {
+    protected void closingSeries(MediaSeries<E> mediaSeries) {
+        if (mediaSeries == null) {
             return;
         }
         boolean open = false;
         synchronized (UIManager.VIEWER_PLUGINS) {
-            List<ViewerPlugin> plugins = UIManager.VIEWER_PLUGINS;
-            pluginList: for (final ViewerPlugin plugin : plugins) {
-                List<MediaSeries> openSeries = plugin.getOpenSeries();
+            List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+            pluginList: for (final ViewerPlugin<?> plugin : plugins) {
+                List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
                 if (openSeries != null) {
-                    for (MediaSeries s : openSeries) {
-                        if (series == s) {
+                    for (MediaSeries<?> s : openSeries) {
+                        if (mediaSeries == s) {
                             // The sequence is still open in another view or plugin
                             open = true;
                             break pluginList;
@@ -345,9 +345,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
         }
-        series.setOpen(open);
-        series.setSelected(false, null);
-        series.setFocused(false);
+        mediaSeries.setOpen(open);
+        // TODO setSelected and setFocused must be global to all view as open
+        mediaSeries.setSelected(false, null);
+        mediaSeries.setFocused(false);
     }
 
     public void setFocused(boolean focused) {
@@ -899,7 +900,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             actionsInView.put(command, showLens);
             if (showLens) {
                 if (lens == null) {
-                    lens = new ZoomWin(this);
+                    lens = new ZoomWin<E>(this);
                 }
                 // resize if to big
                 int maxWidth = getWidth() / 3;

@@ -12,6 +12,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -44,7 +45,7 @@ public class MPRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = MPRContainer.VIEWS_2x1_mpr;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -101,7 +102,7 @@ public class MPRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
         if (viewer instanceof MPRContainer) {
             return true;
         }

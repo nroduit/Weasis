@@ -250,7 +250,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         int interpolation = comboBoxInterpolation.getSelectedIndex();
         eventManager.getZoomSetting().setInterpolation(interpolation);
         synchronized (UIManager.VIEWER_PLUGINS) {
-            for (final ViewerPlugin<DicomImageElement> p : UIManager.VIEWER_PLUGINS) {
+            for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                 if (p instanceof View2dContainer) {
                     View2dContainer viewer = (View2dContainer) p;
                     for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {

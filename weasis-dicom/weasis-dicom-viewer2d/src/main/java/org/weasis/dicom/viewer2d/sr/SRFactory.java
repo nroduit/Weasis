@@ -42,7 +42,7 @@ public class SRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = SRContainer.VIEWS_1x1;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -77,7 +77,7 @@ public class SRFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
         if (viewer instanceof SRContainer) {
             return true;
         }

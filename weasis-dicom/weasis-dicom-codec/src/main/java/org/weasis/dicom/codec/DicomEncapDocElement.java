@@ -11,16 +11,16 @@
 package org.weasis.dicom.codec;
 
 import java.io.File;
-import java.net.URI;
+
+import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.TagW;
 
-public class DicomEncapDocElement extends MediaElement<URI> {
+public class DicomEncapDocElement extends MediaElement<PlanarImage> {
     private File document = null;
 
-    public DicomEncapDocElement(MediaReader mediaIO, Object key) {
+    public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
     }
 

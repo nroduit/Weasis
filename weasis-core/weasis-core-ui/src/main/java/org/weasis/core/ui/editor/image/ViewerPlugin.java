@@ -34,6 +34,7 @@ import bibliothek.gui.dock.common.intern.AbstractCDockable;
 import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
 
@@ -126,7 +127,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
     }
 
     public void setSelectedAndGetFocus() {
-        UIManager.DOCKING_CONTROL.getController().setFocusedDockable(dockable.intern(), this, true, true, false);
+        UIManager.DOCKING_CONTROL.getController().setFocusedDockable(
+            new DefaultFocusRequest(dockable.intern(), this, false, true, false));
     }
 
     @Override

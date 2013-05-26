@@ -26,7 +26,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
-public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> {
+public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement<?>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
 
@@ -35,7 +35,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
     }
 
     @Override
-    public List<MediaSeries<MediaElement>> getOpenSeries() {
+    public List<MediaSeries<MediaElement<?>>> getOpenSeries() {
         return null;
     }
 
@@ -72,7 +72,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
     }
 
     @Override
-    public void removeSeries(MediaSeries<MediaElement> sequence) {
+    public void removeSeries(MediaSeries<MediaElement<?>> sequence) {
 
     }
 

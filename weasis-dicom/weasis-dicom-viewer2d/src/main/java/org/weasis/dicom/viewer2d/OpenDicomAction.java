@@ -21,6 +21,7 @@ import javax.swing.JOptionPane;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -67,7 +68,8 @@ public class OpenDicomAction extends AbstractUIAction {
         } else {
             Codec codec = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
             if (codec != null) {
-                ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
+                ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
                 for (File file : selectedFiles) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);

@@ -21,9 +21,9 @@ public interface MediaReader<E> {
 
     URI getUri();
 
-    MediaElement[] getMediaElement();
+    MediaElement<?>[] getMediaElement();
 
-    MediaSeries getMediaSeries();
+    MediaSeries<? extends MediaElement<E>> getMediaSeries();
 
     boolean delegate(DataExplorerModel explorerModel);
 

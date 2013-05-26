@@ -26,6 +26,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -55,7 +56,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
+    public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -123,7 +124,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
+    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement<?>> viewer) {
         if (viewer instanceof View2dContainer) {
             return true;
         }

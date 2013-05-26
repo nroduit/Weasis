@@ -14,8 +14,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
@@ -27,25 +25,24 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 
-public class DefaultMimeIO implements MediaReader<File> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultMimeIO.class);
+public class DefaultMimeIO<F extends File> implements MediaReader<F> {
 
     protected URI uri;
     protected final String mimeType;
-    private MediaElement media = null;
+    private MediaElement<F> mediaElement = null;
 
     public DefaultMimeIO(URI media, String mimeType) {
         if (media == null) {
-            throw new IllegalArgumentException("media uri is null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("mediaElement uri is null"); //$NON-NLS-1$
         }
         this.uri = media;
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
     }
 
     @Override
-    public File getMediaFragment(MediaElement media) throws Exception {
+    public F getMediaFragment(MediaElement<F> media) throws Exception {
         if (media != null) {
-            return media.getFile();
+            return (F) media.getFile();
         }
         return null;
     }
@@ -61,7 +58,7 @@ public class DefaultMimeIO implements MediaReader<File> {
     }
 
     @Override
-    public MediaElement<File> getPreview() {
+    public MediaElement<F> getPreview() {
         return getSingleImage();
     }
 
@@ -72,8 +69,8 @@ public class DefaultMimeIO implements MediaReader<File> {
     }
 
     @Override
-    public MediaElement[] getMediaElement() {
-        MediaElement element = getSingleImage();
+    public MediaElement<?>[] getMediaElement() {
+        MediaElement<?> element = getSingleImage();
         if (element != null) {
             return new MediaElement[] { element };
         }
@@ -81,14 +78,24 @@ public class DefaultMimeIO implements MediaReader<File> {
     }
 
     @Override
-    public MediaSeries<MediaElement> getMediaSeries() {
-        MediaSeries<MediaElement> mediaSeries =
-            new Series<MediaElement>(TagW.FilePath, this.toString(), TagW.FileName, 1) {
+    public MediaSeries<MediaElement<F>> getMediaSeries() {
+        MediaSeries<MediaElement<F>> mediaSeries =
+            new Series<MediaElement<F>>(TagW.FilePath, this.toString(), TagW.FileName, 1) {
 
                 @Override
-                public void addMedia(MediaElement media) {
-                    if (media instanceof MediaElement) {
-                        this.add(media);
+                public String getMimeType() {
+                    synchronized (this) {
+                        for (MediaElement<?> m : medias) {
+                            return m.getMimeType();
+                        }
+                    }
+                    return null;
+                }
+
+                @Override
+                public <T extends MediaElement<?>> void addMedia(T media) {
+                    if (media != null) {
+                        this.add((MediaElement<F>) media);
                         DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
@@ -96,19 +103,9 @@ public class DefaultMimeIO implements MediaReader<File> {
                         }
                     }
                 }
-
-                @Override
-                public String getMimeType() {
-                    synchronized (this) {
-                        for (MediaElement m : medias) {
-                            return m.getMimeType();
-                        }
-                    }
-                    return null;
-                }
             };
         mediaSeries.add(getSingleImage());
-        mediaSeries.setTag(TagW.FileName, media.getName());
+        mediaSeries.setTag(TagW.FileName, mediaElement.getName());
         return mediaSeries;
     }
 
@@ -118,16 +115,16 @@ public class DefaultMimeIO implements MediaReader<File> {
         return 0;
     }
 
-    private MediaElement<File> getSingleImage() {
-        if (media == null) {
-            media = new MediaElement<File>(this, null) {
+    private MediaElement<F> getSingleImage() {
+        if (mediaElement == null) {
+            mediaElement = new MediaElement<F>(this, null) {
                 @Override
                 public void dispose() {
                     // TODO Auto-generated method stub
                 }
             };
         }
-        return media;
+        return mediaElement;
     }
 
     @Override

@@ -246,14 +246,15 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
         }
     }
 
-    public void openSelection(MediaElement[] medias, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout,
-        boolean inSelView) {
+    public void openSelection(MediaElement<?>[] medias, boolean compareEntryToBuildNewViewer,
+        boolean bestDefaultLayout, boolean inSelView) {
         if (medias != null) {
             boolean oneFile = medias.length == 1;
             String sUID = null;
             String gUID = null;
-            ArrayList<MediaSeries> list = new ArrayList<MediaSeries>();
-            for (MediaElement mediaElement : medias) {
+            ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+                new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+            for (MediaElement<?> mediaElement : medias) {
                 String cfile = getThumbnailListModel().getFileInCache(mediaElement.getFile().getAbsolutePath());
                 File file = cfile == null ? mediaElement.getFile() : new File(JIListModel.EXPLORER_CACHE_DIR, cfile);
                 MediaReader reader = ViewerPluginBuilder.getMedia(file);
@@ -307,14 +308,15 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                 for (String mime : mimes) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
-                        ArrayList<MediaSeries> seriesList = new ArrayList<MediaSeries>();
+                        ArrayList<MediaSeries<? extends MediaElement<?>>> seriesList =
+                            new ArrayList<MediaSeries<? extends MediaElement<?>>>();
                         for (MediaSeries s : list) {
                             if (mime.equals(s.getMimeType())) {
                                 seriesList.add(s);
                             }
                         }
                         ViewerPluginBuilder builder =
-                            new ViewerPluginBuilder(plugin, list, ViewerPluginBuilder.DefaultDataModel, props);
+                            new ViewerPluginBuilder(plugin, seriesList, ViewerPluginBuilder.DefaultDataModel, props);
                         ViewerPluginBuilder.openSequenceInPlugin(builder);
                     }
                 }
@@ -330,15 +332,16 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
             if (modeLayout) {
                 groupUID = UUID.randomUUID().toString();
             }
-            Map<SeriesViewerFactory, List<MediaSeries>> plugins = new HashMap<SeriesViewerFactory, List<MediaSeries>>();
+            Map<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> plugins =
+                new HashMap<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>>();
             for (MediaElement m : medias) {
                 String mime = m.getMimeType();
                 if (mime != null) {
                     SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
                     if (plugin != null) {
-                        List<MediaSeries> list = plugins.get(plugin);
+                        List<MediaSeries<? extends MediaElement<?>>> list = plugins.get(plugin);
                         if (list == null) {
-                            list = new ArrayList<MediaSeries>(modeLayout ? 10 : 1);
+                            list = new ArrayList<MediaSeries<? extends MediaElement<?>>>(modeLayout ? 10 : 1);
                             plugins.put(plugin, list);
                         }
 
@@ -348,14 +351,14 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                         MediaReader mreader = ViewerPluginBuilder.getMedia(file, false);
                         if (mreader != null) {
                             if (modeLayout) {
-                                MediaSeries series =
+                                MediaSeries<? extends MediaElement<?>> series =
                                     ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader, groupUID, null, null,
                                         null);
                                 if (series != null) {
                                     list.add(series);
                                 }
                             } else {
-                                MediaSeries series = null;
+                                MediaSeries<? extends MediaElement<?>> series = null;
                                 if (list.size() == 0) {
                                     series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
                                     if (series != null) {
@@ -364,9 +367,9 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                                 } else {
                                     series = list.get(0);
                                     if (series != null) {
-                                        MediaElement[] ms = mreader.getMediaElement();
+                                        MediaElement<?>[] ms = mreader.getMediaElement();
                                         if (ms != null) {
-                                            for (MediaElement media : ms) {
+                                            for (MediaElement<?> media : ms) {
                                                 media.setTag(TagW.SeriesInstanceUID,
                                                     series.getTagValue(series.getTagID()));
                                                 URI uri = media.getMediaURI();
@@ -391,9 +394,9 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                 props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
             }
 
-            for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries>>> iterator = plugins.entrySet().iterator(); iterator
-                .hasNext();) {
-                Entry<SeriesViewerFactory, List<MediaSeries>> item = iterator.next();
+            for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>>> iterator =
+                plugins.entrySet().iterator(); iterator.hasNext();) {
+                Entry<SeriesViewerFactory, List<MediaSeries<? extends MediaElement<?>>>> item = iterator.next();
                 ViewerPluginBuilder builder =
                     new ViewerPluginBuilder(item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, props);
                 ViewerPluginBuilder.openSequenceInPlugin(builder);

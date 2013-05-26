@@ -19,14 +19,15 @@ public class SeriesViewerEvent {
         SELECT, ADD, LAYOUT, SELECT_VIEW, ANONYM, TOOGLE_INFO, ADD_LAYER, REMOVE_LAYER
     };
 
-    private final SeriesViewer seriesViewer;
-    private final Series series;
-    private final MediaElement mediaElement;
+    private final SeriesViewer<?> seriesViewer;
+    private final Series<?> series;
+    private final MediaElement<?> mediaElement;
 
     private final EVENT eventType;
     private Object sharedObject;
 
-    public SeriesViewerEvent(SeriesViewer seriesViewer, Series series, MediaElement mediaElement, EVENT eventType) {
+    public SeriesViewerEvent(SeriesViewer<?> seriesViewer, Series<?> series, MediaElement<?> mediaElement,
+        EVENT eventType) {
         if (seriesViewer == null) {
             throw new IllegalArgumentException("SeriesViewer parameter cannot be null"); //$NON-NLS-1$
         }
@@ -44,15 +45,15 @@ public class SeriesViewerEvent {
         this.sharedObject = sharedObject;
     }
 
-    public SeriesViewer getSeriesViewer() {
+    public SeriesViewer<? extends MediaElement<?>> getSeriesViewer() {
         return seriesViewer;
     }
 
-    public Series getSeries() {
+    public Series<?> getSeries() {
         return series;
     }
 
-    public MediaElement getMediaElement() {
+    public MediaElement<?> getMediaElement() {
         return mediaElement;
     }
 

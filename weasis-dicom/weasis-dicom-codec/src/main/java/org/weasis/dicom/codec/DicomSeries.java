@@ -60,17 +60,14 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     @Override
-    public void addMedia(MediaElement media) {
+    public <T extends MediaElement<?>> void addMedia(T media) {
         if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-
             if (media instanceof DicomImageElement) {
-
+                DicomImageElement dcm = (DicomImageElement) media;
                 int insertIndex;
                 synchronized (this) {
                     // add image or multi-frame sorted by Instance Number (0020,0013) order
-                    int index =
-                        Collections.binarySearch(medias, (DicomImageElement) media, SortSeriesStack.instanceNumber);
+                    int index = Collections.binarySearch(medias, dcm, SortSeriesStack.instanceNumber);
                     if (index < 0) {
                         insertIndex = -(index + 1);
                     } else {
@@ -80,7 +77,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     if (insertIndex < 0 || insertIndex > medias.size()) {
                         insertIndex = medias.size();
                     }
-                    add(insertIndex, (DicomImageElement) media);
+                    add(insertIndex, dcm);
                 }
                 DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                 if (model != null) {
@@ -348,5 +345,4 @@ public class DicomSeries extends Series<DicomImageElement> {
             }
         }
     }
-
 }
