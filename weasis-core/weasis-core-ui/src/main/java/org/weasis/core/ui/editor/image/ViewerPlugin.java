@@ -36,7 +36,7 @@ import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 
-public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implements SeriesViewer<E> {
+public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel implements SeriesViewer<E> {
 
     private final String dockableUID;
     private MediaSeriesGroup groupID;
