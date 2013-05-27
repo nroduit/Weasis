@@ -36,10 +36,12 @@ import org.dcm4che2.iod.module.sr.KODocumentModule;
 import org.dcm4che2.iod.value.Modality;
 import org.dcm4che2.util.ByteUtils;
 import org.dcm4che2.util.TagUtils;
+import org.dcm4che2.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -53,6 +55,23 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 public class DicomMediaUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaUtils.class);
+
+    public static final String weasisRootUID;
+
+    static {
+        /**
+         * Set value for dicom root UID which should be registered at the
+         * http://www.iana.org/assignments/enterprise-numbers <br>
+         * Default value is 2.25, this enables users to generate OIDs without any registration procedure
+         * 
+         * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>
+         *      http://www.oid-info.com/get/2.25 <br>
+         *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
+         *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
+         */
+
+        weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.UUID_ROOT);
+    }
 
     /**
      * @return false if either an argument is null or if at least one tag value is empty in the given dicomObject
@@ -1116,8 +1135,23 @@ public class DicomMediaUtils {
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static DicomObject createDicomKeyObject(DicomObject dicomObject, String studyInstanceUID,
-         String description) {
+    /**
+     * Creates a Dicom Key Object from another one copying its CurrentRequestedProcedureEvidences and keeping its
+     * patient informations. It's the user responsibility to manage the studyUID and serieUID values. Given UIDs
+     * parameters are supposed to be valid and won't be verified. If their value is null a new one will be generated
+     * instead.
+     * 
+     * @param dicomObject
+     * @param description
+     * @param studyInstanceUID
+     *            can be null
+     * @param seriesInstanceUID
+     *            can be null
+     * @return
+     */
+    public static DicomObject createDicomKeyObject(DicomObject dicomObject, String description,
+        String studyInstanceUID, String seriesInstanceUID) {
+
         if (description == null || "".equals(description)) {
             description = "new KO selection";
         }
@@ -1127,7 +1161,8 @@ public class DicomMediaUtils {
         Date patientBirthdate = dicomObject.getDate(Tag.PatientBirthDate);
 
         DicomObject newDicomKeyObject =
-            createDicomKeyObject(patientID, patientName, patientBirthdate, studyInstanceUID, description);
+            createDicomKeyObject(patientID, patientName, patientBirthdate, description, studyInstanceUID,
+                seriesInstanceUID);
 
         HierachicalSOPInstanceReference[] referencedStudySequence =
             new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
@@ -1138,9 +1173,23 @@ public class DicomMediaUtils {
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    /**
+     * 
+     * Creates a Dicom Key Object from patient information. Given UIDs parameters are supposed to be valid and won't be
+     * verified. If their value is null a new one will be generated instead.
+     * 
+     * @param patientID
+     * @param patientName
+     * @param patientBirthdate
+     * @param description
+     * @param studyInstanceUID
+     *            can be null
+     * @param seriesInstanceUID
+     *            can be null
+     * @return
+     */
     public static DicomObject createDicomKeyObject(String patientID, String patientName, Date patientBirthdate,
-        String studyInstanceUID, String description) {
+        String description, String studyInstanceUID, String seriesInstanceUID) {
 
         DicomObject newDicomKeyObject = new BasicDicomObject();
 
@@ -1160,11 +1209,6 @@ public class DicomMediaUtils {
         newDicomKeyObject.putString(Tag.PatientName, VR.PN, patientName);
         newDicomKeyObject.putDate(Tag.PatientBirthDate, VR.DA, patientBirthdate);
 
-        // TODO - replace this generator with some public code
-        UIDGenerator gen = new UIDGenerator();
-
-        // String studyInstanceUID = gen.getNewUID();
-
         /**
          * @see DICOM standard PS 3.3
          * 
@@ -1177,18 +1221,18 @@ public class DicomMediaUtils {
          *      referenced in the Identical Documents Sequence (0040,A525).
          */
 
+        if (studyInstanceUID == null || !studyInstanceUID.equals("")) {
+            studyInstanceUID = UIDUtils.createUID(weasisRootUID);
+        }
         newDicomKeyObject.putString(Tag.StudyInstanceUID, VR.UI, studyInstanceUID);
 
-        try {
-            String newSeriesInstanceUID = gen.getNewSeriesInstanceUID(studyInstanceUID, new UIDGenerator().getNewUID());
-            newDicomKeyObject.putString(Tag.SeriesInstanceUID, VR.UI, newSeriesInstanceUID);
-            String newSopInstanceUid =
-                gen.getNewSOPInstanceUID(studyInstanceUID, newSeriesInstanceUID, new UIDGenerator().getNewUID());
-            newDicomKeyObject.putString(Tag.SOPInstanceUID, VR.UI, newSopInstanceUid);
-
-        } catch (DicomException e) {
-            e.printStackTrace();
+        if (seriesInstanceUID == null || !seriesInstanceUID.equals("")) {
+            seriesInstanceUID = UIDUtils.createUID(weasisRootUID);
         }
+        newDicomKeyObject.putString(Tag.SeriesInstanceUID, VR.UI, seriesInstanceUID);
+
+        String newSopInstanceUid = UIDUtils.createUID(weasisRootUID);
+        newDicomKeyObject.putString(Tag.SOPInstanceUID, VR.UI, newSopInstanceUid);
 
         newDicomKeyObject.putString(Tag.TransferSyntaxUID, VR.UI, "1.2.840.10008.1.2");
         newDicomKeyObject.putString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.88.59");
@@ -1197,17 +1241,6 @@ public class DicomMediaUtils {
         newDicomKeyObject.putString(Tag.InstanceNumber, VR.IS, "1");
 
         newDicomKeyObject.putString(Tag.ValueType, VR.CS, "CONTAINER");
-
-        // SeriesAndInstanceReference referencedSeries = new SeriesAndInstanceReference();
-        // referencedSeries.setSeriesInstanceUID(referencedSeriesInstanceUID);
-        //
-        // HierachicalSOPInstanceReference hierachicalDicom = new HierachicalSOPInstanceReference();
-        // hierachicalDicom.setStudyInstanceUID(studyInstanceUID);
-        // hierachicalDicom.setReferencedSeries(new SeriesAndInstanceReference[] { referencedSeries });
-        //
-        // new KODocumentModule(newDicomKeyObject)
-        // .setCurrentRequestedProcedureEvidences(new HierachicalSOPInstanceReference[] { hierachicalDicom });
-        // Note : only reference study and serie UID but no sopInstanceUID at this point
 
         newDicomKeyObject.putSequence(Tag.CurrentRequestedProcedureEvidenceSequence);
 

@@ -262,8 +262,8 @@ public class KOManager {
                         Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
 
                         newDicomKO =
-                            DicomMediaUtils.createDicomKeyObject(patientID, patientName, patientBirthdate,
-                                currentStudyInstanceUID, description);
+                            DicomMediaUtils.createDicomKeyObject(patientID, patientName, patientBirthdate, description,
+                                currentStudyInstanceUID, null);
                     } else {
                         // create a new dicom KO from the selected one
 
@@ -272,7 +272,7 @@ public class KOManager {
 
                         newDicomKO =
                             DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(),
-                                currentStudyInstanceUID, description);
+                                description, currentStudyInstanceUID, null);
                     }
 
                     new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // executed in the EDT
