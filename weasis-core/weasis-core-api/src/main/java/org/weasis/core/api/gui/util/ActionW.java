@@ -24,7 +24,8 @@ import org.weasis.core.api.Messages;
 
 public class ActionW {
 
-    public static final ActionW NO_ACTION = new ActionW(Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW NO_ACTION = new ActionW(
+        Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final ActionW SYNCH = new ActionW(Messages.getString("ActionW.synch"), "synch", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW VIEW_MODE =
@@ -73,7 +74,8 @@ public class ActionW {
     public static final ActionW IMAGE_OVERLAY = new ActionW(
         Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PR_STATE = new ActionW(Messages.getString("ActionW.PR"), "pr_state", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
-    public static final ActionW KEY_OBJECT = new ActionW(Messages.getString("ActionW.ko"), "key_object", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW KO_STATE = new ActionW("Toggle KO State", "ko_state", KeyEvent.VK_K, 0, null);
+    public static final ActionW KO_SELECTION = new ActionW("Change KO Selection", "ko_selection", 0, 0, null);
     public static final ActionW KO_FILTER = new ActionW("Apply Filter to KO selection", "ko_filter", 0, 0, null);
     public static final ActionW IMAGE_PIX_PADDING = new ActionW(
         Messages.getString("ActionW.pixpad"), "pixel_padding", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$

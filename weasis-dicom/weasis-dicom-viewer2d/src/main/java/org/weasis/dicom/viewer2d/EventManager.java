@@ -127,6 +127,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener synchAction;
     private final ComboItemListener measureAction;
 
+    private final ToggleButtonListener koToggleAction;
+
     private final PannerListener panAction;
     private final CrosshairListener crosshairAction;
 
@@ -178,6 +180,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(crosshairAction = newCrosshairAction());
         iniAction(new BasicActionState(ActionW.RESET));
 
+        iniAction(koToggleAction = newKOToggleAction());
+
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
         mouseActions.applyPreferences(prefs);
@@ -189,7 +193,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(), 0.1));
             rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
-
         }
 
         initializeParameters();
@@ -530,6 +533,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
+    private ToggleButtonListener newKOToggleAction() {
+        return new ToggleButtonListener(ActionW.KO_STATE, false) {
+            @Override
+            public void actionPerformed(boolean selected) {
+                KOManager.toogleKoState(selectedView2dContainer.getSelectedImagePane());
+                firePropertyChange(action.cmd(), null, selected);
+            }
+        };
+    }
+
     private ComboItemListener newLutAction() {
         return new ComboItemListener(ActionW.LUT, LutManager.getLutCollection()) {
 
@@ -577,6 +590,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public ActionW getActionFromkeyEvent(int keyEvent, int modifier) {
+        // TODO this method should be renamed getLeftMouseActionFromkeyEvent
+
         ActionW action = super.getActionFromkeyEvent(keyEvent, modifier);
 
         if (action == null && keyEvent != 0) {
@@ -585,6 +600,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     return a;
                 }
             }
+
+            // TODO - following key action handling do not return nothing and execute code instead
+            // should be called from within an outer method like keyPressed(KeyEvent e)
+
             if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier) {
                 if (moveTroughSliceAction.isCining()) {
                     moveTroughSliceAction.stop();
@@ -607,6 +626,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             break;
                         }
                     }
+                } else if (keyEvent == ActionW.KO_STATE.getKeyCode()) {
+                    koToggleAction.setSelected(!koToggleAction.isSelected());
                 } else {
                     DefaultComboBoxModel model = presetAction.getModel();
                     for (int i = 0; i < model.getSize(); i++) {
@@ -781,6 +802,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
         viewingProtocolAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.VIEWINGPROTOCOL.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
+
+        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_STATE.cmd()));
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());

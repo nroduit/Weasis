@@ -1025,6 +1025,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+
+            // TODO - should be handled in EventManager !!!
             if (e.isControlDown()) {
                 ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
                 if (view != null) {

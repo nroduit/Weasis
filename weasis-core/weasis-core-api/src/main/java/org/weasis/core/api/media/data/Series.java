@@ -447,7 +447,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     public synchronized void setFileSize(double size) {
         fileSize = size;
     }
-
+    
     @Override
     public synchronized double getFileSize() {
         return fileSize;

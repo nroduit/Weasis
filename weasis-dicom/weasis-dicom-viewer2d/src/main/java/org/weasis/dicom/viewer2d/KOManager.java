@@ -25,8 +25,10 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -82,7 +84,7 @@ public class KOManager {
                     return;
                 }
 
-                Object selectedKO = currentView.getActionValue(ActionW.KEY_OBJECT.cmd());
+                Object selectedKO = currentView.getActionValue(ActionW.KO_SELECTION.cmd());
                 if (selectedKO == null) {
                     selectedKO = ActionState.NONE;
                 }
@@ -96,7 +98,7 @@ public class KOManager {
                 JPopupMenu popupMenu = new JPopupMenu();
                 ButtonGroup groupButtons = new ButtonGroup();
 
-                popupMenu.add(new TitleMenuItem(ActionW.KEY_OBJECT.getTitle(), popupMenu.getInsets()));
+                popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                 popupMenu.addSeparator();
 
                 for (final Object obj : koElementListWithNone) {
@@ -139,170 +141,179 @@ public class KOManager {
     public static KOViewButton buildKoStarButton(final View2d currentView) {
 
         return new KOViewButton(new ShowPopup() {
-
-            /**
-             * Test if current studyInstanceUID is referenced in the selected KEY_OBJECT of this currentView. If not,
-             * search if there is a more suitable new KEY_OBJECT element. Ask the user for any watch dog case.
-             */
             @Override
             public void showPopup(Component invoker, int x, int y) {
+                toogleKoState(currentView);
+                ToggleButtonListener koToggleAction =
+                    ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_STATE));
 
-                MediaSeries<DicomImageElement> currentDicomSeries = currentView.getSeries();
-                DicomImageElement currentImage = currentView.getImage();
+                koToggleAction.setSelected(!koToggleAction.isSelected());
+            }
+        });
+    }
 
-                String currentStudyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
-                String currentSeriesInstanceUID = (String) currentImage.getTagValue(TagW.SeriesInstanceUID);
-                String currentSOPInstanceUID = (String) currentImage.getTagValue(TagW.SOPInstanceUID);
-                String currentSOPClassUID = (String) currentImage.getTagValue(TagW.SOPClassUID);
+    public static void toogleKoState(final DefaultView2d<DicomImageElement> defaultView2d) {
 
-                DicomModel dicomModel = (DicomModel) currentDicomSeries.getTagValue(TagW.ExplorerModel);
+        /**
+         * Test if current studyInstanceUID is referenced in the selected KEY_OBJECT of this currentView. If not, search
+         * if there is a more suitable new KEY_OBJECT element. Ask the user if needed.
+         */
 
-                KOSpecialElement selectedKO =
-                    (currentView.getActionValue(ActionW.KEY_OBJECT.cmd()) instanceof KOSpecialElement)
-                        ? (KOSpecialElement) currentView.getActionValue(ActionW.KEY_OBJECT.cmd()) : null;
+        MediaSeries<DicomImageElement> currentDicomSeries = defaultView2d.getSeries();
+        DicomImageElement currentImage = defaultView2d.getImage();
 
-                // null is Default, it involves creating a new dicom KO and use it as the new selection
-                KOSpecialElement dicomKO = null;
+        String currentStudyInstanceUID = (String) currentImage.getTagValue(TagW.StudyInstanceUID);
+        String currentSeriesInstanceUID = (String) currentImage.getTagValue(TagW.SeriesInstanceUID);
+        String currentSOPInstanceUID = (String) currentImage.getTagValue(TagW.SOPInstanceUID);
+        String currentSOPClassUID = (String) currentImage.getTagValue(TagW.SOPClassUID);
 
-                // Is there a KO selected ?
-                if (selectedKO != null) {
+        DicomModel dicomModel = (DicomModel) currentDicomSeries.getTagValue(TagW.ExplorerModel);
 
-                    // Is it a new created dicom KO ?
-                    if (selectedKO.getMediaReader().isWritableDicom()) {
+        KOSpecialElement selectedKO =
+            (defaultView2d.getActionValue(ActionW.KO_SELECTION.cmd()) instanceof KOSpecialElement)
+                ? (KOSpecialElement) defaultView2d.getActionValue(ActionW.KO_SELECTION.cmd()) : null;
 
-                        // Does this selected KO refers to this studyUID or is it empty?
-                        if (selectedKO.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
-                            || selectedKO.getReferencedSOPInstanceUIDSet().size() == 0) {
+        // null is Default, it involves creating a new dicom KO and use it as the new selection
+        KOSpecialElement dicomKO = null;
 
-                            // continue with the selected KO
-                            dicomKO = selectedKO;
+        // Is there a KO selected ?
+        if (selectedKO != null) {
 
-                        } else {
-                            // Ask the user whether it's better to use this selected KO with a new
-                            // study reference or to create a new KO for this study
+            // Is it a new created dicom KO ?
+            if (selectedKO.getMediaReader().isWritableDicom()) {
 
-                            String message = "Be aware that selected KO doesn't have any reference on this study.\n";
-                            Object[] options = { "Use it anyway", "Create a new KeyObject" };
+                // Does this selected KO refers to this studyUID or is it empty?
+                if (selectedKO.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
+                    || selectedKO.getReferencedSOPInstanceUIDSet().size() == 0) {
 
-                            int response =
-                                JOptionPane.showOptionDialog(invoker, message, "Key Object Selection",
-                                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                    // continue with the selected KO
+                    dicomKO = selectedKO;
 
-                            if (response == 0) {
-                                dicomKO = selectedKO;
-                            } else if (response == JOptionPane.CLOSED_OPTION) {
-                                return;
-                            }
-                        }
-
-                    } else {
-                        // Ask the user whether it's better to create a new KO from a copy of the selected
-                        // one or to create a new KO for this study
-
-                        String message = "Be aware that selected KO is Read Only.\n";
-                        Object[] options = { "Create a new KeyObject from a copy", "Create an empty new KeyObject" };
-
-                        int response =
-                            JOptionPane.showOptionDialog(invoker, message, "Key Object Selection",
-                                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-
-                        if (response == 0) {
-                            dicomKO = selectedKO;
-                        } else if (response == JOptionPane.CLOSED_OPTION) {
-                            return;
-                        }
-                    }
                 } else {
+                    // Ask the user whether it's better to use this selected KO with a new
+                    // study reference or to create a new KO for this study
 
-                    // Is there any new created dicom KO for this study or any empty one?
-                    Collection<KOSpecialElement> kos = DicomModel.getKoSpecialElements(currentDicomSeries);
-                    if (kos != null) {
-                        for (KOSpecialElement koElement : kos) {
-                            if (koElement.getMediaReader().isWritableDicom()) {
-                                if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
-                                    || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
-                                    dicomKO = koElement;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    String message = "Be aware that selected KO doesn't have any reference on this study.\n";
+                    Object[] options = { "Use it anyway", "Create a new KeyObject" };
 
-                    if (dicomKO != null) {
-                        // Ask the user whether it's better to switch to the most recent new created KO with a
-                        // reference to this study or to create a new KO for this study
+                    int response =
+                        JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
-                        String message = "No KeyObject is selected but at least one is available.\n";
-                        Object[] options = { "Switch to the most recent KeyObject", "Create an empty new KeyObject" };
-
-                        int response =
-                            JOptionPane.showOptionDialog(invoker, message, "Key Object Selection",
-                                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-
-                        if (response == 1) {
-                            dicomKO = null;
-                        } else if (response == JOptionPane.CLOSED_OPTION) {
-                            return;
-                        }
+                    if (response == 0) {
+                        dicomKO = selectedKO;
+                    } else if (response == JOptionPane.CLOSED_OPTION) {
+                        return;
                     }
                 }
 
-                if (dicomKO == null || !dicomKO.getMediaReader().isWritableDicom()) {
+            } else {
+                // Ask the user whether it's better to create a new KO from a copy of the selected
+                // one or to create a new KO for this study
 
-                    DicomObject newDicomKO = null;
+                String message = "Be aware that selected KO is Read Only.\n";
+                Object[] options = { "Create a new KeyObject from a copy", "Create an empty new KeyObject" };
 
-                    String message = "Set a description for the new KeyObject Selection";
-                    String description =
-                        (String) JOptionPane.showInputDialog(invoker, message, "Key Object Selection",
-                            JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
+                int response =
+                    JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
-                    if (dicomKO == null) {
-                        String patientID = (String) currentImage.getTagValue(TagW.PatientID);
-                        String patientName = (String) currentImage.getTagValue(TagW.PatientName);
-                        Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
+                if (response == 0) {
+                    dicomKO = selectedKO;
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+            }
+        } else {
 
-                        newDicomKO =
-                            DicomMediaUtils.createDicomKeyObject(patientID, patientName, patientBirthdate, description,
-                                currentStudyInstanceUID, null);
-                    } else {
-                        // create a new dicom KO from the selected one
+            // Is there any new created dicom KO for this study or any empty one?
+            Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(currentDicomSeries);
 
-                        // TODO should remove from the current procedure evidence any SOPInstanceUID references outside
-                        // the scope of the current seriesInstanceUID or at least give the choice to the user
-
-                        newDicomKO =
-                            DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(),
-                                description, currentStudyInstanceUID, null);
-                    }
-
-                    new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // executed in the EDT
-
-                    // Find the new KOSpecialElement just loaded and set it as default for this view
-                    for (KOSpecialElement ko : DicomModel.getKoSpecialElements(currentDicomSeries)) {
-                        if (ko.getMediaReader().getDicomObject().equals(newDicomKO)) {
-                            dicomKO = ko;
+            if (koElements != null) {
+                for (KOSpecialElement koElement : koElements) {
+                    if (koElement.getMediaReader().isWritableDicom()) {
+                        if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
+                            || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
+                            dicomKO = koElement;
                             break;
                         }
                     }
-
-                    // TODO if dicomKOCandidate is a copy just remove any SopInstanceUID outside currentSeriesUID
                 }
-
-                dicomKO.toggleKeyObjectReference(currentStudyInstanceUID, currentSeriesInstanceUID,
-                    currentSOPInstanceUID, currentSOPClassUID);
-
-                if (selectedKO != dicomKO) {
-                    currentView.setKeyObjectSelection(dicomKO);
-                    selectedKO = dicomKO;
-                }
-
-                currentView.updateKOSelectionChange();
-
-                // Fire an event since any view in the View2dContainner may have its KO selected state changed
-                // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, currentView,
-                // null, selectedKO));
             }
-        });
+
+            if (dicomKO != null) {
+                // Ask the user whether it's better to switch to the most recent new created KO with a
+                // reference to this study or to create a new KO for this study
+
+                String message = "No KeyObject is selected but at least one is available.\n";
+                Object[] options = { "Switch to the most recent KeyObject", "Create an empty new KeyObject" };
+
+                int response =
+                    JOptionPane.showOptionDialog(null, message, "Key Object Selection", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+
+                if (response == 1) {
+                    dicomKO = null;
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+            }
+        }
+
+        if (dicomKO == null || !dicomKO.getMediaReader().isWritableDicom()) {
+
+            DicomObject newDicomKO = null;
+
+            String message = "Set a description for the new KeyObject Selection";
+            String description =
+                (String) JOptionPane.showInputDialog(null, message, "Key Object Selection",
+                    JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
+
+            if (dicomKO == null) {
+                String patientID = (String) currentImage.getTagValue(TagW.PatientID);
+                String patientName = (String) currentImage.getTagValue(TagW.PatientName);
+                Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
+
+                newDicomKO =
+                    DicomMediaUtils.createDicomKeyObject(patientID, patientName, patientBirthdate, description,
+                        currentStudyInstanceUID, null);
+            } else {
+                // create a new dicom KO from the selected one
+
+                // TODO should remove from the current procedure evidence any SOPInstanceUID references outside
+                // the scope of the current seriesInstanceUID or at least give the choice to the user
+
+                newDicomKO =
+                    DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(), description,
+                        currentStudyInstanceUID, null);
+            }
+
+            new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // executed in the EDT
+
+            // Find the new KOSpecialElement just loaded and set it as default for this view
+            for (KOSpecialElement ko : DicomModel.getKoSpecialElements(currentDicomSeries)) {
+                if (ko.getMediaReader().getDicomObject().equals(newDicomKO)) {
+                    dicomKO = ko;
+                    break;
+                }
+            }
+
+            // TODO if dicomKOCandidate is a copy just remove any SopInstanceUID outside currentSeriesUID
+        }
+
+        dicomKO.toggleKeyObjectReference(currentStudyInstanceUID, currentSeriesInstanceUID, currentSOPInstanceUID,
+            currentSOPClassUID);
+
+        if (selectedKO != dicomKO) {
+            ((View2d) defaultView2d).setKeyObjectSelection(dicomKO);
+            selectedKO = dicomKO;
+        }
+
+        ((View2d) defaultView2d).updateKOSelectionChange();
+
+        // Fire an event since any view in the View2dContainner may have its KO selected state changed
+        // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, currentView,
+        // null, selectedKO));
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -244,7 +244,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // Set the more recent KO by default
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
         Object defaultKO = (koElements != null && koElements.size() >= 0) ? koElements.iterator().next() : null;
-        actionsInView.put(ActionW.KEY_OBJECT.cmd(), defaultKO);
+
+        actionsInView.put(ActionW.KO_SELECTION.cmd(), defaultKO);
+
+        actionsInView.put(ActionW.KO_STATE.cmd(), false);
 
         // Preprocessing
         actionsInView.put(ActionW.CROP.cmd(), null);
@@ -297,6 +300,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
             actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
             sortStack(getCurrentSortComparator());
+        } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
+            setKeyObjectSelection(val);
+        } else if (command.equals(ActionW.KO_STATE.cmd())) {
+            updateKOselectedState();
         }
     }
 
@@ -309,12 +316,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
 
-        if (JMVUtils.getNULLtoFalse(getActionValue(ActionW.KO_FILTER.cmd()))) {
+        // if (JMVUtils.getNULLtoFalse((Boolean) getActionValue(ActionW.KO_FILTER.cmd()))) {
+        if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
             sopInstanceUIDFilter =
                 (newVal instanceof KOSpecialElement) ? ((KOSpecialElement) newVal).getSOPInstanceUIDFilter() : null;
         }
 
-        actionsInView.put(ActionW.KEY_OBJECT.cmd(), newVal);
+        actionsInView.put(ActionW.KO_SELECTION.cmd(), newVal);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
 
         updateKOSelectionChange();
@@ -326,8 +334,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public void setKeyObjectSelectionFilterState(Boolean newState) {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
+
         if (newState) {
-            Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+            Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
             sopInstanceUIDFilter =
                 (selectedKO instanceof KOSpecialElement) ? ((KOSpecialElement) selectedKO).getSOPInstanceUIDFilter()
                     : null;
@@ -378,10 +387,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // If no Presentation State use the current image
         if (pr == null) {
             // Keeps KO properties (series level)
-            Object ko = actionsInView.get(ActionW.KEY_OBJECT.cmd());
+            Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
             Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
             initActionWState();
-            setActionsInView(ActionW.KEY_OBJECT.cmd(), ko);
+            setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
             if (ActionState.NONE_SERIES.equals(val)) {
                 // Keeps no PS property (for all the series)
@@ -496,9 +505,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             needToRepaint = true;
         }
 
-        if (koElementExist) {
-            needToRepaint = updateKOselectedState();
-        }
+        // if (koElementExist) {
+        // needToRepaint = updateKOselectedState();
+        // }
 
         // if (needToRepaint) {
         repaint();
@@ -510,12 +519,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
      */
     protected boolean updateKOselectedState() {
 
+        // TODO - should not be called here but in a manager listener dedicated to this job
+
         eState previousState = koStarButton.getState();
 
         // evaluate koSelection status for every Image change
         KOViewButton.eState newSelectionState = eState.UNSELECTED;
 
-        Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+        Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
         DicomImageElement dicomImage = getImage();
 
         String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
@@ -547,6 +558,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
 
         koStarButton.setState(newSelectionState);
+
+        // TODO - fix this DIRTY code
+        Boolean selected = koStarButton.getState().equals(eState.SELECTED) ? true : false;
+        actionsInView.put(ActionW.KO_STATE.cmd(), selected);
+        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_STATE)).setSelectedWithoutTriggerAction(selected);
 
         return (previousState != newSelectionState);
     }
@@ -609,7 +625,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         DicomSeries dicomSeries = (DicomSeries) getSeries();
         DicomImageElement currentImg = getImage();
 
-        Object selectedKO = getActionValue(ActionW.KEY_OBJECT.cmd());
+        Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
 
         if (currentImg != null && dicomSeries != null && selectedKO instanceof KOSpecialElement) {
 
@@ -660,7 +676,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 // (see EventManager -> stateChanged()). This change will be handled by any DefaultView2d
                 // object that listen this event change if the synchview Action is Enable
 
-                // In case a new KO selction has been added the FILTERED_SERIES size will be updated in consequence
+                // In case a new KO selection has been added the FILTERED_SERIES size will be updated in consequence
                 // This avoids to call eventManager.updateComponentsListener since only moveTroughSliceAction should be
                 // updated
 

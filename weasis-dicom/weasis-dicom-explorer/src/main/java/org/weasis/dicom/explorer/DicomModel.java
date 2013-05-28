@@ -395,8 +395,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public static boolean isSpecialModality(Series series) {
-        String modality = series == null ? null : (String) series.getTagValue(TagW.Modality);
-        return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        String modality = (series == null) ? null : (String) series.getTagValue(TagW.Modality);
+        return (modality != null && ("PR".equals(modality) || "KO".equals(modality))); //$NON-NLS-1$ //$NON-NLS-2$ 
     }
 
     public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {

@@ -136,6 +136,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
+
             EventManager evtMg = EventManager.getInstance();
             TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
                 BundleTools.SYSTEM_PREFERENCES, 10));
@@ -145,6 +146,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
             TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
             TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
+            TOOLBARS.add(new KeyObjectToolBar<DicomImageElement>(90));
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
@@ -546,6 +548,151 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                             // (for instance it is the same series with more images)
                             v.setSeries(null);
                             v.setSeries(series, null);
+                        }
+                    }
+                }
+            } else if (ObservableEvent.BasicAction.Update.equals(action)) {
+
+                DicomSpecialElement specialElement = null;
+
+                // When a dicom KO element is loaded an ObservableEvent.BasicAction.Update is sent
+                // Either it's a new DicomObject or it's content is updated
+
+                // TODO - a choice should be done about sending either a DicomSpecialElement or a Series object as the
+                // new value for this event. A DicomSpecialElement seems to be a better choice since a Series of
+                // DicomSpecialElement do not necessarily concerned the series in the Viewer2dContainer
+
+                if (newVal instanceof Series) {
+                    Series series = (Series) newVal;
+                    specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
+
+                } else if (newVal instanceof DicomSpecialElement) {
+                    specialElement = (DicomSpecialElement) newVal;
+                }
+
+                // Following is about setting visible KOpopupButton in any view concerned by the KO selection updated
+                // Also the KO Annotation and the view border is about to be repaint if needed
+
+                if (specialElement instanceof KOSpecialElement) {
+                    KOSpecialElement koElement = (KOSpecialElement) specialElement;
+                    Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+
+                    // ////////////
+                    // TODO improve this
+
+                    // DefaultView2d<DicomImageElement> selectedViewPane = eventManager.getSelectedViewPane();
+                    // DicomSeries dicomSeries = (DicomSeries) selectedViewPane.getSeries();
+                    // DicomImageElement currentImg = selectedViewPane.getImage();
+                    //
+                    // if (currentImg != null && dicomSeries != null
+                    // && (Boolean) selectedViewPane.getActionValue(ActionW.KO_FILTER.cmd())) {
+                    //
+                    // ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                    //
+                    // if (seqAction instanceof SliderCineListener) {
+                    // SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                    //
+                    // @SuppressWarnings("unchecked")
+                    // Filter<DicomImageElement> dicomFilter =
+                    // (Filter<DicomImageElement>) selectedViewPane.getActionValue(ActionW.FILTERED_SERIES
+                    // .cmd());
+                    //
+                    // double[] val = (double[]) currentImg.getTagValue(TagW.SlicePosition);
+                    // double location = val[0] + val[1] + val[2];
+                    // Double offset = (Double) selectedViewPane.getActionValue(ActionW.STACK_OFFSET.cmd());
+                    // if (offset != null) {
+                    // location += offset;
+                    // }
+                    //
+                    // int newImageIndex =
+                    // dicomSeries.getNearestImageIndex(location, selectedViewPane.getTileOffset(),
+                    // dicomFilter, selectedViewPane.getCurrentSortComparator());
+                    //
+                    // if (newImageIndex < 0) {
+                    // newImageIndex = 0;
+                    // selectedViewPane.setSeries(dicomSeries, null);
+                    // }
+                    //
+                    // // Take care of the FILTERED_SERIES changes when a KO is added or removed
+                    //
+                    // if (newImageIndex >= 0) {
+                    // sliceAction.setMinMaxValue(1, dicomSeries.size(dicomFilter), newImageIndex + 1);
+                    // }
+                    // }
+                    // }
+
+                    // //////////////
+
+                    ComboItemListener synchAction =
+                        (ComboItemListener) EventManager.getInstance().getAction(ActionW.SYNCH);
+                    SynchView synchview = (SynchView) synchAction.getSelectedItem();
+                    boolean isScrollSeriesEnable = synchview.isActionEnable(ActionW.SCROLL_SERIES);
+
+                    for (DefaultView2d<DicomImageElement> view : view2ds) {
+                        MediaSeries<DicomImageElement> currentSeries = view.getSeries();
+
+                        if (currentSeries != null && //
+                            (referencedSeriesInstanceUIDSet.contains(currentSeries.getTagValue(TagW.SeriesInstanceUID)) || //
+                            koElement.getMediaReader().isWritableDicom())) {
+
+                            // if (JMVUtils.getNULLtoFalse((Boolean) view.getActionValue(ActionW.KO_FILTER.cmd()))) {
+                            // !!! following is useless when view isn't the SelectedImagePane
+                            // eventManager.updateComponentsListener(view);
+
+                            // view.getImageLayer().updateAllImageOperations();
+                            // } else {
+                            // ((View2d) view).updateKOButtonVisibleState();
+                            // }
+
+                            View2d currentView = ((View2d) view);
+                            DicomImageElement currentImg = currentView.getImage();
+
+                            if (!isScrollSeriesEnable && (Boolean) currentView.getActionValue(ActionW.KO_FILTER.cmd())
+                                && currentView.getFrameIndex() < 0) {
+
+                                double[] val = (double[]) currentImg.getTagValue(TagW.SlicePosition);
+                                double location = val[0] + val[1] + val[2];
+                                Double offset = (Double) currentView.getActionValue(ActionW.STACK_OFFSET.cmd());
+                                if (offset != null) {
+                                    location += offset;
+                                }
+
+                                // Take care of any change in the FILTERED_SERIES when a KO is added or removed
+                                @SuppressWarnings("unchecked")
+                                Filter<DicomImageElement> dicomFilter =
+                                    (Filter<DicomImageElement>) currentView.getActionValue(ActionW.FILTERED_SERIES
+                                        .cmd());
+
+                                int newImageIndex = -1;
+                                if (currentSeries.size(dicomFilter) > 0) {
+
+                                    newImageIndex =
+                                        currentSeries.getNearestImageIndex(location, currentView.getTileOffset(),
+                                            dicomFilter, currentView.getCurrentSortComparator());
+                                } else {
+                                    // If there is no more image in KO series filtered then disable the KO_FILTER
+                                    dicomFilter = null;
+                                    currentView.setActionsInView(ActionW.KO_FILTER.cmd(), false);
+                                    currentView.setActionsInView(ActionW.FILTERED_SERIES.cmd(), dicomFilter);
+                                    newImageIndex = currentView.getFrameIndex();
+                                }
+
+                                Double zoomVal = (Double) currentView.getActionValue(ActionW.ZOOM.cmd());
+                                // If zoom has not been defined or was besfit, set image in bestfit zoom mode
+                                boolean rescaleView = (zoomVal == null || zoomVal <= 0.0);
+
+                                DicomImageElement newImage =
+                                    currentSeries.getMedia(newImageIndex, (Filter<DicomImageElement>) currentView
+                                        .getActionValue(ActionW.FILTERED_SERIES.cmd()), currentView
+                                        .getCurrentSortComparator());
+
+                                if (newImage != null && !newImage.isImageAvailable()) {
+                                    newImage.getImage();
+                                }
+                                currentView.setImage(newImage, rescaleView);
+                            }
+
+                            ((View2d) view).updateKOButtonVisibleState();
                         }
                     }
                 }
