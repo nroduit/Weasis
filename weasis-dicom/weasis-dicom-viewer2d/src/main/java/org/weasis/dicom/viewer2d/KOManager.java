@@ -143,7 +143,7 @@ public class KOManager {
         return new KOViewButton(new ShowPopup() {
             @Override
             public void showPopup(Component invoker, int x, int y) {
-                toogleKoState(currentView);
+
                 ToggleButtonListener koToggleAction =
                     ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_STATE));
 
