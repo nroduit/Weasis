@@ -202,7 +202,7 @@ public class KOManager {
 
                     if (response == 0) {
                         dicomKO = selectedKO;
-                    } else if (response == JOptionPane.CLOSED_OPTION) {
+                    } else if (response != 1) { // no option is chosen meaning operation is cancelled
                         return;
                     }
                 }
@@ -220,7 +220,7 @@ public class KOManager {
 
                 if (response == 0) {
                     dicomKO = selectedKO;
-                } else if (response == JOptionPane.CLOSED_OPTION) {
+                } else if (response != 1) { // no option is chosen meaning operation is cancelled
                     return;
                 }
             }
@@ -254,7 +254,7 @@ public class KOManager {
 
                 if (response == 1) {
                     dicomKO = null;
-                } else if (response == JOptionPane.CLOSED_OPTION) {
+                } else if (response != 0) { // no option is chosen meaning operation is cancelled
                     return;
                 }
             }
@@ -268,6 +268,10 @@ public class KOManager {
             String description =
                 (String) JOptionPane.showInputDialog(null, message, "Key Object Selection",
                     JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
+
+            if (description == null || description.trim().length() == 0) {
+                return; // no input is given meaning operation is cancelled
+            }
 
             if (dicomKO == null) {
                 String patientID = (String) currentImage.getTagValue(TagW.PatientID);
