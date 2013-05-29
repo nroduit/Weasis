@@ -30,14 +30,14 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
             menu = ((ComboItemListener) presetAction).createGroupRadioMenu();
         }
 
-        final DropDownButton presetButton = new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menu) { //$NON-NLS-1$
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                    menu.setInvoker(this);
-                    return menu;
-                }
-            };
+        final DropDownButton presetButton = new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menu) {
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                menu.setInvoker(this);
+                return menu;
+            }
+        };
 
         presetButton.setToolTipText(Messages.getString("LutToolBar.presets")); //$NON-NLS-1$
         add(presetButton);
@@ -51,14 +51,14 @@ public class LutToolBar<DicomImageElement> extends WtoolBar {
             menuLut = ((ComboItemListener) lutAction).createGroupRadioMenu();
         }
 
-        final DropDownButton lutButton = new DropDownButton(ActionW.LUT.cmd(), buildLutIcon(), menuLut) { //$NON-NLS-1$
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                    menu.setInvoker(this);
-                    return menu;
-                }
-            };
+        final DropDownButton lutButton = new DropDownButton(ActionW.LUT.cmd(), buildLutIcon(), menuLut) {
+            @Override
+            protected JPopupMenu getPopupMenu() {
+                JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                menu.setInvoker(this);
+                return menu;
+            }
+        };
 
         lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection")); //$NON-NLS-1$
         add(lutButton);

@@ -156,16 +156,6 @@ public abstract class ComboItemListener extends BasicActionState implements List
         }
     }
 
-    public JMenu createUnregisteredRadioMenu(String title) {
-        GroupRadioMenu radioMenu = new GroupRadioMenu();
-        radioMenu.setModel(model);
-        JMenu menu = radioMenu.createMenu(title);
-        if (!enabled) {
-            menu.setEnabled(false);
-        }
-        return menu;
-    }
-
     public DefaultComboBoxModel getModel() {
         return model;
     }
@@ -186,6 +176,8 @@ public abstract class ComboItemListener extends BasicActionState implements List
         return combo;
     }
 
+    @Deprecated
+    // TODO Remove this because quite the same as createUnregisteredRadioMenu
     public JMenu createMenu(String title) {
         JMenu menu = new JMenu(title);
         GroupRadioMenu radioMenu = new GroupRadioMenu();
@@ -195,9 +187,26 @@ public abstract class ComboItemListener extends BasicActionState implements List
         return menu;
     }
 
+    public JMenu createUnregisteredRadioMenu(String title) {
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
+        JMenu menu = radioMenu.createMenu(title);
+        if (!enabled) {
+            menu.setEnabled(false);
+        }
+        return menu;
+    }
+
     public GroupRadioMenu createGroupRadioMenu() {
         GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
         registerActionState(radioMenu);
+        return radioMenu;
+    }
+
+    public GroupRadioMenu createUnregisteredGroupRadioMenu() {
+        GroupRadioMenu radioMenu = new GroupRadioMenu();
+        radioMenu.setModel(model);
         return radioMenu;
     }
 

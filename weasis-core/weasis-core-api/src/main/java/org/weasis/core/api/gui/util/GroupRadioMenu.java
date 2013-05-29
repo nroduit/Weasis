@@ -60,6 +60,10 @@ public class GroupRadioMenu implements ActionListener, ComboBoxModelAdapter {
         return menu;
     }
 
+    public List<RadioMenuItem> getRadioMenuItemListCopy() {
+        return new ArrayList<RadioMenuItem>(itemList);
+    }
+
     public JPopupMenu createJPopupMenu() {
         JPopupMenu popupMouseButtons = new JPopupMenu();
         for (int i = 0; i < itemList.size(); i++) {

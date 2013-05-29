@@ -303,8 +303,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
             setKeyObjectSelection(val);
         } else if (command.equals(ActionW.KO_STATE.cmd())) {
+            KOManager.toogleKoState(this);
             updateKOselectedState();
         }
+
     }
 
     @Override

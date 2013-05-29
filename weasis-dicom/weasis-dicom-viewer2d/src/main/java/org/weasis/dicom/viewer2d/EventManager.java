@@ -128,6 +128,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener measureAction;
 
     private final ToggleButtonListener koToggleAction;
+    private final ComboItemListener koSelectionAction;
 
     private final PannerListener panAction;
     private final CrosshairListener crosshairAction;
@@ -181,6 +182,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(new BasicActionState(ActionW.RESET));
 
         iniAction(koToggleAction = newKOToggleAction());
+        iniAction(koSelectionAction = newKOSelectionAction());
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
         zoomSetting.applyPreferences(prefs);
@@ -537,8 +539,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_STATE, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                KOManager.toogleKoState(selectedView2dContainer.getSelectedImagePane());
                 firePropertyChange(action.cmd(), null, selected);
+            }
+        };
+    }
+
+    private ComboItemListener newKOSelectionAction() {
+        return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
+            @Override
+            public void itemStateChanged(Object object) {
+                firePropertyChange(action.cmd(), null, object);
             }
         };
     }
@@ -804,6 +814,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
         koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_STATE.cmd()));
+
+        koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
+        koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());

@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -23,6 +22,8 @@ import javax.swing.JPopupMenu;
 import org.dcm4che2.data.DicomObject;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -72,50 +73,43 @@ public class KOManager {
         }
     }
 
+    public static List<Object> getKOElementListWithNone(DefaultView2d<DicomImageElement> currentView) {
+
+        Collection<KOSpecialElement> koElements =
+            currentView != null ? DicomModel.getKoSpecialElements(currentView.getSeries()) : null;
+
+        int koElementNb = koElements == null ? 0 : koElements.size();
+
+        List<Object> koElementListWithNone = new ArrayList<Object>(koElementNb + 1);
+        koElementListWithNone.add(ActionState.NONE);
+
+        if (koElementNb > 0) {
+            koElementListWithNone.addAll(koElements);
+        }
+        return koElementListWithNone;
+    }
+
     public static ViewButton buildKoSelectionButton(final View2d currentView) {
 
         return new ViewButton(new ShowPopup() {
 
             @Override
             public void showPopup(Component invoker, int x, int y) {
-                Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(currentView.getSeries());
 
-                if (koElements == null || koElements.size() == 0) {
-                    return;
-                }
-
-                Object selectedKO = currentView.getActionValue(ActionW.KO_SELECTION.cmd());
-                if (selectedKO == null) {
-                    selectedKO = ActionState.NONE;
-                }
-
-                List<Object> koElementListWithNone = new ArrayList<Object>(koElements.size() + 1);
-                koElementListWithNone.add(ActionState.NONE);
-                koElementListWithNone.addAll(koElements);
-
-                Object koFilter = currentView.getActionValue(ActionW.KO_FILTER.cmd());
+                ComboItemListener koSelectionAction =
+                    ((ComboItemListener) EventManager.getInstance().getAction(ActionW.KO_SELECTION));
 
                 JPopupMenu popupMenu = new JPopupMenu();
-                ButtonGroup groupButtons = new ButtonGroup();
 
                 popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
                 popupMenu.addSeparator();
 
-                for (final Object obj : koElementListWithNone) {
-                    final RadioMenuItem menuItem = new RadioMenuItem(obj.toString(), null, obj, obj == selectedKO);
-
-                    menuItem.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            if (e.getSource() instanceof RadioMenuItem) {
-                                RadioMenuItem item = (RadioMenuItem) e.getSource();
-                                currentView.setKeyObjectSelection(item.getUserObject());
-                            }
-                        }
-                    });
-                    groupButtons.add(menuItem);
-                    popupMenu.add(menuItem);
+                GroupRadioMenu groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+                for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
+                    popupMenu.add(item);
                 }
+
+                Object koFilter = currentView.getActionValue(ActionW.KO_FILTER.cmd());
 
                 final JCheckBoxMenuItem menuItem =
                     new JCheckBoxMenuItem(ActionW.KO_FILTER.getTitle(), JMVUtils.getNULLtoFalse(koFilter));
@@ -132,6 +126,8 @@ public class KOManager {
 
                 popupMenu.addSeparator();
                 popupMenu.add(menuItem);
+
+                popupMenu.setEnabled(koSelectionAction.isEnabled());
 
                 popupMenu.show(invoker, x, y);
             }
