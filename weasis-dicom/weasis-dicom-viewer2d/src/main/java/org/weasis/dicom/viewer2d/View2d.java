@@ -302,6 +302,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             sortStack(getCurrentSortComparator());
         } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
             setKeyObjectSelection(val);
+        } else if (command.equals(ActionW.KO_FILTER.cmd())) {
+            setKeyObjectSelectionFilterState((Boolean) val);
         } else if (command.equals(ActionW.KO_STATE.cmd())) {
             KOManager.toogleKoState(this);
             updateKOselectedState();

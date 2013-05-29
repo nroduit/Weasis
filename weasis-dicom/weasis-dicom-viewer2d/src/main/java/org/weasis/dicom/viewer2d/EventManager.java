@@ -128,6 +128,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener measureAction;
 
     private final ToggleButtonListener koToggleAction;
+    private final ToggleButtonListener koFilterAction;
     private final ComboItemListener koSelectionAction;
 
     private final PannerListener panAction;
@@ -182,6 +183,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(new BasicActionState(ActionW.RESET));
 
         iniAction(koToggleAction = newKOToggleAction());
+        iniAction(koFilterAction = newKOFilterAction());
         iniAction(koSelectionAction = newKOSelectionAction());
 
         Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
@@ -544,6 +546,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
+    private ToggleButtonListener newKOFilterAction() {
+        return new ToggleButtonListener(ActionW.KO_FILTER, false) {
+            @Override
+            public void actionPerformed(boolean selected) {
+                firePropertyChange(action.cmd(), null, selected);
+            }
+        };
+    }
+
     private ComboItemListener newKOSelectionAction() {
         return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
             @Override
@@ -814,6 +825,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
         koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_STATE.cmd()));
+        koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
 
         koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
         koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));

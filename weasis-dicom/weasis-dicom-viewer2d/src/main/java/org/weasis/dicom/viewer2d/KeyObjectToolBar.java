@@ -14,7 +14,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.UIManager;
 
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
@@ -29,11 +28,17 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
 
     public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/star_bw.png"));
     public static final ImageIcon KO_STAR_ICON_SELECTED;
+    public static final ImageIcon KO_FILTER_ICON = new ImageIcon(View2d.class.getResource("/icon/24x24/synch-KO.png"));
+    public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
     static {
         ImageFilter imageFilter = new SelectedImageFilter(new float[] { 1.0f, 0.78f, 0.0f }); // ORANGE
+
         ImageProducer imageProducer = new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
         KO_STAR_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
+
+        imageProducer = new FilteredImageSource(KO_FILTER_ICON.getImage().getSource(), imageFilter);
+        KO_FILTER_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
     }
 
     public KeyObjectToolBar(int index) {
@@ -41,42 +46,46 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
 
         final EventManager evtMgr = EventManager.getInstance();
 
-        ActionState koSelectionAction = evtMgr.getAction(ActionW.KO_SELECTION);
+        //
+        ToggleButtonListener koToggleAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_STATE);
+        final JToggleButton toggleKOSelectionBtn = new JToggleButton();
 
-        if (koSelectionAction instanceof ComboItemListener) {
-            GroupRadioMenu koSelectionMenu = ((ComboItemListener) koSelectionAction).createGroupRadioMenu();
+        toggleKOSelectionBtn.setToolTipText("Toggle KO State");
+        toggleKOSelectionBtn.setIcon(KO_STAR_ICON);
+        toggleKOSelectionBtn.setSelectedIcon(KO_STAR_ICON_SELECTED);
 
-            @SuppressWarnings("serial")
-            final DropDownButton koSelectionButton =
-                new DropDownButton(ActionW.KO_SELECTION.cmd(), buildKoSelectionIcon(), koSelectionMenu) {
-                    @Override
-                    protected JPopupMenu getPopupMenu() {
-                        JPopupMenu menu =
-                            (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                        menu.setInvoker(this);
-                        return menu;
-                    }
-                };
+        koToggleAction.registerActionState(toggleKOSelectionBtn);
+        add(toggleKOSelectionBtn);
 
-            koSelectionButton.setToolTipText("Change KO Selection");
-            add(koSelectionButton);
-            koSelectionAction.registerActionState(koSelectionButton);
-        }
+        //
+        ToggleButtonListener koFilterAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
+        final JToggleButton koFilterBtn = new JToggleButton();
 
-        ActionState toggleKoStateAction = evtMgr.getAction(ActionW.KO_STATE);
+        koFilterBtn.setToolTipText("Filter only selected KO ");
+        koFilterBtn.setIcon(KO_FILTER_ICON);
+        koFilterBtn.setSelectedIcon(KO_FILTER_ICON_SELECTED);
 
-        if (toggleKoStateAction instanceof ToggleButtonListener) {
-            final JToggleButton toggleKOSelectionBtn = new JToggleButton();
+        koFilterAction.registerActionState(koFilterBtn);
+        add(koFilterBtn);
 
-            toggleKOSelectionBtn.setToolTipText("Toggle KO State");
+        //
+        ComboItemListener koSelectionAction = (ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION);
+        GroupRadioMenu koSelectionMenu = koSelectionAction.createGroupRadioMenu();
 
-            toggleKOSelectionBtn.setIcon(KO_STAR_ICON);
-            toggleKOSelectionBtn.setSelectedIcon(KO_STAR_ICON_SELECTED);
+        @SuppressWarnings("serial")
+        final DropDownButton koSelectionButton =
+            new DropDownButton(ActionW.KO_SELECTION.cmd(), buildKoSelectionIcon(), koSelectionMenu) {
+                @Override
+                protected JPopupMenu getPopupMenu() {
+                    JPopupMenu menu = (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+                    menu.setInvoker(this);
+                    return menu;
+                }
+            };
 
-            toggleKoStateAction.registerActionState(toggleKOSelectionBtn);
-            add(toggleKOSelectionBtn);
-        }
-
+        koSelectionButton.setToolTipText("Change KO Selection");
+        koSelectionAction.registerActionState(koSelectionButton);
+        add(koSelectionButton);
     }
 
     private Icon buildKoSelectionIcon() {

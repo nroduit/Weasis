@@ -2,8 +2,6 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageProducer;
@@ -24,7 +22,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -96,8 +93,9 @@ public class KOManager {
             @Override
             public void showPopup(Component invoker, int x, int y) {
 
-                ComboItemListener koSelectionAction =
-                    ((ComboItemListener) EventManager.getInstance().getAction(ActionW.KO_SELECTION));
+                final EventManager evtMgr = EventManager.getInstance();
+
+                ComboItemListener koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
 
                 JPopupMenu popupMenu = new JPopupMenu();
 
@@ -109,20 +107,10 @@ public class KOManager {
                     popupMenu.add(item);
                 }
 
-                Object koFilter = currentView.getActionValue(ActionW.KO_FILTER.cmd());
+                ToggleButtonListener koFilterAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
 
                 final JCheckBoxMenuItem menuItem =
-                    new JCheckBoxMenuItem(ActionW.KO_FILTER.getTitle(), JMVUtils.getNULLtoFalse(koFilter));
-
-                menuItem.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
-                            currentView.setKeyObjectSelectionFilterState(item.isSelected());
-                        }
-                    }
-                });
+                    koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
 
                 popupMenu.addSeparator();
                 popupMenu.add(menuItem);
