@@ -273,7 +273,7 @@ public class DicomSpecialElement extends MediaElement {
 
                 if (date1 != null && date2 != null) {
                     // inverse time
-                    int comp = date2.compareTo(date1);
+                    int comp = date1.compareTo(date2);
                     if (comp != 0) {
                         return comp;
                     }

@@ -239,18 +239,41 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
         actionsInView.put(ActionW.PR_STATE.cmd(), null);
+
+        // Preprocessing
+        actionsInView.put(ActionW.CROP.cmd(), null);
+
+        setDefaultKOActionWState();
+    }
+
+    protected void setDefaultKOActionWState() {
+
         actionsInView.put(ActionW.KO_FILTER.cmd(), false);
+        actionsInView.put(ActionW.KO_STATE.cmd(), false);
 
         // Set the more recent KO by default
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
         Object defaultKO = (koElements != null && koElements.size() >= 0) ? koElements.iterator().next() : null;
-
         actionsInView.put(ActionW.KO_SELECTION.cmd(), defaultKO);
 
-        actionsInView.put(ActionW.KO_STATE.cmd(), false);
+        if (defaultKO instanceof KOSpecialElement) {
+            DicomImageElement dicomImage = getImage();
 
-        // Preprocessing
-        actionsInView.put(ActionW.CROP.cmd(), null);
+            if (dicomImage != null) {
+                String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
+                String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
+
+                if (sopInstanceUID != null && seriesInstanceUID != null) {
+                    KOSpecialElement koElement = (KOSpecialElement) defaultKO;
+                    Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+
+                    if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
+                        actionsInView.put(ActionW.KO_STATE.cmd(), true);
+                    }
+                }
+            }
+        }
+
     }
 
     @Override
@@ -313,14 +336,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public void reset() {
+        super.reset();
         setPresentationState(null);
     }
 
+    @Deprecated
     public void setKeyObjectSelection(Object newVal) {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
 
-        // if (JMVUtils.getNULLtoFalse((Boolean) getActionValue(ActionW.KO_FILTER.cmd()))) {
         if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
             sopInstanceUIDFilter =
                 (newVal instanceof KOSpecialElement) ? ((KOSpecialElement) newVal).getSOPInstanceUIDFilter() : null;
@@ -521,6 +545,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     /**
      * @return true if the state has changed and if the view or at least the KO button need to be repaint
      */
+    @Deprecated
     protected boolean updateKOselectedState() {
 
         // TODO - should not be called here but in a manager listener dedicated to this job
@@ -620,6 +645,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         return rect;
     }
 
+    @Deprecated
     @SuppressWarnings("unchecked")
     public void updateKOSelectionChange() {
 
@@ -699,60 +725,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
-        MediaSeries<DicomImageElement> oldsequence = this.series;
-        this.series = series;
+        super.setSeries(series, selectedDicom);
 
-        if (oldsequence != series) {
-            if (oldsequence != null) {
-                // Execute when series changes (old was not null and new series can be null)
-                closingSeries(oldsequence);
-                getLayerModel().deleteAllGraphics();
-                // All the action values are initialized again with the series changing
-                initActionWState();
-
-                // Remove old KO button
-                // for (int i = viewButtons.size() - 1; i >= 0; i--) {
-                // ViewButton vb = viewButtons.get(i);
-                // if (vb != null && vb.getIcon() == View2d.KO_ICON) {
-                // viewButtons.remove(i);
-                // }
-                // }
-            } else {
-                // ViewButton koButton = KOManager.buildKoSelection(this);
-                // if (koButton != null) {
-                // viewButtons.add(koButton);
-                // }
-            }
-        }
-
-        if (series == null) {
-            imageLayer.setImage(null, null);
-            closeLens();
-        } else {
-            DicomImageElement media = selectedDicom;
-            if (selectedDicom == null) {
-                media =
-                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                        (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                        getCurrentSortComparator());
-            }
-
+        if (series != null) {
             AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(), //$NON-NLS-1$
                 series.getTagValue(TagW.Modality));
-
-            setDefautWindowLevel(media);
-            setImage(media, true);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoom(val == null ? 1.0 : val);
-            center();
-
-        }
-
-        eventManager.updateComponentsListener(this);
-
-        // Set the sequence to the state OPEN
-        if (series != null && oldsequence != series) {
-            series.setOpen(true);
         }
 
         updateKOButtonVisibleState();

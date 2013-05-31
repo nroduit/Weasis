@@ -290,23 +290,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setSeries(series, null);
     }
 
-    public void setSeries(MediaSeries<E> series, E selectedMedia) {
+    public void setSeries(MediaSeries<E> newSeries, E selectedMedia) {
         MediaSeries<E> oldsequence = this.series;
-        this.series = series;
-        if (oldsequence != null && oldsequence != series) {
-            closingSeries(oldsequence);
-            getLayerModel().deleteAllGraphics();
-            // All the action values are initialized again with the series changing
-            initActionWState();
+        this.series = newSeries;
+
+        if ((oldsequence != null && oldsequence.equals(newSeries)) || (oldsequence == null && newSeries == null)) {
+            return;
         }
-        if (series == null) {
+
+        closingSeries(oldsequence);
+        getLayerModel().deleteAllGraphics();
+
+        if (newSeries == null) {
             imageLayer.setImage(null, null);
             closeLens();
         } else {
             E media = selectedMedia;
             if (selectedMedia == null) {
                 media =
-                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                    newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
                         (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
 
@@ -317,11 +319,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             center();
         }
 
+        initActionWState();
         eventManager.updateComponentsListener(this);
 
         // Set the sequence to the state OPEN
-        if (series != null && oldsequence != series) {
-            series.setOpen(true);
+        if (newSeries != null) {
+            newSeries.setOpen(true);
         }
     }
 
@@ -576,8 +579,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setActionsInView(String action, Object value, boolean repaint) {
-        if (action != null) {
-            actionsInView.put(action, value);
+        if (action != null && action.trim() != "") {
+            actionsInView.put(action.trim(), value);
             repaint();
         }
     }
@@ -777,9 +780,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setDefautWindowLevel(E img) {
+
+        // TODO - should it be called from within initActionWState instead ??
         if (img != null) {
             if (!img.isImageAvailable()) {
-                // Ensure to load image before calling the default preset that (requires pixel min and max)
+                // Ensure to load image before calling the default preset that requires pixel min and max
                 img.getImage();
             }
             boolean pixelPadding = JMVUtils.getNULLtoTrue(getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));

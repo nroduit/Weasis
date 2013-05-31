@@ -46,7 +46,7 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
 
         final EventManager evtMgr = EventManager.getInstance();
 
-        //
+        // --------------------------------------------------------------------------------------------------
         ToggleButtonListener koToggleAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_STATE);
         final JToggleButton toggleKOSelectionBtn = new JToggleButton();
 
@@ -57,18 +57,18 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
         koToggleAction.registerActionState(toggleKOSelectionBtn);
         add(toggleKOSelectionBtn);
 
-        //
+        // --------------------------------------------------------------------------------------------------
         ToggleButtonListener koFilterAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
         final JToggleButton koFilterBtn = new JToggleButton();
 
-        koFilterBtn.setToolTipText("Filter only selected KO ");
+        koFilterBtn.setToolTipText("Filter selected KO only");
         koFilterBtn.setIcon(KO_FILTER_ICON);
         koFilterBtn.setSelectedIcon(KO_FILTER_ICON_SELECTED);
 
         koFilterAction.registerActionState(koFilterBtn);
         add(koFilterBtn);
 
-        //
+        // --------------------------------------------------------------------------------------------------
         ComboItemListener koSelectionAction = (ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION);
         GroupRadioMenu koSelectionMenu = koSelectionAction.createGroupRadioMenu();
 
