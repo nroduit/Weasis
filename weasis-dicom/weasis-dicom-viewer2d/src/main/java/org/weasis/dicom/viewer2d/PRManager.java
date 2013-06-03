@@ -13,8 +13,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +28,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -53,7 +50,7 @@ import org.weasis.core.ui.graphic.model.Layer;
 import org.weasis.core.ui.graphic.model.LayerModel;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -76,6 +73,7 @@ public class PRManager {
         }
         reader.readSpatialTransformationModule();
         reader.readDisplayArea(img);
+        reader.readGrayscaleSoftcopyModule(img);
         ArrayList<Layer> layers = readGraphicAnnotation(view, reader, img);
         if (layers != null) {
             EventManager eventManager = EventManager.getInstance();
@@ -443,39 +441,12 @@ public class PRManager {
     public static ViewButton buildPrSelection(final View2d view, MediaSeries<DicomImageElement> series,
         DicomImageElement img) {
         if (view != null && series != null && img != null) {
-            // TODO duplicate KO in model if multiple studies references
-            List<DicomSpecialElement> list = DicomModel.getPrSpecialElements(series);
-            if (list != null && list.size() > 0) {
-
-                Object key = img.getKey();
-
-                List<DicomSpecialElement> prList =
-                    DicomSpecialElement.getPRfromSopUID((String) series.getTagValue(TagW.SeriesInstanceUID),
-                        (String) img.getTagValue(TagW.SOPInstanceUID), key instanceof Integer ? (Integer) key + 1
-                            : null, list);
+            Object key = img.getKey();
+            List<PRSpecialElement> prList =
+                DicomModel.getPrSpecialElements(series, (String) img.getTagValue(TagW.SOPInstanceUID),
+                    key instanceof Integer ? (Integer) key + 1 : null);
+            if (prList != null && prList.size() > 0) {
                 if (prList.size() > 0) {
-                    SeriesComparator<DicomSpecialElement> time = new SeriesComparator<DicomSpecialElement>() {
-
-                        @Override
-                        public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
-                            Date date1 = (Date) m1.getTagValue(TagW.SeriesDate);
-                            Date date2 = (Date) m2.getTagValue(TagW.SeriesDate);
-                            if (date1 != null && date2 != null) {
-                                // inverse time
-                                return date2.compareTo(date1);
-                            }
-
-                            Integer val1 = (Integer) m1.getTagValue(TagW.SeriesNumber);
-                            Integer val2 = (Integer) m2.getTagValue(TagW.SeriesNumber);
-                            if (val1 == null || val2 == null) {
-                                return 0;
-                            }
-                            // inverse number
-                            return val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
-                        }
-                    };
-
-                    Collections.sort(prList, time);
 
                     Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
                     if (!ActionState.NONE_SERIES.equals(oldPR)) {
@@ -517,7 +488,9 @@ public class PRManager {
                                     public void actionPerformed(ActionEvent e) {
                                         if (e.getSource() instanceof RadioMenuItem) {
                                             RadioMenuItem item = (RadioMenuItem) e.getSource();
-                                            view.setPresentationState(item.getUserObject());
+                                            Object val = item.getUserObject();
+                                            view.setPresentationState((PRSpecialElement) (val instanceof PRSpecialElement
+                                                ? val : null));
                                         }
                                     }
                                 });

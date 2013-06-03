@@ -73,7 +73,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public PolygonGraphic(List<Point2D.Double> handlePointList, Color paintColor, float lineThickness,
         boolean labelVisible, boolean filled) throws InvalidShapeException {
-        this(handlePointList, AbstractDragGraphic.UNDEFINED, paintColor, lineThickness, labelVisible, filled);
+        this(handlePointList, handlePointList.size(), paintColor, lineThickness, labelVisible, filled);
     }
 
     protected PolygonGraphic(
@@ -87,7 +87,8 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             throw new InvalidShapeException("Polygon must have at least 3 points!");
         }
         buildShape(null);
-
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
         if (!isShapeValid()) {
             int lastPointIndex = handlePointList.size() - 1;
             if (lastPointIndex > 1) {
@@ -96,10 +97,12 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 // uncompleted shape when drawing)
                 if (checkPoint.equals(handlePointList.get(lastPointIndex - 1))) {
                     handlePointList.remove(lastPointIndex - 1);
+                    this.handlePointTotalNumber = handlePointList.size();
                 }
                 // Not necessary to close the shape
                 if (checkPoint.equals(handlePointList.get(0))) {
                     handlePointList.remove(0);
+                    this.handlePointTotalNumber = handlePointList.size();
                 }
             }
             if (!isShapeValid() || handlePointList.size() < 3) {
@@ -107,8 +110,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             }
             buildShape(null);
         }
-        // Do not draw points any more
-        this.handlePointTotalNumber = handlePointList.size();
     }
 
     @Override

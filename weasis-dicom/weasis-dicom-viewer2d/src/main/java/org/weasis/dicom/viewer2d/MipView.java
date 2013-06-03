@@ -82,6 +82,8 @@ public class MipView extends View2d {
         super.initActionWState();
         // Force to extend VOI LUT to pixel allocated
         actionsInView.put(DicomImageElement.FILL_OUTSIDE_LUT, true);
+        // Propagate the preset
+        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
         actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
     }
@@ -206,15 +208,18 @@ public class MipView extends View2d {
                             }
                         }
 
+                        final List<ImageElement> sources = new ArrayList<ImageElement>();
                         int stopIndex = max - 1;
                         if (firstDcm != null) {
-                            List<ImageElement> sources = new ArrayList<ImageElement>();
                             sources.add(firstDcm);
                             while (iter.hasNext()) {
                                 if (this.isInterrupted()) {
                                     return;
                                 }
                                 DicomImageElement dcm = iter.next();
+                                // TODO check Pixel size, LUTs if they are different from the first image (if yes then
+                                // display
+                                // confirmation message to continue)
                                 sources.add(dcm);
 
                                 if (k >= stopIndex) {
@@ -231,6 +236,7 @@ public class MipView extends View2d {
                         // }
 
                         if (curImage != null && firstDcm != null) {
+                            DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
                             RawImage raw = null;
                             try {
                                 raw = new RawImage(File.createTempFile("mip_", ".raw", SeriesBuilder.MPR_CACHE_DIR));//$NON-NLS-1$ //$NON-NLS-2$);
@@ -246,54 +252,35 @@ public class MipView extends View2d {
                                 return;
                             }
                             RawImageIO rawIO = new RawImageIO(raw.getFile().toURI(), null);
-                            int bitsAllocated = firstDcm.getBitsAllocated();
-                            int bitsStored = firstDcm.getBitsStored();
-                            String photometricInterpretation = firstDcm.getPhotometricInterpretation();
+                            int bitsAllocated = imgRef.getBitsAllocated();
+                            int bitsStored = imgRef.getBitsStored();
+
                             // Tags with same values for all the Series
                             rawIO.setTag(TagW.TransferSyntaxUID, UID.ImplicitVRLittleEndian);
                             rawIO.setTag(TagW.Columns, curImage.getWidth());
                             rawIO.setTag(TagW.Rows, curImage.getHeight());
-                            // rawIO.setTag(TagW.SliceThickness, origPixSize);
-                            double origPixSize = firstDcm.getPixelSize();
-                            rawIO.setTag(TagW.PixelSpacing, new double[] { origPixSize, origPixSize });
+
                             rawIO.setTag(TagW.SeriesInstanceUID,
                                 "mip." + (String) series.getTagValue(TagW.SubseriesInstanceUID));
-                            rawIO.setTag(TagW.ImageOrientationPatient,
-                                firstDcm.getTagValue(TagW.ImageOrientationPatient));
+
+                            TagW[] tagList =
+                                { TagW.PhotometricInterpretation, TagW.ImageOrientationPatient,
+                                    TagW.PixelRepresentation, TagW.Units, TagW.ImageType, TagW.SamplesPerPixel,
+                                    TagW.MonoChrome, TagW.Modality };
+                            rawIO.copyTags(tagList, imgRef, true);
 
                             rawIO.setTag(TagW.BitsAllocated, bitsAllocated);
                             rawIO.setTag(TagW.BitsStored, bitsStored);
-                            rawIO.setTag(TagW.PixelRepresentation, firstDcm.getTagValue(TagW.PixelRepresentation));
-                            rawIO.setTag(TagW.Units, firstDcm.getTagValue(TagW.Units));
-                            rawIO.setTag(TagW.ImageType, firstDcm.getTagValue(TagW.ImageType));
-                            rawIO.setTag(TagW.SamplesPerPixel, firstDcm.getTagValue(TagW.SamplesPerPixel));
-                            rawIO.setTag(TagW.PhotometricInterpretation, photometricInterpretation);
-                            rawIO.setTag(TagW.MonoChrome, firstDcm.getTagValue(TagW.MonoChrome));
-                            rawIO.setTag(TagW.Modality, firstDcm.getTagValue(TagW.Modality));
 
-                            // TODO take dicom tags from middle image? what to do when values are not constant in the
-                            // series?
-                            rawIO.setTagNoNull(TagW.PixelSpacingCalibrationDescription,
-                                firstDcm.getTagValue(TagW.PixelSpacingCalibrationDescription));
-                            rawIO
-                                .setTagNoNull(TagW.ModalityLUTSequence, firstDcm.getTagValue(TagW.ModalityLUTSequence));
-                            rawIO.setTagNoNull(TagW.RescaleSlope, firstDcm.getTagValue(TagW.RescaleSlope));
-                            rawIO.setTagNoNull(TagW.RescaleIntercept, firstDcm.getTagValue(TagW.RescaleIntercept));
-                            rawIO.setTagNoNull(TagW.RescaleType, firstDcm.getTagValue(TagW.RescaleType));
-                            // rawIO.setTagNoNull(TagW.SmallestImagePixelValue,
-                            // img.getTagValue(TagW.SmallestImagePixelValue));
-                            // rawIO.setTagNoNull(TagW.LargestImagePixelValue,
-                            // img.getTagValue(TagW.LargestImagePixelValue));
-                            rawIO.setTagNoNull(TagW.PixelPaddingValue, firstDcm.getTagValue(TagW.PixelPaddingValue));
-                            rawIO.setTagNoNull(TagW.PixelPaddingRangeLimit,
-                                firstDcm.getTagValue(TagW.PixelPaddingRangeLimit));
-
-                            rawIO.setTagNoNull(TagW.VOILUTSequence, firstDcm.getTagValue(TagW.VOILUTSequence));
-                            // rawIO.setTagNoNull(TagW.WindowWidth, img.getTagValue(TagW.WindowWidth));
-                            // rawIO.setTagNoNull(TagW.WinArrayListdowCenter, img.getTagValue(TagW.WindowCenter));
-                            // rawIO.setTagNoNull(TagW.WindowCenterWidthExplanation,
-                            // img.getTagValue(TagW.WindowCenterWidthExplanation));
-                            rawIO.setTagNoNull(TagW.VOILutFunction, firstDcm.getTagValue(TagW.VOILutFunction));
+                            TagW[] tagList2 =
+                                { TagW.SmallestImagePixelValue, TagW.LargestImagePixelValue, TagW.ModalityLUTData,
+                                    TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope,
+                                    TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
+                                    TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth,
+                                    TagW.WindowCenter, TagW.WindowCenterWidthExplanation, TagW.VOILutFunction,
+                                    TagW.PixelSpacing, TagW.ImagerPixelSpacing,
+                                    TagW.PixelSpacingCalibrationDescription, TagW.PixelAspectRatio };
+                            rawIO.copyTags(tagList2, imgRef, false);
 
                             // Image specific tags
                             rawIO.setTag(TagW.SOPInstanceUID, "mip.1");
@@ -308,9 +295,7 @@ public class MipView extends View2d {
 
                             setImage(dicom, false);
                         }
-                        // TODO check images have similar modality and VOI LUT, W/L, LUT shape...
                         // imageLayer.updateAllImageOperations();
-
                         // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
                         // imageLayer.setPreprocessing(manager);
 

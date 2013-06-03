@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.dcm4che2.data.DicomObject;
+import org.dcm4che2.data.Tag;
 import org.dcm4che2.iod.module.sr.HierachicalSOPInstanceReference;
 import org.dcm4che2.iod.module.sr.KODocumentModule;
 import org.dcm4che2.iod.module.sr.SOPInstanceReferenceAndMAC;
@@ -81,68 +82,70 @@ public class KOSpecialElement extends DicomSpecialElement {
         init();
 
         DicomObject dicomObject = getMediaReader().getDicomObject();
+        if (dicomObject != null) {
+            HierachicalSOPInstanceReference[] referencedStudySequence =
+                HierachicalSOPInstanceReference.toSOPInstanceReferenceMacros(dicomObject
+                    .get(Tag.CurrentRequestedProcedureEvidenceSequence));
 
-        HierachicalSOPInstanceReference[] referencedStudySequence =
-            new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
+            if (referencedStudySequence != null) {
 
-        if (referencedStudySequence != null) {
+                boolean sopInstanceExist = false;
 
-            boolean sopInstanceExist = false;
-
-            for (HierachicalSOPInstanceReference studyRef : referencedStudySequence) {
-                SeriesAndInstanceReference[] referencedSeriesSequence = studyRef.getReferencedSeries();
-                if (referencedSeriesSequence == null) {
-                    continue;
-                }
-
-                String studyUID = studyRef.getStudyInstanceUID();
-
-                for (SeriesAndInstanceReference serieRef : referencedSeriesSequence) {
-                    SOPInstanceReferenceAndMAC[] referencedSOPInstanceSequence = serieRef.getReferencedInstances();
-                    if (referencedSOPInstanceSequence == null) {
+                for (HierachicalSOPInstanceReference studyRef : referencedStudySequence) {
+                    SeriesAndInstanceReference[] referencedSeriesSequence = studyRef.getReferencedSeries();
+                    if (referencedSeriesSequence == null) {
                         continue;
                     }
 
-                    String seriesUID = serieRef.getSeriesInstanceUID();
+                    String studyUID = studyRef.getStudyInstanceUID();
 
-                    for (SOPInstanceReferenceAndMAC sopRef : referencedSOPInstanceSequence) {
-                        String SOPInstanceUID = sopRef.getReferencedSOPInstanceUID();
-
-                        if (SOPInstanceUID == null || SOPInstanceUID.equals("")) {
+                    for (SeriesAndInstanceReference serieRef : referencedSeriesSequence) {
+                        SOPInstanceReferenceAndMAC[] referencedSOPInstanceSequence = serieRef.getReferencedInstances();
+                        if (referencedSOPInstanceSequence == null) {
                             continue;
                         }
 
-                        Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
-                            sopInstanceReferenceMapBySeriesUID.get(seriesUID);
+                        String seriesUID = serieRef.getSeriesInstanceUID();
 
-                        if (sopInstanceReferenceBySOPInstanceUID == null) {
-                            sopInstanceReferenceMapBySeriesUID.put(seriesUID, sopInstanceReferenceBySOPInstanceUID =
-                                new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
+                        for (SOPInstanceReferenceAndMAC sopRef : referencedSOPInstanceSequence) {
+                            String SOPInstanceUID = sopRef.getReferencedSOPInstanceUID();
+
+                            if (SOPInstanceUID == null || SOPInstanceUID.equals("")) {
+                                continue;
+                            }
+
+                            Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
+                                sopInstanceReferenceMapBySeriesUID.get(seriesUID);
+
+                            if (sopInstanceReferenceBySOPInstanceUID == null) {
+                                sopInstanceReferenceMapBySeriesUID.put(seriesUID, sopInstanceReferenceBySOPInstanceUID =
+                                    new LinkedHashMap<String, SOPInstanceReferenceAndMAC>());
+                            }
+
+                            sopInstanceReferenceBySOPInstanceUID.put(SOPInstanceUID, sopRef);
+                            sopInstanceExist = true;
                         }
 
-                        sopInstanceReferenceBySOPInstanceUID.put(SOPInstanceUID, sopRef);
-                        sopInstanceExist = true;
+                        if (sopInstanceExist) {
+
+                            Map<String, SeriesAndInstanceReference> seriesAndInstanceReferenceBySeriesUID =
+                                seriesAndInstanceReferenceMapByStudyUID.get(studyUID);
+
+                            if (seriesAndInstanceReferenceBySeriesUID == null) {
+                                seriesAndInstanceReferenceMapByStudyUID.put(studyUID,
+                                    seriesAndInstanceReferenceBySeriesUID =
+                                        new LinkedHashMap<String, SeriesAndInstanceReference>());
+                            }
+
+                            seriesAndInstanceReferenceBySeriesUID.put(seriesUID, serieRef);
+                        }
                     }
 
                     if (sopInstanceExist) {
-
-                        Map<String, SeriesAndInstanceReference> seriesAndInstanceReferenceBySeriesUID =
-                            seriesAndInstanceReferenceMapByStudyUID.get(studyUID);
-
-                        if (seriesAndInstanceReferenceBySeriesUID == null) {
-                            seriesAndInstanceReferenceMapByStudyUID.put(studyUID,
-                                seriesAndInstanceReferenceBySeriesUID =
-                                    new LinkedHashMap<String, SeriesAndInstanceReference>());
-                        }
-
-                        seriesAndInstanceReferenceBySeriesUID.put(seriesUID, serieRef);
+                        hierachicalSOPInstanceReferenceByStudyUID.put(studyUID, studyRef);
                     }
-                }
 
-                if (sopInstanceExist) {
-                    hierachicalSOPInstanceReferenceByStudyUID.put(studyUID, studyRef);
                 }
-
             }
         }
     }

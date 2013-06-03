@@ -204,6 +204,15 @@ public class DicomMediaUtils {
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static final int[] PRLUTAttributes = //
+        new int[] { Tag.LUTDescriptor, Tag.LUTData };
+
+    private static boolean containsRequiredPRLUTSequenceAttributes(DicomElement prLUTSequence) {
+        // One or more Items shall be included in this sequence, only first is considered
+        return containsRequiredAttributes(prLUTSequence, 0, PRLUTAttributes);
+    }
+
     /**
      * 
      * @param dicomLutObject
@@ -536,7 +545,7 @@ public class DicomMediaUtils {
         }
     }
 
-    public static void validateDicomImageValues(HashMap<TagW, Object> dicomTagMap) {
+    public static void buildLUTs(HashMap<TagW, Object> dicomTagMap) {
         if (dicomTagMap != null) {
 
             Integer pixelRepresentation = (Integer) dicomTagMap.get(TagW.PixelRepresentation);
@@ -562,8 +571,6 @@ public class DicomMediaUtils {
 
                 if (canApplyMLUT) {
                     DicomObject modalityLUTobj = modalityLUTSequence.getDicomObject(0);
-
-                    // TODO - should not create modality LUT here and prefer to do it in DicomImageElement Factory
 
                     DicomMediaUtils.setTagNoNull(dicomTagMap, TagW.ModalityLUTData,
                         createLut(modalityLUTobj, isPixelRepresentationSigned));
@@ -620,8 +627,6 @@ public class DicomMediaUtils {
 
                 boolean isOutModalityLutSigned = isPixelRepresentationSigned;
 
-                // TODO - remove code below if VOI LUT is created in DicomImageElement Factory as described in next TODO
-
                 // Evaluate outModality min value if signed
                 LookupTableJAI modalityLookup = (LookupTableJAI) dicomTagMap.get(TagW.ModalityLUTData);
 
@@ -648,8 +653,6 @@ public class DicomMediaUtils {
                         isOutModalityLutSigned = true;
                     }
                 }
-
-                // TODO - should not create VOI LUT here and prefer to do it in DicomImageElement Factory
 
                 for (int i = 0; i < voiLUTSequence.countItems(); i++) {
                     DicomObject voiLUTobj = voiLUTSequence.getDicomObject(i);
@@ -682,6 +685,23 @@ public class DicomMediaUtils {
                     LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} // {}", //$NON-NLS-1$
                         windowCenterDefaultTagArray, windowWidthDefaultTagArray);
                 }
+            }
+
+            DicomElement prLUTSequence = (DicomElement) dicomTagMap.get(TagW.PresentationLUTSequence);
+
+            if (containsRequiredPRLUTSequenceAttributes(prLUTSequence)) {
+                LookupTableJAI[] LUTsData = new LookupTableJAI[prLUTSequence.countItems()];
+                String[] prLUTsExplanation = new String[prLUTSequence.countItems()];
+
+                for (int i = 0; i < prLUTSequence.countItems(); i++) {
+                    DicomObject prLUTobj = prLUTSequence.getDicomObject(i);
+
+                    LUTsData[i] = createLut(prLUTobj, false);
+                    prLUTsExplanation[i] = getStringFromDicomElement(prLUTobj, Tag.LUTExplanation, null);
+                }
+
+                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, LUTsData);
+                DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsExplanation, prLUTsExplanation); // Optional Tag
             }
         }
     }
@@ -835,13 +855,13 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.StudyComments, header.getString(Tag.StudyComments));
 
             group.setTagNoNull(TagW.AccessionNumber, header.getString(Tag.AccessionNumber));
-            group.setTagNoNull(TagW.ModalitiesInStudy, header.getString(Tag.ModalitiesInStudy));
+            group.setTagNoNull(TagW.ModalitiesInStudy,
+                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.ModalitiesInStudy, null));
             group.setTagNoNull(TagW.NumberOfStudyRelatedInstances,
                 getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedInstances, null));
             group.setTagNoNull(TagW.NumberOfStudyRelatedSeries,
                 getIntegerFromDicomElement(header, Tag.NumberOfStudyRelatedSeries, null));
 
-            group.setTagNoNull(TagW.StudyStatusID, header.getString(Tag.StudyStatusID));
             // TODO sequence: define data structure
             group.setTagNoNull(TagW.ProcedureCodeSequence, header.get(Tag.ProcedureCodeSequence));
         }
@@ -859,7 +879,8 @@ public class DicomMediaUtils {
                     getDateFromDicomElement(header, Tag.SeriesTime, null)));
 
             group.setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
-            group.setTagNoNull(TagW.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));
+            group.setTagNoNull(TagW.RetrieveAETitle,
+                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.RetrieveAETitle, null));
             group.setTagNoNull(TagW.ReferringPhysicianName,
                 buildPersonName(header.getString(Tag.ReferringPhysicianName)));
             group.setTagNoNull(TagW.InstitutionName, header.getString(Tag.InstitutionName));
@@ -880,6 +901,7 @@ public class DicomMediaUtils {
             group.setTagNoNull(TagW.KVP, getFloatFromDicomElement(header, Tag.KVP, null));
             group.setTagNoNull(TagW.Laterality, header.getString(Tag.Laterality));
             group.setTagNoNull(TagW.BodyPartExamined, header.getString(Tag.BodyPartExamined));
+            // TODO sequence: define data structure
             group.setTagNoNull(TagW.ReferencedImageSequence, header.get(Tag.ReferencedImageSequence));
             group.setTagNoNull(TagW.FrameOfReferenceUID, header.getString(Tag.FrameOfReferenceUID));
             group.setTagNoNull(TagW.NumberOfSeriesRelatedInstances,
@@ -975,14 +997,6 @@ public class DicomMediaUtils {
                     setTagNoNull(tagList, TagW.ImageOrientationPlane,
                         ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(imgOrientation));
                 }
-                // TODO
-                // seq = dcm.get(Tag.ReferencedImageSequence);
-                // if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
-                // DicomObject ref = seq.getDicomObject(0);
-                // setTagNoNull(tagList, TagW.PurposeOfReferenceCodeSequence, getFloatFromDicomElement(ref,
-                // Tag.PurposeOfReferenceCodeSequence, null));
-                //
-                // }
 
                 /**
                  * Specifies the attributes of the Pixel Value Transformation Functional Group. This is equivalent with
@@ -1005,8 +1019,8 @@ public class DicomMediaUtils {
                             getFloatFromDicomElement(pixelValueTransformation, Tag.RescaleIntercept, null));
                         setTagNoNull(tagList, TagW.RescaleType,
                             getStringFromDicomElement(pixelValueTransformation, Tag.RescaleType, null));
-                        setTagNoNull(tagList, TagW.ModalityLUTSequence, null); // must be identity
-                                                                               // transformation
+                        setTagNoNull(tagList, TagW.ModalityLUTSequence,
+                            pixelValueTransformation.get(Tag.ModalityLUTSequence));
                     } else {
                         LOGGER.info("Ignore {} with unconsistent attributes", //$NON-NLS-1$
                             TagUtils.toString(Tag.PixelValueTransformationSequence));
@@ -1076,14 +1090,10 @@ public class DicomMediaUtils {
                         getIntegerFromDicomElement(frame, Tag.InStackPositionNumber, null));
                 }
 
-                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14), Real World Value
-                // Mapping (C.7.6.16-12)
+                // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14),
+                // Real World Value Mapping (C.7.6.16-12)
                 // This transformation should be applied in in the pixel value (add a list of transformation for pixel
                 // statistics)
-
-                // setTagNoNull(tagList, TagW.PixelSpacingCalibrationDescription,
-                // dicomObject.getString(Tag.PixelSpacingCalibrationDescription));
-                // setTagNoNull(tagList, TagW.Units, dicomObject.getString(Tag.Units));
 
                 // Frame Display Shutter Sequence (0018,9472)
                 // Display Shutter Macro Table C.7-17A in PS 3.3
@@ -1132,6 +1142,63 @@ public class DicomMediaUtils {
             }
         }
         return false;
+    }
+
+    public static void readPRLUTsModule(DicomObject header, HashMap<TagW, Object> tags) {
+        if (header != null && tags != null) {
+            // Modality LUT Module
+            DicomElement sequenceElt = header.get(Tag.ModalityLUTSequence);
+            if (sequenceElt != null && sequenceElt.vr() == VR.SQ && sequenceElt.countItems() > 0) {
+                // Only one single item is permitted in this sequence
+                DicomObject modalitySeq = sequenceElt.getDicomObject(0);
+
+                // Overrides Modality LUT Transformation attributes only if sequence is consistent
+                if (containsRequiredModalityLUTSequenceAttributes(sequenceElt)) {
+                    setTagNoNull(tags, TagW.ModalityLUTSequence, modalitySeq.get(Tag.ModalityLUTSequence));
+                    setTagNoNull(tags, TagW.RescaleSlope,
+                        DicomMediaUtils.getFloatFromDicomElement(modalitySeq, Tag.RescaleSlope, null));
+                    setTagNoNull(tags, TagW.RescaleIntercept,
+                        DicomMediaUtils.getFloatFromDicomElement(modalitySeq, Tag.RescaleIntercept, null));
+                    setTagNoNull(tags, TagW.RescaleType,
+                        DicomMediaUtils.getStringFromDicomElement(modalitySeq, Tag.RescaleType, null));
+                } else {
+                    LOGGER.info("Ignore {} with unconsistent attributes", //$NON-NLS-1$
+                        TagUtils.toString(Tag.ModalityLUTSequence));
+                }
+            }
+
+            // VOI LUT Module
+            sequenceElt = header.get(Tag.SoftcopyVOILUTSequence);
+            if (sequenceElt != null && sequenceElt.vr() == VR.SQ && sequenceElt.countItems() > 0) {
+                // Only one single item is permitted in this sequence
+                DicomObject voiSeq = sequenceElt.getDicomObject(0);
+
+                // Overrides VOI LUT Transformation attributes only if sequence is consistent
+                if (containsRequiredVOILUTAttributes(voiSeq)) {
+                    setTagNoNull(tags, TagW.WindowWidth, getFloatArrayFromDicomElement(voiSeq, Tag.WindowWidth, null));
+                    setTagNoNull(tags, TagW.WindowCenter, getFloatArrayFromDicomElement(voiSeq, Tag.WindowCenter, null));
+                    setTagNoNull(tags, TagW.WindowCenterWidthExplanation,
+                        getStringArrayFromDicomElement(voiSeq, Tag.WindowCenterWidthExplanation, null));
+                    setTagNoNull(tags, TagW.VOILutFunction, getStringFromDicomElement(voiSeq, Tag.VOILUTFunction, null));
+                    setTagNoNull(tags, TagW.VOILUTSequence, voiSeq.get(Tag.VOILUTSequence));
+                } else {
+                    LOGGER.info("Ignore {} with unconsistent attributes", //$NON-NLS-1$
+                        TagUtils.toString(Tag.SoftcopyVOILUTSequence));
+                }
+            }
+
+            // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
+            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(header.getString(Tag.SOPClassUID))) {
+                // Presentation LUT Module
+                sequenceElt = header.get(Tag.PresentationLUTSequence);
+                if (sequenceElt != null && sequenceElt.vr() == VR.SQ && sequenceElt.countItems() > 0) {
+                    // Only one single item is permitted in this sequence
+                    setTagNoNull(tags, TagW.PresentationLUTSequence, sequenceElt);
+                } else {
+                    setTagNoNull(tags, TagW.PresentationLUTShape, header.getString(Tag.PresentationLUTShape));
+                }
+            }
+        }
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

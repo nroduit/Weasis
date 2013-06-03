@@ -300,6 +300,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         closingSeries(oldsequence);
         getLayerModel().deleteAllGraphics();
+        initActionWState();
 
         if (newSeries == null) {
             imageLayer.setImage(null, null);
@@ -319,7 +320,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             center();
         }
 
-        initActionWState();
         eventManager.updateComponentsListener(this);
 
         // Set the sequence to the state OPEN

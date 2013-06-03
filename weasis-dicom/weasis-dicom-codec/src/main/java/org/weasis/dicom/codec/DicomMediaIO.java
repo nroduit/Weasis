@@ -366,10 +366,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         return tags.get(tag);
     }
 
-    private void writeTag(MediaSeriesGroup group, TagW tag) {
-        group.setTag(tag, getTagValue(tag));
-    }
-
     public void writeMetaData(MediaSeriesGroup group) {
         if (group == null) {
             return;
@@ -427,10 +423,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         if (pr) {
             // Set the series list for applying the PR
             setTagNoNull(TagW.ReferencedSeriesSequence, header.get(Tag.ReferencedSeriesSequence));
-        } else if (ko) {
-            // Set the series list for applying the KO
-            // setTagNoNull(TagW.CurrentRequestedProcedureEvidenceSequence,
-            // header.get(Tag.CurrentRequestedProcedureEvidenceSequence));
+            DicomMediaUtils.readPRLUTsModule(header, tags);
         }
         if (pr || ko) {
             // Set other required fields
@@ -442,7 +435,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.SeriesNumber, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SeriesNumber, null));
         }
 
-        DicomMediaUtils.validateDicomImageValues(tags);
+        DicomMediaUtils.buildLUTs(tags);
         DicomMediaUtils.computeSlicePositionVector(tags);
 
         Area shape = DicomMediaUtils.buildShutterArea(header);
@@ -460,6 +453,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         }
         DicomMediaUtils.computeSUVFactor(header, tags, 0);
 
+        // Remove sequence item
+        tags.remove(TagW.ModalityLUTSequence);
+        tags.remove(TagW.VOILUTSequence);
+        if (pr) {
+            tags.remove(TagW.PresentationLUTSequence);
+        }
     }
 
     private void writeSharedFunctionalGroupsSequence(DicomObject header) {
@@ -490,9 +489,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.TransferSyntaxUID, header.getString(Tag.TransferSyntaxUID));
             setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
-            setTagNoNull(TagW.ScanningSequence, header.getString(Tag.ScanningSequence));
-            setTagNoNull(TagW.SequenceVariant, header.getString(Tag.SequenceVariant));
-            setTagNoNull(TagW.ScanOptions, header.getString(Tag.ScanOptions));
+            setTagNoNull(TagW.ScanningSequence,
+                DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence, null));
+            setTagNoNull(TagW.SequenceVariant,
+                DicomMediaUtils.getStringFromDicomElement(header, Tag.SequenceVariant, null));
+            setTagNoNull(TagW.ScanOptions, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanOptions, null));
             setTagNoNull(TagW.RepetitionTime,
                 DicomMediaUtils.getFloatFromDicomElement(header, Tag.RepetitionTime, null));
             setTagNoNull(TagW.EchoTime, DicomMediaUtils.getFloatFromDicomElement(header, Tag.EchoTime, null));
@@ -500,9 +501,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.EchoNumbers, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.EchoNumbers, null));
             setTagNoNull(TagW.GantryDetectorTilt,
                 DicomMediaUtils.getFloatFromDicomElement(header, Tag.GantryDetectorTilt, null));
-            setTagNoNull(TagW.ConvolutionKernel, header.getString(Tag.ConvolutionKernel));
+            setTagNoNull(TagW.ConvolutionKernel,
+                DicomMediaUtils.getStringFromDicomElement(header, Tag.ConvolutionKernel, null));
             setTagNoNull(TagW.FlipAngle, DicomMediaUtils.getFloatFromDicomElement(header, Tag.FlipAngle, null));
-            setTagNoNull(TagW.PatientOrientation, header.getStrings(Tag.PatientOrientation, (String[]) null));
+            setTagNoNull(TagW.PatientOrientation,
+                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.PatientOrientation, null));
             setTagNoNull(TagW.SliceLocation, DicomMediaUtils.getFloatFromDicomElement(header, Tag.SliceLocation, null));
             setTagNoNull(TagW.SliceThickness,
                 DicomMediaUtils.getDoubleFromDicomElement(header, Tag.SliceThickness, null));
@@ -684,14 +687,19 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         }
                     } else {
                         String modality = (String) getTagValue(TagW.Modality);
-
-                        if (modality != null && "KO".equals(modality)) {
-                            image = new MediaElement[1];
-                            image[0] = new KOSpecialElement(this);
-                        } else if (modality != null && ("PR".equals(modality) || "SR".equals(modality))) {
-                            image = new MediaElement[1];
-                            image[0] = new DicomSpecialElement(this);
-                        } else {
+                        if (modality != null) {
+                            if ("KO".equals(modality)) {
+                                image = new MediaElement[1];
+                                image[0] = new KOSpecialElement(this);
+                            } else if ("PR".equals(modality)) {
+                                image = new MediaElement[1];
+                                image[0] = new PRSpecialElement(this);
+                            } else if ("SR".equals(modality)) {
+                                image = new MediaElement[1];
+                                image[0] = new DicomSpecialElement(this);
+                            }
+                        }
+                        if (image == null) {
                             // Corrupted image => should have one frame
                             image = new MediaElement[0];
                         }
@@ -704,7 +712,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     @Override
     public MediaSeries getMediaSeries() {
-        Series series = null;
+        Series<?> series = null;
         if (isReadableDicom()) {
             String seriesUID = (String) getTagValue(TagW.SeriesInstanceUID);
             series = buildSeries(seriesUID);
@@ -738,7 +746,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             if ((Integer) key > 0) {
                 HashMap<TagW, Object> tagList = (HashMap<TagW, Object>) tags.clone();
                 if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tagList, getDicomObject(), (Integer) key)) {
-                    DicomMediaUtils.validateDicomImageValues(tagList);
+                    DicomMediaUtils.buildLUTs(tagList);
                     DicomMediaUtils.computeSlicePositionVector(tagList);
                 }
                 return tagList;
@@ -789,7 +797,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         return desc;
     }
 
-    public Series buildSeries(String seriesUID) {
+    public Series<?> buildSeries(String seriesUID) {
         if (IMAGE_MIMETYPE.equals(mimeType)) {
             return new DicomSeries(seriesUID);
         } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {

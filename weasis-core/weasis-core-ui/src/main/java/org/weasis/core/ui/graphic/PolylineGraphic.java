@@ -60,7 +60,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     public PolylineGraphic(List<Point2D.Double> handlePointList, Color color, float f, boolean labelVisible)
         throws InvalidShapeException {
-        this(handlePointList, AbstractDragGraphic.UNDEFINED, color, f, labelVisible);
+        this(handlePointList, handlePointList.size(), color, f, labelVisible);
     }
 
     protected PolylineGraphic(
@@ -74,6 +74,8 @@ public class PolylineGraphic extends AbstractDragGraphic {
             throw new InvalidShapeException("Polyline must have at least 2 points!");
         }
         buildShape(null);
+        // Do not draw points any more
+        this.handlePointTotalNumber = handlePointList.size();
 
         if (!isShapeValid()) {
             int lastPointIndex = handlePointList.size() - 1;
@@ -83,6 +85,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
                 // uncompleted shape when drawing)
                 if (checkPoint.equals(handlePointList.get(lastPointIndex - 1))) {
                     handlePointList.remove(lastPointIndex - 1);
+                    this.handlePointTotalNumber = handlePointList.size();
                 }
             }
             if (!isShapeValid() || handlePointList.size() < 2) {
@@ -90,8 +93,6 @@ public class PolylineGraphic extends AbstractDragGraphic {
             }
             buildShape(null);
         }
-        // Do not draw points any more
-        this.handlePointTotalNumber = handlePointList.size();
     }
 
     @Override

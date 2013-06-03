@@ -146,9 +146,9 @@ public class TagW implements Transferable, Serializable {
     public static final TagW AcquisitionTime = new TagW(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
     public static final TagW ContentTime = new TagW(0x00080033, "Content Time", TagType.Time, 4); //$NON-NLS-1$
     public static final TagW AccessionNumber = new TagW(0x00080050, "Accession Number", TagType.String, 2); //$NON-NLS-1$
-    public static final TagW RetrieveAETitle = new TagW(0x00080054, "Retrieve AE Title", TagType.String, 3); //$NON-NLS-1$
+    public static final TagW RetrieveAETitle = new TagW(0x00080054, "Retrieve AE Title", TagType.StringArray, 3); //$NON-NLS-1$
     public static final TagW Modality = new TagW(0x00080060, "Modality", TagType.String, 3); //$NON-NLS-1$
-    public static final TagW ModalitiesInStudy = new TagW(0x00080061, "Modalities in Study", TagType.String, 2); //$NON-NLS-1$
+    public static final TagW ModalitiesInStudy = new TagW(0x00080061, "Modalities in Study", TagType.StringArray, 2); //$NON-NLS-1$
     public static final TagW Manufacturer = new TagW(0x00080070, "Manufacturer", TagType.String, 3); //$NON-NLS-1$
     public static final TagW InstitutionName = new TagW(0x00080080, "Institution Name", TagType.String, 3); //$NON-NLS-1$
 
@@ -191,7 +191,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ConvolutionKernel = new TagW(0x00181210, "Convolution Kernel", TagType.String); //$NON-NLS-1$
     public static final TagW FlipAngle = new TagW(0x00181314, "Scan Options", TagType.Float); //$NON-NLS-1$
     public static final TagW ImageLaterality = new TagW(0x00200062, "Image Laterality", TagType.String, 4); //$NON-NLS-1$
-    public static final TagW PatientOrientation = new TagW(0x00200020, "Patient Orientation", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW PatientOrientation = new TagW(0x00200020, "Patient Orientation", TagType.StringArray); //$NON-NLS-1$
     public static final TagW FrameOfReferenceUID = new TagW(0x00200052, "Frame Of Reference UID", TagType.String); //$NON-NLS-1$
 
     public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text); //$NON-NLS-1$
@@ -200,8 +200,8 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PixelSpacingCalibrationDescription = new TagW(0x00280A04,
         "Pixel Spacing Calibration Description", TagType.String); //$NON-NLS-1$
 
-    public static final TagW VOILUTSequence = new TagW(0x00283010, "VOI LUT Sequence", TagType.Sequence); //$NON-NLS-1$
     // One or more Items shall be included in this sequence
+    public static final TagW VOILUTSequence = new TagW(0x00283010, "VOI LUT Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW VOILUTsExplanation = new TagW("VOI LUTs Explanation", TagType.StringArray); //$NON-NLS-1$
     public static final TagW VOILUTsData = new TagW("VOI LUTs Data", TagType.Array); //$NON-NLS-1$
 
@@ -211,27 +211,24 @@ public class TagW implements Transferable, Serializable {
         TagType.StringArray);
     public static final TagW VOILutFunction = new TagW(0x00281056, "VOI LUT Function", TagType.String); //$NON-NLS-1$
 
-    public static final TagW ModalityLUTSequence = new TagW(0x00283000, "Modality LUT Sequence", TagType.Sequence); //$NON-NLS-1$
     // Only a single Item shall be included in this sequence
+    public static final TagW ModalityLUTSequence = new TagW(0x00283000, "Modality LUT Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW ModalityLUTExplanation = new TagW("Modality LUT Explanation", TagType.String); //$NON-NLS-1$
     public static final TagW ModalityLUTType = new TagW("Modality LUT Type", TagType.String); //$NON-NLS-1$
     public static final TagW ModalityLUTData = new TagW("Modality LUT Data", TagType.Object); //$NON-NLS-1$
-
-    // public static final TagW LutDescriptor = new TagW(0x00283002, "LUT Descriptor", TagType.IntegerArray);
-    // public static final TagW LutExplanation = new TagW(0x00283003, "LUT Explanation", TagType.IntegerArray);
-    // public static final TagW ModalityLUTType = new TagW(0x00283004, "Modality LUT Type", TagType.String);
-    // public static final TagW LutData = new TagW(0x00283006, "LUT Data", TagType.IntegerArray);
 
     public static final TagW RescaleSlope = new TagW(0x00281053, "Rescale Slope", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleIntercept = new TagW(0x00281052, "Rescale Intercept", TagType.Float); //$NON-NLS-1$
     public static final TagW RescaleType = new TagW(0x00281054, "Rescale Type", TagType.String); //$NON-NLS-1$
     public static final TagW PixelIntensityRelationship = new TagW(0x00281040,
         "Pixel Intensity Relationship", TagType.String); //$NON-NLS-1$
-    // public static final TagW FrameVOILUTSequence = new TagW(0x00289132, "Frame VOI LUT Sequence", TagType.Sequence);
-    // public static final TagW PixelValueTransformationSequence = new TagW(0x00289145,
-    // "Pixel Value Transformation Sequence", TagType.Sequence);
-    // public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence",
-    // TagType.Sequence);
+
+    // Only a single Item shall be included in this sequence
+    public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence",
+        TagType.Sequence);
+    public static final TagW PRLUTsExplanation = new TagW("Presentation State LUT Explanation", TagType.String); //$NON-NLS-1$
+    public static final TagW PRLUTsData = new TagW("Presentation State LUT Data", TagType.Object); //$NON-NLS-1$;
+    public static final TagW PresentationLUTShape = new TagW(0x20500020, "Presentation LUT Shape", TagType.String); //$NON-NLS-1$
 
     public static final TagW PixelDataProviderURL = new TagW(0x00287FE0, "Pixel Data Provider URL", TagType.String); //$NON-NLS-1$
 
@@ -268,7 +265,6 @@ public class TagW implements Transferable, Serializable {
     public static final TagW BitsStored = new TagW(0x00280101, "Bits Stored", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelRepresentation = new TagW(0x00280103, "Pixel Representation", TagType.Integer); //$NON-NLS-1$
 
-    public static final TagW StudyStatusID = new TagW(0x0032000A, "Study StatusID", TagType.String, 2); //$NON-NLS-1$
     public static final TagW StudyComments = new TagW(0x00324000, "Study Comments", TagType.String, 2); //$NON-NLS-1$
     public static final TagW PerformedProcedureStepStartDate = new TagW(0x00400244,
         "Performed Procedure Step Start Date", TagType.Date, 3); //$NON-NLS-1$

@@ -16,7 +16,6 @@ import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.ref.Reference;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -429,7 +428,7 @@ public class DicomImageElement extends ImageElement {
 
     public List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
         if (windowingPresetCollection == null && isImageAvailable()) {
-            windowingPresetCollection = Arrays.asList(PresetWindowLevel.getPresetCollection(this, pixelPadding));
+            windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this.tags, pixelPadding);
         }
         return windowingPresetCollection;
     }
@@ -438,11 +437,7 @@ public class DicomImageElement extends ImageElement {
         if (preset != null) {
             List<PresetWindowLevel> collection = getPresetList(false);
             if (collection != null) {
-                for (PresetWindowLevel p : collection) {
-                    if (p == preset) {
-                        return true;
-                    }
-                }
+                return collection.contains(preset);
             }
         }
         return false;

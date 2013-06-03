@@ -179,6 +179,17 @@ public class RawImageIO implements MediaReader<PlanarImage> {
         }
     }
 
+    public void copyTags(TagW[] tagList, MediaElement<?> media, boolean allowNullValue) {
+        if (tagList != null && media != null) {
+            for (TagW tag : tagList) {
+                Object value = media.getTagValue(tag);
+                if (allowNullValue || value != null) {
+                    tags.put(tag, value);
+                }
+            }
+        }
+    }
+
     @Override
     public void replaceURI(URI uri) {
     }

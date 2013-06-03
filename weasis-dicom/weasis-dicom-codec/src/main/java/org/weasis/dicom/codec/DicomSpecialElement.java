@@ -12,6 +12,7 @@ package org.weasis.dicom.codec;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -90,51 +91,6 @@ public class DicomSpecialElement extends MediaElement {
             }
         }
         return filteredList;
-    }
-
-    public static List<DicomSpecialElement> getKOfromSopUID(String seriesUID, List<DicomSpecialElement> studyElements) {
-        List<DicomSpecialElement> filteredList = new ArrayList<DicomSpecialElement>();
-        if (studyElements != null) {
-            for (DicomSpecialElement dicom : studyElements) {
-                if (dicom != null && seriesUID != null && "KO".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
-                    DicomElement seq = (DicomElement) dicom.getTagValue(TagW.CurrentRequestedProcedureEvidenceSequence);
-                    if (seq != null && seq.vr() == VR.SQ) {
-                        for (int i = 0; i < seq.countItems(); ++i) {
-                            DicomObject dcmObj = null;
-                            try {
-                                dcmObj = seq.getDicomObject(i);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            if (dcmObj != null) {
-                                if (isSeriesuidInReferencedSeriesSequence(dcmObj.get(Tag.ReferencedSeriesSequence),
-                                    seriesUID)) {
-                                    filteredList.add(dicom);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return filteredList;
-    }
-
-    private static boolean isSeriesuidInReferencedSeriesSequence(DicomElement seq, String seriesUID) {
-        if (seq != null && seq.vr() == VR.SQ) {
-            for (int i = 0; i < seq.countItems(); ++i) {
-                DicomObject dcmObj = null;
-                try {
-                    dcmObj = seq.getDicomObject(i);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (dcmObj != null && seriesUID.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private static boolean isSopuidInReferencedSeriesSequence(DicomElement seq, String seriesUID, String sopUID,
@@ -220,32 +176,36 @@ public class DicomSpecialElement extends MediaElement {
         return koElementSet;
     }
 
-    // public static final Collection<KOSpecialElement> getNewCreatedKoSpecialElements(
-    // Collection<DicomSpecialElement> specialElements) {
-    //
-    // if (specialElements == null) {
-    // return null;
-    // }
-    //
-    // SortedSet<KOSpecialElement> koElementSet = null;
-    //
-    // for (DicomSpecialElement element : specialElements) {
-    //
-    // if (element instanceof KOSpecialElement) {
-    // KOSpecialElement koElement = (KOSpecialElement) element;
-    //
-    // if (koElement.getMediaReader().isWritableDicom()) {
-    //
-    // if (koElementSet == null) {
-    // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
-    // }
-    // koElementSet.add(koElement);
-    // }
-    // }
-    // }
-    //
-    // return koElementSet;
-    // }
+    public static final List<PRSpecialElement> getPRSpecialElements(Collection<DicomSpecialElement> specialElements,
+        String seriesUID, String sopUID, Integer frameNumber) {
+
+        if (specialElements == null) {
+            return null;
+        }
+        List<PRSpecialElement> prList = null;
+
+        for (DicomSpecialElement element : specialElements) {
+
+            if (element instanceof PRSpecialElement) {
+                PRSpecialElement prElement = (PRSpecialElement) element;
+
+                if (isSopuidInReferencedSeriesSequence(
+                    (DicomElement) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
+
+                    if (prList == null) {
+                        prList = new ArrayList<PRSpecialElement>();
+                    }
+                    prList.add(prElement);
+
+                }
+            }
+        }
+        if (prList != null) {
+            // Collections.sort(koElementSet, ORDER_BY_DESCRIPTION);
+            Collections.sort(prList, ORDER_BY_DATE);
+        }
+        return prList;
+    }
 
     public final static SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
         new SeriesComparator<DicomSpecialElement>() {
@@ -260,20 +220,22 @@ public class DicomSpecialElement extends MediaElement {
 
             @Override
             public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
-                // Date date1 = (Date) m1.getTagValue(TagW.SeriesDate);
-                // Date date2 = (Date) m2.getTagValue(TagW.SeriesDate);
 
                 // Note : Dicom Standard PS3.3 - Table C.17.6-1 KEY OBJECT DOCUMENT SERIES MODULE ATTRIBUTES
                 //
-                // SeriesDate stands for "Date the Series started" and is optionnal parameter, don't use this to compare
+                // SeriesDate stands for "Date the Series started" and is optional parameter, don't use this to compare
                 // and prefer "Content Date And Time" Tags (date and time the document content creation started)
 
                 Date date1 = (Date) m1.getTagValue(TagW.ContentTime);
                 Date date2 = (Date) m2.getTagValue(TagW.ContentTime);
 
+                if (date1 == null || date2 == null) {
+                    date1 = (Date) m1.getTagValue(TagW.SeriesDate);
+                    date2 = (Date) m2.getTagValue(TagW.SeriesDate);
+                }
                 if (date1 != null && date2 != null) {
                     // inverse time
-                    int comp = date1.compareTo(date2);
+                    int comp = date2.compareTo(date1);
                     if (comp != 0) {
                         return comp;
                     }
@@ -300,10 +262,6 @@ public class DicomSpecialElement extends MediaElement {
                 String sopUID2 = (String) m2.getTagValue(TagW.SOPInstanceUID);
 
                 return String.CASE_INSENSITIVE_ORDER.compare(sopUID2, sopUID1);
-                // return Integer.valueOf(m1.hashCode()).compareTo(m2.hashCode());
-
-                // TODO should implement the dicomSpecialElement Comparable and set accordingly the equals and hashcode
-                // result for this Object
             }
         };
 

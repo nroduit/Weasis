@@ -56,6 +56,8 @@ public class MprView extends View2d {
         // head direction)
         // TODO This option should be fixed
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.slicePosition);
+        // Propagate the preset
+        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
     }
 
     public Type getType() {

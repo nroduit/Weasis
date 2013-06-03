@@ -128,9 +128,9 @@ import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.CornerDisplay;
@@ -253,7 +253,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         // Set the more recent KO by default
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
-        Object defaultKO = (koElements != null && koElements.size() >= 0) ? koElements.iterator().next() : null;
+        Object defaultKO = (koElements != null && koElements.size() > 0) ? koElements.iterator().next() : null;
         actionsInView.put(ActionW.KO_SELECTION.cmd(), defaultKO);
 
         if (defaultKO instanceof KOSpecialElement) {
@@ -379,14 +379,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // setSeries(series, getImage());
     }
 
-    void setPresentationState(Object val) {
+    void setPresentationState(PRSpecialElement val) {
         ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
         if (pane != null) {
             pane.resetMaximizedSelectedImagePane(this);
         }
         // TODO use PR reader for other frame when changing image of the series
-        PresentationStateReader pr =
-            val instanceof DicomSpecialElement ? new PresentationStateReader((DicomSpecialElement) val) : null;
+        PresentationStateReader pr = val == null ? null : new PresentationStateReader(val);
         actionsInView.put(ActionW.PR_STATE.cmd(), val);
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
@@ -439,6 +438,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         PRManager.applyPresentationState(this, reader, img);
         actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
         actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
+
+        PresetWindowLevel p = (PresetWindowLevel) reader.getTagValue(ActionW.PRESET.cmd(), null);
+        if (p != null) {
+            actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
+            actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
+            actionsInView.put(ActionW.PRESET.cmd(), p);
+            actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
+            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
+        }
 
         setShutter(reader.getDicom());
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
@@ -573,7 +581,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             } else {
                 Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
 
-                if (koElements != null && koElements.size() > 0) {
+                if (koElements != null) {
                     for (KOSpecialElement koElement : koElements) {
                         Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
 
@@ -755,7 +763,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             ViewButton prButton = PRManager.buildPrSelection(this, series, img);
             if (prButton != null) {
                 viewButtons.add(prButton);
-            } else if (oldPR instanceof DicomSpecialElement) {
+            } else if (oldPR instanceof PRSpecialElement) {
                 setPresentationState(null);
             }
         }

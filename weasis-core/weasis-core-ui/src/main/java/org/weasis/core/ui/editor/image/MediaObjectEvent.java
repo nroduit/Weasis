@@ -4,27 +4,27 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
 public class MediaObjectEvent {
-    private final MediaSeries series;
-    private final MediaElement media;
+    private final MediaSeries<?> series;
+    private final MediaElement<?> media;
     private final int seriesIndex;
     private Number location;
 
-    public MediaObjectEvent(MediaSeries series, MediaElement media, int seriesIndex) {
+    public MediaObjectEvent(MediaSeries<?> series, MediaElement<?> media, int seriesIndex) {
         this(series, media, seriesIndex, null);
     }
 
-    public MediaObjectEvent(MediaSeries series, MediaElement media, int seriesIndex, Number location) {
+    public MediaObjectEvent(MediaSeries<?> series, MediaElement<?> media, int seriesIndex, Number location) {
         this.series = series;
         this.media = media;
         this.seriesIndex = seriesIndex;
         this.location = location;
     }
 
-    public MediaElement getMedia() {
+    public MediaElement<?> getMedia() {
         return media;
     }
 
-    public MediaSeries getSeries() {
+    public MediaSeries<?> getSeries() {
         return series;
     }
 

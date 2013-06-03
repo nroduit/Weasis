@@ -15,6 +15,7 @@ import java.awt.image.DataBuffer;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -89,10 +90,18 @@ public class PresetWindowLevel {
         return name;
     }
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof PresetWindowLevel) {
+            PresetWindowLevel p = (PresetWindowLevel) obj;
+            return window == p.window && level == p.level && name.equals(p.name) && shape.equals(p.shape);
+        }
+        return false;
+    }
 
-    public static PresetWindowLevel[] getPresetCollection(DicomImageElement image, boolean pixelPadding) {
-        if (image == null) {
+    public static List<PresetWindowLevel> getPresetCollection(DicomImageElement image, HashMap<TagW, Object> tags,
+        boolean pixelPadding) {
+        if (image == null || tags == null) {
             return null;
         }
 
@@ -100,11 +109,11 @@ public class PresetWindowLevel {
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<PresetWindowLevel>();
 
-        Float[] levelList = (Float[]) image.getTagValue(TagW.WindowCenter);
-        Float[] windowList = (Float[]) image.getTagValue(TagW.WindowWidth);
+        Float[] levelList = (Float[]) tags.get(TagW.WindowCenter);
+        Float[] windowList = (Float[]) tags.get(TagW.WindowWidth);
         // optional attributes
-        String[] wlExplanationList = (String[]) image.getTagValue(TagW.WindowCenterWidthExplanation);
-        String lutFunctionDescriptor = (String) image.getTagValue(TagW.VOILutFunction);
+        String[] wlExplanationList = (String[]) tags.get(TagW.WindowCenterWidthExplanation);
+        String lutFunctionDescriptor = (String) tags.get(TagW.VOILutFunction);
 
         LutShape defaultLutShape = LutShape.LINEAR; // Implicitly defined as default function in DICOM standard
 
@@ -124,8 +133,6 @@ public class PresetWindowLevel {
             float minModLUT = image.getMinValue(pixelPadding);
             float maxModLUT = image.getMaxValue(pixelPadding);
             int k = 1;
-
-            // TODO do not add new W/L Preset that have same value as previous object already in the list
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
                 String explanation = defaultExplanation + " " + k;
@@ -156,13 +163,15 @@ public class PresetWindowLevel {
                 } else if (k == 2) {
                     preset.setKeyCode(KeyEvent.VK_2);
                 }
-                presetList.add(preset);
-                k++;
+                if (!presetList.contains(preset)) {
+                    presetList.add(preset);
+                    k++;
+                }
             }
         }
 
-        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) image.getTagValue(TagW.VOILUTsData);
-        String[] voiLUTsExplanation = (String[]) image.getTagValue(TagW.VOILUTsExplanation); // optional attribute
+        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) tags.get(TagW.VOILUTsData);
+        String[] voiLUTsExplanation = (String[]) tags.get(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
             String defaultExplanation = "VOI LUT";
@@ -232,7 +241,7 @@ public class PresetWindowLevel {
             }
         }
 
-        return presetList.toArray(new PresetWindowLevel[presetList.size()]);
+        return presetList;
     }
 
     private static Map<String, List<PresetWindowLevel>> getPresetListByModality() {

@@ -224,7 +224,6 @@ public class SeriesBuilder {
         String prefix = rotate ? "m3." : "m2.";
         int bitsAllocated = img.getBitsAllocated();
         int bitsStored = img.getBitsStored();
-        String photometricInterpretation = img.getPhotometricInterpretation();
 
         int last = newSeries.length;
         List<DicomImageElement> dcms = new ArrayList<DicomImageElement>();
@@ -243,32 +242,21 @@ public class SeriesBuilder {
 
             rawIO.setTag(TagW.BitsAllocated, bitsAllocated);
             rawIO.setTag(TagW.BitsStored, bitsStored);
-            rawIO.setTag(TagW.PixelRepresentation, img.getTagValue(TagW.PixelRepresentation));
-            rawIO.setTag(TagW.Units, img.getTagValue(TagW.Units));
-            rawIO.setTag(TagW.ImageType, img.getTagValue(TagW.ImageType));
-            rawIO.setTag(TagW.SamplesPerPixel, img.getTagValue(TagW.SamplesPerPixel));
-            rawIO.setTag(TagW.PhotometricInterpretation, photometricInterpretation);
-            rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
-            rawIO.setTag(TagW.Modality, img.getTagValue(TagW.Modality));
+
+            TagW[] tagList =
+                { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.ImageType,
+                    TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality, };
+            rawIO.copyTags(tagList, img, true);
 
             // TODO take dicom tags from middle image? what to do when values are not constant in the series?
-            rawIO.setTagNoNull(TagW.PixelSpacingCalibrationDescription,
-                img.getTagValue(TagW.PixelSpacingCalibrationDescription));
-            rawIO.setTagNoNull(TagW.ModalityLUTSequence, img.getTagValue(TagW.ModalityLUTSequence));
-            rawIO.setTagNoNull(TagW.RescaleSlope, img.getTagValue(TagW.RescaleSlope));
-            rawIO.setTagNoNull(TagW.RescaleIntercept, img.getTagValue(TagW.RescaleIntercept));
-            rawIO.setTagNoNull(TagW.RescaleType, img.getTagValue(TagW.RescaleType));
-            // rawIO.setTagNoNull(TagW.SmallestImagePixelValue, img.getTagValue(TagW.SmallestImagePixelValue));
-            // rawIO.setTagNoNull(TagW.LargestImagePixelValue, img.getTagValue(TagW.LargestImagePixelValue));
-            rawIO.setTagNoNull(TagW.PixelPaddingValue, img.getTagValue(TagW.PixelPaddingValue));
-            rawIO.setTagNoNull(TagW.PixelPaddingRangeLimit, img.getTagValue(TagW.PixelPaddingRangeLimit));
 
-            rawIO.setTagNoNull(TagW.VOILUTSequence, img.getTagValue(TagW.VOILUTSequence));
-            // rawIO.setTagNoNull(TagW.WindowWidth, img.getTagValue(TagW.WindowWidth));
-            // rawIO.setTagNoNull(TagW.WindowCenter, img.getTagValue(TagW.WindowCenter));
-            // rawIO.setTagNoNull(TagW.WindowCenterWidthExplanation,
-            // img.getTagValue(TagW.WindowCenterWidthExplanation));
-            rawIO.setTagNoNull(TagW.VOILutFunction, img.getTagValue(TagW.VOILutFunction));
+            TagW[] tagList2 =
+                { TagW.ModalityLUTData, TagW.ModalityLUTType, TagW.ModalityLUTExplanation, TagW.RescaleSlope,
+                    TagW.RescaleIntercept, TagW.RescaleType, TagW.VOILUTsData, TagW.VOILUTsExplanation,
+                    TagW.PixelPaddingValue, TagW.PixelPaddingRangeLimit, TagW.WindowWidth, TagW.WindowCenter,
+                    TagW.WindowCenterWidthExplanation, TagW.VOILutFunction, TagW.PixelSpacingCalibrationDescription, };
+            // TagW.SmallestImagePixelValue,TagW.LargestImagePixelValue,
+            rawIO.copyTags(tagList2, img, false);
 
             // Image specific tags
             int index = i;
@@ -280,9 +268,9 @@ public class SeriesBuilder {
             rawIO.setTag(TagW.ImagePositionPatient, new double[] { rotate ? location : pos[0],
                 rotate ? pos[1] : location, pos[2] });
 
-            HashMap<TagW, Object> tagList = rawIO.getMediaFragmentTags(null);
-            DicomMediaUtils.validateDicomImageValues(tagList);
-            DicomMediaUtils.computeSlicePositionVector(tagList);
+            HashMap<TagW, Object> tagList3 = rawIO.getMediaFragmentTags(null);
+            DicomMediaUtils.buildLUTs(tagList3);
+            DicomMediaUtils.computeSlicePositionVector(tagList3);
             DicomImageElement dcm = new DicomImageElement(rawIO, 0);
             dcms.add(dcm);
         }

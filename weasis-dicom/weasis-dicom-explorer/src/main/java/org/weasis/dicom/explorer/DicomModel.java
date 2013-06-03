@@ -59,6 +59,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.wado.DicomManager;
@@ -400,7 +401,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
-
         // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
@@ -411,34 +411,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
-    // public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
-    // return getKoSpecialElements(dicomSeries, true);
-    // }
-
-    // public static Collection<KOSpecialElement> getNewCreatedKoSpecialElements(MediaSeries<DicomImageElement>
-    // dicomSeries) {
-    //
-    // // Get all DicomSpecialElement at patient level
-    // List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
-    //
-    // if (specialElementList != null) {
-    // return DicomSpecialElement.getNewCreatedKoSpecialElements(specialElementList);
-    // }
-    // return null;
-    // }
-
-    public static List<DicomSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {
-
+    public static List<PRSpecialElement> getPrSpecialElements(MediaSeries<DicomImageElement> dicomSeries,
+        String sopUID, Integer frameNumber) {
+        // Get all DicomSpecialElement at patient level
         List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
         if (specialElementList != null) {
-            List<DicomSpecialElement> prs = new ArrayList<DicomSpecialElement>(specialElementList.size());
-            for (DicomSpecialElement sp : specialElementList) {
-                if ("PR".equals(sp.getTagValue(TagW.Modality))) {
-                    prs.add(sp);
-                }
-            }
-            return prs;
+            String referencedSeriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            return DicomSpecialElement.getPRSpecialElements(specialElementList, referencedSeriesInstanceUID, sopUID,
+                frameNumber);
         }
         return null;
     }

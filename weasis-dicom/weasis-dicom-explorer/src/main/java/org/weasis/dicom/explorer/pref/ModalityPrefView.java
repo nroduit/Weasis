@@ -71,7 +71,6 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         fillMap(TagW.ModalitiesInStudy);
         fillMap(TagW.NumberOfStudyRelatedInstances);
         fillMap(TagW.NumberOfStudyRelatedSeries);
-        fillMap(TagW.StudyStatusID);
         fillMap(TagW.ProcedureCodeSequence);
 
         // Series

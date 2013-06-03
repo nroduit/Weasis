@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.BoundedRangeModel;
@@ -73,6 +74,7 @@ import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -328,7 +330,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
                     // Assume the image cannot display when win =1 and level = 0
                     if (oldPreset != null || (windowAction.getValue() <= 1 && levelAction.getValue() == 0)) {
-                        if (isDefaultPresetSelected) {
+                        // TODO need to be improved
+                        PRSpecialElement pr = (PRSpecialElement) view2d.getActionValue(ActionW.PR_STATE.cmd());
+                        if (pr != null) {
+                            newPreset = oldPreset;
+                        } else if (isDefaultPresetSelected) {
                             newPreset = image.getDefaultPreset(pixelPadding);
                         } else {
                             for (PresetWindowLevel preset : newPresetList) {
@@ -848,6 +854,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         LutShape lutShapeItem = (LutShape) view2d.getActionValue(ActionW.LUT_SHAPE.cmd());
         Boolean defaultPreset = (Boolean) view2d.getActionValue(ActionW.DEFAULT_PRESET.cmd());
         boolean pixelPadding = JMVUtils.getNULLtoTrue(view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+        boolean pr = view2d.getActionValue(ActionW.PR_STATE.cmd()) != null;
 
         defaultPresetAction.setSelectedWithoutTriggerAction(defaultPreset);
 
@@ -857,10 +864,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             (int) image.getMaxValue(pixelPadding), levelValue.intValue());
 
         List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
+        if (pr && presetList != null && preset != null && !presetList.contains(preset)) {
+            // Make a copy of the image list
+            ArrayList<PresetWindowLevel> newList = new ArrayList<PresetWindowLevel>(presetList.size() + 1);
+            newList.add(preset);
+            newList.addAll(presetList);
+            presetList = newList;
+        }
         presetAction.setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray());
         presetAction.setSelectedItemWithoutTriggerAction(preset);
 
-        lutShapeAction.setDataListWithoutTriggerAction(image.getLutShapeCollection(pixelPadding).toArray());
+        Collection<LutShape> lutShapeList = image.getLutShapeCollection(pixelPadding);
+        if (pr && lutShapeList != null && lutShapeItem != null && !lutShapeList.contains(lutShapeItem)) {
+            // Make a copy of the image list
+            ArrayList<LutShape> newList = new ArrayList<LutShape>(lutShapeList.size() + 1);
+            newList.add(lutShapeItem);
+            newList.addAll(lutShapeList);
+            lutShapeList = newList;
+        }
+        lutShapeAction.setDataListWithoutTriggerAction(lutShapeList.toArray());
         lutShapeAction.setSelectedItemWithoutTriggerAction(lutShapeItem);
     }
 

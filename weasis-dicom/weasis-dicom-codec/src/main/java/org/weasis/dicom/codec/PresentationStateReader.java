@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
 import java.util.HashMap;
+import java.util.List;
 
 import org.dcm4che2.data.DicomElement;
 import org.dcm4che2.data.DicomObject;
@@ -14,34 +15,30 @@ import org.dcm4che2.iod.module.macro.ImageSOPInstanceReference;
 import org.dcm4che2.iod.module.pr.DisplayedAreaModule;
 import org.dcm4che2.iod.module.pr.SpatialTransformationModule;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.display.PresetWindowLevel;
 
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
     public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing";
-    public static final String TAG_DICOM_LAYERS = "dicom.layers";
+    public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers";
 
-    private final MediaElement dicom;
+    private final PRSpecialElement prSpecialElement;
     private final DicomObject dcmobj;
     private final HashMap<String, Object> tags = new HashMap<String, Object>();
 
-    public PresentationStateReader(MediaElement dicom) {
+    public PresentationStateReader(PRSpecialElement dicom) {
         if (dicom == null) {
             throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
         }
-        this.dicom = dicom;
-        if (dicom.getMediaReader() instanceof DicomMediaIO) {
-            DicomMediaIO dicomImageLoader = (DicomMediaIO) dicom.getMediaReader();
-            dcmobj = dicomImageLoader.getDicomObject();
-        } else {
-            dcmobj = null;
-        }
+        this.prSpecialElement = dicom;
+        DicomMediaIO dicomImageLoader = dicom.getMediaReader();
+        dcmobj = dicomImageLoader.getDicomObject();
     }
 
-    public MediaElement getDicom() {
-        return dicom;
+    public PRSpecialElement getDicom() {
+        return prSpecialElement;
     }
 
     public DicomObject getDcmobj() {
@@ -96,6 +93,17 @@ public class PresentationStateReader {
             }
         }
         return false;
+    }
+
+    public void readGrayscaleSoftcopyModule(DicomImageElement img) {
+        if (dcmobj != null) {
+            List<PresetWindowLevel> presets =
+                PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
+            if (presets != null && presets.size() > 0) {
+                PresetWindowLevel p = presets.get(0);
+                tags.put(ActionW.PRESET.cmd(), p);
+            }
+        }
     }
 
     public void readSpatialTransformationModule() {
