@@ -83,11 +83,12 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         // boolean vertical = ToolWindowAnchor.RIGHT.equals(anchor) || ToolWindowAnchor.LEFT.equals(anchor);
         boolean vertical = true;
         JSliderW slider = new JSliderW(action.getMin(), action.getMax(), action.getValue());
-        slider.setDisplayOnlyValue(true);
+        slider.setdisplayValueInTitle(false);
         slider.setInverted(vertical);
         slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
         slider.setPaintTicks(true);
         slider.setPreferredSize(new Dimension(35, 250));
+        slider.setShowLabels(false);
         action.registerActionState(slider);
         return slider;
     }

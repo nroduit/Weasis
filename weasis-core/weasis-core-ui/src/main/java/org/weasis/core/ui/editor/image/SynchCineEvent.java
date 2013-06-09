@@ -1,20 +1,18 @@
 package org.weasis.core.ui.editor.image;
 
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
 
-public class MediaObjectEvent {
-    private final MediaSeries<?> series;
+public class SynchCineEvent extends SynchEvent {
     private final MediaElement<?> media;
     private final int seriesIndex;
     private Number location;
 
-    public MediaObjectEvent(MediaSeries<?> series, MediaElement<?> media, int seriesIndex) {
-        this(series, media, seriesIndex, null);
+    public SynchCineEvent(DefaultView2d<?> view, MediaElement<?> media, int seriesIndex) {
+        this(view, media, seriesIndex, null);
     }
 
-    public MediaObjectEvent(MediaSeries<?> series, MediaElement<?> media, int seriesIndex, Number location) {
-        this.series = series;
+    public SynchCineEvent(DefaultView2d<?> view, MediaElement<?> media, int seriesIndex, Number location) {
+        super(view);
         this.media = media;
         this.seriesIndex = seriesIndex;
         this.location = location;
@@ -22,10 +20,6 @@ public class MediaObjectEvent {
 
     public MediaElement<?> getMedia() {
         return media;
-    }
-
-    public MediaSeries<?> getSeries() {
-        return series;
     }
 
     /**

@@ -108,9 +108,9 @@ public class MipPopup implements ShowPopup {
         ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
-            final JSliderW frameSliderMin = createSlider("Min Slice", 4, false, cineAction.getModel());
+            final JSliderW frameSliderMin = createSlider("Min Slice", 4, true, cineAction.getModel());
             panel_1.add(frameSliderMin.getParent());
-            final JSliderW frameSliderMax = createSlider("Max Slice", 4, false, cineAction.getModel());
+            final JSliderW frameSliderMax = createSlider("Max Slice", 4, true, cineAction.getModel());
             panel_1.add(frameSliderMax.getParent());
             Integer minSlice = (Integer) view.getActionValue(MipView.MIP_MIN_SLICE.cmd());
             frameSliderMin.setValue(minSlice == null ? 1 : minSlice);
@@ -173,14 +173,14 @@ public class MipPopup implements ShowPopup {
 
     }
 
-    static JSliderW createSlider(String title, int labelDivision, boolean displayOnlyValue,
+    static JSliderW createSlider(String title, int labelDivision, boolean displayValueInTitle,
         DefaultBoundedRangeModel model) {
         final JPanel palenSlider1 = new JPanel();
         palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
         palenSlider1.setBorder(new TitledBorder(title));
         JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
         slider.setLabelDivision(labelDivision);
-        slider.setDisplayOnlyValue(displayOnlyValue);
+        slider.setdisplayValueInTitle(displayValueInTitle);
         slider.setPaintTicks(true);
         palenSlider1.add(slider);
         if (labelDivision > 0) {
@@ -192,7 +192,7 @@ public class MipPopup implements ShowPopup {
 
     static void updateSliderProoperties(JSliderW slider, String title) {
         JPanel panel = (JPanel) slider.getParent();
-        if (!slider.isDisplayOnlyValue() && panel != null && panel.getBorder() instanceof TitledBorder) {
+        if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             ((TitledBorder) panel.getBorder()).setTitle(title);
             panel.repaint();
         } else {

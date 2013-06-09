@@ -19,6 +19,8 @@ public interface ActionState {
 
     void enableAction(boolean enabled);
 
+    boolean isActionEnabled();
+
     ActionW getActionW();
 
     public boolean registerActionState(Object c);

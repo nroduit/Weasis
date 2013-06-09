@@ -43,6 +43,11 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
     }
 
     @Override
+    public boolean isActionEnabled() {
+        return basicState.isActionEnabled();
+    }
+
+    @Override
     public boolean registerActionState(Object c) {
         return basicState.registerActionState(c);
     }
@@ -100,9 +105,11 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
                 pickPoint = e.getPoint();
-                double scale = panner.getViewModel().getViewScale();
-                setPoint(new PanPoint(PanPoint.STATE.DragStart, -(pickPoint.getX() / scale),
-                    -(pickPoint.getY() / scale)));
+                if (panner.getViewModel() != null) {
+                    double scale = panner.getViewModel().getViewScale();
+                    setPoint(new PanPoint(PanPoint.STATE.DragStart, -(pickPoint.getX() / scale),
+                        -(pickPoint.getY() / scale)));
+                }
             }
         }
     }
@@ -113,7 +120,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
             DefaultView2d panner = getDefaultView2d(e);
             if (panner != null) {
-                if (pickPoint != null) {
+                if (pickPoint != null && panner.getViewModel() != null) {
                     double scale = panner.getViewModel().getViewScale();
                     setPoint(new PanPoint(PanPoint.STATE.Dragging, -((e.getX() - pickPoint.getX()) / scale),
                         -((e.getY() - pickPoint.getY()) / scale)));

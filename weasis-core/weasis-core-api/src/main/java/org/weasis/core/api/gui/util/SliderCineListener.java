@@ -65,7 +65,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
         buffer.append(' ');
         buffer.append(getValueToDisplay());
 
-        if (!slider.isDisplayOnlyValue() && panel != null && panel.getBorder() instanceof TitledBorder) {
+        if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             if (rate > 0) {
                 buffer.append(" - "); //$NON-NLS-1$
                 buffer.append(Messages.getString("SliderCineListener.cine")); //$NON-NLS-1$

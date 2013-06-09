@@ -110,6 +110,7 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     @Override
     public void registerDefaultListeners() {
+        buildPanner();
         super.registerDefaultListeners();
         setTransferHandler(new SequenceHandler());
 
@@ -197,11 +198,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (series != null && oldsequence != series) {
             series.setOpen(true);
         }
-    }
-
-    @Override
-    protected void setDefautWindowLevel(ImageElement img) {
-        super.setDefautWindowLevel(img);
     }
 
     @Override

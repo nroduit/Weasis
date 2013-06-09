@@ -29,7 +29,7 @@ public class BasicActionState implements ActionState {
         }
     }
 
-    public boolean isEnabled() {
+    public boolean isActionEnabled() {
         return enabled;
     }
 

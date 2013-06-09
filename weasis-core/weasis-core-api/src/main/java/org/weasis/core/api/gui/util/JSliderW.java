@@ -16,7 +16,8 @@ import javax.swing.JSlider;
 public class JSliderW extends JSlider {
 
     private int labelDivision = 4;
-    private boolean displayOnlyValue = false;
+    private boolean displayValueInTitle = true;
+    private boolean showLabels = true;
 
     public JSliderW(BoundedRangeModel brm) {
         super(brm);
@@ -46,11 +47,20 @@ public class JSliderW extends JSlider {
         this.labelDivision = labelDivision;
     }
 
-    public boolean isDisplayOnlyValue() {
-        return displayOnlyValue;
+    public boolean isdisplayValueInTitle() {
+        return displayValueInTitle;
     }
 
-    public void setDisplayOnlyValue(boolean displayOnlyValue) {
-        this.displayOnlyValue = displayOnlyValue;
+    public void setdisplayValueInTitle(boolean displayOnlyValue) {
+        this.displayValueInTitle = displayOnlyValue;
     }
+
+    public boolean isShowLabels() {
+        return showLabels;
+    }
+
+    public void setShowLabels(boolean showLabels) {
+        this.showLabels = showLabels;
+    }
+
 }

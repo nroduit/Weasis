@@ -1,8 +1,6 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -19,7 +17,6 @@ import java.util.List;
 import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
@@ -72,7 +69,9 @@ public class MipView extends View2d {
         super(eventManager);
         this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
         mip_button.setVisible(true);
-        viewButtons.add(mip_button);
+        // Remove PR and KO buttons
+        getViewButtons().clear();
+        getViewButtons().add(mip_button);
         progressBar = new JProgressBar();
         progressBar.setVisible(false);
     }
@@ -86,26 +85,6 @@ public class MipView extends View2d {
         actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
         actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
-    }
-
-    @Override
-    protected Rectangle drawExtendedActions(Graphics2D g2d) {
-        // Does not allow to use PR or KO
-        Icon icon = mip_button.getIcon();
-        int x = getWidth() - icon.getIconWidth() - 5;
-        int y = (int) ((getHeight() - 1) * 0.5);
-        mip_button.x = x;
-        mip_button.y = y;
-        icon.paintIcon(this, g2d, x, y);
-
-        if (progressBar.isVisible()) {
-            int shiftx = getWidth() / 2 - progressBar.getWidth() / 2;
-            int shifty = getHeight() / 2 - progressBar.getHeight() / 2;
-            g2d.translate(shiftx, shifty);
-            progressBar.paint(g2d);
-            g2d.translate(-shiftx, -shifty);
-        }
-        return mip_button.getBounds();
     }
 
     public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
@@ -234,7 +213,7 @@ public class MipView extends View2d {
                             }
                         }
                         // }
-
+                        final DicomImageElement dicom;
                         if (curImage != null && firstDcm != null) {
                             DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
                             RawImage raw = null;
@@ -286,14 +265,14 @@ public class MipView extends View2d {
                             rawIO.setTag(TagW.SOPInstanceUID, "mip.1");
                             rawIO.setTag(TagW.InstanceNumber, 1);
 
-                            DicomImageElement dicom = new DicomImageElement(rawIO, 0);
+                            dicom = new DicomImageElement(rawIO, 0);
                             DicomImageElement oldImage = getImage();
                             // Use graphics of the previous image when they belongs to a MIP image
                             if (oldImage != null && "mip.1".equals(oldImage.getTagValue(TagW.SOPInstanceUID))) {
                                 dicom.setTag(TagW.MeasurementGraphics, oldImage.getTagValue(TagW.MeasurementGraphics));
                             }
-
-                            setImage(dicom, false);
+                        } else {
+                            dicom = null;
                         }
                         // imageLayer.updateAllImageOperations();
                         // actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
@@ -304,6 +283,7 @@ public class MipView extends View2d {
 
                             @Override
                             public void run() {
+                                setImage(dicom, false);
                                 progressBar.setVisible(false);
                             }
                         });

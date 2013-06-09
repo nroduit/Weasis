@@ -48,12 +48,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -145,9 +145,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected DragSequence ds;
     protected final RenderedImageLayer<E> imageLayer;
-    protected final Panner<?> panner;
+    protected Panner<?> panner;
     protected ZoomWin<E> lens;
-    protected final List<ViewButton> viewButtons;
+    private final List<ViewButton> viewButtons;
 
     protected MediaSeries<E> series = null;
     protected AnnotationsLayer infoLayer;
@@ -175,14 +175,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setBorder(normalBorder);
         setFocusable(true);
         setPreferredSize(new Dimension(1024, 1024));
-
-        panner = new Panner(this);
     }
 
     public void registerDefaultListeners() {
         addFocusListener(this);
         ToolTipManager.sharedInstance().registerComponent(this);
         imageLayer.addLayerChangeListener(this);
+    }
+
+    protected void buildPanner() {
+        if (panner == null) {
+            panner = new Panner(this);
+        }
     }
 
     public void copyActionWState(HashMap<String, Object> actionsInView) {
@@ -445,8 +449,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
                 }
                 imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
-
-                panner.updateImage();
+                if (panner != null) {
+                    panner.updateImage();
+                }
 
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
@@ -477,12 +482,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         ActionState zoom = eventManager.getAction(ActionW.ZOOM);
         if (zoom instanceof SliderChangeListener) {
             SliderChangeListener z = (SliderChangeListener) zoom;
-            int sliderValue = eventManager.viewScaleToSliderValue(viewScale);
-            // Set the value to the slider (the model can cut the value) and then get it again.
+            // Adjust the best fit value according to the possible range of the model zoom action.
+            int sliderValue = ImageViewerEventManager.viewScaleToSliderValue(viewScale);
             if (eventManager.getSelectedViewPane() == this) {
+                // Set back the value to UI components as this value cannot be computed early.
                 z.setValueWithoutTriggerAction(sliderValue);
-                viewScale = eventManager.sliderValueToViewScale(z.getValue());
-
+                viewScale = ImageViewerEventManager.sliderValueToViewScale(z.getValue());
             } else {
                 DefaultBoundedRangeModel model = z.getModel();
                 if (sliderValue < model.getMinimum()) {
@@ -490,7 +495,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else if (sliderValue > model.getMaximum()) {
                     sliderValue = model.getMaximum();
                 }
-                viewScale = eventManager.sliderValueToViewScale(sliderValue);
+                viewScale = ImageViewerEventManager.sliderValueToViewScale(sliderValue);
             }
         }
         return viewScale;
@@ -654,72 +659,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
         }
-        drawExtendedActions(g2d);
 
         g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
-    }
-
-    protected Rectangle drawExtendedActions(Graphics2D g2d) {
-        Rectangle rect = null;
-        int height = 0;
-        for (ViewButton b : viewButtons) {
-            if (b.isVisible()) {
-                height += b.getIcon().getIconHeight() + 5;
-            }
-        }
-        // TODO implement to draw in two columns when height > getHeight() * 2 / 3
-        int starty = (int) (getHeight() * 0.5 - (height - 5) * 0.5);
-
-        for (ViewButton b : viewButtons) {
-            if (b.isVisible()) {
-                Icon icon = b.getIcon();
-                int x = getWidth() - icon.getIconWidth() - 5;
-                int y = starty;
-                b.x = x;
-                b.y = y;
-                if (rect == null) {
-                    rect = b.getBounds();
-                } else {
-                    rect.createUnion(b.getBounds());
-                }
-                starty = y + icon.getIconHeight() + 5;
-                icon.paintIcon(this, g2d, x, y);
-            }
-        }
-        return rect;
-    }
-
-    protected Rectangle getExtendedActionsBound() {
-        Rectangle rect = null;
-        int height = 0;
-        for (ViewButton b : viewButtons) {
-            // if (b.isVisible()) {
-            height += b.getIcon().getIconHeight() + 5;
-            // }
-        }
-        // TODO implement to draw in two columns when height > getHeight() * 2 / 3
-        int starty = (int) (getHeight() * 0.5 - (height - 5) * 0.5);
-
-        for (ViewButton b : viewButtons) {
-            // if (b.isVisible()) {
-            Icon icon = b.getIcon();
-            int x = getWidth() - icon.getIconWidth() - 5;
-            int y = starty;
-            b.x = x;
-            b.y = y;
-            if (rect == null) {
-                rect = b.getBounds();
-            } else {
-                rect.createUnion(b.getBounds());
-            }
-            starty = y + icon.getIconHeight() + 5;
-            // icon.paintIcon(this, g2d, x, y);
-            // }
-        }
-        return rect;
-
     }
 
     @Override
@@ -843,139 +786,154 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             return;
         }
         final String command = evt.getPropertyName();
-        if (command.equals(ActionW.SCROLL_SERIES.cmd())) {
-            MediaObjectEvent value = (MediaObjectEvent) evt.getNewValue();
-            AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
-            if (layer != null) {
-                layer.deleteAllGraphic();
-            }
-
-            E imgElement = getImage();
-            if (value != null) {
-                if (value.getSeries() == series) {
-                    if (tileOffset != 0) {
-                        // Index could have changed when loading series.
-                        imgElement =
-                            series.getMedia(value.getSeriesIndex() + tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
-                    } else if (value.getMedia() instanceof ImageElement) {
-                        imgElement = (E) value.getMedia();
-                    }
-                } else if (value.getLocation() != null) {
-                    Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-                    if (cutlines != null && cutlines) {
-                        // Compute cutlines from the location of selected image
-                        computeCrosslines(value.getLocation().doubleValue());
-                    } else {
-                        double location = value.getLocation().doubleValue();
-                        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related to
-                        // a specific series
-                        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-                        // if (offset != null) {
-                        // location += offset;
-                        // }
-                        imgElement =
-                            series.getNearestImage(location, tileOffset,
-                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                getCurrentSortComparator());
-
-                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
-                    }
+        if (command.equals(ActionW.SYNCH.cmd())) {
+            SynchEvent synch = (SynchEvent) evt.getNewValue();
+            if (synch instanceof SynchCineEvent) {
+                SynchCineEvent value = (SynchCineEvent) synch;
+                AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
+                if (layer != null) {
+                    layer.deleteAllGraphic();
                 }
-            }
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-            boolean rescaleView = (val == null || val <= 0.0);
 
-            setImage(imgElement, rescaleView);
+                E imgElement = getImage();
+                if (value != null) {
+                    if (value.getView() == this) {
+                        if (tileOffset != 0) {
+                            // Index could have changed when loading series.
+                            imgElement =
+                                series.getMedia(value.getSeriesIndex() + tileOffset,
+                                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                    getCurrentSortComparator());
+                        } else if (value.getMedia() instanceof ImageElement) {
+                            imgElement = (E) value.getMedia();
+                        }
+                    } else if (value.getLocation() != null) {
+                        Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+                        if (cutlines != null && cutlines) {
+                            // Compute cutlines from the location of selected image
+                            computeCrosslines(value.getLocation().doubleValue());
+                        } else {
+                            double location = value.getLocation().doubleValue();
+                            // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and related
+                            // to
+                            // a specific series
+                            // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+                            // if (offset != null) {
+                            // location += offset;
+                            // }
+                            imgElement =
+                                series.getNearestImage(location, tileOffset,
+                                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                    getCurrentSortComparator());
 
-            if (rescaleView) {
-                val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                zoom(val == null ? 1.0 : val);
-                center();
-            }
-        } else if (command.equals(ActionW.WINDOW.cmd())) {
-            actionsInView.put(command, ((Integer) evt.getNewValue()).floatValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (command.equals(ActionW.LEVEL.cmd())) {
-            actionsInView.put(command, ((Integer) evt.getNewValue()).floatValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (command.equals(ActionW.ROTATION.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(RotationOperation.name);
-            updateAffineTransform();
-        } else if (command.equals(ActionW.RESET.cmd())) {
-            reset();
-        } else if (command.equals(ActionW.ZOOM.cmd())) {
-            double zoomFactor = (Double) evt.getNewValue();
-            zoom(zoomFactor);
-        } else if (command.equals(ActionW.LENSZOOM.cmd())) {
-            if (lens != null) {
-                lens.setActionInView(ActionW.ZOOM.cmd(), evt.getNewValue());
-            }
+                            AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
+                        }
+                    }
 
-        } else if (command.equals(ActionW.LENS.cmd())) {
-            Boolean showLens = (Boolean) evt.getNewValue();
-            actionsInView.put(command, showLens);
-            if (showLens) {
-                if (lens == null) {
-                    lens = new ZoomWin<E>(this);
                 }
-                // resize if to big
-                int maxWidth = getWidth() / 3;
-                int maxHeight = getHeight() / 3;
-                lens.setSize(lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(), lens.getHeight() > maxHeight
-                    ? maxHeight : lens.getHeight());
-                this.add(lens);
-                lens.showLens(true);
+                Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+                // If zoom has not been defined or was besfit, set image in bestfit zoom mode
+                boolean rescaleView = (val == null || val <= 0.0);
 
+                setImage(imgElement, rescaleView);
+
+                if (rescaleView) {
+                    val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+                    zoom(val == null ? 1.0 : val);
+                    center();
+                }
             } else {
-                closeLens();
+                propertyChange(synch);
             }
-
-        } else if (command.equals(ActionW.PAN.cmd())) {
-            Object point = evt.getNewValue();
-            // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-            // if (view != null) {
-            // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
-            //
-            // }
-            // }
-            if (point instanceof PanPoint) {
-                moveOrigin((PanPoint) evt.getNewValue());
-            }
-
-        } else if (command.equals(ActionW.FLIP.cmd())) {
-            // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(FlipOperation.name);
-            updateAffineTransform();
-        } else if (command.equals(ActionW.LUT.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(PseudoColorOperation.name);
-        } else if (command.equals(ActionW.INVERSELUT.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            // Update VOI LUT if pixel padding
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (command.equals(ActionW.FILTER.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(FilterOperation.name);
-        } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(ShutterOperation.name);
-        } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
-        } else if (command.equals(ActionW.PROGRESSION.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateAllImageOperations();
         }
-        if (lens != null) {
-            // Transmit to the lens the command in case the source image has been freeze (for updating rotation and flip
-            // => will keep consistent display)
-            lens.setCommandFromParentView(command, evt.getNewValue());
-            lens.updateZoom();
+    }
+
+    private void propertyChange(final SynchEvent synch) {
+        for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
+            String command = entry.getKey();
+            if (command.equals(ActionW.WINDOW.cmd())) {
+                actionsInView.put(command, ((Integer) entry.getValue()).floatValue());
+                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            } else if (command.equals(ActionW.LEVEL.cmd())) {
+                actionsInView.put(command, ((Integer) entry.getValue()).floatValue());
+                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            } else if (command.equals(ActionW.ROTATION.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(RotationOperation.name);
+                updateAffineTransform();
+            } else if (command.equals(ActionW.RESET.cmd())) {
+                reset();
+            } else if (command.equals(ActionW.ZOOM.cmd())) {
+                double zoomFactor = (Double) entry.getValue();
+                zoom(zoomFactor);
+            } else if (command.equals(ActionW.LENSZOOM.cmd())) {
+                if (lens != null) {
+                    lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
+                }
+
+            } else if (command.equals(ActionW.LENS.cmd())) {
+                Boolean showLens = (Boolean) entry.getValue();
+                actionsInView.put(command, showLens);
+                if (showLens) {
+                    if (lens == null) {
+                        lens = new ZoomWin<E>(this);
+                    }
+                    // resize if to big
+                    int maxWidth = getWidth() / 3;
+                    int maxHeight = getHeight() / 3;
+                    lens.setSize(lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(), lens.getHeight() > maxHeight
+                        ? maxHeight : lens.getHeight());
+                    this.add(lens);
+                    lens.showLens(true);
+
+                } else {
+                    closeLens();
+                }
+
+            } else if (command.equals(ActionW.PAN.cmd())) {
+                Object point = entry.getValue();
+                // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+                // if (view != null) {
+                // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
+                //
+                // }
+                // }
+                if (point instanceof PanPoint) {
+                    moveOrigin((PanPoint) entry.getValue());
+                }
+
+            } else if (command.equals(ActionW.FLIP.cmd())) {
+                // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(FlipOperation.name);
+                updateAffineTransform();
+            } else if (command.equals(ActionW.LUT.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(PseudoColorOperation.name);
+            } else if (command.equals(ActionW.INVERSELUT.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                // Update VOI LUT if pixel padding
+                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            } else if (command.equals(ActionW.FILTER.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(FilterOperation.name);
+            } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(ShutterOperation.name);
+            } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            } else if (command.equals(ActionW.PROGRESSION.cmd())) {
+                actionsInView.put(command, entry.getValue());
+                imageLayer.updateAllImageOperations();
+            }
+            if (lens != null) {
+                // Transmit to the lens the command in case the source image has been freeze (for updating rotation and
+                // flip
+                // => will keep consistent display)
+                lens.setCommandFromParentView(command, entry.getValue());
+                lens.updateZoom();
+            }
         }
     }
 
@@ -1473,7 +1431,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 pane.maximizedSelectedImagePane(DefaultView2d.this, evt);
                 return;
             }
-            if (pane.isContainingView(DefaultView2d.this)) {
+
+            // Do select the view when pressing on a view button
+            for (ViewButton b : getViewButtons()) {
+                if (b.isVisible() && b.contains(evt.getPoint())) {
+                    DefaultView2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
+                    evt.consume();
+                    b.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+                    return;
+                }
+            }
+
+            if (pane.isContainingView(DefaultView2d.this) && pane.getSelectedImagePane() != DefaultView2d.this) {
                 // register all actions of the EventManager with this view waiting the focus gained in some cases is not
                 // enough, because others mouseListeners are triggered before the focus event (that means before
                 // registering the view in the EventManager)
@@ -1499,13 +1468,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 action = eventManager.getActionFromCommand(mouseActions.getRight());
             }
 
-            for (ViewButton b : viewButtons) {
-                if (b.isVisible() && b.contains(evt.getPoint())) {
-                    evt.consume();
-                    b.showPopup(evt.getComponent(), evt.getX(), evt.getY());
-                    action = null;
-                }
-            }
             DefaultView2d.this.setCursor(action == null ? AbstractLayerModel.DEFAULT_CURSOR : action.getCursor());
         }
 
@@ -1583,6 +1545,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         resetZoom();
 
         eventManager.updateComponentsListener(this);
+    }
+
+    public List<ViewButton> getViewButtons() {
+        return viewButtons;
     }
 
 }

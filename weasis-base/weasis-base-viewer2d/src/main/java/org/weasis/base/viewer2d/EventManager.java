@@ -46,6 +46,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
@@ -159,7 +160,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             @Override
             public void itemStateChanged(Object object) {
                 if (object instanceof KernelData) {
-                    firePropertyChange(action.cmd(), null, object);
+                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                        object));
                 }
             }
         };
@@ -173,7 +175,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             public void itemStateChanged(Object object) {
                 if (object instanceof ByteLut) {
                     // customPreset = false;
-                    firePropertyChange(action.cmd(), null, object);
+                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                        object));
                 }
             }
         };
@@ -313,11 +316,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
         if (ResetTools.All.equals(action)) {
-            firePropertyChange(ActionW.RESET.cmd(), null, true);
+            firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
+                true));
         } else if (ResetTools.Zoom.equals(action)) {
             // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
             // value is adjusted by the BoundedRangeModel
-            firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+            firePropertyChange(ActionW.SYNCH.cmd(), null,
+                new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
         } else if (ResetTools.Rotation.equals(action)) {
             rotateAction.setValue(0);
         } else if (ResetTools.WindowLevel.equals(action)) {
@@ -383,7 +388,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (lensZoom != null) {
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
         }
-        moveTroughSliceAction.setMinMaxValue(1,
+        moveTroughSliceAction.setMinMaxValueWithoutTriggerAction(1,
             series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1);
         Integer speed = (Integer) series.getTagValue(TagW.CineRate);

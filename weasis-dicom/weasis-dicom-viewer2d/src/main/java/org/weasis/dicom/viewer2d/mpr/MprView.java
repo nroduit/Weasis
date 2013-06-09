@@ -1,8 +1,6 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -195,20 +193,22 @@ public class MprView extends View2d {
         }
     }
 
-    @Override
-    protected Rectangle drawExtendedActions(Graphics2D g2d) {
-        Rectangle rect = super.drawExtendedActions(g2d);
-        // To avoid concurrency issue
-        final JProgressBar bar = progressBar;
-        if (bar != null && bar.isVisible()) {
-            int shiftx = getWidth() / 2 - bar.getWidth() / 2;
-            int shifty = getHeight() / 2 - bar.getHeight() / 2;
-            g2d.translate(shiftx, shifty);
-            bar.paint(g2d);
-            g2d.translate(-shiftx, -shifty);
-        }
-        return rect;
-    }
+    // TODO repaint progress bar ?
+
+    // @Override
+    // protected Rectangle drawExtendedActions(Graphics2D g2d) {
+    // Rectangle rect = super.drawExtendedActions(g2d);
+    // // To avoid concurrency issue
+    // final JProgressBar bar = progressBar;
+    // if (bar != null && bar.isVisible()) {
+    // int shiftx = getWidth() / 2 - bar.getWidth() / 2;
+    // int shifty = getHeight() / 2 - bar.getHeight() / 2;
+    // g2d.translate(shiftx, shifty);
+    // bar.paint(g2d);
+    // g2d.translate(-shiftx, -shifty);
+    // }
+    // return rect;
+    // }
 
     public void setProgressBar(JProgressBar bar) {
         this.progressBar = bar;

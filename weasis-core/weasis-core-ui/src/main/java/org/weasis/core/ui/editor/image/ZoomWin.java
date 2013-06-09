@@ -96,7 +96,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
         if (zoomAction instanceof SliderChangeListener) {
             actionsInView.put(ActionW.ZOOM.cmd(),
-                manager.sliderValueToViewScale(((SliderChangeListener) zoomAction).getValue()));
+                ImageViewerEventManager.sliderValueToViewScale(((SliderChangeListener) zoomAction).getValue()));
         }
 
         this.popup = new PopUpMenuOnZoom(this);
@@ -473,8 +473,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 ImageViewerEventManager manager = view2d.getEventManager();
                 ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
                 if (zoomAction instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoomAction).setValue(manager.viewScaleToSliderValue(view2d.getViewModel()
-                        .getViewScale()));
+                    ((SliderChangeListener) zoomAction).setValue(ImageViewerEventManager.viewScaleToSliderValue(view2d
+                        .getViewModel().getViewScale()));
                 }
             }
         }

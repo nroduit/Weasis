@@ -115,7 +115,7 @@ public class KOManager {
                 popupMenu.addSeparator();
                 popupMenu.add(menuItem);
 
-                popupMenu.setEnabled(koSelectionAction.isEnabled());
+                popupMenu.setEnabled(koSelectionAction.isActionEnabled());
 
                 popupMenu.show(invoker, x, y);
             }

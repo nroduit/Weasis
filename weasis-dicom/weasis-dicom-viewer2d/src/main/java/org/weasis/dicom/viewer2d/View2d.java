@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.ButtonGroup;
@@ -43,7 +45,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -104,6 +105,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -159,11 +161,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     private final Dimension oldSize;
     private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
 
-    protected final FocusHandler focusHandler = new FocusHandler();
-
     protected final KOViewButton koStarButton;
-
-    private JLayeredPane layeredPane;
 
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
@@ -189,13 +187,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         oldSize = new Dimension(0, 0);
 
-        viewButtons.add(KOManager.buildKoSelectionButton(this));
+        // TODO should be a lazy instantiation
+        getViewButtons().add(KOManager.buildKoSelectionButton(this));
         koStarButton = KOManager.buildKoStarButton(this);
-
-        // TODO add panner
-        // this.layeredPane = new JLayeredPane();
-        // layeredPane.setPreferredSize(new Dimension(1024, 1024));
-        // this.add(layeredPane);
+        koStarButton.setPosition(GridBagConstraints.NORTHEAST);
+        getViewButtons().add(koStarButton);
     }
 
     @Override
@@ -286,61 +282,60 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    public synchronized void iniDefaultMouseListener() {
-        super.iniDefaultMouseListener();
-        this.addMouseListener(focusHandler);
-        this.addMouseMotionListener(focusHandler);
-    }
-
-    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         super.propertyChange(evt);
         if (series == null) {
             return;
         }
-        final String command = evt.getPropertyName();
-        final Object val = evt.getNewValue();
-        if (command.equals(ActionW.PRESET.cmd())) {
-            actionsInView.put(ActionW.PRESET.cmd(), val);
+        final String name = evt.getPropertyName();
+        if (name.equals(ActionW.SYNCH.cmd())) {
+            SynchEvent synch = (SynchEvent) evt.getNewValue();
+            for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
+                final String command = entry.getKey();
+                final Object val = entry.getValue();
 
-            if (val instanceof PresetWindowLevel) {
-                PresetWindowLevel preset = (PresetWindowLevel) val;
-                DicomImageElement img = getImage();
-                if (img == null || !img.containsPreset(preset)) {
-                    // When series synchronization, do not synch preset from other series
-                    actionsInView.put(ActionW.PRESET.cmd(), null);
+                if (command.equals(ActionW.PRESET.cmd())) {
+                    actionsInView.put(ActionW.PRESET.cmd(), val);
+
+                    if (val instanceof PresetWindowLevel) {
+                        PresetWindowLevel preset = (PresetWindowLevel) val;
+                        DicomImageElement img = getImage();
+                        if (img == null || !img.containsPreset(preset)) {
+                            // When series synchronization, do not synch preset from other series
+                            actionsInView.put(ActionW.PRESET.cmd(), null);
+                        }
+                        actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
+                        actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+                        actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+                        imageLayer.updateImageOperation(WindowLevelOperation.name);
+                    }
+                } else if (command.equals(ActionW.DEFAULT_PRESET.cmd())) {
+                    actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), val);
+                } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
+                    actionsInView.put(ActionW.LUT_SHAPE.cmd(), val);
+                    imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
+                } else if (command.equals(ActionW.IMAGE_OVERLAY.cmd())) {
+                    actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), val);
+                    imageLayer.updateImageOperation(OverlayOperation.name);
+                } else if (command.equals(ActionW.SORTSTACK.cmd())) {
+                    actionsInView.put(ActionW.SORTSTACK.cmd(), val);
+                    sortStack(getCurrentSortComparator());
+                } else if (command.equals(ActionW.VIEWINGPROTOCOL.cmd())) {
+                    actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), val);
+                    repaint();
+                } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
+                    actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
+                    sortStack(getCurrentSortComparator());
+                } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
+                    setKeyObjectSelection(val);
+                } else if (command.equals(ActionW.KO_FILTER.cmd())) {
+                    setKeyObjectSelectionFilterState((Boolean) val);
+                } else if (command.equals(ActionW.KO_STATE.cmd())) {
+                    KOManager.toogleKoState(this);
+                    updateKOselectedState();
                 }
-                actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
-                actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
-                actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
-                imageLayer.updateImageOperation(WindowLevelOperation.name);
             }
-        } else if (command.equals(ActionW.DEFAULT_PRESET.cmd())) {
-            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), val);
-        } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
-            actionsInView.put(ActionW.LUT_SHAPE.cmd(), val);
-            imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
-        } else if (command.equals(ActionW.IMAGE_OVERLAY.cmd())) {
-            actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), val);
-            imageLayer.updateImageOperation(OverlayOperation.name);
-        } else if (command.equals(ActionW.SORTSTACK.cmd())) {
-            actionsInView.put(ActionW.SORTSTACK.cmd(), val);
-            sortStack(getCurrentSortComparator());
-        } else if (command.equals(ActionW.VIEWINGPROTOCOL.cmd())) {
-            actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), val);
-            repaint();
-        } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
-            actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
-            sortStack(getCurrentSortComparator());
-        } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
-            setKeyObjectSelection(val);
-        } else if (command.equals(ActionW.KO_FILTER.cmd())) {
-            setKeyObjectSelectionFilterState((Boolean) val);
-        } else if (command.equals(ActionW.KO_STATE.cmd())) {
-            KOManager.toogleKoState(this);
-            updateKOselectedState();
         }
-
     }
 
     @Override
@@ -527,7 +522,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         boolean needToRepaint = false;
 
-        for (ViewButton vb : viewButtons) {
+        for (ViewButton vb : getViewButtons()) {
             if (vb != null && vb.getIcon() == View2d.KO_ICON) {
                 if (vb.isVisible() != koElementExist) {
                     vb.setVisible(koElementExist);
@@ -643,25 +638,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         return new Rectangle(xPos, yPos, koStarIcon.getIconWidth(), koStarIcon.getIconHeight());
     }
 
-    @Override
-    protected Rectangle drawExtendedActions(Graphics2D g2d) {
-        Rectangle rect = super.drawExtendedActions(g2d);
-
-        if (infoLayer.isVisible() //
-            && infoLayer.getDisplayPreferences(AnnotationsLayer.ANNOTATIONS)
-            && infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT)) {
-
-            // TODO - shouldn't be called in infoLayer.paint() instead
-            Rectangle koRectBound = getKOStarButtonBound(g2d);
-            Icon koStarIcon = koStarButton.getIcon();
-            koStarButton.x = koRectBound.x;
-            koStarButton.y = koRectBound.y;
-            koStarIcon.paintIcon(this, g2d, koRectBound.x, koRectBound.y);
-        }
-
-        return rect;
-    }
-
     @Deprecated
     @SuppressWarnings("unchecked")
     public void updateKOSelectionChange() {
@@ -775,12 +751,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         super.setImage(img, bestFit);
 
+        updateButtonState(img, newImg);
+    }
+
+    private void updateButtonState(DicomImageElement img, boolean newImg) {
         if (img == null || newImg) {
             // Remove old PR button
-            for (int i = viewButtons.size() - 1; i >= 0; i--) {
-                ViewButton vb = viewButtons.get(i);
-                if (vb != null && vb.getIcon() == View2d.PR_ICON) {
-                    viewButtons.remove(i);
+            for (int i = getViewButtons().size() - 1; i >= 0; i--) {
+                ViewButton vb = getViewButtons().get(i);
+                if (vb != null && (vb.getIcon() == View2d.PR_ICON)) {
+                    getViewButtons().remove(i);
                 }
             }
         }
@@ -788,7 +768,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
             ViewButton prButton = PRManager.buildPrSelection(this, series, img);
             if (prButton != null) {
-                viewButtons.add(prButton);
+                getViewButtons().add(prButton);
             } else if (oldPR instanceof PRSpecialElement) {
                 setPresentationState(null);
             }
@@ -1010,18 +990,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return (MouseActionAdapter) a;
         }
         return null;
-    }
-
-    class FocusHandler extends MouseActionAdapter {
-        @Override
-        public void mousePressed(MouseEvent evt) {
-
-            if (infoLayer.getDisplayPreferences(AnnotationsLayer.KEY_OBJECT) && koStarButton.contains(evt.getPoint())) {
-                evt.consume();
-                koStarButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
-                View2d.this.setCursor(AbstractLayerModel.DEFAULT_CURSOR);
-            }
-        }
     }
 
     @Override

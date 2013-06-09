@@ -34,6 +34,7 @@ import javax.swing.border.LineBorder;
 
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 
@@ -58,6 +59,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
         this.series = sequence;
+        init((MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null));
     }
 
     @Override

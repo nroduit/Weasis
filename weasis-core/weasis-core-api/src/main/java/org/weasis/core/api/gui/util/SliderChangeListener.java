@@ -57,6 +57,11 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         basicState.enableAction(enabled);
     }
 
+    @Override
+    public boolean isActionEnabled() {
+        return basicState.isActionEnabled();
+    }
+
     public int getMin() {
         return model.getMinimum();
     }
@@ -65,37 +70,32 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         setMinMaxValue(min, max, model.getValue());
     }
 
-    public synchronized void setMinMaxValue(int min, int max, int value) {
-        if (min <= max) {
-            // Adjust the value to min and max to avoid the model to change the min and the max
-            value = value > max ? max : value < min ? min : value;
-            model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
-
-            for (Object c : basicState.getComponents()) {
-                if (c instanceof JSliderW) {
-                    JSliderW s = (JSliderW) c;
-                    updateSliderProoperties(s);
-                    setSliderLabelValues(s, min, max);
-                }
-            }
-        }
+    public void setMinMaxValue(int min, int max, int value) {
+        minMaxValueAction(min, max, value, true);
     }
 
-    public synchronized void setMinMaxValueWithoutTriggerAction(int min, int max, int value) {
+    public void setMinMaxValueWithoutTriggerAction(int min, int max, int value) {
+        minMaxValueAction(min, max, value, false);
+    }
+
+    private synchronized void minMaxValueAction(int min, int max, int value, boolean trigger) {
         if (min <= max) {
             // Adjust the value to min and max to avoid the model to change the min and the max
             value = (value > max) ? max : ((value < min) ? min : value);
-            triggerAction = false;
+            boolean oldTrigger = triggerAction;
+            triggerAction = trigger;
             model.setRangeProperties(value, model.getExtent(), min, max, model.getValueIsAdjusting());
-            // System.out.println(SwingUtilities.isEventDispatchThread());
-            triggerAction = true;
+            triggerAction = oldTrigger;
             boolean paintThicks = max < 65536;
 
             for (Object c : basicState.getComponents()) {
                 if (c instanceof JSliderW) {
                     JSliderW s = (JSliderW) c;
-                    s.setPaintTicks(paintThicks);
-                    s.setPaintLabels(paintThicks);
+                    if (s.isShowLabels()) {
+                        // When range becomes big do not display thick (can be very slow) and labels
+                        s.setPaintTicks(paintThicks);
+                        s.setPaintLabels(paintThicks);
+                    }
                     updateSliderProoperties(s);
                     setSliderLabelValues(s, min, max);
                 }
@@ -227,7 +227,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         JPanel panel = (JPanel) slider.getParent();
 
         String result = basicState.getActionW().getTitle() + ": " + getValueToDisplay(); //$NON-NLS-1$
-        if (!slider.isDisplayOnlyValue() && panel != null && panel.getBorder() instanceof TitledBorder) {
+        if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             ((TitledBorder) panel.getBorder()).setTitle(result);
             panel.repaint();
         } else {
@@ -237,60 +237,66 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
 
     @Override
     public void mousePressed(MouseEvent e) {
-        int buttonMask = getButtonMaskEx();
-        if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
-            lastPosition = isMoveOnX() ? e.getX() : e.getY();
-            dragAccumulator = getValue();
+        if (basicState.isActionEnabled()) {
+            int buttonMask = getButtonMaskEx();
+            if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
+                lastPosition = isMoveOnX() ? e.getX() : e.getY();
+                dragAccumulator = getValue();
+            }
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        int buttonMask = getButtonMaskEx();
-        int modifier = e.getModifiersEx();
-        // dragAccumulator == Double.NaN when the listener did not catch the Pressed MouseEvent (could append in
-        // multisplit container)
-        if (!e.isConsumed() && (modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
-            int position = isMoveOnX() ? e.getX() : e.getY();
-            int mask = (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
-            // Accelerate the action if ctrl or shift is down
-            double acceleratorKey = (modifier & mask) == 0 ? 1.0 : (modifier & mask) == mask ? 5.0 : 2.5;
-            double val = (position - lastPosition) * getMouseSensivity() * acceleratorKey;
-            if (val == 0.0) {
-                return;
-            }
-            lastPosition = position;
-            if (isInverse()) {
-                dragAccumulator -= val;
-            } else {
-                dragAccumulator += val;
-            }
-            // logger.debug("val:" + val + " accu: " + dragAccumulator);
-            if (val < 0.0) {
-                setValue((int) Math.ceil(dragAccumulator));
-            } else {
-                setValue((int) Math.floor(dragAccumulator));
+        if (basicState.isActionEnabled()) {
+            int buttonMask = getButtonMaskEx();
+            int modifier = e.getModifiersEx();
+            // dragAccumulator == Double.NaN when the listener did not catch the Pressed MouseEvent (could append in
+            // multisplit container)
+            if (!e.isConsumed() && (modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
+                int position = isMoveOnX() ? e.getX() : e.getY();
+                int mask = (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
+                // Accelerate the action if ctrl or shift is down
+                double acceleratorKey = (modifier & mask) == 0 ? 1.0 : (modifier & mask) == mask ? 5.0 : 2.5;
+                double val = (position - lastPosition) * getMouseSensivity() * acceleratorKey;
+                if (val == 0.0) {
+                    return;
+                }
+                lastPosition = position;
+                if (isInverse()) {
+                    dragAccumulator -= val;
+                } else {
+                    dragAccumulator += val;
+                }
+                // logger.debug("val:" + val + " accu: " + dragAccumulator);
+                if (val < 0.0) {
+                    setValue((int) Math.ceil(dragAccumulator));
+                } else {
+                    setValue((int) Math.floor(dragAccumulator));
+                }
             }
         }
     }
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        setValue(getValue() + e.getWheelRotation() * e.getScrollAmount());
-        super.mouseWheelMoved(e);
+        if (basicState.isActionEnabled()) {
+            setValue(getValue() + e.getWheelRotation() * e.getScrollAmount());
+        }
     }
 
-    public JSliderW createSlider(int labelDivision, boolean displayOnlyValue) {
+    public JSliderW createSlider(int labelDivision, boolean displayValueInTitle) {
         final JPanel palenSlider1 = new JPanel();
         palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
         palenSlider1.setBorder(new TitledBorder(basicState.getActionW().getTitle()));
         JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
         slider.setLabelDivision(labelDivision);
-        slider.setDisplayOnlyValue(displayOnlyValue);
+        slider.setdisplayValueInTitle(displayValueInTitle);
         slider.setPaintTicks(true);
+        slider.setShowLabels(labelDivision > 0);
         palenSlider1.add(slider);
         registerActionState(slider);
-        if (labelDivision > 0) {
+        if (slider.isShowLabels()) {
             slider.setPaintLabels(true);
             setSliderLabelValues(slider, model.getMinimum(), model.getMaximum());
         }

@@ -14,6 +14,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -31,6 +32,7 @@ import java.util.Hashtable;
 import javax.media.jai.Histogram;
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
+import javax.swing.Icon;
 import javax.vecmath.Vector3d;
 
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -50,6 +52,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
@@ -278,9 +281,10 @@ public class InfoLayer implements AnnotationsLayer {
                 int pColor = (int) (510 * imgProgression);
                 g2.setPaint(new Color(510 - pColor > 255 ? 255 : 510 - pColor, pColor > 255 ? 255 : pColor, 0));
                 g2.fillOval(border, (int) drawY, 13, 13);
-                drawY -= 2;
             }
         }
+        Point2D.Float[] positions = new Point2D.Float[4];
+        positions[3] = new Point2D.Float(border, drawY - 5);
 
         if (getDisplayPreferences(ANNOTATIONS) && dcm != null) {
             Series series = (Series) view2DPane.getSeries();
@@ -302,6 +306,8 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
             }
+            positions[0] = new Point2D.Float(border, drawY - fontHeight + 5);
+
             corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
             drawY = fontHeight;
             infos = corner.getInfos();
@@ -318,34 +324,7 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
             }
-
-            // ////////////////////// draw a STAR for KO objects
-
-            // double starCenterX = bound.width - (fontHeight / 2.0) - border;
-            // double starCenterY = drawY - (fontHeight / 2.0);
-            // Shape starShape = createStar(5, starCenterX, starCenterY, fontHeight, fontHeight / 2.0);
-            // double outerRadius = (0.8 * fontHeight) / 2;
-            // double xPos = bound.width - (0.8 * fontHeight) - border;
-            // double yPos = drawY - (0.8 * fontHeight);
-            // Shape starShape = generateStar(xPos, yPos, outerRadius / 2.0, outerRadius, 5);
-            //
-            // DicomImageElement dicomImage = view2DPane.getImage();
-            // String sopInstanceUID = null;
-            // if (dicomImage != null && dicomImage.getTagValue(TagW.SOPInstanceUID) != null) {
-            // sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-            //
-            // boolean isKOselected = model.KOsopInstanceUIDSet.contains(sopInstanceUID);
-            //
-            // Color previousColor = g2.getColor();
-            // g2.setColor(Color.ORANGE);
-            // g2.draw(starShape);
-            // if (isKOselected) {
-            // g2.fill(starShape);
-            // }
-            // g2.setColor(previousColor);
-            // }
-
-            // /////////////////////
+            positions[1] = new Point2D.Float(bound.width - border, drawY - fontHeight + 5);
 
             corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
             drawY = bound.height - border - 1.5f; // -1.5 for outline
@@ -363,8 +342,9 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
             }
-            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY - 5));
-            drawY -= 8;
+            drawY -= 5;
+            drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY));
+            positions[2] = new Point2D.Float(bound.width - border, drawY - 5);
 
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
             //            String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -478,8 +458,12 @@ public class InfoLayer implements AnnotationsLayer {
 
             GraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5 for
                                                                                                              // outline
-
+        } else {
+            positions[0] = new Point2D.Float(border, border);
+            positions[1] = new Point2D.Float(bound.width - border, border);
+            positions[2] = new Point2D.Float(bound.width - border, bound.height - border);
         }
+        drawExtendedActions(g2, view2DPane, positions);
     }
 
     private void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
@@ -1349,5 +1333,55 @@ public class InfoLayer implements AnnotationsLayer {
     @Override
     public Identifier getIdentifier() {
         return identifier;
+    }
+
+    protected void drawExtendedActions(Graphics2D g2d, DefaultView2d<?> view, Point2D.Float[] positions) {
+        if (view.getViewButtons().size() > 0) {
+            int space = 5;
+            int height = 0;
+            for (ViewButton b : view.getViewButtons()) {
+                if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+                    height += b.getIcon().getIconHeight() + 5;
+                }
+            }
+            // TODO implement to draw in two columns when height > getHeight() * 2 / 3
+            Point2D.Float midy =
+                new Point2D.Float(positions[1].x, (float) (view.getHeight() * 0.5 - (height - space) * 0.5));
+
+            for (ViewButton b : view.getViewButtons()) {
+                if (b.isVisible()) {
+                    Icon icon = b.getIcon();
+                    int p = b.getPosition();
+
+                    if (p == GridBagConstraints.EAST) {
+                        b.x = midy.x - icon.getIconWidth();
+                        b.y = midy.y;
+                        midy.y += icon.getIconHeight() + 5;
+                    } else if (p == GridBagConstraints.NORTHEAST) {
+                        b.x = positions[1].x - icon.getIconWidth();
+                        b.y = positions[1].y;
+                        positions[1].x -= icon.getIconWidth() + 5;
+                    } else if (p == GridBagConstraints.SOUTHEAST) {
+                        b.x = positions[2].x - icon.getIconWidth();
+                        b.y = positions[2].y - icon.getIconHeight();
+                        positions[2].x -= icon.getIconWidth() + 5;
+                    } else if (p == GridBagConstraints.NORTHWEST) {
+                        b.x = positions[0].x;
+                        b.y = positions[0].y;
+                        positions[0].x += icon.getIconWidth() + 5;
+                    } else if (p == GridBagConstraints.SOUTHWEST) {
+                        b.x = positions[3].x;
+                        b.y = positions[3].y - icon.getIconHeight();
+                        positions[3].x += icon.getIconWidth() + 5;
+                    } else {
+                        b.x = midy.x - icon.getIconWidth();
+                        b.y = midy.y;
+                        midy.y += icon.getIconHeight() + 5;
+                    }
+                    icon.paintIcon(view, g2d, (int) b.x, (int) b.y);
+                }
+            }
+        }
+        return;
     }
 }

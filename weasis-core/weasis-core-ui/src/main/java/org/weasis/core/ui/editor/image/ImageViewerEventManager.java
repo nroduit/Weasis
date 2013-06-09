@@ -79,7 +79,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
                 DefaultView2d<ImageElement> view2d = null;
                 Series<ImageElement> series = null;
-                MediaObjectEvent mediaEvent = null;
+                SynchCineEvent mediaEvent = null;
                 ImageElement image = null;
 
                 if (selectedView2dContainer != null) {
@@ -95,7 +95,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                             series.getMedia(index,
                                 (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
                                 view2d.getCurrentSortComparator());
-                        mediaEvent = new MediaObjectEvent(series, image, index);
+                        mediaEvent = new SynchCineEvent(view2d, image, index);
                         // Ensure to load image before calling the default preset (requires pixel min and max)
                         if (image != null && !image.isImageAvailable()) {
                             image.getImage();
@@ -113,8 +113,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // }
                 // }
                 // }
-
-                firePropertyChange(getActionW().cmd(), null, mediaEvent);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    mediaEvent));
                 if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));
@@ -259,7 +259,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(getActionW().cmd(), null, model.getValue());
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    model.getValue()));
             }
         };
     }
@@ -269,8 +270,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(getActionW().cmd(), null, model.getValue());
-
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    model.getValue()));
             }
         };
     }
@@ -280,7 +281,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(getActionW().cmd(), null, model.getValue());
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    model.getValue()));
             }
 
             @Override
@@ -295,7 +297,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(getActionW().cmd(), null, sliderValueToViewScale(model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    sliderValueToViewScale(model.getValue())));
             }
 
             @Override
@@ -311,7 +314,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(getActionW().cmd(), null, point);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    point));
             }
 
         };
@@ -322,7 +326,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void pointChanged(Point2D point) {
-                firePropertyChange(getActionW().cmd(), null, point);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    point));
             }
         };
     }
@@ -332,7 +337,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
 
         };
@@ -343,7 +349,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
         };
     }
@@ -353,7 +360,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
 
         };
@@ -365,7 +373,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                firePropertyChange(getActionW().cmd(), null, sliderValueToViewScale(model.getValue()));
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
+                    sliderValueToViewScale(model.getValue())));
             }
 
             @Override
@@ -437,7 +446,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
         };
     }
@@ -463,7 +473,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(action.cmd(), null, selected);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
                 MeasureTool.viewSetting.setDrawOnlyOnce(selected);
             }
         };
@@ -538,12 +549,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         }
     }
 
-    public void addPropertyChangeListeners(DefaultView2d<E> viewPane) {
-        for (ActionState a : actions.values()) {
-            propertySupport.addPropertyChangeListener(a.getActionW().cmd(), viewPane);
-        }
-    }
-
     public ActionState getAction(ActionW action) {
         if (action != null) {
             return actions.get(action);
@@ -587,9 +592,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         return zoomSetting;
     }
 
-    public int viewScaleToSliderValue(double viewScale) {
+    public static int viewScaleToSliderValue(double viewScale) {
         final double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * ZOOM_SLIDER_MAX;
         return (int) Math.round(v);
+    }
+
+    public static double sliderValueToViewScale(final int sliderValue) {
+        final double v = sliderValue / (double) ZOOM_SLIDER_MAX;
+        double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
+        viewScale = roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
+        return viewScale;
     }
 
     public synchronized void enableActions(boolean enabled) {
@@ -597,13 +609,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         for (ActionState a : actions.values()) {
             a.enableAction(enabled);
         }
-    }
-
-    public double sliderValueToViewScale(final int sliderValue) {
-        final double v = sliderValue / (double) ZOOM_SLIDER_MAX;
-        double viewScale = Math.exp(v * Math.log(DefaultViewModel.SCALE_MAX));
-        viewScale = roundAndCropViewScale(viewScale, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX);
-        return viewScale;
     }
 
     public DefaultView2d<E> getSelectedViewPane() {
@@ -625,34 +630,31 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 return;
             }
             if (viewPane.getSeries() != null) {
-                addPropertyChangeListeners(viewPane);
-                Boolean synchLink = (Boolean) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());
+                viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+                addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
+
                 final ArrayList<DefaultView2d<E>> panes = viewerPlugin.getImagePanels();
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
-
+                    for (int i = 0; i < panes.size(); i++) {
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+                    }
                 } else if (Mode.Stack.equals(synchView.getMode())) {
                     // TODO if Pan is activated than rotation is required
 
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
-                        if (isCompatible(viewPane.getSeries(), panes.get(i).getSeries())) {
-                            if (synchLink == null || synchLink) {
-                                hasLink = true;
-                                panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
-                                addPropertyChangeListeners(panes.get(i), synchView);
-                            }
+                        boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synchView : null);
+                        if (synchByDefault) {
+                            hasLink = true;
+                            addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                         }
-                    }
-                    if (synchLink == null && hasLink) {
-                        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), hasLink);
                     }
                 } else if (Mode.Tile.equals(synchView.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
-                        if (synchLink == null || synchLink) {
-                            panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), true);
-                            addPropertyChangeListeners(panes.get(i), synchView);
-                        }
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchView);
+                        addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                     }
                 }
 

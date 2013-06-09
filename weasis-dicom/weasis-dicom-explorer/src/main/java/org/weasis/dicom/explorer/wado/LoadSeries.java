@@ -427,8 +427,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     } else {
                         thumbnail.setProgressBar(progressBar);
                     }
-                    addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
                     thumbnail.registerListeners();
+                    addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
                     dicomSeries.setTag(TagW.Thumbnail, thumbnail);
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, dicomModel,
                         null, dicomSeries));

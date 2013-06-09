@@ -42,6 +42,11 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     }
 
     @Override
+    public boolean isActionEnabled() {
+        return basicState.isActionEnabled();
+    }
+
+    @Override
     public boolean registerActionState(Object c) {
         return basicState.registerActionState(c);
     }
@@ -94,26 +99,12 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
 
     @Override
     public void mousePressed(MouseEvent e) {
-
-        // System.out.println("cross pressed");
-
-        int buttonMask = getButtonMaskEx();
-        if ((e.getModifiersEx() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
-            if (panner != null) {
-                pickPoint = e.getPoint();
-                setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
-            }
-        }
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        int buttonMask = getButtonMaskEx();
-        if ((e.getModifiersEx() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
-            if (panner != null) {
-                if (pickPoint != null) {
+        if (basicState.isActionEnabled()) {
+            int buttonMask = getButtonMaskEx();
+            if ((e.getModifiersEx() & buttonMask) != 0) {
+                DefaultView2d panner = getDefaultView2d(e);
+                if (panner != null) {
+                    pickPoint = e.getPoint();
                     setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
             }
@@ -121,13 +112,30 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     }
 
     @Override
+    public void mouseDragged(MouseEvent e) {
+        if (basicState.isActionEnabled()) {
+            int buttonMask = getButtonMaskEx();
+            if ((e.getModifiersEx() & buttonMask) != 0) {
+                DefaultView2d panner = getDefaultView2d(e);
+                if (panner != null) {
+                    if (pickPoint != null) {
+                        setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void mouseReleased(MouseEvent e) {
-        int buttonMask = getButtonMask();
-        if ((e.getModifiers() & buttonMask) != 0) {
-            DefaultView2d panner = getDefaultView2d(e);
-            if (panner != null) {
-                // panner.resetPointerType(DefaultView2d.CENTER_POINTER);
-                panner.repaint();
+        if (basicState.isActionEnabled()) {
+            int buttonMask = getButtonMask();
+            if ((e.getModifiers() & buttonMask) != 0) {
+                DefaultView2d panner = getDefaultView2d(e);
+                if (panner != null) {
+                    // panner.resetPointerType(DefaultView2d.CENTER_POINTER);
+                    panner.repaint();
+                }
             }
         }
     }

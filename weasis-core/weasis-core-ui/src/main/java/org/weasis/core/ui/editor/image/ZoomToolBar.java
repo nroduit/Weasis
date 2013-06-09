@@ -33,7 +33,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
             public void actionPerformed(ActionEvent e) {
                 ActionState zoom = eventManager.getAction(ActionW.ZOOM);
                 if (zoom instanceof SliderChangeListener) {
-                    ((SliderChangeListener) zoom).setValue(eventManager.viewScaleToSliderValue(1.0));
+                    ((SliderChangeListener) zoom).setValue(ImageViewerEventManager.viewScaleToSliderValue(1.0));
                 }
             }
         });
@@ -48,7 +48,8 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
             public void actionPerformed(ActionEvent e) {
                 // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
                 // value is adjusted by the BoundedRangeModel
-                eventManager.firePropertyChange(ActionW.ZOOM.cmd(), null, 0.0);
+                eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
+                    new SynchEvent(null, ActionW.ZOOM.cmd(), 0.0));
                 AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
             }
         });

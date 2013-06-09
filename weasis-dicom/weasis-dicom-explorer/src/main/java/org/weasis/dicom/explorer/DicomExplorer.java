@@ -1599,9 +1599,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             @Override
             public SeriesThumbnail call() throws Exception {
                 final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize);
+                thumb.registerListeners();
                 thumb.addMouseListener(createThumbnailMouseAdapter(series, dicomModel, null));
                 thumb.addKeyListener(createThumbnailKeyListener(series, dicomModel));
-                thumb.registerListeners();
                 if (series.getSeriesLoader() instanceof LoadSeries) {
                     // In case series is downloaded or canceled
                     LoadSeries loader = (LoadSeries) series.getSeriesLoader();

@@ -1,15 +1,18 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Component;
+import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.Icon;
 
 public class ViewButton extends Rectangle2D.Double implements ShowPopup {
+
     private final ShowPopup popup;
     private final Icon icon;
     private boolean visible;
     private boolean enable;
+    private int position;
 
     public ViewButton(ShowPopup popup, Icon icon) {
         if (icon == null || popup == null) {
@@ -17,6 +20,7 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
         }
         this.popup = popup;
         this.icon = icon;
+        this.position = GridBagConstraints.EAST;
         this.setFrame(0, 0, icon.getIconWidth(), icon.getIconHeight());
     }
 
@@ -38,6 +42,14 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
     public Icon getIcon() {
         return icon;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
     }
 
     /*

@@ -136,7 +136,7 @@ public class ImageTool extends PluginTool {
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
             SliderCineListener cineAction = (SliderCineListener) sequence;
-            final JSliderW frameSlider = cineAction.createSlider(4, false);
+            final JSliderW frameSlider = cineAction.createSlider(4, true);
             framePanel.add(frameSlider.getParent());
 
             final JPanel panel_3 = new JPanel();
@@ -181,14 +181,14 @@ public class ImageTool extends PluginTool {
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
         if (winAction instanceof SliderChangeListener) {
-            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(4, false);
+            final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(4, true);
             // windowSlider.setMajorTickSpacing((largestWindow - smallestWindow) / 4);
             JMVUtils.setPreferredWidth(windowSlider, 100);
             winLevelPanel.add(windowSlider.getParent());
         }
         ActionState levelAction = EventManager.getInstance().getAction(ActionW.LEVEL);
         if (levelAction instanceof SliderChangeListener) {
-            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, false);
+            final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(4, true);
             levelSlider
                 .setMajorTickSpacing((ImageViewerEventManager.LEVEL_LARGEST - ImageViewerEventManager.LEVEL_SMALLEST) / 4);
             JMVUtils.setPreferredWidth(levelSlider, 100);
@@ -244,13 +244,13 @@ public class ImageTool extends PluginTool {
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
         ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
         if (zoomAction instanceof SliderChangeListener) {
-            final JSliderW zoomSlider = ((SliderChangeListener) zoomAction).createSlider(0, false);
+            final JSliderW zoomSlider = ((SliderChangeListener) zoomAction).createSlider(0, true);
             JMVUtils.setPreferredWidth(zoomSlider, 100);
             transform.add(zoomSlider.getParent());
         }
         ActionState rotateAction = EventManager.getInstance().getAction(ActionW.ROTATION);
         if (rotateAction instanceof SliderChangeListener) {
-            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(4, false);
+            final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(4, true);
             JMVUtils.setPreferredWidth(rotationSlider, 100);
             transform.add(rotationSlider.getParent());
         }
