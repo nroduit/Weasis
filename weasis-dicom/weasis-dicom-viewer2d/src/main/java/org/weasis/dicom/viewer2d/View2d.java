@@ -105,8 +105,9 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -290,9 +291,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         final String name = evt.getPropertyName();
         if (name.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
+            SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+            if (synchData != null && Mode.None.equals(synchData.getMode())) {
+                return;
+            }
             for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
                 final String command = entry.getKey();
                 final Object val = entry.getValue();
+                if (synchData != null && !synchData.isActionEnable(command)) {
+                    continue;
+                }
 
                 if (command.equals(ActionW.PRESET.cmd())) {
                     actionsInView.put(ActionW.PRESET.cmd(), val);
@@ -1199,7 +1207,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 selList.setOpenningSeries(true);
             }
 
-            if (selPlugin != null && SynchView.Mode.Tile.equals(selPlugin.getSynchView().getMode())) {
+            if (selPlugin != null && SynchData.Mode.Tile.equals(selPlugin.getSynchView().getSynchData().getMode())) {
                 selPlugin.addSeries(seq);
                 if (selList != null) {
                     selList.setOpenningSeries(false);

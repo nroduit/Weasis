@@ -18,71 +18,65 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 
 public class SynchView implements GUIEntry {
-    public enum Mode {
-        None, Stack, Tile
-    }
-
     public static final SynchView NONE =
         new SynchView(
-            Messages.getString("SynchView.none"), "None", Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<ActionW, Boolean>()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            Messages.getString("SynchView.none"), "None", Mode.None, new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<String, Boolean>()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     public static final SynchView DEFAULT_TILE;
     public static final SynchView DEFAULT_STACK;
     static {
-        HashMap<ActionW, Boolean> actions = new HashMap<ActionW, Boolean>();
-        actions.put(ActionW.SCROLL_SERIES, true);
-        actions.put(ActionW.PAN, true);
-        actions.put(ActionW.ZOOM, true);
-        actions.put(ActionW.ROTATION, true);
-        actions.put(ActionW.FLIP, true);
-        actions.put(ActionW.WINDOW, true);
-        actions.put(ActionW.LEVEL, true);
-        actions.put(ActionW.PRESET, true);
-        actions.put(ActionW.LUT_SHAPE, true);
-        actions.put(ActionW.LUT, true);
-        actions.put(ActionW.INVERSELUT, true);
-        actions.put(ActionW.FILTER, true);
-        actions.put(ActionW.INVERSESTACK, true);
-        actions.put(ActionW.SORTSTACK, true);
+        HashMap<String, Boolean> actions = new HashMap<String, Boolean>();
+        actions.put(ActionW.SCROLL_SERIES.cmd(), true);
+        actions.put(ActionW.PAN.cmd(), true);
+        actions.put(ActionW.ZOOM.cmd(), true);
+        actions.put(ActionW.ROTATION.cmd(), true);
+        actions.put(ActionW.FLIP.cmd(), true);
+        actions.put(ActionW.WINDOW.cmd(), true);
+        actions.put(ActionW.LEVEL.cmd(), true);
+        actions.put(ActionW.PRESET.cmd(), true);
+        actions.put(ActionW.LUT_SHAPE.cmd(), true);
+        actions.put(ActionW.LUT.cmd(), true);
+        actions.put(ActionW.INVERSELUT.cmd(), true);
+        actions.put(ActionW.FILTER.cmd(), true);
+        actions.put(ActionW.INVERSESTACK.cmd(), true);
+        actions.put(ActionW.SORTSTACK.cmd(), true);
         DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), "Tile", Mode.Tile, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
-        actions = new HashMap<ActionW, Boolean>();
-        actions.put(ActionW.SCROLL_SERIES, true);
-        actions.put(ActionW.PAN, true);
-        actions.put(ActionW.ZOOM, true);
-        actions.put(ActionW.ROTATION, true);
-        actions.put(ActionW.FLIP, true);
+        actions = new HashMap<String, Boolean>();
+        actions.put(ActionW.SCROLL_SERIES.cmd(), true);
+        actions.put(ActionW.PAN.cmd(), true);
+        actions.put(ActionW.ZOOM.cmd(), true);
+        actions.put(ActionW.ROTATION.cmd(), true);
+        actions.put(ActionW.FLIP.cmd(), true);
         DEFAULT_STACK =
             new SynchView(Messages.getString("SynchView.def_s"), "Stack", Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$ //$NON-NLS-2$
                 .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
     }
 
-    private final HashMap<ActionW, Boolean> actions;
-    private final Mode mode;
     private final String name;
     private final String command;
     private final Icon icon;
+    private final SynchData synchData;
 
-    public SynchView(String name, String command, Mode mode, Icon icon, HashMap<ActionW, Boolean> actions) {
-        if (name == null || actions == null) {
+    public SynchView(String name, String command, Mode mode, Icon icon, HashMap<String, Boolean> actions) {
+        if (name == null) {
             throw new IllegalArgumentException("A parameter is null!"); //$NON-NLS-1$
         }
+        this.synchData = new SynchData(mode, actions);
         this.name = name;
         this.command = command;
-        this.actions = actions;
-        this.mode = mode;
         this.icon = icon;
     }
 
-    public HashMap<ActionW, Boolean> getActions() {
-        return actions;
+    public String getName() {
+        return name;
     }
 
-    public boolean isActionEnable(ActionW action) {
-        Boolean bool = actions.get(action);
-        return (bool != null && bool);
+    public SynchData getSynchData() {
+        return synchData;
     }
 
     @Override
@@ -92,10 +86,6 @@ public class SynchView implements GUIEntry {
 
     public String getCommand() {
         return command;
-    }
-
-    public Mode getMode() {
-        return mode;
     }
 
     @Override

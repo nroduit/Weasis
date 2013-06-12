@@ -169,8 +169,9 @@ public class SeriesBuilder {
                                         DicomMediaUtils.writeMetaData(dicomSeries, dcmObj);
                                         secView.setSeries(dicomSeries);
                                         // Copy the synch values from the main view
-                                        for (ActionW action : MPRContainer.DEFAULT_MPR.getActions().keySet()) {
-                                            secView.setActionsInView(action.cmd(), view.getActionValue(action.cmd()));
+                                        for (String action : MPRContainer.DEFAULT_MPR.getSynchData().getActions()
+                                            .keySet()) {
+                                            secView.setActionsInView(action, view.getActionValue(action));
                                         }
                                         secView.repaint();
                                     }
@@ -202,8 +203,9 @@ public class SeriesBuilder {
                                         // Copy tags from original dicom into series
                                         DicomMediaUtils.writeMetaData(dicomSeries2, dcmObj);
                                         thirdView.setSeries(dicomSeries2);
-                                        for (ActionW action : MPRContainer.DEFAULT_MPR.getActions().keySet()) {
-                                            thirdView.setActionsInView(action.cmd(), view.getActionValue(action.cmd()));
+                                        for (String action : MPRContainer.DEFAULT_MPR.getSynchData().getActions()
+                                            .keySet()) {
+                                            thirdView.setActionsInView(action, view.getActionValue(action));
                                         }
                                         thirdView.repaint();
                                     }

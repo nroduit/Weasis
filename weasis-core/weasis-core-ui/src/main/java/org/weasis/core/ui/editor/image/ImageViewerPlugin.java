@@ -204,7 +204,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         // TODO set series in specific place and if does not exist in
         // the first free place
         if (sequence != null && selectedImagePane != null) {
-            if (SynchView.Mode.Tile.equals(synchView.getMode())) {
+            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
                 selectedImagePane.setSeries(sequence, null);
                 updateSynchView();
                 return;
@@ -325,7 +325,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             selectedImagePane = view2ds.get(0);
 
             MouseActions mouseActions = eventManager.getMouseActions();
-            boolean tiledMode = SynchView.Mode.Tile.equals(synchView);
+            boolean tiledMode = SynchData.Mode.Tile.equals(synchView);
             for (int i = 0; i < view2ds.size(); i++) {
                 DefaultView2d<E> v = view2ds.get(i);
                 // Close lens because update does not work
@@ -384,7 +384,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     selectedImagePane = view2ds.get(0);
                 }
                 MouseActions mouseActions = eventManager.getMouseActions();
-                boolean tiledMode = SynchView.Mode.Tile.equals(synchView);
+                boolean tiledMode = SynchData.Mode.Tile.equals(synchView);
                 for (int i = 0; i < view2ds.size(); i++) {
                     DefaultView2d<E> v = view2ds.get(i);
                     // Close lens because update does not work
@@ -556,7 +556,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
 
     protected void updateSynchView() {
-        if (SynchView.Mode.Tile.equals(synchView.getMode()) && selectedImagePane != null) {
+        if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode()) && selectedImagePane != null) {
             MediaSeries<E> series = null;
             DefaultView2d<E> selectedView = selectedImagePane;
             if (selectedImagePane.getSeries() != null) {
@@ -640,7 +640,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
         if (seriesList != null && seriesList.size() > 0) {
-            if (SynchView.Mode.Tile.equals(synchView.getMode())) {
+            if (SynchData.Mode.Tile.equals(synchView.getSynchData().getMode())) {
                 addSeries(seriesList.get(0));
                 return;
             }

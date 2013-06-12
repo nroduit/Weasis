@@ -94,6 +94,7 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.graphic.DragSequence;
@@ -596,9 +597,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void setActionsInView(String action, Object value, boolean repaint) {
-        if (action != null && action.trim() != "") {
-            actionsInView.put(action.trim(), value);
-            repaint();
+        if (action != null) {
+            actionsInView.put(action, value);
+            if (repaint) {
+                repaint();
+            }
         }
     }
 
@@ -849,8 +852,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     private void propertyChange(final SynchEvent synch) {
+        SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+        if (synchData != null && Mode.None.equals(synchData.getMode())) {
+            return;
+        }
         for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
             String command = entry.getKey();
+            if (synchData != null && !synchData.isActionEnable(command)) {
+                continue;
+            }
             if (command.equals(ActionW.WINDOW.cmd())) {
                 actionsInView.put(command, ((Integer) entry.getValue()).floatValue());
                 imageLayer.updateImageOperation(WindowLevelOperation.name);

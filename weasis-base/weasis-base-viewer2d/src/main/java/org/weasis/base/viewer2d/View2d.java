@@ -69,7 +69,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
-import org.weasis.core.ui.editor.image.SynchView;
+import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AbstractDragGraphic;
@@ -767,7 +767,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                 return false;
             }
 
-            if (selPlugin != null && SynchView.Mode.Tile.equals(selPlugin.getSynchView().getMode())) {
+            if (selPlugin != null && SynchData.Mode.Tile.equals(selPlugin.getSynchView().getSynchData().getMode())) {
                 selPlugin.addSeries(seq);
                 return true;
             }

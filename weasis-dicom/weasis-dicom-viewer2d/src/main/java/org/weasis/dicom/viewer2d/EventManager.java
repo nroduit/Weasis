@@ -62,9 +62,10 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
+import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
@@ -268,7 +269,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     && synch instanceof ComboItemListener) {
 
                     SynchView synchview = (SynchView) ((ComboItemListener) synch).getSelectedItem();
-                    if (synchview.isActionEnable(ActionW.SCROLL_SERIES)) {
+                    if (synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd())) {
                         double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
                         if (val != null) {
                             mediaEvent.setLocation(val[0] + val[1] + val[2]);
@@ -502,7 +503,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         } else {
             int w = windowAction.getValue();
             int l = levelAction.getValue();
-            DefaultComboBoxModel<?> dataModel = presetAction.getModel();
+            DefaultComboBoxModel dataModel = presetAction.getModel();
 
             for (int i = 0; i < dataModel.getSize(); i++) {
                 Object obj = dataModel.getElementAt(i);
@@ -924,13 +925,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (viewPane == null) {
                 return;
             }
+            SynchData synch = synchView.getSynchData();
             MediaSeries<DicomImageElement> series = viewPane.getSeries();
             if (series != null) {
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
                 if (viewPane instanceof MipView) {
+                    // Handle special case with MIP view, do not let scroll the series
                     moveTroughSliceAction.enableAction(false);
                     synchView = SynchView.NONE;
+                    synch = synchView.getSynchData();
                 } else {
                     moveTroughSliceAction.enableAction(true);
                 }
@@ -958,11 +962,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                 moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
                             }
                         }
-                        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+                        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
                 } else {
                     // TODO if Pan is activated than rotation is required
-                    if (Mode.Stack.equals(synchView.getMode())) {
+                    if (Mode.Stack.equals(synch.getMode())) {
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                         DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
                         double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
@@ -977,7 +981,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             boolean specialView = pane instanceof MipView;
                             if (s != null && fruid != null && val != null && !specialView) {
                                 boolean synchByDefault = fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID));
-                                pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synchView : null);
+                                SynchData synchVal = null;
                                 if (synchByDefault) {
                                     if (ImageOrientation.hasSameOrientation(series, s)) {
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
@@ -986,43 +990,36 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                             && hasSameSize(series, s)) {
                                             // If the image has the same reference and the same spatial calibration, all
                                             // the actions are synchronized
-
-                                            // TODO Pass synchview to filter action
-
-                                            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-                                            // addPropertyChangeListeners(pane, synchView);
+                                            synchVal = synch.clone();
                                         } else {
-                                            HashMap<ActionW, Boolean> map = new HashMap<ActionW, Boolean>(2);
-                                            map.put(ActionW.SCROLL_SERIES, true);
-                                            // addPropertyChangeListeners(pane, new SynchView("", "", Mode.Stack, null,
-                                            // map));
-                                            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+                                            HashMap<String, Boolean> map = new HashMap<String, Boolean>(2);
+                                            map.put(ActionW.SCROLL_SERIES.cmd(), true);
+                                            synchVal = new SynchData(Mode.Stack, map);
                                         }
                                     } else {
                                         pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
                                         if (pane instanceof MprView) {
-                                            // addPropertyChangeListeners(pane, synchView);
-                                            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+                                            synchVal = synch.clone();
                                         } else {
-                                            HashMap<ActionW, Boolean> map = new HashMap<ActionW, Boolean>(2);
-                                            map.put(ActionW.SCROLL_SERIES, true);
-                                            // addPropertyChangeListeners(pane, new SynchView("", "", Mode.Stack, null,
-                                            // map));
-                                            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+                                            HashMap<String, Boolean> map = new HashMap<String, Boolean>(2);
+                                            map.put(ActionW.SCROLL_SERIES.cmd(), true);
+                                            synchVal = new SynchData(Mode.Stack, map);
                                         }
                                     }
+                                    addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                                 }
+                                pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchVal);
                             }
                         }
                         // Force to draw crosslines without changing the slice position
                         moveTroughSliceAction.stateChanged(moveTroughSliceAction.getModel());
 
-                    } else if (Mode.Tile.equals(synchView.getMode())) {
+                    } else if (Mode.Tile.equals(synch.getMode())) {
                         for (int i = 0; i < panes.size(); i++) {
                             DefaultView2d<DicomImageElement> pane = panes.get(i);
-                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchView);
+                            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.clone());
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
-                            addPropertyChangeListeners(pane, synchView);
+                            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                         }
                     }
                 }

@@ -38,7 +38,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.SynchView.Mode;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
@@ -539,16 +539,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
         }
     }
 
-    public void addPropertyChangeListeners(DefaultView2d<E> viewPane, SynchView synchView) {
-        HashMap<ActionW, Boolean> synchActions = synchView.getActions();
-        for (ActionState a : actions.values()) {
-            Boolean bool = synchActions.get(a.getActionW());
-            if (bool != null && bool) {
-                propertySupport.addPropertyChangeListener(a.getActionW().cmd(), viewPane);
-            }
-        }
-    }
-
     public ActionState getAction(ActionW action) {
         if (action != null) {
             return actions.get(action);
@@ -630,6 +620,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 return;
             }
             if (viewPane.getSeries() != null) {
+                SynchData synch = synchView.getSynchData();
                 viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
                 addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
@@ -637,23 +628,23 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 panes.remove(viewPane);
                 if (SynchView.NONE.equals(synchView)) {
                     for (int i = 0; i < panes.size(); i++) {
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
                     }
-                } else if (Mode.Stack.equals(synchView.getMode())) {
+                } else if (Mode.Stack.equals(synch.getMode())) {
                     // TODO if Pan is activated than rotation is required
 
                     boolean hasLink = false;
                     for (int i = 0; i < panes.size(); i++) {
                         boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synchView : null);
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.clone() : null);
                         if (synchByDefault) {
                             hasLink = true;
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                         }
                     }
-                } else if (Mode.Tile.equals(synchView.getMode())) {
+                } else if (Mode.Tile.equals(synch.getMode())) {
                     for (int i = 0; i < panes.size(); i++) {
-                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synchView);
+                        panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.clone());
                         addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
                     }
                 }

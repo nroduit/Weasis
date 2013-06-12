@@ -53,8 +53,8 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
+import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.SynchView.Mode;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.util.PrintDialog;
@@ -85,18 +85,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     static {
         SYNCH_LIST.add(SynchView.NONE);
 
-        HashMap<ActionW, Boolean> actions = new HashMap<ActionW, Boolean>();
-        actions.put(ActionW.SCROLL_SERIES, true);
-        actions.put(ActionW.RESET, true);
-        actions.put(ActionW.ZOOM, true);
-        actions.put(ActionW.WINDOW, true);
-        actions.put(ActionW.LEVEL, true);
-        actions.put(ActionW.PRESET, true);
-        actions.put(ActionW.LUT_SHAPE, true);
-        actions.put(ActionW.LUT, true);
-        actions.put(ActionW.INVERSELUT, true);
-        actions.put(ActionW.FILTER, true);
-        DEFAULT_MPR = new SynchView("MPR synch", "mpr", Mode.Stack, //$NON-NLS-1$ //$NON-NLS-2$
+        HashMap<String, Boolean> actions = new HashMap<String, Boolean>();
+        actions.put(ActionW.SCROLL_SERIES.cmd(), true);
+        actions.put(ActionW.RESET.cmd(), true);
+        actions.put(ActionW.ZOOM.cmd(), true);
+        actions.put(ActionW.WINDOW.cmd(), true);
+        actions.put(ActionW.LEVEL.cmd(), true);
+        actions.put(ActionW.PRESET.cmd(), true);
+        actions.put(ActionW.LUT_SHAPE.cmd(), true);
+        actions.put(ActionW.LUT.cmd(), true);
+        actions.put(ActionW.INVERSELUT.cmd(), true);
+        actions.put(ActionW.FILTER.cmd(), true);
+        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.Stack, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
         SYNCH_LIST.add(DEFAULT_MPR);

@@ -626,7 +626,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     ComboItemListener synchAction =
                         (ComboItemListener) EventManager.getInstance().getAction(ActionW.SYNCH);
                     SynchView synchview = (SynchView) synchAction.getSelectedItem();
-                    boolean isScrollSeriesEnable = synchview.isActionEnable(ActionW.SCROLL_SERIES);
+                    boolean isScrollSeriesEnable = synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd());
 
                     for (DefaultView2d<DicomImageElement> view : view2ds) {
                         MediaSeries<DicomImageElement> currentSeries = view.getSeries();
@@ -771,7 +771,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     ComboItemListener synchAction =
                         (ComboItemListener) EventManager.getInstance().getAction(ActionW.SYNCH);
                     SynchView synchview = (SynchView) synchAction.getSelectedItem();
-                    boolean isScrollSeriesEnable = synchview.isActionEnable(ActionW.SCROLL_SERIES);
+                    boolean isScrollSeriesEnable = synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd());
 
                     for (DefaultView2d<DicomImageElement> view : view2ds) {
                         MediaSeries<DicomImageElement> currentSeries = view.getSeries();
