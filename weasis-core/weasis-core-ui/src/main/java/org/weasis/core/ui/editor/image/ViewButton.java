@@ -52,6 +52,14 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
         this.position = position;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ViewButton) {
+            return ((ViewButton) obj).popup == popup;
+        }
+        return false;
+    }
+
     /*
      * (non-Javadoc)
      * 

@@ -12,11 +12,13 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -25,6 +27,7 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
@@ -54,6 +57,9 @@ import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -110,13 +116,14 @@ import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.ui.util.TitleMenuItem;
 
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
-
+    public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;
     static final Shape[] pointer;
@@ -149,6 +156,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     protected Panner<?> panner;
     protected ZoomWin<E> lens;
     private final List<ViewButton> viewButtons;
+    protected ViewButton synchButton;
 
     protected MediaSeries<E> series = null;
     protected AnnotationsLayer infoLayer;
@@ -213,6 +221,54 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public ImageViewerEventManager<E> getEventManager() {
         return eventManager;
+    }
+
+    public void updateSynchState() {
+        if (getActionValue(ActionW.SYNCH_LINK.cmd()) != null) {
+            if (synchButton == null) {
+                synchButton = new ViewButton(new ShowPopup() {
+
+                    @Override
+                    public void showPopup(Component invoker, int x, int y) {
+                        final SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+                        if (synch == null) {
+                            return;
+                        }
+
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        TitleMenuItem itemTitle = new TitleMenuItem(ActionW.SYNCH.getTitle(), popupMenu.getInsets());
+                        popupMenu.add(itemTitle);
+                        popupMenu.addSeparator();
+
+                        for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                            JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
+                            menuItem.addActionListener(new ActionListener() {
+
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                        JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                                        synch.getActions().put(item.getText(), item.isSelected());
+                                    }
+                                }
+                            });
+                            popupMenu.add(menuItem);
+                        }
+                        popupMenu.show(invoker, x, y);
+
+                    }
+                }, SYNCH_ICON);
+                synchButton.setVisible(true);
+                synchButton.setPosition(GridBagConstraints.SOUTHEAST);
+            }
+            if (!getViewButtons().contains(synchButton)) {
+                getViewButtons().add(synchButton);
+            }
+            SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+            synchButton.setVisible(!SynchData.Mode.None.equals(synch.getMode()));
+        } else {
+            getViewButtons().remove(synchButton);
+        }
     }
 
     public String getPixelInfo(Point p, RenderedImageLayer<E> imageLayer) {

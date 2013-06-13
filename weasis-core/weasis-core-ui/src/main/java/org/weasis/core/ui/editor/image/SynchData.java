@@ -34,13 +34,7 @@ public class SynchData implements Cloneable {
 
     @Override
     public SynchData clone() {
-        SynchData synchData = null;
-        try {
-            synchData = (SynchData) super.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        return synchData;
+        return new SynchData(mode, new HashMap<String, Boolean>(actions));
     }
 
 }
