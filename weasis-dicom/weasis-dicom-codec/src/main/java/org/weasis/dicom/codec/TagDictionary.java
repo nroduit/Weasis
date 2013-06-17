@@ -20,7 +20,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.dcm4che2.data.VR;
+import org.dcm4che.data.VR;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -40,7 +40,7 @@ public class TagDictionary {
             array = true;
         }
         if (vr == VR.AE || vr == VR.AS || vr == VR.AT || vr == VR.CS || vr == VR.LO || vr == VR.LT || vr == VR.PN
-            || vr == VR.SH || vr == VR.ST || vr == VR.UI || vr == VR.UN || vr == VR.UN_SIEMENS) {
+            || vr == VR.SH || vr == VR.ST || vr == VR.UI || vr == VR.UN) {
             return TagType.String;
         } else if (vr == VR.DA) {
             return TagType.Date;

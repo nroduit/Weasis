@@ -38,10 +38,10 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.image.PartialComponentColorModel;
-import org.dcm4che2.image.SimpleYBRColorSpace;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Tag;
+import org.dcm4che.image.PartialComponentColorModel;
+import org.dcm4che.image.SimpleYBRColorSpace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

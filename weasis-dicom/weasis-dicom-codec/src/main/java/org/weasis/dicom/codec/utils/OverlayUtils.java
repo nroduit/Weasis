@@ -41,10 +41,10 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageReader;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.image.ByteLookupTable;
-import org.dcm4che2.image.LookupTable;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Tag;
+import org.dcm4che.image.ByteLookupTable;
+import org.dcm4che.image.LookupTable;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 

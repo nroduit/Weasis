@@ -6,12 +6,12 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.iod.module.sr.HierachicalSOPInstanceReference;
-import org.dcm4che2.iod.module.sr.KODocumentModule;
-import org.dcm4che2.iod.module.sr.SOPInstanceReferenceAndMAC;
-import org.dcm4che2.iod.module.sr.SeriesAndInstanceReference;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Tag;
+import org.dcm4che.iod.module.sr.HierachicalSOPInstanceReference;
+import org.dcm4che.iod.module.sr.KODocumentModule;
+import org.dcm4che.iod.module.sr.SOPInstanceReferenceAndMAC;
+import org.dcm4che.iod.module.sr.SeriesAndInstanceReference;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.TagW;
 

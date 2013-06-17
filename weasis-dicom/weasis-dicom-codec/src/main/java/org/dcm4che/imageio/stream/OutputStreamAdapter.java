@@ -12,15 +12,15 @@
  * License.
  *
  * The Original Code is part of dcm4che, an implementation of DICOM(TM) in
- * Java(TM), hosted at http://sourceforge.net/projects/dcm4che.
+ * Java(TM), hosted at https://github.com/gunterze/dcm4che.
  *
  * The Initial Developer of the Original Code is
- * Gunter Zeilinger, Huetteldorferstr. 24/10, 1150 Vienna/Austria/Europe.
- * Portions created by the Initial Developer are Copyright (C) 2002-2005
+ * Agfa Healthcare.
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Gunter Zeilinger <gunterze@gmail.com>
+ * See @authors listed below
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,56 +35,43 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
+package org.dcm4che.imageio.stream;
 
-package org.dcm4che2.imageioimpl.plugins.rle;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import java.util.Locale;
-
-import javax.imageio.ImageReader;
-import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.stream.ImageOutputStreamImpl;
 
 /**
- * @author gunter zeilinger(gunterze@gmail.com)
- * @version $Revision: 13898 $ $Date: 2010-08-19 13:50:09 +0200 (Thu, 19 Aug 2010) $
- * @since May 11, 2006
- * 
+ * @author Gunter Zeilinger <gunterze@gmail.com>
+ *
  */
-public class RLEImageReaderSpi extends ImageReaderSpi {
+public class OutputStreamAdapter extends ImageOutputStreamImpl {
 
-    private static String[] formatNames = { "rle", "RLE" };
-    private static String[] entensions = { "" };
-    private static String[] MIMETypes = { "" };
-    private static String vendor;
-    private static String version;
-    static {
-        Package p = RLEImageReaderSpi.class.getPackage();
-        vendor = maskNull(p.getImplementationVendor(), "");
-        version = maskNull(p.getImplementationVersion(), "");
-    }
+    private final OutputStream out;
 
-    private static String maskNull(String s, String def) {
-        return s != null ? s : def;
-    }
-
-    public RLEImageReaderSpi() {
-        super(vendor, version, formatNames, entensions, MIMETypes,
-            "org.dcm4che2.imageioimpl.plugins.rle.RLEImageReader", STANDARD_INPUT_TYPE, null, false, null, null, null,
-            null, false, null, null, null, null);
+    public OutputStreamAdapter(OutputStream out) {
+        this.out = out;
     }
 
     @Override
-    public String getDescription(Locale locale) {
-        return "RLE Image Reader";
+    public void write(int b) throws IOException {
+        out.write(b);
     }
 
     @Override
-    public boolean canDecodeInput(Object source) {
-        // never auto-selected by ImageIO
-        return false;
+    public void write(byte[] b, int off, int len) throws IOException {
+        out.write(b, off, len);
     }
 
     @Override
-    public ImageReader createReaderInstance(Object extension) {
-        return new RLEImageReader(this);
+    public int read() throws IOException {
+        throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
 }

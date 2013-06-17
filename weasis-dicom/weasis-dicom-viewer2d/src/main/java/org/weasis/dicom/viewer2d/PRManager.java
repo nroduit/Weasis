@@ -19,11 +19,11 @@ import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.iod.module.pr.GraphicAnnotationModule;
-import org.dcm4che2.iod.module.pr.GraphicLayerModule;
-import org.dcm4che2.iod.module.pr.GraphicObject;
-import org.dcm4che2.iod.module.pr.TextObject;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.iod.module.pr.GraphicAnnotationModule;
+import org.dcm4che.iod.module.pr.GraphicLayerModule;
+import org.dcm4che.iod.module.pr.GraphicObject;
+import org.dcm4che.iod.module.pr.TextObject;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.RadioMenuItem;

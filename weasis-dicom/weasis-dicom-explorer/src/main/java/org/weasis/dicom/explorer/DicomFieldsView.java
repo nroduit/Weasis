@@ -34,10 +34,10 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.VR;
-import org.dcm4che2.util.TagUtils;
+import org.dcm4che.data.DicomElement;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.VR;
+import org.dcm4che.util.TagUtils;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;

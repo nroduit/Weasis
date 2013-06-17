@@ -7,13 +7,8 @@ import java.awt.color.ICC_Profile;
 import java.util.HashMap;
 import java.util.List;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.iod.module.general.SeriesAndInstanceReference;
-import org.dcm4che2.iod.module.macro.ImageSOPInstanceReference;
-import org.dcm4che2.iod.module.pr.DisplayedAreaModule;
-import org.dcm4che2.iod.module.pr.SpatialTransformationModule;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -25,7 +20,7 @@ public class PresentationStateReader {
     public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers";
 
     private final PRSpecialElement prSpecialElement;
-    private final DicomObject dcmobj;
+    private final Attributes dcmobj;
     private final HashMap<String, Object> tags = new HashMap<String, Object>();
 
     public PresentationStateReader(PRSpecialElement dicom) {

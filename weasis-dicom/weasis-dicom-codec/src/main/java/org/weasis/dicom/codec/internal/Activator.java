@@ -27,7 +27,7 @@ import org.weasis.dicom.codec.pref.DicomPrefManager;
 public class Activator implements BundleActivator {
 
     private static final String LOGGER_KEY = "always.info.ItemParser";
-    private static final String LOGGER_VAL = "org.dcm4che2.imageio.ItemParser";
+    private static final String LOGGER_VAL = "org.dcm4che.imageio.ItemParser";
     public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
     // @Override
@@ -36,9 +36,9 @@ public class Activator implements BundleActivator {
         PREFERENCES.init(bundleContext);
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
-        // org.dcm4che2.imageioimpl.plugins.rle.RLEImageReaderSpi
-        // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReaderSpi
-        // org.dcm4che2.imageioimpl.plugins.dcm.DicomImageWriterSpi
+        // org.dcm4che.imageioimpl.plugins.rle.RLEImageReaderSpi
+        // org.dcm4che.imageioimpl.plugins.dcm.DicomImageReaderSpi
+        // org.dcm4che.imageioimpl.plugins.dcm.DicomImageWriterSpi
         ImageioUtil.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
 

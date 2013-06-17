@@ -17,11 +17,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -31,7 +28,6 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import org.dcm4che2.imageio.ImageReaderFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public class DicomPrefView extends AbstractItemDialogPage {
@@ -124,20 +120,22 @@ public class DicomPrefView extends AbstractItemDialogPage {
     }
 
     public List<Decoder> getJpeg2000ReaderClassName() {
-        ImageReaderFactory factory = ImageReaderFactory.getInstance();
-        String decoders[] = factory.getProperty("jpeg2000").split(",");
-        String decoderNames[] = factory.getProperty("jpeg2000.title").split(",");
         ArrayList<Decoder> list = new ArrayList<Decoder>();
-        if (decoders.length == decoderNames.length) {
-            for (int i = 0; i < decoders.length; i++) {
-                for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {
-                    ImageReader r = (ImageReader) it.next();
-                    if (decoders[i].equals(r.getClass().getName())) {
-                        list.add(new Decoder(decoderNames[i], decoders[i]));
-                    }
-                }
-            }
-        }
+
+        // TODO handle several codecs
+        // ImageReaderFactory factory = ImageReaderFactory.getDefault();
+        // String decoders[] = factory.getProperty("jpeg2000").split(",");
+        // String decoderNames[] = factory.getProperty("jpeg2000.title").split(",");
+        // if (decoders.length == decoderNames.length) {
+        // for (int i = 0; i < decoders.length; i++) {
+        // for (Iterator it = ImageIO.getImageReadersByFormatName("jpeg2000"); it.hasNext();) {
+        // ImageReader r = (ImageReader) it.next();
+        // if (decoders[i].equals(r.getClass().getName())) {
+        // list.add(new Decoder(decoderNames[i], decoders[i]));
+        // }
+        // }
+        // }
+        // }
         return list;
     }
 

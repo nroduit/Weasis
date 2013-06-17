@@ -56,24 +56,24 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.NullDescriptor;
 
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.UID;
-import org.dcm4che2.data.VR;
-import org.dcm4che2.image.OverlayUtils;
-import org.dcm4che2.image.PartialComponentSampleModel;
-import org.dcm4che2.imageio.ImageReaderFactory;
-import org.dcm4che2.imageio.ItemParser;
-import org.dcm4che2.imageio.plugins.dcm.DicomImageReadParam;
-import org.dcm4che2.imageio.plugins.dcm.DicomStreamMetaData;
-import org.dcm4che2.imageioimpl.plugins.dcm.DicomImageReader;
-import org.dcm4che2.imageioimpl.plugins.dcm.SizeSkipInputHandler;
-import org.dcm4che2.io.DicomInputHandler;
-import org.dcm4che2.io.DicomInputStream;
-import org.dcm4che2.io.StopTagInputHandler;
-import org.dcm4che2.iod.module.pr.DisplayShutterModule;
-import org.dcm4che2.util.ByteUtils;
+import org.dcm4che.data.DicomElement;
+import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
+import org.dcm4che.data.VR;
+import org.dcm4che.image.OverlayUtils;
+import org.dcm4che.image.PartialComponentSampleModel;
+import org.dcm4che.imageio.ImageReaderFactory;
+import org.dcm4che.imageio.ItemParser;
+import org.dcm4che.imageio.plugins.dcm.DicomImageReadParam;
+import org.dcm4che.imageio.plugins.dcm.DicomStreamMetaData;
+import org.dcm4che.imageioimpl.plugins.dcm.DicomImageReader;
+import org.dcm4che.imageioimpl.plugins.dcm.SizeSkipInputHandler;
+import org.dcm4che.io.DicomInputHandler;
+import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.StopTagInputHandler;
+import org.dcm4che.iod.module.pr.DisplayShutterModule;
+import org.dcm4che.util.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -1205,7 +1205,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     // }
     //
     // // Not reusing the earlier dicom input stream as it has a stop tag handler and we want to go past the pixeldata.
-    // DicomInputStream postDis = new DicomInputStream(iis, org.dcm4che2.data.TransferSyntax.valueOf(tsuid));
+    // DicomInputStream postDis = new DicomInputStream(iis, org.dcm4che.data.TransferSyntax.valueOf(tsuid));
     // if (isSkipLargePrivate()) {
     // DicomInputHandler dih = new SizeSkipInputHandler(null);
     // postDis.setHandler(dih);

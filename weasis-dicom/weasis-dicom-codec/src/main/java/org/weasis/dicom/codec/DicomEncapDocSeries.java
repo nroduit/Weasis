@@ -18,8 +18,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Tag;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -51,7 +51,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 byte[] doc = null;
                 String extension = "tmp"; //$NON-NLS-1$
                 try {
-                    DicomObject dicom = dicomImageLoader.getDicomObject();
+                    Attributes dicom = dicomImageLoader.getDicomObject();
                     String mime = dicom.getString(Tag.MIMETypeOfEncapsulatedDocument);
                     String[] extensions = MimeInspector.getExtensions(mime);
                     if (extensions.length > 0) {

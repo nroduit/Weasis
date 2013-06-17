@@ -20,7 +20,7 @@ import javax.media.jai.PlanarImage;
 import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
-import org.dcm4che2.data.UID;
+import org.dcm4che.data.UID;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;

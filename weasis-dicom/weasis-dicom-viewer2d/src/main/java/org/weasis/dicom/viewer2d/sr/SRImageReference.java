@@ -3,7 +3,7 @@ package org.weasis.dicom.viewer2d.sr;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dcm4che2.iod.module.macro.ImageSOPInstanceReference;
+import org.dcm4che.iod.module.macro.ImageSOPInstanceReference;
 import org.weasis.core.ui.graphic.Graphic;
 
 public class SRImageReference {

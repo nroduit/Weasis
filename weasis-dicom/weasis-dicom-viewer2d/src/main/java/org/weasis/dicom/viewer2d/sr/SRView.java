@@ -31,7 +31,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
-import org.dcm4che2.iod.module.macro.ImageSOPInstanceReference;
+import org.dcm4che.iod.module.macro.ImageSOPInstanceReference;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
