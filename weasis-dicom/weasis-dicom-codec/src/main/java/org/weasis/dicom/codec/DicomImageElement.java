@@ -72,7 +72,7 @@ public class DicomImageElement extends ImageElement {
         if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
             // Physical distance in mm between the center of each pixel (ratio in mm)
             double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
-            if (val == null) {
+            if (val == null || val.length != 2) {
                 val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
                 // Follows D. Clunie recommendations
                 pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector"); //$NON-NLS-1$
@@ -80,7 +80,7 @@ public class DicomImageElement extends ImageElement {
             } else {
                 pixelSizeCalibrationDescription = (String) mediaIO.getTagValue(TagW.PixelSpacingCalibrationDescription);
             }
-            if (val != null && val[0] > 0.0 && val[1] > 0.0) {
+            if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
                 /*
                  * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that
                  * is the spacing between the centers of adjacent rows, or vertical spacing. Pixel Spacing must be

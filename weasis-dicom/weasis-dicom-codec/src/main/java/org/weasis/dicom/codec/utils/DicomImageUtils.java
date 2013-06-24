@@ -8,6 +8,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.media.jai.LookupTableJAI;
 
+import org.dcm4che.data.Attributes;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagW;
 
@@ -52,10 +53,6 @@ public class DicomImageUtils {
 
         bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
         window = (window < 1f) ? 1f : window;
-
-        // int outRangeSize = (1 << bitsStored) - 1;
-        // float maxOutValue = isSigned ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-        // float minOutValue = isSigned ? -(maxOutValue + 1) : 0;
 
         // TODO - use bitsAllocated as a parameter instead of extrapolated one
         int bitsAllocated = (bitsStored <= 8) ? 8 : 16;
@@ -541,277 +538,6 @@ public class DicomImageUtils {
         }
     }
 
-    @Deprecated
-    protected static void setWindowLevelSequenceLutOld(float window, float level, LookupTableJAI lutSequence,
-        float minInValue, Object outLut, float minOutValue, float maxOutValue, boolean inverse) {
-
-        if (lutSequence == null) {
-            return;
-        }
-
-        Object inLut;
-
-        if (lutSequence.getDataType() == DataBuffer.TYPE_BYTE) {
-            inLut = lutSequence.getByteData(0);
-        } else if (lutSequence.getDataType() <= DataBuffer.TYPE_SHORT) {
-            inLut = lutSequence.getShortData(0);
-        } else {
-            return;
-        }
-
-        float levelMin = level - window / 2f;
-        float levelMax = level + window / 2f;
-
-        int minValueLookup = lutSequence.getOffset();
-        int maxValueLookup = lutSequence.getOffset() + Array.getLength(inLut) - 1;
-
-        float inLutLevelMin = (levelMin > maxValueLookup) ? maxValueLookup : Math.max(levelMin, minValueLookup);
-        float inLutLevelMax = (levelMax < minValueLookup) ? minValueLookup : Math.min(levelMax, maxValueLookup);
-
-        float slope = (maxOutValue - minOutValue) / window;
-        float intercept = maxOutValue - slope * (level + (window / 2f));
-
-        int minOutLutValue = (int) (inLutLevelMin * slope + intercept);
-        int maxOutLutValue = (int) (inLutLevelMax * slope + intercept);
-
-        float inLutLevelMinValue = Array.getFloat(inLut, (int) inLutLevelMin - lutSequence.getOffset());
-        float inLutLevelMaxValue = Array.getFloat(inLut, (int) inLutLevelMax - lutSequence.getOffset());
-
-        slope = (maxOutLutValue - minOutLutValue) / (inLutLevelMaxValue - inLutLevelMinValue);
-        intercept = maxOutLutValue - slope * inLutLevelMaxValue;
-
-        for (int i = 0; i < Array.getLength(outLut); i++) {
-            int value;
-
-            if ((i + minInValue) < inLutLevelMin) {
-                value = minOutLutValue;
-            } else if ((i + minInValue) > inLutLevelMax) {
-                value = maxOutLutValue;
-            } else {
-                float inLutValue = Array.getFloat(inLut, (int) (i + minInValue) - lutSequence.getOffset());
-                value = Math.round(inLutValue * slope + intercept);
-            }
-            value = (int) (inverse ? (maxOutValue + minOutValue - value) : value);
-
-            if (outLut instanceof byte[]) {
-                Array.set(outLut, i, (byte) value);
-            } else {
-                Array.set(outLut, i, (short) value);
-            }
-        }
-    }
-
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // public static LookupTable createRescaleRampLut(float intercept, float slope, int minValue, int maxValue,
-    // int bitsStored, boolean signed, boolean inverse) {
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    //
-    // // when bitsStored=8 bits => outRangeSize=255 or bitsStored=16 bits => outRangeSize=65535 ...
-    // int outRangeSize = (1 << bitsStored) - 1;
-    // // when bitsStored=8 bits signed => maxOutValue=127 or bitsStored=16 bits signed => maxOutValue= 32767 ...
-    // int maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    // // when bitsStored=8 bits signed => minOutValue=-128 or bitsStored=16 bits signed => minOutValue= -32768 ...
-    // int minOutValue = signed ? -(maxOutValue + 1) : 0;
-    //
-    // minValue = Math.min(maxValue, minValue);
-    // maxValue = Math.max(maxValue, minValue);
-    //
-    // int numEntries = Math.abs(maxValue - minValue) + 1;
-    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-    //
-    // for (int i = 0; i < numEntries; i++) {
-    // int value = Math.round((i + minValue) * slope + intercept);
-    // value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
-    //
-    // value = inverse ? (outRangeSize - (value - minOutValue) + minOutValue) : value;
-    // // this trick do the correct computation when signed is true and then minOutValue is negative
-    //
-    // if (bitsStored <= 8) {
-    // Array.set(outLut, i, (byte) value);
-    // } else {
-    // Array.set(outLut, i, (short) value);
-    // }
-    // }
-    //
-    // if (bitsStored <= 8) {
-    // return new ByteLookupTable(minValue, (byte[]) outLut);
-    // } else {
-    // return new ShortLookupTable(minValue, (short[]) outLut);
-    // }
-    // }
-
-    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // protected static LookupTable createWindowLevelRampLut(float window, float level, int minValue, int maxValue,
-    // int bitsStored, boolean signed, boolean inverse) {
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    // window = (window < 1f) ? 1f : window;
-    //
-    // // when bitsStored=8 bits => outRangeSize=255 or bitsStored=16 bits => outRangeSize=65535 ...
-    // float outRangeSize = (1 << bitsStored) - 1;
-    // // when bitsStored=8 bits signed => maxOutValue=127 or bitsStored=16 bits signed => maxOutValue= 32767 ...
-    // float maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    //
-    // float slope = outRangeSize / window;
-    // float intercept = maxOutValue - slope * (level + (window / 2f));
-    //
-    // return createRescaleRampLut(intercept, slope, minValue, maxValue, bitsStored, signed, inverse);
-    //
-    // /*
-    // * Algo : with minimum and maximum image values do a linear mapping of (min, max) to (0, 255). From Euclidean
-    // * Geometry we have two data points [(min, 0) and (max, 255)] and a straight line,thus (from y = mx + b)
-    // */
-    // }
-
-    // public static LookupTable createWindowLevelLinearLut(float window, float level, int minValue, int maxValue,
-    // int bitsStored, boolean signed, boolean inverse) {
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    // window = (window < 1f) ? 1f : window;
-    //
-    // // when bitsStored=8 bits => outRangeSize=255 or bitsStored=16 bits => outRangeSize=65535 ...
-    // int outRangeSize = (1 << bitsStored) - 1;
-    // // when bitsStored=8 bits signed => maxOutValue=127 or bitsStored=16 bits signed => maxOutValue= 32767 ...
-    // int maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    // // when bitsStored=8 bits signed => minOutValue=-128 or bitsStored=16 bits signed => minOutValue= -32768 ...
-    // int minOutValue = signed ? -(maxOutValue + 1) : 0;
-    //
-    // minValue = Math.min(maxValue, minValue);
-    // maxValue = Math.max(maxValue, minValue);
-    //
-    // int numEntries = Math.abs(maxValue - minValue) + 1;
-    //
-    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-    //
-    // float lowLevel = (level - 0.5f) - (window - 1f) / 2f;
-    // float highLevel = (level - 0.5f) + (window - 1f) / 2f;
-    //
-    // for (int i = 0; i < numEntries; i++) {
-    // int value;
-    //
-    // // Below is pseudo code defined in Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module
-    // if ((i + minValue) <= lowLevel) {
-    // value = minOutValue;
-    // } else if ((i + minValue) > highLevel) {
-    // value = maxOutValue;
-    // } else {
-    // value =
-    // (int) ((((i + minValue) - (level - 0.5f)) / (window - 1f) + 0.5f) * (outRangeSize) + minOutValue);
-    // }
-    //
-    // value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
-    // value = inverse ? (outRangeSize - (value - minOutValue) + minOutValue) : value;
-    // // this trick do the correct computation when signed is true and then minOutValue is negative
-    //
-    // if (bitsStored <= 8) {
-    // Array.set(outLut, i, (byte) value);
-    // } else {
-    // Array.set(outLut, i, (short) value);
-    // }
-    // }
-    //
-    // if (bitsStored <= 8) {
-    // return new ByteLookupTable(minValue, (byte[]) outLut);
-    // } else {
-    // return new ShortLookupTable(minValue, (short[]) outLut);
-    // }
-    // }
-
-    // public static LookupTable createWindowLevelLogarithmicLut(float window, float level, int minValue, int maxValue,
-    // int bitsStored, boolean signed, boolean inverse) {
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    // window = (window < 1f) ? 1f : window;
-    //
-    // // when bitsStored=8 bits => outRangeSize=255 or bitsStored=16 bits => outRangeSize=65535 ...
-    // int outRangeSize = (1 << bitsStored) - 1;
-    // // when bitsStored=8 bits signed => maxOutValue=127 or bitsStored=16 bits signed => maxOutValue= 32767 ...
-    // int maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    // // when bitsStored=8 bits signed => minOutValue=-128 or bitsStored=16 bits signed => minOutValue= -32768 ...
-    // int minOutValue = signed ? -(maxOutValue + 1) : 0;
-    //
-    // minValue = Math.min(maxValue, minValue);
-    // maxValue = Math.max(maxValue, minValue);
-    //
-    // int numEntries = Math.abs(maxValue - minValue) + 1;
-    //
-    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-    //
-    // float nFactor = 20; // factor defined by default in Dicom standard ???? unknown
-    //
-    // for (int i = 0; i < numEntries; i++) {
-    //
-    // int value =
-    // Math.round(outRangeSize
-    // * (float) Math.log1p((nFactor / 10d) * ((i + minValue) - (level - window / 2f)) / window));
-    //
-    // value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
-    // value = inverse ? (outRangeSize - (value - minOutValue) + minOutValue) : value;
-    // // this trick do the correct computation when signed is true and then minOutValue is negative
-    //
-    // if (bitsStored <= 8) {
-    // Array.set(outLut, i, (byte) value);
-    // } else {
-    // Array.set(outLut, i, (short) value);
-    // }
-    // }
-    //
-    // if (bitsStored <= 8) {
-    // return new ByteLookupTable(minValue, (byte[]) outLut);
-    // } else {
-    // return new ShortLookupTable(minValue, (short[]) outLut);
-    // }
-    // }
-
-    // public static LookupTable createWindowLevelExponentialLut(float window, float level, int minValue, int maxValue,
-    // int bitsStored, boolean signed, boolean inverse) {
-    //
-    // bitsStored = (bitsStored > 16) ? bitsStored = 16 : ((bitsStored < 1) ? 1 : bitsStored);
-    // window = (window < 1f) ? 1f : window;
-    //
-    // // when bitsStored=8 bits => outRangeSize=255 or bitsStored=16 bits => outRangeSize=65535 ...
-    // int outRangeSize = (1 << bitsStored) - 1;
-    // // when bitsStored=8 bits signed => maxOutValue=127 or bitsStored=16 bits signed => maxOutValue= 32767 ...
-    // int maxOutValue = signed ? (1 << (bitsStored - 1)) - 1 : outRangeSize;
-    // // when bitsStored=8 bits signed => minOutValue=-128 or bitsStored=16 bits signed => minOutValue= -32768 ...
-    // int minOutValue = signed ? -(maxOutValue + 1) : 0;
-    //
-    // minValue = Math.min(maxValue, minValue);
-    // maxValue = Math.max(maxValue, minValue);
-    //
-    // int numEntries = Math.abs(maxValue - minValue) + 1;
-    //
-    // Object outLut = (bitsStored <= 8) ? new byte[numEntries] : new short[numEntries];
-    //
-    // float nFactor = 20; // factor defined by default in Dicom standard ???? unknown
-    //
-    // for (int i = 0; i < numEntries; i++) {
-    //
-    // int value =
-    // Math.round(outRangeSize
-    // * (float) Math.exp((nFactor / 10d) * ((i + minValue) - (level - window / 2f)) / window));
-    //
-    // value = (value >= maxOutValue) ? maxOutValue : ((value <= minOutValue) ? minOutValue : value);
-    // value = inverse ? (outRangeSize - (value - minOutValue) + minOutValue) : value;
-    // // this trick do the correct computation when signed is true and then minOutValue is negative
-    //
-    // if (bitsStored <= 8) {
-    // Array.set(outLut, i, (byte) value);
-    // } else {
-    // Array.set(outLut, i, (short) value);
-    // }
-    // }
-    //
-    // if (bitsStored <= 8) {
-    // return new ByteLookupTable(minValue, (byte[]) outLut);
-    // } else {
-    // return new ShortLookupTable(minValue, (short[]) outLut);
-    // }
-    // }
-
     static void compareDataLuts(Object outLut, Object outLut2) {
 
         int countDiff = 0;
@@ -841,6 +567,7 @@ public class DicomImageUtils {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // TODO make test class instead
     public static void main(String[] args) {
         short sh = -1;
         int in = sh;
@@ -947,5 +674,142 @@ public class DicomImageUtils {
             }
         }
         return pixelValue;
+    }
+
+    // ////////////////////////////////////////////////////////////////////////////
+    // Take from dcm4che3, should be public
+
+    public static int[] lutDescriptor(Attributes ds, int descTag) {
+        int[] desc = ds.getInts(descTag);
+        if (desc == null) {
+            throw new IllegalArgumentException("Missing LUT Descriptor!");
+        }
+        if (desc.length != 3) {
+            throw new IllegalArgumentException("Illegal number of LUT Descriptor values: " + desc.length);
+        }
+        if (desc[0] < 0) {
+            throw new IllegalArgumentException("Illegal LUT Descriptor: len=" + desc[0]);
+        }
+        int bits = desc[2];
+        if (bits != 8 && bits != 16) {
+            throw new IllegalArgumentException("Illegal LUT Descriptor: bits=" + bits);
+        }
+        return desc;
+    }
+
+    public static byte[] lutData(Attributes ds, int[] desc, int dataTag, int segmTag) {
+        int len = desc[0] == 0 ? 0x10000 : desc[0];
+        int bits = desc[2];
+        byte[] data = ds.getSafeBytes(dataTag);
+        if (data == null) {
+            int[] segm = ds.getInts(segmTag);
+            if (segm == null) {
+                throw new IllegalArgumentException("Missing LUT Data!");
+            }
+            if (bits == 8) {
+                throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8");
+            }
+            data = new byte[len];
+            inflateSegmentedLut(segm, data);
+        } else if (bits == 16 || data.length != len) {
+            if (data.length != len << 1) {
+                lutLengthMismatch(data.length, len);
+            }
+            int hilo = ds.bigEndian() ? 0 : 1;
+            if (bits == 8) {
+                hilo = 1 - hilo; // padded high bits -> use low bits
+            }
+            byte[] bs = new byte[data.length >> 1];
+            for (int i = 0; i < bs.length; i++) {
+                bs[i] = data[(i << 1) | hilo];
+            }
+            data = bs;
+        }
+        return data;
+    }
+
+    private static void inflateSegmentedLut(int[] in, byte[] out) {
+        int x = 0;
+        try {
+            for (int i = 0; i < in.length;) {
+                int op = in[i++];
+                int n = in[i++];
+                switch (op) {
+                    case 0:
+                        while (n-- > 0) {
+                            out[x++] = (byte) in[i++];
+                        }
+                        break;
+                    case 1:
+                        x = linearSegment(in[i++], out, x, n);
+                        break;
+                    case 2: {
+                        int i2 = (in[i++] & 0xffff) | (in[i++] << 16);
+                        while (n-- > 0) {
+                            int op2 = in[i2++];
+                            int n2 = in[i2++] & 0xffff;
+                            switch (op2) {
+                                case 0:
+                                    while (n2-- > 0) {
+                                        out[x++] = (byte) in[i2++];
+                                    }
+                                    break;
+                                case 1:
+                                    x = linearSegment(in[i2++], out, x, n);
+                                    break;
+                                default:
+                                    illegalOpcode(op, i2 - 2);
+                            }
+                        }
+                    }
+                    default:
+                        illegalOpcode(op, i - 2);
+                }
+            }
+        } catch (IndexOutOfBoundsException e) {
+            if (x > out.length) {
+                exceedsLutLength(out.length);
+            } else {
+                endOfSegmentedLut();
+            }
+        }
+        if (x < out.length) {
+            lutLengthMismatch(x, out.length);
+        }
+    }
+
+    private static void endOfSegmentedLut() {
+        throw new IllegalArgumentException("Running out of data inflating segmented LUT");
+    }
+
+    private static int linearSegment(int y1, byte[] out, int x, int n) {
+        if (x == 0) {
+            throw new IllegalArgumentException("Linear segment cannot be the first segment");
+        }
+
+        try {
+            int y0 = out[x - 1];
+            int dy = y1 - y0;
+            for (int j = 1; j <= n; j++) {
+                out[x++] = (byte) ((y0 + dy * j / n) >> 8);
+            }
+        } catch (IndexOutOfBoundsException e) {
+            exceedsLutLength(out.length);
+        }
+        return x;
+    }
+
+    private static void exceedsLutLength(int descLen) {
+        throw new IllegalArgumentException("Number of entries in inflated segmented LUT exceeds specified value: "
+            + descLen + " in LUT Descriptor");
+    }
+
+    private static void lutLengthMismatch(int lutLen, int descLen) {
+        throw new IllegalArgumentException("Number of actual LUT entries: " + lutLen + " mismatch specified value: "
+            + descLen + " in LUT Descriptor");
+    }
+
+    private static void illegalOpcode(int op, int i) {
+        throw new IllegalArgumentException("illegal op code:" + op + ", index:" + i);
     }
 }

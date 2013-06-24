@@ -15,14 +15,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.dcm4che.data.DicomElement;
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
-import org.dcm4che.data.VR;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
@@ -34,7 +31,7 @@ public class DicomSpecialElement extends MediaElement {
 
     public DicomSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO, null);
-        DicomObject dicom = mediaIO.getDicomObject();
+        Attributes dicom = mediaIO.getDicomObject();
         String clabel = dicom.getString(Tag.ContentLabel);
         if (clabel == null) {
             clabel = dicom.getString(Tag.ContentDescription);
@@ -83,8 +80,8 @@ public class DicomSpecialElement extends MediaElement {
         if (studyElements != null && seriesUID != null && sopUID != null) {
             for (DicomSpecialElement dicom : studyElements) {
                 if (dicom != null && "PR".equals(dicom.getTagValue(TagW.Modality))) { //$NON-NLS-1$
-                    if (isSopuidInReferencedSeriesSequence(
-                        (DicomElement) dicom.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
+                    if (isSopuidInReferencedSeriesSequence((Sequence) dicom.getTagValue(TagW.ReferencedSeriesSequence),
+                        seriesUID, sopUID, frameNumber)) {
                         filteredList.add(dicom);
                     }
                 }
@@ -93,29 +90,17 @@ public class DicomSpecialElement extends MediaElement {
         return filteredList;
     }
 
-    private static boolean isSopuidInReferencedSeriesSequence(DicomElement seq, String seriesUID, String sopUID,
+    private static boolean isSopuidInReferencedSeriesSequence(Sequence seq, String seriesUID, String sopUID,
         Integer frameNumber) {
-        if (seq != null && seq.vr() == VR.SQ) {
-            for (int i = 0; i < seq.countItems(); ++i) {
-                DicomObject dcmObj = null;
-                try {
-                    dcmObj = seq.getDicomObject(i);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (dcmObj != null && seriesUID.equals(dcmObj.getString(Tag.SeriesInstanceUID))) {
-                    DicomElement seq2 = dcmObj.get(Tag.ReferencedImageSequence);
-                    if (seq2 != null && seq2.vr() == VR.SQ) {
-                        for (int j = 0; j < seq2.countItems(); ++j) {
-                            DicomObject dcmImgs = null;
-                            try {
-                                dcmImgs = seq2.getDicomObject(j);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            if (dcmImgs != null && sopUID.equals(dcmImgs.getString(Tag.ReferencedSOPInstanceUID))) {
+        if (seq != null) {
+            for (Attributes item : seq) {
+                if (seriesUID.equals(item.getString(Tag.SeriesInstanceUID))) {
+                    Sequence seq2 = item.getSequence(Tag.ReferencedImageSequence);
+                    if (seq2 != null) {
+                        for (Attributes sop : seq2) {
+                            if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
                                 if (frameNumber != null && frameNumber > 1) {
-                                    int[] seqFrame = dcmImgs.getInts(Tag.ReferencedFrameNumber);
+                                    int[] seqFrame = sop.getInts(Tag.ReferencedFrameNumber);
                                     if (seqFrame == null || seqFrame.length == 0) {
                                         return true;
                                     } else {
@@ -159,17 +144,18 @@ public class DicomSpecialElement extends MediaElement {
 
             if (element instanceof KOSpecialElement) {
                 KOSpecialElement koElement = (KOSpecialElement) element;
-                Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
 
-                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
-                    koElement.getMediaReader().isWritableDicom()) {
-
-                    if (koElementSet == null) {
-                        // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
-                        koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
-                    }
-                    koElementSet.add(koElement);
-                }
+                // Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+                //
+                // if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
+                // koElement.getMediaReader().isWritableDicom()) {
+                //
+                // if (koElementSet == null) {
+                // // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
+                // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
+                // }
+                // koElementSet.add(koElement);
+                // }
             }
         }
 
@@ -189,8 +175,8 @@ public class DicomSpecialElement extends MediaElement {
             if (element instanceof PRSpecialElement) {
                 PRSpecialElement prElement = (PRSpecialElement) element;
 
-                if (isSopuidInReferencedSeriesSequence(
-                    (DicomElement) prElement.getTagValue(TagW.ReferencedSeriesSequence), seriesUID, sopUID, frameNumber)) {
+                if (isSopuidInReferencedSeriesSequence((Sequence) prElement.getTagValue(TagW.ReferencedSeriesSequence),
+                    seriesUID, sopUID, frameNumber)) {
 
                     if (prList == null) {
                         prList = new ArrayList<PRSpecialElement>();

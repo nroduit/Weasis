@@ -177,6 +177,9 @@ public class PresetWindowLevel {
             String defaultExplanation = "VOI LUT";
 
             for (int i = 0; i < voiLUTsData.length; i++) {
+                if (voiLUTsData[i] == null) {
+                    continue;
+                }
                 String explanation = defaultExplanation + " " + i;
 
                 if (voiLUTsExplanation != null && i < voiLUTsExplanation.length) {

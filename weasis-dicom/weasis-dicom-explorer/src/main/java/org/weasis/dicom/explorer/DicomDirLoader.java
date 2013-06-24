@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.dcm4che.data.DicomElement;
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
-import org.dcm4che.data.VR;
+import org.dcm4che.image.PhotometricInterpretation;
 import org.dcm4che.media.DicomDirReader;
-import org.dcm4che.media.DirectoryRecordType;
+import org.dcm4che.media.RecordFactory;
+import org.dcm4che.media.RecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -33,7 +33,6 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
-import org.weasis.dicom.codec.utils.ColorModelFactory;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
@@ -41,6 +40,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomDirLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirLoader.class);
+
+    public static final RecordFactory RecordFactory = new RecordFactory();
 
     private DicomDirReader reader;
     private final DicomModel dicomModel;
@@ -58,16 +59,16 @@ public class DicomDirLoader {
         seriesList = new ArrayList<LoadSeries>();
         try {
             reader = new DicomDirReader(dcmDirFile);
-            reader.setShowInactiveRecords(false);
+            // reader.setShowInactiveRecords(false);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public ArrayList<LoadSeries> readDicomDir() {
-        DicomObject dcmPatient = null;
+        Attributes dcmPatient = null;
         try {
-            dcmPatient = reader.findFirstRootRecord();
+            dcmPatient = reader.findFirstRootDirectoryRecordInUse(true);
         } catch (IOException e1) {
             LOGGER.error("Cannot find Patient in DICOMDIR !"); //$NON-NLS-1$
         }
@@ -75,7 +76,7 @@ public class DicomDirLoader {
         MediaSeriesGroup patient = null;
         int pat = 0;
         while (dcmPatient != null) {
-            if (DirectoryRecordType.PATIENT.equals(dcmPatient.getString(Tag.DirectoryRecordType))) {
+            if (RecordType.PATIENT.name().equals(dcmPatient.getString(Tag.DirectoryRecordType))) {
                 try {
                     String name = DicomMediaUtils.buildPatientName(dcmPatient.getString(Tag.PatientName));
                     String patientPseudoUID =
@@ -126,10 +127,10 @@ public class DicomDirLoader {
         return seriesList;
     }
 
-    private void parseStudy(MediaSeriesGroup patient, DicomObject dcmPatient) {
-        DicomObject dcmStudy = findFirstChildRecord(dcmPatient);
+    private void parseStudy(MediaSeriesGroup patient, Attributes dcmPatient) {
+        Attributes dcmStudy = findFirstChildRecord(dcmPatient);
         while (dcmStudy != null) {
-            if (DirectoryRecordType.STUDY.equals(dcmStudy.getString(Tag.DirectoryRecordType))) {
+            if (RecordType.STUDY.name().equals(dcmStudy.getString(Tag.DirectoryRecordType))) {
                 String studyUID = dcmStudy.getString(Tag.StudyInstanceUID, DicomMediaIO.NO_VALUE);
                 MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
                 if (study == null) {
@@ -143,10 +144,10 @@ public class DicomDirLoader {
         }
     }
 
-    private void parseSeries(MediaSeriesGroup patient, MediaSeriesGroup study, DicomObject dcmStudy) {
-        DicomObject series = findFirstChildRecord(dcmStudy);
+    private void parseSeries(MediaSeriesGroup patient, MediaSeriesGroup study, Attributes dcmStudy) {
+        Attributes series = findFirstChildRecord(dcmStudy);
         while (series != null) {
-            if (DirectoryRecordType.SERIES.equals(series.getString(Tag.DirectoryRecordType))) {
+            if (RecordType.SERIES.name().equals(series.getString(Tag.DirectoryRecordType))) {
                 String seriesUID = series.getString(Tag.SeriesInstanceUID, DicomMediaIO.NO_VALUE);
                 Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
                 if (dicomSeries == null) {
@@ -172,19 +173,17 @@ public class DicomDirLoader {
                 } else if (dicomInstances.size() > 0) {
                     containsInstance = true;
                 }
-                DicomObject iconInstance = null;
+
                 // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It may or may not
                 // correspond to one of the images of the Series.
-                DicomElement seq = series.get(Tag.IconImageSequence);
-                if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
-                    iconInstance = seq.getDicomObject(0);
-                }
+                Attributes iconInstance = series.getNestedDataset(Tag.IconImageSequence);
 
                 // TODO implement Key Object
-                DicomObject instance = findFirstChildRecord(series);
+
+                Attributes instance = findFirstChildRecord(series);
                 while (instance != null) {
-                    if (DirectoryRecordType.IMAGE.equals(instance.getString(Tag.DirectoryRecordType))
-                        || DirectoryRecordType.ENCAP_DOC.equals(instance.getString(Tag.DirectoryRecordType))) {
+                    if (RecordType.IMAGE.name().equals(instance.getString(Tag.DirectoryRecordType))
+                        || RecordType.ENCAP_DOC.name().equals(instance.getString(Tag.DirectoryRecordType))) {
                         // update instance level tag values
 
                         String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
@@ -205,15 +204,11 @@ public class DicomDirLoader {
                                     if (iconInstance == null) {
                                         // Icon Image Sequence (0088,0200). This Icon Image is representative of the
                                         // Image. Only a single Item is permitted in this Sequence.
-                                        seq = instance.get(Tag.IconImageSequence);
-                                        if (seq != null && seq.vr() == VR.SQ && seq.countItems() > 0) {
-                                            iconInstance = seq.getDicomObject(0);
-                                        }
+                                        iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                                     }
                                 }
                             }
                         }
-
                     }
                     instance = findNextSiblingRecord(instance);
                 }
@@ -243,9 +238,15 @@ public class DicomDirLoader {
         }
     }
 
-    private String readDicomDirIcon(DicomObject iconInstance) {
+    private String readDicomDirIcon(Attributes iconInstance) {
         if (iconInstance != null) {
-            byte[] pixelData = iconInstance.getBytes(Tag.PixelData);
+            byte[] pixelData = null;
+            try {
+                pixelData = iconInstance.getBytes(Tag.PixelData);
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             if (pixelData != null) {
                 File thumbnailPath = null;
                 try {
@@ -260,15 +261,22 @@ public class DicomDirLoader {
                      * either MONOCHROME 1, MONOCHROME 2 or PALETTE COLOR, Planar Configuration (0028,0006) shall not be
                      * present
                      */
-                    int width = iconInstance.getInt(Tag.Columns);
-                    int height = iconInstance.getInt(Tag.Rows);
-                    WritableRaster raster =
-                        WritableRaster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
-                    raster.setDataElements(0, 0, width, height, pixelData);
-                    BufferedImage thumbnail =
-                        new BufferedImage(ColorModelFactory.createColorModel(iconInstance), raster, false, null);
-                    if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
-                        return thumbnailPath.getPath();
+                    int width = iconInstance.getInt(Tag.Columns, 0);
+                    int height = iconInstance.getInt(Tag.Rows, 0);
+                    if (width != 0 && height != 0) {
+                        WritableRaster raster =
+                            WritableRaster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0,
+                                0));
+                        raster.setDataElements(0, 0, width, height, pixelData);
+                        PhotometricInterpretation pmi =
+                            PhotometricInterpretation.fromString(iconInstance.getString(Tag.PhotometricInterpretation,
+                                "MONOCHROME2"));
+                        BufferedImage thumbnail =
+                            new BufferedImage(pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster,
+                                false, null);
+                        if (ImageFiler.writeJPG(thumbnailPath, thumbnail, 0.75f)) {
+                            return thumbnailPath.getPath();
+                        }
                     }
                 }
             }
@@ -276,25 +284,25 @@ public class DicomDirLoader {
         return null;
     }
 
-    private DicomObject findFirstChildRecord(DicomObject dcmObject) {
+    private Attributes findFirstChildRecord(Attributes dcmObject) {
         try {
-            return reader.findFirstChildRecord(dcmObject);
+            return reader.findLowerDirectoryRecordInUse(dcmObject, true);
         } catch (IOException e) {
             LOGGER.error("Cannot read first DICOMDIR entry!", e.getMessage()); //$NON-NLS-1$
         }
         return null;
     }
 
-    private DicomObject findNextSiblingRecord(DicomObject dcmObject) {
+    private Attributes findNextSiblingRecord(Attributes dcmObject) {
         try {
-            return reader.findNextSiblingRecord(dcmObject);
+            return reader.findNextDirectoryRecordInUse(dcmObject, true);
         } catch (IOException e) {
             LOGGER.error("Cannot read next DICOMDIR entry!", e.getMessage()); //$NON-NLS-1$
         }
         return null;
     }
 
-    private String toFileName(DicomObject dcmObject) {
+    private String toFileName(Attributes dcmObject) {
         String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
         if (fileID == null || fileID.length == 0) {
             return null;

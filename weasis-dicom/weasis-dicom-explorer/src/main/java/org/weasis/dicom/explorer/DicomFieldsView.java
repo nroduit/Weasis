@@ -13,7 +13,6 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.util.Iterator;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -34,10 +33,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
-import org.dcm4che.data.DicomElement;
-import org.dcm4che.data.DicomObject;
-import org.dcm4che.data.VR;
-import org.dcm4che.util.TagUtils;
+import org.dcm4che.data.Attributes;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
@@ -137,45 +133,45 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         StyleConstants.setItalic(s, true);
     }
 
-    public StringBuffer toStringBuffer(DicomElement element, DicomObject dcmObj) {
-        StringBuffer sb = new StringBuffer();
-        TagUtils.toStringBuffer(element.tag(), sb);
-        sb.append(' ');
-        sb.append(element.vr());
-        sb.append(" #"); //$NON-NLS-1$
-        sb.append(element.length());
-        sb.append(" ["); //$NON-NLS-1$
-        // Other VR than sequence can have several items, but there are not displayed after.
-        if (element.vr() == VR.SQ || element.hasFragments()) {
-            final int size = element.countItems();
-            if (size != 0) {
-                if (size == 1) {
-                    sb.append("1 item"); //$NON-NLS-1$
-                } else {
-                    sb.append(size).append(" items"); //$NON-NLS-1$
-                }
-            }
-        } else {
-            element.vr().promptValue(element.getBytes(), element.bigEndian(), null, cbuf.get(), 96, sb);
-        }
-        sb.append("] "); //$NON-NLS-1$
-        // String tag = ElementDictionary.getDictionary().nameOf(element.tag());
-        // if (tag != null) {
-        sb.append(dcmObj.nameOf(element.tag()));
-        // }
-        return sb;
-    }
+    // public StringBuffer toStringBuffer(DicomElement element, Attributes dcmObj) {
+    // StringBuffer sb = new StringBuffer();
+    // TagUtils.toStringBuffer(element.tag(), sb);
+    // sb.append(' ');
+    // sb.append(element.vr());
+    //        sb.append(" #"); //$NON-NLS-1$
+    // sb.append(element.length());
+    //        sb.append(" ["); //$NON-NLS-1$
+    // // Other VR than sequence can have several items, but there are not displayed after.
+    // if (element.vr() == VR.SQ || element.hasFragments()) {
+    // final int size = element.countItems();
+    // if (size != 0) {
+    // if (size == 1) {
+    //                    sb.append("1 item"); //$NON-NLS-1$
+    // } else {
+    //                    sb.append(size).append(" items"); //$NON-NLS-1$
+    // }
+    // }
+    // } else {
+    // element.vr().promptValue(element.getBytes(), element.bigEndian(), null, cbuf.get(), 96, sb);
+    // }
+    //        sb.append("] "); //$NON-NLS-1$
+    // // String tag = ElementDictionary.getDictionary().nameOf(element.tag());
+    // // if (tag != null) {
+    // sb.append(dcmObj.nameOf(element.tag()));
+    // // }
+    // return sb;
+    // }
 
-    public void addSequenceElement(DicomElement element, DefaultListModel listModel) {
-        for (int i = 0; i < element.countItems(); i++) {
-            DicomObject dcmObj = element.getDicomObject(i);
-            String[] val = dcmObj.toString().split("\n"); //$NON-NLS-1$
-            for (int j = 0; j < val.length; j++) {
-                listModel.addElement(" >" + val[j]); //$NON-NLS-1$
-            }
-
-        }
-    }
+    // public void addSequenceElement(DicomElement element, DefaultListModel listModel) {
+    // for (int i = 0; i < element.countItems(); i++) {
+    // DicomObject dcmObj = element.getDicomObject(i);
+    //            String[] val = dcmObj.toString().split("\n"); //$NON-NLS-1$
+    // for (int j = 0; j < val.length; j++) {
+    //                listModel.addElement(" >" + val[j]); //$NON-NLS-1$
+    // }
+    //
+    // }
+    // }
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
@@ -207,23 +203,25 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (media != null) {
             MediaReader loader = media.getMediaReader();
             if (loader instanceof DicomMediaIO) {
-                DicomObject dcmObj = ((DicomMediaIO) loader).getDicomObject();
-                Iterator it = dcmObj.fileMetaInfoIterator();
-                while (it.hasNext()) {
-                    DicomElement element = (DicomElement) it.next();
-                    listModel.addElement(toStringBuffer(element, dcmObj).toString());
-                    if (element.vr() == VR.SQ) {
-                        addSequenceElement(element, listModel);
-                    }
-                }
-                it = dcmObj.datasetIterator();
-                while (it.hasNext()) {
-                    DicomElement element = (DicomElement) it.next();
-                    listModel.addElement(toStringBuffer(element, dcmObj).toString());
-                    if (element.vr() == VR.SQ) {
-                        addSequenceElement(element, listModel);
-                    }
-                }
+                Attributes dcmObj = ((DicomMediaIO) loader).getDicomObject();
+                // TODO
+
+                // Iterator it = dcmObj.fileMetaInfoIterator();
+                // while (it.hasNext()) {
+                // DicomElement element = (DicomElement) it.next();
+                // listModel.addElement(toStringBuffer(element, dcmObj).toString());
+                // if (element.vr() == VR.SQ) {
+                // addSequenceElement(element, listModel);
+                // }
+                // }
+                // it = dcmObj.datasetIterator();
+                // while (it.hasNext()) {
+                // DicomElement element = (DicomElement) it.next();
+                // listModel.addElement(toStringBuffer(element, dcmObj).toString());
+                // if (element.vr() == VR.SQ) {
+                // addSequenceElement(element, listModel);
+                // }
+                // }
             }
         }
 

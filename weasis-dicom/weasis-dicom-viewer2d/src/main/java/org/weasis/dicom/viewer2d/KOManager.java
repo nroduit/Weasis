@@ -17,7 +17,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -246,7 +246,7 @@ public class KOManager {
 
         if (dicomKO == null || !dicomKO.getMediaReader().isWritableDicom()) {
 
-            DicomObject newDicomKO = null;
+            Attributes newDicomKO = null;
 
             String message = "Set a description for the new KeyObject Selection";
             String description =

@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.XMLConstants;
@@ -222,7 +223,9 @@ public class DownloadManager {
 
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE);
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
-        Date birthdate = DateUtils.parseDA(getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null), false);
+        Date birthdate =
+            DateUtils.parseDA(TimeZone.getDefault(), getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null),
+                false);
         String name =
             DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
                 DicomMediaIO.NO_VALUE));

@@ -41,10 +41,11 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageReader;
 
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
-import org.dcm4che.image.ByteLookupTable;
 import org.dcm4che.image.LookupTable;
+import org.dcm4che.image.LookupTableFactory;
+import org.dcm4che.image.StoredValue.Unsigned;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 
@@ -92,7 +93,8 @@ public class OverlayUtils {
                 }
             }
         }
-        reorderBytes = new ByteLookupTable(8, false, 0, 8, reorder);
+        LookupTableFactory lutParam = new LookupTableFactory(new Unsigned(8));
+        reorderBytes = lutParam.createLUT(8);
     }
 
     private static byte[] rgbArr = new byte[] { (byte) 0xFF, 0 };
@@ -110,13 +112,14 @@ public class OverlayUtils {
      *            - of the form 0x60xx yyyy where xx is the overlay index and yyyy is the frame index
      * @param reader
      *            is the image reader used to extract the raster for the high bits
+     * @param cm
      * @param rgb
      *            is the colour to apply, can be null to use black & white overlays.
      * @return A single bit buffered image, transparent except in the given colour where bits are 1.
      * @throws IOException
      *             only if an image from the image reader is attempted and throws an exception.
      */
-    public static BufferedImage extractOverlay(DicomObject ds, int overlayNumber, ImageReader reader, String rgbs)
+    public static BufferedImage extractOverlay(Attributes ds, int overlayNumber, ImageReader reader, ColorModel cm)
         throws IOException {
         // We need the original overlay number.
         if (!OverlayUtils.isOverlay(overlayNumber)) {
@@ -131,7 +134,7 @@ public class OverlayUtils {
         if (cols == 0 || rows == 0) {
             throw new IllegalArgumentException("No overlay found for " + Integer.toString(overlayNumber)); //$NON-NLS-1$
         }
-        int position = ds.getInt(overlayNumber | Tag.OverlayBitPosition);
+        int position = ds.getInt(overlayNumber | Tag.OverlayBitPosition, 0);
         byte[] data;
         if (position == 0) {
             byte[] unpaddedData = ds.getBytes(overlayNumber | Tag.OverlayData);
@@ -167,19 +170,19 @@ public class OverlayUtils {
         // byte[] pixelByte = new byte[rows*(cols/8 + (cols%8==0?0:1))];
 
         WritableRaster wr = Raster.createPackedRaster(db, cols, rows, 1, new Point());
-        byte[] rArr = rgbArr;
-        byte[] gArr = rgbArr;
-        byte[] bArr = rgbArr;
-        if (rgbs != null && rgbs.length() > 0) {
-            if (rgbs.startsWith("#")) { //$NON-NLS-1$
-                rgbs = rgbs.substring(1);
-            }
-            int rgb = Integer.parseInt(rgbs, 16);
-            rArr = new byte[] { 0, (byte) ((rgb >> 16) & 0xFF) };
-            gArr = new byte[] { 0, (byte) ((rgb >> 8) & 0xFF) };
-            bArr = new byte[] { 0, (byte) (rgb & 0xFF) };
-        }
-        ColorModel cm = new IndexColorModel(1, 2, rArr, gArr, bArr, aArr);
+        // byte[] rArr = rgbArr;
+        // byte[] gArr = rgbArr;
+        // byte[] bArr = rgbArr;
+        // if (rgbs != null && rgbs.length() > 0) {
+        //            if (rgbs.startsWith("#")) { //$NON-NLS-1$
+        // rgbs = rgbs.substring(1);
+        // }
+        // int rgb = Integer.parseInt(rgbs, 16);
+        // rArr = new byte[] { 0, (byte) ((rgb >> 16) & 0xFF) };
+        // gArr = new byte[] { 0, (byte) ((rgb >> 8) & 0xFF) };
+        // bArr = new byte[] { 0, (byte) (rgb & 0xFF) };
+        // }
+        // ColorModel cm = new IndexColorModel(1, 2, rArr, gArr, bArr, aArr);
         BufferedImage bi = new BufferedImage(cm, wr, false, null);
         reorderBytes.lookup(bi.getRaster(), bi.getRaster());
 
@@ -254,10 +257,10 @@ public class OverlayUtils {
      * @return The width in pixels of the given overlay.
      * @throws IOException
      */
-    public static int getOverlayWidth(DicomObject ds, int overlayNumber) {
+    public static int getOverlayWidth(Attributes ds, int overlayNumber) {
         // Zero out the frame index first.
         overlayNumber &= 0x60FF0000;
-        return ds.getInt(Tag.OverlayColumns | overlayNumber);
+        return ds.getInt(Tag.OverlayColumns | overlayNumber, 0);
     }
 
     /**
@@ -267,9 +270,9 @@ public class OverlayUtils {
      * @param overlayNumber
      * @return
      */
-    public static int getOverlayHeight(DicomObject ds, int overlayNumber) {
+    public static int getOverlayHeight(Attributes ds, int overlayNumber) {
         overlayNumber &= 0x60FF0000;
-        return ds.getInt(Tag.OverlayRows | overlayNumber);
+        return ds.getInt(Tag.OverlayRows | overlayNumber, 0);
     }
 
     private static final byte[] icmColorValues = new byte[] { (byte) 0xFF, (byte) 0x00 };
@@ -297,15 +300,15 @@ public class OverlayUtils {
         return tag + x;
     }
 
-    private static int getInt(DicomObject ds, int group, int tag, int def) {
+    private static int getInt(Attributes ds, int group, int tag, int def) {
         return ds.getInt(groupedTag(group, tag), def);
     }
 
-    private static int[] getInts(DicomObject ds, int group, int tag) {
+    private static int[] getInts(Attributes ds, int group, int tag) {
         return ds.getInts(groupedTag(group, tag));
     }
 
-    private static String getString(DicomObject ds, int group, int tag) {
+    private static String getString(Attributes ds, int group, int tag) {
         return ds.getString(groupedTag(group, tag));
     }
 
@@ -333,7 +336,7 @@ public class OverlayUtils {
      */
     public static RenderedImage getOverlays(ImageElement imageElement, DicomMediaIO reader, int frame, int width,
         int height) throws IOException {
-        DicomObject ds = reader.getDicomObject();
+        Attributes ds = reader.getDicomObject();
 
         // long t1 = System.currentTimeMillis();
         IndexColorModel icm = new IndexColorModel(1, 2, icmColorValues, icmColorValues, icmColorValues, 0);
@@ -413,7 +416,7 @@ public class OverlayUtils {
             // log.debug("Overlay: {} numBits: {}", group, numBits);
             // log.debug("Overlay: {} numBytes: {}", group, numBytes);
 
-            byte[] bb = ds.get(groupedTag(group, Tag.OverlayData)).getBytes();
+            byte[] bb = ds.getBytes(groupedTag(group, Tag.OverlayData));
             // log.debug("Overlay: {} ByteBuffer: {}", group, bb);
             // log.debug("Overlay: {} ByteBuffer ByteOrder: {}", group, (bb.order() == ByteOrder.BIG_ENDIAN) ?
             // "BigEndian"

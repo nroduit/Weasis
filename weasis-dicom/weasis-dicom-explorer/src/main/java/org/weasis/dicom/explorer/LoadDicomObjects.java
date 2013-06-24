@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -42,12 +42,12 @@ import org.weasis.dicom.codec.DicomMediaIO;
 public class LoadDicomObjects extends ExplorerTask {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(LoadDicomObjects.class);
-    private final DicomObject[] dicomObjectsToLoad;
+    private final Attributes[] dicomObjectsToLoad;
     private final DicomModel dicomModel;
 
     private boolean openPlugin = true;
 
-    public LoadDicomObjects(DataExplorerModel explorerModel, DicomObject... dcmObjects) {
+    public LoadDicomObjects(DataExplorerModel explorerModel, Attributes... dcmObjects) {
         super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
 
         if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
@@ -83,7 +83,7 @@ public class LoadDicomObjects extends ExplorerTask {
 
         final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>(dicomObjectsToLoad.length);
 
-        for (DicomObject dicom : dicomObjectsToLoad) {
+        for (Attributes dicom : dicomObjectsToLoad) {
             DicomMediaIO loader = new DicomMediaIO(dicom);
 
             if (loader.isReadableDicom()) {

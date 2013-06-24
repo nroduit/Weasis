@@ -28,14 +28,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.vecmath.Vector3d;
 
-import org.dcm4che.data.DicomElement;
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.util.TagUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
@@ -157,7 +155,7 @@ public class SeriesBuilder {
                             final DicomSeries dicomSeries =
                                 buildDicomSeriesFromRaw(secSeries, new Dimension(width, size), img, false, seriesID,
                                     origPixSize, sPixSize, pos, imgOr);
-                            final DicomObject dcmObj = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
+                            final Attributes dcmObj = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
 
                             if (dicomSeries != null) {
                                 GuiExecutor.instance().execute(new Runnable() {
@@ -281,22 +279,21 @@ public class SeriesBuilder {
         return dicomSeries;
     }
 
-    private static DicomSeries buildDicomSeries(RawImage[] newSeries, Dimension dim, DicomObject dcmObj,
-        boolean rotate, String seriesID, double origPixSize, double sPixSize, double[] pos, double[] imOr)
-        throws Exception {
+    private static DicomSeries buildDicomSeries(RawImage[] newSeries, Dimension dim, Attributes dcmObj, boolean rotate,
+        String seriesID, double origPixSize, double sPixSize, double[] pos, double[] imOr) throws Exception {
         // clean tags
         removeAllPrivateTags(dcmObj);
 
         String prefix = rotate ? "m3." : "m2.";
 
-        dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
+        dcmObj.setString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
 
-        dcmObj.putInt(Tag.Columns, VR.US, dim.width);
-        dcmObj.putInt(Tag.Rows, VR.US, dim.height);
-        dcmObj.putDouble(Tag.SliceThickness, VR.DS, origPixSize);
-        dcmObj.putDoubles(Tag.PixelSpacing, VR.DS, new double[] { sPixSize, origPixSize });
-        dcmObj.putString(Tag.SeriesInstanceUID, VR.UI, prefix + seriesID);
-        dcmObj.putDoubles(Tag.ImageOrientationPatient, VR.DS, imOr);
+        dcmObj.setInt(Tag.Columns, VR.US, dim.width);
+        dcmObj.setInt(Tag.Rows, VR.US, dim.height);
+        dcmObj.setDouble(Tag.SliceThickness, VR.DS, origPixSize);
+        dcmObj.setDouble(Tag.PixelSpacing, VR.DS, new double[] { sPixSize, origPixSize });
+        dcmObj.setString(Tag.SeriesInstanceUID, VR.UI, prefix + seriesID);
+        dcmObj.setDouble(Tag.ImageOrientationPatient, VR.DS, imOr);
 
         int last = newSeries.length;
         for (int i = 0; i < newSeries.length; i++) {
@@ -306,15 +303,15 @@ public class SeriesBuilder {
                 throw new IllegalAccessException("Cannot read raw image!");
             }
             int index = i;
-            dcmObj.putString(Tag.SOPInstanceUID, VR.UI, prefix + (rotate ? last - index : index + 1));
-            dcmObj.putInt(Tag.InstanceNumber, VR.IS, rotate ? last - index : index + 1);
+            dcmObj.setString(Tag.SOPInstanceUID, VR.UI, prefix + (rotate ? last - index : index + 1));
+            dcmObj.setInt(Tag.InstanceNumber, VR.IS, rotate ? last - index : index + 1);
             double location = (rotate ? pos[0] : pos[1]) + (rotate ? last - index - 1 : index) * origPixSize;
 
-            dcmObj.putDouble(Tag.SliceLocation, VR.DS, location);
-            dcmObj.putDoubles(Tag.ImagePositionPatient, VR.DS, new double[] { rotate ? location : pos[0],
+            dcmObj.setDouble(Tag.SliceLocation, VR.DS, location);
+            dcmObj.setDouble(Tag.ImagePositionPatient, VR.DS, new double[] { rotate ? location : pos[0],
                 rotate ? pos[1] : location, pos[2] });
 
-            dcmObj.putBytes(Tag.PixelData, VR.OW, bytesOut);
+            dcmObj.setBytes(Tag.PixelData, VR.OW, bytesOut);
 
             writeDICOM(newSeries[i], dcmObj);
 
@@ -512,17 +509,16 @@ public class SeriesBuilder {
                 * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
     }
 
-    private static void removeAllPrivateTags(DicomObject dcmObj) {
-        Iterator it = dcmObj.datasetIterator();
-        while (it.hasNext()) {
-            DicomElement element = (DicomElement) it.next();
-            if (TagUtils.isPrivateDataElement(element.tag())) {
-                dcmObj.remove(element.tag());
-            }
-        }
+    private static void removeAllPrivateTags(Attributes item) {
+        // for (int i = 0; i < item.size(); i++) {
+        // DicomElement element = item.getValue(tag);
+        // if (TagUtils.isPrivateDataElement(element.tag())) {
+        // dcmObj.remove(element.tag());
+        // }
+        // }
     }
 
-    private static boolean writeDICOM(RawImage newSeries, DicomObject dcmObj) throws Exception {
+    private static boolean writeDICOM(RawImage newSeries, Attributes dcmObj) throws Exception {
         DicomOutputStream out = null;
         DicomInputStream dis = null;
         File inFile = newSeries.getFile();
@@ -530,8 +526,10 @@ public class SeriesBuilder {
         File outFile = new File(MPR_CACHE_DIR, name + ".dcm");
 
         try {
-            out = new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)));
-            out.writeDicomFile(dcmObj);
+            out =
+                new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)),
+                    UID.ImplicitVRLittleEndian);
+            out.writeDataset(null, dcmObj);
         } catch (IOException e) {
             //     LOGGER.warn("", e); //$NON-NLS-1$
             outFile.delete();

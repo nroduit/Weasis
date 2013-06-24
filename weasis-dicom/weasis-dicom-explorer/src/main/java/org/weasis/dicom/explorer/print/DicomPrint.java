@@ -26,21 +26,19 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
-import java.util.concurrent.Executor;
 
-import org.dcm4che.data.BasicDicomObject;
-import org.dcm4che.data.DicomObject;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
-import org.dcm4che.imageioimpl.plugins.dcm.DicomImageReader;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
+import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.NetworkApplicationEntity;
-import org.dcm4che.net.NetworkConnection;
-import org.dcm4che.net.NewThreadExecutor;
 import org.dcm4che.net.TransferCapability;
+import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.util.UIDUtils;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ImagePrint;
@@ -78,7 +76,7 @@ public class DicomPrint {
         boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
         BufferedImage bufferedImage;
         if (printOptions.isColor()) {
-            bufferedImage = DicomImageReader.createRGBBufferedImage(image.getWidth(), image.getHeight());
+            bufferedImage = createRGBBufferedImage(image.getWidth(), image.getHeight());
         } else {
             bufferedImage = createGrayBufferedImage(image.getWidth(), image.getHeight());
         }
@@ -87,6 +85,19 @@ public class DicomPrint {
         image.draw(g2d);
         ImagePrint.restoreDoubleBuffering(image, wasBuffered);
         return bufferedImage;
+    }
+
+    /**
+     * Creates a BufferedImage with a custom color model that can be used to store 3 channel RGB data in a byte array
+     * data buffer
+     */
+    public static BufferedImage createRGBBufferedImage(int destWidth, int destHeight) {
+        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        ColorModel cm = new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
+        BufferedImage dest = new BufferedImage(cm, r, false, null);
+
+        return dest;
     }
 
     public static BufferedImage createGrayBufferedImage(int destWidth, int destHeight) {
@@ -99,10 +110,10 @@ public class DicomPrint {
     }
 
     public void printImage(BufferedImage image) throws Exception {
-        DicomObject filmSessionAttrs = new BasicDicomObject();
-        DicomObject filmBoxAttrs = new BasicDicomObject();
-        DicomObject imageBoxAttrs = new BasicDicomObject();
-        DicomObject dicomImage = new BasicDicomObject();
+        Attributes filmSessionAttrs = new Attributes();
+        Attributes filmBoxAttrs = new Attributes();
+        Attributes imageBoxAttrs = new Attributes();
+        Attributes dicomImage = new Attributes();
         final String printManagementSOPClass =
             dicomPrintOptions.isPrintInColor() ? UID.BasicColorPrintManagementMetaSOPClass
                 : UID.BasicGrayscalePrintManagementMetaSOPClass;
@@ -110,83 +121,83 @@ public class DicomPrint {
             dicomPrintOptions.isPrintInColor() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
 
         storeRasterInDicom(image, dicomImage, dicomPrintOptions.isPrintInColor());
-        TransferCapability[] transferCapability =
-            { new TransferCapability(printManagementSOPClass, NATIVE_LE_TS, TransferCapability.SCU) };
+        TransferCapability transferCapability =
+            new TransferCapability(null, printManagementSOPClass, TransferCapability.Role.SCU, NATIVE_LE_TS);
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-        Device device = new Device(""); //$NON-NLS-1$
-        NetworkApplicationEntity ae = new NetworkApplicationEntity();
-        NetworkConnection conn = new NetworkConnection();
-        Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
-        NetworkApplicationEntity remoteAE = new NetworkApplicationEntity();
-        NetworkConnection remoteConn = new NetworkConnection();
+        Device device = new Device("WEASIS_AE"); //$NON-NLS-1$
+        ApplicationEntity ae = new ApplicationEntity("WEASIS_AE");
+        Connection conn = new Connection();
+        //    Executor executor = new NewThreadExecutor("WEASIS_AE"); //$NON-NLS-1$
+        ApplicationEntity remoteAE = new ApplicationEntity("WEASIS_AE");
+        Connection remoteConn = new Connection();
 
         conn.setPort(106);
         conn.setHostname("localhost"); //$NON-NLS-1$
 
-        ae.setNetworkConnection(conn);
+        ae.addConnection(conn);
         ae.setAssociationInitiator(true);
         ae.setAETitle("WEASIS_AE"); //$NON-NLS-1$
-        ae.setTransferCapability(transferCapability);
+        ae.addTransferCapability(transferCapability);
 
         remoteConn.setPort(dicomPrintOptions.getDicomPrinter().getPort());
         remoteConn.setHostname(dicomPrintOptions.getDicomPrinter().getHostname());
         remoteConn.setSocketCloseDelay(90);
 
-        remoteAE.setNetworkConnection(remoteConn);
+        remoteAE.addConnection(remoteConn);
         remoteAE.setAssociationAcceptor(true);
         remoteAE.setAETitle(dicomPrintOptions.getDicomPrinter().getAeTitle());
 
-        device.setNetworkApplicationEntity(ae);
-        device.setNetworkConnection(conn);
+        device.addApplicationEntity(ae);
+        device.addConnection(conn);
 
-        filmSessionAttrs.putInt(Tag.NumberOfCopies, VR.IS, dicomPrintOptions.getNumOfCopies());
-        filmSessionAttrs.putString(Tag.PrintPriority, VR.CS, dicomPrintOptions.getPriority());
-        filmSessionAttrs.putString(Tag.MediumType, VR.CS, dicomPrintOptions.getMediumType());
-        filmSessionAttrs.putString(Tag.FilmDestination, VR.CS, dicomPrintOptions.getFilmDestination());
-        filmBoxAttrs.putString(Tag.FilmSizeID, VR.CS, dicomPrintOptions.getFilmSizeId());
-        filmBoxAttrs.putString(Tag.FilmOrientation, VR.CS, dicomPrintOptions.getFilmOrientation());
-        filmBoxAttrs.putString(Tag.MagnificationType, VR.CS, dicomPrintOptions.getMagnificationType());
-        filmBoxAttrs.putString(Tag.SmoothingType, VR.CS, dicomPrintOptions.getSmoothingType());
-        filmBoxAttrs.putString(Tag.Trim, VR.CS, dicomPrintOptions.getTrim());
-        filmBoxAttrs.putString(Tag.BorderDensity, VR.CS, dicomPrintOptions.getBorderDensity());
-        filmBoxAttrs.putInt(Tag.MinDensity, VR.US, dicomPrintOptions.getMinDensity());
-        filmBoxAttrs.putInt(Tag.MaxDensity, VR.US, dicomPrintOptions.getMaxDensity());
-        filmBoxAttrs.putString(Tag.ImageDisplayFormat, VR.ST, dicomPrintOptions.getImageDisplayFormat());
-        imageBoxAttrs.putInt(Tag.ImageBoxPosition, VR.US, 1);
-        if (dicomPrintOptions.isPrintInColor()) {
-            imageBoxAttrs.putNestedDicomObject(Tag.BasicColorImageSequence, dicomImage);
-        } else {
-            imageBoxAttrs.putNestedDicomObject(Tag.BasicGrayscaleImageSequence, dicomImage);
-        }
+        filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, dicomPrintOptions.getNumOfCopies());
+        filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, dicomPrintOptions.getPriority());
+        filmSessionAttrs.setString(Tag.MediumType, VR.CS, dicomPrintOptions.getMediumType());
+        filmSessionAttrs.setString(Tag.FilmDestination, VR.CS, dicomPrintOptions.getFilmDestination());
+        filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, dicomPrintOptions.getFilmSizeId());
+        filmBoxAttrs.setString(Tag.FilmOrientation, VR.CS, dicomPrintOptions.getFilmOrientation());
+        filmBoxAttrs.setString(Tag.MagnificationType, VR.CS, dicomPrintOptions.getMagnificationType());
+        filmBoxAttrs.setString(Tag.SmoothingType, VR.CS, dicomPrintOptions.getSmoothingType());
+        filmBoxAttrs.setString(Tag.Trim, VR.CS, dicomPrintOptions.getTrim());
+        filmBoxAttrs.setString(Tag.BorderDensity, VR.CS, dicomPrintOptions.getBorderDensity());
+        filmBoxAttrs.setInt(Tag.MinDensity, VR.US, dicomPrintOptions.getMinDensity());
+        filmBoxAttrs.setInt(Tag.MaxDensity, VR.US, dicomPrintOptions.getMaxDensity());
+        filmBoxAttrs.setString(Tag.ImageDisplayFormat, VR.ST, dicomPrintOptions.getImageDisplayFormat());
+        imageBoxAttrs.setInt(Tag.ImageBoxPosition, VR.US, 1);
+
+        Sequence seq =
+            imageBoxAttrs.ensureSequence(dicomPrintOptions.isPrintInColor() ? Tag.BasicColorImageSequence
+                : Tag.BasicGrayscaleImageSequence, 1);
+        seq.add(dicomImage);
         final String filmSessionUID = UIDUtils.createUID();
         final String filmBoxUID = UIDUtils.createUID();
-        DicomObject filmSessionSequenceObject = new BasicDicomObject();
-        filmSessionSequenceObject.putString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSessionSOPClass);
-        filmSessionSequenceObject.putString(Tag.ReferencedSOPInstanceUID, VR.UI, filmSessionUID);
-        filmBoxAttrs.putNestedDicomObject(Tag.ReferencedFilmSessionSequence, filmSessionSequenceObject);
+        Attributes filmSessionSequenceObject = new Attributes();
+        filmSessionSequenceObject.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSessionSOPClass);
+        filmSessionSequenceObject.setString(Tag.ReferencedSOPInstanceUID, VR.UI, filmSessionUID);
+        seq = filmBoxAttrs.ensureSequence(Tag.ReferencedFilmSessionSequence, 1);
+        seq.add(filmSessionSequenceObject);
 
         Association association;
-        association = ae.connect(remoteAE, executor);
+        association = ae.connect(conn, remoteConn, new AAssociateRQ());
         // Create a Basic Film Session
         dimseRSPHandler(association.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
-            filmSessionAttrs, transferCapability[0].getTransferSyntax()[0]));
+            filmSessionAttrs, transferCapability.getTransferSyntaxes()[0]));
         // Create a Basic Film Box. We need to get the Image Box UID from the response
         DimseRSP ncreateFilmBoxRSP =
             association.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, filmBoxAttrs,
-                transferCapability[0].getTransferSyntax()[0]);
+                transferCapability.getTransferSyntaxes()[0]);
         dimseRSPHandler(ncreateFilmBoxRSP);
         ncreateFilmBoxRSP.next();
-        DicomObject imageBoxSequence =
-            ncreateFilmBoxRSP.getDataset().getNestedDicomObject(Tag.ReferencedImageBoxSequence);
+        Attributes imageBoxSequence = ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
         // Send N-SET message with the Image Box
         dimseRSPHandler(association.nset(printManagementSOPClass, imageBoxSOPClass,
             imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs,
-            transferCapability[0].getTransferSyntax()[0]));
+            transferCapability.getTransferSyntaxes()[0]));
         // Send N-ACTION message with the print action
         dimseRSPHandler(association.naction(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, 1, null,
-            transferCapability[0].getTransferSyntax()[0]));
+            transferCapability.getTransferSyntaxes()[0]));
         // The print action ends here. This will only delete the Film Box and Film Session
         association.ndelete(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID);
         association.ndelete(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID);
@@ -195,28 +206,28 @@ public class DicomPrint {
 
     private void dimseRSPHandler(DimseRSP response) throws Exception {
         response.next();
-        DicomObject command = response.getCommand();
-        if (command.getInt(Tag.Status) != 0) {
+        Attributes command = response.getCommand();
+        if (command.getInt(Tag.Status, 0) != 0) {
             throw new Exception("Unable to print the image."); //$NON-NLS-1$
         }
     }
 
-    public static void storeRasterInDicom(BufferedImage image, DicomObject dcmObj, Boolean printInColor) {
+    public static void storeRasterInDicom(BufferedImage image, Attributes dcmObj, Boolean printInColor) {
         byte[] bytesOut = null;
         if (dcmObj != null && image != null) {
-            dcmObj.putInt(Tag.Columns, VR.US, image.getWidth());
-            dcmObj.putInt(Tag.Rows, VR.US, image.getHeight());
-            dcmObj.putInt(Tag.PixelRepresentation, VR.US, 0);
-            dcmObj.putString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2"); //$NON-NLS-1$ //$NON-NLS-2$
-            dcmObj.putInt(Tag.SamplesPerPixel, VR.US, printInColor ? 3 : 1);
-            dcmObj.putInt(Tag.BitsAllocated, VR.US, 8);
-            dcmObj.putInt(Tag.BitsStored, VR.US, 8);
-            dcmObj.putInt(Tag.HighBit, VR.US, 7);
+            dcmObj.setInt(Tag.Columns, VR.US, image.getWidth());
+            dcmObj.setInt(Tag.Rows, VR.US, image.getHeight());
+            dcmObj.setInt(Tag.PixelRepresentation, VR.US, 0);
+            dcmObj.setString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2"); //$NON-NLS-1$ //$NON-NLS-2$
+            dcmObj.setInt(Tag.SamplesPerPixel, VR.US, printInColor ? 3 : 1);
+            dcmObj.setInt(Tag.BitsAllocated, VR.US, 8);
+            dcmObj.setInt(Tag.BitsStored, VR.US, 8);
+            dcmObj.setInt(Tag.HighBit, VR.US, 7);
             // Issue with some PrintSCP servers
             // dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
             if (printInColor) {
                 // Must be PixelInterleavedSampleModel
-                dcmObj.putInt(Tag.PlanarConfiguration, VR.US, 0);
+                dcmObj.setInt(Tag.PlanarConfiguration, VR.US, 0);
             } else {
                 image = convertRGBImageToMonochrome(image);
             }
@@ -235,7 +246,7 @@ public class DicomPrint {
                     bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
                 }
             }
-            dcmObj.putBytes(Tag.PixelData, VR.OW, bytesOut);
+            dcmObj.setBytes(Tag.PixelData, VR.OW, bytesOut);
         }
     }
 

@@ -66,8 +66,6 @@ public interface LayerModel {
      *            the 2D graphics context
      * @param transform
      * @param clip
-     *            TODO
-     * 
      */
     void draw(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform, Rectangle2D viewClip);
 

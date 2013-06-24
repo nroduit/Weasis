@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -40,12 +39,9 @@ import java.util.concurrent.Executors;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
-import org.dcm4che.data.DicomObject;
 import org.dcm4che.data.Tag;
-import org.dcm4che.data.VRMap;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.io.StopTagInputHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -59,7 +55,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -1001,53 +996,54 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             try {
                 BufferedInputStream bin = new BufferedInputStream(inputStream);
                 dis = new DicomInputStream(bin);
-                dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-                DicomObject dcm = dis.readDicomObject();
-                BufferedOutputStream bout = new BufferedOutputStream(out);
-                dos = new DicomOutputStream(bout);
+                // dis.setHandler(new StopTagInputHandler(Tag.PixelData));
+                // DicomObject dcm = dis.readDicomObject();
+                // BufferedOutputStream bout = new BufferedOutputStream(out);
+                // dos = new DicomOutputStream(bout);
 
-                if (overrideList != null) {
-                    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                    VRMap vrMap = VRMap.getVRMap();
-                    for (int tag : overrideList) {
-                        TagW tagElement = patient.getTagElement(tag);
-                        Object value = null;
-                        if (tagElement == null) {
-                            tagElement = study.getTagElement(tag);
-                            value = study.getTagValue(tagElement);
-                        } else {
-                            value = patient.getTagValue(tagElement);
-                        }
-                        if (value != null) {
-                            TagType type = tagElement.getType();
-                            if (TagType.String.equals(type)) {
-                                dcm.putString(tag, vrMap.vrOf(tag), value.toString());
-                            } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
-                                dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
-                            } else if (TagType.Integer.equals(type)) {
-                                dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
-                            } else if (TagType.Float.equals(type)) {
-                                dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
-                            }
-                        }
-                    }
-                }
-                dos.writeDicomFile(dcm);
-                dos.flush();
+                // if (overrideList != null) {
+                // MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                // MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                // VRMap vrMap = VRMap.getVRMap();
+                // for (int tag : overrideList) {
+                // TagW tagElement = patient.getTagElement(tag);
+                // Object value = null;
+                // if (tagElement == null) {
+                // tagElement = study.getTagElement(tag);
+                // value = study.getTagValue(tagElement);
+                // } else {
+                // value = patient.getTagValue(tagElement);
+                // }
+                // if (value != null) {
+                // TagType type = tagElement.getType();
+                // if (TagType.String.equals(type)) {
+                // dcm.putString(tag, vrMap.vrOf(tag), value.toString());
+                // } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
+                // dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
+                // } else if (TagType.Integer.equals(type)) {
+                // dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
+                // } else if (TagType.Float.equals(type)) {
+                // dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
+                // }
+                // }
+                // }
+                // }
+                // dos.writeDicomFile(dcm);
+                // dos.flush();
 
                 // Read again the the beginning of the pixel data tag, if needed
                 if (dis.tag() == Tag.PixelData) {
-                    long stop = dis.getStreamPosition();
-                    dis.reset();
-                    int diff = (int) (stop - dis.getStreamPosition());
-                    if (diff > 0) {
-                        byte[] pixBuffer = new byte[diff];
-                        dis.read(pixBuffer);
-                        bout.write(pixBuffer);
-                    }
+                    // long stop = dis.getStreamPosition();
+                    // dis.reset();
+                    // int diff = (int) (stop - dis.getStreamPosition());
+                    // if (diff > 0) {
+                    // byte[] pixBuffer = new byte[diff];
+                    // dis.read(pixBuffer);
+                    // bout.write(pixBuffer);
+                    // }
                 }
-                return FileUtil.writeFile(bin, bout);
+                // return FileUtil.writeFile(bin, bout);
+                return 0;
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (IOException e) {

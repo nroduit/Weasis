@@ -904,6 +904,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else {
                 propertyChange(synch);
             }
+        } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
+            actionsInView.put(command, evt.getNewValue());
+            imageLayer.updateImageOperation(ShutterOperation.name);
+        } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
+            actionsInView.put(command, evt.getNewValue());
+            imageLayer.updateImageOperation(WindowLevelOperation.name);
+        } else if (command.equals(ActionW.PROGRESSION.cmd())) {
+            actionsInView.put(command, evt.getNewValue());
+            imageLayer.updateAllImageOperations();
         }
     }
 
@@ -983,15 +992,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.FILTER.cmd())) {
                 actionsInView.put(command, entry.getValue());
                 imageLayer.updateImageOperation(FilterOperation.name);
-            } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(ShutterOperation.name);
-            } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(WindowLevelOperation.name);
-            } else if (command.equals(ActionW.PROGRESSION.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateAllImageOperations();
             }
             if (lens != null) {
                 // Transmit to the lens the command in case the source image has been freeze (for updating rotation and

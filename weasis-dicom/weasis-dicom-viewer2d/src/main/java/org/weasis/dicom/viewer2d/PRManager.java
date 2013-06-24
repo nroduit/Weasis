@@ -13,17 +13,16 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 
-import org.dcm4che.data.DicomObject;
-import org.dcm4che.iod.module.pr.GraphicAnnotationModule;
-import org.dcm4che.iod.module.pr.GraphicLayerModule;
-import org.dcm4che.iod.module.pr.GraphicObject;
-import org.dcm4che.iod.module.pr.TextObject;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
+import org.dcm4che.data.Tag;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.RadioMenuItem;
@@ -55,6 +54,11 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.explorer.DicomModel;
 
 public class PRManager {
+    public static final String POINT = "POINT";
+    public static final String POLYLINE = "POLYLINE";
+    public static final String INTERPOLATED = "INTERPOLATED";
+    public static final String CIRCLE = "CIRCLE";
+    public static final String ELLIPSE = "ELLIPSE";
 
     // private PresentationStateReader prReader;
     // private DicomImageElement image;
@@ -95,11 +99,19 @@ public class PRManager {
     private static ArrayList<Layer> readGraphicAnnotation(View2d view, PresentationStateReader reader,
         DicomImageElement img) {
         ArrayList<Layer> layers = null;
-        DicomObject dcmobj = reader.getDcmobj();
+        Attributes dcmobj = reader.getDcmobj();
         if (dcmobj != null) {
-            GraphicAnnotationModule[] gams = GraphicAnnotationModule.toGraphicAnnotationModules(dcmobj);
-            Map<String, GraphicLayerModule> glms = GraphicLayerModule.toGraphicLayerMap(dcmobj);
-            if (gams != null && glms != null) {
+            // GraphicAnnotationModule[] gams = GraphicAnnotationModule.toGraphicAnnotationModules(dcmItems);
+            // Map<String, GraphicLayerModule> glms = GraphicLayerModule.toGraphicLayerMap(dcmItems);
+
+            Sequence gams = dcmobj.getSequence(Tag.GraphicAnnotationSequence);
+            Sequence layerSeqs = dcmobj.getSequence(Tag.GraphicLayerSequence);
+
+            if (gams != null && layerSeqs != null) {
+                Map<String, Attributes> glms = new HashMap<String, Attributes>(layerSeqs.size());
+                for (Attributes a : layerSeqs) {
+                    glms.put(a.getString(Tag.GraphicLayer), a);
+                }
                 /*
                  * Apply spatial transformations (rotation, flip) AFTER when graphics are in PIXEL mode and BEFORE when
                  * graphics are in DISPLAY mode.
@@ -123,27 +135,30 @@ public class PRManager {
                     }
                 }
 
-                layers = new ArrayList<Layer>(gams.length);
-                for (GraphicAnnotationModule gram : gams) {
+                layers = new ArrayList<Layer>(gams.size());
+                for (Attributes gram : gams) {
                     // TODO filter sop
-                    gram.getImageSOPInstanceReferences();
-                    String graphicLayerName = gram.getGraphicLayer();
-                    GraphicLayerModule glm = glms.get(graphicLayerName);
+                    Sequence refImgs = gram.getSequence(Tag.ReferencedImageSequence);
+                    String graphicLayerName = gram.getString(Tag.GraphicLayer);
+                    Attributes glm = glms.get(graphicLayerName);
                     if (glm == null) {
                         continue;
                     }
                     Identifier layerId =
-                        new Identifier(310 + glm.getGraphicLayerOrder(), glm.getGraphicLayer() + " [DICOM]");
+                        new Identifier(310 + glm.getInt(Tag.GraphicLayerOrder, 0), graphicLayerName + " [DICOM]");
                     DragLayer layer = new DragLayer(view.getLayerModel(), layerId);
                     // layer.setLocked(true);
                     layers.add(layer);
                     Color rgb =
-                        PresentationStateReader.getRGBColor(glm.getGraphicLayerRecommendedDisplayGrayscaleValue(),
-                            glm.getFloatLab(), glm.getGraphicLayerRecommendedDisplayRGBValue());
+                        PresentationStateReader.getRGBColor(
+                            glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
+                            glm.getFloats(Tag.GraphicLayerRecommendedDisplayCIELabValue),
+                            glm.getInts(Tag.GraphicLayerRecommendedDisplayRGBValue));
 
-                    GraphicObject[] gos = gram.getGraphicObjects();
+                    Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
+                    ;
                     if (gos != null) {
-                        for (GraphicObject go : gos) {
+                        for (Attributes go : gos) {
                             Graphic graphic;
                             try {
                                 graphic = buildGraphicFromPR(go, rgb, false, width, height, true, inverse, false);
@@ -157,14 +172,14 @@ public class PRManager {
                         }
                     }
 
-                    TextObject[] txos = gram.getTextObjects();
+                    Sequence txos = gram.getSequence(Tag.TextObjectSequence);
                     if (txos != null) {
-                        for (TextObject txo : txos) {
-                            String[] lines = EscapeChars.convertToLines(txo.getUnformattedTextValue());
+                        for (Attributes txo : txos) {
+                            String[] lines = EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
                             // MATRIX not implemented
-                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getBoundingBoxAnnotationUnits());
-                            float[] topLeft = txo.getBoundingBoxTopLeftHandCorner();
-                            float[] bottomRight = txo.getBoundingBoxBottomRightHandCorner();
+                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits));
+                            float[] topLeft = txo.getFloats(Tag.BoundingBoxTopLeftHandCorner);
+                            float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
                             if (topLeft != null && bottomRight != null) {
                                 rect =
@@ -184,10 +199,11 @@ public class PRManager {
                                 }
                             }
 
-                            float[] anchor = txo.getAnchorPoint();
+                            float[] anchor = txo.getFloats(Tag.AnchorPoint);
                             if (anchor != null && anchor.length == 2) {
                                 // MATRIX not implemented
-                                boolean disp = "DISPLAY".equalsIgnoreCase(txo.getAnchorPointAnnotationUnits()); //$NON-NLS-1$
+                                boolean disp =
+                                    "DISPLAY".equalsIgnoreCase(txo.getString(Tag.AnchorPointAnnotationUnits)); //$NON-NLS-1$
                                 double x = disp ? anchor[0] * width : anchor[0];
                                 double y = disp ? anchor[1] * height : anchor[1];
                                 Double ptAnchor = new Point2D.Double(x, y);
@@ -200,8 +216,8 @@ public class PRManager {
                                 AnnotationGraphic line;
                                 try {
                                     line =
-                                        new AnnotationGraphic(txo.getAnchorPointVisibility() ? ptAnchor : null, ptBox,
-                                            1.0f, rgb, true);
+                                        new AnnotationGraphic(getBooleanValue(txo, Tag.AnchorPointVisibility)
+                                            ? ptAnchor : null, ptBox, 1.0f, rgb, true);
                                     line.setLabel(lines, view);
                                     layer.addGraphic(line);
                                 } catch (InvalidShapeException e) {
@@ -231,7 +247,7 @@ public class PRManager {
         return layers;
     }
 
-    public static Graphic buildGraphicFromPR(GraphicObject go, Color color, boolean labelVisible, double width,
+    public static Graphic buildGraphicFromPR(Attributes go, Color color, boolean labelVisible, double width,
         double height, boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*
          * For DICOM SR
@@ -248,17 +264,17 @@ public class PRManager {
          * 
          * MATRIX not implemented
          */
-        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getGraphicAnnotationUnits());
+        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
 
-        String type = go.getGraphicType();
+        String type = go.getString(Tag.GraphicType);
         Graphic shape = null;
-        float[] points = go.getGraphicData();
+        float[] points = go.getFloats(Tag.GraphicData);
         if (isDisp && inverse != null) {
             float[] dstpoints = new float[points.length];
             inverse.transform(points, 0, dstpoints, 0, points.length / 2);
             points = dstpoints;
         }
-        if (GraphicObject.POLYLINE.equalsIgnoreCase(type)) {
+        if (POLYLINE.equalsIgnoreCase(type)) {
             if (points != null) {
                 int size = points.length / 2;
                 if (size >= 2) {
@@ -278,7 +294,8 @@ public class PRManager {
                         // Closed when the first point is the same as the last point
                         if (handlePointList.get(0).equals(handlePointList.get(size - 1))) {
                             shape =
-                                new PolygonGraphic(handlePointList, color, 1.0f, labelVisible, go.getGraphicFilled());
+                                new PolygonGraphic(handlePointList, color, 1.0f, labelVisible, getBooleanValue(go,
+                                    Tag.GraphicFilled));
                         } else {
                             shape = new PolylineGraphic(handlePointList, color, 1.0f, labelVisible);
                         }
@@ -297,11 +314,13 @@ public class PRManager {
                             // Always close polyline for DICOM SR
                             path.closePath();
                         }
-                        shape = new NonEditableGraphic(path, 1.0f, color, labelVisible, go.getGraphicFilled());
+                        shape =
+                            new NonEditableGraphic(path, 1.0f, color, labelVisible, getBooleanValue(go,
+                                Tag.GraphicFilled));
                     }
                 }
             }
-        } else if (GraphicObject.ELLIPSE.equalsIgnoreCase(type)) {
+        } else if (ELLIPSE.equalsIgnoreCase(type)) {
             if (points != null && points.length == 8) {
                 double majorX1 = isDisp ? points[0] * width : points[0];
                 double majorY1 = isDisp ? points[1] * height : points[1];
@@ -329,12 +348,14 @@ public class PRManager {
                 if (canBeEdited && rotation == 0) {
                     shape =
                         new EllipseGraphic(((Ellipse2D) ellipse).getFrame(), 1.0f, color, labelVisible,
-                            go.getGraphicFilled());
+                            getBooleanValue(go, Tag.GraphicFilled));
                 } else {
-                    shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, go.getGraphicFilled());
+                    shape =
+                        new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, getBooleanValue(go,
+                            Tag.GraphicFilled));
                 }
             }
-        } else if (GraphicObject.CIRCLE.equalsIgnoreCase(type)) {
+        } else if (CIRCLE.equalsIgnoreCase(type)) {
             if (points != null && points.length == 4) {
                 double x = isDisp ? points[0] * width : points[0];
                 double y = isDisp ? points[1] * height : points[1];
@@ -342,12 +363,16 @@ public class PRManager {
                 double dist = euclideanDistance(points, 0, 2, isDisp, width, height);
                 ellipse.setFrameFromCenter(x, y, x + dist, y + dist);
                 if (canBeEdited) {
-                    shape = new EllipseGraphic(ellipse.getFrame(), 1.0f, color, labelVisible, go.getGraphicFilled());
+                    shape =
+                        new EllipseGraphic(ellipse.getFrame(), 1.0f, color, labelVisible, getBooleanValue(go,
+                            Tag.GraphicFilled));
                 } else {
-                    shape = new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, go.getGraphicFilled());
+                    shape =
+                        new NonEditableGraphic(ellipse, 1.0f, color, labelVisible, getBooleanValue(go,
+                            Tag.GraphicFilled));
                 }
             }
-        } else if (GraphicObject.POINT.equalsIgnoreCase(type)) {
+        } else if (POINT.equalsIgnoreCase(type)) {
             if (points != null && points.length == 2) {
                 double x = isDisp ? points[0] * width : points[0];
                 double y = isDisp ? points[1] * height : points[1];
@@ -376,7 +401,7 @@ public class PRManager {
                 }
                 shape = new NonEditableGraphic(path, 1.0f, color, labelVisible, true);
             }
-        } else if (GraphicObject.INTERPOLATED.equalsIgnoreCase(type)) {
+        } else if (INTERPOLATED.equalsIgnoreCase(type)) {
             if (points != null && points.length >= 2) {
                 // Only non editable graphic (required control point tool)
                 if (points != null) {
@@ -404,12 +429,23 @@ public class PRManager {
                             lx = x;
                             ly = y;
                         }
-                        shape = new NonEditableGraphic(path, 1.0f, color, labelVisible, go.getGraphicFilled());
+                        shape =
+                            new NonEditableGraphic(path, 1.0f, color, labelVisible, getBooleanValue(go,
+                                Tag.GraphicFilled));
                     }
                 }
             }
         }
         return shape;
+    }
+
+    /** Indicate if the graphic is to be filled in */
+    public static boolean getBooleanValue(Attributes dcmobj, int tag) {
+        String grFill = dcmobj.getString(tag);
+        if (grFill == null) {
+            return false;
+        }
+        return grFill.equalsIgnoreCase("Y");
     }
 
     private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width, double height) {

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
@@ -36,7 +37,7 @@ public class PresentationStateReader {
         return prSpecialElement;
     }
 
-    public DicomObject getDcmobj() {
+    public Attributes getDcmobj() {
         return dcmobj;
     }
 
@@ -52,23 +53,17 @@ public class PresentationStateReader {
         return object == null ? defaultValue : object;
     }
 
-    public SeriesAndInstanceReference getSeriesAndInstanceReference() {
-        if (dcmobj != null) {
-            return new SeriesAndInstanceReference(dcmobj);
-        }
-        return null;
-    }
-
-    private boolean isModuleAppicable(ImageSOPInstanceReference[] sops, DicomImageElement img) {
+    private boolean isModuleAppicable(Attributes item, DicomImageElement img) {
         if (dcmobj != null && img != null) {
-            if (sops == null) {
+            Sequence sops = item.getSequence(Tag.ReferencedImageSequence);
+            if (sops == null || sops.isEmpty()) {
                 return true;
             }
             String imgSop = (String) img.getTagValue(TagW.SOPInstanceUID);
             if (imgSop != null) {
-                for (ImageSOPInstanceReference sop : sops) {
-                    if (imgSop.equals(sop.getReferencedSOPInstanceUID())) {
-                        int[] frames = sop.getReferencedFrameNumber();
+                for (Attributes sop : sops) {
+                    if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
+                        int[] frames = sop.getInts(Tag.ReferencedFrameNumber);
                         if (frames == null) {
                             return true;
                         }
@@ -104,28 +99,26 @@ public class PresentationStateReader {
     public void readSpatialTransformationModule() {
         if (dcmobj != null) {
             // Rotation and then Flip
-            SpatialTransformationModule spat = new SpatialTransformationModule(dcmobj);
-            tags.put(ActionW.ROTATION.cmd(), spat.getRotation());
-            tags.put(ActionW.FLIP.cmd(), spat.isHorizontalFlip());
+            tags.put(ActionW.ROTATION.cmd(), dcmobj.getInt(Tag.ImageRotation, 0));
+            tags.put(ActionW.FLIP.cmd(), "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip)));
         }
     }
 
     public void readDisplayArea(DicomImageElement img) {
         if (dcmobj != null) {
-            DicomElement sq = dcmobj.get(Tag.DisplayedAreaSelectionSequence);
-            if (sq == null || !sq.hasItems()) {
+            Sequence srcSeq = dcmobj.getSequence(Tag.DisplayedAreaSelectionSequence);
+            if (srcSeq == null || srcSeq.isEmpty()) {
                 return;
             }
-            for (int i = 0; i < sq.countItems(); i++) {
-                DisplayedAreaModule dam = new DisplayedAreaModule(sq.getDicomObject(i));
-                if (dam != null && isModuleAppicable(dam.getImageSOPInstanceReferences(), img)) {
+            for (Attributes item : srcSeq) {
+                if (isModuleAppicable(item, img)) {
                     double[] pixelsize = null;
-                    float[] spacing = dam.getPresentationPixelSpacing();
+                    float[] spacing = item.getFloats(Tag.PresentationPixelSpacing);
                     if (spacing != null && spacing.length == 2) {
                         pixelsize = new double[] { spacing[1], spacing[0] };
                     }
                     if (spacing == null) {
-                        int[] aspects = dam.getPresentationPixelAspectRatio();
+                        int[] aspects = item.getInts(Tag.PresentationPixelAspectRatio);
                         if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
                             // set the aspects to the pixel size of the image to stretch the image rendering (square
                             // pixel)
@@ -140,9 +133,9 @@ public class PresentationStateReader {
                         tags.put(TagW.PixelSpacing.getName(), pixelsize);
                     }
 
-                    String presentationMode = dam.getPresentationSizeMode();
-                    int[] tlhc = dam.getDisplayedAreaTopLeftHandCorner();
-                    int[] brhc = dam.getDisplayedAreaBottomRightHandCorner();
+                    String presentationMode = item.getString(Tag.PresentationSizeMode);
+                    int[] tlhc = item.getInts(Tag.DisplayedAreaTopLeftHandCorner);
+                    int[] brhc = item.getInts(Tag.DisplayedAreaBottomRightHandCorner);
 
                     if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
                         // Lots of systems encode topLeft as 1,1, even when they mean 0,0
@@ -161,7 +154,8 @@ public class PresentationStateReader {
                     if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         tags.put(ActionW.ZOOM.cmd(), 0.0);
                     } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
-                        tags.put(ActionW.ZOOM.cmd(), (double) dam.getPresentationPixelMagnificationRatio());
+                        tags.put(ActionW.ZOOM.cmd(),
+                            (double) item.getFloat(Tag.PresentationPixelMagnificationRatio, 1.0f));
                     } else if ("TRUE SIZE".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
                         // TODO required to calibrate the screen (Measure physically two lines displayed on screen, must
                         // be

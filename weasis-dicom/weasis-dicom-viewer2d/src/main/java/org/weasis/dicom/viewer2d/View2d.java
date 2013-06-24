@@ -322,9 +322,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
                     actionsInView.put(ActionW.LUT_SHAPE.cmd(), val);
                     imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
-                } else if (command.equals(ActionW.IMAGE_OVERLAY.cmd())) {
-                    actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), val);
-                    imageLayer.updateImageOperation(OverlayOperation.name);
                 } else if (command.equals(ActionW.SORTSTACK.cmd())) {
                     actionsInView.put(ActionW.SORTSTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
@@ -343,6 +340,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     updateKOselectedState();
                 }
             }
+        } else if (name.equals(ActionW.IMAGE_OVERLAY.cmd())) {
+            actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), evt.getNewValue());
+            imageLayer.updateImageOperation(OverlayOperation.name);
         }
     }
 
