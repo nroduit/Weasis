@@ -31,18 +31,20 @@ import org.weasis.dicom.codec.DicomSeries;
 
 public class ExportTree extends JScrollPane {
 
-    private final CheckboxTree tree = new CheckboxTree();
+    private final CheckboxTree tree;
     private final DicomModel dicomModel;
+    private final DefaultMutableTreeNode rootNode;
 
     public ExportTree(DicomModel dicomModel) {
         this.dicomModel = dicomModel;
+        this.tree = new CheckboxTree();
+        this.rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
         iniTree();
 
     }
 
     public void iniTree() {
         tree.getCheckingModel().setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
 
         synchronized (dicomModel) {
             for (Iterator<MediaSeriesGroup> iterator = dicomModel.getChildren(TreeModel.rootNode).iterator(); iterator
@@ -101,13 +103,13 @@ public class ExportTree extends JScrollPane {
                     }
                     patientNode.add(studyNode);
                 }
-                root.add(patientNode);
+                rootNode.add(patientNode);
             }
         }
 
-        DefaultTreeModel model = new DefaultTreeModel(root, false);
+        DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
         tree.setModel(model);
-        expandTree(tree, root, 3);
+        expandTree(tree, rootNode, 3);
         setViewportView(tree);
     }
 
@@ -128,6 +130,10 @@ public class ExportTree extends JScrollPane {
             }
         }
         return;
+    }
+
+    public DefaultMutableTreeNode getRootNode() {
+        return rootNode;
     }
 
 }

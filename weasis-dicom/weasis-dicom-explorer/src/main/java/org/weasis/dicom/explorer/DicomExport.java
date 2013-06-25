@@ -106,7 +106,6 @@ public class DicomExport extends AbstractWizardDialog {
         final Object[] servicesPref = prefs_tracker.getServices();
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
-        properties.put(exportTree.getClass().getName(), exportTree);
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             if (servicesPref[i] instanceof DicomExportFactory) {
                 ExportDicom page = ((DicomExportFactory) servicesPref[i]).createDicomExportPage(properties);
