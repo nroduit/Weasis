@@ -49,7 +49,7 @@ import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.BulkDataLocator;
+import org.dcm4che.data.BulkData;
 import org.dcm4che.data.Fragments;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
@@ -135,7 +135,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     private Attributes dicomObject = null;
     // TODO should replace dicomObject
     private DicomMetaData metadata;
-    private BulkDataLocator pixeldata;
+    private BulkData pixeldata;
     private final VR.Holder pixeldataVR = new VR.Holder();
     private Fragments pixeldataFragments;
     private ImageReader decompressor;
@@ -1276,7 +1276,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             }
             iis.seek(0L);
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
-            dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            dis.setIncludeBulkData(IncludeBulkData.URI);
             dis.setBulkDataDescriptor(BulkDataDescriptor.PIXELDATA);
             dis.setURI("java:iis"); // avoid copy of pixeldata to temporary file
             Attributes fmi = dis.readFileMetaInformation();
@@ -1313,14 +1313,14 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     dataType = DataBuffer.TYPE_INT;
                 }
                 pmi = PhotometricInterpretation.fromString(ds.getString(Tag.PhotometricInterpretation, "MONOCHROME2"));
-                if (pixdata instanceof BulkDataLocator) {
+                if (pixdata instanceof BulkData) {
                     // Old way
                     // if (numberOfFrame == 0) {
                     // numberOfFrame = 1;
                     // }
                     iis.setByteOrder(ds.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
                     this.frameLength = pmi.frameLength(width, height, samples, allocated);
-                    this.pixeldata = (BulkDataLocator) pixdata;
+                    this.pixeldata = (BulkData) pixdata;
                     // Handle JPIP
                 } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
                     if (numberOfFrame == 0) {
