@@ -399,7 +399,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[3].equals(format)) {
@@ -413,7 +413,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[4].equals(format)) {
@@ -427,7 +427,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -521,42 +521,43 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
                             if (writer != null) {
                                 DicomInputStream in = null;
+                                DicomObject dcmobj;
                                 try {
                                     in = new DicomInputStream(destinationFile);
                                     in.setHandler(new StopTagInputHandler(Tag.PixelData));
-                                    DicomObject dcmobj = in.readDicomObject();
-                                    DicomObject patrec = dicomStruct.makePatientDirectoryRecord(dcmobj);
-                                    DicomObject styrec = dicomStruct.makeStudyDirectoryRecord(dcmobj);
-                                    DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
-
-                                    // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series.
-                                    // It may or may not correspond to one of the images of the Series.
-                                    if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
-                                        DicomImageElement midImage =
-                                            ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
-                                                .getMedia(MEDIA_POSITION.MIDDLE, null, null);
-                                        DicomObject seq = mkIconItem(midImage);
-                                        if (seq != null) {
-                                            serrec.putNestedDicomObject(Tag.IconImageSequence, seq);
-                                        }
-                                    }
-
-                                    DicomObject instrec =
-                                        dicomStruct.makeInstanceDirectoryRecord(dcmobj,
-                                            writer.toFileID(destinationFile));
-                                    DicomObject rec = writer.addPatientRecord(patrec);
-                                    rec = writer.addStudyRecord(rec, styrec);
-                                    rec = writer.addSeriesRecord(rec, serrec);
-                                    String miuid = dcmobj.getString(Tag.MediaStorageSOPInstanceUID);
-                                    if (writer.findInstanceRecord(rec, miuid) == null) {
-                                        writer.addChildRecord(rec, instrec);
-                                    }
+                                    dcmobj = in.readDicomObject();
                                 } finally {
                                     FileUtil.safeClose(in);
                                 }
+                                DicomObject patrec = dicomStruct.makePatientDirectoryRecord(dcmobj);
+                                DicomObject styrec = dicomStruct.makeStudyDirectoryRecord(dcmobj);
+                                DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
+
+                                // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series.
+                                // It may or may not correspond to one of the images of the Series.
+                                if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
+                                    DicomImageElement midImage =
+                                        ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
+                                            .getMedia(MEDIA_POSITION.MIDDLE, null, null);
+                                    DicomObject seq = mkIconItem(midImage);
+                                    if (seq != null) {
+                                        serrec.putNestedDicomObject(Tag.IconImageSequence, seq);
+                                    }
+                                }
+
+                                DicomObject instrec =
+                                    dicomStruct.makeInstanceDirectoryRecord(dcmobj, writer.toFileID(destinationFile));
+                                DicomObject rec = writer.addPatientRecord(patrec);
+                                rec = writer.addStudyRecord(rec, styrec);
+                                rec = writer.addSeriesRecord(rec, serrec);
+                                String miuid = dcmobj.getString(Tag.MediaStorageSOPInstanceUID);
+                                if (writer.findInstanceRecord(rec, miuid) == null) {
+                                    writer.addChildRecord(rec, instrec);
+                                }
+
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -565,7 +566,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 try {
                     FileUtil.zip(writeDir, exportDir);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot export DICOM ZIP file: ", exportDir); //$NON-NLS-1$
+                    LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir); //$NON-NLS-1$
                 } finally {
                     // FileUtil.delete(writeDir);
                 }
@@ -586,11 +587,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return String.valueOf(ch8);
     }
 
-    private static String makeFileIDs(String uid) {
+    public static String makeFileIDs(String uid) {
         return toHex(uid.hashCode());
     }
 
-    private DicomObject mkIconItem(DicomImageElement image) {
+    public static DicomObject mkIconItem(DicomImageElement image) {
         if (image == null) {
             return null;
         }
@@ -661,7 +662,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return iconItem;
     }
 
-    private BufferedImage convertBI(BufferedImage src, int imageType) {
+    private static BufferedImage convertBI(BufferedImage src, int imageType) {
         BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
         Graphics2D big = dst.createGraphics();
         try {
