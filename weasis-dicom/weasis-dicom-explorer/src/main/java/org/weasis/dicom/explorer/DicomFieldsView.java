@@ -34,7 +34,12 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.ElementDictionary;
+import org.dcm4che.data.Sequence;
+import org.dcm4che.data.VR;
+import org.dcm4che.util.TagUtils;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -133,46 +138,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         StyleConstants.setItalic(s, true);
     }
 
-    // public StringBuffer toStringBuffer(DicomElement element, Attributes dcmObj) {
-    // StringBuffer sb = new StringBuffer();
-    // TagUtils.toStringBuffer(element.tag(), sb);
-    // sb.append(' ');
-    // sb.append(element.vr());
-    //        sb.append(" #"); //$NON-NLS-1$
-    // sb.append(element.length());
-    //        sb.append(" ["); //$NON-NLS-1$
-    // // Other VR than sequence can have several items, but there are not displayed after.
-    // if (element.vr() == VR.SQ || element.hasFragments()) {
-    // final int size = element.countItems();
-    // if (size != 0) {
-    // if (size == 1) {
-    //                    sb.append("1 item"); //$NON-NLS-1$
-    // } else {
-    //                    sb.append(size).append(" items"); //$NON-NLS-1$
-    // }
-    // }
-    // } else {
-    // element.vr().promptValue(element.getBytes(), element.bigEndian(), null, cbuf.get(), 96, sb);
-    // }
-    //        sb.append("] "); //$NON-NLS-1$
-    // // String tag = ElementDictionary.getDictionary().nameOf(element.tag());
-    // // if (tag != null) {
-    // sb.append(dcmObj.nameOf(element.tag()));
-    // // }
-    // return sb;
-    // }
-
-    // public void addSequenceElement(DicomElement element, DefaultListModel listModel) {
-    // for (int i = 0; i < element.countItems(); i++) {
-    // DicomObject dcmObj = element.getDicomObject(i);
-    //            String[] val = dcmObj.toString().split("\n"); //$NON-NLS-1$
-    // for (int j = 0; j < val.length; j++) {
-    //                listModel.addElement(" >" + val[j]); //$NON-NLS-1$
-    // }
-    //
-    // }
-    // }
-
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
         EVENT type = event.getEventType();
@@ -199,29 +164,16 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     private void displayAllDicomInfo(Series<?> series, MediaElement<?> media) {
-        DefaultListModel listModel = new DefaultListModel();
+        DefaultListModel<String> listModel = new DefaultListModel<String>();
         if (media != null) {
             MediaReader loader = media.getMediaReader();
             if (loader instanceof DicomMediaIO) {
                 Attributes dcmObj = ((DicomMediaIO) loader).getDicomObject();
-                // TODO
-
-                // Iterator it = dcmObj.fileMetaInfoIterator();
-                // while (it.hasNext()) {
-                // DicomElement element = (DicomElement) it.next();
-                // listModel.addElement(toStringBuffer(element, dcmObj).toString());
-                // if (element.vr() == VR.SQ) {
-                // addSequenceElement(element, listModel);
-                // }
-                // }
-                // it = dcmObj.datasetIterator();
-                // while (it.hasNext()) {
-                // DicomElement element = (DicomElement) it.next();
-                // listModel.addElement(toStringBuffer(element, dcmObj).toString());
-                // if (element.vr() == VR.SQ) {
-                // addSequenceElement(element, listModel);
-                // }
-                // }
+                int[] tags = dcmObj.tags();
+                for (int tag : tags) {
+                    printElement(dcmObj, tag, listModel);
+                }
+                // System.out.println(dcmObj.toString(1024, 150));
             }
         }
 
@@ -229,6 +181,78 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         jListElement.setLayoutOrientation(JList.VERTICAL);
         jListElement.setBorder(new EmptyBorder(5, 5, 5, 5));
         allPane.setViewportView(jListElement);
+    }
+
+    private static void printElement(Attributes dcmObj, int tag, DefaultListModel listModel) {
+        StringBuilder buf = new StringBuilder(TagUtils.toString(tag));
+        buf.append(" [");
+        VR vr = dcmObj.getVR(tag);
+        buf.append(vr.toString());
+        buf.append("] ");
+
+        String privateCreator = dcmObj.privateCreatorOf(tag);
+        String word = ElementDictionary.keywordOf(tag, privateCreator);
+        if (!JMVUtils.textHasContent(word)) {
+            word = "PrivateTag";
+        }
+
+        buf.append(word);
+        buf.append(": ");
+        String[] value = dcmObj.getStrings(privateCreator, tag);
+        int level = dcmObj.getLevel();
+        if (level > 0) {
+            buf.insert(0, "-->");
+        }
+        for (int i = 1; i < level; i++) {
+            buf.insert(0, "--");
+        }
+        if (value != null && value.length > 0) {
+            buf.append(value[0]);
+            for (int i = 1; i < value.length; i++) {
+                buf.append("\\");
+                buf.append(value[i]);
+            }
+            if (buf.length() > 256) {
+                buf.setLength(253);
+                buf.append("...");
+            }
+            listModel.addElement(buf.toString());
+        } else {
+            printSequence(dcmObj.getSequence(tag), listModel, buf);
+        }
+    }
+
+    private static void printSequence(Sequence seq, DefaultListModel listModel, StringBuilder buf) {
+        if (seq != null) {
+            buf.append(seq.size());
+            if (seq.size() <= 1) {
+                buf.append(" item");
+            } else {
+                buf.append(" items");
+            }
+            listModel.addElement(buf.toString());
+
+            for (int i = 0; i < seq.size(); i++) {
+                Attributes attributes = seq.get(i);
+                int level = attributes.getLevel();
+                StringBuilder buffer = new StringBuilder();
+                if (level > 0) {
+                    buffer.insert(0, "-->");
+                }
+                for (int k = 1; k < level; k++) {
+                    buffer.insert(0, "--");
+                }
+                buffer.append(" ITEM #");
+                buffer.append(i + 1);
+                listModel.addElement(buffer.toString());
+                int[] tags = attributes.tags();
+                for (int tag : tags) {
+                    printElement(attributes, tag, listModel);
+                }
+            }
+        } else {
+            listModel.addElement(buf.toString());
+        }
     }
 
     private void displayLimitedDicomInfo(Series<?> series, MediaElement<?> media) {
