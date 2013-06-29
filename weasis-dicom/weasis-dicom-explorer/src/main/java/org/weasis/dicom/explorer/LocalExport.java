@@ -393,7 +393,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[3].equals(format)) {
@@ -407,7 +407,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[4].equals(format)) {
@@ -421,7 +421,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -594,7 +594,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 }
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -603,7 +603,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 try {
                     FileUtil.zip(writeDir, exportDir);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot export DICOM ZIP file: ", exportDir); //$NON-NLS-1$
+                    LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir); //$NON-NLS-1$
                 } finally {
                     // FileUtil.delete(writeDir);
                 }
@@ -624,11 +624,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return String.valueOf(ch8);
     }
 
-    private static String makeFileIDs(String uid) {
+    public static String makeFileIDs(String uid) {
         return toHex(uid.hashCode());
     }
 
-    private Attributes mkIconItem(DicomImageElement image) {
+    public static Attributes mkIconItem(DicomImageElement image) {
         if (image == null) {
             return null;
         }
@@ -699,7 +699,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return iconItem;
     }
 
-    private BufferedImage convertBI(BufferedImage src, int imageType) {
+    private static BufferedImage convertBI(BufferedImage src, int imageType) {
         BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
         Graphics2D big = dst.createGraphics();
         try {
