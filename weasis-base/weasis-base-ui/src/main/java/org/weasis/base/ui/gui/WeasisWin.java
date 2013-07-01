@@ -473,24 +473,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar, boolean force) {
-        if (toolBar == null) {
-            if (oldToolBar != null) {
-                toolbarContainer.unregisterAll();
-            }
-            toolbarContainer.registerToolBar(ToolBarContainer.EMPTY);
-            toolbarContainer.revalidate();
-            toolbarContainer.repaint();
-        } else {
-            if (force || toolBar != oldToolBar) {
-                if (oldToolBar != null) {
-                    toolbarContainer.unregisterAll();
-                }
-                for (Toolbar t : toolBar) {
-                    toolbarContainer.registerToolBar(t);
-                }
-                toolbarContainer.revalidate();
-                toolbarContainer.repaint();
-            }
+        if (force || toolBar != oldToolBar) {
+            toolbarContainer.registerToolBar(toolBar);
         }
     }
 
@@ -606,15 +590,15 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private void buildToolBarSubMenu(final JMenu toolBarMenu) {
         List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
         for (final Toolbar bar : bars) {
-            if (!TYPE.main.equals(bar.getType()) && !TYPE.conditional.equals(bar.getType())) {
+            if (!TYPE.empty.equals(bar.getType())) {
                 JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getBarName(), bar.getComponent().isEnabled());
                 item.addActionListener(new ActionListener() {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            bar.getComponent().setEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
-                            toolbarContainer.showToolbar(bar.getComponent());
+                            toolbarContainer.displayToolbar(bar.getComponent(),
+                                ((JCheckBoxMenuItem) e.getSource()).isSelected());
                         }
                     }
                 });

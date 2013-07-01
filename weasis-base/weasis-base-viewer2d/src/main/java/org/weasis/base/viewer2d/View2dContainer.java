@@ -42,11 +42,13 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -67,7 +69,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<DockableTool>());
     private static WtoolBar statusBar = null;
-    private static boolean INI_COMPONENTS = false;
+    private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
         this(VIEWS_1x1);
@@ -79,19 +81,17 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
-            ViewerToolBar<ImageElement> bar = new ViewerToolBar<ImageElement>(EventManager.getInstance());
-            TOOLBARS.add(bar);
-            TOOLBARS.add(bar.getMeasureToolBar());
-            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
-            TOOLBARS.add(zoomBar);
-            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
-            TOOLBARS.add(rotationBar);
+            EventManager evtMg = EventManager.getInstance();
+            TOOLBARS.add(new ViewerToolBar<ImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                BundleTools.SYSTEM_PREFERENCES, 10));
+            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new RotationToolBar(evtMg, 30));
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
-                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-                zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
-                rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), true));
+                String className = this.getClass().getSimpleName().toLowerCase();
+                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
             }
 
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$

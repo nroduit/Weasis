@@ -335,11 +335,21 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     StringBuffer buffer = new StringBuffer();
                     if (keepNames) {
                         TreeNode[] objects = node.getPath();
-                        if (objects.length > 2) {
-                            for (int i = 1; i < objects.length - 1; i++) {
-                                buffer.append(FileUtil.getValidFileName(objects[i].toString()));
-                                buffer.append(File.separator);
+                        if (objects.length > 3) {
+                            buffer.append(FileUtil.getValidFileName(objects[1].toString()));
+                            buffer.append(File.separator);
+                            buffer.append(FileUtil.getValidFileName(objects[2].toString()));
+                            buffer.append(File.separator);
+                            String seriesName = FileUtil.getValidFileName(objects[3].toString());
+                            if (seriesName.length() > 30) {
+                                buffer.append(seriesName, 0, 27);
+                                buffer.append("...");
+                            } else {
+                                buffer.append(seriesName);
                             }
+                            buffer.append('-');
+                            // Hash of UID to guaranty the unique behavior of the name (can have only series number).
+                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
                         }
                     } else {
                         buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
@@ -363,7 +373,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             ImageFiler.writeJPG(
                                 new File(destinationDir, instance + ".jpg"), image, jpegQuality / 100.0f); //$NON-NLS-1$
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[2].equals(format)) {
@@ -373,7 +383,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (image != null) {
                             ImageFiler.writePNG(new File(destinationDir, instance + ".png"), image); //$NON-NLS-1$
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                     if (EXPORT_FORMAT[3].equals(format)) {
@@ -383,7 +393,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             }
                             ImageFiler.writeTIFF(new File(destinationDir, instance + ".tif"), image); //$NON-NLS-1$
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", format, img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -456,9 +466,15 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
                             if (writer != null) {
-                                DicomInputStream in = new DicomInputStream(destinationFile);
-                                in.setHandler(new StopTagInputHandler(Tag.PixelData));
-                                DicomObject dcmobj = in.readDicomObject();
+                                DicomInputStream in = null;
+                                DicomObject dcmobj;
+                                try {
+                                    in = new DicomInputStream(destinationFile);
+                                    in.setHandler(new StopTagInputHandler(Tag.PixelData));
+                                    dcmobj = in.readDicomObject();
+                                } finally {
+                                    FileUtil.safeClose(in);
+                                }
                                 DicomObject patrec = dicomStruct.makePatientDirectoryRecord(dcmobj);
                                 DicomObject styrec = dicomStruct.makeStudyDirectoryRecord(dcmobj);
                                 DicomObject serrec = dicomStruct.makeSeriesDirectoryRecord(dcmobj);
@@ -486,7 +502,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 }
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -507,11 +523,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return String.valueOf(ch8);
     }
 
-    private static String makeFileIDs(String uid) {
+    public static String makeFileIDs(String uid) {
         return toHex(uid.hashCode());
     }
 
-    private DicomObject mkIconItem(DicomImageElement image) {
+    public static DicomObject mkIconItem(DicomImageElement image) {
         if (image == null) {
             return null;
         }
@@ -582,7 +598,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return iconItem;
     }
 
-    private BufferedImage convertBI(BufferedImage src, int imageType) {
+    private static BufferedImage convertBI(BufferedImage src, int imageType) {
         BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
         Graphics2D big = dst.createGraphics();
         try {

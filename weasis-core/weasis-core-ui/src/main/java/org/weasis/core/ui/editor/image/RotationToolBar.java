@@ -17,13 +17,12 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class RotationToolBar<E extends ImageElement> extends WtoolBar {
 
-    public RotationToolBar(final ImageViewerEventManager<E> eventManager) {
-        super(Messages.getString("RotationToolBar.rotationBar"), TYPE.tool); //$NON-NLS-1$
+    public RotationToolBar(final ImageViewerEventManager<E> eventManager, int index) {
+        super(Messages.getString("RotationToolBar.rotationBar"), TYPE.tool, index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
 
-        // TODO change icon
         final JButton jButtonRotate90 =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/rotate.png"))); //$NON-NLS-1$
         jButtonRotate90.setToolTipText(Messages.getString("RotationToolBar.90")); //$NON-NLS-1$
@@ -40,7 +39,6 @@ public class RotationToolBar<E extends ImageElement> extends WtoolBar {
         });
         add(jButtonRotate90);
 
-        // TODO change icon
         final JToggleButton jButtonFlip =
             new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/flip.png"))); //$NON-NLS-1$
         jButtonFlip.setToolTipText(Messages.getString("RotationToolBar.flip")); //$NON-NLS-1$

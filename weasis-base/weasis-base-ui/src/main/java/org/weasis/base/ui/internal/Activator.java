@@ -26,6 +26,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -75,7 +76,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 // Register default model
                 ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWin.getInstance());
 
-                ServiceTracker m_tracker = new ServiceTracker(context, DataExplorerView.class.getName(), null);
+                ServiceTracker m_tracker = new ServiceTracker(context, DataExplorerViewFactory.class.getName(), null);
                 // Must keep the tracker open, because calling close() will unget service. This is a problem because the
                 // desactivate method is called although the service stay alive in UI.
                 m_tracker.open();
@@ -83,8 +84,9 @@ public class Activator implements BundleActivator, ServiceListener {
                 for (int i = 0; (services != null) && (i < services.length); i++) {
                     synchronized (UIManager.EXPLORER_PLUGINS) {
                         if (!UIManager.EXPLORER_PLUGINS.contains(services[i])
-                            && services[i] instanceof DataExplorerView) {
-                            final DataExplorerView explorer = (DataExplorerView) services[i];
+                            && services[i] instanceof DataExplorerViewFactory) {
+                            final DataExplorerView explorer =
+                                ((DataExplorerViewFactory) services[i]).createDataExplorerView(null);
                             UIManager.EXPLORER_PLUGINS.add(explorer);
 
                             if (explorer.getDataExplorerModel() != null) {
@@ -129,8 +131,8 @@ public class Activator implements BundleActivator, ServiceListener {
                 if (service == null) {
                     return;
                 }
-                if (service instanceof DataExplorerView) {
-                    final DataExplorerView explorer = (DataExplorerView) service;
+                if (service instanceof DataExplorerViewFactory) {
+                    final DataExplorerView explorer = ((DataExplorerViewFactory) service).createDataExplorerView(null);
                     synchronized (UIManager.EXPLORER_PLUGINS) {
                         if (event.getType() == ServiceEvent.REGISTERED) {
                             if (!UIManager.EXPLORER_PLUGINS.contains(explorer)) {

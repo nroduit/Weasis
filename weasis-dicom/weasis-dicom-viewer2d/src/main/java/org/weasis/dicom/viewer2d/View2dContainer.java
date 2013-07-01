@@ -55,12 +55,14 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -122,25 +124,19 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
             // Add standard toolbars
-            ViewerToolBar<DicomImageElement> bar = new ViewerToolBar<DicomImageElement>(EventManager.getInstance());
-            TOOLBARS.add(bar);
-            TOOLBARS.add(bar.getMeasureToolBar());
-            ZoomToolBar zoomBar = new ZoomToolBar(EventManager.getInstance());
-            TOOLBARS.add(zoomBar);
-            RotationToolBar rotationBar = new RotationToolBar(EventManager.getInstance());
-            TOOLBARS.add(rotationBar);
-            LutToolBar lutdBar = new LutToolBar<DicomImageElement>();
-            TOOLBARS.add(lutdBar);
-            CineToolBar cineBar = new CineToolBar<DicomImageElement>();
-            TOOLBARS.add(cineBar);
+            EventManager evtMg = EventManager.getInstance();
+            TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                BundleTools.SYSTEM_PREFERENCES, 10));
+            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+            TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
 
             Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
             if (prefs != null) {
-                Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-                zoomBar.setEnabled(prefNode.getBoolean(ZoomToolBar.class.getName(), true));
-                rotationBar.setEnabled(prefNode.getBoolean(RotationToolBar.class.getName(), false));
-                lutdBar.setEnabled(prefNode.getBoolean(LutToolBar.class.getName(), true));
-                cineBar.setEnabled(prefNode.getBoolean(CineToolBar.class.getName(), false));
+                String className = this.getClass().getSimpleName().toLowerCase();
+                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
             }
 
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini"), null) { //$NON-NLS-1$
