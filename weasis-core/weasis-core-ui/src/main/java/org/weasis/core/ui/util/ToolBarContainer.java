@@ -20,7 +20,7 @@ import java.util.List;
 import javax.swing.JPanel;
 
 public class ToolBarContainer extends JPanel {
-    public static final Toolbar EMPTY = ToolBarFactory.buildEmptyToolBar("empty"); //$NON-NLS-1$
+    public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty"); //$NON-NLS-1$
     private final List<Toolbar> bars = new ArrayList<Toolbar>();
 
     public ToolBarContainer() {
