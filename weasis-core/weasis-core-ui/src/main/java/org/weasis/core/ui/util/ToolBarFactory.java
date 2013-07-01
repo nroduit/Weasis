@@ -25,7 +25,7 @@ import org.weasis.core.ui.util.WtoolBar.TYPE;
 public class ToolBarFactory {
 
     public static WtoolBar buildEmptyToolBar(String name) {
-        WtoolBar toolBar = new WtoolBar(name, TYPE.main);
+        WtoolBar toolBar = new WtoolBar(name, TYPE.empty, 0);
         toolBar.add(ToolBarFactory.buildToolBarSizerComponent());
         return toolBar;
     }

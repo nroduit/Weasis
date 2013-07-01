@@ -50,7 +50,7 @@ import org.weasis.core.ui.graphic.AngleToolGraphic;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
-import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.ui.util.WtoolBar;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -306,12 +306,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         } else if (ResetTools.WindowLevel.equals(action)) {
             if (selectedView2dContainer != null) {
                 DefaultView2d<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
-                ImageElement img = defaultView2d.getImage();
-                if (img != null) {
-                    boolean pixelPadding =
-                        JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
-                    windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
-                    levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
+                if (defaultView2d != null) {
+                    ImageElement img = defaultView2d.getImage();
+                    if (img != null) {
+                        boolean pixelPadding =
+                            JMVUtils.getNULLtoTrue((Boolean) defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING
+                                .cmd()));
+                        windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
+                        levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
+                    }
                 }
             }
         } else if (ResetTools.Pan.equals(action)) {
@@ -403,13 +406,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
-            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            if (View2dContainer.TOOLBARS.size() > 2) {
-                for (int i = 2; i < View2dContainer.TOOLBARS.size(); i++) {
-                    Toolbar tb = View2dContainer.TOOLBARS.get(i);
-                    BundlePreferences.putBooleanPreferences(prefNode, tb.getClass().getName(), tb.isEnabled());
-                }
-            }
+            WtoolBar.savePreferences(View2dContainer.TOOLBARS,
+                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()));
         }
     }
 }

@@ -94,8 +94,8 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     protected final DropDownButton measureButton;
     protected final ImageViewerEventManager<E> eventManager;
 
-    public MeasureToolBar(final ImageViewerEventManager<E> eventManager) {
-        super("Measurement Bar", TYPE.conditional); //$NON-NLS-1$
+    public MeasureToolBar(final ImageViewerEventManager<E> eventManager, int index) {
+        super("Measurement Bar", TYPE.tool, index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -122,6 +122,30 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
             }
         };
         measureButton.setToolTipText(Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$
+
+        // when user press the measure icon, set the action to measure
+        measureButton.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                ImageViewerPlugin view = eventManager.getSelectedView2dContainer();
+                if (view != null) {
+                    final ViewerToolBar toolBar = view.getViewerToolBar();
+                    if (toolBar != null) {
+                        String cmd = ActionW.MEASURE.cmd();
+                        if (!toolBar.isCommandActive(cmd)) {
+                            MouseActions mouseActions = eventManager.getMouseActions();
+                            mouseActions.setAction(MouseActions.LEFT, cmd);
+                            if (view != null) {
+                                view.setMouseActions(mouseActions);
+                            }
+                            toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                        }
+                    }
+                }
+            }
+        });
 
         add(measureButton);
 

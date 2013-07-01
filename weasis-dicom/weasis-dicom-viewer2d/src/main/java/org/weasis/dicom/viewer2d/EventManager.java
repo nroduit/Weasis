@@ -73,7 +73,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.graphic.model.Tools;
 import org.weasis.core.ui.pref.ViewSetting;
-import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
@@ -948,13 +948,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
-            prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            if (View2dContainer.TOOLBARS.size() > 2) {
-                for (int i = 2; i < View2dContainer.TOOLBARS.size(); i++) {
-                    Toolbar tb = View2dContainer.TOOLBARS.get(i);
-                    BundlePreferences.putBooleanPreferences(prefNode, tb.getClass().getName(), tb.isEnabled());
-                }
-            }
+            WtoolBar.savePreferences(View2dContainer.TOOLBARS,
+                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()));
         }
     }
 

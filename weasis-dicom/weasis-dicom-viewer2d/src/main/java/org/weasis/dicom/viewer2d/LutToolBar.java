@@ -19,8 +19,8 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class LutToolBar<DicomImageElement> extends WtoolBar {
 
-    public LutToolBar() {
-        super(Messages.getString("LutToolBar.lookupbar"), TYPE.tool); //$NON-NLS-1$
+    public LutToolBar(int index) {
+        super(Messages.getString("LutToolBar.lookupbar"), TYPE.tool, index); //$NON-NLS-1$
 
         GroupRadioMenu menu = null;
         ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);

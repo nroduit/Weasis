@@ -18,12 +18,11 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
-    public ZoomToolBar(final ImageViewerEventManager<E> eventManager) {
-        super(Messages.getString("ZoomToolBar.zoomBar"), TYPE.tool); //$NON-NLS-1$
+    public ZoomToolBar(final ImageViewerEventManager<E> eventManager, int index) {
+        super(Messages.getString("ZoomToolBar.zoomBar"), TYPE.tool, index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
-
         final JButton jButtonActualZoom =
             new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-original.png"))); //$NON-NLS-1$
         jButtonActualZoom.setToolTipText(Messages.getString("ViewerToolBar.zoom_1")); //$NON-NLS-1$
