@@ -533,7 +533,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         String pmi = (String) image.getTagValue(TagW.PhotometricInterpretation);
         BufferedImage bi = thumbnail;
-        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.CS_GRAY) {
+        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_GRAY) {
             bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
             pmi = "PALETTE COLOR"; //$NON-NLS-1$
         }
