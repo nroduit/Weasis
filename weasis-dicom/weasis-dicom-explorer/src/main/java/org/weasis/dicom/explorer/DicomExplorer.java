@@ -1713,18 +1713,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         });
                         menuFactory.add(item4);
 
-                        item4 = new JMenuItem("Open in new window");
-                        item4.addActionListener(new ActionListener() {
+                        // Exclude system factory
+                        if (viewerFactory.canExternalizeSeries()) {
+                            item4 = new JMenuItem("Open in new window");
+                            item4.addActionListener(new ActionListener() {
 
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                selList.setOpenningSeries(true);
-                                ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false,
-                                    true);
-                                selList.setOpenningSeries(false);
-                            }
-                        });
-                        menuFactory.add(item4);
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    selList.setOpenningSeries(true);
+                                    ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel,
+                                        false, true);
+                                    selList.setOpenningSeries(false);
+                                }
+                            });
+                            menuFactory.add(item4);
+                        }
 
                         if (viewerFactory.canAddSeries()) {
                             item4 = new JMenuItem("Add");

@@ -456,9 +456,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             if (writeDicomdir) {
                 File dcmdirFile = new File(writeDir, "DICOMDIR"); //$NON-NLS-1$
-                if (dcmdirFile.createNewFile()) {
-                    writer = DicomDirWriter.open(dcmdirFile);
-                }
+                writer = DicomDirLoader.open(dcmdirFile);
             }
 
             synchronized (tree) {
@@ -500,7 +498,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             iuid = makeFileIDs(iuid);
                         }
                         File destinationDir = new File(writeDir, buffer.toString());
-                        boolean newSeries = destinationDir.mkdirs();
+                        destinationDir.mkdirs();
 
                         File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
@@ -537,7 +535,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 String pid = dataset.getString(Tag.PatientID, null);
                                 String styuid = dataset.getString(Tag.StudyInstanceUID, null);
                                 String seruid = dataset.getString(Tag.SeriesInstanceUID, null);
-                                Attributes seriesRec = null;
 
                                 if (styuid != null && seruid != null) {
                                     if (pid == null) {
@@ -557,15 +554,27 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                                 null, null);
                                         writer.addLowerDirectoryRecord(patRec, studyRec);
                                     }
-                                    seriesRec = writer.findSeriesRecord(studyRec, seruid);
+                                    Attributes seriesRec = writer.findSeriesRecord(studyRec, seruid);
                                     if (seriesRec == null) {
                                         seriesRec =
                                             DicomDirLoader.RecordFactory.createRecord(RecordType.SERIES, null, dataset,
                                                 null, null);
+                                        // Icon Image Sequence (0088,0200).This Icon Image is representative of the
+                                        // Series.
+                                        // It may or may not correspond to one of the images of the Series.
+                                        if (seriesRec != null && node.getParent() instanceof DefaultMutableTreeNode) {
+                                            DicomImageElement midImage =
+                                                ((DicomSeries) ((DefaultMutableTreeNode) node.getParent())
+                                                    .getUserObject()).getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null,
+                                                    null);
+                                            Attributes iconItem = mkIconItem(midImage);
+                                            if (iconItem != null) {
+                                                seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
+                                            }
+                                        }
                                         writer.addLowerDirectoryRecord(studyRec, seriesRec);
                                     }
                                     Attributes instRec;
-
                                     if (writer.findLowerInstanceRecord(seriesRec, false, iuid) == null) {
                                         instRec =
                                             DicomDirLoader.RecordFactory.createRecord(dataset, fmi,
@@ -578,18 +587,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                             DicomDirLoader.RecordFactory.createRecord(dataset, fmi,
                                                 writer.toFileIDs(destinationFile));
                                         writer.addRootDirectoryRecord(instRec);
-                                    }
-                                }
-                                // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series.
-                                // It may or may not correspond to one of the images of the Series.
-                                if (newSeries && seriesRec != null
-                                    && node.getParent() instanceof DefaultMutableTreeNode) {
-                                    DicomImageElement midImage =
-                                        ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
-                                            .getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
-                                    Attributes iconItem = mkIconItem(midImage);
-                                    if (iconItem != null) {
-                                        seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
                                     }
                                 }
                             }
@@ -650,7 +647,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         String pmi = (String) image.getTagValue(TagW.PhotometricInterpretation);
         BufferedImage bi = thumbnail;
-        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.CS_GRAY) {
+        if (thumbnail.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_GRAY) {
             bi = convertBI(thumbnail, BufferedImage.TYPE_BYTE_INDEXED);
             pmi = "PALETTE COLOR"; //$NON-NLS-1$
         }

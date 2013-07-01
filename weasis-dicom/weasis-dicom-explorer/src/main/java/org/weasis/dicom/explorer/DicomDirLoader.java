@@ -14,8 +14,10 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.image.PhotometricInterpretation;
 import org.dcm4che.media.DicomDirReader;
+import org.dcm4che.media.DicomDirWriter;
 import org.dcm4che.media.RecordFactory;
 import org.dcm4che.media.RecordType;
+import org.dcm4che.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -244,7 +246,6 @@ public class DicomDirLoader {
             try {
                 pixelData = iconInstance.getBytes(Tag.PixelData);
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
             if (pixelData != null) {
@@ -321,5 +322,12 @@ public class DicomDirLoader {
         }
 
         return file.toURI().toString();
+    }
+
+    public static DicomDirWriter open(File file) throws IOException {
+        if (file.createNewFile()) {
+            DicomDirWriter.createEmptyDirectory(file, UIDUtils.createUID(), null, null, null);
+        }
+        return DicomDirWriter.open(file);
     }
 }

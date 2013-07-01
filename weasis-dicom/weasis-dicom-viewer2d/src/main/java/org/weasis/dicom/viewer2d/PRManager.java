@@ -23,6 +23,8 @@ import javax.swing.JPopupMenu;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.RadioMenuItem;
@@ -54,6 +56,8 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.explorer.DicomModel;
 
 public class PRManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
+
     public static final String POINT = "POINT";
     public static final String POLYLINE = "POLYLINE";
     public static final String INTERPOLATED = "INTERPOLATED";
@@ -166,8 +170,7 @@ public class PRManager {
                                     layer.addGraphic(graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
+                                LOGGER.error("Cannot create graphic: {}", e.getMessage());
                             }
                         }
                     }
@@ -221,8 +224,7 @@ public class PRManager {
                                     line.setLabel(lines, view);
                                     layer.addGraphic(line);
                                 } catch (InvalidShapeException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
+                                    LOGGER.error("Cannot create annotation: {}", e.getMessage());
                                 }
                             } else if (rect != null) {
                                 AnnotationGraphic g;
@@ -233,8 +235,7 @@ public class PRManager {
                                     g.setLabel(lines, view);
                                     layer.addGraphic(g);
                                 } catch (InvalidShapeException e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
+                                    LOGGER.error("Cannot create annotation: {}", e.getMessage());
                                 }
                             }
                         }
@@ -540,7 +541,6 @@ public class PRManager {
                     prButton.setVisible(true);
                     return prButton;
                 }
-
             }
         }
         return null;

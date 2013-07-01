@@ -10,16 +10,17 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.BulkData;
 import org.dcm4che.data.Tag;
+import org.dcm4che.util.StreamUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -46,34 +47,34 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     @Override
     public <T extends MediaElement<?>> void addMedia(T media) {
         if (media instanceof DicomEncapDocElement) {
+            DicomEncapDocElement dcmEnc = (DicomEncapDocElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                byte[] doc = null;
                 String extension = "tmp"; //$NON-NLS-1$
-                try {
-                    Attributes dicom = dicomImageLoader.getDicomObject();
-                    String mime = dicom.getString(Tag.MIMETypeOfEncapsulatedDocument);
-                    String[] extensions = MimeInspector.getExtensions(mime);
-                    if (extensions.length > 0) {
-                        extension = extensions[0];
-                    }
-                    doc = dicom.getBytes(Tag.EncapsulatedDocument);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                Attributes ds = dicomImageLoader.getDicomObject();
+                String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
+                String[] extensions = MimeInspector.getExtensions(mime);
+                if (extensions.length > 0) {
+                    extension = extensions[0];
                 }
-                if (doc != null) {
-                    OutputStream tempFileStream = null;
+                Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
+                if (data instanceof BulkData) {
+                    BulkData bulkData = (BulkData) data;
+                    FileInputStream in = null;
+                    FileOutputStream out = null;
                     try {
                         File file = File.createTempFile("encap_", "." + extension, AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                        tempFileStream = new BufferedOutputStream(new FileOutputStream(file));
-                        tempFileStream.write(doc);
-                        DicomEncapDocElement dicom = (DicomEncapDocElement) media;
-                        dicom.setDocument(file);
-                        this.add(dicom);
+                        in = new FileInputStream(dcmEnc.getFile());
+                        out = new FileOutputStream(file);
+                        StreamUtils.skipFully(in, bulkData.offset);
+                        StreamUtils.copy(in, out, bulkData.length, new byte[Math.min(bulkData.length, 4096)]);
+                        dcmEnc.setDocument(file);
+                        this.add(dcmEnc);
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
-                        FileUtil.safeClose(tempFileStream);
+                        FileUtil.safeClose(out);
+                        FileUtil.safeClose(in);
                     }
                 }
             }

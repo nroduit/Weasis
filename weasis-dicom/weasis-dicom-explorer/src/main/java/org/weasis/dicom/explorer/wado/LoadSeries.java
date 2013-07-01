@@ -48,6 +48,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -112,8 +113,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
         });
         this.progressBar = bar[0];
-        Boolean cache = (Boolean) dicomSeries.getTagValue(TagW.ReadFromDicomdir);
-        if (cache != null && cache) {
+        if (JMVUtils.getNULLtoFalse(dicomSeries.getTagValue(TagW.ReadFromDicomdir))) {
             progressBar.setVisible(false);
         }
         this.dicomSeries.setSeriesLoader(this);
@@ -965,6 +965,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                                             ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel,
                                                 true, true);
+                                        } else if (plugin != null) {
+                                            // Send event to select the related patient in Dicom Explorer.
+                                            dicomModel.firePropertyChange(new ObservableEvent(
+                                                ObservableEvent.BasicAction.Select, dicomModel, null, dicomSeries));
                                         }
                                     }
                                 }

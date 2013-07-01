@@ -287,7 +287,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             selectedView2dContainer.setDrawActions(graphic);
             DefaultView2d<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
-                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.SELECT_VIEW));
+                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
+                    EVENT.SELECT_VIEW));
                 pane.setFocused(true);
             }
         }

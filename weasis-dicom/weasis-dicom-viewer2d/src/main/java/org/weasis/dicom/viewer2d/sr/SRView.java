@@ -118,8 +118,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
         EVENT type = event.getEventType();
-        if (EVENT.LAYOUT.equals(type)) {
-            setSeries(event.getSeries());
+        if (EVENT.LAYOUT.equals(type) && event.getSeries() instanceof Series) {
+            setSeries((Series<?>) event.getSeries());
         }
     }
 

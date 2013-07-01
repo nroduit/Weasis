@@ -745,7 +745,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             DefaultView2d<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
             if (pane != null) {
                 pane.setFocused(true);
-                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.SELECT_VIEW));
+                fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, pane.getSeries(), null,
+                    EVENT.SELECT_VIEW));
             }
         }
     }

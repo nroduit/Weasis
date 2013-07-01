@@ -42,8 +42,8 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -80,7 +80,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private final JScrollPane limitedPane = new JScrollPane();
     private final JTextPane jTextPane1 = new JTextPane();
     private MediaElement<?> currentMedia;
-    private Series<?> currentSeries;
+    private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
 
     public DicomFieldsView() {
@@ -154,7 +154,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void changeDicomInfo(Series<?> series, MediaElement<?> media) {
+    private void changeDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
         int index = getSelectedIndex();
         if (index == 0) {
             displayLimitedDicomInfo(series, media);
@@ -163,7 +163,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void displayAllDicomInfo(Series<?> series, MediaElement<?> media) {
+    private void displayAllDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
         DefaultListModel<String> listModel = new DefaultListModel<String>();
         if (media != null) {
             MediaReader loader = media.getMediaReader();
@@ -255,7 +255,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
     }
 
-    private void displayLimitedDicomInfo(Series<?> series, MediaElement<?> media) {
+    private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
 
         StyledDocument doc = jTextPane1.getStyledDocument();
         try {

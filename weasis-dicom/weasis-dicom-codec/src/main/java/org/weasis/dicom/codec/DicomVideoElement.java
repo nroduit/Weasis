@@ -29,7 +29,7 @@ public class DicomVideoElement extends AudioVideoElement {
         super(mediaIO, key);
         // Physical distance in mm between the center of each pixel (ratio in mm)
         double[] val = (double[]) mediaIO.getTagValue(TagW.PixelSpacing);
-        if (val == null) {
+        if (val == null || val.length != 2) {
             val = (double[]) mediaIO.getTagValue(TagW.ImagerPixelSpacing);
         }
         if (val != null) {

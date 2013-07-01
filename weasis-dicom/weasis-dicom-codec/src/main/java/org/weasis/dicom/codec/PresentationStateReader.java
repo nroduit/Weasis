@@ -129,7 +129,7 @@ public class PresentationStateReader {
                             }
                         }
                     }
-                    if (pixelsize != null) {
+                    if (pixelsize == null || pixelsize.length != 2) {
                         tags.put(TagW.PixelSpacing.getName(), pixelsize);
                     }
 

@@ -11,7 +11,7 @@
 package org.weasis.core.ui.editor;
 
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.MediaSeries;
 
 public class SeriesViewerEvent {
 
@@ -20,13 +20,13 @@ public class SeriesViewerEvent {
     };
 
     private final SeriesViewer<?> seriesViewer;
-    private final Series<?> series;
+    private final MediaSeries<?> series;
     private final MediaElement<?> mediaElement;
 
     private final EVENT eventType;
     private Object sharedObject;
 
-    public SeriesViewerEvent(SeriesViewer<?> seriesViewer, Series<?> series, MediaElement<?> mediaElement,
+    public SeriesViewerEvent(SeriesViewer<?> seriesViewer, MediaSeries<?> series, MediaElement<?> mediaElement,
         EVENT eventType) {
         if (seriesViewer == null) {
             throw new IllegalArgumentException("SeriesViewer parameter cannot be null"); //$NON-NLS-1$
@@ -49,7 +49,7 @@ public class SeriesViewerEvent {
         return seriesViewer;
     }
 
-    public Series<?> getSeries() {
+    public MediaSeries<?> getSeries() {
         return series;
     }
 

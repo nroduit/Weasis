@@ -10,26 +10,28 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.dcm4che.data.Attributes;
+import org.dcm4che.data.BulkData;
+import org.dcm4che.data.Fragments;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.VR;
+import org.dcm4che.util.StreamUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 
 public class DicomVideoSeries extends Series<DicomVideoElement> implements FileExtractor {
 
     private int width = 256;
     private int height = 256;
-    private int frames = 0;
 
     public DicomVideoSeries(String subseriesInstanceUID) {
         super(TagW.SubseriesInstanceUID, subseriesInstanceUID, TagW.SubseriesInstanceUID);
@@ -48,45 +50,38 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
     @Override
     public void addMedia(MediaElement media) {
         if (media instanceof DicomVideoElement) {
+            DicomVideoElement dcmVideo = (DicomVideoElement) media;
             if (media.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-                frames = dicomImageLoader.getMediaElementNumber();
-                byte[] mpeg = null;
-                try {
-                    width = dicomImageLoader.getWidth(0);
-                    height = dicomImageLoader.getHeight(0);
-                    Attributes pixData = dicomImageLoader.readPixelData();
-                    // mpeg = pixData.get(TagW.PixelData.getId()).getFragment(1);
-                    mpeg = pixData.getNestedDataset(1).getBytes(Tag.PixelData);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (mpeg != null) {
-                    OutputStream tempFileStream = null;
-                    try {
-                        File videoFile = File.createTempFile("video_", ".mpg", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                        tempFileStream = new BufferedOutputStream(new FileOutputStream(videoFile));
-                        tempFileStream.write(mpeg);
-                        DicomVideoElement dicom = (DicomVideoElement) media;
-                        dicom.setVideoFile(videoFile);
-                        this.add(dicom);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        // Close file.
-                        if (tempFileStream != null) {
+                width = (Integer) dicomImageLoader.getTagValue(TagW.Columns);
+                height = (Integer) dicomImageLoader.getTagValue(TagW.Rows);
+                VR.Holder holder = new VR.Holder();
+                Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
+                if (pixdata instanceof Fragments) {
+                    Fragments fragments = (Fragments) pixdata;
+                    for (Object data : fragments) {
+                        if (data instanceof BulkData) {
+                            BulkData bulkData = (BulkData) data;
+                            FileInputStream in = null;
+                            FileOutputStream out = null;
                             try {
-                                tempFileStream.close();
+                                File videoFile =
+                                    File.createTempFile("video_", ".mpg", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                in = new FileInputStream(dcmVideo.getFile());
+                                out = new FileOutputStream(videoFile);
+                                StreamUtils.skipFully(in, bulkData.offset);
+                                StreamUtils.copy(in, out, bulkData.length, new byte[Math.min(bulkData.length, 4096)]);
+                                dcmVideo.setVideoFile(videoFile);
+                                this.add(dcmVideo);
                             } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                FileUtil.safeClose(out);
+                                FileUtil.safeClose(in);
                             }
                         }
                     }
                 }
-                // DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
-                // if (model != null) {
-                // model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
-                // new SeriesEvent(SeriesEvent.Action.AddImage, this, insertIndex + frames)));
-                // }
             }
         }
     }

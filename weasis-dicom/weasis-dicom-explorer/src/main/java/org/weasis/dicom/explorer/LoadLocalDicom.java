@@ -200,6 +200,10 @@ public class LoadLocalDicom extends ExplorerTask {
                     if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                         openPlugin = false;
                         ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
+                    } else if (plugin != null) {
+                        // Send event to select the related patient in Dicom Explorer.
+                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select,
+                            dicomModel, null, dicomSeries));
                     }
                 }
             } else {

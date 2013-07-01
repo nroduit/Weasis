@@ -345,8 +345,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             selectedImagePane.setSelected(true);
             eventManager.updateComponentsListener(selectedImagePane);
             if (selectedImagePane.getSeries() instanceof Series) {
-                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane
-                    .getSeries(), selectedImagePane.getImage(), EVENT.LAYOUT));
+                eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, selectedImagePane.getSeries(),
+                    selectedImagePane.getImage(), EVENT.LAYOUT));
             }
         }
     }
@@ -431,10 +431,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             eventManager.updateComponentsListener(defaultView2d);
         }
         if (newView && defaultView2d.getSeries() instanceof Series) {
-            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, (Series) selectedImagePane.getSeries(),
+            eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, selectedImagePane.getSeries(),
                 selectedImagePane.getImage(), EVENT.SELECT));
         }
-        eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
+        eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(this, defaultView2d == null ? null : defaultView2d
+            .getSeries(), null, EVENT.SELECT_VIEW));
     }
 
     public void resetMaximizedSelectedImagePane(final DefaultView2d<E> defaultView2d) {
