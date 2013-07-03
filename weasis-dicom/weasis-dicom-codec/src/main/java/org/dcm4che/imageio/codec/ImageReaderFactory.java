@@ -127,7 +127,8 @@ public class ImageReaderFactory implements Serializable {
         try {
             url = new URL(name);
         } catch (MalformedURLException e) {
-            url = StringUtils.getResourceURL(name, this.getClass());
+            // url = StringUtils.getResourceURL(name, this.getClass()); // method doesn't exist
+            url = this.getClass().getResource(name);
             if (url == null) {
                 throw new IOException("No such resource: " + name);
             }

@@ -164,7 +164,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     private void displayAllDicomInfo(MediaSeries<?> series, MediaElement<?> media) {
-        DefaultListModel<String> listModel = new DefaultListModel<String>();
+        // DefaultListModel<String> listModel = new DefaultListModel<String>(); // only compliant with in JAVA7
+        DefaultListModel listModel = new DefaultListModel();
         if (media != null) {
             MediaReader loader = media.getMediaReader();
             if (loader instanceof DicomMediaIO) {
@@ -299,9 +300,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     Object val = group == null ? currentMedia.getTagValue(t) : group.getTagValue(t);
                     if (val != null) {
                         exist = true;
-                        doc.insertString(doc.getLength(), t.toString(), italic); //$NON-NLS-1$
+                        doc.insertString(doc.getLength(), t.toString(), italic);
                         doc.insertString(doc.getLength(),
-                            ": " + t.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
+                            ": " + TagW.getFormattedText(val, t.getType(), null) + "\n", regular); //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 } catch (BadLocationException e) {
                     e.printStackTrace();
