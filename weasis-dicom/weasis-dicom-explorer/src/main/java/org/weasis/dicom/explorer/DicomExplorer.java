@@ -38,9 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,8 +75,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.felix.service.command.CommandProcessor;
-import org.osgi.service.component.ComponentContext;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -312,19 +308,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         thumnailView.setViewportView(patientContainer);
         changeToolWindowAnchor(getDockable().getBaseLocation());
 
-    }
-
-    protected void activate(ComponentContext context) {
-        this.model.addPropertyChangeListener(this);
-        Dictionary<String, Object> dict = new Hashtable<String, Object>();
-        dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
-        dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
-        context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
-
-    }
-
-    protected void deactivate(ComponentContext context) {
-        this.model.removePropertyChangeListener(this);
     }
 
     private String getLimiteStringSize(String name, int limit) {

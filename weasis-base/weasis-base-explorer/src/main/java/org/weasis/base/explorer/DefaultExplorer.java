@@ -33,7 +33,7 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.osgi.service.component.ComponentContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -63,12 +63,11 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     private final JTree tree;
     private JPanel jRootPanel = new JPanel();
 
-    public DefaultExplorer() {
-        this(JIUtility.createTreeModel());
-    }
-
     public DefaultExplorer(final FileTreeModel model) {
         super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.MINIMIZED, PluginTool.TYPE.explorer);
+        if (model == null) {
+            throw new IllegalArgumentException();
+        }
         setDockableWidth(400);
 
         this.tree = new JTree(model);
@@ -113,9 +112,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         return jRootPanel;
     }
 
-    protected void activate(ComponentContext context) {
+    protected void iniLastPath() {
         File prefDir = null;
-        Preferences prefs = BundlePreferences.getDefaultPreferences(context.getBundleContext());
+        Preferences prefs =
+            BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs == null) {
             prefDir = new File(System.getProperty("user.home"));
         } else {
@@ -132,10 +132,11 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         }
     }
 
-    protected void deactivate(ComponentContext context) {
+    protected void saveLastPath() {
         File dir = getCurrentDir();
         if (dir != null) {
-            Preferences prefs = BundlePreferences.getDefaultPreferences(context.getBundleContext());
+            Preferences prefs =
+                BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
             if (prefs != null) {
                 Preferences p = prefs.node(PREFERENCE_NODE);
                 BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getAbsolutePath());
