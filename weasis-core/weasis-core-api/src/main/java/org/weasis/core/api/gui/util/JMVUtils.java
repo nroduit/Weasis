@@ -21,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
@@ -466,4 +467,37 @@ public class JMVUtils {
         return Color.getHSBColor(c[0] + 0.5F, c[1], c[2]);
     }
 
+    public static String getResource(String resource, Class<?> c) {
+        URL url = getResourceURL(resource, c);
+        return url != null ? url.toString() : null;
+    }
+
+    public InputStream getResourceAsStream(String name, Class<?> c) {
+        URL url = getResourceURL(name, c);
+        try {
+            return url != null ? url.openStream() : null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static URL getResourceURL(String resource, Class<?> c) {
+        URL url = null;
+        if (c != null) {
+            ClassLoader classLoader = c.getClassLoader();
+            if (classLoader != null) {
+                url = classLoader.getResource(resource);
+            }
+        }
+        if (url == null) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader != null) {
+                url = classLoader.getResource(resource);
+            }
+        }
+        if (url == null) {
+            url = ClassLoader.getSystemResource(resource);
+        }
+        return url;
+    }
 }
