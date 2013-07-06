@@ -26,12 +26,19 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.util.Toolbar;
 
+import bibliothek.gui.DockStation;
 import bibliothek.gui.Dockable;
+import bibliothek.gui.dock.action.view.ActionViewConverter;
+import bibliothek.gui.dock.action.view.ViewTarget;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.action.CAction;
+import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.core.CommonSimpleButtonAction;
 import bibliothek.gui.dock.common.action.predefined.CCloseAction;
 import bibliothek.gui.dock.common.intern.AbstractCDockable;
 import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.intern.CommonDockable;
 import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
@@ -92,6 +99,8 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
         this.dockable.setCloseable(true);
         this.dockable.setMinimizable(false);
         this.dockable.setExternalizable(false);
+        this.dockable.addAction(new CloseOthersAction(dockable, false));
+        this.dockable.addAction(new CloseOthersAction(dockable, true));
     }
 
     @Override
@@ -187,4 +196,64 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
     public abstract List<Action> getExportActions();
 
     public abstract List<Action> getPrintActions();
+
+    private static class CloseOthersAction extends CButton {
+        private CDockable dockable;
+        private boolean closeAll;
+
+        public CloseOthersAction(CDockable dockable, boolean closeAll) {
+            // prevent standard initialization of the action by calling the protected constructor
+            super(null);
+            // initialize with a modified action
+            init(new MenuOnlySimpleAction(this));
+            this.dockable = dockable;
+            this.closeAll = closeAll;
+            setText(closeAll ? "Close All" : "Close Others");
+        }
+
+        @Override
+        protected void action() {
+            super.action();
+
+            // We need to access the Core API to find out which other Dockables exist.
+            DockStation parent = dockable.intern().getDockParent();
+
+            // Because closing a Dockable may remove the parent DockStation, we first collect all the
+            // Dockables we may later close
+            Dockable[] children = new Dockable[parent.getDockableCount()];
+            for (int i = 0; i < children.length; i++) {
+                children[i] = parent.getDockable(i);
+            }
+            for (Dockable child : children) {
+                // we are not interested in things like entire stacks, or our own Dockable. So let's do
+                // some checks before closing a Dockable
+                if (child instanceof CommonDockable) {
+                    CDockable cChild = ((CommonDockable) child).getDockable();
+                    if (closeAll || cChild != dockable) {
+                        if (cChild.getFocusComponent() instanceof SeriesViewer) {
+                            ((SeriesViewer) cChild.getFocusComponent()).close();
+                        } else {
+                            cChild.setVisible(false);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static class MenuOnlySimpleAction extends CommonSimpleButtonAction {
+        public MenuOnlySimpleAction(CAction action) {
+            super(action);
+        }
+
+        @Override
+        public <V> V createView(ViewTarget<V> target, ActionViewConverter converter, Dockable dockable) {
+            // This method creates the view (e.g. a JMenuItem) for this DockAction. Since we do not want
+            // to show it up everywhere, we just ignore some places (targets).
+            if (ViewTarget.TITLE == target) {
+                return null;
+            }
+            return super.createView(target, converter, dockable);
+        }
+    }
 }
