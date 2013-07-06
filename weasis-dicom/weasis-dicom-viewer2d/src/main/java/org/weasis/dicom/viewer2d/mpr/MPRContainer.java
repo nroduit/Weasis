@@ -23,6 +23,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.docking.DockableTool;
@@ -72,7 +75,6 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
-import org.weasis.dicom.viewer2d.internal.Activator;
 import org.weasis.dicom.viewer2d.mpr.MprView.Type;
 
 public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -154,10 +156,11 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
             TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
 
-            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 String className = this.getClass().getSimpleName().toLowerCase();
-                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
+                WtoolBar.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className);
             }
         }
     }

@@ -14,10 +14,12 @@ import java.io.File;
 import java.util.List;
 import java.util.Scanner;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.internal.Activator;
 
 public class LutManager {
 
@@ -51,7 +53,8 @@ public class LutManager {
     }
 
     public static void readLutFilesFromConfigDir(List<ByteLut> luts) {
-        File lutFolder = new File(Activator.PREFERENCES.getDataFolder(), LUT_DIR);
+        final BundleContext context = FrameworkUtil.getBundle(LutManager.class).getBundleContext();
+        File lutFolder = new File(BundlePreferences.getDataFolder(context), LUT_DIR);
         if (lutFolder.exists() && lutFolder.isDirectory()) {
             File[] files = lutFolder.listFiles();
             Scanner scan = null;

@@ -15,9 +15,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
-import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -132,7 +133,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(panAction = newPanAction());
         iniAction(new BasicActionState(ActionW.RESET));
 
-        Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
+        final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        Preferences pref = BundlePreferences.getDefaultPreferences(context);
         zoomSetting.applyPreferences(pref);
         mouseActions.applyPreferences(pref);
         if (pref != null) {
@@ -412,8 +414,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         return true;
     }
 
-    public void savePreferences() {
-        Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+    public void savePreferences(BundleContext bundleContext) {
+        Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
         // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
         try {
             if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {

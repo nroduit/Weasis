@@ -21,22 +21,20 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomImport extends AbstractWizardDialog {
 
-    private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
 
     public DicomImport(Frame parent, final DicomModel dicomModel) {
         super(parent,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        prefs_tracker =
-            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
-                DicomImportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -93,22 +91,22 @@ public class DicomImport extends AbstractWizardDialog {
         pagesRoot.add(new DefaultMutableTreeNode(new DicomDirImport()));
         pagesRoot.add(new DefaultMutableTreeNode(new DicomZipImport()));
 
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
-            prefs_tracker.open();
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        final Object[] servicesPref = prefs_tracker.getServices();
-        for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
-            if (servicesPref[i] instanceof DicomImportFactory) {
-                ImportDicom page = ((DicomImportFactory) servicesPref[i]).createDicomImportPage(null);
-                if (page != null) {
-                    pagesRoot.add(new DefaultMutableTreeNode(page));
+            for (ServiceReference<DicomImportFactory> service : context.getServiceReferences(DicomImportFactory.class,
+                null)) {
+                DicomImportFactory factory = context.getService(service);
+                if (factory != null) {
+                    ImportDicom page = factory.createDicomImportPage(null);
+                    if (page != null) {
+                        pagesRoot.add(new DefaultMutableTreeNode(page));
+                    }
                 }
             }
+        } catch (InvalidSyntaxException e) {
+            e.printStackTrace();
         }
+
         iniTree();
     }
 

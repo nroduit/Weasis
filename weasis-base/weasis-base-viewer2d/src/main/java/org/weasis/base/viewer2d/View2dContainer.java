@@ -27,10 +27,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
-import org.weasis.base.viewer2d.internal.Activator;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -47,6 +48,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
@@ -113,10 +115,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(new ZoomToolBar(evtMg, 20));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
 
-            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 String className = this.getClass().getSimpleName().toLowerCase();
-                WtoolBar.applyPreferences(TOOLBARS, prefs, Activator.PREFERENCES.getBundleSymbolicName(), className);
+                WtoolBar.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className);
             }
 
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$

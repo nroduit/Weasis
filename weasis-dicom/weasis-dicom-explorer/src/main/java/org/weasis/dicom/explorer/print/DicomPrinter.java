@@ -23,8 +23,10 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.explorer.internal.Activator;
 
 /**
  * 
@@ -42,9 +44,10 @@ public class DicomPrinter {
     public static void savePrintersSettings(javax.swing.JComboBox printersComboBox) {
         XMLStreamWriter writer = null;
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
+        final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
         try {
             writer =
-                factory.createXMLStreamWriter(new FileWriter(new File(Activator.PREFERENCES.getDataFolder(),
+                factory.createXMLStreamWriter(new FileWriter(new File(BundlePreferences.getDataFolder(context),
                     "dicomPrinters.xml"))); //$NON-NLS-1$
 
             writer.writeStartDocument();
@@ -70,7 +73,8 @@ public class DicomPrinter {
     }
 
     public static void loadPrintersSettings(javax.swing.JComboBox printersComboBox) {
-        File prefs = new File(Activator.PREFERENCES.getDataFolder(), "dicomPrinters.xml"); //$NON-NLS-1$
+        final BundleContext context = FrameworkUtil.getBundle(DicomPrinter.class).getBundleContext();
+        File prefs = new File(BundlePreferences.getDataFolder(context), "dicomPrinters.xml"); //$NON-NLS-1$
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
             XMLInputFactory factory = XMLInputFactory.newInstance();

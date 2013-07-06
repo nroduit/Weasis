@@ -10,9 +10,10 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.pref;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.dicom.codec.internal.Activator;
 
 public class DicomPrefManager {
 
@@ -34,7 +35,8 @@ public class DicomPrefManager {
     private DicomPrefManager() {
         restoreDefaultValues();
         if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
-            Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences pref = BundlePreferences.getDefaultPreferences(context);
             if (pref != null) {
                 Preferences prefNode = pref.node("dicom"); //$NON-NLS-1$
                 j2kReader = prefNode.get("jpeg2000.reader", null);
@@ -48,7 +50,8 @@ public class DicomPrefManager {
 
     public void savePreferences() {
         if ("superuser".equals(System.getProperty("weasis.user.prefs"))) {
-            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 Preferences prefNode = prefs.node("dicom"); //$NON-NLS-1$
                 BundlePreferences.putStringPreferences(prefNode, "jpeg2000.reader", j2kReader); //$NON-NLS-1$

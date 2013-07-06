@@ -14,73 +14,54 @@ import java.io.File;
 import java.util.Arrays;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.prefs.Preferences;
 import org.osgi.service.prefs.PreferencesService;
-import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.util.AbstractProperties;
 
 public class BundlePreferences {
 
-    private ServiceTracker tracker;
-    private File dataFolder;
-    private String bundleSymbolicName = "";
+    private BundlePreferences() {
+    }
 
-    public synchronized void init(final BundleContext context) throws Exception {
-        if (tracker != null) {
-            tracker.close();
+    public static File getDataFolder(BundleContext context) {
+        if (context != null) {
+            File dataFolder =
+                new File(
+                    AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+            dataFolder.mkdirs();
+            return dataFolder;
         }
-        bundleSymbolicName = context.getBundle().getSymbolicName();
-        dataFolder = new File(AbstractProperties.WEASIS_PATH + File.separator + "data", bundleSymbolicName); //$NON-NLS-1$
-        tracker = new ServiceTracker(context, PreferencesService.class.getName(), null);
-        tracker.open();
+        return new File(AbstractProperties.WEASIS_PATH, "data");
     }
 
-    public final synchronized void close() {
-        if (tracker != null) {
-            tracker.close();
-            tracker = null;
-        }
-    }
-
-    public String getBundleSymbolicName() {
-        return bundleSymbolicName;
-    }
-
-    public PreferencesService getPreferencesService() {
-        // track only one service service
-        return tracker == null ? null : (PreferencesService) tracker.getService();
-    }
-
-    public Preferences getDefaultPreferences() {
-        return getUserPreferences(AbstractProperties.WEASIS_USER);
-    }
-
-    public Preferences getSystemPreferences() {
-        PreferencesService service = getPreferencesService();
-        return service == null ? null : service.getSystemPreferences();
-    }
-
-    public Preferences getUserPreferences(String name) {
-        PreferencesService service = getPreferencesService();
-        return service == null ? null : service.getUserPreferences(name);
-    }
-
-    public File getDataFolder() {
-        dataFolder.mkdirs();
-        return dataFolder;
-    }
-
-    public static Preferences getDefaultPreferences(final BundleContext context) {
+    public static Preferences getDefaultPreferences(BundleContext context) {
         return getUserPreferences(context, AbstractProperties.WEASIS_USER);
     }
 
-    public static Preferences getUserPreferences(final BundleContext context, String name) {
-        ServiceTracker track = new ServiceTracker(context, PreferencesService.class.getName(), null);
-        track.open();
-        PreferencesService service = (PreferencesService) track.getService();
-        Preferences pref = service == null ? null : service.getUserPreferences(name);
-        track.close();
-        return pref;
+    public static Preferences getUserPreferences(BundleContext context, String name) {
+        if (context != null) {
+            String user = name == null ? AbstractProperties.WEASIS_USER : name;
+            PreferencesService prefService = BundlePreferences.getService(context, PreferencesService.class);
+            if (prefService != null) {
+                return prefService.getUserPreferences(user);
+            }
+        }
+        return null;
+    }
+
+    public static <S> S getService(BundleContext context, Class<S> clazz) {
+        if (clazz != null) {
+            try {
+                ServiceReference<S> serviceRef = context.getServiceReference(clazz);
+                if (serviceRef != null) {
+                    return context.getService(serviceRef);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 
     public static void putStringPreferences(Preferences pref, String key, String value) {

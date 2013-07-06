@@ -23,8 +23,10 @@ import java.util.Hashtable;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
@@ -32,7 +34,6 @@ import org.weasis.core.api.gui.util.AbstractWizardDialog;
 public class DicomExport extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
 
-    private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
 
@@ -41,9 +42,6 @@ public class DicomExport extends AbstractWizardDialog {
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(dicomModel);
-        prefs_tracker =
-            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
-                DicomExportFactory.class.getName(), null);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -98,24 +96,24 @@ public class DicomExport extends AbstractWizardDialog {
     protected void initializePages() {
         pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, exportTree)));
 
-        try {
-            prefs_tracker.open();
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        final Object[] servicesPref = prefs_tracker.getServices();
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
-        for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
-            if (servicesPref[i] instanceof DicomExportFactory) {
-                ExportDicom page = ((DicomExportFactory) servicesPref[i]).createDicomExportPage(properties);
-                if (page != null) {
-                    pagesRoot.add(new DefaultMutableTreeNode(page));
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        try {
+            for (ServiceReference<DicomExportFactory> service : context.getServiceReferences(DicomExportFactory.class,
+                null)) {
+                DicomExportFactory factory = context.getService(service);
+                if (factory != null) {
+                    ExportDicom page = factory.createDicomExportPage(properties);
+                    if (page != null) {
+                        pagesRoot.add(new DefaultMutableTreeNode(page));
+                    }
                 }
             }
+        } catch (InvalidSyntaxException e) {
+            e.printStackTrace();
         }
+
         iniTree();
     }
 

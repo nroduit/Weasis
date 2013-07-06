@@ -33,7 +33,6 @@ import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractProperties;
@@ -55,24 +54,20 @@ import org.weasis.core.api.util.ProxyDetector;
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
-    private static final String codecFilter = String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()); //$NON-NLS-1$
-    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-
     @Override
-    public void start(final BundleContext bundleContext) throws Exception {
-        context.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(context), null);
-        context.addServiceListener(this, codecFilter);
-        ServiceTracker m_tracker = new ServiceTracker(context, Codec.class.getName(), null);
-        // Do not close tracker. It will uregister services
-        m_tracker.open();
-        Object[] services = m_tracker.getServices();
-        for (int i = 0; (services != null) && (i < services.length); i++) {
-            if (!BundleTools.CODEC_PLUGINS.contains(services[i]) && services[i] instanceof Codec) {
-                Codec codec = (Codec) services[i];
+    public void start(BundleContext bundleContext) throws Exception {
+        bundleContext.registerService(BackingStore.class.getName(), new DataFileBackingStoreImpl(bundleContext), null);
+
+        for (ServiceReference<Codec> service : bundleContext.getServiceReferences(Codec.class, null)) {
+            Codec codec = bundleContext.getService(service);
+            if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
                 BundleTools.CODEC_PLUGINS.add(codec);
                 LOGGER.info("Register Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
             }
         }
+
+        bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
+
         JAI jai = getJAI();
         OperationRegistry or = jai.getOperationRegistry();
 
@@ -100,7 +95,7 @@ public class Activator implements BundleActivator, ServiceListener {
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
 
-        initLoggerAndAudit();
+        initLoggerAndAudit(bundleContext);
     }
 
     @Override
@@ -131,7 +126,8 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
-        ServiceReference m_ref = event.getServiceReference();
+        ServiceReference<?> m_ref = event.getServiceReference();
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         Codec codec = (Codec) context.getService(m_ref);
         if (codec == null) {
             return;
@@ -154,24 +150,23 @@ public class Activator implements BundleActivator, ServiceListener {
         }
     }
 
-    private void initLoggerAndAudit() throws IOException {
+    private void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
         // Audit log for giving statistics about usage of Weasis
         String loggerKey = "audit.log"; //$NON-NLS-1$
         String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
-        String audit = context.getProperty(loggerKey);
+        String audit = bundleContext.getProperty(loggerKey);
         if (audit != null && audit.equalsIgnoreCase("true")) { //$NON-NLS-1$
-            AuditLog.createOrUpdateLogger(context, loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
                 + File.separator + "log" + File.separator + "audit-" + AbstractProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {
-            ServiceReference configurationAdminReference =
-                context.getServiceReference(ConfigurationAdmin.class.getName());
+            ServiceReference<ConfigurationAdmin> configurationAdminReference =
+                bundleContext.getServiceReference(ConfigurationAdmin.class);
             if (configurationAdminReference != null) {
-                ConfigurationAdmin confAdmin = (ConfigurationAdmin) context.getService(configurationAdminReference);
+                ConfigurationAdmin confAdmin = bundleContext.getService(configurationAdminReference);
                 if (confAdmin != null) {
-
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                     if (logConfiguration == null) {
                         logConfiguration =

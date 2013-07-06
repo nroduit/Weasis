@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultComboBoxModel;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
@@ -80,7 +82,6 @@ import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.viewer2d.internal.Activator;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 
@@ -188,7 +189,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(koFilterAction = newKOFilterAction());
         iniAction(koSelectionAction = newKOSelectionAction());
 
-        Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+        final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        Preferences prefs = BundlePreferences.getDefaultPreferences(context);
         zoomSetting.applyPreferences(prefs);
         mouseActions.applyPreferences(prefs);
 
@@ -1069,8 +1071,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return false;
     }
 
-    public void savePreferences() {
-        Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+    public void savePreferences(BundleContext bundleContext) {
+        Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
         // Remove prefs used in Weasis 1.1.0 RC2, has moved to core.ui
         try {
             if (prefs.nodeExists(ViewSetting.PREFERENCE_NODE)) {

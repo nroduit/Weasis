@@ -22,40 +22,32 @@ import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.util.DockableToolFactory;
+import org.weasis.core.ui.util.ToolBarFactory;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public class Activator implements BundleActivator, ServiceListener {
 
-    public static final BundlePreferences PREFERENCES = new BundlePreferences();
-    private static final String TOOLBAR_FILTER = String.format(
-        "(%s=%s)", Constants.OBJECTCLASS, Toolbar.class.getName()); //$NON-NLS-1$
-    private static final String TOOL_FILTER = String.format(
-        "(%s=%s)", Constants.OBJECTCLASS, DockableTool.class.getName()); //$NON-NLS-1$
-
-    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-
     @Override
-    public void start(BundleContext bundleContext) throws Exception {
-        PREFERENCES.init(context);
+    public void start(final BundleContext bundleContext) throws Exception {
 
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
             public void run() {
                 try {
-                    ServiceReference[] scrServiceRef = context.getServiceReferences(Toolbar.class.getName(), null);
-                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
-                        synchronized (View2dContainer.TOOLBARS) {
-                            // The container should referenced as a property in the provided service
-                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
-                                Object service = context.getService(scrServiceRef[i]);
-                                if (service instanceof Toolbar && !View2dContainer.TOOLBARS.contains(service)) {
-                                    View2dContainer.TOOLBARS.add((Toolbar) service);
+                    for (ServiceReference<ToolBarFactory> serviceReference : bundleContext.getServiceReferences(
+                        ToolBarFactory.class, null)) {
+                        // The container should referenced as a property in the provided service
+                        if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
+                            ToolBarFactory factory = bundleContext.getService(serviceReference);
+                            if (factory != null) {
+                                final Toolbar bar = factory.createToolbar(null);
+                                if (bar != null && !View2dContainer.TOOLBARS.contains(bar)) {
+                                    View2dContainer.TOOLBARS.add(bar);
                                 }
                             }
                         }
@@ -65,14 +57,15 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
 
                 try {
-                    ServiceReference[] scrServiceRef = context.getServiceReferences(DockableTool.class.getName(), null);
-                    for (int i = 0; (scrServiceRef != null) && (i < scrServiceRef.length); i++) {
-                        synchronized (View2dContainer.TOOLS) {
-                            // The container should referenced as a property in the provided service
-                            if (Boolean.valueOf((String) scrServiceRef[i].getProperty(View2dContainer.class.getName()))) {
-                                Object service = context.getService(scrServiceRef[i]);
-                                if (service instanceof DockableTool && !View2dContainer.TOOLS.contains(service)) {
-                                    View2dContainer.TOOLS.add((DockableTool) service);
+                    for (ServiceReference<DockableToolFactory> serviceReference : bundleContext.getServiceReferences(
+                        DockableToolFactory.class, null)) {
+                        // The container should referenced as a property in the provided service
+                        if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
+                            DockableToolFactory factory = bundleContext.getService(serviceReference);
+                            if (factory != null) {
+                                final DockableTool tool = factory.createTool(null);
+                                if (tool != null && !View2dContainer.TOOLS.contains(factory)) {
+                                    View2dContainer.TOOLS.add(tool);
                                 }
                             }
                         }
@@ -86,8 +79,10 @@ public class Activator implements BundleActivator, ServiceListener {
                  * context.getServiceReferences()
                  */
                 try {
-                    context.addServiceListener(Activator.this, TOOLBAR_FILTER);
-                    context.addServiceListener(Activator.this, TOOL_FILTER);
+                    bundleContext.addServiceListener(Activator.this,
+                        String.format("(%s=%s)", Constants.OBJECTCLASS, ToolBarFactory.class.getName())); //$NON-NLS-1$
+                    bundleContext.addServiceListener(Activator.this,
+                        String.format("(%s=%s)", Constants.OBJECTCLASS, DockableToolFactory.class.getName())); //$NON-NLS-1$
                 } catch (InvalidSyntaxException e) {
                     e.printStackTrace();
                 }
@@ -98,8 +93,7 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences
-        EventManager.getInstance().savePreferences();
-        PREFERENCES.close();
+        EventManager.getInstance().savePreferences(bundleContext);
         UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 
@@ -110,43 +104,35 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
+                final ServiceReference<?> m_ref = event.getServiceReference();
+                final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
+                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+                    Object service = context.getService(m_ref);
+                    if (service instanceof ToolBarFactory) {
+                        final Toolbar bar = ((ToolBarFactory) service).createToolbar(null);
 
-                final ServiceReference m_ref = event.getServiceReference();
-                Object service = context.getService(m_ref);
-                if (service != null) {
-                    if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
-                        if (service instanceof WtoolBar) {
-                            final WtoolBar bar = (WtoolBar) service;
-                            synchronized (View2dContainer.TOOLBARS) {
-                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
-                                    if (event.getType() == ServiceEvent.REGISTERED) {
-                                        if (!View2dContainer.TOOLBARS.contains(bar)) {
-                                            View2dContainer.TOOLBARS.add(bar);
-                                            updateToolbarView();
-                                        }
-                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                                        if (View2dContainer.TOOLBARS.contains(bar)) {
-                                            View2dContainer.TOOLBARS.remove(bar);
-                                            updateToolbarView();
-                                        }
-                                    }
-                                }
+                        if (event.getType() == ServiceEvent.REGISTERED) {
+                            if (bar != null && !View2dContainer.TOOLBARS.contains(bar)) {
+                                View2dContainer.TOOLBARS.add(bar);
+                                updateToolbarView();
                             }
-                        } else if (service instanceof DockableTool) {
-                            final DockableTool tool = (DockableTool) service;
-                            synchronized (View2dContainer.TOOLS) {
-                                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
-                                    if (event.getType() == ServiceEvent.REGISTERED) {
-                                        if (!View2dContainer.TOOLS.contains(tool)) {
-                                            View2dContainer.TOOLS.add(tool);
-                                        }
-                                    } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                                        if (View2dContainer.TOOLS.contains(tool)) {
-                                            View2dContainer.TOOLS.remove(tool);
-                                            tool.closeDockable();
-                                        }
-                                    }
-                                }
+                        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                            if (View2dContainer.TOOLBARS.contains(bar)) {
+                                View2dContainer.TOOLBARS.remove(bar);
+                                updateToolbarView();
+                            }
+                        }
+
+                    } else if (service instanceof DockableToolFactory) {
+                        final DockableTool tool = ((DockableToolFactory) service).createTool(null);
+                        if (event.getType() == ServiceEvent.REGISTERED) {
+                            if (!View2dContainer.TOOLS.contains(tool)) {
+                                View2dContainer.TOOLS.add(tool);
+                            }
+                        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                            if (View2dContainer.TOOLS.contains(tool)) {
+                                View2dContainer.TOOLS.remove(tool);
+                                tool.closeDockable();
                             }
                         }
                     }

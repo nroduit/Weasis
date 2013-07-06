@@ -10,10 +10,11 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomManager {
 
@@ -37,7 +38,8 @@ public class DicomManager {
         portableDirCache = true;
         restoreDefaultValues();
         if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
-            Preferences pref = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences pref = BundlePreferences.getDefaultPreferences(context);
             if (pref != null) {
                 Preferences prefNode = pref.node("wado"); //$NON-NLS-1$
                 wadoTSUID = TransferSyntax.getTransferSyntax(prefNode.get("compression.type", "NONE")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -70,7 +72,8 @@ public class DicomManager {
 
     public void savePreferences() {
         if ("superuser".equals(System.getProperty("weasis.user.prefs"))) { //$NON-NLS-1$ //$NON-NLS-2$
-            Preferences prefs = Activator.PREFERENCES.getDefaultPreferences();
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 Preferences prefNode = prefs.node("wado"); //$NON-NLS-1$
                 BundlePreferences.putStringPreferences(prefNode, "compression.type", wadoTSUID.name()); //$NON-NLS-1$

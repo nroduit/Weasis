@@ -19,8 +19,10 @@ import java.util.Hashtable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.util.tracker.ServiceTracker;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
@@ -28,14 +30,9 @@ import org.weasis.core.ui.Messages;
 
 public class PreferenceDialog extends AbstractWizardDialog {
 
-    private final ServiceTracker prefs_tracker;
-
     public PreferenceDialog(Window parentWin) {
         super(parentWin,
             Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(700, 520)); //$NON-NLS-1$
-        prefs_tracker =
-            new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
-                PreferencesPageFactory.class.getName(), null);
         initializePages();
         pack();
         showPageFirstPage();
@@ -51,22 +48,20 @@ public class PreferenceDialog extends AbstractWizardDialog {
         list.add(new LabelsPrefView());
         list.add(new ScreenPrefView());
 
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
-            prefs_tracker.open();
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        final Object[] servicesPref = prefs_tracker.getServices();
-        for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
-            if (servicesPref[i] instanceof PreferencesPageFactory) {
-                AbstractItemDialogPage page =
-                    ((PreferencesPageFactory) servicesPref[i]).createPreferencesPage(properties);
-                if (page != null) {
-                    list.add(page);
+            for (ServiceReference<PreferencesPageFactory> service : context.getServiceReferences(
+                PreferencesPageFactory.class, null)) {
+                PreferencesPageFactory factory = context.getService(service);
+                if (factory != null) {
+                    AbstractItemDialogPage page = factory.createPreferencesPage(properties);
+                    if (page != null) {
+                        list.add(page);
+                    }
                 }
             }
+        } catch (InvalidSyntaxException e) {
+            e.printStackTrace();
         }
 
         Collections.sort(list, new Comparator<AbstractItemDialogPage>() {
@@ -91,7 +86,6 @@ public class PreferenceDialog extends AbstractWizardDialog {
     public void dispose() {
         closeAllPages();
         super.dispose();
-        prefs_tracker.close();
     }
 
 }

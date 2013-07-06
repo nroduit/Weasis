@@ -25,25 +25,23 @@ import org.weasis.dicom.explorer.wado.DicomManager;
 
 public class Activator implements BundleActivator {
 
-    public static final BundlePreferences PREFERENCES = new BundlePreferences();
     public static final Properties IMPORT_EXPORT_PERSISTENCE = new Properties();
 
     @Override
     public void start(final BundleContext context) throws Exception {
-        PREFERENCES.init(context);
         String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
         DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
         FileUtil.readProperties(
-            new File(PREFERENCES.getDataFolder(), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE);//$NON-NLS-1$
+            new File(BundlePreferences.getDataFolder(context), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE);//$NON-NLS-1$
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
-        FileUtil.storeProperties(
-            new File(PREFERENCES.getDataFolder(), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE, null);//$NON-NLS-1$
+        FileUtil
+            .storeProperties(
+                new File(BundlePreferences.getDataFolder(context), "import-export.properties"), IMPORT_EXPORT_PERSISTENCE, null);//$NON-NLS-1$
         // Save preferences
         DicomManager.getInstance().savePreferences();
-        PREFERENCES.close();
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (explorer instanceof DicomExplorer) {
             DicomExplorer dexp = (DicomExplorer) explorer;

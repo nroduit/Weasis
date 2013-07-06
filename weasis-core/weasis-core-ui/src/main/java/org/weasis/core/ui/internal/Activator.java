@@ -16,10 +16,10 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
@@ -31,50 +31,43 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class Activator implements BundleActivator, ServiceListener {
 
-    private static final String pluginViewerFilter = String.format(
-        "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()); //$NON-NLS-1$
-    public static final BundlePreferences PREFERENCES = new BundlePreferences();
-
-    private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-
     @Override
-    public void start(BundleContext bundleContext) throws Exception {
+    public void start(final BundleContext bundleContext) throws Exception {
         MeasureTool.viewSetting.initMonitors();
-        PREFERENCES.init(bundleContext);
-        MeasureTool.viewSetting.applyPreferences(PREFERENCES.getDefaultPreferences());
+        MeasureTool.viewSetting.applyPreferences(BundlePreferences.getDefaultPreferences(bundleContext));
 
-        bundleContext.addServiceListener(this, pluginViewerFilter);
         // must be instantiate in the EDT
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
             public void run() {
-                ServiceTracker m_tracker = new ServiceTracker(context, SeriesViewerFactory.class.getName(), null);
-                m_tracker.open();
-                Object[] services = m_tracker.getServices();
-                for (int i = 0; (services != null) && (i < services.length); i++) {
-                    if (!UIManager.SERIES_VIEWER_FACTORIES.contains(services[i])
-                        && services[i] instanceof SeriesViewerFactory) {
-                        UIManager.SERIES_VIEWER_FACTORIES.add((SeriesViewerFactory) services[i]);
-                        // Activator.log(LogService.LOG_INFO, "Register viewer Plug-in: " + m_ref.toString());
+                try {
+                    for (ServiceReference<SeriesViewerFactory> service : bundleContext.getServiceReferences(
+                        SeriesViewerFactory.class, null)) {
+                        SeriesViewerFactory factory = bundleContext.getService(service);
+                        if (factory != null && !UIManager.SERIES_VIEWER_FACTORIES.contains(factory)) {
+                            UIManager.SERIES_VIEWER_FACTORIES.add(factory);
+                            // Activator.log(LogService.LOG_INFO, "Register viewer Plug-in: " + m_ref.toString());
+                        }
                     }
+                } catch (InvalidSyntaxException e) {
+                    e.printStackTrace();
                 }
-                // closing tracker will uregister services
-                // m_tracker.close();
             }
         });
+
+        bundleContext.addServiceListener(this,
+            String.format("(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()));//$NON-NLS-1$
         File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
             FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
         }
     }
 
-    // @Override
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences
-        MeasureTool.viewSetting.savePreferences(PREFERENCES.getDefaultPreferences());
-        PREFERENCES.close();
+        MeasureTool.viewSetting.savePreferences(BundlePreferences.getDefaultPreferences(bundleContext));
         File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
             File file = new File(dataFolder, "persitence.properties"); //$NON-NLS-1$
@@ -91,7 +84,8 @@ public class Activator implements BundleActivator, ServiceListener {
 
             @Override
             public void run() {
-                ServiceReference m_ref = event.getServiceReference();
+                ServiceReference<?> m_ref = event.getServiceReference();
+                BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
                 SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(m_ref);
                 if (viewerFactory == null) {
                     return;

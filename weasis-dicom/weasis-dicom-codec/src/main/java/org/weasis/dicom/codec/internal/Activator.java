@@ -15,7 +15,6 @@ import java.util.Hashtable;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.weasis.core.api.service.AuditLog;
@@ -28,12 +27,10 @@ public class Activator implements BundleActivator {
 
     private static final String LOGGER_KEY = "always.info.ItemParser";
     private static final String LOGGER_VAL = "org.dcm4che.imageio.ItemParser";
-    public static final BundlePreferences PREFERENCES = new BundlePreferences();
 
     // @Override
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-        PREFERENCES.init(bundleContext);
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
         // org.dcm4che.imageioimpl.plugins.rle.RLEImageReaderSpi
@@ -42,24 +39,20 @@ public class Activator implements BundleActivator {
         ImageioUtil.registerServiceProvider(DicomCodec.RLEImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomCodec.DicomImageReaderSpi);
 
-        ServiceReference configurationAdminReference =
-            bundleContext.getServiceReference(ConfigurationAdmin.class.getName());
-        if (configurationAdminReference != null) {
-            ConfigurationAdmin confAdmin = (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
-            if (confAdmin != null) {
-                Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
-                if (logConfiguration == null) {
-                    logConfiguration =
-                        confAdmin.createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config",
-                            null);
-                    Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
-                    loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
-                    // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
-                    loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
-                    // add this property to give us something unique to re-find this configuration
-                    loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
-                    logConfiguration.update(loggingProperties);
-                }
+        ConfigurationAdmin confAdmin = BundlePreferences.getService(bundleContext, ConfigurationAdmin.class);
+        if (confAdmin != null) {
+            Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
+            if (logConfiguration == null) {
+                logConfiguration =
+                    confAdmin
+                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null);
+                Dictionary<String, Object> loggingProperties = new Hashtable<String, Object>();
+                loggingProperties.put("org.apache.sling.commons.log.level", "INFO");
+                // loggingProperties.put("org.apache.sling.commons.log.file", "logs.log");
+                loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
+                // add this property to give us something unique to re-find this configuration
+                loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
+                logConfiguration.update(loggingProperties);
             }
         }
     }
@@ -68,7 +61,6 @@ public class Activator implements BundleActivator {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         DicomPrefManager.getInstance().savePreferences();
-        PREFERENCES.close();
         ImageioUtil.deregisterServiceProvider(DicomCodec.RLEImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
     }
