@@ -22,31 +22,18 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.List;
-import java.util.Properties;
 
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 
-import org.osgi.service.prefs.Preferences;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
-
 public class WtoolBar extends JPanel implements Toolbar {
 
-    public final static String ALL_BUNDLE = "weasis";
-    public final static String ALL = "all";
-
-    public enum TYPE {
-        main, explorer, tool, empty
-    };
-
-    private final TYPE type;
+    private final Type type;
     private final String barName;
 
-    private int index = 100;
+    private int barPosition = 100;
     private boolean rolloverBorderPainted = true;
     private boolean rolloverContentAreaFilled = true;
     private boolean useCustomUI = true;
@@ -74,21 +61,18 @@ public class WtoolBar extends JPanel implements Toolbar {
         }
     };
 
-    /**
-     * Constructs a toolbar with the given name.
-     * <p>
-     * The name is used when reading/writing XML configuration. It must not be null if you use this feature.
-     * 
-     * @param i
-     */
-    public WtoolBar(String barName, TYPE type, int index) {
+    public WtoolBar(String barName, int position) {
+        this(barName, Type.TOOLBAR, position);
+    }
+
+    WtoolBar(String barName, Type type, int index) {
         FlowLayout flowLayout = (FlowLayout) getLayout();
         flowLayout.setVgap(0);
         flowLayout.setHgap(0);
         flowLayout.setAlignment(FlowLayout.LEADING);
         this.barName = barName;
         this.type = type;
-        this.index = index;
+        this.barPosition = index;
         this.setAlignmentX(LEFT_ALIGNMENT);
         this.setAlignmentY(TOP_ALIGNMENT);
         setOpaque(false);
@@ -96,18 +80,18 @@ public class WtoolBar extends JPanel implements Toolbar {
     }
 
     @Override
-    public TYPE getType() {
+    public Type getType() {
         return type;
     }
 
     @Override
-    public int getIndex() {
-        return index;
+    public int getComponentPosition() {
+        return barPosition;
     }
 
     @Override
-    public void setIndex(int index) {
-        this.index = index;
+    public void setComponentPosition(int position) {
+        this.barPosition = position;
     }
 
     public void addSeparator(Dimension dim) {
@@ -255,7 +239,7 @@ public class WtoolBar extends JPanel implements Toolbar {
     }
 
     @Override
-    public String getBarName() {
+    public String getComponentName() {
         return barName;
     }
 
@@ -264,111 +248,16 @@ public class WtoolBar extends JPanel implements Toolbar {
         return this;
     }
 
-    public static void applyPreferences(List<Toolbar> toolbars, Preferences prefs, String bundleName, String className) {
-        if (toolbars != null && prefs != null && bundleName != null && className != null) {
-            // Remove prefs of Weasis 1.x
-            try {
-                if (prefs.nodeExists("toolbars")) {
-                    Preferences oldPref = prefs.node("toolbars");
-                    oldPref.removeNode();
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-            Preferences prefNode = prefs.node(className).node("toolbars"); //$NON-NLS-1$
-            for (Toolbar tb : toolbars) {
-                String barName = tb.getClass().getSimpleName().toLowerCase();
-                String key = "visible";
-                Preferences node = prefNode.node(barName);
-                String valString = node.get(key, null);
-                // If not specify, value is true
-                boolean val = true;
-                if (valString == null) {
-                    val = getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, className, barName, key, val);
-                } else if (valString.equalsIgnoreCase("false")) {
-                    val = false;
-                }
-                tb.setEnabled(val);
+    @Override
+    public boolean isComponentEnabled() {
+        return isEnabled();
+    }
 
-                key = "index";
-                valString = node.get(key, null);
-                // If not specify, value is true
-                int index = tb.getIndex();
-                if (valString == null) {
-                    index = getIntProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, className, barName, key, index);
-                } else {
-                    try {
-                        index = Integer.parseInt(valString);
-                    } catch (NumberFormatException ignore) {
-                        // return the default value
-                    }
-                }
-                tb.setIndex(index);
-            }
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+        if (isComponentEnabled() != enabled) {
+            setEnabled(enabled);
         }
     }
 
-    public static void savePreferences(List<Toolbar> toolbars, Preferences prefs) {
-        if (toolbars != null && prefs != null) {
-            Preferences prefNode = prefs.node("toolbars"); //$NON-NLS-1$
-            for (Toolbar tb : toolbars) {
-                String cname = tb.getClass().getSimpleName().toLowerCase();
-                Preferences node = prefNode.node(cname);
-                BundlePreferences.putBooleanPreferences(node, "visible", tb.isEnabled());
-                BundlePreferences.putIntPreferences(node, "index", tb.getIndex());
-            }
-        }
-    }
-
-    public static boolean getBooleanProperty(Properties props, String bundleName, String className, String barName,
-        String key, boolean def) {
-        if (props != null && bundleName != null && className != null && key != null) {
-            for (String bundle : new String[] { bundleName, ALL_BUNDLE }) {
-                for (String cl : new String[] { className, ALL }) {
-                    StringBuffer buf = new StringBuffer(bundle);
-                    buf.append('.');
-                    buf.append(cl);
-                    buf.append('.');
-                    buf.append(barName);
-                    buf.append('.');
-                    buf.append(key);
-                    final String value = props.getProperty(buf.toString());
-                    if (value != null) {
-                        if (value.equalsIgnoreCase("true")) { //$NON-NLS-1$
-                            return true;
-                        } else if (value.equalsIgnoreCase("false")) { //$NON-NLS-1$
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        return def;
-    }
-
-    private static int getIntProperty(Properties props, String bundleName, String className, String barName,
-        String key, int def) {
-        if (props != null && bundleName != null && className != null && key != null) {
-            for (String bundle : new String[] { bundleName, ALL_BUNDLE }) {
-                for (String cl : new String[] { className, ALL }) {
-                    StringBuffer buf = new StringBuffer(bundle);
-                    buf.append('.');
-                    buf.append(cl);
-                    buf.append('.');
-                    buf.append(barName);
-                    buf.append('.');
-                    buf.append(key);
-                    final String value = props.getProperty(buf.toString());
-                    if (value != null) {
-                        try {
-                            return Integer.parseInt(value);
-                        } catch (NumberFormatException ignore) {
-                            // return the default value
-                        }
-                    }
-                }
-            }
-        }
-        return def;
-    }
 }

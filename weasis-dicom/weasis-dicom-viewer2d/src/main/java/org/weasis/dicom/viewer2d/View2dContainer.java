@@ -62,6 +62,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.InsertableUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -150,13 +152,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
             TOOLBARS.add(new KeyObjectToolBar<DicomImageElement>(90));
 
-            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-            if (prefs != null) {
-                String className = this.getClass().getSimpleName().toLowerCase();
-                WtoolBar.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className);
-            }
-
             PluginTool tool = null;
 
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.minitools", true)) {
@@ -204,10 +199,21 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 TOOLS.add(tool);
             }
 
+            InsertableUtil.sortInsertable(TOOLS);
+
             // Send event to synchronize the series selection.
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null) {
                 eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
+            }
+
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+            if (prefs != null) {
+                String className = this.getClass().getSimpleName().toLowerCase();
+                String bundleName = context.getBundle().getSymbolicName();
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, className, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, className, Type.TOOL);
             }
         }
     }

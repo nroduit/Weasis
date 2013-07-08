@@ -12,9 +12,10 @@ package org.weasis.core.ui.docking;
 
 import java.awt.Component;
 
+
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 
-public interface DockableTool {
+public interface DockableTool extends Insertable {
 
     DefaultSingleCDockable getDockable();
 

@@ -39,6 +39,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.InsertableUtil;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -55,7 +57,6 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
-import org.weasis.core.ui.util.WtoolBar;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -405,9 +406,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
 
-        for (DockableTool p : selectedView2dContainer.getToolPanel()) {
-            if (p instanceof GraphicsListener) {
-                view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+        List<DockableTool> tools = selectedView2dContainer.getToolPanel();
+        synchronized (tools) {
+            for (DockableTool p : tools) {
+                if (p instanceof GraphicsListener) {
+                    view2d.getLayerModel().addGraphicSelectionListener((GraphicsListener) p);
+                }
             }
         }
 
@@ -441,8 +445,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
 
-            WtoolBar.savePreferences(View2dContainer.TOOLBARS,
-                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()));
+            Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
+            InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
+            InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
         }
     }
 }

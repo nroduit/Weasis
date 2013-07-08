@@ -73,6 +73,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable.Type;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -84,7 +85,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar.TYPE;
 
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabDockActionLocation;
@@ -146,6 +146,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             this.setJMenuBar(createMenuBar());
         }
         toolbarContainer = new ToolBarContainer();
+        setSelectedPlugin(null);
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
         this.setTitle(AbstractProperties.WEASIS_NAME
             + " v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
@@ -382,8 +383,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             } else if (event.getSource() instanceof ViewerPlugin) {
                 ViewerPlugin plugin = (ViewerPlugin) event.getSource();
                 if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
-                    updateToolbars(selectedPlugin == null ? null : selectedPlugin.getToolBar(), plugin.getToolBar(),
-                        true);
+                    List toolaBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
+                    updateToolbars(toolaBars, toolaBars, true);
+                } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
+                    setSelectedPlugin(null);
                 }
             }
         }
@@ -590,6 +593,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
         if (plugin == null) {
+            toolbarContainer.registerToolBar(null);
+            List<DockableTool> oldTool = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
+            if (oldTool != null) {
+                for (DockableTool p : oldTool) {
+                    p.closeDockable();
+                }
+            }
             return;
         }
         if (selectedPlugin == plugin) {
@@ -604,36 +614,28 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         List<DockableTool> tool = selectedPlugin.getToolPanel();
         List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
 
-        if (tool == null) {
+        if (tool != oldTool) {
             if (oldTool != null) {
                 for (DockableTool p : oldTool) {
                     p.closeDockable();
                 }
             }
-        } else {
-            if (tool != oldTool) {
-                if (oldTool != null) {
-                    for (DockableTool p : oldTool) {
-                        p.closeDockable();
-                    }
-                }
+            if (tool != null) {
                 for (int i = 0; i < tool.size(); i++) {
                     DockableTool p = tool.get(i);
-                    p.showDockable();
+                    if (p.isComponentEnabled()) {
+                        p.showDockable();
+                    }
                 }
             }
         }
 
-        List<Toolbar> toolBar = selectedPlugin.getToolBar();
-        List<Toolbar> oldToolBar = oldPlugin == null ? null : oldPlugin.getToolBar();
-
-        updateToolbars(oldToolBar, toolBar, false);
-
+        updateToolbars(oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
     }
 
-    private void updateToolbars(List<Toolbar> oldToolBar, List<Toolbar> toolBar, boolean force) {
-        if (force || toolBar != oldToolBar) {
-            toolbarContainer.registerToolBar(toolBar);
+    private void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
+        if (force || toolBars != oldToolBars) {
+            toolbarContainer.registerToolBar(toolBars);
         }
     }
 
@@ -742,8 +744,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private void buildToolBarSubMenu(final JMenu toolBarMenu) {
         List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
         for (final Toolbar bar : bars) {
-            if (!TYPE.empty.equals(bar.getType())) {
-                JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getBarName(), bar.getComponent().isEnabled());
+            if (!Type.EMPTY.equals(bar.getType())) {
+                JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
                 item.addActionListener(new ActionListener() {
 
                     @Override
@@ -759,16 +761,31 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         }
     }
 
-    // private void buildToolSubMenu(final JMenu toolMenu) {
-    // List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
-    // if (tools != null) {
-    // for (DockableTool t : tools) {
-    // if (t instanceof PluginTool && PluginTool.TYPE.tool.equals(((PluginTool) t).getType())) {
-    // toolMenu.add(((PlaceholderDockable) t.registerToolAsDockable()).createMenuItem());
-    // }
-    // }
-    // }
-    // }
+    private void buildToolSubMenu(final JMenu toolMenu) {
+        List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
+        if (tools != null) {
+            for (final DockableTool t : tools) {
+                if (!Type.EMPTY.equals(t.getType())) {
+                    JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
+                    item.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (e.getSource() instanceof JCheckBoxMenuItem) {
+                                t.setComponentEnabled(((JCheckBoxMenuItem) e.getSource()).isSelected());
+                                if (t.isComponentEnabled()) {
+                                    t.showDockable();
+                                } else {
+                                    t.closeDockable();
+                                }
+                            }
+                        }
+                    });
+                    toolMenu.add(item);
+                }
+            }
+        }
+    }
 
     private static void buildPrintSubMenu(final JMenu printMenu) {
         if (selectedPlugin != null) {
@@ -868,39 +885,16 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         toolBarMenu.addPopupMenuListener();
         menuDisplay.add(toolBarMenu);
 
-        // final JMenu toolMenu = new JMenu("Tools");
-        // JPopupMenu menuTool = toolMenu.getPopupMenu();
-        // // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
-        // if (AbstractProperties.isMacNativeLookAndFeel()) {
-        // toolMenu.addChangeListener(new ChangeListener() {
-        // @Override
-        // public void stateChanged(ChangeEvent e) {
-        // if (toolMenu.isSelected()) {
-        // buildToolSubMenu(toolMenu);
-        // } else {
-        // toolMenu.removeAll();
-        // }
-        // }
-        // });
-        // } else {
-        // menuTool.addPopupMenuListener(new PopupMenuListener() {
-        //
-        // @Override
-        // public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        // buildToolSubMenu(toolMenu);
-        // }
-        //
-        // @Override
-        // public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        // toolMenu.removeAll();
-        // }
-        //
-        // @Override
-        // public void popupMenuCanceled(PopupMenuEvent e) {
-        // }
-        // });
-        // }
-        // menuDisplay.add(toolMenu);
+        DynamicMenu toolMenu = new DynamicMenu("Tools") {
+
+            @Override
+            public void popupMenuWillBecomeVisible() {
+                buildToolSubMenu(this);
+
+            }
+        };
+        toolMenu.addPopupMenuListener();
+        menuDisplay.add(toolMenu);
     }
 
     private static void buildMenuFile() {

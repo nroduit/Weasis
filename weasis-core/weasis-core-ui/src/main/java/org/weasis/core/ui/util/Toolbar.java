@@ -12,23 +12,13 @@ package org.weasis.core.ui.util;
 
 import java.awt.Dimension;
 
-import org.weasis.core.ui.util.WtoolBar.TYPE;
+import org.weasis.core.ui.docking.Insertable;
 
-public interface Toolbar {
+public interface Toolbar extends Insertable {
 
     public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
 
-    TYPE getType();
-
-    String getBarName();
+    Type getType();
 
     WtoolBar getComponent();
-
-    boolean isEnabled();
-
-    void setEnabled(boolean boolean1);
-
-    public int getIndex();
-
-    public void setIndex(int index);
 }

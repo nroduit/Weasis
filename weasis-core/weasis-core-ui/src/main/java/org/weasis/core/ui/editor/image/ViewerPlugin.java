@@ -19,11 +19,14 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.docking.Insertable;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.Toolbar;
 
 import bibliothek.gui.DockStation;
@@ -87,6 +90,9 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
                         if (lp != null) {
                             lp.dockable.toFront();
                         }
+                    } else {
+                        ViewerPluginBuilder.DefaultDataModel.firePropertyChange(new ObservableEvent(
+                            ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
                     }
                 } else {
                     CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
@@ -184,9 +190,11 @@ public abstract class ViewerPlugin<E extends MediaElement<?>> extends JPanel imp
     public ViewerToolBar getViewerToolBar() {
         List<Toolbar> bars = getToolBar();
         if (bars != null) {
-            for (Toolbar t : bars) {
-                if (t instanceof ViewerToolBar) {
-                    return (ViewerToolBar) t;
+            synchronized (bars) {
+                for (Insertable t : bars) {
+                    if (t instanceof ViewerToolBar) {
+                        return (ViewerToolBar) t;
+                    }
                 }
             }
         }

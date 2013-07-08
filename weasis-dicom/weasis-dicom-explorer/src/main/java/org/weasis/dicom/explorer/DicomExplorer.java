@@ -298,7 +298,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     public DicomExplorer(DicomModel model) {
-        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.TYPE.mainExplorer);
+        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
         setLayout(new BorderLayout());
         setDockableWidth(180);
         dockable.setMaximizable(true);

@@ -15,7 +15,6 @@ import java.awt.Dimension;
 
 import javax.swing.JPanel;
 
-import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.GuiExecutor;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -29,28 +28,28 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     private static final long serialVersionUID = -204558500055275231L;
 
-    public enum TYPE {
-        mainExplorer, explorer, mainTool, tool
-    };
-
     public enum POSITION {
         NORTH, EAST, SOUTH, WEST
     };
 
-    private final TYPE type;
+    private final Type type;
+
+    private int toolPosition = 100;
     private int dockableWidth;
     protected final DefaultSingleCDockable dockable;
     protected POSITION defaultPosition;
     protected ExtendedMode defaultMode;
 
-    public PluginTool(String id, String toolName, TYPE type) {
-        this(id, toolName, null, null, type);
+    public PluginTool(String id, String toolName, Type type, int position) {
+        this(id, toolName, null, null, type, position);
     }
 
-    public PluginTool(String id, String toolName, POSITION defaultPosition, ExtendedMode defaultMode, TYPE type) {
+    public PluginTool(String id, String toolName, POSITION defaultPosition, ExtendedMode defaultMode, Type type,
+        int position) {
         // Works only if there is only one instance of pluginTool at the same time
         this.dockableWidth = -1;
         this.type = type;
+        this.toolPosition = position;
         this.defaultPosition = defaultPosition;
         this.defaultMode = defaultMode;
 
@@ -71,29 +70,43 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
     }
 
-    public void applyPreferences(Preferences prefs) {
-        if (prefs != null) {
-            Preferences p = prefs.node(this.getClass().getSimpleName());
-            //            available = p.getBoolean("show", isAvailable()); //$NON-NLS-1$
-        }
-    }
-
-    public void savePreferences(Preferences prefs) {
-        if (prefs != null) {
-            Preferences p = prefs.node(this.getClass().getSimpleName());
-            //        BundlePreferences.putBooleanPreferences(p, "show", isAvailable()); //$NON-NLS-1$
-        }
-    }
-
     protected abstract void changeToolWindowAnchor(CLocation clocation);
 
-    public TYPE getType() {
+    @Override
+    public Type getType() {
         return type;
+    }
+
+    @Override
+    public String getComponentName() {
+        return dockable.getTitleText();
+    }
+
+    @Override
+    public int getComponentPosition() {
+        return toolPosition;
+    }
+
+    @Override
+    public void setComponentPosition(int postion) {
+        toolPosition = postion;
     }
 
     @Override
     public Component getToolComponent() {
         return this;
+    }
+
+    @Override
+    public boolean isComponentEnabled() {
+        return isEnabled();
+    }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+        if (enabled != isComponentEnabled()) {
+            setEnabled(enabled);
+        }
     }
 
     public void setDockableWidth(int width) {

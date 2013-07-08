@@ -51,6 +51,8 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.InsertableUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -115,13 +117,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             TOOLBARS.add(new ZoomToolBar(evtMg, 20));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
 
-            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-            if (prefs != null) {
-                String className = this.getClass().getSimpleName().toLowerCase();
-                WtoolBar.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className);
-            }
-
             PluginTool tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
 
                     @Override
@@ -153,6 +148,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             tool = new MeasureTool(eventManager);
             TOOLS.add(tool);
+
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+            if (prefs != null) {
+                String className = this.getClass().getSimpleName().toLowerCase();
+                String bundleName = context.getBundle().getSymbolicName();
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, className, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, className, Type.TOOL);
+            }
         }
     }
 

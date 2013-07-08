@@ -42,7 +42,7 @@ public class KeyObjectToolBar<DicomImageElement> extends WtoolBar {
     }
 
     public KeyObjectToolBar(int index) {
-        super("KeyObject Tools", TYPE.tool, index);
+        super("KeyObject Tools", index);
 
         final EventManager evtMgr = EventManager.getInstance();
 

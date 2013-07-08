@@ -48,6 +48,8 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.InsertableUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.CrosshairListener;
@@ -75,7 +77,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
-import org.weasis.dicom.viewer2d.mpr.MprView.Type;
+import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
@@ -160,7 +162,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 String className = this.getClass().getSimpleName().toLowerCase();
-                WtoolBar.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className);
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(),
+                    className, Type.TOOLBAR);
             }
         }
     }
@@ -512,10 +515,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         return actions;
     }
 
-    public MprView getMprView(Type type) {
+    public MprView getMprView(SliceOrientation sliceOrientation) {
         for (DefaultView2d v : view2ds) {
             if (v instanceof MprView) {
-                if ((((MprView) v).getType()).equals(type)) {
+                if ((((MprView) v).getSliceOrientation()).equals(sliceOrientation)) {
                     return (MprView) v;
                 }
             }
@@ -534,19 +537,19 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         for (int i = 0; i < view2ds.size(); i++) {
             DefaultView2d<DicomImageElement> val = view2ds.get(i);
             if (val instanceof MprView) {
-                Type type;
+                SliceOrientation sliceOrientation;
                 switch (i) {
                     case 1:
-                        type = Type.CORONAL;
+                        sliceOrientation = SliceOrientation.CORONAL;
                         break;
                     case 2:
-                        type = Type.SAGITTAL;
+                        sliceOrientation = SliceOrientation.SAGITTAL;
                         break;
                     default:
-                        type = Type.AXIAL;
+                        sliceOrientation = SliceOrientation.AXIAL;
                         break;
                 }
-                ((MprView) val).setType(type);
+                ((MprView) val).setType(sliceOrientation);
             }
         }
 
@@ -642,13 +645,13 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                     String orientation =
                         ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
                             v[4], v[5]);
-                    Type type = Type.AXIAL;
+                    SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
                     if (ImageOrientation.LABELS[3].equals(orientation)) {
-                        type = Type.CORONAL;
+                        sliceOrientation = SliceOrientation.CORONAL;
                     } else if (ImageOrientation.LABELS[2].equals(orientation)) {
-                        type = Type.SAGITTAL;
+                        sliceOrientation = SliceOrientation.SAGITTAL;
                     }
-                    MprView view = getMprView(type);
+                    MprView view = getMprView(sliceOrientation);
                     if (view != null) {
                         setSelectedImagePane(view);
                         return view;

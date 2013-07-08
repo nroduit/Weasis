@@ -13,8 +13,6 @@ package org.weasis.core.ui.util;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 
-import org.weasis.core.ui.Messages;
-
 public abstract class AbstractUIAction extends AbstractAction {
 
     private String description = ""; //$NON-NLS-1$

@@ -12,12 +12,13 @@ package org.weasis.core.ui.util;
 
 import java.awt.FlowLayout;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JPanel;
+
+import org.weasis.core.ui.docking.Insertable;
+import org.weasis.core.ui.docking.InsertableUtil;
 
 public class ToolBarContainer extends JPanel {
     public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty"); //$NON-NLS-1$
@@ -31,31 +32,25 @@ public class ToolBarContainer extends JPanel {
     /**
      * Registers a new ToolBar.
      */
-    public void registerToolBar(List<Toolbar> toolBar) {
+    public void registerToolBar(List<Toolbar> toolBars) {
         unregisterAll();
-        if (toolBar == null) {
-            toolBar = new ArrayList<Toolbar>(1);
+        if (toolBars == null) {
+            toolBars = new ArrayList<Toolbar>(1);
         }
-        if (toolBar.isEmpty()) {
-            toolBar.add(ToolBarContainer.EMPTY);
+        if (toolBars.isEmpty()) {
+            toolBars.add(ToolBarContainer.EMPTY);
         }
-        // Sort toolbars according the index
-        Collections.sort(toolBar, new Comparator<Toolbar>() {
+        // Sort toolbars according the the position
+        InsertableUtil.sortInsertable(toolBars);
 
-            @Override
-            public int compare(Toolbar t1, Toolbar t2) {
-                int val1 = t1.getIndex();
-                int val2 = t2.getIndex();
-                return val1 < val2 ? -1 : (val1 == val2 ? 0 : 1);
+        synchronized (toolBars) {
+            for (Toolbar b : toolBars) {
+                WtoolBar bar = b.getComponent();
+                if (bar.isComponentEnabled()) {
+                    add(bar);
+                }
+                bars.add(b);
             }
-        });
-
-        for (Toolbar b : toolBar) {
-            WtoolBar bar = b.getComponent();
-            if (bar.isEnabled()) {
-                add(bar);
-            }
-            bars.add(b);
         }
 
         revalidate();
@@ -63,13 +58,13 @@ public class ToolBarContainer extends JPanel {
     }
 
     public void displayToolbar(WtoolBar bar, boolean show) {
-        if (show != bar.getComponent().isEnabled()) {
+        if (show != bar.isComponentEnabled()) {
             if (show) {
-                int barIndex = bar.getIndex();
+                int barIndex = bar.getComponentPosition();
                 int insert = 0;
                 for (Iterator<Toolbar> iterator = bars.iterator(); iterator.hasNext();) {
-                    Toolbar b = iterator.next();
-                    if (b.isEnabled() && b.getIndex() < barIndex) {
+                    Insertable b = iterator.next();
+                    if (b.isComponentEnabled() && b.getComponentPosition() < barIndex) {
                         insert++;
                     }
                 }
@@ -81,7 +76,7 @@ public class ToolBarContainer extends JPanel {
             } else {
                 super.remove(bar);
             }
-            bar.getComponent().setEnabled(show);
+            bar.setComponentEnabled(show);
             revalidate();
             repaint();
         }

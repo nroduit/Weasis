@@ -34,16 +34,16 @@ import org.weasis.dicom.viewer2d.View2d;
 public class MprView extends View2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
-    public enum Type {
+    public enum SliceOrientation {
         AXIAL, CORONAL, SAGITTAL
     };
 
-    private Type type;
+    private SliceOrientation sliceOrientation;
     private JProgressBar progressBar;
 
     public MprView(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
-        this.type = Type.AXIAL;
+        this.sliceOrientation = SliceOrientation.AXIAL;
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.PRELOADING_BAR, false);
     }
 
@@ -58,12 +58,12 @@ public class MprView extends View2d {
         actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
     }
 
-    public Type getType() {
-        return type;
+    public SliceOrientation getSliceOrientation() {
+        return sliceOrientation;
     }
 
-    public void setType(Type type) {
-        this.type = type == null ? Type.AXIAL : type;
+    public void setType(SliceOrientation sliceOrientation) {
+        this.sliceOrientation = sliceOrientation == null ? SliceOrientation.AXIAL : sliceOrientation;
     }
 
     @Override
@@ -100,7 +100,7 @@ public class MprView extends View2d {
                                 Vector3d vn = v.getImage().getSliceGeometry().getNormal();
                                 vn.absolute();
                                 double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                                // if (MprView.Type.SAGITTAL == ((MprView) v).type) {
+                                // if (MprView.SliceOrientation.SAGITTAL == ((MprView) v).type) {
                                 // location = -location;
                                 // }
                                 DicomImageElement img =
@@ -150,7 +150,7 @@ public class MprView extends View2d {
             if (sliceGeometry != null) {
                 Point2D p = sliceGeometry.getImagePosition(p3);
                 Tuple3d dimensions = sliceGeometry.getDimensions();
-                boolean axial = Type.AXIAL.equals(this.getType());
+                boolean axial = SliceOrientation.AXIAL.equals(this.getSliceOrientation());
                 double y = axial ? p.getY() - p.getX() : p.getY();
                 Point2D centerPt = new Point2D.Double(p.getX(), y);
 
@@ -158,7 +158,7 @@ public class MprView extends View2d {
                 pts.add(new Point2D.Double(p.getX(), 0.0));
                 pts.add(new Point2D.Double(p.getX(), dimensions.x));
 
-                Color color1 = Type.SAGITTAL.equals(this.getType()) ? Color.GREEN : Color.BLUE;
+                Color color1 = SliceOrientation.SAGITTAL.equals(this.getSliceOrientation()) ? Color.GREEN : Color.BLUE;
                 addMPRline(layer, pts, color1, centerPt);
 
                 List<Point2D.Double> pts2 = new ArrayList<Point2D.Double>();

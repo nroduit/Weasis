@@ -78,7 +78,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     private JPanel panel_foot;
 
     public DisplayTool(String pluginName) {
-        super(BUTTON_NAME, pluginName, PluginTool.TYPE.mainTool);
+        super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
         dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
         setDockableWidth(210);
 

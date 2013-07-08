@@ -18,76 +18,48 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.View2dContainer;
+import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.Insertable;
+import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.InsertableFactory;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.util.DockableToolFactory;
-import org.weasis.core.ui.util.ToolBarFactory;
 import org.weasis.core.ui.util.Toolbar;
 
 public class Activator implements BundleActivator, ServiceListener {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
+
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-
-        GuiExecutor.instance().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    for (ServiceReference<ToolBarFactory> serviceReference : bundleContext.getServiceReferences(
-                        ToolBarFactory.class, null)) {
-                        // The container should referenced as a property in the provided service
-                        if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-                            ToolBarFactory factory = bundleContext.getService(serviceReference);
-                            if (factory != null) {
-                                final Toolbar bar = factory.createToolbar(null);
-                                if (bar != null && !View2dContainer.TOOLBARS.contains(bar)) {
-                                    View2dContainer.TOOLBARS.add(bar);
-                                }
-                            }
-                        }
-                    }
-                } catch (InvalidSyntaxException e1) {
-                    e1.printStackTrace();
-                }
-
-                try {
-                    for (ServiceReference<DockableToolFactory> serviceReference : bundleContext.getServiceReferences(
-                        DockableToolFactory.class, null)) {
-                        // The container should referenced as a property in the provided service
-                        if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-                            DockableToolFactory factory = bundleContext.getService(serviceReference);
-                            if (factory != null) {
-                                final DockableTool tool = factory.createTool(null);
-                                if (tool != null && !View2dContainer.TOOLS.contains(factory)) {
-                                    View2dContainer.TOOLS.add(tool);
-                                }
-                            }
-                        }
-                    }
-                } catch (InvalidSyntaxException e1) {
-                    e1.printStackTrace();
-                }
-
-                /*
-                 * Register services for new events after getting those previously registered from
-                 * context.getServiceReferences()
-                 */
-                try {
-                    bundleContext.addServiceListener(Activator.this,
-                        String.format("(%s=%s)", Constants.OBJECTCLASS, ToolBarFactory.class.getName())); //$NON-NLS-1$
-                    bundleContext.addServiceListener(Activator.this,
-                        String.format("(%s=%s)", Constants.OBJECTCLASS, DockableToolFactory.class.getName())); //$NON-NLS-1$
-                } catch (InvalidSyntaxException e) {
-                    e.printStackTrace();
+        try {
+            for (ServiceReference<InsertableFactory> serviceReference : bundleContext.getServiceReferences(
+                InsertableFactory.class, null)) {
+                // The View2dContainer name should be referenced as a property in the provided service
+                if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
+                    registerComponent(bundleContext, bundleContext.getService(serviceReference), false);
                 }
             }
-        });
+        } catch (InvalidSyntaxException e1) {
+            e1.printStackTrace();
+        }
+
+        // Add listener for getting new service events
+        try {
+            bundleContext.addServiceListener(Activator.this, "(" + Constants.OBJECTCLASS + "="
+                + InsertableFactory.class.getName() + ")");
+        } catch (InvalidSyntaxException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -99,41 +71,76 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(final ServiceEvent event) {
-        // Instantiate in the EDT (necessary for UI components with Substance)
+
+        final ServiceReference<?> m_ref = event.getServiceReference();
+        // The View2dContainer name should be referenced as a property in the provided service
+        if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
+            final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
+            Object service = context.getService(m_ref);
+            if (service instanceof InsertableFactory) {
+                InsertableFactory factory = (InsertableFactory) service;
+                if (event.getType() == ServiceEvent.REGISTERED) {
+                    registerComponent(context, factory, true);
+                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                    if (Type.TOOLBAR.equals(factory.getType())) {
+                        boolean updateGUI = false;
+                        synchronized (View2dContainer.TOOLBARS) {
+                            for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
+                                Insertable b = View2dContainer.TOOLBARS.get(i);
+                                if (factory.isComponentCreatedByThisFactory(b)) {
+                                    View2dContainer.TOOLBARS.remove(i);
+                                    factory.dispose(b);
+                                    updateGUI = true;
+                                }
+                            }
+                        }
+                        if (updateGUI) {
+                            updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
+                        }
+                    } else if (Type.TOOL.equals(factory.getType())) {
+                        synchronized (View2dContainer.TOOLS) {
+                            for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
+                                DockableTool t = View2dContainer.TOOLS.get(i);
+                                if (factory.isComponentCreatedByThisFactory(t)) {
+                                    View2dContainer.TOOLS.remove(i);
+                                    factory.dispose(t);
+                                    t.closeDockable();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void registerComponent(final BundleContext bundleContext, final InsertableFactory factory,
+        final boolean updateGUI) {
+        // Instantiate UI components in EDT (necessary with Substance Theme)
         GuiExecutor.instance().execute(new Runnable() {
 
             @Override
             public void run() {
-                final ServiceReference<?> m_ref = event.getServiceReference();
-                final BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
-                if (Boolean.valueOf((String) m_ref.getProperty(View2dContainer.class.getName()))) {
-                    Object service = context.getService(m_ref);
-                    if (service instanceof ToolBarFactory) {
-                        final Toolbar bar = ((ToolBarFactory) service).createToolbar(null);
-
-                        if (event.getType() == ServiceEvent.REGISTERED) {
-                            if (bar != null && !View2dContainer.TOOLBARS.contains(bar)) {
-                                View2dContainer.TOOLBARS.add(bar);
-                                updateToolbarView();
+                if (factory != null) {
+                    if (Type.TOOLBAR.equals(factory.getType())) {
+                        Insertable instance = factory.createInstance(null);
+                        if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
+                            Toolbar bar = (Toolbar) instance;
+                            View2dContainer.TOOLBARS.add(bar);
+                            if (updateGUI) {
+                                updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
                             }
-                        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                            if (View2dContainer.TOOLBARS.contains(bar)) {
-                                View2dContainer.TOOLBARS.remove(bar);
-                                updateToolbarView();
-                            }
+                            LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
                         }
-
-                    } else if (service instanceof DockableToolFactory) {
-                        final DockableTool tool = ((DockableToolFactory) service).createTool(null);
-                        if (event.getType() == ServiceEvent.REGISTERED) {
-                            if (!View2dContainer.TOOLS.contains(tool)) {
-                                View2dContainer.TOOLS.add(tool);
+                    } else if (Type.TOOL.equals(factory.getType())) {
+                        Insertable instance = factory.createInstance(null);
+                        if (instance instanceof DockableTool && !View2dContainer.TOOLS.contains(factory)) {
+                            DockableTool tool = (DockableTool) instance;
+                            View2dContainer.TOOLS.add(tool);
+                            if (updateGUI) {
+                                tool.showDockable();
                             }
-                        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                            if (View2dContainer.TOOLS.contains(tool)) {
-                                View2dContainer.TOOLS.remove(tool);
-                                tool.closeDockable();
-                            }
+                            LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName());
                         }
                     }
                 }
@@ -141,15 +148,10 @@ public class Activator implements BundleActivator, ServiceListener {
         });
     }
 
-    private static void updateToolbarView() {
+    private static void updateViewerUI(BasicAction action) {
         ImageViewerPlugin<ImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
         if (view instanceof View2dContainer) {
-            // DataExplorerView dicomView = UIManager.getExplorerplugin(name);
-            // if (dicomView.getDataExplorerModel() instanceof DicomModel) {
-            // DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-            // model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UpdateToolbars, view, null,
-            // view));
-            // }
+            ViewerPluginBuilder.DefaultDataModel.firePropertyChange(new ObservableEvent(action, view, null, view));
         }
     }
 }

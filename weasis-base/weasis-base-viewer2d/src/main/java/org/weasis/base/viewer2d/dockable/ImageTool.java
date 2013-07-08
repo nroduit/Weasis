@@ -61,7 +61,7 @@ public class ImageTool extends PluginTool {
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
     public ImageTool(String pluginName, Icon icon) {
-        super(BUTTON_NAME, pluginName, PluginTool.TYPE.tool);
+        super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 20);
         dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
         setDockableWidth(290);
         jbInit();

@@ -49,7 +49,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.RawImage;
-import org.weasis.dicom.viewer2d.mpr.MprView.Type;
+import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class SeriesBuilder {
     public static final File MPR_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
@@ -74,26 +74,26 @@ public class SeriesBuilder {
                     if (pos != null && pos.length == 3) {
                         HashMap<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
                         if (tags != null) {
-                            Type type1 = view.getType();
-                            Type type2;
-                            Type type3;
+                            SliceOrientation type1 = view.getSliceOrientation();
+                            SliceOrientation type2;
+                            SliceOrientation type3;
                             TransposeType rotate2;
                             TransposeType rotate3;
-                            if (Type.SAGITTAL.equals(type1)) {
-                                type2 = Type.CORONAL;
-                                type3 = Type.AXIAL;
+                            if (SliceOrientation.SAGITTAL.equals(type1)) {
+                                type2 = SliceOrientation.CORONAL;
+                                type3 = SliceOrientation.AXIAL;
                                 rotate2 = TransposeDescriptor.ROTATE_270;
                                 rotate3 = TransposeDescriptor.ROTATE_270;
                                 throw new IllegalStateException("Cannot build MPR from Sagittal view!");
-                            } else if (Type.CORONAL.equals(type1)) {
-                                type2 = Type.AXIAL;
-                                type3 = Type.SAGITTAL;
+                            } else if (SliceOrientation.CORONAL.equals(type1)) {
+                                type2 = SliceOrientation.AXIAL;
+                                type3 = SliceOrientation.SAGITTAL;
                                 rotate2 = null;
                                 rotate3 = TransposeDescriptor.ROTATE_270;
                                 throw new IllegalStateException("Cannot build MPR from Coronal view!");
                             } else {
-                                type2 = Type.CORONAL;
-                                type3 = Type.SAGITTAL;
+                                type2 = SliceOrientation.CORONAL;
+                                type3 = SliceOrientation.SAGITTAL;
                                 rotate2 = null;
                                 rotate3 = TransposeDescriptor.ROTATE_270;
                             }

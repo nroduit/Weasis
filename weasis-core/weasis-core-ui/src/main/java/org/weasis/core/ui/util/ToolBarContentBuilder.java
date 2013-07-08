@@ -20,12 +20,12 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
-import org.weasis.core.ui.util.WtoolBar.TYPE;
+import org.weasis.core.ui.docking.Insertable.Type;
 
 public class ToolBarContentBuilder {
 
     public static WtoolBar buildEmptyToolBar(String name) {
-        WtoolBar toolBar = new WtoolBar(name, TYPE.empty, 0);
+        WtoolBar toolBar = new WtoolBar(name, Type.EMPTY, 0);
         toolBar.add(ToolBarContentBuilder.buildToolBarSizerComponent());
         return toolBar;
     }

@@ -71,7 +71,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private DropDownButton synchButton;
 
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager, int activeMouse, WProperties props, int index) {
-        super("Viewer2d Main Bar", TYPE.main, index); //$NON-NLS-1$
+        super("Viewer2d Main Bar", index); //$NON-NLS-1$
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

@@ -19,7 +19,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
     private final Logger LOGGER = LoggerFactory.getLogger(CineToolBar.class);
 
     public CineToolBar(int index) {
-        super(Messages.getString("CineToolBar.name"), TYPE.tool, index); //$NON-NLS-1$
+        super(Messages.getString("CineToolBar.name"), index); //$NON-NLS-1$
 
         ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         if (sequence instanceof SliderCineListener) {
