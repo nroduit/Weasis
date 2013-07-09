@@ -94,7 +94,6 @@
 							<Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
 							<Embed-Directory>lib</Embed-Directory>
 							<Embed-StripGroup>true</Embed-StripGroup>
-							<Service-Component>OSGI-INF/*.xml</Service-Component>
 						</instructions>
 					</configuration>
 				</plugin>
@@ -136,6 +135,18 @@
 	</profiles>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>4.3.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.3.1</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>

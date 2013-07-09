@@ -73,7 +73,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.ui.docking.Insertable;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -744,7 +744,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private void buildToolBarSubMenu(final JMenu toolBarMenu) {
         List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
         for (final Toolbar bar : bars) {
-            if (!Type.EMPTY.equals(bar.getType())) {
+            if (!Insertable.Type.EMPTY.equals(bar.getType())) {
                 JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
                 item.addActionListener(new ActionListener() {
 
@@ -765,7 +765,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
         if (tools != null) {
             for (final DockableTool t : tools) {
-                if (!Type.EMPTY.equals(t.getType())) {
+                if (!Insertable.Type.EMPTY.equals(t.getType())) {
                     JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
                     item.addActionListener(new ActionListener() {
 
