@@ -56,6 +56,11 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
         super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
     }
 
+    public AbstractDragGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
+        float lineThickness, boolean labelVisible, boolean filled, int classID) {
+        super(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled, classID);
+    }
+
     protected abstract void buildShape(MouseEventDouble mouseEvent);
 
     @Override

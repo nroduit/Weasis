@@ -90,13 +90,7 @@ public abstract class PropertiesDialog extends JDialog {
         jButtonColor.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JButton button = (JButton) e.getSource();
-                Color newColor =
-                    JColorChooser.showDialog(PropertiesDialog.this,
-                        Messages.getString("MeasureTool.pick_color"), button.getBackground()); //$NON-NLS-1$
-                if (newColor != null) {
-                    button.setBackground(newColor);
-                }
+                openColorChooser((JButton) e.getSource());
             }
         });
 
@@ -180,4 +174,13 @@ public abstract class PropertiesDialog extends JDialog {
         dispose();
     }
 
+    public static void openColorChooser(JButton button) {
+        if (button != null) {
+            Color newColor =
+                JColorChooser.showDialog(button, Messages.getString("MeasureTool.pick_color"), button.getBackground()); //$NON-NLS-1$
+            if (newColor != null) {
+                button.setBackground(newColor);
+            }
+        }
+    }
 }

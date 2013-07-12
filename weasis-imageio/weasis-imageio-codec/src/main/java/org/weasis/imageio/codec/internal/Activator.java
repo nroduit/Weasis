@@ -11,10 +11,10 @@
 package org.weasis.imageio.codec.internal;
 
 import javax.imageio.ImageIO;
-import javax.media.jai.JAI;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.weasis.core.api.image.util.JAIUtil;
 import org.weasis.core.api.service.ImageioUtil;
 
 import com.sun.media.imageioimpl.plugins.bmp.BMPImageReaderSpi;
@@ -66,7 +66,7 @@ public class Activator implements BundleActivator {
         // ImageioUtil.unRegisterServiceProvider(registry, CLibJPEGImageReaderSpi.class);
 
         // Register the ImageRead and ImageWrite operation for JAI
-        new ImageReadWriteSpi().updateRegistry(getJAI().getOperationRegistry());
+        new ImageReadWriteSpi().updateRegistry(JAIUtil.getOperationRegistry());
     }
 
     @Override
@@ -86,14 +86,4 @@ public class Activator implements BundleActivator {
 
     }
 
-    public static JAI getJAI() {
-        // Issue Resolution: necessary when jai already exist in JRE
-        // Change to the bundle classloader for loading the services providers (spi) correctly.
-        ClassLoader bundleClassLoader = JAI.class.getClassLoader();
-        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(bundleClassLoader);
-        JAI jai = JAI.getDefaultInstance();
-        Thread.currentThread().setContextClassLoader(originalClassLoader);
-        return jai;
-    }
 }

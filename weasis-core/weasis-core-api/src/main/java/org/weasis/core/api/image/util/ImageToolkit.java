@@ -25,7 +25,6 @@ import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
 
-import org.weasis.core.api.internal.Activator;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
@@ -35,13 +34,6 @@ import org.weasis.core.api.media.data.ImageElement;
 public class ImageToolkit {
 
     public static final RenderingHints NOCACHE_HINT = new RenderingHints(JAI.KEY_TILE_CACHE, null);
-
-    /**
-     * Initialise JAI memory used by the Tile Cache.
-     */
-    public static void setJaiCacheMemoryCapacity(long tileCacheMB) {
-        Activator.getJAI().getTileCache().setMemoryCapacity(tileCacheMB * 1024L * 1024L);
-    }
 
     /**
      * Load an image.

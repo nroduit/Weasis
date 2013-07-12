@@ -10,17 +10,13 @@
  ******************************************************************************/
 package org.weasis.core.api.internal;
 
-import java.awt.image.renderable.RenderedImageFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 import javax.media.jai.JAI;
-import javax.media.jai.OperationDescriptorImpl;
 import javax.media.jai.OperationRegistry;
-import javax.media.jai.RegistryElementDescriptor;
-import javax.media.jai.registry.RIFRegistry;
 import javax.media.jai.util.ImagingListener;
 
 import org.apache.felix.prefs.BackingStore;
@@ -44,7 +40,7 @@ import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.op.ShutterDescriptor;
 import org.weasis.core.api.image.op.ThresholdToBinDescriptor;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.core.api.image.util.JAIUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
@@ -68,7 +64,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
 
-        JAI jai = getJAI();
+        JAI jai = JAIUtil.getJAI();
         OperationRegistry or = jai.getOperationRegistry();
 
         jai.setImagingListener(new ImagingListener() {
@@ -80,17 +76,17 @@ public class Activator implements BundleActivator, ServiceListener {
                 return false;
             }
         });
-        registerOp(or, new FormatBinaryDescriptor());
-        registerOp(or, new NotBinaryDescriptor());
-        registerOp(or, new ImageStatisticsDescriptor());
-        registerOp(or, new ImageStatistics2Descriptor());
-        registerOp(or, new ShutterDescriptor());
-        registerOp(or, new ThresholdToBinDescriptor());
-        registerOp(or, new RectifySignedShortDataDescriptor());
-        registerOp(or, new RectifyUShortToShortDataDescriptor());
+        JAIUtil.registerOp(or, new FormatBinaryDescriptor());
+        JAIUtil.registerOp(or, new NotBinaryDescriptor());
+        JAIUtil.registerOp(or, new ImageStatisticsDescriptor());
+        JAIUtil.registerOp(or, new ImageStatistics2Descriptor());
+        JAIUtil.registerOp(or, new ShutterDescriptor());
+        JAIUtil.registerOp(or, new ThresholdToBinDescriptor());
+        JAIUtil.registerOp(or, new RectifySignedShortDataDescriptor());
+        JAIUtil.registerOp(or, new RectifyUShortToShortDataDescriptor());
 
         // TODO manage memory setting ?
-        ImageToolkit.setJaiCacheMemoryCapacity(128);
+        jai.getTileCache().setMemoryCapacity(128 * 1024L * 1024L);
 
         // Allows to connect through a proxy initialized by Java Webstart
         ProxyDetector.setProxyFromJavaWebStart();
@@ -100,28 +96,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-    }
-
-    public static JAI getJAI() {
-        // Issue Resolution: necessary when jai already exist in JRE
-        // Change to the bundle classloader for loading the services providers (spi) correctly.
-        ClassLoader bundleClassLoader = JAI.class.getClassLoader();
-        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-
-        Thread.currentThread().setContextClassLoader(bundleClassLoader);
-        JAI jai = JAI.getDefaultInstance();
-        Thread.currentThread().setContextClassLoader(originalClassLoader);
-        return jai;
-    }
-
-    public static void registerOp(OperationRegistry or, OperationDescriptorImpl descriptor) {
-        String name = descriptor.getName();
-        String[] mode = descriptor.getSupportedModes();
-        RegistryElementDescriptor val = or.getDescriptor(mode[0], name);
-        if (val == null) {
-            or.registerDescriptor(descriptor);
-            RIFRegistry.register(null, name, "org.weasis.core.api.image.op", (RenderedImageFactory) descriptor); //$NON-NLS-1$
-        }
     }
 
     @Override

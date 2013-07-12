@@ -42,7 +42,7 @@ public class PointGraphic extends BasicGraphic {
 
     @Override
     public String getUIName() {
-        return "";
+        return "Point";
     }
 
     @Override

@@ -78,6 +78,8 @@ public abstract class BasicGraphic implements Graphic {
     protected boolean labelVisible;
     @Element(name = "label", required = false)
     protected GraphicLabel graphicLabel;
+    @Attribute(name = "class_id")
+    protected int classID;
 
     public BasicGraphic() {
         this(0);
@@ -93,11 +95,16 @@ public abstract class BasicGraphic implements Graphic {
 
     public BasicGraphic(int handlePointTotalNumber, Paint paintColor, float lineThickness, boolean labelVisible,
         boolean filled) {
-        this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled);
+        this(null, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled, 0);
     }
 
     public BasicGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
         float lineThickness, boolean labelVisible, boolean filled) {
+        this(handlePointList, handlePointTotalNumber, paintColor, lineThickness, labelVisible, filled, 0);
+    }
+
+    public BasicGraphic(List<Point2D.Double> handlePointList, int handlePointTotalNumber, Paint paintColor,
+        float lineThickness, boolean labelVisible, boolean filled, int classID) {
         if (paintColor == null) {
             paintColor = Color.YELLOW;
         }
@@ -110,6 +117,7 @@ public abstract class BasicGraphic implements Graphic {
         this.lineThickness = lineThickness;
         this.labelVisible = labelVisible;
         this.filled = filled;
+        this.classID = classID;
     }
 
     protected abstract void buildShape();
@@ -134,6 +142,14 @@ public abstract class BasicGraphic implements Graphic {
     public Stroke getDashStroke(float lineThickness) {
         return new BasicStroke(lineThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 5.0f,
             5.0f }, 0f);
+    }
+
+    public int getClassID() {
+        return classID;
+    }
+
+    public void setClassID(int classID) {
+        this.classID = classID;
     }
 
     public Paint getColorPaint() {

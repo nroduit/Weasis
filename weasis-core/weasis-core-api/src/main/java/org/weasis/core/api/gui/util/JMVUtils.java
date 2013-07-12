@@ -186,20 +186,24 @@ public class JMVUtils {
         return names;
     }
 
-    public static void setList(JComboBox jComboBox, Object first, Object[] obj) {
+    public static void setList(JComboBox jComboBox, Object first, Object[] items) {
         jComboBox.removeAllItems();
-        jComboBox.addItem(first);
-        for (int i = 0; i < obj.length; i++) {
-            jComboBox.addItem(obj[i]);
+        if (first != null) {
+            jComboBox.addItem(first);
+        }
+        for (Object object : items) {
+            jComboBox.addItem(object);
         }
     }
 
-    public static void setList(JComboBox jComboBox, Object[] obj, Object last) {
+    public static void setList(JComboBox jComboBox, Object[] items, Object last) {
         jComboBox.removeAllItems();
-        for (int i = 0; i < obj.length; i++) {
-            jComboBox.addItem(obj[i]);
+        for (Object object : items) {
+            jComboBox.addItem(object);
         }
-        jComboBox.addItem(last);
+        if (last != null) {
+            jComboBox.addItem(last);
+        }
     }
 
     public static void setList(JComboBox jComboBox, java.util.List list) {
