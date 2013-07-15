@@ -30,7 +30,7 @@ public class SampleTool extends PluginTool {
     private final JScrollPane rootPane = new JScrollPane();
 
     public SampleTool(Type type) {
-        super(BUTTON_NAME, "Point Counting", type, 120);
+        super(BUTTON_NAME, "Sample Tool", type, 120);
         dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png"))); //${symbol_dollar}NON-NLS-1${symbol_dollar}
         setDockableWidth(290);
     }
