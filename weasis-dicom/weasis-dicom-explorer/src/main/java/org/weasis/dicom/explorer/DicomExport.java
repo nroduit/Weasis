@@ -34,13 +34,13 @@ public class DicomExport extends AbstractWizardDialog {
 
     private final ServiceTracker prefs_tracker;
     private final DicomModel dicomModel;
-    private final ExportTree exportTree;
+    private final CheckTreeModel treeModel;
 
     public DicomExport(Frame parent, final DicomModel dicomModel) {
         super(parent,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        this.exportTree = new ExportTree(dicomModel);
+        this.treeModel = new CheckTreeModel(dicomModel);
         prefs_tracker =
             new ServiceTracker(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
                 DicomExportFactory.class.getName(), null);
@@ -96,7 +96,7 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, exportTree)));
+        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, treeModel)));
 
         try {
             prefs_tracker.open();
@@ -108,6 +108,7 @@ public class DicomExport extends AbstractWizardDialog {
         final Object[] servicesPref = prefs_tracker.getServices();
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
+        properties.put(treeModel.getClass().getName(), treeModel);
         for (int i = 0; (servicesPref != null) && (i < servicesPref.length); i++) {
             if (servicesPref[i] instanceof DicomExportFactory) {
                 ExportDicom page = ((DicomExportFactory) servicesPref[i]).createDicomExportPage(properties);
@@ -131,7 +132,7 @@ public class DicomExport extends AbstractWizardDialog {
                 cancel();
             }
             try {
-                selectedPage.exportDICOM(exportTree, null);
+                selectedPage.exportDICOM(treeModel, null);
             } catch (IOException e1) {
                 LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
             }

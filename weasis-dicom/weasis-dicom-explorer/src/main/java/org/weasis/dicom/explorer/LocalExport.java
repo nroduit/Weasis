@@ -64,7 +64,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
@@ -97,10 +97,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private JComboBox comboBoxImgFormat;
     private JButton btnNewButton;
 
-    public LocalExport(DicomModel dicomModel, ExportTree exportTree) {
+    public LocalExport(DicomModel dicomModel, CheckTreeModel treeModel) {
         super(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        this.exportTree = exportTree;
+        this.exportTree = new ExportTree(treeModel);
         initGUI();
         initialize(true);
     }
@@ -236,6 +236,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
         fileChooser.setMultiSelectionEnabled(false);
         File folder = null;
         if (fileChooser.showOpenDialog(this) != 0 || (folder = fileChooser.getSelectedFile()) == null) {
@@ -268,32 +269,32 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     @Override
-    public void exportDICOM(final ExportTree tree, JProgressBar info) throws IOException {
+    public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {
         browseImgFile();
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
             final String format = (String) comboBoxImgFormat.getSelectedItem();
-            ExplorerTask task = new ExplorerTask("Exporting...") { //$NON-NLS-1$
+            ExplorerTask task = new ExplorerTask("Exporting...") {
 
-                    @Override
-                    protected Boolean doInBackground() throws Exception {
-                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
-                            dicomModel, null, this));
-                        if (EXPORT_FORMAT[0].equals(format)) {
-                            writeDicom(exportDir, tree);
-                        } else {
-                            writeOther(exportDir, tree, format);
-                        }
-                        return true;
+                @Override
+                protected Boolean doInBackground() throws Exception {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart,
+                        dicomModel, null, this));
+                    if (EXPORT_FORMAT[0].equals(format)) {
+                        writeDicom(exportDir, model);
+                    } else {
+                        writeOther(exportDir, model, format);
                     }
+                    return true;
+                }
 
-                    @Override
-                    protected void done() {
-                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop,
-                            dicomModel, null, this));
-                    }
+                @Override
+                protected void done() {
+                    dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop,
+                        dicomModel, null, this));
+                }
 
-                };
+            };
             task.execute();
         }
     }
@@ -317,14 +318,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         return (String) img.getTagValue(TagW.SOPInstanceUID);
     }
 
-    private void writeOther(File exportDir, ExportTree tree, String format) {
+    private void writeOther(File exportDir, CheckTreeModel model, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         int jpegQuality = JMVUtils.getIntValueFromString(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.valueOf(pref.getProperty(HEIGHT_BITS, "false")); //$NON-NLS-1$
 
-        synchronized (tree) {
-            TreePath[] paths = tree.getTree().getCheckingPaths();
+        synchronized (model) {
+            TreePath[] paths = model.getCheckingPaths();
             for (TreePath treePath : paths) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
@@ -396,13 +397,16 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, img.getFile()); //$NON-NLS-1$
                         }
                     }
+
+                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                    img.removeImageFromCache();
                 }
             }
         }
 
     }
 
-    private void writeDicom(File exportDir, ExportTree tree) throws IOException {
+    private void writeDicom(File exportDir, CheckTreeModel model) throws IOException {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
         boolean writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
@@ -422,9 +426,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 }
             }
 
-            synchronized (tree) {
+            synchronized (model) {
                 ArrayList<String> uids = new ArrayList<String>();
-                TreePath[] paths = tree.getTree().getCheckingPaths();
+                TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
@@ -484,7 +488,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 if (newSeries && node.getParent() instanceof DefaultMutableTreeNode) {
                                     DicomImageElement midImage =
                                         ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject())
-                                            .getMedia(MEDIA_POSITION.MIDDLE, null, null);
+                                            .getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
                                     DicomObject seq = mkIconItem(midImage);
                                     if (seq != null) {
                                         serrec.putNestedDicomObject(Tag.IconImageSequence, seq);
@@ -541,6 +545,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     .getRendering() : PlanarImage.wrapRenderedImage(img);
             thumbnail = thumb.getAsBufferedImage();
         }
+        // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+        image.removeImageFromCache();
+
         if (thumbnail == null) {
             return null;
         }
