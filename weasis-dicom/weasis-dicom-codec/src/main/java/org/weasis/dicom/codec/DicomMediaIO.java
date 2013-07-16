@@ -1254,7 +1254,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
          * Prevent error when reading images from a large multiframe and the header is removed from the cache at the
          * same time
          */
-        if (!readingHeader && readingImage) {
+        if (!readingHeader && !readingImage) {
             super.reset();
             resetLocal();
         }
