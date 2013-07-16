@@ -98,8 +98,8 @@ public final class JIThumbnailCache {
                             Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null : PlanarImage
                             .wrapRenderedImage(img).getAsBufferedImage();
 
-                    // DO not close the stream
-                    // diskObject.dispose();
+                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                    diskObject.removeImageFromCache();
 
                     GuiExecutor.instance().execute(new Runnable() {
 
