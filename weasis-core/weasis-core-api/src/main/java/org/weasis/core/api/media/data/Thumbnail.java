@@ -207,39 +207,43 @@ public class Thumbnail extends JLabel {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                                BufferedImage thumbnail = null;
-                                if (thumbnailPath != null) {
-                                    if (ImageFiler.writeJPG(thumbnailPath, thumb, 0.75f)) {
-                                        /*
-                                         * Write the thumbnail in temp folder, better than getting the thumbnail
-                                         * directly from t.getAsBufferedImage() (it is true if the image is big and
-                                         * cannot handle all the tiles in memory)
-                                         */
-                                        readable = true;
-                                        media.setTag(TagW.ThumbnailPath, thumbnailPath.getAbsolutePath());
-                                        repaint(50L);
-                                        return;
-                                    } else {
-                                        // out of memory
-                                    }
+                                try {
+                                    BufferedImage thumbnail = null;
+                                    if (thumbnailPath != null) {
+                                        if (ImageFiler.writeJPG(thumbnailPath, thumb, 0.75f)) {
+                                            /*
+                                             * Write the thumbnail in temp folder, better than getting the thumbnail
+                                             * directly from t.getAsBufferedImage() (it is true if the image is big and
+                                             * cannot handle all the tiles in memory)
+                                             */
+                                            readable = true;
+                                            media.setTag(TagW.ThumbnailPath, thumbnailPath.getAbsolutePath());
+                                            repaint(50L);
+                                            return;
+                                        } else {
+                                            // out of memory
+                                        }
 
-                                } else if (thumb instanceof PlanarImage) {
-                                    thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
-                                }
-                                if (thumbnail == null && (thumbnailPath != null || media != null)) {
-                                    readable = false;
-                                } else {
-                                    readable = true;
-                                    imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
-                                    repaint(5L);
-                                    try {
-                                        Thread.sleep(50L);
-                                    } catch (InterruptedException e) {
-                                        // DO nothing
+                                    } else if (thumb instanceof PlanarImage) {
+                                        thumbnail = ((PlanarImage) thumb).getAsBufferedImage();
                                     }
+                                    if (thumbnail == null && (thumbnailPath != null || media != null)) {
+                                        readable = false;
+                                    } else {
+                                        readable = true;
+                                        imageSoftRef = new SoftReference<BufferedImage>(thumbnail);
+                                        repaint(5L);
+                                        try {
+                                            Thread.sleep(50L);
+                                        } catch (InterruptedException e) {
+                                            // DO nothing
+                                        }
+                                    }
+                                } finally {
+                                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                                    image.removeImageFromCache();
                                 }
                             }
-
                         }
                     } else {
                         Load ref = new Load(thumbnailPath);
