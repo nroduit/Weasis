@@ -18,6 +18,6 @@ import org.weasis.core.api.gui.util.PageProps;
 
 public interface ExportDicom extends PageProps {
 
-    void exportDICOM(ExportTree tree, JProgressBar info) throws IOException;
+    void exportDICOM(CheckTreeModel model, JProgressBar info) throws IOException;
 
 }

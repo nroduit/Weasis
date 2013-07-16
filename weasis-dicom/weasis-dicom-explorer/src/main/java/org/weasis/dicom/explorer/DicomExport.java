@@ -35,13 +35,13 @@ public class DicomExport extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
 
     private final DicomModel dicomModel;
-    private final ExportTree exportTree;
+    private final CheckTreeModel treeModel;
 
     public DicomExport(Frame parent, final DicomModel dicomModel) {
         super(parent,
             Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        this.exportTree = new ExportTree(dicomModel);
+        this.treeModel = new CheckTreeModel(dicomModel);
         jPanelButtom.removeAll();
         final GridBagLayout gridBagLayout = new GridBagLayout();
         jPanelButtom.setLayout(gridBagLayout);
@@ -94,10 +94,11 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, exportTree)));
+        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, treeModel)));
 
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
+        properties.put(treeModel.getClass().getName(), treeModel);
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
             for (ServiceReference<DicomExportFactory> service : context.getServiceReferences(DicomExportFactory.class,
@@ -129,7 +130,7 @@ public class DicomExport extends AbstractWizardDialog {
                 cancel();
             }
             try {
-                selectedPage.exportDICOM(exportTree, null);
+                selectedPage.exportDICOM(treeModel, null);
             } catch (IOException e1) {
                 LOGGER.error("DICOM export failed", e1.getMessage()); //$NON-NLS-1$
             }

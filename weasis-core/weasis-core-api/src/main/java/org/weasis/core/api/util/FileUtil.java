@@ -119,7 +119,7 @@ public final class FileUtil {
         }
         final File[] files = dir.listFiles();
         if (files != null) {
-            for (final File f : files) {
+            for (File f : files) {
                 if (f.isDirectory()) {
                     deleteDirectoryContents(f);
                 } else {
@@ -149,6 +149,36 @@ public final class FileUtil {
             }
         }
         return fileOrDirectory.delete();
+    }
+
+    public static void recursiveDelete(File rootDir) {
+        recursiveDelete(rootDir, true);
+    }
+
+    public static void recursiveDelete(File rootDir, boolean deleteRoot) {
+        if ((rootDir == null) || !rootDir.isDirectory()) {
+            return;
+        }
+        File[] childDirs = rootDir.listFiles();
+        if (childDirs != null) {
+            for (File f : childDirs) {
+                if (f.isDirectory()) {
+                    recursiveDelete(f, deleteRoot);
+                    f.delete();
+                } else {
+                    try {
+                        if (!f.delete()) {
+                            LOGGER.info("Cannot delete {}", f.getPath()); //$NON-NLS-1$
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage());
+                    }
+                }
+            }
+        }
+        if (deleteRoot) {
+            rootDir.delete();
+        }
     }
 
     public static void safeClose(XMLStreamWriter writer) {
