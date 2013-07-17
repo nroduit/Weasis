@@ -113,6 +113,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(levelAction = newLevelAction());
         iniAction(rotateAction = newRotateAction());
         iniAction(zoomAction = newZoomAction());
+        // Set default display to pixel size
+        zoomAction.setValue(viewScaleToSliderValue(1.0));
         iniAction(lensZoomAction = newLensZoomAction());
 
         iniAction(flipAction = newFlipAction());

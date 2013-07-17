@@ -820,7 +820,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
-                look = config.getProperty(nativeLook, null);
+                look = config.getProperty("weasis.look", null);
             }
         }
 

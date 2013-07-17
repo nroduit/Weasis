@@ -152,6 +152,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
+        actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
     }
 
     @Override
@@ -187,7 +188,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                         getCurrentSortComparator());
             }
             setDefautWindowLevel(media);
-            setImage(media, true);
+            setImage(media, false);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
