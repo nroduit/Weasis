@@ -199,6 +199,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 TOOLS.add(tool);
             }
 
+            // TODO doesn't work
             InsertableUtil.sortInsertable(TOOLS);
 
             // Send event to synchronize the series selection.
@@ -687,8 +688,8 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
 
                                 Double zoomVal = (Double) currentView.getActionValue(ActionW.ZOOM.cmd());
-                                // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-                                boolean rescaleView = (zoomVal == null || zoomVal <= 0.0);
+                                // If zoom has a negative or null value, set image in bestfit zoom mode
+                                boolean rescaleView = (zoomVal != null && zoomVal <= 0.0);
 
                                 DicomImageElement newImage =
                                     currentSeries.getMedia(newImageIndex, (Filter<DicomImageElement>) currentView

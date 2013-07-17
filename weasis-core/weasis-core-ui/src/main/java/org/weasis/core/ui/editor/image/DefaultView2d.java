@@ -382,8 +382,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             setDefautWindowLevel(media);
-            setImage(media, true);
             Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+            setImage(media, val != null && val <= 0.0);
+            val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             zoom(val == null ? 1.0 : val);
             center();
         }
@@ -499,8 +500,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (!modelArea.equals(area)) {
                     ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
                     getViewModel().setModelArea(modelArea);
-                    // setPreferredSize(modelArea.getSize());
-                    center();
                 }
                 if (bestFit) {
                     actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
@@ -891,8 +890,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 }
                 Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-                boolean rescaleView = (val == null || val <= 0.0);
+                // If zoom has a null or negative value, set image in bestfit zoom mode
+                boolean rescaleView = (val != null && val <= 0.0);
 
                 setImage(imgElement, rescaleView);
 
@@ -1609,7 +1608,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         imageLayer.updateAllImageOperations();
         resetZoom();
-
+        center();
         eventManager.updateComponentsListener(this);
     }
 

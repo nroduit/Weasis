@@ -247,6 +247,7 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                     shape = null;
                     buildShape(mouseEvent);
                     if (mouseEvent.getClickCount() == 2) {
+                        // TODO Conflict with end of drawing polyline
                         DefaultView2d<?> graphPane = getDefaultView2d(mouseEvent);
                         if (graphPane != null) {
                             final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();

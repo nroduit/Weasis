@@ -113,8 +113,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         iniAction(levelAction = newLevelAction());
         iniAction(rotateAction = newRotateAction());
         iniAction(zoomAction = newZoomAction());
-        // Set default display to pixel size
-        zoomAction.setValue(viewScaleToSliderValue(1.0));
         iniAction(lensZoomAction = newLensZoomAction());
 
         iniAction(flipAction = newFlipAction());
@@ -325,10 +323,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
                 true));
         } else if (ResetTools.Zoom.equals(action)) {
-            // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
-            // value is adjusted by the BoundedRangeModel
-            firePropertyChange(ActionW.SYNCH.cmd(), null,
-                new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
+            zoomAction.setValue(0);
         } else if (ResetTools.Rotation.equals(action)) {
             rotateAction.setValue(0);
         } else if (ResetTools.WindowLevel.equals(action)) {

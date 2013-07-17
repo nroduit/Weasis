@@ -600,6 +600,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                     p.closeDockable();
                 }
             }
+            selectedPlugin = null;
             return;
         }
         if (selectedPlugin == plugin) {
