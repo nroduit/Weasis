@@ -17,7 +17,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
 import org.osgi.service.prefs.PreferencesService;
 import org.osgi.util.tracker.ServiceTracker;
-import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
 
 public class BundlePreferences {
@@ -73,6 +72,17 @@ public class BundlePreferences {
     public File getDataFolder() {
         dataFolder.mkdirs();
         return dataFolder;
+    }
+
+    public static File getDataFolder(BundleContext context) {
+        if (context != null) {
+            File dataFolder =
+                new File(
+                    AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+            dataFolder.mkdirs();
+            return dataFolder;
+        }
+        return new File(AbstractProperties.WEASIS_PATH, "data");
     }
 
     public static Preferences getDefaultPreferences(final BundleContext context) {
