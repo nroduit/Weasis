@@ -3,6 +3,8 @@ package org.weasis.dicom.explorer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
+import java.io.File;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -13,10 +15,13 @@ import javax.swing.tree.TreePath;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 
 public class CheckTreeModel {
+    private static final int THUMBNAIL_SIZE = 72;
+
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
     private final TreeCheckingModel checkingModel;
@@ -59,22 +64,50 @@ public class CheckTreeModel {
                         Object item = it.next();
                         if (item instanceof DicomSeries) {
                             DicomSeries series = (DicomSeries) item;
+
                             DefaultMutableTreeNode seriesNode = new DefaultMutableTreeNode(series, true) {
                                 @Override
                                 public String toString() {
                                     DicomSeries s = (DicomSeries) getUserObject();
+                                    Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
+                                    URL url = null;
+                                    if (thumb != null) {
+                                        try {
+                                            File path = thumb.getThumbnailPath();
+                                            if (path != null) {
+                                                url = path.toURI().toURL();
+                                            }
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+
                                     Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
-                                    StringBuffer buffer = new StringBuffer();
+                                    StringBuffer buf = new StringBuffer();
+                                    if (url != null) {
+                                        buf.append("<html><br>");
+                                        buf.append("<img src=\"");
+                                        buf.append(url.toString());
+                                        buf.append("\" width=\"");
+                                        buf.append(THUMBNAIL_SIZE);
+                                        buf.append("\" height=\"");
+                                        buf.append(THUMBNAIL_SIZE);
+                                        buf.append("\"><br>");
+                                    }
+
                                     if (val != null) {
-                                        buffer.append("["); //$NON-NLS-1$
-                                        buffer.append(val);
-                                        buffer.append("] "); //$NON-NLS-1$
+                                        buf.append("["); //$NON-NLS-1$
+                                        buf.append(val);
+                                        buf.append("] "); //$NON-NLS-1$
                                     }
                                     String desc = (String) s.getTagValue(TagW.SeriesDescription);
                                     if (desc != null) {
-                                        buffer.append(desc);
+                                        buf.append(desc);
                                     }
-                                    return buffer.toString();
+                                    if (url != null) {
+                                        buf.append("<br></html>");
+                                    }
+                                    return buf.toString();
                                 }
                             };
                             for (DicomImageElement dicom : series.getMedias(null, null)) {
