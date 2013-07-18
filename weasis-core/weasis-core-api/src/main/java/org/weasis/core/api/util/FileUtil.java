@@ -79,6 +79,15 @@ public final class FileUtil {
         return cleanName.toString().trim();
     }
 
+    public static String getValidFileNameWithoutHTML(String fileName) {
+        String val = null;
+        if (fileName != null) {
+            // Force to remove html tags
+            val = fileName.replaceAll("\\<.*?>", "");
+        }
+        return getValidFileName(val);
+    }
+
     public static void safeClose(final Closeable object) {
         if (object != null) {
             try {
