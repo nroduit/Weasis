@@ -337,11 +337,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     if (keepNames) {
                         TreeNode[] objects = node.getPath();
                         if (objects.length > 3) {
-                            buffer.append(FileUtil.getValidFileName(objects[1].toString()));
+                            buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[1].toString()));
                             buffer.append(File.separator);
-                            buffer.append(FileUtil.getValidFileName(objects[2].toString()));
+                            buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[2].toString()));
                             buffer.append(File.separator);
-                            String seriesName = FileUtil.getValidFileName(objects[3].toString());
+                            String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
                             if (seriesName.length() > 30) {
                                 buffer.append(seriesName, 0, 27);
                                 buffer.append("...");
@@ -448,7 +448,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             TreeNode[] objects = node.getPath();
                             if (objects.length > 2) {
                                 for (int i = 1; i < objects.length - 1; i++) {
-                                    buffer.append(FileUtil.getValidFileName(objects[i].toString()));
+                                    buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[i].toString()));
                                     buffer.append(File.separator);
                                 }
                             }
