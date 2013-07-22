@@ -123,6 +123,11 @@ import org.weasis.core.ui.util.TitleMenuItem;
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
+    public enum ZoomType {
+        CURRENT, BEST_FIT, PIXEL_SIZE, REAL
+    };
+
+    public static final String zoomTypeCmd = "zoom.type";
     public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
     public static final int CENTER_POINTER = 1 << 1;
     public static final int HIGHLIGHTED_POINTER = 1 << 2;
@@ -204,6 +209,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void initActionWState() {
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
+        actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.LENS.cmd(), false);
         actionsInView.put(ActionW.ROTATION.cmd(), 0);
         actionsInView.put(ActionW.FLIP.cmd(), false);
@@ -382,11 +388,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
 
             setDefautWindowLevel(media);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            setImage(media, val != null && val <= 0.0);
-            val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoom(val == null ? 1.0 : val);
-            center();
+            setImage(media);
         }
 
         eventManager.updateComponentsListener(this);
@@ -457,7 +459,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return new Rectangle(0, 0, 512, 512);
     }
 
-    protected void setImage(E img, boolean bestFit) {
+    protected void setImage(E img) {
         if (img == null) {
             imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
@@ -501,9 +503,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
                     getViewModel().setModelArea(modelArea);
                 }
-                if (bestFit) {
-                    actionsInView.put(ActionW.ZOOM.cmd(), -getBestFitViewScale());
-                }
+                resetZoom();
                 imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
                 if (panner != null) {
                     panner.updateImage();
@@ -599,13 +599,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public final void setCenter(double x, double y) {
-        double scale = getViewModel().getViewScale();
-        setOrigin(x - (getWidth() - 1) / (2.0 * scale), y - (getHeight() - 1) / (2.0 * scale));
+        int w = getWidth();
+        int h = getHeight();
+        // Only apply when the panel size is not zero.
+        if (w != 0 && h != 0) {
+            double scale = getViewModel().getViewScale();
+            setOrigin(x - (w - 1) / (2.0 * scale), y - (h - 1) / (2.0 * scale));
+        }
     }
 
     /** Provides panning */
     public final void setOrigin(double x, double y) {
         getViewModel().setModelOffset(x, y);
+        if (panner != null) {
+            panner.updateImageSize();
+        }
     }
 
     /** Provides panning */
@@ -625,9 +633,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 startedDragPoint.setLocation(getViewModel().getModelOffsetX(), getViewModel().getModelOffsetY());
             } else if (PanPoint.STATE.Dragging.equals(point.getState())) {
                 setOrigin(startedDragPoint.getX() + point.getX(), startedDragPoint.getY() + point.getY());
-            }
-            if (panner != null) {
-                panner.updateImageSize();
             }
         }
     }
@@ -889,17 +894,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
 
                 }
-                Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                // If zoom has a null or negative value, set image in bestfit zoom mode
-                boolean rescaleView = (val != null && val <= 0.0);
-
-                setImage(imgElement, rescaleView);
-
-                if (rescaleView) {
-                    val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                    zoom(val == null ? 1.0 : val);
-                    center();
-                }
+                setImage(imgElement);
             } else {
                 propertyChange(synch);
             }
@@ -1563,6 +1558,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
         list.add(exportToClipboardAction);
 
+        // TODO exclude big images?
         exportToClipboardAction = new AbstractAction(Messages.getString("DefaultView2d.clipboard_real")) { //$NON-NLS-1$
 
                 @Override
@@ -1587,13 +1583,23 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void resetZoom() {
-        Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        zoomVal = zoomVal == null ? 1.0 : zoomVal;
-        if (zoomVal <= 0.0) {
-            zoom(0.0);
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (!ZoomType.CURRENT.equals(type)) {
+            if (ZoomType.BEST_FIT.equals(type)) {
+                zoom(-getBestFitViewScale());
+                center();
+            } else {
+                zoom(1.0);
+            }
+        }
+    }
+
+    public void resetPan() {
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (ZoomType.BEST_FIT.equals(type)) {
             center();
         } else {
-            zoom(zoomVal);
+            setOrigin(0, 0);
         }
     }
 
@@ -1608,7 +1614,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         imageLayer.updateAllImageOperations();
         resetZoom();
-        center();
+        resetPan();
         eventManager.updateComponentsListener(this);
     }
 

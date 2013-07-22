@@ -32,7 +32,9 @@ public class DefaultSerializer {
         classMap.put("perpendicularLine", org.weasis.core.ui.graphic.PerpendicularLineGraphic.class);
         classMap.put("lineWithGap", org.weasis.core.ui.graphic.LineWithGapGraphic.class);
         classMap.put("ParallelLine", org.weasis.core.ui.graphic.ParallelLineGraphic.class);
+        classMap.put("point", org.weasis.core.ui.graphic.PointGraphic.class);
         classMap.put("polygon", org.weasis.core.ui.graphic.PolygonGraphic.class);
+        classMap.put("polyline", org.weasis.core.ui.graphic.PolylineGraphic.class);
         classMap.put("rectangle", org.weasis.core.ui.graphic.RectangleGraphic.class);
         classMap.put("threePointsCircle", org.weasis.core.ui.graphic.ThreePointsCircleGraphic.class);
 

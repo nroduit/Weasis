@@ -111,7 +111,13 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
                 imageWidth = (int) Math.round(imageHeight * modelRatio);
             }
             if (imageWidth > 0 && imageHeight > 0) {
-                updatePanArea();
+                panArea.setRect(0, 0, imageWidth, imageHeight);
+                if (imageWidth < getWidth()) {
+                    panArea.x = (getWidth() - imageWidth) / 2;
+                }
+                if (imageHeight < getHeight()) {
+                    panArea.y = (getHeight() - imageHeight) / 2;
+                }
                 updateSlider();
             }
         }
@@ -133,19 +139,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         slider.width = (int) Math.round(panArea.width * va.getWidth() / ma.getWidth());
         slider.height = (int) Math.round(panArea.height * va.getHeight() / ma.getHeight());
         repaint();
-    }
-
-    private void updatePanArea() {
-        panArea.x = 0;
-        panArea.y = 0;
-        panArea.width = this.getWidth();
-        panArea.height = this.getHeight();
-        if (this.getWidth() < getWidth()) {
-            panArea.x = (getWidth() - this.getWidth()) / 2;
-        }
-        if (this.getHeight() < getHeight()) {
-            panArea.y = (getHeight() - this.getHeight()) / 2;
-        }
     }
 
     public void moveToOrigin() {

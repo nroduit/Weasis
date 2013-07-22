@@ -754,10 +754,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    protected void setImage(DicomImageElement img, boolean bestFit) {
+    protected void setImage(DicomImageElement img) {
         boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
 
-        super.setImage(img, bestFit);
+        super.setImage(img);
 
         updateButtonState(img, newImg);
     }

@@ -343,7 +343,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (selectedView2dContainer != null) {
                 DefaultView2d viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
-                    viewPane.center();
+                    viewPane.resetPan();
                 }
             }
         }

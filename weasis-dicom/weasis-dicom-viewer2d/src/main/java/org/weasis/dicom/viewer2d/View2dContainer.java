@@ -687,10 +687,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     newImageIndex = currentView.getFrameIndex();
                                 }
 
-                                Double zoomVal = (Double) currentView.getActionValue(ActionW.ZOOM.cmd());
-                                // If zoom has a negative or null value, set image in bestfit zoom mode
-                                boolean rescaleView = (zoomVal != null && zoomVal <= 0.0);
-
                                 DicomImageElement newImage =
                                     currentSeries.getMedia(newImageIndex, (Filter<DicomImageElement>) currentView
                                         .getActionValue(ActionW.FILTERED_SERIES.cmd()), currentView
@@ -699,7 +695,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 if (newImage != null && !newImage.isImageAvailable()) {
                                     newImage.getImage();
                                 }
-                                currentView.setImage(newImage, rescaleView);
+                                currentView.setImage(newImage);
                             }
 
                             ((View2d) view).updateKOButtonVisibleState();
@@ -832,10 +828,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                     newImageIndex = currentView.getFrameIndex();
                                 }
 
-                                Double zoomVal = (Double) currentView.getActionValue(ActionW.ZOOM.cmd());
-                                // If zoom has not been defined or was besfit, set image in bestfit zoom mode
-                                boolean rescaleView = (zoomVal == null || zoomVal <= 0.0);
-
                                 DicomImageElement newImage =
                                     currentSeries.getMedia(newImageIndex, (Filter<DicomImageElement>) currentView
                                         .getActionValue(ActionW.FILTERED_SERIES.cmd()), currentView
@@ -844,7 +836,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 if (newImage != null && !newImage.isImageAvailable()) {
                                     newImage.getImage();
                                 }
-                                currentView.setImage(newImage, rescaleView);
+                                currentView.setImage(newImage);
                             }
 
                             ((View2d) view).updateKOButtonVisibleState();

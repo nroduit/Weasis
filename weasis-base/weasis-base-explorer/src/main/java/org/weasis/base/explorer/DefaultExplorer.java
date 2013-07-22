@@ -64,7 +64,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     private JPanel jRootPanel = new JPanel();
 
     public DefaultExplorer(final FileTreeModel model) {
-        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.MINIMIZED, PluginTool.Type.EXPLORER, 10);
+        super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 10);
         if (model == null) {
             throw new IllegalArgumentException();
         }

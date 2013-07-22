@@ -43,7 +43,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -57,7 +56,6 @@ import org.weasis.core.api.image.WindowLevelOperation;
 import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -153,6 +151,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
+        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.PIXEL_SIZE);
     }
 
     @Override
@@ -165,41 +164,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         // actionsInView.put(ActionW.INVERSESTACK.cmd(), evt.getNewValue());
         // sortStack();
         // }
-    }
-
-    @Override
-    public void setSeries(MediaSeries<ImageElement> series, ImageElement selectedImage) {
-        MediaSeries<ImageElement> oldsequence = this.series;
-        this.series = series;
-        if (oldsequence != null && oldsequence != series) {
-            closingSeries(oldsequence);
-            getLayerModel().deleteAllGraphics();
-            // All the action values are initialized again with the series changing
-            initActionWState();
-        }
-        if (series == null) {
-            imageLayer.setImage(null, null);
-        } else {
-            ImageElement media = selectedImage;
-            if (selectedImage == null) {
-                media =
-                    series.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                        (Filter<ImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                        getCurrentSortComparator());
-            }
-            setDefautWindowLevel(media);
-            Double val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            setImage(media, val != null && val <= 0.0);
-            val = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-            zoom(val == null ? 1.0 : val);
-            center();
-        }
-        eventManager.updateComponentsListener(this);
-
-        // Set the sequence to the state OPEN
-        if (series != null && oldsequence != series) {
-            series.setOpen(true);
-        }
     }
 
     @Override

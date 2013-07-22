@@ -237,6 +237,8 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
             if (rect.isEmpty()) {
                 return;
             }
+            // Avoid to display one pixel outside the border line of a view
+            // rect.setRect(Math.ceil(rect.getX()), Math.ceil(rect.getY()), rect.getWidth() - 1, rect.getHeight() - 1);
             g2d.setClip(rect);
         }
 

@@ -33,7 +33,7 @@ public class PopUpMenuOnThumb extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO To implement
+                // TODO To implement: show/hide from image tree display (add Panner checkboxtree)
             }
         });
         jMenuItemOrigin.setText("Move to Origin");
@@ -57,7 +57,6 @@ public class PopUpMenuOnThumb extends JPopupMenu {
         this.addSeparator();
         this.add(jMenuItemOrigin);
         this.add(jMenuItemCenter);
-        this.addSeparator();
     }
 
 }

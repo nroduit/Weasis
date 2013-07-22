@@ -247,14 +247,32 @@ public abstract class AbstractDragGraphic extends BasicGraphic {
                     shape = null;
                     buildShape(mouseEvent);
                     if (mouseEvent.getClickCount() == 2) {
-                        // TODO Conflict with end of drawing polyline
                         DefaultView2d<?> graphPane = getDefaultView2d(mouseEvent);
                         if (graphPane != null) {
-                            final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
-                            list.add(AbstractDragGraphic.this);
-                            JDialog dialog = new MeasureDialog(graphPane, list);
-                            WinUtil.adjustLocationToFitScreen(dialog, mouseEvent.getLocationOnScreen());
-                            dialog.setVisible(true);
+                            // Do not open properties dialog for graphic with undefined points (like polyline) => double
+                            // click conflict
+                            boolean isEditingGraph = false;
+                            Graphic firstGraphicIntersecting =
+                                graphPane.getLayerModel().getFirstGraphicIntersecting(mouseEvent);
+                            if (firstGraphicIntersecting == AbstractDragGraphic.this && isSelected()
+                                && isVariablePointsNumber()) {
+                                AbstractDragGraphic dragGraph = (AbstractDragGraphic) firstGraphicIntersecting;
+                                List<AbstractDragGraphic> selectedDragGraphList =
+                                    graphPane.getLayerModel().getSelectedDragableGraphics();
+
+                                if (selectedDragGraphList != null && selectedDragGraphList.size() == 1
+                                    && !dragGraph.isOnGraphicLabel(mouseEvent)
+                                    && dragGraph.getHandlePointIndex(mouseEvent) >= 0) {
+                                    isEditingGraph = true;
+                                }
+                            }
+                            if (!isEditingGraph) {
+                                final ArrayList<AbstractDragGraphic> list = new ArrayList<AbstractDragGraphic>();
+                                list.add(AbstractDragGraphic.this);
+                                JDialog dialog = new MeasureDialog(graphPane, list);
+                                WinUtil.adjustLocationToFitScreen(dialog, mouseEvent.getLocationOnScreen());
+                                dialog.setVisible(true);
+                            }
                         }
                     }
                     return true;

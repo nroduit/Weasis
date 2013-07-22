@@ -50,6 +50,7 @@ public class MprView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
+        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
         // Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
         // head direction)
         // TODO This option should be fixed
@@ -67,8 +68,8 @@ public class MprView extends View2d {
     }
 
     @Override
-    protected void setImage(DicomImageElement img, boolean bestFit) {
-        super.setImage(img, bestFit);
+    protected void setImage(DicomImageElement img) {
+        super.setImage(img);
     }
 
     @Override
@@ -114,18 +115,7 @@ public class MprView extends View2d {
                                     v.setActionsInView(ActionW.PRESET.cmd(), img.containsPreset(preset) ? preset : null);
                                     v.setActionsInView(ActionW.WINDOW.cmd(), actionsInView.get(ActionW.WINDOW.cmd()));
                                     v.setActionsInView(ActionW.LEVEL.cmd(), actionsInView.get(ActionW.LEVEL.cmd()));
-                                    Double zoomVal = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                                    v.setActionsInView(ActionW.ZOOM.cmd(), zoomVal);
-                                    ((MprView) v).setImage(img, true);
-                                    zoomVal = zoomVal == null ? 1.0 : zoomVal;
-                                    if (zoomVal <= 0.0) {
-                                        // TODO use same code view resize listener
-                                        v.zoom(0.0);
-                                        v.center();
-                                    } else {
-                                        v.zoom(zoomVal);
-                                    }
-
+                                    ((MprView) v).setImage(img);
                                 }
                             }
                         }

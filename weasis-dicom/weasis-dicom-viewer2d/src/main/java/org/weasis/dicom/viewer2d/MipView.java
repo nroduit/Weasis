@@ -31,6 +31,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -79,6 +80,7 @@ public class MipView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
+        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
         // Force to extend VOI LUT to pixel allocated
         actionsInView.put(DicomImageElement.FILL_OUTSIDE_LUT, true);
         // Propagate the preset
@@ -283,7 +285,7 @@ public class MipView extends View2d {
 
                             @Override
                             public void run() {
-                                setImage(dicom, false);
+                                setImage(dicom);
                                 progressBar.setVisible(false);
                             }
                         });
