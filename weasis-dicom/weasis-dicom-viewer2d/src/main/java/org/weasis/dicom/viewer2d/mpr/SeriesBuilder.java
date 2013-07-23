@@ -29,11 +29,13 @@ import javax.swing.JProgressBar;
 import javax.vecmath.Vector3d;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Attributes.Visitor;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che.util.TagUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
@@ -103,6 +105,9 @@ public class SeriesBuilder {
                             if (secView == null || thirdView == null) {
                                 return;
                             }
+                            final MprView mainView = mprContainer.getMprView(type1);
+                            mainView.zoom(0.0);
+                            mainView.center();
 
                             final int size = series.size(filter);
                             final JProgressBar[] bar = new JProgressBar[2];
@@ -138,10 +143,6 @@ public class SeriesBuilder {
                             RawImage[] secSeries = new RawImage[height];
                             double sPixSize = writeBlock(secSeries, series, medias, rotate2, secView, thread);
 
-                            if (origPixSize * width < sPixSize * size) {
-                                // origPixSize = origPixSize / sPixSize;
-                                sPixSize = 1.0 / sPixSize;
-                            }
                             Vector3d vr = new Vector3d(or[0], or[1], or[2]);
                             Vector3d vc = new Vector3d(or[3], or[4], or[5]);
 
@@ -171,6 +172,8 @@ public class SeriesBuilder {
                                             .keySet()) {
                                             secView.setActionsInView(action, view.getActionValue(action));
                                         }
+                                        secView.zoom(mainView.getViewModel().getViewScale());
+                                        secView.center();
                                         secView.repaint();
                                     }
                                 });
@@ -198,6 +201,7 @@ public class SeriesBuilder {
                                     @Override
                                     public void run() {
                                         thirdView.setProgressBar(null);
+
                                         // Copy tags from original dicom into series
                                         DicomMediaUtils.writeMetaData(dicomSeries2, dcmObj);
                                         thirdView.setSeries(dicomSeries2);
@@ -205,6 +209,8 @@ public class SeriesBuilder {
                                             .keySet()) {
                                             thirdView.setActionsInView(action, view.getActionValue(action));
                                         }
+                                        thirdView.zoom(mainView.getViewModel().getViewScale());
+                                        thirdView.center();
                                         thirdView.repaint();
                                     }
                                 });
@@ -510,12 +516,17 @@ public class SeriesBuilder {
     }
 
     private static void removeAllPrivateTags(Attributes item) {
-        // for (int i = 0; i < item.size(); i++) {
-        // DicomElement element = item.getValue(tag);
-        // if (TagUtils.isPrivateDataElement(element.tag())) {
-        // dcmObj.remove(element.tag());
-        // }
-        // }
+        // TODO remove them or skip when reading?
+        Visitor visitor = new Visitor() {
+
+            @Override
+            public void visit(Attributes item, int tag, VR vr, Object value) {
+                if (TagUtils.isPrivateTag(tag)) {
+                    item.setNull(tag, vr);
+                }
+            }
+        };
+        item.accept(visitor);
     }
 
     private static boolean writeDICOM(RawImage newSeries, Attributes dcmObj) throws Exception {

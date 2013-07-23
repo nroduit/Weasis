@@ -1,10 +1,12 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.JProgressBar;
 import javax.vecmath.Point3d;
@@ -20,6 +22,9 @@ import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
+import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.LineWithGapGraphic;
@@ -50,7 +55,7 @@ public class MprView extends View2d {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.CURRENT);
         // Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
         // head direction)
         // TODO This option should be fixed
@@ -78,52 +83,69 @@ public class MprView extends View2d {
         if (series == null) {
             return;
         }
-        final String command = evt.getPropertyName();
-        if (command.equals(ActionW.CROSSHAIR.cmd())) {
-            Object point = evt.getNewValue();
-            if (point instanceof Point2D) {
-
-                Point2D p = (Point2D) point;
-                Point3d p3 = this.getImage().getSliceGeometry().getPosition(p);
-                // double [] xxx = (double [])this.getImage().getTagValue(TagW.SlicePosition);
-                // System.out.println(p3.x+","+p3.y+","+p3.z+","+xxx[0]+","+xxx[1]+","+xxx[2]);
-                ImageViewerPlugin<DicomImageElement> container = this.eventManager.getSelectedView2dContainer();
-                if (container instanceof MPRContainer) {
-                    ArrayList<DefaultView2d<DicomImageElement>> viewpanels =
-                        ((MPRContainer) container).getImagePanels();
-                    for (DefaultView2d<DicomImageElement> v : viewpanels) {
-                        if (v.getSeries() == null) {
-                            continue;
-                        }
-                        DefaultView2d<DicomImageElement> selImg = container.getSelectedImagePane();
-                        if (v instanceof MprView) {
-                            if (v != selImg) {
-                                Vector3d vn = v.getImage().getSliceGeometry().getNormal();
-                                vn.absolute();
-                                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                                // if (MprView.SliceOrientation.SAGITTAL == ((MprView) v).type) {
-                                // location = -location;
-                                // }
-                                DicomImageElement img =
-                                    v.getSeries().getNearestImage(location, 0,
-                                        (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                        v.getCurrentSortComparator());
-                                if (img != null) {
-                                    PresetWindowLevel preset =
-                                        (PresetWindowLevel) actionsInView.get(ActionW.PRESET.cmd());
-                                    // When series synchronization, do not synch preset from other series
-                                    v.setActionsInView(ActionW.PRESET.cmd(), img.containsPreset(preset) ? preset : null);
-                                    v.setActionsInView(ActionW.WINDOW.cmd(), actionsInView.get(ActionW.WINDOW.cmd()));
-                                    v.setActionsInView(ActionW.LEVEL.cmd(), actionsInView.get(ActionW.LEVEL.cmd()));
-                                    ((MprView) v).setImage(img);
+        final String name = evt.getPropertyName();
+        if (name.equals(ActionW.SYNCH.cmd())) {
+            SynchEvent synch = (SynchEvent) evt.getNewValue();
+            SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+            if (synchData != null && Mode.None.equals(synchData.getMode())) {
+                return;
+            }
+            for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
+                final String command = entry.getKey();
+                final Object val = entry.getValue();
+                if (synchData != null && !synchData.isActionEnable(command)) {
+                    continue;
+                }
+                if (command.equals(ActionW.CROSSHAIR.cmd())) {
+                    if (val instanceof Point2D.Double) {
+                        Point2D.Double p = (Point2D.Double) val;
+                        Point3d p3 = this.getImage().getSliceGeometry().getPosition(p);
+                        // double [] xxx = (double [])this.getImage().getTagValue(TagW.SlicePosition);
+                        // System.out.println(p3.x+","+p3.y+","+p3.z+","+xxx[0]+","+xxx[1]+","+xxx[2]);
+                        ImageViewerPlugin<DicomImageElement> container = this.eventManager.getSelectedView2dContainer();
+                        if (container instanceof MPRContainer) {
+                            ArrayList<DefaultView2d<DicomImageElement>> viewpanels =
+                                ((MPRContainer) container).getImagePanels();
+                            for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                if (v.getSeries() == null) {
+                                    continue;
+                                }
+                                DefaultView2d<DicomImageElement> selImg = container.getSelectedImagePane();
+                                if (v instanceof MprView) {
+                                    if (v != selImg) {
+                                        Vector3d vn = v.getImage().getSliceGeometry().getNormal();
+                                        vn.absolute();
+                                        double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                                        // if (MprView.SliceOrientation.SAGITTAL == ((MprView) v).type) {
+                                        // location = -location;
+                                        // }
+                                        DicomImageElement img =
+                                            v.getSeries().getNearestImage(
+                                                location,
+                                                0,
+                                                (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES
+                                                    .cmd()), v.getCurrentSortComparator());
+                                        if (img != null) {
+                                            PresetWindowLevel preset =
+                                                (PresetWindowLevel) actionsInView.get(ActionW.PRESET.cmd());
+                                            // When series synchronization, do not synch preset from other series
+                                            v.setActionsInView(ActionW.PRESET.cmd(), img.containsPreset(preset)
+                                                ? preset : null);
+                                            v.setActionsInView(ActionW.WINDOW.cmd(),
+                                                actionsInView.get(ActionW.WINDOW.cmd()));
+                                            v.setActionsInView(ActionW.LEVEL.cmd(),
+                                                actionsInView.get(ActionW.LEVEL.cmd()));
+                                            ((MprView) v).setImage(img);
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
-                    for (DefaultView2d<DicomImageElement> v : viewpanels) {
-                        if (v instanceof MprView) {
-                            ((MprView) v).computeCrosshair(p3);
-                            v.repaint();
+                            for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                if (v instanceof MprView) {
+                                    ((MprView) v).computeCrosshair(p3);
+                                    v.repaint();
+                                }
+                            }
                         }
                     }
                 }
@@ -183,22 +205,18 @@ public class MprView extends View2d {
         }
     }
 
-    // TODO repaint progress bar ?
-
-    // @Override
-    // protected Rectangle drawExtendedActions(Graphics2D g2d) {
-    // Rectangle rect = super.drawExtendedActions(g2d);
-    // // To avoid concurrency issue
-    // final JProgressBar bar = progressBar;
-    // if (bar != null && bar.isVisible()) {
-    // int shiftx = getWidth() / 2 - bar.getWidth() / 2;
-    // int shifty = getHeight() / 2 - bar.getHeight() / 2;
-    // g2d.translate(shiftx, shifty);
-    // bar.paint(g2d);
-    // g2d.translate(-shiftx, -shifty);
-    // }
-    // return rect;
-    // }
+    @Override
+    protected void drawOnTop(Graphics2D g2d) {
+        super.drawOnTop(g2d);
+        final JProgressBar bar = progressBar;
+        if (bar != null && bar.isVisible()) {
+            int shiftx = getWidth() / 2 - progressBar.getWidth() / 2;
+            int shifty = getHeight() / 2 - progressBar.getHeight() / 2;
+            g2d.translate(shiftx, shifty);
+            progressBar.paint(g2d);
+            g2d.translate(-shiftx, -shifty);
+        }
+    }
 
     public void setProgressBar(JProgressBar bar) {
         this.progressBar = bar;

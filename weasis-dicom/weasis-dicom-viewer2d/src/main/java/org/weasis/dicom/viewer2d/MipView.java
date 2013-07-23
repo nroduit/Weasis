@@ -1,6 +1,7 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -62,19 +63,18 @@ public class MipView extends View2d {
     };
 
     private final ViewButton mip_button;
-
     private final JProgressBar progressBar;
     private volatile Thread process;
 
     public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
+        progressBar = new JProgressBar();
+        progressBar.setVisible(false);
         this.mip_button = new ViewButton(new MipPopup(), MIP_ICON_SETTING);
         mip_button.setVisible(true);
         // Remove PR and KO buttons
         getViewButtons().clear();
         getViewButtons().add(mip_button);
-        progressBar = new JProgressBar();
-        progressBar.setVisible(false);
     }
 
     @Override
@@ -97,6 +97,18 @@ public class MipView extends View2d {
     public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         // If series is updates by other actions than MIP, the view is reseted
         exitMipMode(series, selectedDicom);
+    }
+
+    @Override
+    protected void drawOnTop(Graphics2D g2d) {
+        super.drawOnTop(g2d);
+        if (progressBar.isVisible()) {
+            int shiftx = getWidth() / 2 - progressBar.getWidth() / 2;
+            int shifty = getHeight() / 2 - progressBar.getHeight() / 2;
+            g2d.translate(shiftx, shifty);
+            progressBar.paint(g2d);
+            g2d.translate(-shiftx, -shifty);
+        }
     }
 
     public void exitMipMode(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
@@ -130,7 +142,6 @@ public class MipView extends View2d {
 
             @Override
             public void run() {
-                progressBar.setVisible(true);
                 progressBar.setMinimum(0);
                 progressBar.setMaximum(max - min + 1);
                 Dimension dim = new Dimension(getWidth() / 2, 30);
@@ -141,6 +152,7 @@ public class MipView extends View2d {
                 progressBar.setStringPainted(true);
                 // Required for Substance l&f
                 progressBar.updateUI();
+                progressBar.setVisible(true);
                 repaint();
             }
         });
@@ -340,7 +352,4 @@ public class MipView extends View2d {
         }
     }
 
-    public JProgressBar getProgressBar() {
-        return progressBar;
-    }
 }

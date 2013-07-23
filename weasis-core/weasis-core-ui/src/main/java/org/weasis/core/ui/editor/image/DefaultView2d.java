@@ -722,10 +722,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
         }
+        drawOnTop(g2d);
 
         g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
+    }
+
+    protected void drawOnTop(Graphics2D g2d) {
     }
 
     @Override
