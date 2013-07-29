@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -293,15 +295,13 @@ public class WeasisLauncher {
 
                 @Override
                 public void run() {
-                    int exitStatus = 0;
                     try {
                         if (m_felix != null) {
                             m_felix.stop();
-                            // wait asynchronous stop (max 20 seconds to stop all bundles)
-                            m_felix.waitForStop(20000);
+                            // wait asynchronous stop (max 7 seconds to stop all bundles)
+                            m_felix.waitForStop(7000);
                         }
                     } catch (Exception ex) {
-                        exitStatus = -1;
                         System.err.println("Error stopping framework: " + ex); //$NON-NLS-1$
                     } finally {
                         // After all bundles has been stopped, we can copy the preferences
@@ -317,7 +317,8 @@ public class WeasisLauncher {
                         if (dir != null) {
                             FileUtil.deleteDirectoryContents(new File(dir));
                         }
-                        Runtime.getRuntime().halt(exitStatus);
+                        Timer timer = new Timer();
+                        timer.schedule(new HaltTask(), 7000);
                     }
                 }
             });
@@ -1075,5 +1076,13 @@ public class WeasisLauncher {
 
         }
         return laf;
+    }
+
+    static class HaltTask extends TimerTask {
+        @Override
+        public void run() {
+            System.out.println("Force to close the application");
+            Runtime.getRuntime().halt(1);
+        }
     }
 }
