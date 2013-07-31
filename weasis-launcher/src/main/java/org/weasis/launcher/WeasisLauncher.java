@@ -1081,7 +1081,7 @@ public class WeasisLauncher {
     static class HaltTask extends TimerTask {
         @Override
         public void run() {
-            System.out.println("Force to close the application");
+            System.out.println("Force to close the application"); //$NON-NLS-1$
             Runtime.getRuntime().halt(1);
         }
     }

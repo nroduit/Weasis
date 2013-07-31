@@ -85,14 +85,14 @@ public class CheckTreeModel {
                                     Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
                                     StringBuffer buf = new StringBuffer();
                                     if (url != null) {
-                                        buf.append("<html><br>");
-                                        buf.append("<img src=\"");
+                                        buf.append("<html><br>"); //$NON-NLS-1$
+                                        buf.append("<img src=\""); //$NON-NLS-1$
                                         buf.append(url.toString());
-                                        buf.append("\" width=\"");
+                                        buf.append("\" width=\""); //$NON-NLS-1$
                                         buf.append(THUMBNAIL_SIZE);
-                                        buf.append("\" height=\"");
+                                        buf.append("\" height=\""); //$NON-NLS-1$
                                         buf.append(THUMBNAIL_SIZE);
-                                        buf.append("\"><br>");
+                                        buf.append("\"><br>"); //$NON-NLS-1$
                                     }
 
                                     if (val != null) {
@@ -105,7 +105,7 @@ public class CheckTreeModel {
                                         buf.append(desc);
                                     }
                                     if (url != null) {
-                                        buf.append("<br></html>");
+                                        buf.append("<br></html>"); //$NON-NLS-1$
                                     }
                                     return buf.toString();
                                 }

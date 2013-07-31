@@ -274,7 +274,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
             final String format = (String) comboBoxImgFormat.getSelectedItem();
-            ExplorerTask task = new ExplorerTask("Exporting...") {
+            ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.export")) { //$NON-NLS-1$
 
                 @Override
                 protected Boolean doInBackground() throws Exception {
@@ -344,7 +344,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             String seriesName = FileUtil.getValidFileNameWithoutHTML(objects[3].toString());
                             if (seriesName.length() > 30) {
                                 buffer.append(seriesName, 0, 27);
-                                buffer.append("...");
+                                buffer.append("..."); //$NON-NLS-1$
                             } else {
                                 buffer.append(seriesName);
                             }

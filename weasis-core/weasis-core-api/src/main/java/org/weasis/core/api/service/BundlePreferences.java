@@ -23,7 +23,7 @@ public class BundlePreferences {
 
     private ServiceTracker tracker;
     private File dataFolder;
-    private String bundleSymbolicName = "";
+    private String bundleSymbolicName = ""; //$NON-NLS-1$
 
     public synchronized void init(final BundleContext context) throws Exception {
         if (tracker != null) {
@@ -82,7 +82,7 @@ public class BundlePreferences {
             dataFolder.mkdirs();
             return dataFolder;
         }
-        return new File(AbstractProperties.WEASIS_PATH, "data");
+        return new File(AbstractProperties.WEASIS_PATH, "data"); //$NON-NLS-1$
     }
 
     public static Preferences getDefaultPreferences(final BundleContext context) {

@@ -36,8 +36,8 @@ import org.weasis.core.api.service.BundleTools;
 
 public class WtoolBar extends JPanel implements Toolbar {
 
-    public final static String ALL_BUNDLE = "weasis";
-    public final static String ALL = "all";
+    public final static String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
+    public final static String ALL = "all"; //$NON-NLS-1$
 
     public enum TYPE {
         main, explorer, tool, empty
@@ -268,8 +268,8 @@ public class WtoolBar extends JPanel implements Toolbar {
         if (toolbars != null && prefs != null && bundleName != null && className != null) {
             // Remove prefs of Weasis 1.x
             try {
-                if (prefs.nodeExists("toolbars")) {
-                    Preferences oldPref = prefs.node("toolbars");
+                if (prefs.nodeExists("toolbars")) { //$NON-NLS-1$
+                    Preferences oldPref = prefs.node("toolbars"); //$NON-NLS-1$
                     oldPref.removeNode();
                 }
             } catch (Exception e) {
@@ -278,19 +278,19 @@ public class WtoolBar extends JPanel implements Toolbar {
             Preferences prefNode = prefs.node(className).node("toolbars"); //$NON-NLS-1$
             for (Toolbar tb : toolbars) {
                 String barName = tb.getClass().getSimpleName().toLowerCase();
-                String key = "visible";
+                String key = "visible"; //$NON-NLS-1$
                 Preferences node = prefNode.node(barName);
                 String valString = node.get(key, null);
                 // If not specify, value is true
                 boolean val = true;
                 if (valString == null) {
                     val = getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, className, barName, key, val);
-                } else if (valString.equalsIgnoreCase("false")) {
+                } else if (valString.equalsIgnoreCase("false")) { //$NON-NLS-1$
                     val = false;
                 }
                 tb.setEnabled(val);
 
-                key = "index";
+                key = "index"; //$NON-NLS-1$
                 valString = node.get(key, null);
                 // If not specify, value is true
                 int index = tb.getIndex();
@@ -314,8 +314,8 @@ public class WtoolBar extends JPanel implements Toolbar {
             for (Toolbar tb : toolbars) {
                 String cname = tb.getClass().getSimpleName().toLowerCase();
                 Preferences node = prefNode.node(cname);
-                BundlePreferences.putBooleanPreferences(node, "visible", tb.isEnabled());
-                BundlePreferences.putIntPreferences(node, "index", tb.getIndex());
+                BundlePreferences.putBooleanPreferences(node, "visible", tb.isEnabled()); //$NON-NLS-1$
+                BundlePreferences.putIntPreferences(node, "index", tb.getIndex()); //$NON-NLS-1$
             }
         }
     }
