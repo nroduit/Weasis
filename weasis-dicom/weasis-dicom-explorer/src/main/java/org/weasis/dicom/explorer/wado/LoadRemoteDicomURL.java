@@ -90,7 +90,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                 study = new MediaSeriesGroupNode(TagW.StudyInstanceUID, unknown, TagW.StudyDate);
                 dicomModel.addHierarchyNode(patient, study);
             }
-            Series dicomSeries = dicomSeries = new DicomSeries(seriesUID);
+            Series dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagW.SeriesInstanceUID, seriesUID);
             final WadoParameters wadoParameters = new WadoParameters("", false, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$

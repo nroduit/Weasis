@@ -188,11 +188,13 @@ public class Thumbnail extends JLabel {
                 @Override
                 public void run() {
                     boolean noPath = thumbnailPath == null || !thumbnailPath.canRead();
-                    String path = (String) media.getTagValue(TagW.ThumbnailPath);
-                    if (noPath && path != null) {
-                        thumbnailPath = new File(path);
-                        if (thumbnailPath.canRead()) {
-                            noPath = false;
+                    if (noPath && media != null) {
+                        String path = (String) media.getTagValue(TagW.ThumbnailPath);
+                        if (path != null) {
+                            thumbnailPath = new File(path);
+                            if (thumbnailPath.canRead()) {
+                                noPath = false;
+                            }
                         }
                     }
                     if (noPath) {

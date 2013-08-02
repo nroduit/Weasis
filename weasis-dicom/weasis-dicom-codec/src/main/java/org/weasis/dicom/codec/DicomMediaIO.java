@@ -88,6 +88,7 @@ import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -593,56 +594,68 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     // buffer = jpipReader.readAsRenderedImage(frame, null);
                     // }
                 } else {
-                    buffer = readAsRenderedImage(frame, null);
-                }
-                PlanarImage img = null;
-                if (buffer != null) {
-                    // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
-                    // for short data. They convert signed short to unsigned short.
-                    if (dataType == DataBuffer.TYPE_SHORT
-                        && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                        img =
-                            RectifyUShortToShortDataDescriptor
-                                .create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
-                    } else if (ImageUtil.isBinary(buffer.getSampleModel())) {
-                        ParameterBlock pb = new ParameterBlock();
-                        pb.addSource(buffer);
-                        // Tile size are set in this operation
-                        img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
-                    } else if (buffer.getTileWidth() != ImageFiler.TILESIZE
-                        || buffer.getTileHeight() != ImageFiler.TILESIZE) {
-                        img = ImageFiler.tileImage(buffer);
-                    } else {
-                        img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+                    String path = (String) media.getTagValue(TagW.TiledImagePath);
+                    if (StringUtil.hasText(path)) {
+                        buffer = ImageFiler.readTiledCacheImage(new File(path));
                     }
+                    if (buffer == null) {
+                        buffer = readAsRenderedImage(frame, null);
 
-                    // Convert images with PaletteColorModel to RGB model
-                    if (img.getColorModel() instanceof PaletteColorModel) {
-                        Attributes ds = getDicomObject();
-                        if (ds != null) {
-                            int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
-                            int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
-                            int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
-                            byte[] r =
-                                DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
-                                    Tag.SegmentedRedPaletteColorLookupTableData);
-                            byte[] g =
-                                DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
-                                    Tag.SegmentedGreenPaletteColorLookupTableData);
-                            byte[] b =
-                                DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
-                                    Tag.SegmentedBluePaletteColorLookupTableData);
-                            LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
-
-                            // Replace the original image with the RGB image.
-                            img = JAI.create("lookup", img, lut); //$NON-NLS-1$
-                        }
+                        // File file = ImageFiler.cacheTiledImage(getValidImage(buffer), media);
+                        // if (file != null) {
+                        // System.gc();
+                        // buffer = ImageFiler.readTiledCacheImage(file);
+                        // }
                     }
                 }
-                return img;
+                return getValidImage(buffer);
             }
         }
         return null;
+    }
+
+    private PlanarImage getValidImage(RenderedImage buffer) {
+        PlanarImage img = null;
+        if (buffer != null) {
+            // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
+            // for short data. They convert signed short to unsigned short.
+            if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
+                img = RectifyUShortToShortDataDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+            } else if (ImageUtil.isBinary(buffer.getSampleModel())) {
+                ParameterBlock pb = new ParameterBlock();
+                pb.addSource(buffer);
+                // Tile size are set in this operation
+                img = JAI.create("formatbinary", pb, null); //$NON-NLS-1$
+            } else if (buffer.getTileWidth() != ImageFiler.TILESIZE || buffer.getTileHeight() != ImageFiler.TILESIZE) {
+                img = ImageFiler.tileImage(buffer);
+            } else {
+                img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+            }
+
+            // Convert images with PaletteColorModel to RGB model
+            if (img.getColorModel() instanceof PaletteColorModel) {
+                Attributes ds = getDicomObject();
+                if (ds != null) {
+                    int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
+                    int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
+                    int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
+                    byte[] r =
+                        DicomImageUtils.lutData(ds, rDesc, Tag.RedPaletteColorLookupTableData,
+                            Tag.SegmentedRedPaletteColorLookupTableData);
+                    byte[] g =
+                        DicomImageUtils.lutData(ds, gDesc, Tag.GreenPaletteColorLookupTableData,
+                            Tag.SegmentedGreenPaletteColorLookupTableData);
+                    byte[] b =
+                        DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
+                            Tag.SegmentedBluePaletteColorLookupTableData);
+                    LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
+
+                    // Replace the original image with the RGB image.
+                    img = JAI.create("lookup", img, lut); //$NON-NLS-1$
+                }
+            }
+        }
+        return img;
     }
 
     private MediaElement getSingleImage() {

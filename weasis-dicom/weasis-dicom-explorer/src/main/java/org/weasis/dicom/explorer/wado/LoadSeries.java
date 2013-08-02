@@ -14,7 +14,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -39,9 +39,18 @@ import java.util.concurrent.Executors;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.BulkData;
+import org.dcm4che.data.ElementDictionary;
+import org.dcm4che.data.Fragments;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
+import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -56,6 +65,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
@@ -985,78 +995,152 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
 
         /**
-         * @param inputStream
+         * @param in
          * @param out
          * @param overrideList
          * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
          *         interruption
          */
-        public int writFile(InputStream inputStream, OutputStream out, int[] overrideList) {
-            if (inputStream == null && out == null) {
+        public int writFile(InputStream in, OutputStream out, int[] overrideList) {
+            if (in == null && out == null) {
                 return 0;
             }
+
             DicomInputStream dis = null;
             DicomOutputStream dos = null;
+
             try {
-                BufferedInputStream bin = new BufferedInputStream(inputStream);
-                dis = new DicomInputStream(bin);
-                // dis.setHandler(new StopTagInputHandler(Tag.PixelData));
-                // DicomObject dcm = dis.readDicomObject();
-                // BufferedOutputStream bout = new BufferedOutputStream(out);
-                // dos = new DicomOutputStream(bout);
+                Attributes fmi;
+                Attributes dataset;
+                dis = new DicomInputStream(in);
 
-                // if (overrideList != null) {
-                // MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                // MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                // VRMap vrMap = VRMap.getVRMap();
-                // for (int tag : overrideList) {
-                // TagW tagElement = patient.getTagElement(tag);
-                // Object value = null;
-                // if (tagElement == null) {
-                // tagElement = study.getTagElement(tag);
-                // value = study.getTagValue(tagElement);
-                // } else {
-                // value = patient.getTagValue(tagElement);
-                // }
-                // if (value != null) {
-                // TagType type = tagElement.getType();
-                // if (TagType.String.equals(type)) {
-                // dcm.putString(tag, vrMap.vrOf(tag), value.toString());
-                // } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
-                // dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
-                // } else if (TagType.Integer.equals(type)) {
-                // dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
-                // } else if (TagType.Float.equals(type)) {
-                // dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
-                // }
-                // }
-                // }
-                // }
-                // dos.writeDicomFile(dcm);
-                // dos.flush();
+                dis.setIncludeBulkData(IncludeBulkData.URI);
+                // dis.setBulkDataDescriptor(BulkDataDescriptor.DEFAULT);
+                fmi = dis.readFileMetaInformation();
+                dataset = dis.readDataset(-1, -1);
 
-                // Read again the the beginning of the pixel data tag, if needed
-                if (dis.tag() == Tag.PixelData) {
-                    // long stop = dis.getStreamPosition();
-                    // dis.reset();
-                    // int diff = (int) (stop - dis.getStreamPosition());
-                    // if (diff > 0) {
-                    // byte[] pixBuffer = new byte[diff];
-                    // dis.read(pixBuffer);
-                    // bout.write(pixBuffer);
-                    // }
+                String tsuid = fmi.getString(Tag.TransferSyntaxUID, UID.ExplicitVRLittleEndian);
+                dos = new DicomOutputStream(out, tsuid);
+                dos.setEncodingOptions(DicomEncodingOptions.DEFAULT);
+                if (overrideList != null) {
+                    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                    ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
+
+                    for (int tag : overrideList) {
+                        TagW tagElement = patient.getTagElement(tag);
+                        Object value = null;
+                        if (tagElement == null) {
+                            tagElement = study.getTagElement(tag);
+                            value = study.getTagValue(tagElement);
+                        } else {
+                            value = patient.getTagValue(tagElement);
+                        }
+                        if (value != null) {
+                            TagType type = tagElement.getType();
+                            if (TagType.String.equals(type)) {
+                                dataset.setString(tag, dic.vrOf(tag), value.toString());
+                            } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
+                                dataset.setDate(tag, (Date) value);
+                            } else if (TagType.Integer.equals(type)) {
+                                dataset.setInt(tag, dic.vrOf(tag), (Integer) value);
+                            } else if (TagType.Float.equals(type)) {
+                                dataset.setFloat(tag, dic.vrOf(tag), (Float) value);
+                            }
+                        }
+                    }
                 }
-                // return FileUtil.writeFile(bin, bout);
+
+                fmi = dataset.createFileMetaInformation(tsuid);
+                dos.writeDataset(null, dataset);
+
+                Object pixeldata = dataset.getValue(Tag.PixelData);
+                if (pixeldata instanceof BulkData) {
+                    BulkData bulkData = (BulkData) pixeldata;
+                    StreamUtils.skipFully(in, bulkData.offset);
+                    // TODO fixme
+                    StreamUtils.copy(in, out, bulkData.length);
+                } else if (pixeldata instanceof Fragments) {
+                    Fragments fragments = (Fragments) pixeldata;
+                    for (Object object : fragments) {
+                        if (object instanceof BulkData) {
+                            BulkData bulkData = (BulkData) object;
+                            StreamUtils.skipFully(in, bulkData.offset);
+                            StreamUtils.copy(in, out, bulkData.length);
+                        }
+                    }
+                }
                 return 0;
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 return 0;
             } finally {
-                FileUtil.safeClose(dos);
-                FileUtil.safeClose(dis);
+                SafeClose.close(dis);
+                SafeClose.close(dos);
             }
+
+            // DicomInputStream dis = null;
+            // DicomOutputStream dos = null;
+            // try {
+            // BufferedInputStream bin = new BufferedInputStream(inputStream);
+            // dis = new DicomInputStream(bin);
+            //
+            // BufferedOutputStream bout = new BufferedOutputStream(out);
+            // dos = new DicomOutputStream(bout, null);
+            //
+            // if (overrideList != null) {
+            // MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+            // MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+            // VRMap vrMap = VRMap.getVRMap();
+            // for (int tag : overrideList) {
+            // TagW tagElement = patient.getTagElement(tag);
+            // Object value = null;
+            // if (tagElement == null) {
+            // tagElement = study.getTagElement(tag);
+            // value = study.getTagValue(tagElement);
+            // } else {
+            // value = patient.getTagValue(tagElement);
+            // }
+            // if (value != null) {
+            // TagType type = tagElement.getType();
+            // if (TagType.String.equals(type)) {
+            // dcm.putString(tag, vrMap.vrOf(tag), value.toString());
+            // } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
+            // dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
+            // } else if (TagType.Integer.equals(type)) {
+            // dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
+            // } else if (TagType.Float.equals(type)) {
+            // dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
+            // }
+            // }
+            // }
+            // }
+            // dos.writeDicomFile(dcm);
+            // dos.flush();
+            //
+            // // Read again the the beginning of the pixel data tag, if needed
+            // if (dis.tag() == Tag.PixelData) {
+            // long stop = dis.getStreamPosition();
+            // dis.reset();
+            // int diff = (int) (stop - dis.getStreamPosition());
+            // if (diff > 0) {
+            // byte[] pixBuffer = new byte[diff];
+            // dis.read(pixBuffer);
+            // bout.write(pixBuffer);
+            // }
+            // }
+            // return FileUtil.writeFile(bin, bout);
+            // } catch (InterruptedIOException e) {
+            // return e.bytesTransferred;
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // return 0;
+            // } finally {
+            // FileUtil.safeClose(dos);
+            // FileUtil.safeClose(dis);
+            // }
         }
     }
 

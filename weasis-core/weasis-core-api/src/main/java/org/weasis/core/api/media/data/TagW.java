@@ -65,6 +65,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW SeriesLoading = new TagW(Messages.getString("TagElement.laod"), TagType.Integer); //$NON-NLS-1$
     public static final TagW Thumbnail = new TagW(Messages.getString("TagElement.thumb"), TagType.Thumbnail); //$NON-NLS-1$
     public static final TagW ThumbnailPath = new TagW("", TagType.String); //$NON-NLS-1$
+    public static final TagW TiledImagePath = new TagW("", TagType.String); //$NON-NLS-1$
     public static final TagW ExplorerModel = new TagW(Messages.getString("TagElement.exp_model"), TagType.Object); //$NON-NLS-1$
     public static final TagW MeasurementGraphics = new TagW(
         Messages.getString("TagElement.measure_graph"), TagType.List);; //$NON-NLS-1$
