@@ -311,11 +311,13 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             new RawImageInputStream(iis, createImageType(bitsStored, dataType, banded), frameOffsets, imageDimensions);
         // endianess is already in iis?
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
-        if (reader == null) {
-            FileUtil.safeClose(riis);
-            throw new UnsupportedOperationException("No RAW Reader available");
-        }
+
+        ImageReader reader = new RawImageReader(DicomCodec.RawImageReaderSpi);
+        // ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next();
+        // if (reader == null) {
+        // FileUtil.safeClose(riis);
+        // throw new UnsupportedOperationException("No RAW Reader available");
+        // }
         reader.setInput(riis);
         return reader;
     }

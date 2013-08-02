@@ -19,10 +19,13 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
+import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
+
 public class DicomCodec implements Codec {
     public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
     public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();
     // public static final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
+    public static final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
 
