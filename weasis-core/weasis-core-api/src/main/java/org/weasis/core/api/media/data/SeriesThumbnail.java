@@ -59,6 +59,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
         this.series = sequence;
+        // media can be null for seriesThumbnail
         init((MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null));
     }
 
@@ -107,7 +108,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     public synchronized void reBuildThumbnail(File file, MediaSeries.MEDIA_POSITION position) {
         Object media = series.getMedia(mediaPosition, null, null);
-        if (media instanceof MediaElement<?>) {
+        if (file != null || media instanceof MediaElement<?>) {
             mediaPosition = position;
             thumbnailPath = file;
             readable = true;
@@ -123,7 +124,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
         boolean update = this.thumbnailSize != thumbnailSize;
         if (update) {
             Object media = series.getMedia(mediaPosition, null, null);
-            if (media instanceof MediaElement<?>) {
+            if (thumbnailPath != null || media instanceof MediaElement<?>) {
                 this.thumbnailSize = thumbnailSize;
                 buildThumbnail((MediaElement<?>) media);
             }

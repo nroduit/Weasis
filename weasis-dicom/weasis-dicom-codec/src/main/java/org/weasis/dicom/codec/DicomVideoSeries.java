@@ -70,7 +70,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
                                 StreamUtils.skipFully(in, bulkData.offset);
-                                StreamUtils.copy(in, out, bulkData.length, new byte[Math.min(bulkData.length, 4096)]);
+                                StreamUtils.copy(in, out, bulkData.length);
                                 dcmVideo.setVideoFile(videoFile);
                                 this.add(dcmVideo);
                             } catch (Exception e) {

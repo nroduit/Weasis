@@ -67,7 +67,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                         in = new FileInputStream(dcmEnc.getFile());
                         out = new FileOutputStream(file);
                         StreamUtils.skipFully(in, bulkData.offset);
-                        StreamUtils.copy(in, out, bulkData.length, new byte[Math.min(bulkData.length, 4096)]);
+                        StreamUtils.copy(in, out, bulkData.length);
                         dcmEnc.setDocument(file);
                         this.add(dcmEnc);
                     } catch (Exception e) {
