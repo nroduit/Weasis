@@ -45,6 +45,8 @@ import org.weasis.core.api.gui.util.AbstractBufferHandler;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 
@@ -467,5 +469,49 @@ public class ImageFiler extends AbstractBufferHandler {
         pb.addSource(img);
         pb.add(img.getSampleModel().getDataType());
         return JAI.create("format", pb, hints); //$NON-NLS-1$
+    }
+
+    public static File cacheTiledImage(RenderedImage img, MediaElement<?> media) {
+        if ((img.getWidth() > 2 * ImageFiler.TILESIZE || img.getHeight() > 2 * ImageFiler.TILESIZE)) {
+            File imgCacheFile = null;
+            try {
+                imgCacheFile = File.createTempFile("tiled_", ".tif", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (ImageFiler.writeTIFF(imgCacheFile, img, true, false, false)) {
+                media.setTag(TagW.TiledImagePath, imgCacheFile.getPath());
+                return imgCacheFile;
+            }
+        }
+        return null;
+    }
+
+    public static RenderedImage readTiledCacheImage(File file) {
+        try {
+            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+            return dec.decodeAsRenderedImage();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    public static RenderedImage readThumbnailCacheImage(File file) {
+        try {
+            ImageDecoder dec = ImageCodec.createImageDecoder("tiff", new FileSeekableStream(file), null);
+            int count = dec.getNumPages();
+            if (count == 2) {
+                RenderedImage src2 = dec.decodeAsRenderedImage(1);
+                if (src2.getWidth() <= Thumbnail.MAX_SIZE) {
+                    return src2;
+                }
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 }
