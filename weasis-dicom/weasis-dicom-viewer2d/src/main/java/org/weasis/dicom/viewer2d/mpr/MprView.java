@@ -114,11 +114,8 @@ public class MprView extends View2d {
                                 if (v instanceof MprView) {
                                     if (v != selImg) {
                                         Vector3d vn = v.getImage().getSliceGeometry().getNormal();
-                                        vn.absolute();
+                                        // vn.absolute();
                                         double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                                        // if (MprView.SliceOrientation.SAGITTAL == ((MprView) v).type) {
-                                        // location = -location;
-                                        // }
                                         DicomImageElement img =
                                             v.getSeries().getNearestImage(
                                                 location,

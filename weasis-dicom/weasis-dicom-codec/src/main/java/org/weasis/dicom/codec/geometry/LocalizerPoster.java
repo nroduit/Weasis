@@ -788,48 +788,4 @@ public abstract class LocalizerPoster {
         return vectors;
     }
 
-    /**
-     * <p>
-     * Get the shape on the localizer of one or more volume localization slabs.
-     * </p>
-     * 
-     * @param spectroscopyVolumeLocalization
-     * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row and column
-     *         coordinates
-     */
-    public final Vector getOutlineOnLocalizerForThisVolumeLocalization(
-        SpectroscopyVolumeLocalization spectroscopyVolumeLocalization) {
-        Vector intersections = new Vector();
-        if (spectroscopyVolumeLocalization != null) {
-            int n = spectroscopyVolumeLocalization.getNumberOfSlabs();
-            for (int j = 0; j < n; ++j) {
-                double slabThickness = spectroscopyVolumeLocalization.getSlabThickness(j);
-                double[] slabOrientation = spectroscopyVolumeLocalization.getSlabOrientation(j);
-                double[] midSlabPosition = spectroscopyVolumeLocalization.getMidSlabPosition(j);
-                Vector3d[] vectors = getOrthogonalVectors(slabOrientation[0], slabOrientation[1], slabOrientation[2]);
-
-                // pretend we have a really large rectangle in the slab plane ...
-                Vector3d row = vectors[0];
-                Vector3d column = vectors[1];
-                Vector3d voxelSpacing = new Vector3d(1, 1, 0);
-                Vector3d dimensions = new Vector3d(100000, 100000, 1); // a 100m square !
-                Point3d midSlabPoint = new Point3d(midSlabPosition);
-                Point3d tlhc = new Point3d(midSlabPoint);
-                Vector3d distanceAlongRow = new Vector3d(row);
-                distanceAlongRow.scale(50000);
-                Vector3d distanceAlongColumn = new Vector3d(column);
-                distanceAlongColumn.scale(50000);
-                tlhc.sub(distanceAlongRow);
-                tlhc.sub(distanceAlongColumn);
-
-                Point3d[] corners =
-                    getCornersOfSourceCubeInSourceSpace(row, column, tlhc, voxelSpacing, slabThickness, dimensions);
-                for (int i = 0; i < 8; ++i) {
-                    corners[i] = transformPointFromSourceSpaceIntoLocalizerSpace(corners[i]);
-                }
-                intersections.addAll(getIntersectionsOfCubeWithZPlane(corners));
-            }
-        }
-        return intersections.size() > 0 ? drawOutlineOnLocalizer(intersections) : null;
-    }
 }

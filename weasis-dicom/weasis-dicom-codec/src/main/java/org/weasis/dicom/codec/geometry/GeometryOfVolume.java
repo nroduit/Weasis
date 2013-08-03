@@ -47,7 +47,7 @@ public abstract class GeometryOfVolume {
      *            the offset along the frames from first frame, zero being no offset
      * @return the x, y and z location in 3D space
      */
-    public final double[] lookupImageCoordinate(int column, int row, int frame) {
+    public final double[] lookupImageCoordinate(double column, double row, int frame) {
         double[] location = null;
         if (frames != null && frame < frames.length && frames[frame] != null) {
             location = frames[frame].lookupImageCoordinate(column, row);
@@ -70,7 +70,7 @@ public abstract class GeometryOfVolume {
      * @param frame
      *            the offset along the frames from first frame, zero being no offset
      */
-    public final void lookupImageCoordinate(double[] location, int column, int row, int frame) {
+    public final void lookupImageCoordinate(double[] location, double column, double row, int frame) {
         if (frames != null && frame < frames.length && frames[frame] != null) {
             frames[frame].lookupImageCoordinate(location, column, row);
         } else {

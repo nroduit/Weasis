@@ -56,7 +56,7 @@ public class GeometryOfSlice {
         normal.normalize();
         normalArray = new double[3];
         normal.get(normalArray);
-        normalArray[2] = normalArray[2] * -1;
+        // normalArray[2] = normalArray[2] * -1;
         normal = new Vector3d(normalArray);
     }
 
@@ -219,25 +219,24 @@ public class GeometryOfSlice {
     public final Point3d getTLHC() {
         return tlhc;
     }
-    
-    
+
     public final Point3d getPosition(Point2D p) {
-        Point3d temp = tlhc;
-        temp.x += (p.getX() * row.x + p.getY() * column.x)*this.voxelSpacing.x;
-        temp.y += (p.getX() * row.y + p.getY() * column.y)*this.voxelSpacing.x;
-        temp.z += (p.getX() * row.z + p.getY() * column.z)*this.voxelSpacing.x;
-        
-        return temp;
+        return new Point3d(row.x * voxelSpacing.x * p.getX() + column.x * voxelSpacing.y * p.getY() + tlhc.x,
+
+        row.y * voxelSpacing.x * p.getX() + column.y * voxelSpacing.y * p.getY() + tlhc.y,
+
+        row.z * voxelSpacing.x * p.getX() + column.z * voxelSpacing.y * p.getY() + tlhc.z);
     }
 
     public final Point2D getImagePosition(Point3d p3) {
-        if(voxelSpacing.x<0.00001)
+        if (voxelSpacing.x < 0.00001) {
             return null;
-        double dx = (p3.x - tlhc.x)/voxelSpacing.x;
-        double dy = (p3.y - tlhc.y)/voxelSpacing.x;
-        double dz = (p3.z - tlhc.z)/voxelSpacing.x;
+        }
+        double dx = (p3.x - tlhc.x) / voxelSpacing.x;
+        double dy = (p3.y - tlhc.y) / voxelSpacing.x;
+        double dz = (p3.z - tlhc.z) / voxelSpacing.x;
         double ix = dx * row.x + dy * row.y + dz * row.z;
-        double iy = dx * column.y + dy * column.y + dz * column.z;     
+        double iy = dx * column.y + dy * column.y + dz * column.z;
         return new Point2D.Double(ix, iy);
     }
 
@@ -327,7 +326,7 @@ public class GeometryOfSlice {
      *            the offset along the row from the top left hand corner, zero being no offset
      * @return the x, y and z location in 3D space
      */
-    public final double[] lookupImageCoordinate(int column, int row) {
+    public final double[] lookupImageCoordinate(double column, double row) {
         double[] location = new double[3];
         lookupImageCoordinate(location, column, row);
         return location;
@@ -346,9 +345,11 @@ public class GeometryOfSlice {
      * @param row
      *            the offset along the row from the top left hand corner, zero being no offset
      */
-    public final void lookupImageCoordinate(double[] location, int column, int row) {
+    public final void lookupImageCoordinate(double[] location, double column, double row) {
         // the row is how far we are down the column direction
         // the column is how far we are down the row direction
+        row = row - 0.5; // account for sub-pixel resolution per DICOM PS 3.3 Figure C.10.5-1
+        column = column - 0.5;
         location[0] =
             tlhcArray[0] + row * columnArray[0] * voxelSpacingArray[0]/* between rows */+ column * rowArray[0]
                 * voxelSpacingArray[1]/* between cols */;
@@ -397,8 +398,8 @@ public class GeometryOfSlice {
         double row =
             (location[1] - tlhcArray[1] - column * rowArray[1] * voxelSpacingArray[1])
                 / (columnArray[1] * voxelSpacingArray[0]);
-        offsets[0] = column;
-        offsets[1] = row;
+        offsets[0] = column + 0.5; // account for sub-pixel resolution per DICOM PS 3.3 Figure C.10.5-1
+        offsets[1] = row + 0.5;
     }
 
     /**
