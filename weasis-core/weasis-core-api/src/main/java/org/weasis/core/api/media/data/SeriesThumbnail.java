@@ -93,6 +93,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
         }
         addFocusListener(this);
         this.setFocusable(true);
+        this.addMouseListener(this);
         dragSource = new DragSource();
         dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
         dragSource.addDragSourceMotionListener(this);

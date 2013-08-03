@@ -40,17 +40,12 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.BulkData;
 import org.dcm4che.data.ElementDictionary;
-import org.dcm4che.data.Fragments;
-import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
-import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.util.SafeClose;
-import org.dcm4che.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -848,7 +843,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         bytesTransferred =
                             writFile(
                                 new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString().contains(
-                                    "?requestType=WADO")), new FileOutputStream(tempFile), overrideList); //$NON-NLS-1$
+                                    "?requestType=WADO")), new BufferedOutputStream(new FileOutputStream(tempFile)), overrideList); //$NON-NLS-1$
                     }
                     if (bytesTransferred == -1) {
                         log.info("End of downloading {} ", url); //$NON-NLS-1$
@@ -875,7 +870,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         } else if (wado != null) {
                             bytesTransferred =
                                 writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
-                                    new FileOutputStream(tempFile), overrideList);
+                                    new BufferedOutputStream(new FileOutputStream(tempFile)), overrideList);
                         }
                         if (bytesTransferred == -1) {
                             log.info("End of downloading {} ", url); //$NON-NLS-1$
@@ -1010,18 +1005,18 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             DicomOutputStream dos = null;
 
             try {
-                Attributes fmi;
                 Attributes dataset;
                 dis = new DicomInputStream(in);
 
-                dis.setIncludeBulkData(IncludeBulkData.URI);
-                // dis.setBulkDataDescriptor(BulkDataDescriptor.DEFAULT);
-                fmi = dis.readFileMetaInformation();
-                dataset = dis.readDataset(-1, -1);
+                try {
+                    dis.setIncludeBulkData(IncludeBulkData.URI);
+                    dataset = dis.readDataset(-1, -1);
+                } finally {
+                    dis.close();
+                }
 
-                String tsuid = fmi.getString(Tag.TransferSyntaxUID, UID.ExplicitVRLittleEndian);
-                dos = new DicomOutputStream(out, tsuid);
-                dos.setEncodingOptions(DicomEncodingOptions.DEFAULT);
+                dos = new DicomOutputStream(out, UID.ExplicitVRLittleEndian);
+
                 if (overrideList != null) {
                     MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
                     MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
@@ -1050,97 +1045,24 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         }
                     }
                 }
-
-                fmi = dataset.createFileMetaInformation(tsuid);
                 dos.writeDataset(null, dataset);
-
-                Object pixeldata = dataset.getValue(Tag.PixelData);
-                if (pixeldata instanceof BulkData) {
-                    BulkData bulkData = (BulkData) pixeldata;
-                    StreamUtils.skipFully(in, bulkData.offset);
-                    // TODO fixme
-                    StreamUtils.copy(in, out, bulkData.length);
-                } else if (pixeldata instanceof Fragments) {
-                    Fragments fragments = (Fragments) pixeldata;
-                    for (Object object : fragments) {
-                        if (object instanceof BulkData) {
-                            BulkData bulkData = (BulkData) object;
-                            StreamUtils.skipFully(in, bulkData.offset);
-                            StreamUtils.copy(in, out, bulkData.length);
-                        }
-                    }
-                }
-                return 0;
+                return -1;
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;
             } catch (Exception e) {
                 e.printStackTrace();
                 return 0;
             } finally {
-                SafeClose.close(dis);
                 SafeClose.close(dos);
+                if (dis != null) {
+                    List<File> blkFiles = dis.getBulkDataFiles();
+                    if (blkFiles != null) {
+                        for (File file : blkFiles) {
+                            file.delete();
+                        }
+                    }
+                }
             }
-
-            // DicomInputStream dis = null;
-            // DicomOutputStream dos = null;
-            // try {
-            // BufferedInputStream bin = new BufferedInputStream(inputStream);
-            // dis = new DicomInputStream(bin);
-            //
-            // BufferedOutputStream bout = new BufferedOutputStream(out);
-            // dos = new DicomOutputStream(bout, null);
-            //
-            // if (overrideList != null) {
-            // MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-            // MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-            // VRMap vrMap = VRMap.getVRMap();
-            // for (int tag : overrideList) {
-            // TagW tagElement = patient.getTagElement(tag);
-            // Object value = null;
-            // if (tagElement == null) {
-            // tagElement = study.getTagElement(tag);
-            // value = study.getTagValue(tagElement);
-            // } else {
-            // value = patient.getTagValue(tagElement);
-            // }
-            // if (value != null) {
-            // TagType type = tagElement.getType();
-            // if (TagType.String.equals(type)) {
-            // dcm.putString(tag, vrMap.vrOf(tag), value.toString());
-            // } else if (TagType.Date.equals(type) || TagType.Time.equals(type)) {
-            // dcm.putDate(tag, vrMap.vrOf(tag), (Date) value);
-            // } else if (TagType.Integer.equals(type)) {
-            // dcm.putInt(tag, vrMap.vrOf(tag), (Integer) value);
-            // } else if (TagType.Float.equals(type)) {
-            // dcm.putFloat(tag, vrMap.vrOf(tag), (Float) value);
-            // }
-            // }
-            // }
-            // }
-            // dos.writeDicomFile(dcm);
-            // dos.flush();
-            //
-            // // Read again the the beginning of the pixel data tag, if needed
-            // if (dis.tag() == Tag.PixelData) {
-            // long stop = dis.getStreamPosition();
-            // dis.reset();
-            // int diff = (int) (stop - dis.getStreamPosition());
-            // if (diff > 0) {
-            // byte[] pixBuffer = new byte[diff];
-            // dis.read(pixBuffer);
-            // bout.write(pixBuffer);
-            // }
-            // }
-            // return FileUtil.writeFile(bin, bout);
-            // } catch (InterruptedIOException e) {
-            // return e.bytesTransferred;
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // return 0;
-            // } finally {
-            // FileUtil.safeClose(dos);
-            // FileUtil.safeClose(dis);
-            // }
         }
     }
 
