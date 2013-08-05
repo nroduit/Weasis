@@ -12,6 +12,7 @@ package org.weasis.launcher;
 
 import java.awt.Desktop;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -833,7 +834,9 @@ public class WeasisLauncher {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    if (look.startsWith("org.pushingpixels")) { //$NON-NLS-1$
+                    boolean substance = look.startsWith("org.pushingpixels");
+                    if (substance) { //$NON-NLS-1$
+                        // TODO should be true: bug with docking-frame
                         JFrame.setDefaultLookAndFeelDecorated(true);
                         JDialog.setDefaultLookAndFeelDecorated(true);
                     }
@@ -1041,7 +1044,8 @@ public class WeasisLauncher {
             System.err.println("WARNING : Unable to set the Look&Feel"); //$NON-NLS-1$
             laf = UIManager.getSystemLookAndFeelClassName();
         }
-
+        // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
+        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12));
         return laf;
     }
 
