@@ -11,6 +11,7 @@
 package org.weasis.launcher;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.swing.UIManager;
@@ -95,6 +96,16 @@ public final class LookAndFeels {
         @Override
         public int hashCode() {
             return getClassName().hashCode();
+        }
+    }
+
+    public static void setUIFont(javax.swing.plaf.FontUIResource font) {
+        Enumeration<Object> keys = UIManager.getDefaults().keys();
+        while (keys.hasMoreElements()) {
+            Object key = keys.nextElement();
+            if (UIManager.get(key) instanceof javax.swing.plaf.FontUIResource) {
+                UIManager.put(key, font);
+            }
         }
     }
 }

@@ -132,6 +132,8 @@ public final class JIThumbnailCache {
                             }
 
                             if (ImageFiler.writeTIFF(imgCacheFile, img, true, true, false)) {
+                                // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                                diskObject.removeImageFromCache();
                                 thumbnailList.getThumbnailListModel().putFileInCache(cfile, imgCacheFile.getName());
                             } else {
                                 // TODO make it invalid
