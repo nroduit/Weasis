@@ -23,6 +23,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
+import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,13 +32,19 @@ import java.util.Map.Entry;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.PrintOptions.SCALE;
 
 public class ImagePrint implements Printable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
+
     private Point printLoc;
     private PrintOptions printOptions;
     private Object printable;
@@ -87,7 +94,27 @@ public class ImagePrint implements Printable {
                 // aset.add(pr);
                 pj.print(aset);
             } catch (Exception e) {
-                System.out.println(e);
+                // check for the annoying 'Printer is not accepting job' error.
+                if (e.getMessage().indexOf("accepting job") != -1) {
+                    // recommend prompting the user at this point if they want to force it
+                    // so they'll know there may be a problem.
+                    int response =
+                        JOptionPane.showConfirmDialog(null, "Printer is not ready to print, do you want print anyway?",
+                            "Printer Status", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                    if (response == 0) {
+                        try {
+                            // try printing again but ignore the not-accepting-jobs attribute
+                            ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
+                            pj.print(aset);
+                            LOGGER.info("Bypass Printer is not accepting job");
+                        } catch (PrinterException ex) {
+                            AuditLog.logError(LOGGER, e, "Printer exception");
+                        }
+                    }
+                } else {
+                    AuditLog.logError(LOGGER, e, "Print exception");
+                }
             }
         }
     }
