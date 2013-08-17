@@ -227,7 +227,7 @@ public class DicomMediaUtils {
                 // LUT Data contains the LUT entry values, assuming data is always unsigned data
                 byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
-                if (numEntries <= 256 && (bData.length == (numEntries << 1))) {
+                if (bData != null && numEntries <= 256 && (bData.length == (numEntries << 1))) {
                     // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
 
                     byte[] bDataNew = new byte[numEntries];
@@ -250,7 +250,7 @@ public class DicomMediaUtils {
                     // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     byte[] bData = dicomLutObject.getBytes(Tag.LUTData);
 
-                    if (bData.length == (numEntries << 1)) {
+                    if (bData != null && bData.length == (numEntries << 1)) {
 
                         // Some implementations have encoded 8 bit entries with 16 bits allocated, padding the high bits
 
