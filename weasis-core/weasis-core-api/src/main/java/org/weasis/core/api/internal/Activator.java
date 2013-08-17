@@ -81,7 +81,12 @@ public class Activator implements BundleActivator, ServiceListener {
             @Override
             public boolean errorOccurred(String message, Throwable thrown, Object where, boolean isRetryable)
                 throws RuntimeException {
-                LOGGER.error("JAI error ocurred: {}", message); //$NON-NLS-1$
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.error("JAI error ocurred in {}", where); //$NON-NLS-1$
+                    LOGGER.error(message, thrown); //$NON-NLS-1$
+                } else {
+                    LOGGER.error("JAI error ocurred: {}", message); //$NON-NLS-1$
+                }
                 return false;
             }
         });
