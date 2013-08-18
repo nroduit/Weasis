@@ -91,9 +91,6 @@ public class DicomMediaUtils {
                 missingTagList.add(TagUtils.toString(tag));
             }
         }
-        if (countValues > 0 && countValues < requiredTags.length) {
-            LOGGER.debug("Missing attributes {} in required list", missingTagList);
-        }
         return (countValues == requiredTags.length);
     }
 
@@ -112,8 +109,7 @@ public class DicomMediaUtils {
     public static final int[] modalityLutAttributes = new int[] { Tag.RescaleIntercept, Tag.RescaleSlope };
 
     public static boolean containsRequiredModalityLUTAttributes(Attributes dcmItems) {
-        return containsRequiredAttributes(dcmItems, modalityLutAttributes)
-            || containsRequiredModalityLUTDataAttributes(dcmItems);
+        return containsRequiredAttributes(dcmItems, modalityLutAttributes);
     }
 
     public static boolean containsRequiredModalityLUTDataAttributes(Attributes dcmItems) {
@@ -139,10 +135,6 @@ public class DicomMediaUtils {
 
     public static boolean containsRequiredVOILUTWindowLevelAttributes(Attributes dcmItems) {
         return containsRequiredAttributes(dcmItems, VOILUTWindowLevelAttributes);
-    }
-
-    public static boolean containsRequiredVOILUTAttributes(Attributes dcmItems) {
-        return containsRequiredVOILUTWindowLevelAttributes(dcmItems) || containsLUTAttributes(dcmItems);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1038,10 +1030,16 @@ public class DicomMediaUtils {
                 setTagNoNull(tagList, TagW.RescaleIntercept,
                     getFloatFromDicomElement(mLutItems, Tag.RescaleIntercept, null));
                 setTagNoNull(tagList, TagW.RescaleType, getStringFromDicomElement(mLutItems, Tag.RescaleType));
-                setTagNoNull(tagList, TagW.ModalityLUTSequence, mLutItems.getNestedDataset(Tag.ModalityLUTSequence));
+
             } else if (seqParentTag != null) {
                 LOGGER.info(
                     "Cannot apply Modality LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
+            }
+
+            // Should exist only in root DICOM (when seqParentTag == null)
+            Attributes mLutSeq = mLutItems.getNestedDataset(Tag.ModalityLUTSequence);
+            if (mLutSeq != null && containsRequiredModalityLUTDataAttributes(mLutSeq)) {
+                setTagNoNull(tagList, TagW.ModalityLUTSequence, mLutItems.getNestedDataset(Tag.ModalityLUTSequence));
             }
         }
     }
@@ -1049,16 +1047,22 @@ public class DicomMediaUtils {
     public static void applyVoiLutModule(Attributes voiItems, HashMap<TagW, Object> tagList, Integer seqParentTag) {
         if (voiItems != null && tagList != null) {
             // Overrides VOI LUT Transformation attributes only if sequence is consistent
-            if (containsRequiredVOILUTAttributes(voiItems)) {
+            if (containsRequiredVOILUTWindowLevelAttributes(voiItems)) {
                 setTagNoNull(tagList, TagW.WindowWidth, getFloatArrayFromDicomElement(voiItems, Tag.WindowWidth));
                 setTagNoNull(tagList, TagW.WindowCenter, getFloatArrayFromDicomElement(voiItems, Tag.WindowCenter));
                 setTagNoNull(tagList, TagW.WindowCenterWidthExplanation,
                     getStringArrayFromDicomElement(voiItems, Tag.WindowCenterWidthExplanation));
                 setTagNoNull(tagList, TagW.VOILutFunction, getStringFromDicomElement(voiItems, Tag.VOILUTFunction));
                 setTagNoNull(tagList, TagW.VOILUTSequence, voiItems.getSequence(Tag.VOILUTSequence));
-            } else if (seqParentTag != null) {
-                LOGGER.info(
-                    "Cannot apply VOI LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
+            }
+            // else if (seqParentTag != null) {
+            // LOGGER.info(
+            //                    "Cannot apply VOI LUT from {} with inconsistent attributes", TagUtils.toString(seqParentTag));//$NON-NLS-1$
+            // }
+
+            Sequence vLutSeq = voiItems.getSequence(Tag.VOILUTSequence);
+            if (vLutSeq != null && vLutSeq.size() > 0) {
+                setTagNoNull(tagList, TagW.VOILUTSequence, vLutSeq);
             }
         }
     }

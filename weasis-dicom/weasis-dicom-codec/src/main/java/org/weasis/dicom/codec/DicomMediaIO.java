@@ -99,9 +99,6 @@ import com.sun.media.jai.util.ImageUtil;
 
 public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage> {
 
-    /**
-     * Logger for this class
-     */
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
