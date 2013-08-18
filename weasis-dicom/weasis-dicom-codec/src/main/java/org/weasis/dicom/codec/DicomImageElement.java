@@ -28,6 +28,8 @@ import javax.media.jai.ROI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.LookupDescriptor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -46,6 +48,9 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
 
 public class DicomImageElement extends ImageElement {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
+
     public static final String FILL_OUTSIDE_LUT = "fill_outside_lut";
     private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache =
         new SoftHashMap<LutParameters, LookupTableJAI>() {
@@ -325,8 +330,20 @@ public class DicomImageElement extends ImageElement {
     protected LookupTableJAI getModalityLookup(boolean pixelPadding, boolean inverseLUTAction) {
         Integer paddingValue = getPaddingValue();
         LookupTableJAI mLUTSeq = (LookupTableJAI) getTagValue(TagW.ModalityLUTData);
-        if (mLUTSeq != null && (!pixelPadding || paddingValue == null)) {
-            return mLUTSeq;
+        if (mLUTSeq != null) {
+            if (!pixelPadding || paddingValue == null) {
+                if (super.getMinValue(false) >= mLUTSeq.getOffset()
+                    && super.getMaxValue(false) < mLUTSeq.getOffset() + mLUTSeq.getNumEntries()) {
+                    return mLUTSeq;
+                } else {
+                    // Remove MLut as it cannot be used.
+                    tags.remove(TagW.ModalityLUTData);
+                    LOGGER
+                        .warn("Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied.");
+                }
+            } else {
+                LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding");
+            }
         }
         boolean modSeqLUT = mLUTSeq != null;
         boolean inverseLut = isPhotometricInterpretationInverse();
