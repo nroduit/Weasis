@@ -276,6 +276,8 @@ public class WeasisLauncher {
             configProps.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
         }
 
+        // Define the sourceID for the temp and cache directory. The portable version will always have the same
+        // sourceID.
         String sourceID =
             toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         System.setProperty("weasis.source.id", sourceID); //$NON-NLS-1$
@@ -806,7 +808,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
-                look = config.getProperty(nativeLook, null);
+                look = config.getProperty("weasis.look", null);
             }
         }
 
