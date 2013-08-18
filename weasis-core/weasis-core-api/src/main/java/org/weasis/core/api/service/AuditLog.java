@@ -97,4 +97,12 @@ public class AuditLog {
         }
         return logConfiguration;
     }
+
+    public static void logError(Logger log, Throwable t, String message) {
+        if (log.isDebugEnabled()) {
+            log.error(message, t); //$NON-NLS-1$
+        } else {
+            log.error(t.getMessage());
+        }
+    }
 }
