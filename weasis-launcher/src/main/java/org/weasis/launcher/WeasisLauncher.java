@@ -276,6 +276,8 @@ public class WeasisLauncher {
             configProps.setProperty(AutoProcessor.AUTO_DEPLOY_DIR_PROPERY, bundleDir);
         }
 
+        // Define the sourceID for the temp and cache directory. The portable version will always have the same
+        // sourceID.
         String sourceID =
             toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         System.setProperty("weasis.source.id", sourceID); //$NON-NLS-1$
@@ -749,7 +751,7 @@ public class WeasisLauncher {
         final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         getGeneralProperty("weasis.confirm.closing", "true", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -806,7 +808,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
-                look = config.getProperty(nativeLook, null);
+                look = config.getProperty("weasis.look", null);
             }
         }
 
@@ -939,7 +941,7 @@ public class WeasisLauncher {
                 });
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            String val = getGeneralProperty("weasis.show.release", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            String val = getGeneralProperty("weasis.show.release", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
                 final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
                 message.append(String.format(
