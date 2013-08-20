@@ -333,7 +333,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     protected void sortStack(Comparator<DicomImageElement> sortComparator) {
         if (sortComparator != null) {
-            setSeries(series, getImage());
+            // Only refresh UI components, Fix WEA-222
+            eventManager.updateComponentsListener(this);
         }
     }
 
