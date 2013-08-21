@@ -53,6 +53,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 
 public class PRManager {
@@ -151,13 +152,15 @@ public class PRManager {
                     Identifier layerId =
                         new Identifier(310 + glm.getInt(Tag.GraphicLayerOrder, 0), graphicLayerName + " [DICOM]");
                     DragLayer layer = new DragLayer(view.getLayerModel(), layerId);
-                    // layer.setLocked(true);
+                    // TODO should be an option
+                    layer.setLocked(true);
                     layers.add(layer);
                     Color rgb =
-                        PresentationStateReader.getRGBColor(
-                            glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
-                            glm.getFloats(Tag.GraphicLayerRecommendedDisplayCIELabValue),
-                            glm.getInts(Tag.GraphicLayerRecommendedDisplayRGBValue));
+                        PresentationStateReader.getRGBColor(glm.getInt(
+                            Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255), DicomMediaUtils
+                            .getFloatArrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null),
+                            DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
+                                Tag.GraphicLayerRecommendedDisplayRGBValue, null));
 
                     Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
                     ;
@@ -269,7 +272,7 @@ public class PRManager {
 
         String type = go.getString(Tag.GraphicType);
         Graphic shape = null;
-        float[] points = go.getFloats(Tag.GraphicData);
+        float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
         if (isDisp && inverse != null) {
             float[] dstpoints = new float[points.length];
             inverse.transform(points, 0, dstpoints, 0, points.length / 2);

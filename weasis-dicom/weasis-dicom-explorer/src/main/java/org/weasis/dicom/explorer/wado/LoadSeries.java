@@ -41,7 +41,6 @@ import javax.swing.SwingWorker;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.ElementDictionary;
-import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
@@ -843,7 +842,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         bytesTransferred =
                             writFile(
                                 new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString().contains(
-                                    "?requestType=WADO")), new BufferedOutputStream(new FileOutputStream(tempFile)), overrideList); //$NON-NLS-1$
+                                    "?requestType=WADO")), tempFile, overrideList); //$NON-NLS-1$
                     }
                     if (bytesTransferred == -1) {
                         log.info("End of downloading {} ", url); //$NON-NLS-1$
@@ -869,8 +868,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                     new FileOutputStream(tempFile));
                         } else if (wado != null) {
                             bytesTransferred =
-                                writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
-                                    new BufferedOutputStream(new FileOutputStream(tempFile)), overrideList);
+                                writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile,
+                                    overrideList);
                         }
                         if (bytesTransferred == -1) {
                             log.info("End of downloading {} ", url); //$NON-NLS-1$
@@ -991,13 +990,13 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         /**
          * @param in
-         * @param out
+         * @param tempFile
          * @param overrideList
          * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
          *         interruption
          */
-        public int writFile(InputStream in, OutputStream out, int[] overrideList) {
-            if (in == null && out == null) {
+        public int writFile(InputStream in, File tempFile, int[] overrideList) {
+            if (in == null && tempFile == null) {
                 return 0;
             }
 
@@ -1005,17 +1004,18 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             DicomOutputStream dos = null;
 
             try {
+                String tsuid = null;
                 Attributes dataset;
                 dis = new DicomInputStream(in);
-
                 try {
                     dis.setIncludeBulkData(IncludeBulkData.URI);
                     dataset = dis.readDataset(-1, -1);
+                    tsuid = dis.getTransferSyntax();
                 } finally {
                     dis.close();
                 }
 
-                dos = new DicomOutputStream(out, UID.ExplicitVRLittleEndian);
+                dos = new DicomOutputStream(tempFile);
 
                 if (overrideList != null) {
                     MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
@@ -1045,7 +1045,9 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         }
                     }
                 }
-                dos.writeDataset(null, dataset);
+                dos.writeDataset(dataset.createFileMetaInformation(tsuid), dataset);
+                dos.finish();
+                dos.flush();
                 return -1;
             } catch (InterruptedIOException e) {
                 return e.bytesTransferred;

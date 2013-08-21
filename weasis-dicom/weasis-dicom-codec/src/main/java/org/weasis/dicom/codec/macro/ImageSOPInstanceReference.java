@@ -2,6 +2,7 @@ package org.weasis.dicom.codec.macro;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class ImageSOPInstanceReference extends SOPInstanceReference {
 
@@ -10,7 +11,7 @@ public class ImageSOPInstanceReference extends SOPInstanceReference {
     }
 
     public int[] getReferencedFrameNumber() {
-        return dcmItems.getInts(Tag.ReferencedFrameNumber);
+        return DicomMediaUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
     }
 
 }

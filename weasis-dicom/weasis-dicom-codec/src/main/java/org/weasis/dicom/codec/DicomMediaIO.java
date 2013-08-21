@@ -408,7 +408,8 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         setTag(TagW.StudyInstanceUID, header.getString(Tag.StudyInstanceUID, NO_VALUE));
         setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, NO_VALUE));
         setTag(TagW.Modality, header.getString(Tag.Modality, NO_VALUE));
-        setTag(TagW.InstanceNumber, header.getInt(Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
+        setTag(TagW.InstanceNumber,
+            DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
         setTag(TagW.SOPInstanceUID, header.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
         // -------- End of Mandatory Tags --------
 
@@ -441,7 +442,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.ShutterFinalShape, shape);
             Integer psVal = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.ShutterPresentationValue, null);
             setTagNoNull(TagW.ShutterPSValue, psVal);
-            float[] rgb = CIELab.convertToFloatLab(header.getInts(Tag.ShutterPresentationColorCIELabValue));
+            float[] rgb =
+                CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(header,
+                    Tag.ShutterPresentationColorCIELabValue, null));
             Color color =
                 rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
             setTagNoNull(TagW.ShutterRGBColor, color);
@@ -498,8 +501,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionTime, null));
             setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
 
-            setTagNoNull(TagW.ImagePositionPatient, header.getDoubles(Tag.ImagePositionPatient));
-            setTagNoNull(TagW.ImageOrientationPatient, header.getDoubles(Tag.ImageOrientationPatient));
+            setTagNoNull(TagW.ImagePositionPatient,
+                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagePositionPatient, null));
+            setTagNoNull(TagW.ImageOrientationPatient,
+                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImageOrientationPatient, null));
             setTagNoNull(
                 TagW.ImageOrientationPlane,
                 ImageOrientation
@@ -514,9 +519,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.PixelRepresentation,
                 DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PixelRepresentation, 0));
 
-            setTagNoNull(TagW.ImagerPixelSpacing, header.getDoubles(Tag.ImagerPixelSpacing));
-            setTagNoNull(TagW.PixelSpacing, header.getDoubles(Tag.PixelSpacing));
-            setTagNoNull(TagW.PixelAspectRatio, header.getInts(Tag.PixelAspectRatio));
+            setTagNoNull(TagW.ImagerPixelSpacing,
+                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagerPixelSpacing, null));
+            setTagNoNull(TagW.PixelSpacing,
+                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.PixelSpacing, null));
+            setTagNoNull(TagW.PixelAspectRatio,
+                DicomMediaUtils.getIntAyrrayFromDicomElement(header, Tag.PixelAspectRatio, null));
             setTagNoNull(TagW.PixelSpacingCalibrationDescription,
                 header.getString(Tag.PixelSpacingCalibrationDescription));
 

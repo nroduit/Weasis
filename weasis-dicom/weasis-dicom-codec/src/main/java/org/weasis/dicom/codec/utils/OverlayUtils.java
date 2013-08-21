@@ -305,7 +305,7 @@ public class OverlayUtils {
     }
 
     private static int[] getInts(Attributes ds, int group, int tag) {
-        return ds.getInts(groupedTag(group, tag));
+        return DicomMediaUtils.getIntAyrrayFromDicomElement(ds, groupedTag(group, tag), null);
     }
 
     private static String getString(Attributes ds, int group, int tag) {

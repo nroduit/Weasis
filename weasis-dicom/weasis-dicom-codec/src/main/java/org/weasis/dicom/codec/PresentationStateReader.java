@@ -13,6 +13,7 @@ import org.dcm4che.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
@@ -63,7 +64,8 @@ public class PresentationStateReader {
             if (imgSop != null) {
                 for (Attributes sop : sops) {
                     if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
-                        int[] frames = sop.getInts(Tag.ReferencedFrameNumber);
+                        int[] frames =
+                            DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
                         if (frames == null) {
                             return true;
                         }
@@ -113,12 +115,14 @@ public class PresentationStateReader {
             for (Attributes item : srcSeq) {
                 if (isModuleAppicable(item, img)) {
                     double[] pixelsize = null;
-                    float[] spacing = item.getFloats(Tag.PresentationPixelSpacing);
+                    float[] spacing =
+                        DicomMediaUtils.getFloatArrayFromDicomElement(item, Tag.PresentationPixelSpacing, null);
                     if (spacing != null && spacing.length == 2) {
                         pixelsize = new double[] { spacing[1], spacing[0] };
                     }
                     if (spacing == null) {
-                        int[] aspects = item.getInts(Tag.PresentationPixelAspectRatio);
+                        int[] aspects =
+                            DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.PresentationPixelAspectRatio, null);
                         if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
                             // set the aspects to the pixel size of the image to stretch the image rendering (square
                             // pixel)
@@ -134,8 +138,11 @@ public class PresentationStateReader {
                     }
 
                     String presentationMode = item.getString(Tag.PresentationSizeMode);
-                    int[] tlhc = item.getInts(Tag.DisplayedAreaTopLeftHandCorner);
-                    int[] brhc = item.getInts(Tag.DisplayedAreaBottomRightHandCorner);
+                    int[] tlhc =
+                        DicomMediaUtils.getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaTopLeftHandCorner, null);
+                    int[] brhc =
+                        DicomMediaUtils
+                            .getIntAyrrayFromDicomElement(item, Tag.DisplayedAreaBottomRightHandCorner, null);
 
                     if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
                         // Lots of systems encode topLeft as 1,1, even when they mean 0,0

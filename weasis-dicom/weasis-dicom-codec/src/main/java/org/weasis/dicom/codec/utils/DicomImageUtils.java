@@ -680,7 +680,7 @@ public class DicomImageUtils {
     // Take from dcm4che3, should be public
 
     public static int[] lutDescriptor(Attributes ds, int descTag) {
-        int[] desc = ds.getInts(descTag);
+        int[] desc = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, descTag, null);
         if (desc == null) {
             throw new IllegalArgumentException("Missing LUT Descriptor!");
         }
@@ -702,7 +702,7 @@ public class DicomImageUtils {
         int bits = desc[2];
         byte[] data = ds.getSafeBytes(dataTag);
         if (data == null) {
-            int[] segm = ds.getInts(segmTag);
+            int[] segm = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, segmTag, null);
             if (segm == null) {
                 throw new IllegalArgumentException("Missing LUT Data!");
             }

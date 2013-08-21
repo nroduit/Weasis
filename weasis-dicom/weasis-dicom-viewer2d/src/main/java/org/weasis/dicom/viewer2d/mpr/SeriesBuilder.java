@@ -7,10 +7,8 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.renderable.ParameterBlock;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -537,10 +535,10 @@ public class SeriesBuilder {
         File outFile = new File(MPR_CACHE_DIR, name + ".dcm");
 
         try {
-            out =
-                new DicomOutputStream(new BufferedOutputStream(new FileOutputStream(outFile)),
-                    UID.ImplicitVRLittleEndian);
-            out.writeDataset(null, dcmObj);
+            out = new DicomOutputStream(outFile);
+            out.writeDataset(
+                dcmObj.createFileMetaInformation(dcmObj.getString(Tag.TransferSyntaxUID, UID.ImplicitVRLittleEndian)),
+                dcmObj);
         } catch (IOException e) {
             //     LOGGER.warn("", e); //$NON-NLS-1$
             outFile.delete();

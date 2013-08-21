@@ -23,6 +23,7 @@ import org.dcm4che.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement {
 
@@ -100,7 +101,9 @@ public class DicomSpecialElement extends MediaElement {
                         for (Attributes sop : seq2) {
                             if (sopUID.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
                                 if (frameNumber != null && frameNumber > 1) {
-                                    int[] seqFrame = sop.getInts(Tag.ReferencedFrameNumber);
+                                    int[] seqFrame =
+                                        DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber,
+                                            null);
                                     if (seqFrame == null || seqFrame.length == 0) {
                                         return true;
                                     } else {

@@ -166,7 +166,7 @@ public class DicomMediaUtils {
         LookupTableJAI lookupTable = null;
 
         // Three values of the LUT Descriptor describe the format of the LUT Data in the corresponding Data Element
-        int[] descriptor = dicomLutObject.getInts(Tag.LUTDescriptor);
+        int[] descriptor = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTDescriptor, null);
 
         if (descriptor == null) {
             LOGGER.debug("Missing LUT Descriptor");
@@ -244,7 +244,7 @@ public class DicomMediaUtils {
 
                     // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     // short[] sData = dicomLutObject.getShorts(Tag.LUTData);
-                    int[] iData = dicomLutObject.getInts(Tag.LUTData);
+                    int[] iData = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTData, null);
                     if (iData != null) {
                         short[] sData = new short[iData.length];
                         for (int i = 0; i < iData.length; i++) {
@@ -330,128 +330,79 @@ public class DicomMediaUtils {
         if (dicom == null || !dicom.containsValue(tag)) {
             return null;
         }
-        return toFloatArray(dicom.getFloats(tag));
+        return toFloatArray(DicomMediaUtils.getFloatArrayFromDicomElement(dicom, tag, null));
     }
 
     public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
             return defaultValue;
         }
-        return dicom.getFloat(tag, defaultValue == null ? 0.0F : defaultValue);
+        try {
+            return dicom.getFloat(tag, defaultValue == null ? 0.0F : defaultValue);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
     }
 
     public static Integer getIntegerFromDicomElement(Attributes dicom, int tag, Integer defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
             return defaultValue;
         }
-        return dicom.getInt(tag, defaultValue == null ? 0 : defaultValue);
+        try {
+            return dicom.getInt(tag, defaultValue == null ? 0 : defaultValue);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
     }
 
     public static Double getDoubleFromDicomElement(Attributes dicom, int tag, Double defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
             return defaultValue;
         }
-        return dicom.getDouble(tag, defaultValue == null ? 0.0 : defaultValue);
+        try {
+            return dicom.getDouble(tag, defaultValue == null ? 0.0 : defaultValue);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
     }
 
-    public static void computeSUVFactor(Attributes dicomObject, HashMap<TagW, Object> tagList, int index) {
-        // From vendor neutral code at http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
-        String modlality = (String) tagList.get(TagW.Modality);
-        if ("PT".equals(modlality)) { //$NON-NLS-1$
-            String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
-            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { //$NON-NLS-1$ //$NON-NLS-2$
-                double suvFactor = 0.0;
-                String units = dicomObject.getString(Tag.Units);
-                // DICOM $C.8.9.1.1.3 Units
-                // The units of the pixel values obtained after conversion from the stored pixel values (SV) (Pixel
-                // Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept (0028,1052) and
-                // Rescale Slope (0028,1053). Defined Terms:
-                // CNTS = counts
-                // NONE = unitless
-                // CM2 = centimeter**2
-                // PCNT = percent
-                // CPS = counts/second
-                // BQML = Becquerels/milliliter
-                // MGMINML = milligram/minute/milliliter
-                // UMOLMINML = micromole/minute/milliliter
-                // MLMING = milliliter/minute/gram
-                // MLG = milliliter/gram
-                // 1CM = 1/centimeter
-                // UMOLML = micromole/milliliter
-                // PROPCNTS = proportional to counts
-                // PROPCPS = proportional to counts/sec
-                // MLMINML = milliliter/minute/milliliter
-                // MLML = milliliter/milliliter
-                // GML = grams/milliliter
-                // STDDEV = standard deviations
-                if ("BQML".equals(units)) { //$NON-NLS-1$
-                    Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
-                    if (weight != 0.0f) {
-                        Attributes dcm =
-                            dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
-                        if (dcm != null) {
-                            Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
-                            Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
-                            Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
-                            Date injectDateTime =
-                                getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-                            Date acquisitionDateTime =
-                                TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
-                                    (Date) tagList.get(TagW.AcquisitionTime));
-                            Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
-                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
-                                && halfLife != null && acquisitionDateTime != null
-                                && (injectDateTime != null || (scanDate != null && injectTime != null))) {
-                                double time = 0.0;
-                                long scanDateTime =
-                                    TagW.dateTime(scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
-                                        .getTime();
-                                if (injectDateTime == null) {
-                                    if (scanDateTime > acquisitionDateTime.getTime()) {
-                                        // per GE docs, may have been updated during post-processing into new series
-                                        String privateCreator = dicomObject.getString(0x00090010);
-                                        Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
-                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //$NON-NLS-1$
-                                            scanDate = privateScanDateTime;
-                                        } else {
-                                            scanDate = null;
-                                        }
-                                    }
-                                    if (scanDate != null) {
-                                        injectDateTime = TagW.dateTime(scanDate, injectTime);
-                                        time = scanDateTime - injectDateTime.getTime();
-                                    }
-
-                                } else {
-                                    time = scanDateTime - injectDateTime.getTime();
-                                }
-                                // Exclude negative value (case over midnight)
-                                if (time > 0) {
-                                    double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                                    // Weight convert in kg to g
-                                    suvFactor = weight * 1000.0 / correctedDose;
-                                }
-                            }
-                        }
-                    }
-                } else if ("CNTS".equals(units)) { //$NON-NLS-1$
-                    String privateTagCreator = dicomObject.getString(0x70530010);
-                    double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
-                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) { //$NON-NLS-1$
-                        suvFactor = privateSUVFactor;
-                        // units= "g/ml";
-                    }
-                } else if ("GML".equals(units)) { //$NON-NLS-1$
-                    suvFactor = 1.0;
-                    // UNIT
-                    // String unit = dicomObject.getString(Tag.SUVType);
-
-                }
-                if (suvFactor != 0.0) {
-                    DicomMediaUtils.setTag(tagList, TagW.SuvFactor, suvFactor);
-                }
-            }
+    public static int[] getIntAyrrayFromDicomElement(Attributes dicom, int tag, int[] defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
         }
+        try {
+            return dicom.getInts(tag);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
+    }
+
+    public static float[] getFloatArrayFromDicomElement(Attributes dicom, int tag, float[] defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
+        }
+        try {
+            return dicom.getFloats(tag);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
+    }
+
+    public static double[] getDoubleArrayFromDicomElement(Attributes dicom, int tag, double[] defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
+        }
+        try {
+            return dicom.getDoubles(tag);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
+        }
+        return defaultValue;
     }
 
     public static void buildLUTs(HashMap<TagW, Object> dicomTagMap) {
@@ -848,7 +799,8 @@ public class DicomMediaUtils {
 
             }
             if (shutterShape.contains("CIRCULAR")) { //$NON-NLS-1$
-                int[] centerOfCircularShutter = dcmObject.getInts(Tag.CenterOfCircularShutter);
+                int[] centerOfCircularShutter =
+                    DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.CenterOfCircularShutter, null);
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
                     Ellipse2D ellipse = new Ellipse2D.Double();
                     int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
@@ -863,7 +815,8 @@ public class DicomMediaUtils {
                 }
             }
             if (shutterShape.contains("POLYGONAL")) { //$NON-NLS-1$
-                int[] points = dcmObject.getInts(Tag.VerticesOfThePolygonalShutter);
+                int[] points =
+                    DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.VerticesOfThePolygonalShutter, null);
                 if (points != null) {
                     Polygon polygon = new Polygon();
                     for (int i = 0; i < points.length / 2; i++) {
@@ -889,7 +842,8 @@ public class DicomMediaUtils {
              */
             Attributes macroPixelMeasures = dcm.getNestedDataset(Tag.PixelMeasuresSequence);
             if (macroPixelMeasures != null) {
-                setTagNoNull(tagList, TagW.PixelSpacing, macroPixelMeasures.getDoubles(Tag.PixelSpacing));
+                setTagNoNull(tagList, TagW.PixelSpacing,
+                    DicomMediaUtils.getDoubleArrayFromDicomElement(macroPixelMeasures, Tag.PixelSpacing, null));
                 setTagNoNull(tagList, TagW.SliceThickness,
                     getDoubleFromDicomElement(macroPixelMeasures, Tag.SliceThickness, null));
             }
@@ -971,8 +925,8 @@ public class DicomMediaUtils {
                         getIntegerFromDicomElement(macroFrameDisplayShutter, Tag.ShutterPresentationValue, null);
                     setTagNoNull(tagList, TagW.ShutterPSValue, psVal);
                     float[] rgb =
-                        CIELab.convertToFloatLab(macroFrameDisplayShutter
-                            .getInts(Tag.ShutterPresentationColorCIELabValue));
+                        CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(macroFrameDisplayShutter,
+                            Tag.ShutterPresentationColorCIELabValue, null));
                     Color color =
                         rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb,
                             (int[]) null);
@@ -1089,6 +1043,106 @@ public class DicomMediaUtils {
                     // value: INVERSE, IDENTITY
                     // INVERSE => must inverse values (same as monochrome 1)
                     setTagNoNull(tagList, TagW.PresentationLUTShape, dcmItems.getString(Tag.PresentationLUTShape));
+                }
+            }
+        }
+    }
+
+    public static void computeSUVFactor(Attributes dicomObject, HashMap<TagW, Object> tagList, int index) {
+        // From vendor neutral code at http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
+        String modlality = (String) tagList.get(TagW.Modality);
+        if ("PT".equals(modlality)) { //$NON-NLS-1$
+            String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
+            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { //$NON-NLS-1$ //$NON-NLS-2$
+                double suvFactor = 0.0;
+                String units = dicomObject.getString(Tag.Units);
+                // DICOM $C.8.9.1.1.3 Units
+                // The units of the pixel values obtained after conversion from the stored pixel values (SV) (Pixel
+                // Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept (0028,1052) and
+                // Rescale Slope (0028,1053). Defined Terms:
+                // CNTS = counts
+                // NONE = unitless
+                // CM2 = centimeter**2
+                // PCNT = percent
+                // CPS = counts/second
+                // BQML = Becquerels/milliliter
+                // MGMINML = milligram/minute/milliliter
+                // UMOLMINML = micromole/minute/milliliter
+                // MLMING = milliliter/minute/gram
+                // MLG = milliliter/gram
+                // 1CM = 1/centimeter
+                // UMOLML = micromole/milliliter
+                // PROPCNTS = proportional to counts
+                // PROPCPS = proportional to counts/sec
+                // MLMINML = milliliter/minute/milliliter
+                // MLML = milliliter/milliliter
+                // GML = grams/milliliter
+                // STDDEV = standard deviations
+                if ("BQML".equals(units)) { //$NON-NLS-1$
+                    Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f);
+                    if (weight != 0.0f) {
+                        Attributes dcm =
+                            dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
+                        if (dcm != null) {
+                            Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
+                            Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
+                            Date injectTime = getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                            Date injectDateTime =
+                                getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
+                            Date acquisitionDateTime =
+                                TagW.dateTime((Date) tagList.get(TagW.AcquisitionDate),
+                                    (Date) tagList.get(TagW.AcquisitionTime));
+                            Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
+                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
+                                && halfLife != null && acquisitionDateTime != null
+                                && (injectDateTime != null || (scanDate != null && injectTime != null))) {
+                                double time = 0.0;
+                                long scanDateTime =
+                                    TagW.dateTime(scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
+                                        .getTime();
+                                if (injectDateTime == null) {
+                                    if (scanDateTime > acquisitionDateTime.getTime()) {
+                                        // per GE docs, may have been updated during post-processing into new series
+                                        String privateCreator = dicomObject.getString(0x00090010);
+                                        Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
+                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //$NON-NLS-1$
+                                            scanDate = privateScanDateTime;
+                                        } else {
+                                            scanDate = null;
+                                        }
+                                    }
+                                    if (scanDate != null) {
+                                        injectDateTime = TagW.dateTime(scanDate, injectTime);
+                                        time = scanDateTime - injectDateTime.getTime();
+                                    }
+
+                                } else {
+                                    time = scanDateTime - injectDateTime.getTime();
+                                }
+                                // Exclude negative value (case over midnight)
+                                if (time > 0) {
+                                    double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
+                                    // Weight convert in kg to g
+                                    suvFactor = weight * 1000.0 / correctedDose;
+                                }
+                            }
+                        }
+                    }
+                } else if ("CNTS".equals(units)) { //$NON-NLS-1$
+                    String privateTagCreator = dicomObject.getString(0x70530010);
+                    double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
+                    if ("Philips PET Private Group".equals(privateTagCreator) && privateSUVFactor != 0.0) { //$NON-NLS-1$
+                        suvFactor = privateSUVFactor;
+                        // units= "g/ml";
+                    }
+                } else if ("GML".equals(units)) { //$NON-NLS-1$
+                    suvFactor = 1.0;
+                    // UNIT
+                    // String unit = dicomObject.getString(Tag.SUVType);
+
+                }
+                if (suvFactor != 0.0) {
+                    DicomMediaUtils.setTag(tagList, TagW.SuvFactor, suvFactor);
                 }
             }
         }

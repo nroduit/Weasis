@@ -2,6 +2,7 @@ package org.weasis.dicom.viewer2d.sr;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class SRDocumentContent extends SRDocumentContentModule {
 
@@ -14,7 +15,7 @@ public class SRDocumentContent extends SRDocumentContentModule {
     }
 
     public int[] getReferencedContentItemIdentifier() {
-        return dcmItems.getInts(Tag.ReferencedContentItemIdentifier);
+        return DicomMediaUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedContentItemIdentifier, null);
     }
 
 }

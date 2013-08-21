@@ -82,6 +82,7 @@ import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -419,7 +420,8 @@ public class DicomImageReader extends ImageReader {
                 }
                 for (Attributes refImg : refImgs) {
                     if (iuid.equals(refImg.getString(Tag.ReferencedSOPInstanceUID))) {
-                        int[] refFrames = refImg.getInts(Tag.ReferencedFrameNumber);
+                        int[] refFrames =
+                            DicomMediaUtils.getIntAyrrayFromDicomElement(refImg, Tag.ReferencedFrameNumber, null);
                         if (refFrames == null) {
                             return voiLUT;
                         }
