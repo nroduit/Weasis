@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -476,6 +477,20 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     selected));
                 MeasureTool.viewSetting.setDrawOnlyOnce(selected);
+            }
+        };
+    }
+
+    protected ComboItemListener newSpatialUnit(Unit[] units) {
+        if (units == null) {
+            units = new Unit[0];
+        }
+        return new ComboItemListener(ActionW.SPATIAL_UNIT, units) {
+
+            @Override
+            public void itemStateChanged(Object object) {
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    object));
             }
         };
     }

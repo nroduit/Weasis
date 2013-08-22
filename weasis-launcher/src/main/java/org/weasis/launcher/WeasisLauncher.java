@@ -321,6 +321,7 @@ public class WeasisLauncher {
                         if (dir != null) {
                             FileUtil.deleteDirectoryContents(new File(dir));
                         }
+                        // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
                         Timer timer = new Timer();
                         timer.schedule(new HaltTask(), 7000);
                     }

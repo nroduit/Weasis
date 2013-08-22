@@ -26,6 +26,7 @@ import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 @Root(name = "lineWithGap")
@@ -127,7 +128,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     }
 

@@ -42,6 +42,7 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.FILTER.cmd(), true);
         actions.put(ActionW.INVERSESTACK.cmd(), true);
         actions.put(ActionW.SORTSTACK.cmd(), true);
+        actions.put(ActionW.SPATIAL_UNIT.cmd(), true);
         DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), "Tile", Mode.Tile, //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
 
@@ -51,6 +52,7 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.ZOOM.cmd(), true);
         actions.put(ActionW.ROTATION.cmd(), true);
         actions.put(ActionW.FLIP.cmd(), true);
+        actions.put(ActionW.SPATIAL_UNIT.cmd(), true);
         DEFAULT_STACK =
             new SynchView(Messages.getString("SynchView.def_s"), "Stack", Mode.Stack, new ImageIcon(SynchView.class //$NON-NLS-1$ //$NON-NLS-2$
                 .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$

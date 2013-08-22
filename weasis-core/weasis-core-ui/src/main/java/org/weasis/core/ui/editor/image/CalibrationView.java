@@ -152,15 +152,17 @@ public class CalibrationView extends JPanel {
         if (image != null) {
             Number inputCalibVal = JMVUtils.getFormattedValue(jTextFieldLineWidth);
             if (inputCalibVal != null) {
-                double factor = image.getPixelSize();
+                double imgRatio = image.getPixelSize();
                 Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
-                Unit originalUnit = image.getPixelSpacingUnit();
+                Unit imgUnit = image.getPixelSpacingUnit();
                 if (!Unit.PIXEL.equals(unit)) {
                     double unitRatio = 1.0;
-                    if (Unit.PIXEL.equals(originalUnit)) {
+                    if (Unit.PIXEL.equals(imgUnit)) {
                         image.setPixelSpacingUnit(unit);
                     } else {
-                        unitRatio = originalUnit.getConversionRatio(unit.getConvFactor());
+                        unitRatio = 1.0;
+                        image.setPixelSpacingUnit(unit);
+                        // unitRatio = imgUnit.getConversionRatio(unit.getConvFactor());
                     }
 
                     Double lineLength = 0.0;
@@ -174,7 +176,7 @@ public class CalibrationView extends JPanel {
                         lineLength = 1.0;
                     }
                     double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
-                    if (factor != newRatio) {
+                    if (imgRatio != newRatio) {
                         if (radioButtonSeries.isSelected()) {
                             MediaSeries seriesList = view2d.getSeries();
                             if (seriesList != null) {

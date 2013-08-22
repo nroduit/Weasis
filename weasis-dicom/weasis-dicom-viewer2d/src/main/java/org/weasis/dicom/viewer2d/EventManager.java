@@ -47,6 +47,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
@@ -130,6 +131,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
     private final ComboItemListener measureAction;
+    private final ComboItemListener spUnitAction;
 
     private final ToggleButtonListener koToggleAction;
     private final ToggleButtonListener koFilterAction;
@@ -182,6 +184,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
+        iniAction(spUnitAction = newSpatialUnit(Unit.values()));
         iniAction(panAction = newPanAction());
         iniAction(crosshairAction = newCrosshairAction());
         iniAction(new BasicActionState(ActionW.RESET));
@@ -837,6 +840,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             .getActionValue(ActionW.ZOOM.cmd()))));
         rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
         flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
+        spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
 
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
         Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());

@@ -15,6 +15,7 @@ import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
@@ -84,7 +85,7 @@ public class PointGraphic extends BasicGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     }
 

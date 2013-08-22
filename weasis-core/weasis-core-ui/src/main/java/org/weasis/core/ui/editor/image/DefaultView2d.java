@@ -88,6 +88,7 @@ import org.weasis.core.api.image.ZoomOperation;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -208,6 +209,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void initActionWState() {
+        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.LENS.cmd(), false);
@@ -461,12 +463,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void setImage(E img) {
         if (img == null) {
+            actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
             imageLayer.setImage(null, null);
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
             E oldImage = imageLayer.getSourceImage();
             if (img != null && !img.equals(oldImage)) {
+                actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
                 final Rectangle modelArea = getImageBounds(img);
                 AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
@@ -529,6 +533,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
             }
+        }
+
+        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+        if (spUnitAction instanceof ComboItemListener) {
+            ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                .get(ActionW.SPATIAL_UNIT.cmd()));
         }
     }
 
@@ -990,6 +1000,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.FILTER.cmd())) {
                 actionsInView.put(command, entry.getValue());
                 imageLayer.updateImageOperation(FilterOperation.name);
+            } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
+                actionsInView.put(command, entry.getValue());
+
+                // TODO update only measure and limit when selected view share graphics
+                List<Graphic> list = this.getLayerModel().getAllGraphics();
+                for (Graphic graphic : list) {
+                    graphic.updateLabel(true, this);
+                }
+
             }
             if (lens != null) {
                 // Transmit to the lens the command in case the source image has been freeze (for updating rotation and

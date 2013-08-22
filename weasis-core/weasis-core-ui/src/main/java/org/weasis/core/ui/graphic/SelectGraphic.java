@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -99,7 +100,7 @@ public class SelectGraphic extends RectangleGraphic {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
         return null;
     };
 

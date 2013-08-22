@@ -28,9 +28,11 @@ import org.simpleframework.xml.convert.Convert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -589,7 +591,8 @@ public abstract class BasicGraphic implements Graphic {
         // If isMultiSelection is false, it should return all enable computed measurements when
         // quickComputing is enable or when releasedEvent is true
         if (labelVisible || !isMultiSelection) {
-            measList = computeMeasurements(layer, releasedEvent);
+            Unit displayUnit = view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());
+            measList = computeMeasurements(layer, releasedEvent, displayUnit);
         }
 
         if (labelVisible && measList != null && measList.size() > 0) {

@@ -65,6 +65,7 @@ public class ActionW {
         Messages.getString("ActionW.measure"), "measure", KeyEvent.VK_M, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DRAW_MEASURE = new ActionW(
         Messages.getString("ActionW.measurement"), "measurement", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW SPATIAL_UNIT = new ActionW("Spatial Unit", "spunit", 0, 0, null); //$NON-NLS-2$
     public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW CONTEXTMENU = new ActionW(
         Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null); //$NON-NLS-1$ //$NON-NLS-2$

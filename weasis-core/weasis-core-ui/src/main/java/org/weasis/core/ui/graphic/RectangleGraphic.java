@@ -28,6 +28,7 @@ import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -196,10 +197,10 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     @Override
-    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent) {
+    public List<MeasureItem> computeMeasurements(ImageLayer layer, boolean releaseEvent, Unit displayUnit) {
 
         if (layer != null && layer.getSourceImage() != null && isShapeValid()) {
-            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter();
+            MeasurementsAdapter adapter = layer.getSourceImage().getMeasurementAdapter(displayUnit);
 
             if (adapter != null) {
                 ArrayList<MeasureItem> measVal = new ArrayList<MeasureItem>();

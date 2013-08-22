@@ -216,8 +216,9 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return pixelSizeCalibrationDescription;
     }
 
-    public MeasurementsAdapter getMeasurementAdapter() {
-        return new MeasurementsAdapter(getPixelSize(), 0, 0, false, 0, pixelSpacingUnit.getAbbreviation());
+    public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit) {
+        double unitRatio = displayUnit.getConversionRatio(pixelSpacingUnit.getConvFactor());
+        return new MeasurementsAdapter(getPixelSize() * unitRatio, 0, 0, false, 0, displayUnit.getAbbreviation());
     }
 
     public boolean isImageInCache() {

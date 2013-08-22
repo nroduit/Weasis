@@ -31,6 +31,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -53,6 +54,7 @@ import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
@@ -277,6 +279,19 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             }
         });
         panel_1.add(chckbxBasicImageStatistics);
+
+        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+        if (spUnitAction instanceof ComboItemListener) {
+            final JPanel panel_4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
+            final JLabel lutLabel = new JLabel();
+            lutLabel.setText("Unit:");
+            panel_4.add(lutLabel);
+            final JComboBox unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
+            unitComboBox.setSelectedItem(Unit.PIXEL);
+            panel_4.add(unitComboBox);
+            transform.add(panel_4);
+        }
+
         transform.add(Box.createVerticalStrut(5));
         JPanel panel_2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel_2);
@@ -383,7 +398,12 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         List<MeasureItem> measList = null;
 
         if (graph != null && layer != null) {
-            measList = graph.computeMeasurements(layer, true);
+            Unit unit = null;
+            ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+            if (spUnitAction instanceof ComboItemListener) {
+                unit = (Unit) ((ComboItemListener) spUnitAction).getSelectedItem();
+            }
+            measList = graph.computeMeasurements(layer, true, unit);
         }
         updateMeasuredItems(measList);
     }
