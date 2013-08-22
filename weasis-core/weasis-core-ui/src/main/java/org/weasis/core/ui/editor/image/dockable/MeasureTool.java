@@ -111,19 +111,12 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
         setDockableWidth(DockableWidth);
         jbInit();
-
     }
 
     private final void jbInit() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         add(getIconsPanel());
         add(getSelectedMeasurePanel());
-        // final JPanel panel_1 = new JPanel();
-        // panel_1.setAlignmentY(Component.TOP_ALIGNMENT);
-        // panel_1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        // panel_1.setLayout(new GridBagLayout());
-        // add(panel_1);
-
     }
 
     public final JPanel getIconsPanel() {

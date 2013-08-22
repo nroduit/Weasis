@@ -33,6 +33,7 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -90,6 +91,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
     private final ComboItemListener measureAction;
+    private final ComboItemListener spUnitAction;
 
     private final PannerListener panAction;
 
@@ -131,6 +133,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         synchAction.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK);
         iniAction(measureAction =
             newMeasurementAction(MeasureToolBar.graphicList.toArray(new Graphic[MeasureToolBar.graphicList.size()])));
+        iniAction(spUnitAction = newSpatialUnit(Unit.values()));
         iniAction(panAction = newPanAction());
         iniAction(new BasicActionState(ActionW.RESET));
 
@@ -382,6 +385,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             (int) image.getMaxValue(pixelPadding), ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
         rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
         flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
+        spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
             .getActionValue(ActionW.ZOOM.cmd()))));
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
