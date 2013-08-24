@@ -223,9 +223,11 @@ public class DownloadManager {
 
         String patientID = getTagAttribute(xmler, TagW.PatientID.getTagName(), DicomMediaIO.NO_VALUE);
         String issuerOfPatientID = getTagAttribute(xmler, TagW.IssuerOfPatientID.getTagName(), null);
-        Date birthdate =
-            DateUtils.parseDA(TimeZone.getDefault(), getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null),
-                false);
+        Date birthdate = null;
+        String date = getTagAttribute(xmler, TagW.PatientBirthDate.getTagName(), null);
+        if (date != null) {
+            birthdate = DateUtils.parseDA(TimeZone.getDefault(), date, false);
+        }
         String name =
             DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
                 DicomMediaIO.NO_VALUE));
