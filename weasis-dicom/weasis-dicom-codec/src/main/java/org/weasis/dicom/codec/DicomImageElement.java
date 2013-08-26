@@ -169,7 +169,9 @@ public class DicomImageElement extends ImageElement {
     }
 
     public boolean isPhotometricInterpretationInverse() {
-        return "MONOCHROME1".equalsIgnoreCase(getPhotometricInterpretation()); //$NON-NLS-1$
+        String prLUTShape = (String) getTagValue(TagW.PresentationLUTShape);
+        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1"
+            .equalsIgnoreCase(getPhotometricInterpretation());
     }
 
     /**
@@ -558,8 +560,12 @@ public class DicomImageElement extends ImageElement {
                 int maxInValue = isSigned ? (1 << (bitsStored - 1)) - 1 : (1 << bitsStored) - 1;
                 if (minPixelValue < minInValue || maxPixelValue > maxInValue) {
                     /*
-                     * When the image contains values smaller or bigger than the bits stored min max values, the bits
-                     * stored is replaced by the bits allocated.
+                     * 
+                     * 
+                     * When the image contains values outside the bits stored values, the bits stored is replaced by the
+                     * bits allocated for having a LUT which handles all the values.
+                     * 
+                     * Overlays in pixel data should be masked before finding min and max.
                      */
                     setTag(TagW.BitsStored, bitsAllocated);
                 }

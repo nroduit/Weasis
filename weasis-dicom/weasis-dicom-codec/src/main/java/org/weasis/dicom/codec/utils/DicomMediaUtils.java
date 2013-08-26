@@ -547,6 +547,13 @@ public class DicomMediaUtils {
                 }
             }
 
+            /**
+             * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
+             * 
+             *      Presentation LUT Module is always implicitly specified to apply over the full range of output of
+             *      the preceding transformation, and it never selects a subset or superset of the that range
+             *      (unlike the VOI LUT).
+             */
             Attributes prLUTSequence = (Attributes) dicomTagMap.get(TagW.PresentationLUTSequence);
             if (prLUTSequence != null) {
                 DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence, false));
@@ -1020,7 +1027,24 @@ public class DicomMediaUtils {
             }
         }
     }
-
+    public static void applyPrLutModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
+        if (dcmItems != null && tagList != null) {
+            // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
+            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) {
+                /**
+                 * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
+                 */
+                Attributes presentationLUT = dcmItems.getNestedDataset(Tag.PresentationLUTSequence);
+                if (presentationLUT != null) {
+                    setTagNoNull(tagList, TagW.PresentationLUTSequence, presentationLUT);
+                } else {
+                    // value: INVERSE, IDENTITY
+                    // INVERSE => must inverse values (same as monochrome 1)
+                    setTagNoNull(tagList, TagW.PresentationLUTShape, dcmItems.getString(Tag.PresentationLUTShape));
+                }
+            }
+        }
+    }
     public static void readPRLUTsModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {
             // Modality LUT Module: already read from root DataSet
@@ -1029,22 +1053,8 @@ public class DicomMediaUtils {
             applyVoiLutModule(dcmItems.getNestedDataset(Tag.SoftcopyVOILUTSequence), tagList,
                 Tag.SoftcopyVOILUTSequence);
 
-            // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
-            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) {
-                // Presentation LUT Module
-                /**
-                 * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
-                 */
-                Attributes presentationLUT = dcmItems.getNestedDataset(Tag.PresentationLUTSequence);
-                if (presentationLUT != null) {
-                    setTagNoNull(tagList, TagW.PresentationLUTSequence, presentationLUT);
-                } else {
-                    // TODO
-                    // value: INVERSE, IDENTITY
-                    // INVERSE => must inverse values (same as monochrome 1)
-                    setTagNoNull(tagList, TagW.PresentationLUTShape, dcmItems.getString(Tag.PresentationLUTShape));
-                }
-            }
+            // Presentation LUT Module
+            applyPrLutModule(dcmItems, tagList);
         }
     }
 

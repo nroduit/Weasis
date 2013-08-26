@@ -454,37 +454,26 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             String title;
 
             if (factory.canExternalizeSeries()) {
-                Toolkit toolkit = Toolkit.getDefaultToolkit();
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 GraphicsDevice[] gd = ge.getScreenDevices();
                 if (gd.length > 1) {
                     viewer.getDockable().setExternalizable(true);
-                    Rectangle bound = WinUtil.getClosedScreenBound(WinUtil.getParentFrame(this).getBounds());
-                    // LocationHint hint =
-                    // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
-                    // DefaultDockActionSource source = new DefaultDockActionSource(hint);
-                    // source.add(setupDropDownMenu(viewer.getDockable()));
-                    // source.addSeparator();
-
-                    for (int i = 0; i < gd.length; i++) {
-                        GraphicsConfiguration config = gd[i].getDefaultConfiguration();
-                        final Rectangle b = config.getBounds();
-                        if (!b.contains(bound)) {
-                            // Insets inset = toolkit.getScreenInsets(config);
-                            // b.x += inset.left;
-                            // b.y += inset.top;
-                            // b.width -= (inset.left + inset.right);
-                            // b.height -= (inset.top + inset.bottom);
-
-                            viewer.getDockable().setDefaultLocation(ExtendedMode.EXTERNALIZED,
-                                CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
-
-                            // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
-                            break;
-                        }
-                    }
+                    setExternalPosition(viewer.getDockable());
+                    // viewer.getDockable().addCDockableLocationListener(new CDockableLocationListener() {
+                    //
+                    // @Override
+                    // public void changed(CDockableLocationEvent event) {
+                    // // TODO not a good condition
+                    // if (event.getNewLocation() instanceof CExternalizedLocation
+                    // && !(event.getOldLocation() instanceof CExternalizedLocation)) {
+                    // CDockable dockable = event.getDockable();
+                    // if (dockable instanceof DefaultSingleCDockable) {
+                    // setExternalPosition((DefaultSingleCDockable) dockable);
+                    // }
+                    // }
+                    // }
+                    // });
                 }
-
             }
             if (group == null && model instanceof TreeModel && seriesList.size() > 0
                 && model.getTreeModelNodeForNewPlugin() != null) {
@@ -522,6 +511,50 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                 viewer.setSelected(true);
             } else {
                 viewer.close();
+            }
+        }
+    }
+
+    private void setExternalPosition(final DefaultSingleCDockable dockable) {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gd = ge.getScreenDevices();
+        if (gd.length > 1) {
+            // dockable.setExternalizable(true);
+            Rectangle bound = WinUtil.getClosedScreenBound(WinUtil.getParentFrame(this).getBounds());
+            // LocationHint hint =
+            // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
+            // DefaultDockActionSource source = new DefaultDockActionSource(hint);
+            // source.add(setupDropDownMenu(viewer.getDockable()));
+            // source.addSeparator();
+
+            for (int i = 0; i < gd.length; i++) {
+                GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+                final Rectangle b = config.getBounds();
+                if (!b.contains(bound)) {
+                    Insets inset = toolkit.getScreenInsets(config);
+                    b.x += inset.left;
+                    b.y += inset.top;
+                    b.width -= (inset.left + inset.right);
+                    b.height -= (inset.top + inset.bottom);
+                    dockable.setDefaultLocation(ExtendedMode.EXTERNALIZED,
+                        CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
+
+                    // GuiExecutor.instance().execute(new Runnable() {
+                    //
+                    // @Override
+                    // public void run() {
+                    // if (dockable.isVisible()) {
+                    // dockable.setLocation(CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
+                    // UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+                    // dockable.setExtendedMode(ExtendedMode.MAXIMIZED);
+                    // UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+                    // }
+                    // }
+                    // });
+                    // source.add(new CloseAction(UIManager.DOCKING_CONTROLLER));
+                    break;
+                }
             }
         }
     }

@@ -49,6 +49,7 @@ import javax.imageio.stream.ImageInputStreamImpl;
 import javax.media.jai.JAI;
 import javax.media.jai.LookupTableJAI;
 import javax.media.jai.PlanarImage;
+import javax.media.jai.operator.AndConstDescriptor;
 import javax.media.jai.operator.NullDescriptor;
 
 import org.dcm4che.data.Attributes;
@@ -156,6 +157,8 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     private boolean banded = false;
 
     private int bitsStored;
+    private int bitsAllocated;
+    private int highBit;
     /**
      * Store the transfer syntax locally in case it gets modified to re-write the image
      */
@@ -219,8 +222,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     close();
                     return false;
                 }
-
-                hasPixel = header.getInt(Tag.BitsStored, header.getInt(Tag.BitsAllocated, 0)) > 0;
                 if (hasPixel) {
                     if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$ $NON-NLS-2$
                         // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
@@ -469,7 +470,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     private void writeOnlyinstance(Attributes header) {
         if (header != null) {
-            boolean signed = header.getInt(Tag.PixelRepresentation, 0) != 0;
+
             // Instance tags
             setTagNoNull(TagW.ImageType, DicomMediaUtils.getStringFromDicomElement(header, Tag.ImageType));
             setTagNoNull(TagW.ImageComments, header.getString(Tag.ImageComments));
@@ -501,6 +502,14 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionTime, null));
             setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
 
+            writeImageValues(header);
+            setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, header.getString(Tag.MIMETypeOfEncapsulatedDocument));
+            setTagNoNull(TagW.PixelDataProviderURL, header.getString(Tag.PixelDataProviderURL));
+        }
+    }
+
+    private void writeImageValues(Attributes header) {
+        if (hasPixel) {
             setTagNoNull(TagW.ImagePositionPatient,
                 DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagePositionPatient, null));
             setTagNoNull(TagW.ImageOrientationPatient,
@@ -510,14 +519,16 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 ImageOrientation
                     .makeImageOrientationLabelFromImageOrientationPatient((double[]) getTagValue(TagW.ImageOrientationPatient)));
 
-            // TODO should be coherent with image reader
-            int bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, 8);
-            bitsAllocated = (bitsAllocated <= 8) ? 8 : ((bitsAllocated <= 16) ? 16 : 32);
-            int bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, bitsAllocated);
+            bitsStored = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, 8);
+            bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, bitsStored);
+            highBit = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.HighBit, bitsStored - 1);
+            if (highBit >= bitsAllocated) {
+                highBit = bitsStored - 1;
+            }
+            int pixelRepresentation = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PixelRepresentation, 0);
             setTagNoNull(TagW.BitsAllocated, bitsAllocated);
             setTagNoNull(TagW.BitsStored, bitsStored);
-            setTagNoNull(TagW.PixelRepresentation,
-                DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PixelRepresentation, 0));
+            setTagNoNull(TagW.PixelRepresentation, pixelRepresentation);
 
             setTagNoNull(TagW.ImagerPixelSpacing,
                 DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.ImagerPixelSpacing, null));
@@ -537,17 +548,28 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
             setTagNoNull(TagW.Units, header.getString(Tag.Units));
 
-            setTagNoNull(TagW.SmallestImagePixelValue,
-                DicomMediaUtils.getIntPixelValue(header, Tag.SmallestImagePixelValue, signed, bitsStored));
-            setTagNoNull(TagW.LargestImagePixelValue,
-                DicomMediaUtils.getIntPixelValue(header, Tag.LargestImagePixelValue, signed, bitsStored));
+            setTagNoNull(TagW.SmallestImagePixelValue, DicomMediaUtils.getIntPixelValue(header,
+                Tag.SmallestImagePixelValue, pixelRepresentation != 0, bitsStored));
+            setTagNoNull(TagW.LargestImagePixelValue, DicomMediaUtils.getIntPixelValue(header,
+                Tag.LargestImagePixelValue, pixelRepresentation != 0, bitsStored));
             setTagNoNull(TagW.NumberOfFrames,
                 DicomMediaUtils.getIntegerFromDicomElement(header, Tag.NumberOfFrames, null));
             setTagNoNull(TagW.OverlayRows, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.OverlayRows, null));
 
             int samplesPerPixel = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
             setTagNoNull(TagW.SamplesPerPixel, samplesPerPixel);
-            String photometricInterpretation = header.getString(Tag.PhotometricInterpretation);
+            banded =
+                samplesPerPixel > 1
+                    && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0) != 0;
+            dataType =
+                bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT
+                    : DataBuffer.TYPE_USHORT;
+            if (bitsAllocated > 16 && samplesPerPixel == 1) {
+                dataType = DataBuffer.TYPE_INT;
+            }
+            String photometricInterpretation = header.getString(Tag.PhotometricInterpretation, "MONOCHROME2");
+            pmi = PhotometricInterpretation.fromString(photometricInterpretation);
+            setTagNoNull(TagW.PresentationLUTShape, header.getString(Tag.PresentationLUTShape));
             setTagNoNull(TagW.PhotometricInterpretation, photometricInterpretation);
             setTag(TagW.MonoChrome,
                 samplesPerPixel == 1 && !"PALETTE COLOR".equalsIgnoreCase(photometricInterpretation)); //$NON-NLS-1$
@@ -556,12 +578,43 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.Columns, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Columns, 0));
 
             setTagNoNull(TagW.PixelPaddingValue,
-                DicomMediaUtils.getIntPixelValue(header, Tag.PixelPaddingValue, signed, bitsStored));
-            setTagNoNull(TagW.PixelPaddingRangeLimit,
-                DicomMediaUtils.getIntPixelValue(header, Tag.PixelPaddingRangeLimit, signed, bitsStored));
+                DicomMediaUtils.getIntPixelValue(header, Tag.PixelPaddingValue, pixelRepresentation != 0, bitsStored));
+            setTagNoNull(TagW.PixelPaddingRangeLimit, DicomMediaUtils.getIntPixelValue(header,
+                Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
-            setTagNoNull(TagW.MIMETypeOfEncapsulatedDocument, header.getString(Tag.MIMETypeOfEncapsulatedDocument));
-            setTagNoNull(TagW.PixelDataProviderURL, header.getString(Tag.PixelDataProviderURL));
+            /*
+             * 
+             * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
+             * and Overlay Bit Position (60xx,0102) is always 0.
+             * 
+             * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
+             */
+            if (header.getInt(Tag.OverlayBitsAllocated, 0) > 1 && bitsStored < bitsAllocated
+                && dataType >= DataBuffer.TYPE_BYTE && dataType <= DataBuffer.TYPE_INT) {
+                int high = highBit + 1;
+                int val = (1 << high) - 1;
+                if (high > bitsStored) {
+                    val -= (1 << (high - bitsStored)) - 1;
+                }
+                /*
+                 * Set to 0 all bits upper than highBit and if lower than high-bitsStored (=> all bits outside
+                 * bitStored)
+                 */
+                setTagNoNull(TagW.OverlayBitMask, val);
+
+                // TODO need to extract overlay from pixel
+
+                if (high > bitsStored) {
+                    // Combine to the slope value
+                    Float slopeVal = (Float) tags.get(TagW.RescaleSlope);
+                    if (slopeVal == null) {
+                        slopeVal = 1.0f;
+                    }
+                    // Divide pixel value by (2 ^ rightBit) => remove right bits
+                    slopeVal /= 1 << (high - bitsStored);
+                    tags.put(TagW.RescaleSlope, slopeVal);
+                }
+            }
         }
     }
 
@@ -635,6 +688,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 img = ImageFiler.tileImage(buffer);
             } else {
                 img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
+            }
+
+            Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
+            if (overlayBitMask != null) {
+                // Set to 0 all bits outside bitStored
+                img = AndConstDescriptor.create(img, new int[] { overlayBitMask }, null);
             }
 
             // Convert images with PaletteColorModel to RGB model
@@ -1092,13 +1151,11 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         // | | | |XXXXXXXXXXXXXX|
         // |______________|______________|______________|______________|
         // 15 12 11 8 7 4 3 0
-        int allocated = (Integer) getTagValue(TagW.BitsAllocated);
-        int highBit;
+
         // TODO test with all decoders (works with raw decoder)
         if (source != null && dataType == DataBuffer.TYPE_SHORT
-            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT
-            && (highBit = getDicomObject().getInt(Tag.HighBit, allocated - 1) + 1) < allocated) {
-            source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit }, null);
+            && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT && (highBit + 1) < bitsAllocated) {
+            source = RectifySignedShortDataDescriptor.create(source, new int[] { highBit + 1 }, null);
         }
         return source;
     }
@@ -1172,8 +1229,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         FileUtil.safeClose(iis);
         iis = null;
         dis = null;
-        dataType = 0;
-        banded = false;
         tsuid = null;
 
         pixeldata = null;
@@ -1183,7 +1238,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             decompressor = null;
         }
         patchJpegLS = null;
-        pmi = null;
     }
 
     private void checkIndex(int frameIndex) {
@@ -1290,31 +1344,16 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             if (pixdata != null) {
                 tsuid = dis.getTransferSyntax();
                 numberOfFrame = ds.getInt(Tag.NumberOfFrames, 1);
+                hasPixel = ds.getInt(Tag.BitsStored, ds.getInt(Tag.BitsAllocated, 0)) > 0;
 
-                if (!tsuid.startsWith("1.2.840.10008.1.2.4.10")) {
+                if (readImageAfter && !tsuid.startsWith("1.2.840.10008.1.2.4.10") && hasPixel) {
 
-                    int width = ds.getInt(Tag.Columns, 0);
-                    int height = ds.getInt(Tag.Rows, 0);
-                    int samples = ds.getInt(Tag.SamplesPerPixel, 1);
-                    banded = samples > 1 && ds.getInt(Tag.PlanarConfiguration, 0) != 0;
-                    int allocated = ds.getInt(Tag.BitsAllocated, 8);
-                    bitsStored = ds.getInt(Tag.BitsStored, allocated);
-                    dataType =
-                        allocated <= 8 ? DataBuffer.TYPE_BYTE : ds.getInt(Tag.PixelRepresentation, 0) != 0
-                            ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
-                    if (allocated > 16 && samples == 1) {
-                        dataType = DataBuffer.TYPE_INT;
-                    }
-                    pmi =
-                        PhotometricInterpretation
-                            .fromString(ds.getString(Tag.PhotometricInterpretation, "MONOCHROME2"));
                     if (pixdata instanceof BulkData) {
-                        // Old way
-                        // if (numberOfFrame == 0) {
-                        // numberOfFrame = 1;
-                        // }
+                        int width = (Integer) getTagValue(TagW.Columns);
+                        int height = (Integer) getTagValue(TagW.Rows);
+                        int samples = (Integer) getTagValue(TagW.SamplesPerPixel);
                         iis.setByteOrder(ds.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-                        this.frameLength = pmi.frameLength(width, height, samples, allocated);
+                        this.frameLength = pmi.frameLength(width, height, samples, bitsAllocated);
                         this.pixeldata = (BulkData) pixdata;
                         // Handle JPIP
                     } else if (ds.getString(Tag.PixelDataProviderURL) != null) {

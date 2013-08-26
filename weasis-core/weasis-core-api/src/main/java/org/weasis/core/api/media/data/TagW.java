@@ -82,6 +82,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ShutterFinalShape = new TagW("Shutter Shape", TagType.Object); //$NON-NLS-1$
     public static final TagW ShutterRGBColor = new TagW("Shutter Color", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
+    public static final TagW OverlayBitMask = new TagW("Overlay Bit Mask", TagType.Integer); //$NON-NLS-1$
 
     // public static final TagW ModalityLUTable = new TagW("Modality Lookup Tables", TagType.Object);
     // public static final TagW VOILUTables = new TagW("VOI Lookup Tables", TagType.Object);
