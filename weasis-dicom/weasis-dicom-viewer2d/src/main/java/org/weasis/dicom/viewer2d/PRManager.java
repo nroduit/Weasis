@@ -163,7 +163,7 @@ public class PRManager {
                                 Tag.GraphicLayerRecommendedDisplayRGBValue, null));
 
                     Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
-                    ;
+
                     if (gos != null) {
                         for (Attributes go : gos) {
                             Graphic graphic;

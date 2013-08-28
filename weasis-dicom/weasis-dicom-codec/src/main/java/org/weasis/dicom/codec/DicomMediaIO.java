@@ -609,6 +609,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     Float slopeVal = (Float) tags.get(TagW.RescaleSlope);
                     if (slopeVal == null) {
                         slopeVal = 1.0f;
+                        Float ri = (Float) tags.get(TagW.RescaleIntercept);
+                        String rt = (String) tags.get(TagW.RescaleType);
+                        tags.put(TagW.RescaleIntercept, ri == null ? 0.0f : ri);
+                        tags.put(TagW.RescaleType, rt == null ? "US" : rt);
                     }
                     // Divide pixel value by (2 ^ rightBit) => remove right bits
                     slopeVal /= 1 << (high - bitsStored);
