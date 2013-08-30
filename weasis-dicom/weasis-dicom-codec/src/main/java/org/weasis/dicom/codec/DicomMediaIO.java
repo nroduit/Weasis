@@ -58,6 +58,7 @@ import org.dcm4che.data.Fragments;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
+import org.dcm4che.image.Overlays;
 import org.dcm4che.image.PaletteColorModel;
 import org.dcm4che.image.PhotometricInterpretation;
 import org.dcm4che.imageio.codec.ImageReaderFactory;
@@ -600,7 +601,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
              * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
              */
             if (header.getInt(Tag.OverlayBitsAllocated, 0) > 1 && bitsStored < bitsAllocated
-                && dataType >= DataBuffer.TYPE_BYTE && dataType <= DataBuffer.TYPE_INT) {
+                && dataType >= DataBuffer.TYPE_BYTE && dataType < DataBuffer.TYPE_INT) {
                 int high = highBit + 1;
                 int val = (1 << high) - 1;
                 if (high > bitsStored) {
@@ -612,13 +613,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                  */
                 setTagNoNull(TagW.OverlayBitMask, val);
 
-                // TODO need to extract overlay from pixel
-
                 if (high > bitsStored) {
                     // Combine to the slope value
                     Float slopeVal = (Float) tags.get(TagW.RescaleSlope);
                     if (slopeVal == null) {
                         slopeVal = 1.0f;
+                        // Set valid modality LUT values
                         Float ri = (Float) tags.get(TagW.RescaleIntercept);
                         String rt = (String) tags.get(TagW.RescaleType);
                         tags.put(TagW.RescaleIntercept, ri == null ? 0.0f : ri);
@@ -680,13 +680,13 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         // }
                     }
                 }
-                return getValidImage(buffer);
+                return getValidImage(buffer, media);
             }
         }
         return null;
     }
 
-    private PlanarImage getValidImage(RenderedImage buffer) {
+    private PlanarImage getValidImage(RenderedImage buffer, MediaElement<PlanarImage> media) {
         PlanarImage img = null;
         if (buffer != null) {
             // Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values
@@ -706,6 +706,18 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
             Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
             if (overlayBitMask != null) {
+                if (media.getTagValue(TagW.OverlayBurninData) == null) {
+                    Attributes ds = getDicomObject();
+                    int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
+                    byte[][] overlayData = new byte[overlayGroupOffsets.length][];
+                    Raster raster = buffer.getData();
+                    for (int i = 0; i < overlayGroupOffsets.length; i++) {
+                        overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
+                    }
+                    if (overlayGroupOffsets.length > 0) {
+                        setTagNoNull(TagW.OverlayBurninData, overlayData);
+                    }
+                }
                 // Set to 0 all bits outside bitStored
                 img = AndConstDescriptor.create(img, new int[] { overlayBitMask }, null);
             }

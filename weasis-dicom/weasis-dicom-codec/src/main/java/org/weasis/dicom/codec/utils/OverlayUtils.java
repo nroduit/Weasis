@@ -37,7 +37,6 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import javax.imageio.ImageReader;
 
@@ -45,8 +44,10 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.image.LookupTable;
 import org.dcm4che.image.LookupTableFactory;
+import org.dcm4che.image.Overlays;
 import org.dcm4che.image.StoredValue.Unsigned;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 
 /**
@@ -338,18 +339,28 @@ public class OverlayUtils {
         int height) throws IOException {
         Attributes ds = reader.getDicomObject();
 
+        WritableRaster raster = null;
+        byte[][] data = (byte[][]) imageElement.getTagValue(TagW.OverlayBurninData);
+        // if (data != null) {
+        // DataBufferByte dataBuffer = new DataBufferByte(data, data.length);
+        // raster = RasterFactory.createPackedRaster(dataBuffer, width, height, 1, null);
+        // }
+
         // long t1 = System.currentTimeMillis();
         IndexColorModel icm = new IndexColorModel(1, 2, icmColorValues, icmColorValues, icmColorValues, 0);
-        BufferedImage overBi = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY, icm);
-        // MultiPixelPackedSampleModel sampleModel = new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE, width,
-        // height,
-        // 1); // one
-        // TiledImage tiledImage = new TiledImage(0, 0, width, height, 0, 0, sampleModel, icm);
-        // WritableRaster wr = tiledImage.getWritableTile(0, 0);
+        BufferedImage overBi;
+        if (raster == null) {
+            overBi = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY, icm);
+        } else {
+            overBi = new BufferedImage(icm, raster, false, null);
+            // MultiPixelPackedSampleModel sampleModel = new MultiPixelPackedSampleModel(DataBuffer.TYPE_BYTE, width,
+            // height,
+            // 1); // one
+            // TiledImage tiledImage = new TiledImage(0, 0, width, height, 0, 0, sampleModel, icm);
+            // WritableRaster wr = tiledImage.getWritableTile(0, 0);
+        }
 
-        ArrayList<Integer> oldStyleOverlayPlanes = new ArrayList<Integer>();
-
-        for (int group = 0; group < 0x20; group += 2) {
+        for (int group = 0, k = 0; group < 0x20; group += 2) {
 
             int oBitPosition = getInt(ds, group, Tag.OverlayBitPosition, -1);
             int oRows = getInt(ds, group, Tag.OverlayRows, -1);
@@ -360,6 +371,7 @@ public class OverlayUtils {
             int oNumberOfFrames = getInt(ds, group, 0x60000015, 1);
             int oFrameStart = getInt(ds, group, 0x60000051, 1) - 1;
             int oFrameEnd = oFrameStart + oNumberOfFrames;
+            byte[] bb = null;
 
             if (oBitPosition == -1 && oBitsAllocated == -1 && oRows == -1 && oCols == -1) {
                 // log.trace("No overlay data associated with image for group {}", group);
@@ -372,9 +384,12 @@ public class OverlayUtils {
             }
 
             if ((oBitsAllocated != 1) && (oBitPosition != 0)) {
-                // log.debug("Overlay: {}  OldStyle bitPostion {}", group, oBitPosition);
-                oldStyleOverlayPlanes.add(oBitPosition);
-                continue;
+                if (data.length >= k) {
+                    bb = data[k];
+                    k++;
+                } else {
+                    continue;
+                }
             }
 
             if ("GR".indexOf(oType) < 0) { //$NON-NLS-1$
@@ -416,13 +431,15 @@ public class OverlayUtils {
             // log.debug("Overlay: {} numBits: {}", group, numBits);
             // log.debug("Overlay: {} numBytes: {}", group, numBytes);
 
-            byte[] bb = ds.getBytes(groupedTag(group, Tag.OverlayData));
-            // log.debug("Overlay: {} ByteBuffer: {}", group, bb);
-            // log.debug("Overlay: {} ByteBuffer ByteOrder: {}", group, (bb.order() == ByteOrder.BIG_ENDIAN) ?
-            // "BigEndian"
-            // : "LittleEndian");
-            // DataBufferByte db = new DataBufferByte(bb, bb.length);
-            // sampleModel.setDataElements(oX1, oY1, bb, db);
+            if (bb == null) {
+                bb = ds.getBytes(groupedTag(group, Tag.OverlayData));
+                // log.debug("Overlay: {} ByteBuffer: {}", group, bb);
+                // log.debug("Overlay: {} ByteBuffer ByteOrder: {}", group, (bb.order() == ByteOrder.BIG_ENDIAN) ?
+                // "BigEndian"
+                // : "LittleEndian");
+                // DataBufferByte db = new DataBufferByte(bb, bb.length);
+                // sampleModel.setDataElements(oX1, oY1, bb, db);
+            }
 
             DataBufferByte dataBufferByte = (DataBufferByte) overBi.getRaster().getDataBuffer();
             byte[] dest = dataBufferByte.getData();
@@ -465,56 +482,23 @@ public class OverlayUtils {
                 }
             }
         }
-
-        // Not use because the modality lut is automatically enlarge
-        // if (oldStyleOverlayPlanes.size() > 0) {
-        // try {
-        //
-        // // int bitsStored = ds.getInt(Tag.BitsStored, -1);
-        // // short overlayValue = (short) ((1 << bitsStored) - 1);
-        // PlanarImage source = imageElement.getImage();
-        // if (source != null) {
-        // int dataType = source.getSampleModel().getDataType();
-        // if (dataType == DataBuffer.TYPE_SHORT || dataType == DataBuffer.TYPE_USHORT) {
-        // int mask = Integer.MAX_VALUE;
-        // for (int i = 0, size = oldStyleOverlayPlanes.size(); i < size; i++) {
-        // int val = (1 << oldStyleOverlayPlanes.get(i));
-        // if (dataType == DataBuffer.TYPE_SHORT) {
-        // // TODO need to be validated (no test available)
-        // val = val - 32768;
-        // }
-        // if (val < mask) {
-        // mask = val;
-        // }
-        // }
-        //
-        // // get the image again, this time without windowing/maskpixeldata
-        // ImageReadParam param = reader.getDefaultReadParam();
-        // if (param instanceof DicomImageReadParam) {
-        // ((DicomImageReadParam) param).setAutoWindowing(false);
-        // }
-        //
-        // ParameterBlock pb = new ParameterBlock();
-        // pb.addSource(source);
-        // pb.add((double) imageElement.getMinValue());
-        // pb.add((double) (mask - 1));
-        //                        RenderedOp result = JAI.create("ThresholdToBin", pb, null); //$NON-NLS-1$
-        //
-        // // pb.add((double) (mask - 1));
-        // // RenderedOp result = JAI.create("binarize", pb, null);
-        // // pb = new ParameterBlock();
-        // // pb.addSource(result);
-        // // return JAI.create("NotBinary", pb);
-        // return result;
-        // } else {
-        // // log.warn("mergeOverlays(): data buffer type {} not supported", _buffer.getDataType());
-        // }
-        // }
-        // } catch (Exception e) {
-        // e.printStackTrace();
-        // // log.error("mergeOverlays(): ERROR", e);
-        // }
-        // }
         return overBi;
+    }
+
+    public static byte[] extractOverlay(int gg0000, Raster raster, Attributes attrs) {
+        if (attrs.getInt(Tag.OverlayBitsAllocated | gg0000, 1) == 1) {
+            return null;
+        }
+
+        int ovlyRows = attrs.getInt(Tag.OverlayRows | gg0000, 0);
+        int ovlyColumns = attrs.getInt(Tag.OverlayColumns | gg0000, 0);
+        int bitPosition = attrs.getInt(Tag.OverlayBitPosition | gg0000, 0);
+
+        int mask = 1 << bitPosition;
+        int length = ovlyRows * ovlyColumns;
+
+        byte[] ovlyData = new byte[(((length + 7) >>> 3) + 1) & (~1)];
+        Overlays.extractFromPixeldata(raster, mask, ovlyData, 0, length);
+        return ovlyData;
     }
 }

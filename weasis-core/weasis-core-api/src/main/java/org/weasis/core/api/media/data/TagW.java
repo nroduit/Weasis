@@ -52,8 +52,8 @@ public class TagW implements Transferable, Serializable {
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        String, StringArray, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, Integer, IntegerArray, Float,
-        FloatArray, Double, DoubleArray, Color, Thumbnail, Object, List, Array
+        String, StringArray, Text, URI, Sequence, Date, DateTime, Time, Period, Boolean, ByteArray, Integer,
+        IntegerArray, Float, FloatArray, Double, DoubleArray, Color, Thumbnail, Object, List, Array
 
     };
 
@@ -83,6 +83,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ShutterRGBColor = new TagW("Shutter Color", TagType.IntegerArray); //$NON-NLS-1$
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
     public static final TagW OverlayBitMask = new TagW("Overlay Bit Mask", TagType.Integer); //$NON-NLS-1$
+    public static final TagW OverlayBurninData = new TagW("Overlay Burnin Data", TagType.ByteArray); //$NON-NLS-1$
 
     // public static final TagW ModalityLUTable = new TagW("Modality Lookup Tables", TagType.Object);
     // public static final TagW VOILUTables = new TagW("VOI Lookup Tables", TagType.Object);
