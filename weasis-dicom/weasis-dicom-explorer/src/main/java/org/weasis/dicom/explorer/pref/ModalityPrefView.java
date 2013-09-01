@@ -136,7 +136,6 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
         fillMap(TagW.PixelPaddingValue);
         fillMap(TagW.NumberOfFrames);
         fillMap(TagW.PixelPaddingRangeLimit);
-        fillMap(TagW.OverlayRows);
 
         fillMap(TagW.SamplesPerPixel);
         fillMap(TagW.MonoChrome);

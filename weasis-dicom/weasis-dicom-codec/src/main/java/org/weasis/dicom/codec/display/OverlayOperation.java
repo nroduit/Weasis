@@ -19,12 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOperation;
 import org.weasis.core.api.image.CombineTwoImagesOperation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
+import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
 public class OverlayOperation extends AbstractOperation {
@@ -32,10 +35,12 @@ public class OverlayOperation extends AbstractOperation {
 
     public static final String name = Messages.getString("OverlayOperation.title"); //$NON-NLS-1$
 
+    @Override
     public String getOperationName() {
         return name;
     }
 
+    @Override
     public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
         Boolean overlay = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_OVERLAY.cmd());
         if (overlay == null) {
@@ -44,8 +49,15 @@ public class OverlayOperation extends AbstractOperation {
         } else if (overlay) {
             RenderedImage imgOverlay = null;
             ImageElement image = imageOperation.getImage();
-            Integer row = (Integer) image.getTagValue(TagW.OverlayRows);
-            if (row != null && row != 0 && image.getMediaReader() instanceof DicomMediaIO) {
+
+            boolean overlays = JMVUtils.getNULLtoFalse(image.getTagValue(TagW.HasOverlay));
+            if (!overlays) {
+                Object pr = imageOperation.getActionValue(ActionW.PR_STATE.cmd());
+                if (pr instanceof PRSpecialElement) {
+                    overlays = DicomMediaUtils.hasOverlay(((PRSpecialElement) pr).getMediaReader().getDicomObject());
+                }
+            }
+            if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
                 DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
                 try {
                     if (image.getKey() instanceof Integer) {
@@ -54,8 +66,8 @@ public class OverlayOperation extends AbstractOperation {
                         Integer width = (Integer) reader.getTagValue(TagW.Columns);
                         if (height != null && width != null) {
                             imgOverlay =
-                                PlanarImage.wrapRenderedImage(OverlayUtils.getOverlays(imageOperation.getImage(),
-                                    reader, frame, width, height));
+                                PlanarImage.wrapRenderedImage(OverlayUtils.getOverlays(imageOperation, reader, frame,
+                                    width, height));
                         }
                     }
                 } catch (IOException e) {

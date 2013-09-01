@@ -36,6 +36,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -416,6 +417,25 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 m.setPixelSize(prPixSize[0], prPixSize[1]);
                 actionsInView.remove(PresentationStateReader.TAG_OLD_PIX_SIZE);
             }
+
+            // Restore Modality LUT Sequence
+            if (actionsInView.containsKey(PresentationStateReader.TAG_OLD_ModalityLUTData)) {
+                m.setTag(TagW.ModalityLUTData, actionsInView.get(PresentationStateReader.TAG_OLD_ModalityLUTData));
+                actionsInView.remove(PresentationStateReader.TAG_OLD_ModalityLUTData);
+            } else {
+                if (actionsInView.containsKey(PresentationStateReader.TAG_OLD_RescaleSlope)) {
+                    m.setTag(TagW.RescaleSlope, actionsInView.get(PresentationStateReader.TAG_OLD_RescaleSlope));
+                    m.setTag(TagW.RescaleIntercept, actionsInView.get(PresentationStateReader.TAG_OLD_RescaleIntercept));
+                    m.setTag(TagW.RescaleType, actionsInView.get(PresentationStateReader.TAG_OLD_RescaleType));
+                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleSlope);
+                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleIntercept);
+                    actionsInView.remove(PresentationStateReader.TAG_OLD_RescaleType);
+                }
+            }
+
+            // Restore presets
+            actionsInView.remove(PresentationStateReader.PR_PRESETS);
+
             // Reset crop
             final Rectangle modelArea = getImageBounds(m);
             if (!modelArea.equals(getViewModel().getModelArea())) {
@@ -447,14 +467,37 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
+        HashMap<TagW, Object> tags = reader.getDicom().geTags();
+        // Set Modality LUT before creating presets
+        Object mLUT = tags.get(TagW.ModalityLUTData);
+        if (mLUT != null) {
+            actionsInView.put(PresentationStateReader.TAG_OLD_ModalityLUTData, img.getTagValue(TagW.ModalityLUTData));
+            img.setTag(TagW.ModalityLUTData, mLUT);
+        } else {
+            Object rs = tags.get(TagW.RescaleSlope);
+            Object ri = tags.get(TagW.RescaleIntercept);
+            Object rt = tags.get(TagW.RescaleType);
+            if (rs != null && ri != null && rt != null) {
+                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleSlope, img.getTagValue(TagW.RescaleSlope));
+                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleIntercept,
+                    img.getTagValue(TagW.RescaleIntercept));
+                actionsInView.put(PresentationStateReader.TAG_OLD_RescaleType, img.getTagValue(TagW.RescaleType));
+                img.setTag(TagW.RescaleSlope, rs);
+                img.setTag(TagW.RescaleIntercept, ri);
+                img.setTag(TagW.RescaleType, rt);
+            }
+        }
+
         PRManager.applyPresentationState(this, reader, img);
         actionsInView.put(ActionW.ROTATION.cmd(), reader.getTagValue(ActionW.ROTATION.cmd(), 0));
         actionsInView.put(ActionW.FLIP.cmd(), reader.getTagValue(ActionW.FLIP.cmd(), false));
 
-        PresetWindowLevel p = (PresetWindowLevel) reader.getTagValue(ActionW.PRESET.cmd(), null);
-        if (p != null) {
+        List<PresetWindowLevel> presets = (List<PresetWindowLevel>) reader.getTagValue(ActionW.PRESET.cmd(), null);
+        if (presets != null && presets.size() > 0) {
+            PresetWindowLevel p = presets.get(0);
             actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
+            actionsInView.put(PresentationStateReader.PR_PRESETS, presets);
             actionsInView.put(ActionW.PRESET.cmd(), p);
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
             actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);

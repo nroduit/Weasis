@@ -84,6 +84,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW ShutterPSValue = new TagW("Shutter PS Value", TagType.Integer); //$NON-NLS-1$
     public static final TagW OverlayBitMask = new TagW("Overlay Bit Mask", TagType.Integer); //$NON-NLS-1$
     public static final TagW OverlayBurninData = new TagW("Overlay Burnin Data", TagType.ByteArray); //$NON-NLS-1$
+    public static final TagW HasOverlay = new TagW("Overlay", TagType.Boolean); //$NON-NLS-1$
 
     // public static final TagW ModalityLUTable = new TagW("Modality Lookup Tables", TagType.Object);
     // public static final TagW VOILUTables = new TagW("VOI Lookup Tables", TagType.Object);
@@ -262,7 +263,6 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PhotometricInterpretation = new TagW(0x00280004,
         "Photometric Interpretation", TagType.String); //$NON-NLS-1$
 
-    public static final TagW OverlayRows = new TagW(0x60000010, "Overlay Rows", TagType.Integer); //$NON-NLS-1$
     public static final TagW Rows = new TagW(0x00280010, "Rows", TagType.Integer); //$NON-NLS-1$
     public static final TagW Columns = new TagW(0x00280011, "Columns", TagType.Integer); //$NON-NLS-1$
     public static final TagW BitsAllocated = new TagW(0x00280100, "Bits Allocated", TagType.Integer); //$NON-NLS-1$

@@ -18,7 +18,12 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PresentationStateReader {
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
+    public static final String PR_PRESETS = "pr.presets";
     public static final String TAG_OLD_PIX_SIZE = "original.pixel.spacing";
+    public static final String TAG_OLD_ModalityLUTData = "original.modality.lut";
+    public static final String TAG_OLD_RescaleSlope = "original.rescale.slope";
+    public static final String TAG_OLD_RescaleIntercept = "original.rescale.intercept";
+    public static final String TAG_OLD_RescaleType = "original.rescale.type";
     public static final String TAG_DICOM_LAYERS = "prSpecialElement.layers";
 
     private final PRSpecialElement prSpecialElement;
@@ -92,8 +97,7 @@ public class PresentationStateReader {
             List<PresetWindowLevel> presets =
                 PresetWindowLevel.getPresetCollection(img, prSpecialElement.geTags(), true);
             if (presets != null && presets.size() > 0) {
-                PresetWindowLevel p = presets.get(0);
-                tags.put(ActionW.PRESET.cmd(), p);
+                tags.put(ActionW.PRESET.cmd(), presets);
             }
         }
     }

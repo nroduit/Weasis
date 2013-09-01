@@ -565,7 +565,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 Tag.LargestImagePixelValue, pixelRepresentation != 0, bitsStored));
             setTagNoNull(TagW.NumberOfFrames,
                 DicomMediaUtils.getIntegerFromDicomElement(header, Tag.NumberOfFrames, null));
-            setTagNoNull(TagW.OverlayRows, DicomMediaUtils.getIntegerFromDicomElement(header, Tag.OverlayRows, null));
+            setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
 
             int samplesPerPixel = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
             setTagNoNull(TagW.SamplesPerPixel, samplesPerPixel);
@@ -915,18 +915,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     @Override
     public int getHeight(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        if (OverlayUtils.isOverlay(frameIndex)) {
-            return OverlayUtils.getOverlayHeight(getDicomObject(), frameIndex);
-        }
         return (Integer) getTagValue(TagW.Rows);
     }
 
     @Override
     public int getWidth(int frameIndex) throws IOException {
         checkIndex(frameIndex);
-        if (OverlayUtils.isOverlay(frameIndex)) {
-            return OverlayUtils.getOverlayWidth(getDicomObject(), frameIndex);
-        }
         return (Integer) getTagValue(TagW.Columns);
     }
 
@@ -1050,11 +1044,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     public BufferedImage read(int frameIndex, ImageReadParam param) throws IOException {
         readingImage = true;
         try {
-            if (OverlayUtils.isOverlay(frameIndex)) {
-                // String rgbs = (param != null) ? ((DicomImageReadParam) param).getOverlayRGB() : null;
-                return OverlayUtils.extractOverlay(getDicomObject(), frameIndex, this,
-                    createColorModel(8, DataBuffer.TYPE_BYTE));
-            }
             checkIndex(frameIndex);
             if (param == null) {
                 param = getDefaultReadParam();
@@ -1074,6 +1063,25 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             } else {
                 raster = (WritableRaster) readRaster(frameIndex, param);
             }
+
+            // ColorModel cm;
+            // if (pmi.isMonochrome()) {
+            // int[] overlayGroupOffsets = getActiveOverlayGroupOffsets(param);
+            // byte[][] overlayData = new byte[overlayGroupOffsets.length][];
+            // for (int i = 0; i < overlayGroupOffsets.length; i++) {
+            // overlayData[i] = extractOverlay(overlayGroupOffsets[i], raster);
+            // }
+            // cm = createColorModel(8, DataBuffer.TYPE_BYTE);
+            // SampleModel sm = createSampleModel(DataBuffer.TYPE_BYTE, false);
+            // raster = applyLUTs(raster, frameIndex, param, sm, 8);
+            // for (int i = 0; i < overlayGroupOffsets.length; i++) {
+            // applyOverlay(overlayGroupOffsets[i],
+            // raster, frameIndex, param, 8, overlayData[i]);
+            // }
+            // } else {
+            // cm = createColorModel(bitsStored, dataType);
+            // }
+
             ColorModel cm = createColorModel(bitsStored, dataType);
             return new BufferedImage(cm, raster, false, null);
         } finally {

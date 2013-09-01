@@ -79,6 +79,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
@@ -898,12 +899,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             (int) image.getMaxValue(pixelPadding), levelValue.intValue());
 
         List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
-        if (pr && presetList != null && preset != null && !presetList.contains(preset)) {
-            // Make a copy of the image list
-            ArrayList<PresetWindowLevel> newList = new ArrayList<PresetWindowLevel>(presetList.size() + 1);
-            newList.add(preset);
-            newList.addAll(presetList);
-            presetList = newList;
+        if (pr) {
+            List<PresetWindowLevel> prPresets =
+                (List<PresetWindowLevel>) view2d.getActionValue(PresentationStateReader.PR_PRESETS);
+            if (prPresets != null) {
+                presetList = prPresets;
+            }
         }
         presetAction.setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray());
         presetAction.setSelectedItemWithoutTriggerAction(preset);

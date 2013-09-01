@@ -405,6 +405,18 @@ public class DicomMediaUtils {
         return defaultValue;
     }
 
+    public static boolean hasOverlay(Attributes attrs) {
+        if (attrs != null) {
+            for (int i = 0; i < 16; i++) {
+                int gg0000 = i << 17;
+                if ((0xffff & (1 << i)) != 0 && attrs.containsValue(Tag.OverlayRows | gg0000)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static void buildLUTs(HashMap<TagW, Object> dicomTagMap) {
         if (dicomTagMap != null) {
 
@@ -550,15 +562,16 @@ public class DicomMediaUtils {
             /**
              * @see - Dicom Standard 2011 - PS 3.3 § C.11.6 Softcopy Presentation LUT Module
              * 
-             *      Presentation LUT Module is always implicitly specified to apply over the full range of output of
-             *      the preceding transformation, and it never selects a subset or superset of the that range
-             *      (unlike the VOI LUT).
+             *      Presentation LUT Module is always implicitly specified to apply over the full range of output of the
+             *      preceding transformation, and it never selects a subset or superset of the that range (unlike the
+             *      VOI LUT).
              */
             Attributes prLUTSequence = (Attributes) dicomTagMap.get(TagW.PresentationLUTSequence);
             if (prLUTSequence != null) {
                 DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsData, createLut(prLUTSequence, false));
                 DicomMediaUtils.setTag(dicomTagMap, TagW.PRLUTsExplanation,
                     getStringFromDicomElement(prLUTSequence, Tag.LUTExplanation)); // Optional Tag
+                // TODO implement PresentationLUTSequence renderer
             }
         }
     }
@@ -1027,6 +1040,7 @@ public class DicomMediaUtils {
             }
         }
     }
+
     public static void applyPrLutModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {
             // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
@@ -1045,9 +1059,11 @@ public class DicomMediaUtils {
             }
         }
     }
+
     public static void readPRLUTsModule(Attributes dcmItems, HashMap<TagW, Object> tagList) {
         if (dcmItems != null && tagList != null) {
-            // Modality LUT Module: already read from root DataSet
+            // Modality LUT Module
+            applyModalityLutModule(dcmItems, tagList, null);
 
             // VOI LUT Module
             applyVoiLutModule(dcmItems.getNestedDataset(Tag.SoftcopyVOILUTSequence), tagList,
