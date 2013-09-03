@@ -4,12 +4,12 @@
 	<parent>
 		<groupId>org.weasis</groupId>
 		<artifactId>weasis-parent</artifactId>
-		<version>1.16</version>
+		<version>1.17-SNAPSHOT</version>
 		<relativePath>weasis-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-framework</artifactId>
 	<!-- Remove "-SNAPSHOT" for release -->
-	<version>1.2.6</version>
+	<version>1.2.7-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>
