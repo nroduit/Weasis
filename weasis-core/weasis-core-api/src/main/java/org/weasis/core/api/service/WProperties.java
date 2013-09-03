@@ -19,10 +19,7 @@ import org.weasis.core.api.util.Base64;
 
 public class WProperties extends Properties {
 
-    private final BundleContext context;
-
     public WProperties() {
-        context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     }
 
     public void putIntProperty(String key, int value) {
@@ -99,7 +96,8 @@ public class WProperties extends Properties {
     public String getProperty(String key) {
         String value = super.getProperty(key);
         if (value == null) {
-            value = context.getProperty(key);
+            BundleContext bundleContext = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+            value = bundleContext.getProperty(key);
         }
         return value;
     }
