@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.weasis</groupId>
 		<artifactId>weasis-parent</artifactId>
-		<version>1.16-SNAPSHOT</version>
+		<version>1.16</version>
 		<relativePath>weasis-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-framework</artifactId>
