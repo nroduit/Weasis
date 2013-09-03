@@ -76,7 +76,7 @@ public final class FileUtil {
         String val = null;
         if (fileName != null) {
             // Force to remove html tags
-            val = fileName.replaceAll("\\<.*?>", "");
+            val = fileName.replaceAll("\\<.*?>", ""); //$NON-NLS-1$ //$NON-NLS-2$
         }
         return getValidFileName(val);
     }
