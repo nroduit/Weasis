@@ -759,16 +759,19 @@ public class DicomImageElement extends ImageElement {
         if (imgOr != null && imgOr.length == 6) {
             double[] pos = (double[]) getTagValue(TagW.ImagePositionPatient);
             if (pos != null && pos.length == 3) {
-                double[] spacing = { getPixelSize(), getPixelSize(), 0.0 };
                 Double sliceTickness = (Double) getTagValue(TagW.SliceThickness);
+                if (sliceTickness == null) {
+                    sliceTickness = getPixelSize();
+                }
+                double[] spacing = { getPixelSize(), getPixelSize(), sliceTickness };
                 Integer rows = (Integer) getTagValue(TagW.Rows);
                 Integer columns = (Integer) getTagValue(TagW.Columns);
                 if (rows != null && columns != null && rows > 0 && columns > 0) {
-                    // If no sliceTickness: set 0, sliceTickness is only use in IntersectVolume
+                    // SliceTickness is only use in IntersectVolume
                     // Multiply rows and columns by getZoomScale() to have square pixel image size
                     return new GeometryOfSlice(new double[] { imgOr[0], imgOr[1], imgOr[2] }, new double[] { imgOr[3],
-                        imgOr[4], imgOr[5] }, pos, spacing, sliceTickness == null ? 0.0 : sliceTickness, new double[] {
-                        rows * getRescaleY(), columns * getRescaleX(), 1 });
+                        imgOr[4], imgOr[5] }, pos, spacing, sliceTickness, new double[] { rows * getRescaleY(),
+                        columns * getRescaleX(), 1 });
                 }
             }
         }

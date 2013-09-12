@@ -229,14 +229,13 @@ public class GeometryOfSlice {
     }
 
     public final Point2D getImagePosition(Point3d p3) {
-        if (voxelSpacing.x < 0.00001) {
+        if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
             return null;
         }
-        double dx = (p3.x - tlhc.x) / voxelSpacing.x;
-        double dy = (p3.y - tlhc.y) / voxelSpacing.x;
-        double dz = (p3.z - tlhc.z) / voxelSpacing.x;
-        double ix = dx * row.x + dy * row.y + dz * row.z;
-        double iy = dx * column.y + dy * column.y + dz * column.z;
+        double ix = ((p3.x - tlhc.x) * row.x + (p3.y - tlhc.y) * row.y + (p3.z - tlhc.z) * row.z) / voxelSpacing.x;
+        double iy =
+            ((p3.x - tlhc.x) * column.x + (p3.y - tlhc.y) * column.y + (p3.z - tlhc.z) * column.z) / voxelSpacing.y;
+
         return new Point2D.Double(ix, iy);
     }
 

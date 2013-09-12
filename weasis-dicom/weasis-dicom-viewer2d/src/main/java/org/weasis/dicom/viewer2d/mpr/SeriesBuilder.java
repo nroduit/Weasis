@@ -72,6 +72,26 @@ public class SeriesBuilder {
                 if (or != null && or.length == 6) {
                     double[] pos = (double[]) img.getTagValue(TagW.ImagePositionPatient);
                     if (pos != null && pos.length == 3) {
+
+                        // Float tilt = (Float) img.getTagValue(TagW.GantryDetectorTilt);
+                        // if (tilt != null && tilt != 0.0f) {
+                        // GuiExecutor.instance().invokeAndWait(new Runnable() {
+                        //
+                        // @Override
+                        // public void run() {
+                        // int usrChoice =
+                        // JOptionPane
+                        // .showConfirmDialog(
+                        // view,
+                        // "Images have gantry tilt!\nThe image may be displayed incorrectly.\n Do you want to continue anyway?",
+                        // MPRFactory.NAME, JOptionPane.YES_NO_OPTION,
+                        // JOptionPane.QUESTION_MESSAGE);
+                        // if (usrChoice == JOptionPane.NO_OPTION) {
+                        // throw new IllegalStateException("Images have gantry tilt!");
+                        // }
+                        // }
+                        // });
+                        // }
                         HashMap<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
                         if (tags != null) {
                             SliceOrientation type1 = view.getSliceOrientation();
@@ -140,6 +160,9 @@ public class SeriesBuilder {
 
                             RawImage[] secSeries = new RawImage[height];
                             double sPixSize = writeBlock(secSeries, series, medias, rotate2, secView, thread);
+
+                            // Set the space between two slices for 3D geometry calculation
+                            // series.setTag(TagW.SliceThickness, sPixSize);
 
                             Vector3d vr = new Vector3d(or[0], or[1], or[2]);
                             Vector3d vc = new Vector3d(or[3], or[4], or[5]);
@@ -378,9 +401,11 @@ public class SeriesBuilder {
                         @Override
                         public void run() {
                             int usrChoice =
-                                JOptionPane.showConfirmDialog(view,
-                                    "Space between slices is unpredictable!\n Do you want to continue anyway?",
-                                    MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                JOptionPane
+                                    .showConfirmDialog(
+                                        view,
+                                        "Space between slices is unpredictable!\nThe image may be displayed incorrectly.\nDo you want to continue anyway?",
+                                        MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                             if (usrChoice == JOptionPane.NO_OPTION) {
                                 abort[0] = true;
                                 throw new IllegalStateException("Slices don't have 3D position!");
@@ -399,9 +424,12 @@ public class SeriesBuilder {
                                 @Override
                                 public void run() {
                                     int usrChoice =
-                                        JOptionPane.showConfirmDialog(view,
-                                            "Space between slices is not regular!\n Do you want to continue anyway?",
-                                            MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                        JOptionPane
+                                            .showConfirmDialog(
+                                                view,
+                                                "Space between slices is not regular!\nThe image may be displayed incorrectly.\n Do you want to continue anyway?",
+                                                MPRFactory.NAME, JOptionPane.YES_NO_OPTION,
+                                                JOptionPane.QUESTION_MESSAGE);
                                     if (usrChoice == JOptionPane.NO_OPTION) {
                                         abort[0] = true;
                                         throw new IllegalStateException("Space between slices is not regular!");
@@ -507,7 +535,7 @@ public class SeriesBuilder {
                 * Math.cos(angle) + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
         vDst.y =
             axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.y
-                * Math.cos(angle) + (axis.z * vSrc.x + axis.x * vSrc.z) * Math.sin(angle);
+                * Math.cos(angle) + (axis.z * vSrc.x - axis.x * vSrc.z) * Math.sin(angle);
         vDst.z =
             axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle)) + vSrc.z
                 * Math.cos(angle) + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);

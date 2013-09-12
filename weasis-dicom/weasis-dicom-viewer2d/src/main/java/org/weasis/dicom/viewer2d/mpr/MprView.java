@@ -100,6 +100,8 @@ public class MprView extends View2d {
                     if (val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
                         Point3d p3 = this.getImage().getSliceGeometry().getPosition(p);
+                        // Inverse function
+                        // Point2D p2d = this.getImage().getSliceGeometry().getImagePosition(p3);
                         // double [] xxx = (double [])this.getImage().getTagValue(TagW.SlicePosition);
                         // System.out.println(p3.x+","+p3.y+","+p3.z+","+xxx[0]+","+xxx[1]+","+xxx[2]);
                         ImageViewerPlugin<DicomImageElement> container = this.eventManager.getSelectedView2dContainer();
@@ -160,7 +162,7 @@ public class MprView extends View2d {
                 Point2D p = sliceGeometry.getImagePosition(p3);
                 Tuple3d dimensions = sliceGeometry.getDimensions();
                 boolean axial = SliceOrientation.AXIAL.equals(this.getSliceOrientation());
-                double y = axial ? p.getY() - p.getX() : p.getY();
+                double y = p.getY();
                 Point2D centerPt = new Point2D.Double(p.getX(), y);
 
                 List<Point2D.Double> pts = new ArrayList<Point2D.Double>();
