@@ -262,15 +262,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             if (sameOrigin) {
                 int min = Integer.MAX_VALUE;
-                MediaSeries base = seriesList.get(0);
-                for (MediaSeries series : seriesList) {
+                MediaSeries<? extends MediaElement<?>> base = seriesList.get(0);
+                for (MediaSeries<? extends MediaElement<?>> series : seriesList) {
                     Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
                     if (splitNb != null && min > splitNb) {
                         min = splitNb;
                         base = series;
                     }
                 }
-                for (MediaSeries series : seriesList) {
+                for (MediaSeries<? extends MediaElement<?>> series : seriesList) {
                     if (series != base) {
                         base.addAll((Collection) series.getMedias(null, null));
                         removeSeries(series);
@@ -666,6 +666,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 continue;
             }
             if (tag != null && !tag.equals(tag2)) {
+                if (TagW.ImageOrientationPlane.equals(tagElement)) {
+                    String val = (String) firstMedia.getTagValue(TagW.ImageType);
+                    // Exclude images that are MIP in different directions.
+                    if (val != null && val.contains("PROJECTION")) {
+                        continue;
+                    }
+                }
                 return false;
             }
         }
