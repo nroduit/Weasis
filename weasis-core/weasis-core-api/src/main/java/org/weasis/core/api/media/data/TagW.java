@@ -253,6 +253,8 @@ public class TagW implements Transferable, Serializable {
     public static final TagW StackID = new TagW(0x00209056, "Stack ID", TagType.String, 4); //$NON-NLS-1$
     public static final TagW FrameAcquisitionNumber = new TagW(0x00209156,
         "Frame Acquisition Number", TagType.Integer, 4); //$NON-NLS-1$
+    public static final TagW TemporalPositionIndex =
+        new TagW(0x00209128, "Temporal Position Index", TagType.Integer, 4); //$NON-NLS-1$
 
     public static final TagW NumberOfFrames = new TagW(0x00280008, "Number of Frames", TagType.Integer); //$NON-NLS-1$
     public static final TagW PixelPaddingValue = new TagW(0x00280120, "Pixel Padding Value", TagType.Integer); //$NON-NLS-1$

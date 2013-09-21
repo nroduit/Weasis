@@ -89,7 +89,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
     private final TagW[] multiframeSplittingRules = new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType,
-        TagW.FrameAcquisitionNumber, TagW.StackID };
+        TagW.FrameAcquisitionNumber, TagW.StackID, TagW.TemporalPositionIndex };
     private final HashMap<Modality, TagW[]> splittingRules = new HashMap<Modality, TagW[]>();
 
     public DicomModel() {

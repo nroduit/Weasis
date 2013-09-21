@@ -878,6 +878,8 @@ public class DicomMediaUtils {
                 setTagNoNull(tagList, TagW.StackID, macroFrameContent.getString(Tag.StackID));
                 setTagNoNull(tagList, TagW.InstanceNumber,
                     getIntegerFromDicomElement(macroFrameContent, Tag.InStackPositionNumber, null));
+                setTagNoNull(tagList, TagW.TemporalPositionIndex,
+                    getIntegerFromDicomElement(macroFrameContent, Tag.TemporalPositionIndex, null));
             }
 
             /**
