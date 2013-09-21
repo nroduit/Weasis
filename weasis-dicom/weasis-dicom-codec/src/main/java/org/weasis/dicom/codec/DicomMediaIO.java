@@ -1146,7 +1146,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     // 1.0f);
                 } else {
                     ImageReader reader = initRawImageReader();
-                    bi = reader.readAsRenderedImage(0, param);
+                    bi = reader.readAsRenderedImage(frameIndex, param);
                 }
             }
             return validateSignedShortDataBuffer(bi);
