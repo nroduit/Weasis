@@ -73,7 +73,7 @@ public abstract class AbstractProperties {
         System.setProperty("weasis.tmp.dir", APP_TEMP_DIR.getAbsolutePath());
         try {
             // Clean temp folder, necessary when the application has crashed.
-            FileUtil.deleteDirectoryContents(APP_TEMP_DIR);
+            FileUtil.deleteDirectoryContents(APP_TEMP_DIR, 3, 0);
         } catch (Exception e1) {
         }
     }

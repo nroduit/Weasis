@@ -40,6 +40,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                     DefaultView2d selView = container.getSelectedImagePane();
                     if (selView != null) {
                         MediaSeries s = selView.getSeries();
+                        // Requires at least 5 images to build the MPR views
                         if (s != null && s.size(null) >= 5) {
                             DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
                             if (model instanceof DicomModel) {

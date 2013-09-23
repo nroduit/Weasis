@@ -319,7 +319,7 @@ public class WeasisLauncher {
                         // Clean temp folder.
                         String dir = System.getProperty("weasis.tmp.dir");
                         if (dir != null) {
-                            FileUtil.deleteDirectoryContents(new File(dir));
+                            FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
                         }
                         // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
                         Timer timer = new Timer();

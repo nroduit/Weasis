@@ -122,24 +122,33 @@ public final class FileUtil {
         throw new IllegalStateException("Failed to create directory"); //$NON-NLS-1$
     }
 
-    public static void deleteDirectoryContents(final File dir) {
+    public static final void deleteDirectoryContents(final File dir, int deleteDirLevel, int level) {
         if ((dir == null) || !dir.isDirectory()) {
             return;
         }
         final File[] files = dir.listFiles();
         if (files != null) {
-            for (File f : files) {
+            for (final File f : files) {
                 if (f.isDirectory()) {
-                    deleteDirectoryContents(f);
+                    deleteDirectoryContents(f, deleteDirLevel, level + 1);
                 } else {
                     try {
                         if (!f.delete()) {
-                            LOGGER.info("Cannot delete {}", f.getPath()); //$NON-NLS-1$
+                            LOGGER.warn("Cannot delete {}", f.getPath()); //$NON-NLS-1$
                         }
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage());
                     }
                 }
+            }
+        }
+        if (level >= deleteDirLevel) {
+            try {
+                if (!dir.delete()) {
+                    LOGGER.warn("Cannot delete {}", dir.getPath()); //$NON-NLS-1$
+                }
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage());
             }
         }
     }

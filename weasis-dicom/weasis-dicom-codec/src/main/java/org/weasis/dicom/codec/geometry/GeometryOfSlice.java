@@ -221,7 +221,9 @@ public class GeometryOfSlice {
     }
 
     public final Point3d getPosition(Point2D p) {
-        return new Point3d(row.x * voxelSpacing.x * p.getX() + column.x * voxelSpacing.y * p.getY() + tlhc.x,
+        return new Point3d(
+
+        row.x * voxelSpacing.x * p.getX() + column.x * voxelSpacing.y * p.getY() + tlhc.x,
 
         row.y * voxelSpacing.x * p.getX() + column.y * voxelSpacing.y * p.getY() + tlhc.y,
 

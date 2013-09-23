@@ -42,7 +42,7 @@ public class FileUtil {
         }
     }
 
-    public static final void deleteDirectoryContents(final File dir) {
+    public static final void deleteDirectoryContents(final File dir, int deleteDirLevel, int level) {
         if ((dir == null) || !dir.isDirectory()) {
             return;
         }
@@ -50,7 +50,7 @@ public class FileUtil {
         if (files != null) {
             for (final File f : files) {
                 if (f.isDirectory()) {
-                    deleteDirectoryContents(f);
+                    deleteDirectoryContents(f, deleteDirLevel, level + 1);
                 } else {
                     try {
                         f.delete();
@@ -58,6 +58,13 @@ public class FileUtil {
                         // Do nothing, wait next start to delete it
                     }
                 }
+            }
+        }
+        if (level >= deleteDirLevel) {
+            try {
+                dir.delete();
+            } catch (Exception e) {
+                // Do nothing, wait next start to delete it
             }
         }
     }
