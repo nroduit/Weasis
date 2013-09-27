@@ -208,6 +208,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     public boolean isReadableDicom() {
         if (UNREADABLE.equals(mimeType)) {
+            // Return true only to display the error message in the view
             return true;
         }
         if (uri == null && dcmMetadata == null) {
@@ -216,15 +217,19 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
         if (tags.size() == 0) {
             try {
-                Attributes header = getDicomObject();
+                DicomMetaData md = readMetaData(false);
+                Attributes fmi = md.getFileMetaInformation();
+                Attributes header = md.getAttributes();
                 // Exclude DICOMDIR
-                if (header == null || header.getString(Tag.MediaStorageSOPClassUID, "").equals("1.2.840.10008.1.3.10")) { //$NON-NLS-1$ //$NON-NLS-2$
+                String mediaStorageSOPClassUID = fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
+                if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) { //$NON-NLS-1$ //$NON-NLS-2$
                     mimeType = UNREADABLE;
                     close();
                     return false;
                 }
                 if (hasPixel) {
-                    if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$ $NON-NLS-2$
+                    String ts = fmi == null ? null : fmi.getString(Tag.TransferSyntaxUID);
+                    if (ts != null && ts.startsWith("1.2.840.10008.1.2.4.10")) { //$NON-NLS-1$ $NON-NLS-2$
                         // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
                         // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
                         // MPEG4 AVC/H.264 1.2.840.10008.1.2.4.102
@@ -243,11 +248,15 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     }
                 }
 
-                writeInstanceTags(header);
+                writeInstanceTags(fmi, header);
 
             } catch (Throwable t) {
                 mimeType = UNREADABLE;
-                LOGGER.warn("", t); //$NON-NLS-1$
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.error("Cannot read DICOM:", t);
+                } else {
+                    LOGGER.error(t.getMessage());
+                }
                 close();
                 return false;
             }
@@ -380,18 +389,18 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             group.setTagNoNull(TagW.PatientName, getTagValue(TagW.PatientName));
             group.setTagNoNull(TagW.StudyDescription, header.getString(Tag.StudyDescription));
 
-            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-                MediaElement[] elements = getMediaElement();
-                if (elements != null) {
-                    for (MediaElement m : elements) {
-                        m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
-                    }
-                }
-            }
+            //            if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+            // MediaElement[] elements = getMediaElement();
+            // if (elements != null) {
+            // for (MediaElement m : elements) {
+            // m.setTag(TagW.ExplorerModel, group.getTagValue(TagW.ExplorerModel));
+            // }
+            // }
+            // }
         }
     }
 
-    private void writeInstanceTags(Attributes header) {
+    private void writeInstanceTags(Attributes fmi, Attributes header) {
         if (tags.size() > 0 || header == null) {
             return;
         }
@@ -413,6 +422,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         setTag(TagW.InstanceNumber,
             DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, TagW.AppID.incrementAndGet()));
         setTag(TagW.SOPInstanceUID, header.getString(Tag.SOPInstanceUID, getTagValue(TagW.InstanceNumber).toString()));
+        if (fmi != null) {
+            setTagNoNull(TagW.TransferSyntaxUID, fmi.getString(Tag.TransferSyntaxUID));
+        }
         // -------- End of Mandatory Tags --------
 
         writeOnlyinstance(header);
@@ -477,7 +489,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.ImageComments, header.getString(Tag.ImageComments));
             setTagNoNull(TagW.ImageLaterality, header.getString(Tag.ImageLaterality, header.getString(Tag.Laterality)));
             setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
-            setTagNoNull(TagW.TransferSyntaxUID, header.getString(Tag.TransferSyntaxUID));
             setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
             setTagNoNull(TagW.ScanningSequence, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));
             setTagNoNull(TagW.SequenceVariant, DicomMediaUtils.getStringFromDicomElement(header, Tag.SequenceVariant));
@@ -654,32 +665,32 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 // read as tiled rendered image
                 LOGGER.debug("read dicom image frame: {} sopUID: {}", frame, tags.get(TagW.SOPInstanceUID)); //$NON-NLS-1$
                 RenderedImage buffer = null;
-                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
-                    // if (jpipReader == null) {
-                    // // TODO change JPIP reader
-                    // // ImageReaderFactory f = ImageReaderFactory.getInstance();
-                    // // jpipReader = f.getReaderForTransferSyntax(tsuid);
-                    // }
-                    // MediaElement[] elements = getMediaElement();
-                    // if (elements != null && elements.length > frame) {
-                    // jpipReader.setInput(elements);
-                    // buffer = jpipReader.readAsRenderedImage(frame, null);
-                    // }
-                } else {
-                    String path = (String) media.getTagValue(TagW.TiledImagePath);
-                    if (StringUtil.hasText(path)) {
-                        buffer = ImageFiler.readTiledCacheImage(new File(path));
-                    }
-                    if (buffer == null) {
-                        buffer = readAsRenderedImage(frame, null);
-
-                        // File file = ImageFiler.cacheTiledImage(getValidImage(buffer), media);
-                        // if (file != null) {
-                        // System.gc();
-                        // buffer = ImageFiler.readTiledCacheImage(file);
-                        // }
-                    }
+                //                if ("1.2.840.10008.1.2.4.94".equals(tsuid)) { //$NON-NLS-1$
+                // if (jpipReader == null) {
+                // // TODO change JPIP reader
+                // // ImageReaderFactory f = ImageReaderFactory.getInstance();
+                // // jpipReader = f.getReaderForTransferSyntax(tsuid);
+                // }
+                // MediaElement[] elements = getMediaElement();
+                // if (elements != null && elements.length > frame) {
+                // jpipReader.setInput(elements);
+                // buffer = jpipReader.readAsRenderedImage(frame, null);
+                // }
+                // } else {
+                String path = (String) media.getTagValue(TagW.TiledImagePath);
+                if (StringUtil.hasText(path)) {
+                    buffer = ImageFiler.readTiledCacheImage(new File(path));
                 }
+                if (buffer == null) {
+                    buffer = readAsRenderedImage(frame, null);
+
+                    // File file = ImageFiler.cacheTiledImage(getValidImage(buffer), media);
+                    // if (file != null) {
+                    // System.gc();
+                    // buffer = ImageFiler.readTiledCacheImage(file);
+                    // }
+                }
+                // }
                 return getValidImage(buffer, media);
             }
         }
@@ -877,26 +888,20 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     public String[] getReaderDescription() {
         String[] desc = new String[3];
         desc[0] = "DICOM Codec: " + DicomCodec.NAME; //$NON-NLS-1$
-        ImageReader imgReader = null;
-        try {
-            imgReader = decompressor;
-            // imgReader =
-            // ImageReaderFactory.getInstance().getReaderForTransferSyntax(
-            // (String) getTagValue(TagW.TransferSyntaxUID));
-        } catch (Exception e1) {
-            // Do nothing
-        }
-        if (imgReader != null) {
-            desc[1] = "Image Reader Class: " + imgReader.getClass().getName(); //$NON-NLS-1$
+        if (decompressor != null) {
+            desc[1] = "Image Reader Class: " + decompressor.getClass().getName(); //$NON-NLS-1$
             try {
-                desc[2] = "Image Format: " + imgReader.getFormatName(); //$NON-NLS-1$
+                desc[2] = "Image Format: " + decompressor.getFormatName(); //$NON-NLS-1$
             } catch (IOException e) {
                 desc[2] = "Image Format: unknown"; //$NON-NLS-1$
             }
-
         }
         if (desc[1] == null) {
-            desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + tsuid; //$NON-NLS-1$
+            String ts = tsuid;
+            if (ts == null) {
+                ts = NO_VALUE;
+            }
+            desc[1] = Messages.getString("DicomMediaIO.msg_no_reader") + ts; //$NON-NLS-1$
         }
         return desc;
     }
@@ -1361,6 +1366,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             // dis.setURI("java:iis"); // avoid copy of pixeldata to temporary file
             Attributes fmi = dis.readFileMetaInformation();
             Attributes ds = dis.readDataset(-1, -1);
+            if (fmi == null) {
+                fmi = ds.createFileMetaInformation(dis.getTransferSyntax());
+            }
             DicomMetaData metadata = new DicomMetaData(fmi, ds);
             Object pixdata = ds.getValue(Tag.PixelData, pixeldataVR);
 

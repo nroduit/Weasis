@@ -13,6 +13,7 @@ package org.weasis.dicom.explorer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -37,7 +38,10 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.ElementDictionary;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.VR;
+import org.dcm4che.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che.util.TagUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
@@ -55,6 +59,8 @@ import org.weasis.dicom.codec.DicomMediaIO;
 
 public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
+
     private static final TagW[] PATIENT = { TagW.PatientName, TagW.PatientID, TagW.IssuerOfPatientID, TagW.PatientSex,
         TagW.PatientBirthDate };
     private static final TagW[] STATION = { TagW.Manufacturer, TagW.ManufacturerModelName, TagW.StationName, };
@@ -69,13 +75,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private static final TagW[] IMAGE_PLANE = { TagW.PixelSpacing, TagW.SliceLocation, TagW.SliceThickness };
     private static final TagW[] IMAGE_ACQ = { TagW.KVP, TagW.ContrastBolusAgent };
 
-    private static final ThreadLocal<char[]> cbuf = new ThreadLocal<char[]>() {
-
-        @Override
-        protected char[] initialValue() {
-            return new char[96];
-        }
-    };
     private final JScrollPane allPane = new JScrollPane();
     private final JScrollPane limitedPane = new JScrollPane();
     private final JTextPane jTextPane1 = new JTextPane();
@@ -169,12 +168,16 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (media != null) {
             MediaReader loader = media.getMediaReader();
             if (loader instanceof DicomMediaIO) {
-                Attributes dcmObj = ((DicomMediaIO) loader).getDicomObject();
-                int[] tags = dcmObj.tags();
-                for (int tag : tags) {
-                    printElement(dcmObj, tag, listModel);
+                DicomMetaData metaData = null;
+                try {
+                    metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
+                } catch (IOException e) {
+                    LOGGER.error(e.getMessage());
                 }
-                // System.out.println(dcmObj.toString(1024, 150));
+                if (metaData != null) {
+                    printAttribute(metaData.getFileMetaInformation(), listModel);
+                    printAttribute(metaData.getAttributes(), listModel);
+                }
             }
         }
 
@@ -182,6 +185,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         jListElement.setLayoutOrientation(JList.VERTICAL);
         jListElement.setBorder(new EmptyBorder(5, 5, 5, 5));
         allPane.setViewportView(jListElement);
+    }
+
+    private static void printAttribute(Attributes dcmObj, DefaultListModel listModel) {
+        if (dcmObj != null) {
+            int[] tags = dcmObj.tags();
+            for (int tag : tags) {
+                printElement(dcmObj, tag, listModel);
+            }
+        }
     }
 
     private static void printElement(Attributes dcmObj, int tag, DefaultListModel listModel) {
@@ -199,7 +211,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
         buf.append(word);
         buf.append(": ");
-        String[] value = dcmObj.getStrings(privateCreator, tag);
+
         int level = dcmObj.getLevel();
         if (level > 0) {
             buf.insert(0, "-->");
@@ -207,19 +219,32 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         for (int i = 1; i < level; i++) {
             buf.insert(0, "--");
         }
-        if (value != null && value.length > 0) {
-            buf.append(value[0]);
-            for (int i = 1; i < value.length; i++) {
-                buf.append("\\");
-                buf.append(value[i]);
+
+        Sequence seq = dcmObj.getSequence(tag);
+        if (seq != null) {
+            if (seq.size() > 0) {
+                printSequence(seq, listModel, buf);
+            } else {
+                listModel.addElement(buf.toString());
             }
-            if (buf.length() > 256) {
-                buf.setLength(253);
-                buf.append("...");
+        } else {
+            if (vr.isXMLBase64()) {
+                buf.append("binary data");
+            } else {
+                String[] value = dcmObj.getStrings(privateCreator, tag);
+                if (value != null && value.length > 0) {
+                    buf.append(value[0]);
+                    for (int i = 1; i < value.length; i++) {
+                        buf.append("\\");
+                        buf.append(value[i]);
+                    }
+                    if (buf.length() > 256) {
+                        buf.setLength(253);
+                        buf.append("...");
+                    }
+                }
             }
             listModel.addElement(buf.toString());
-        } else {
-            printSequence(dcmObj.getSequence(tag), listModel, buf);
         }
     }
 
