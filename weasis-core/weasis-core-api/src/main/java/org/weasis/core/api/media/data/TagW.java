@@ -228,6 +228,12 @@ public class TagW implements Transferable, Serializable {
     public static final TagW PixelIntensityRelationship = new TagW(0x00281040,
         "Pixel Intensity Relationship", TagType.String); //$NON-NLS-1$
 
+    public static final TagW LossyImageCompression = new TagW(0x00282110, "Lossy Image Compression", TagType.String); //$NON-NLS-1$
+    public static final TagW LossyImageCompressionRatio = new TagW(0x00282112,
+        "Lossy Image Compression Ratio", TagType.DoubleArray); //$NON-NLS-1$
+    public static final TagW LossyImageCompressionMethod = new TagW(0x00282114,
+        "Lossy Image Compression Method", TagType.StringArray); //$NON-NLS-1$
+
     // Only a single Item shall be included in this sequence
     public static final TagW PresentationLUTSequence = new TagW(0x20500010, "Presentation LUT Sequence",
         TagType.Sequence);

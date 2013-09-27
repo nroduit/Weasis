@@ -211,21 +211,35 @@ public class InfoLayer implements AnnotationsLayer {
             drawLUT(g2, bound, midfontHeight);
             // drawLUTgraph(g2, bound, midfontHeight);
         }
-        // if (getDisplayPreferences(IMAGE_ORIENTATION)) {
-        // For image Orientation and compression
+
         if (dcm != null) {
+            /*
+             * IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
+             * 
+             * Whether or not lossy compression has been applied, derived from Lossy Image 990 Compression (0028,2110),
+             * and if so, the value of Lossy Image Compression Ratio (0028,2112) and Lossy Image Compression Method
+             * (0028,2114), if present (as per FDA Guidance for the Submission Of Premarket Notifications for Medical
+             * Image Management Devices, July 27, 2000).
+             */
             drawY -= fontHeight;
-            String tsuid = getLossyTransferSyntaxUID((String) dcm.getTagValue(TagW.TransferSyntaxUID));
-            if (tsuid != null) {
-                Integer rate = (Integer) view2DPane.getSeries().getTagValue(TagW.WadoCompressionRate);
-                GraphicLabel.paintColorFontOutline(g2, Messages.getString("InfoLayer.lossy") //$NON-NLS-1$
-                    + " " //$NON-NLS-1$
-                    + tsuid + ((rate == null || rate < 1) ? "" : " " + rate + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + Messages.getString("InfoLayer.percent_symb")), border, drawY, Color.RED); //$NON-NLS-1$ 
+            if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) {
+                double[] rates = (double[]) dcm.getTagValue(TagW.LossyImageCompressionRatio);
+                String[] methods = (String[]) dcm.getTagValue(TagW.LossyImageCompressionMethod);
+                StringBuffer buf = new StringBuffer(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
+                if (rates != null && rates.length > 0) {
+                    if (methods != null && methods.length > 0) {
+                        buf.append(methods[0]);
+                    }
+                    buf.append(" [");
+                    buf.append((int) rates[0]);
+                    buf.append(":1");
+                    buf.append(']');
+                }
+
+                GraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
                 drawY -= fontHeight;
             }
         }
-        // }
 
         if (getDisplayPreferences(PIXEL)) {
             String str = Messages.getString("InfoLayer.pixel") + pixelInfo; //$NON-NLS-1$
@@ -497,24 +511,6 @@ public class InfoLayer implements AnnotationsLayer {
                 }
             }
         }
-    }
-
-    private String getLossyTransferSyntaxUID(String tsuid) {
-        if (tsuid != null) {
-            if ("1.2.840.10008.1.2.4.50".equals(tsuid)) { //$NON-NLS-1$
-                return "JPEG Baseline"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.51".equals(tsuid)) { //$NON-NLS-1$
-                return "JPEG Extended"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.81".equals(tsuid)) { //$NON-NLS-1$
-                return "JPEG-LS (Near-Lossless)"; //$NON-NLS-1$
-            }
-            if ("1.2.840.10008.1.2.4.91".equals(tsuid)) { //$NON-NLS-1$
-                return "JPEG 2000"; //$NON-NLS-1$
-            }
-        }
-        return null;
     }
 
     private Object getTagValue(TagW tag, MediaSeriesGroup patient, MediaSeriesGroup study, Series series,

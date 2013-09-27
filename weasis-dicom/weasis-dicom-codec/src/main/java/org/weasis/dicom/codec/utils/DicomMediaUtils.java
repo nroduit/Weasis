@@ -684,7 +684,7 @@ public class DicomMediaUtils {
             buffer.append(TagW.dicomformatDate.format(birthdate).toString());
         }
         if (patientName != null) {
-            buffer.append(patientName);
+            buffer.append(patientName.toUpperCase());
         }
 
         return buffer.toString();

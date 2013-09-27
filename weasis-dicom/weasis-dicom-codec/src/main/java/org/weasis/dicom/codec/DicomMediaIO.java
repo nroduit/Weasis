@@ -604,6 +604,12 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.PixelPaddingRangeLimit, DicomMediaUtils.getIntPixelValue(header,
                 Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
+            setTagNoNull(TagW.LossyImageCompression, header.getString(Tag.LossyImageCompression));
+            setTagNoNull(TagW.LossyImageCompressionRatio,
+                DicomMediaUtils.getDoubleArrayFromDicomElement(header, Tag.LossyImageCompressionRatio, null));
+            setTagNoNull(TagW.LossyImageCompressionMethod,
+                DicomMediaUtils.getStringArrayFromDicomElement(header, Tag.LossyImageCompressionMethod));
+
             /*
              * 
              * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
