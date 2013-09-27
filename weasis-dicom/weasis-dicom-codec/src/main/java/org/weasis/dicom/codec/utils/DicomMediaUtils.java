@@ -663,20 +663,30 @@ public class DicomMediaUtils {
 
     public static String buildPatientPseudoUID(String patientID, String issuerOfPatientID, String patientName,
         Date birthdate) {
+        /*
+         * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
+         * 
+         * The Image Display shall not display FrameSets for multiple patients simultaneously. Only images with exactly
+         * the same value for Patient’s ID (0010,0020) and Patient’s Name (0010,0010) shall be displayed at the same
+         * time (other Patient-level attributes may be different, empty or absent). Though it is possible that the same
+         * patient may have slightly different identifying attributes in different DICOM images performed at different
+         * sites or on different occasions, it is expected that such differences will have been reconciled prior to the
+         * images being provided to the Image Display (e.g., in the Image Manager/Archive or by the Portable Media
+         * Creator).
+         */
         // Build a global identifier for the patient.
         StringBuffer buffer = new StringBuffer(patientID == null ? DicomMediaIO.NO_VALUE : patientID);
         if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) { //$NON-NLS-1$
             // patientID + issuerOfPatientID => should be unique globally
             buffer.append(issuerOfPatientID);
-        } else {
-            // Try to make it unique.
-            if (birthdate != null) {
-                buffer.append(TagW.dicomformatDate.format(birthdate).toString());
-            }
-            if (patientName != null) {
-                buffer.append(patientName.substring(0, patientName.length() < 5 ? patientName.length() : 5));
-            }
         }
+        if (birthdate != null) {
+            buffer.append(TagW.dicomformatDate.format(birthdate).toString());
+        }
+        if (patientName != null) {
+            buffer.append(patientName);
+        }
+
         return buffer.toString();
 
     }

@@ -406,7 +406,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         setTagNoNull(TagW.PatientBirthDate, birthdate);
         // Global Identifier for the patient.
         setTag(TagW.PatientPseudoUID,
-            DicomMediaUtils.buildPatientPseudoUID(patientID, header.getString(Tag.IssuerOfPatientID), name, birthdate));
+            DicomMediaUtils.buildPatientPseudoUID(patientID, header.getString(Tag.IssuerOfPatientID), name, null));
         setTag(TagW.StudyInstanceUID, header.getString(Tag.StudyInstanceUID, NO_VALUE));
         setTag(TagW.SeriesInstanceUID, header.getString(Tag.SeriesInstanceUID, NO_VALUE));
         setTag(TagW.Modality, header.getString(Tag.Modality, NO_VALUE));

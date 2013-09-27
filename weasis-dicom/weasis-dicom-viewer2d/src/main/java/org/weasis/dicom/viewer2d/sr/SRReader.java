@@ -54,7 +54,7 @@ public class SRReader {
                     DicomMediaUtils.setTagNoNull(tags, TagW.PatientBirthDate, birthdate);
                     // Global Identifier for the patient.
                     tags.put(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(patientID,
-                        dcmItems.getString(Tag.IssuerOfPatientID), name, birthdate));
+                        dcmItems.getString(Tag.IssuerOfPatientID), name, null));
                     tags.put(TagW.PatientSex, DicomMediaUtils.buildPatientSex(dcmItems.getString(Tag.PatientSex)));
 
                 } else {
