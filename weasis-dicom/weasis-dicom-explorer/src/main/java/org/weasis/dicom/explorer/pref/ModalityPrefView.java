@@ -298,6 +298,7 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             TagW.PatientID.setFormat(Messages.getString("ModalityPrefView.id")); //$NON-NLS-1$
             TagW.PatientSex.setFormat(Messages.getString("ModalityPrefView.sex")); //$NON-NLS-1$
             TagW.StudyID.setFormat(Messages.getString("ModalityPrefView.study")); //$NON-NLS-1$
+            TagW.AccessionNumber.setFormat("Ac. Nb: $V");
             TagW.StudyDescription.setFormat(Messages.getString("ModalityPrefView.study_des")); //$NON-NLS-1$
             TagW.AcquisitionDate.setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
             TagW.AcquisitionTime.setFormat(Messages.getString("ModalityPrefView.acq")); //$NON-NLS-1$
@@ -307,6 +308,9 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
             TagW.SliceLocation.setFormat(Messages.getString("ModalityPrefView.location")); //$NON-NLS-1$
             TagW.ImageLaterality.setFormat(Messages.getString("ModalityPrefView.laterality")); //$NON-NLS-1$
 
+            /*
+             * See IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
+             */
             Modality[] modalities = Modality.values();
             infos = new ModalityInfoData[modalities.length - 1];
             for (int i = 0; i < infos.length; i++) {
@@ -319,18 +323,24 @@ public class ModalityPrefView extends AbstractItemDialogPage implements DragGest
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
                 disElements[0] = TagW.InstitutionName;
-                disElements[1] = TagW.StudyID;
-                disElements[2] = TagW.StudyDescription;
-                disElements[3] = TagW.AcquisitionDate;
-                disElements[4] = TagW.AcquisitionTime;
+                disElements[1] = TagW.StudyDescription;
+                disElements[2] = TagW.StudyID;
+                disElements[3] = TagW.AccessionNumber;
+                disElements[4] = TagW.AcquisitionDate; // else content date, else Series date, else Study date
+                disElements[5] = TagW.AcquisitionTime; // else content time, else Series time, else Study time
 
                 disElements = infos[i].getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
                 disElements[1] = TagW.SeriesNumber;
                 disElements[2] = TagW.ImageLaterality;
-                disElements[3] = TagW.ContrastBolusAgent;
+                disElements[3] = TagW.ContrastBolusAgent; // derived from Contrast/Bolus Agent Sequence (0018,0012), if
+                                                          // present, else Contrast/Bolus Agent (0018,0010)
                 disElements[4] = TagW.SeriesDescription;
                 disElements[5] = TagW.SliceThickness;
                 disElements[6] = TagW.SliceLocation;
+                /*
+                 * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image
+                 * Position (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
+                 */
             }
         }
         return infos;
