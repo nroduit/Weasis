@@ -86,8 +86,8 @@ public class SeriesBuilder {
             SliceOrientation type1 = view.getSliceOrientation();
             // Get image stack sort from Reference Coordinates System
             DicomImageElement img =
-                SliceOrientation.AXIAL.equals(type1) ? series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
-                    SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter,
+                SliceOrientation.CORONAL.equals(type1) ? series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter,
+                    SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
                     SortSeriesStack.slicePosition);
             if (img != null && img.getMediaReader() instanceof DicomMediaIO) {
                 GeometryOfSlice geometry = img.getSliceGeometry();
@@ -118,15 +118,15 @@ public class SeriesBuilder {
                         final ViewParameter[] recParams = new ViewParameter[2];
 
                         if (SliceOrientation.SAGITTAL.equals(type1)) {
-                            // The reference image is the first of the saggital stack (Right)
+                            // The reference image is the first of the saggital stack (Left)
                             rotate(vc, vr, Math.toRadians(270), resr);
                             recParams[0] =
-                                new ViewParameter(".2", SliceOrientation.AXIAL, true, null, new double[] { resr.x,
+                                new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x,
                                     resr.y, resr.z, row[0], row[1], row[2] }, true, true, new Object[] { 0.0, false });
                             recParams[1] =
-                                new ViewParameter(".3", SliceOrientation.CORONAL, true, TransposeDescriptor.ROTATE_270,
-                                    new double[] { resr.x, resr.y, resr.z, col[0], col[1], col[2] }, true, true,
-                                    new Object[] { true, 0.0 });
+                                new ViewParameter(".3", SliceOrientation.CORONAL, false,
+                                    TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
+                                        col[1], col[2] }, true, true, new Object[] { true, 0.0 });
                         } else if (SliceOrientation.CORONAL.equals(type1)) {
                             // The reference image is the first of the coronal stack (Anterior)
                             rotate(vc, vr, Math.toRadians(90), resc);
@@ -138,7 +138,7 @@ public class SeriesBuilder {
                             recParams[1] =
                                 new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
                                     TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                        col[1], col[2] }, true, true, new Object[] { true, 0.0 });
+                                        col[1], col[2] }, true, false, new Object[] { true, 0.0 });
                         } else {
                             // The reference image is the last of the axial stack (Head)
                             rotate(vc, vr, Math.toRadians(270), resc);
@@ -150,7 +150,7 @@ public class SeriesBuilder {
                             recParams[1] =
                                 new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
                                     TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
-                                        resr.y, resr.z }, false, true, new Object[] { true, 0.0 });
+                                        resr.y, resr.z }, false, false, new Object[] { true, 0.0 });
 
                         }
 

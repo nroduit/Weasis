@@ -3,6 +3,8 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.LineWithGapGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
+import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -162,21 +165,30 @@ public class MprView extends View2d {
                 Point2D p = sliceGeometry.getImagePosition(p3);
                 Tuple3d dimensions = sliceGeometry.getDimensions();
                 boolean axial = SliceOrientation.AXIAL.equals(this.getSliceOrientation());
-                double y = p.getY();
-                Point2D centerPt = new Point2D.Double(p.getX(), y);
+                Point2D centerPt = new Point2D.Double(p.getX(), p.getY());
 
                 List<Point2D.Double> pts = new ArrayList<Point2D.Double>();
                 pts.add(new Point2D.Double(p.getX(), 0.0));
                 pts.add(new Point2D.Double(p.getX(), dimensions.x));
 
-                Color color1 = SliceOrientation.SAGITTAL.equals(this.getSliceOrientation()) ? Color.GREEN : Color.BLUE;
+                boolean sagittal = SliceOrientation.SAGITTAL.equals(this.getSliceOrientation());
+                Color color1 = sagittal ? Color.GREEN : Color.BLUE;
                 addMPRline(layer, pts, color1, centerPt);
 
                 List<Point2D.Double> pts2 = new ArrayList<Point2D.Double>();
                 Color color2 = axial ? Color.GREEN : Color.RED;
-                pts2.add(new Point2D.Double(0.0, y));
-                pts2.add(new Point2D.Double(dimensions.y, y));
+                pts2.add(new Point2D.Double(0.0, p.getY()));
+                pts2.add(new Point2D.Double(dimensions.y, p.getY()));
                 addMPRline(layer, pts2, color2, centerPt);
+
+                RenderedImage dispImg = image.getImage();
+                if (dispImg != null) {
+                    Rectangle2D rect =
+                        new Rectangle2D.Double(dispImg.getMinX() * image.getRescaleX(), dispImg.getMinY()
+                            * image.getRescaleY(), dispImg.getWidth() * image.getRescaleX(), dispImg.getHeight()
+                            * image.getRescaleY());
+                    addRectangle(layer, rect, axial ? Color.RED : sagittal ? Color.BLUE : Color.GREEN);
+                }
             }
         }
     }
@@ -192,6 +204,16 @@ public class MprView extends View2d {
                 LOGGER.error(e.getMessage());
             }
 
+        }
+    }
+
+    private void addRectangle(AbstractLayer layer, Rectangle2D rect, Color color) {
+        if (rect != null && layer != null) {
+            try {
+                layer.addGraphic(new RectangleGraphic(rect, 1.0f, color, false, false));
+            } catch (InvalidShapeException e) {
+                LOGGER.error(e.getMessage());
+            }
         }
     }
 
