@@ -29,11 +29,13 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.serialize.DefaultSerializer;
+import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 
 public class LoadLocalDicom extends ExplorerTask {
@@ -80,6 +82,7 @@ public class LoadLocalDicom extends ExplorerTask {
         }
         final ArrayList<SeriesThumbnail> thumbs = new ArrayList<SeriesThumbnail>();
         final ArrayList<File> folders = new ArrayList<File>();
+
         for (int i = 0; i < file.length; i++) {
             if (file[i] == null) {
                 continue;
@@ -89,7 +92,8 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
             } else {
                 if (file[i].canRead()) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
+                    if (FileUtil.isFielExtensionMatching(file[i], DicomCodec.FILE_EXTENSIONS)
+                        || MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.isReadableDicom()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)
@@ -189,7 +193,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 thumb = t;
 
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (splitNb != null || dicomObject != null) {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel,
                         null, dicomSeries));
@@ -231,7 +235,7 @@ public class LoadLocalDicom extends ExplorerTask {
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer
                     Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                     if (splitNb != null || dicomObject != null) {
                         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update,
                             dicomModel, null, dicomSeries));

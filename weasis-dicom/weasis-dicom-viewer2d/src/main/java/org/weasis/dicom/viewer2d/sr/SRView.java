@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -104,9 +105,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     public synchronized void setSeries(Series<?> series) {
         this.series = series;
         if (series != null) {
-            Object dicomObject = series.getTagValue(TagW.DicomSpecialElement);
-            if (dicomObject instanceof DicomSpecialElement) {
-                displayLimitedDicomInfo((DicomSpecialElement) dicomObject);
+            List<MediaElement<?>> specialElements =
+                (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
+            if (specialElements != null && specialElements.size() > 0) {
+                displayLimitedDicomInfo((DicomSpecialElement) specialElements.get(0));
             }
         }
     }

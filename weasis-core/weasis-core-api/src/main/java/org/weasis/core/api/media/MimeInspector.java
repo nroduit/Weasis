@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
@@ -264,7 +265,7 @@ public class MimeInspector {
         return extension;
     }
 
-    public static String[] getExtensions(String mime) {
+    public static List<String> getExtensions(String mime) {
         ArrayList<String> list = new ArrayList<String>();
         if (mime != null) {
             String[] mimes = mime.split(","); //$NON-NLS-1$
@@ -275,14 +276,12 @@ public class MimeInspector {
                 if (val != null) {
                     for (String m : mimes) {
                         if (val.equals(m)) {
-                            if (!list.contains(key)) {
-                                list.add(key);
-                            }
+                            list.add(key);
                         }
                     }
                 }
             }
         }
-        return list.toArray(new String[list.size()]);
+        return list;
     }
 }

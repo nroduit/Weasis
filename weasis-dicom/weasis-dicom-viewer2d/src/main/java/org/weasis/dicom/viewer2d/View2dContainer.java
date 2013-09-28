@@ -574,7 +574,12 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
+                    List<DicomSpecialElement> specialElements =
+                        (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
+                    // TODO handle several elements
+                    if (specialElements != null && specialElements.size() > 0) {
+                        specialElement = specialElements.get(0);
+                    }
 
                 } else if (newVal instanceof DicomSpecialElement) {
                     specialElement = (DicomSpecialElement) newVal;
@@ -715,7 +720,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 if (newVal instanceof Series) {
                     Series series = (Series) newVal;
-                    specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
+                    specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElementList);
 
                 } else if (newVal instanceof DicomSpecialElement) {
                     specialElement = (DicomSpecialElement) newVal;

@@ -72,6 +72,8 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         if (list == null) {
             list = new ArrayList<E>();
             fileSize = 0.0;
+        } else if (mediaOrder != null) {
+            Collections.sort(list, mediaOrder);
         }
         medias = Collections.synchronizedList(list);
     }
@@ -447,7 +449,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
     public synchronized void setFileSize(double size) {
         fileSize = size;
     }
-    
+
     @Override
     public synchronized double getFileSize() {
         return fileSize;

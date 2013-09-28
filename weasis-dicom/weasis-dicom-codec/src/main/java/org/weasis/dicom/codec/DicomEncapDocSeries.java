@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.dcm4che.data.Attributes;
@@ -53,9 +54,9 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 String extension = "tmp"; //$NON-NLS-1$
                 Attributes ds = dicomImageLoader.getDicomObject();
                 String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
-                String[] extensions = MimeInspector.getExtensions(mime);
-                if (extensions.length > 0) {
-                    extension = extensions[0];
+                List<String> extensions = MimeInspector.getExtensions(mime);
+                if (extensions.size() > 0) {
+                    extension = extensions.get(0);
                 }
                 Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
                 if (data instanceof BulkData) {

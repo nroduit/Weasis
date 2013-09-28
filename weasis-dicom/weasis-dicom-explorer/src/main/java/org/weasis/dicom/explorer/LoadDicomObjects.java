@@ -166,7 +166,7 @@ public class LoadDicomObjects extends ExplorerTask {
                 thumb = t;
 
                 Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+                Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                 if (splitNb != null || dicomObject != null) {
                     dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel,
                         null, dicomSeries));
@@ -204,7 +204,7 @@ public class LoadDicomObjects extends ExplorerTask {
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer
                     Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+                    Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
                     if (splitNb != null || dicomObject != null) {
                         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update,
                             dicomModel, null, dicomSeries));

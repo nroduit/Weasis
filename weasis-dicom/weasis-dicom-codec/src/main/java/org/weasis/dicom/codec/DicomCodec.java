@@ -15,7 +15,6 @@ import java.util.Hashtable;
 
 import org.dcm4che.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che.imageio.plugins.rle.RLEImageReaderSpi;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
@@ -28,6 +27,7 @@ public class DicomCodec implements Codec {
     public static final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
+    public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" };
 
     @Override
     public String[] getReaderMIMETypes() {
@@ -37,7 +37,7 @@ public class DicomCodec implements Codec {
 
     @Override
     public String[] getReaderExtensions() {
-        return MimeInspector.getExtensions(DicomMediaIO.MIMETYPE);
+        return FILE_EXTENSIONS;
     }
 
     @Override

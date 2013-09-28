@@ -204,7 +204,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
 
             Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-            Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElement);
+            Object dicomObject = dicomSeries.getTagValue(TagW.DicomSpecialElementList);
             if (splitNb != null || dicomObject != null) {
                 dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, dicomModel, null,
                     dicomSeries));

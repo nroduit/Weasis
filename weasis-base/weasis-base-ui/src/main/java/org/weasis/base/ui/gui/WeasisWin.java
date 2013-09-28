@@ -434,6 +434,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
                         } else {
                             viewer.addSeriesList(seriesList, bestDefaultLayout);
                         }
+                        viewer.setSelectedAndGetFocus();
                         return;
                     }
                 }

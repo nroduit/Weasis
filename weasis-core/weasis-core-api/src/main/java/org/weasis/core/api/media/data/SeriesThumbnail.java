@@ -21,6 +21,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -60,14 +61,21 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
         }
         this.series = sequence;
         // media can be null for seriesThumbnail
-        init((MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null));
+        MediaElement<?> media = (MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+        // Handle special case for DICOM SR
+        if (media == null) {
+            List<MediaElement<?>> specialElements =
+                (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
+            if (specialElements != null && specialElements.size() > 0) {
+                media = specialElements.get(0);
+            }
+        }
+        init(media);
     }
 
     @Override
     protected void init(MediaElement<?> media) {
         super.init(media);
-        // Activate tooltip
-        ToolTipManager.sharedInstance().registerComponent(this);
         setBorder(outMouseOverBorder);
     }
 
@@ -86,6 +94,10 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
     @Override
     public void registerListeners() {
         super.registerListeners();
+
+        // Reactivate tooltip listener
+        ToolTipManager.sharedInstance().registerComponent(this);
+
         if (dragSource != null) {
             dragSource.removeDragSourceListener(this);
             dragSource.removeDragSourceMotionListener(this);

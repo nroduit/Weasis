@@ -101,7 +101,6 @@ public class TagW implements Transferable, Serializable {
 
     public static final TagW WadoParameters = new TagW("Wado Parameter", TagType.Object); //$NON-NLS-1$
     public static final TagW WadoInstanceReferenceList = new TagW("List of DICOM instance References", TagType.List); //$NON-NLS-1$
-    public static final TagW DicomSpecialElement = new TagW("Special DICOM Object", TagType.Object); //$NON-NLS-1$
     public static final TagW DicomSpecialElementList = new TagW("Special DICOM List", TagType.List); //$NON-NLS-1$
     public static final TagW SlicePosition = new TagW("Slice Position", TagType.DoubleArray); //$NON-NLS-1$
     public static final TagW SuvFactor = new TagW("SUV Factor", TagType.DoubleArray); //$NON-NLS-1$

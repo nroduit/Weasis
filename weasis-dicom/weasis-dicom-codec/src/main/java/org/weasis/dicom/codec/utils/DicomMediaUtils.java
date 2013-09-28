@@ -477,8 +477,6 @@ public class DicomMediaUtils {
                 } else if (dicomTagMap.get(TagW.RescaleIntercept) != null) {
                     if (dicomTagMap.get(TagW.RescaleSlope) == null) {
                         LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present."); //$NON-NLS-1$
-                    } else if (dicomTagMap.get(TagW.RescaleType) == null) {
-                        LOGGER.debug("Modality Rescale Type is required if Rescale Intercept is present."); //$NON-NLS-1$
                     }
                 } else {
                     LOGGER.debug("Modality Rescale Intercept is required if Modality LUT Sequence is not present. "); //$NON-NLS-1$
@@ -1012,10 +1010,25 @@ public class DicomMediaUtils {
         if (mLutItems != null && tagList != null) {
             // Overrides Modality LUT Transformation attributes only if sequence is consistent
             if (containsRequiredModalityLUTAttributes(mLutItems)) {
-                setTagNoNull(tagList, TagW.RescaleSlope, getFloatFromDicomElement(mLutItems, Tag.RescaleSlope, null));
-                setTagNoNull(tagList, TagW.RescaleIntercept,
-                    getFloatFromDicomElement(mLutItems, Tag.RescaleIntercept, null));
-                setTagNoNull(tagList, TagW.RescaleType, getStringFromDicomElement(mLutItems, Tag.RescaleType));
+                String modlality = (String) tagList.get(TagW.Modality);
+                if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality)
+                    || "PT".equals(modlality)) {
+                    /*
+                     * IHE BIR: 4.16.4.2.2.5.4
+                     * 
+                     * The grayscale rendering pipeline shall be appropriate to the SOP Class and modality. If Rescale
+                     * Slope and Rescale Intercept are present in the image for MR and PET and XA/XRF images, they shall
+                     * be ignored from the perspective of applying window values, and for those SOP Classes, window
+                     * values shall be applied directly to the stored pixel values without rescaling.
+                     */
+                    LOGGER.info("Do not apply Modality LUT to {}", modlality);//$NON-NLS-1$
+                } else {
+                    setTagNoNull(tagList, TagW.RescaleSlope,
+                        getFloatFromDicomElement(mLutItems, Tag.RescaleSlope, null));
+                    setTagNoNull(tagList, TagW.RescaleIntercept,
+                        getFloatFromDicomElement(mLutItems, Tag.RescaleIntercept, null));
+                    setTagNoNull(tagList, TagW.RescaleType, getStringFromDicomElement(mLutItems, Tag.RescaleType));
+                }
 
             } else if (seqParentTag != null) {
                 LOGGER.info(

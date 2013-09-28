@@ -253,7 +253,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else {
             if (saveFile) {
                 outputFolder =
-                    "zip".equals(FileUtil.getExtension(folder.getName())) ? folder : new File(folder + ".zip");
+                    ".zip".equals(FileUtil.getExtension(folder.getName())) ? folder : new File(folder + ".zip");
             } else {
                 outputFolder = folder;
             }

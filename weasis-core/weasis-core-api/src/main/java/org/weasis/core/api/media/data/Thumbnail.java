@@ -114,6 +114,9 @@ public class Thumbnail extends JLabel {
                 } else if (mime.startsWith("audio")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
                     icon = MimeInspector.audioIcon;
+                } else if (mime.equals("sr/dicom")) { //$NON-NLS-1$
+                    type = "Structured Report";
+                    icon = MimeInspector.textIcon;
                 } else if (mime.startsWith("txt")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.text"); //$NON-NLS-1$
                     icon = MimeInspector.textIcon;

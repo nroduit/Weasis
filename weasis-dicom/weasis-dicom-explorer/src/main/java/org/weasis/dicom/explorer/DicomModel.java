@@ -370,8 +370,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
      */
     public void addSpecialModality(Series series) {
 
-        DicomSpecialElement specialElement = (DicomSpecialElement) series.getTagValue(TagW.DicomSpecialElement);
-        if (specialElement == null) {
+        List<DicomSpecialElement> specialElements =
+            (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
+        if (specialElements == null || specialElements.size() == 0) {
             return;
         }
 
@@ -389,8 +390,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 patientGroup.setTag(TagW.DicomSpecialElementList, specialElementList =
                     new ArrayList<DicomSpecialElement>());
             }
-            if (!specialElementList.contains(specialElement)) {
-                specialElementList.add(specialElement);
+            for (DicomSpecialElement specialElement : specialElements) {
+                if (!specialElementList.contains(specialElement)) {
+                    specialElementList.add(specialElement);
+                }
             }
         }
     }
@@ -442,6 +445,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
+        Series s = splitSeries(dicomReader, original);
+        s.addMedia(media);
+        LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
+    }
+
+    private Series splitSeries(DicomMediaIO dicomReader, Series original) {
         MediaSeriesGroup study = getParent(original, DicomModel.study);
         String seriesUID = (String) original.getTagValue(TagW.SeriesInstanceUID);
         int k = 1;
@@ -463,8 +472,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagW.SplitSeriesNumber, k + 1);
         s.setTag(TagW.ExplorerModel, this);
         addHierarchyNode(study, s);
-        s.addMedia(media);
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
+        return s;
     }
 
     private void replaceSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
@@ -542,6 +551,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 return true;
             }
             if (original instanceof DicomSeries) {
+                DicomSeries initialSeries = (DicomSeries) original;
                 // Handle cases when the Series is created before getting the image (downloading)
                 if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
                     if (original.size(null) > 0) {
@@ -552,7 +562,23 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
                     return true;
                 }
-                DicomSeries initialSeries = (DicomSeries) original;
+                if (media instanceof DicomSpecialElement) {
+                    List<DicomSpecialElement> specialElementList =
+                        (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
+
+                    if (specialElementList == null) {
+                        initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
+                            new ArrayList<DicomSpecialElement>());
+                    } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) {
+                        Series s = splitSeries(dicomReader, initialSeries);
+                        s.setTag(TagW.DicomSpecialElementList, specialElementList =
+                            new ArrayList<DicomSpecialElement>());
+                        specialElementList.add((DicomSpecialElement) media);
+                        return false;
+                    }
+                    specialElementList.add((DicomSpecialElement) media);
+                    return false;
+                }
 
                 int frames = dicomReader.getMediaElementNumber();
                 if (frames < 1) {

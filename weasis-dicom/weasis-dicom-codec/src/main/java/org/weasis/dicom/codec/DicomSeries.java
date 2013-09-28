@@ -84,8 +84,6 @@ public class DicomSeries extends Series<DicomImageElement> {
                     model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Add, model, null,
                         new SeriesEvent(SeriesEvent.Action.AddImage, this, media)));
                 }
-            } else if (media instanceof DicomSpecialElement) {
-                setTag(TagW.DicomSpecialElement, media);
             }
         }
     }

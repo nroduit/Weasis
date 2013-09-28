@@ -146,6 +146,14 @@ public class PresetWindowLevel {
                     LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
                     continue;
                 }
+
+                // When window is larger than the dynamic, adapt it according the dynamic.
+                if (windowList[i] > maxModLUT - minModLUT) {
+                    float range = windowList[i];
+                    windowList[i] = maxModLUT - minModLUT;
+                    levelList[i] = (windowList[i] / range) * levelList[i];
+                }
+
                 // Level values seems not valid, set min or max pixel value
                 if (levelList[i] < minModLUT) {
                     levelList[i] = minModLUT;
@@ -153,10 +161,7 @@ public class PresetWindowLevel {
                 if (levelList[i] > maxModLUT) {
                     levelList[i] = maxModLUT;
                 }
-                // Keep it if larger than the dynamic, values are adapted in voiLUT if there are outside the range.
-                // if (windowList[i] > maxModLUT - minModLUT) {
-                // windowList[i] = maxModLUT - minModLUT;
-                // }
+
                 PresetWindowLevel preset =
                     new PresetWindowLevel(explanation + dicomKeyWord, windowList[i], levelList[i], defaultLutShape);
                 // Only set shortcuts for the two first presets
