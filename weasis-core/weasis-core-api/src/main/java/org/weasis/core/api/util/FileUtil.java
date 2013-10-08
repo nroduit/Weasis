@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.util;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +35,7 @@ import java.util.LinkedList;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.stream.ImageInputStream;
@@ -109,14 +111,14 @@ public final class FileUtil {
         }
     }
 
-    public static File createTempDir(String prefix) {
-        File baseDir = new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
-        String baseName = prefix + System.currentTimeMillis();
-
-        for (int counter = 0; counter < 1000; counter++) {
-            File tempDir = new File(baseDir, baseName + counter);
-            if (tempDir.mkdir()) {
-                return tempDir;
+    public static File createTempDir(File baseDir) {
+        if (baseDir != null) {
+            String baseName = String.valueOf(System.currentTimeMillis());
+            for (int counter = 0; counter < 1000; counter++) {
+                File tempDir = new File(baseDir, baseName + counter);
+                if (tempDir.mkdir()) {
+                    return tempDir;
+                }
             }
         }
         throw new IllegalStateException("Failed to create directory"); //$NON-NLS-1$
@@ -486,6 +488,25 @@ public final class FileUtil {
             safeClose(zout);
             safeClose(out);
         }
+    }
+
+    public static void unzip(InputStream inputStream, File directory) throws IOException {
+        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
+        try {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File file = new File(directory, entry.getName());
+                if (entry.isDirectory()) {
+                    file.mkdirs();
+                } else {
+                    file.getParentFile().mkdirs();
+                    copyZip(zis, file);
+                }
+            }
+        } finally {
+            safeClose(zis);
+        }
+
     }
 
     public static void unzip(File zipfile, File directory) throws IOException {

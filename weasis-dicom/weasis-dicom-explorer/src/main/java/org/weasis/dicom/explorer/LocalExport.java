@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -446,7 +447,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             keepNames = false;
             writeDicomdir = true;
             cdCompatible = true;
-            writeDir = FileUtil.createTempDir("zip-");
+            writeDir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirecotry("tmp", "zip"));
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
             keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
@@ -600,18 +601,20 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     }
                 }
             }
-            if (zipFile) {
-                try {
-                    FileUtil.zip(writeDir, exportDir);
-                } catch (Exception e) {
-                    LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir); //$NON-NLS-1$
-                } finally {
-                    // FileUtil.delete(writeDir);
-                }
-            }
         } finally {
             if (writer != null) {
+                // Commit DICOMDIR changes and close the file
                 writer.close();
+            }
+        }
+
+        if (zipFile) {
+            try {
+                FileUtil.zip(writeDir, exportDir);
+            } catch (Exception e) {
+                LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir); //$NON-NLS-1$
+            } finally {
+                FileUtil.recursiveDelete(writeDir);
             }
         }
     }

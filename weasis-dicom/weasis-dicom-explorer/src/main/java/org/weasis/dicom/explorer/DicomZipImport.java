@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -18,12 +19,14 @@ import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -36,6 +39,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
     private File selectedFile;
     private JButton btnOpen;
+    private JLabel fileLabel = new JLabel();
 
     public DicomZipImport() {
         super("DICOM Zip");
@@ -45,8 +49,8 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
     public void initGUI() {
         setBorder(new TitledBorder(null, "DICOM Zip", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-
-        btnOpen = new JButton("Open");
+        setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
+        btnOpen = new JButton("Select a file");
         btnOpen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -54,7 +58,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             }
         });
         add(btnOpen);
-
+        add(fileLabel);
     }
 
     public void browseImgFile() {
@@ -66,9 +70,11 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         fileChooser.setFileFilter(new FileFormatFilter("zip", "ZIP"));
         if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
             || (selectedFile = fileChooser.getSelectedFile()) == null) {
+            fileLabel.setText("");
             return;
         } else {
             Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, selectedFile.getParent());
+            fileLabel.setText(selectedFile.getPath());
         }
     }
 
@@ -108,13 +114,13 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
-                File dir = FileUtil.createTempDir("unzip");
+                File dir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirecotry("tmp", "zip"));
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                DicomDirLoader dirImport = new DicomDirLoader(new File(dir, "DICOMDIR"), dicomModel, true);
+                DicomDirLoader dirImport = new DicomDirLoader(new File(dir, "DICOMDIR"), dicomModel, false);
                 loadSeries = dirImport.readDicomDir();
             }
             if (loadSeries != null && loadSeries.size() > 0) {
