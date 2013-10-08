@@ -244,7 +244,8 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
 
         try {
             g2d.drawRenderedImage(displayImage, AffineTransform.getTranslateInstance(0, 0));
-        } catch (OutOfMemoryError e1) {
+        } catch (Throwable t) {
+            // When outOfMemory exception or when tiles are not available anymore (file stream closed)
             System.gc();
             try {
                 Thread.sleep(100);
