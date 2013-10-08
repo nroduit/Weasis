@@ -1,0 +1,70 @@
+package org.weasis.dicom.codec.macro;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
+import org.dcm4che.data.Tag;
+import org.dcm4che.data.VR;
+
+public class MACParameters extends Module {
+
+    public MACParameters(Attributes dcmItems) {
+        super(dcmItems);
+    }
+
+    public MACParameters() {
+        super(new Attributes());
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static Collection<MACParameters> toMACParametersMacros(Sequence seq) {
+        if (seq == null || seq.isEmpty()) {
+            return null;
+        }
+
+        ArrayList<MACParameters> list = new ArrayList<MACParameters>(seq.size());
+
+        for (Attributes attr : seq) {
+            list.add(new MACParameters(attr));
+        }
+
+        return list;
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////
+
+    public int getMACIDNumber() {
+        return dcmItems.getInt(Tag.MACIDNumber, -1);
+    }
+
+    public void setMACIDNumber(int i) {
+        dcmItems.setInt(Tag.MACIDNumber, VR.US, i);
+    }
+
+    public String getMACCalculationTransferSyntaxUID() {
+        return dcmItems.getString(Tag.MACCalculationTransferSyntaxUID);
+    }
+
+    public void setMACCalculationTransferSyntaxUID(String s) {
+        dcmItems.setString(Tag.MACCalculationTransferSyntaxUID, VR.UI, s);
+    }
+
+    public String getMACAlgorithm() {
+        return dcmItems.getString(Tag.MACAlgorithm);
+    }
+
+    public void setMACAlgorithm(String s) {
+        dcmItems.setString(Tag.MACAlgorithm, VR.CS, s);
+    }
+
+    public int[] getDataElementsSigned() {
+        return dcmItems.getInts(Tag.DataElementsSigned);
+    }
+
+    public void setDataElementsSigned(int[] ints) {
+        dcmItems.setInt(Tag.DataElementsSigned, VR.AT, ints);
+    }
+}

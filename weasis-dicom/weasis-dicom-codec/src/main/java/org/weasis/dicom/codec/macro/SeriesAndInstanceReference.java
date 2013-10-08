@@ -1,7 +1,12 @@
 package org.weasis.dicom.codec.macro;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.VR;
 
 public class SeriesAndInstanceReference extends Module {
 
@@ -9,15 +14,67 @@ public class SeriesAndInstanceReference extends Module {
         super(dcmItems);
     }
 
+    public SeriesAndInstanceReference() {
+        super(new Attributes());
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static Collection<SeriesAndInstanceReference> toSeriesAndInstanceReferenceMacros(Sequence seq) {
+        if (seq == null || seq.isEmpty()) {
+            return null;
+        }
+
+        ArrayList<SeriesAndInstanceReference> list = new ArrayList<SeriesAndInstanceReference>(seq.size());
+
+        for (Attributes attr : seq) {
+            list.add(new SeriesAndInstanceReference(attr));
+        }
+
+        return list;
+    }
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////
+
     public String getSeriesInstanceUID() {
         return dcmItems.getString(Tag.SeriesInstanceUID);
+    }
+
+    public void setSeriesInstanceUID(String uid) {
+        dcmItems.setString(Tag.SeriesInstanceUID, VR.UI, uid);
     }
 
     public String getRetrieveAETitle() {
         return dcmItems.getString(Tag.RetrieveAETitle);
     }
 
+    public void setRetrieveAETitle(String ae) {
+        dcmItems.setString(Tag.RetrieveAETitle, VR.AE, ae);
+    }
+
     public String getStorageMediaFileSetID() {
         return dcmItems.getString(Tag.StorageMediaFileSetID);
     }
+
+    public void setStorageMediaFileSetID(String sh) {
+        dcmItems.setString(Tag.StorageMediaFileSetID, VR.SH, sh);
+    }
+
+    public String getStorageMediaFileSetUID() {
+        return dcmItems.getString(Tag.StorageMediaFileSetUID);
+    }
+
+    public void setStorageMediaFileSetUID(String uid) {
+        dcmItems.setString(Tag.StorageMediaFileSetUID, VR.UI, uid);
+    }
+
+    public Collection<SOPInstanceReferenceAndMAC> getReferencedSOPInstances() {
+        return SOPInstanceReferenceAndMAC.toSOPInstanceReferenceAndMacMacros(dcmItems
+            .getSequence(Tag.ReferencedSOPSequence));
+    }
+
+    public void setReferencedSOPInstances(Collection<SOPInstanceReferenceAndMAC> referencedSOPInstances) {
+        updateSequence(Tag.ReferencedSOPSequence, referencedSOPInstances);
+    }
+
 }

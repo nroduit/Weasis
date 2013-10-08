@@ -372,6 +372,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // setSeries(series, getImage());
     }
 
+    @Deprecated
     public void setKeyObjectSelectionFilterState(Boolean newState) {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
