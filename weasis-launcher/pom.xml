@@ -146,7 +146,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
-			<version>1.1.2-p5</version>
+			<version>1.1.2-p8</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
