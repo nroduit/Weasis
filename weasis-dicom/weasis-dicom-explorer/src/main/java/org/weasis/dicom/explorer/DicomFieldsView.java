@@ -228,7 +228,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 listModel.addElement(buf.toString());
             }
         } else {
-            if (vr.isXMLBase64()) {
+            if (vr.isInlineBinary()) {
                 buf.append("binary data");
             } else {
                 String[] value = dcmObj.getStrings(privateCreator, tag);

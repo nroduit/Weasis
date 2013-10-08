@@ -359,7 +359,7 @@ public class Compressor extends Decompressor implements Closeable {
             return decompressFrame(iis, frameIndex);
         }
 
-        iis.setByteOrder(UID.ExplicitVRBigEndian.equals(pixeldata.transferSyntax) ? ByteOrder.BIG_ENDIAN
+        iis.setByteOrder(UID.ExplicitVRBigEndian.equals(pixeldata.uuid) ? ByteOrder.BIG_ENDIAN
             : ByteOrder.LITTLE_ENDIAN);
         iis.seek(pixeldata.offset + frameLength * frameIndex);
         DataBuffer db = bi.getRaster().getDataBuffer();
