@@ -68,6 +68,8 @@ public class DicomMediaUtils {
          */
 
         weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
+
+        UIDUtils.setRoot(weasisRootUID);
     }
 
     /**
@@ -1201,10 +1203,10 @@ public class DicomMediaUtils {
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * Creates a Dicom Key Object from another one copying its CurrentRequestedProcedureEvidences and keeping its
-     * patient informations. It's the user responsibility to manage the studyUID and serieUID values. Given UIDs
-     * parameters are supposed to be valid and won't be verified. If their value is null a new one will be generated
-     * instead.
+     * Creates a Dicom Key Object from another dicom KOS document copying its CurrentRequestedProcedureEvidences and
+     * keeping its patient informations. It's the user responsibility to manage the studyUID and serieUID values. Given
+     * UIDs parameters are supposed to be valid and won't be verified. If their value is null a new one will be
+     * generated instead.
      * 
      * @param dicomObject
      * @param description
@@ -1214,104 +1216,211 @@ public class DicomMediaUtils {
      *            can be null
      * @return
      */
-    public static Attributes createDicomKeyObject(Attributes dicomObject, String description, String studyInstanceUID,
-        String seriesInstanceUID) {
 
-        if (description == null || "".equals(description)) {
-            description = "new KO selection";
-        }
-
-        String patientID = dicomObject.getString(Tag.PatientID);
-        String patientName = dicomObject.getString(Tag.PatientName);
-        Date patientBirthdate = dicomObject.getDate(Tag.PatientBirthDate);
-
-        // TODO see implementation in dcm4che3
-
-        // DicomObject newDicomKeyObject =
-        // createDicomKeyObject(patientID, patientName, patientBirthdate, description, studyInstanceUID,
-        // seriesInstanceUID);
-        //
-        // HierachicalSOPInstanceReference[] referencedStudySequence =
-        // new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
-        //
-        // new KODocumentModule(newDicomKeyObject).setCurrentRequestedProcedureEvidences(referencedStudySequence);
-        // return newDicomKeyObject;
-
-        return null;
-    }
+    // public static Attributes createDicomKeyObject(Attributes dicomObject, String description, String
+    // studyInstanceUID,
+    // String seriesInstanceUID) {
+    //
+    // if (description == null || "".equals(description)) {
+    // description = "new KO selection";
+    // }
+    //
+    // String patientID = dicomObject.getString(Tag.PatientID);
+    // String patientName = dicomObject.getString(Tag.PatientName);
+    // Date patientBirthdate = dicomObject.getDate(Tag.PatientBirthDate);
+    //
+    // // TODO see implementation in dcm4che3
+    //
+    // // DicomObject newDicomKeyObject =
+    // // createDicomKeyObject(patientID, patientName, patientBirthdate, description, studyInstanceUID,
+    // // seriesInstanceUID);
+    // //
+    // // HierachicalSOPInstanceReference[] referencedStudySequence =
+    // // new KODocumentModule(dicomObject).getCurrentRequestedProcedureEvidences();
+    // //
+    // // new KODocumentModule(newDicomKeyObject).setCurrentRequestedProcedureEvidences(referencedStudySequence);
+    // // return newDicomKeyObject;
+    //
+    // return null;
+    // }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
+     * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping it's patient and study
+     * informations. For instance it can be can an IMAGE or a previously build dicomKOS Document.
      * 
-     * Creates a Dicom Key Object from patient information. Given UIDs parameters are supposed to be valid and won't be
-     * verified. If their value is null a new one will be generated instead.
-     * 
-     * @param patientID
-     * @param patientName
-     * @param patientBirthdate
-     * @param description
-     * @param studyInstanceUID
-     *            can be null
+     * @param dicomSourceAttribute
+     *            : Must be valid
+     * @param keyObjectDescription
+     *            : Optional, can be null
      * @param seriesInstanceUID
-     *            can be null
-     * @return
+     *            is supposed to be valid and won't be verified, it's the user responsibility to manage this value. If
+     *            null a randomly new one will be generated instead
+     * 
+     * @return new dicomKeyObjectSelection Document Attributes
+     * @throws IOException
      */
-    public static Attributes createDicomKeyObject(String patientID, String patientName, Date patientBirthdate,
-        String description, String studyInstanceUID, String seriesInstanceUID) {
-
-        Attributes newDicomKeyObject = new Attributes();
-
-        if (description == null || "".equals(description)) {
-            description = "new KO selection";
-        }
-
-        newDicomKeyObject.setString(Tag.SeriesDescription, VR.LO, description);
-
-        newDicomKeyObject.setString(Tag.Modality, VR.CS, "KO");
-
-        Date dateTimeNow = Calendar.getInstance().getTime();
-        newDicomKeyObject.setDate(Tag.ContentDate, VR.DA, dateTimeNow);
-        newDicomKeyObject.setDate(Tag.ContentTime, VR.TM, dateTimeNow);
-
-        newDicomKeyObject.setString(Tag.PatientID, VR.LO, patientID);
-        newDicomKeyObject.setString(Tag.PatientName, VR.PN, patientName);
-        newDicomKeyObject.setDate(Tag.PatientBirthDate, VR.DA, patientBirthdate);
+    public static Attributes createDicomKeyObject(Attributes dicomSourceAttribute, String keyObjectDescription,
+        String seriesInstanceUID) {
 
         /**
-         * @see DICOM standard PS 3.3
+         * @see DICOM standard PS 3.3 - § C.17.6.1 Key Object Document Series Module
          * 
-         *      C.17.6 Key Object Selection Modules && C.17.6.2.1 Identical Documents
-         * 
-         *      The Unique identifier for the Study (studyInstanceUID) is supposed to be the same as to one of the
-         *      referenced image but it's not necessary. Standard says that if the Current Requested Procedure Evidence
-         *      Sequence (0040,A375) references SOP Instances both in the current study and in one or more other
-         *      studies, this document shall be duplicated into each of those other studies, and the duplicates shall be
-         *      referenced in the Identical Documents Sequence (0040,A525).
+         * @note Series of Key Object Selection Documents are separate from Series of Images or other Composite SOP
+         *       Instances. Key Object Documents do not reside in a Series of Images or other Composite SOP Instances.
          */
 
-        if (studyInstanceUID == null || !studyInstanceUID.equals("")) {
-            studyInstanceUID = UIDUtils.createUID(weasisRootUID);
+        if (seriesInstanceUID == null || "".equals(seriesInstanceUID)) {
+            seriesInstanceUID = UIDUtils.createUID();
         }
-        newDicomKeyObject.setString(Tag.StudyInstanceUID, VR.UI, studyInstanceUID);
 
-        if (seriesInstanceUID == null || !seriesInstanceUID.equals("")) {
-            seriesInstanceUID = UIDUtils.createUID(weasisRootUID);
+        // /////////////////////////////////////////////////////////////////////
+        // USE of MkKOS to manipulates predefined "Key Object Selection Document Code"
+        final MkKOS makeKOS = new MkKOS();
+
+        // /////////////////////////////////////////////////////////////////////////////////////////////////
+        // FOLLOWING re-creates what is done within MkKOS.configure static private method
+
+        /**
+         * @note Loads properties that reference all "Key Object Codes" * In dcm4che2 it was defined in the following
+         *       class : org.dcm4che2.code.KeyObjectSelectionDocumentTitle <br>
+         *       In dcm4che3 it's defined as a resource : dcm4che-tool/dcm4che-tool-mkkos/src/etc/mkkos/code.properties
+         * 
+         * @see These Codes are up to date regarding Dicom Conformance : <br>
+         *      PS 3.16 - § Context ID 7010 Key Object Selection Document Title <br>
+         *      PS 3.16 - § Context ID 7011 Rejected for Quality Reasons - <br>
+         *      PS 3.16 - § Context ID 7012 Best In Set<br>
+         *      Correction Proposal - § CP 1152 Parts 16 (Additional document titles for Key Object Selection Document)
+         */
+        try {
+            makeKOS.setCodes(CLIUtils.loadProperties("resource:code.properties", null));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        newDicomKeyObject.setString(Tag.SeriesInstanceUID, VR.UI, seriesInstanceUID);
 
-        String newSopInstanceUid = UIDUtils.createUID(weasisRootUID);
-        newDicomKeyObject.setString(Tag.SOPInstanceUID, VR.UI, newSopInstanceUid);
+        /**
+         * Document Title of created KOS - must be one of the values specified by etc/mkkos/code.properties <br>
+         * 
+         * @note Default value is code [DCM-113000] with following attributes : <br>
+         *       Tag.CodeValue = 113000 <br>
+         *       Tag.CodingSchemeDesignator = "DCM" <br>
+         *       Tag.CodeMeaning = "Of Interest"
+         */
+        // makeKOS.setDocumentTitle(makeKOS.toCodeItem("DCM-113000"));
+        // TODO - the user or some preferences should be able to set this title value from the predefined list of code
+        final Attributes documentTitle = makeKOS.toCodeItem("DCM-113000");
 
-        newDicomKeyObject.setString(Tag.TransferSyntaxUID, VR.UI, "1.2.840.10008.1.2");
-        newDicomKeyObject.setString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.88.59");
+        /**
+         * @note "Document Title Modifier" should be set when "Document Title" meets one of the following case : <br>
+         *       - Concept Name = (113001, DCM, "Rejected for Quality Reasons") <br>
+         *       - Concept Name = (113010, DCM," Quality Issue") <br>
+         *       - Concept Name = (113013, DCM, "Best In Set")
+         * 
+         * @see PS 3.16 - Structured Reporting Templates § TID 2010 Key Object Selection
+         */
+        // makeKOS.setDocumentTitleModifier(makeKOS.toCodeItem(""));
+        // TODO - add ability to set "Optional Document Title Modifier" for created KOS from the predefined list of code
+        // final Attributes documentTitleModifier = null;
 
-        newDicomKeyObject.setString(Tag.SeriesNumber, VR.IS, "1");
-        newDicomKeyObject.setString(Tag.InstanceNumber, VR.IS, "1");
+        // makeKOS.setKeyObjectDescription(keyObjectDescription); // optional Key Object Description of created KOS
 
-        newDicomKeyObject.setString(Tag.ValueType, VR.CS, "CONTAINER");
+        // makeKOS.setSeriesNumber("999");
+        final String seriesNumber = "999"; // A number that identifies the Series. (default: 999)
+        // makeKOS.setInstanceNumber("1");
+        final String instanceNumber = "1"; // A number that identifies the Document. (default: 1)
 
-        newDicomKeyObject.newSequence(Tag.CurrentRequestedProcedureEvidenceSequence, 10);
+        // TODO - add ability to override default instanceNumber and setSeriesNumber from given parameters in case many
+        // KEY OBJECT DOCUMENT SERIES and KEY OBJECT DOCUMENT are build for the same Study in the same context
 
-        return newDicomKeyObject;
+        // makeKOS.setOutputFile(null); // use for writing process only
+        // makeKOS.setNoFileMetaInformation(false); // use for writing process only
+        // makeKOS.setTransferSyntax(UID.ExplicitVRLittleEndian);// use for writing process only
+        // makeKOS.setEncodingOptions(DicomEncodingOptions.DEFAULT);// use for writing process only
+        // CLIUtils.addAttributes(main.attrs, cl.getOptionValues("s")); // not to be used
+
+        // Specify suffix to be appended to the Study, Series and SOP Instance UID of referenced object(s)
+        // makeKOS.setUIDSuffix(null);
+
+        // /////////////////////////////////////////////////////////////////////////////////////////////////
+        // FOLLOWING re-creates what is done within MkKOS.createKOS(Attributes inst) private method
+
+        // final int[] PATIENT_AND_STUDY_ATTRS =
+        // { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime, Tag.AccessionNumber,
+        // Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName, Tag.PatientName, Tag.PatientID,
+        // Tag.IssuerOfPatientID, Tag.PatientBirthDate, Tag.PatientSex, Tag.StudyInstanceUID, Tag.StudyID };
+
+        // Attributes attrs = new Attributes(inst, PATIENT_AND_STUDY_ATTRS);
+
+        final int[] PATIENT_AND_STUDY_ATTRS =
+            { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime, Tag.AccessionNumber,
+                Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName, Tag.PatientName, Tag.PatientID,
+                Tag.IssuerOfPatientID, Tag.PatientBirthDate, Tag.PatientSex, Tag.StudyInstanceUID, Tag.StudyID };
+        Arrays.sort(PATIENT_AND_STUDY_ATTRS);
+
+        /**
+         * Add selected attributes from another Attributes object to this. The specified array of tag values must be
+         * sorted (as by the {@link java.util.Arrays#sort(int[])} method) prior to making this call.
+         */
+        Attributes dKOS = new Attributes(dicomSourceAttribute, PATIENT_AND_STUDY_ATTRS);
+
+        dKOS.setString(Tag.SOPClassUID, VR.UI, UID.KeyObjectSelectionDocumentStorage);
+        dKOS.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
+        dKOS.setDate(Tag.ContentDateAndTime, new Date());
+        dKOS.setString(Tag.Modality, VR.CS, "KO");
+        dKOS.setNull(Tag.ReferencedPerformedProcedureStepSequence, VR.SQ);
+        dKOS.setString(Tag.SeriesInstanceUID, VR.UI, seriesInstanceUID);
+        dKOS.setString(Tag.SeriesNumber, VR.IS, seriesNumber);
+        dKOS.setString(Tag.InstanceNumber, VR.IS, instanceNumber);
+        dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER");
+        dKOS.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE");
+        dKOS.newSequence(Tag.ConceptNameCodeSequence, 1).add(documentTitle);
+        dKOS.newSequence(Tag.CurrentRequestedProcedureEvidenceSequence, 1);
+
+        Attributes templateIdentifier = new Attributes(2);
+        templateIdentifier.setString(Tag.MappingResource, VR.CS, "DCMR");
+        templateIdentifier.setString(Tag.TemplateIdentifier, VR.CS, "2010");
+        dKOS.newSequence(Tag.ContentTemplateSequence, 1).add(templateIdentifier);
+
+        Sequence contentSeq = dKOS.newSequence(Tag.ContentSequence, 1);
+
+        // !! Dead Code !! uncomment this when documentTitleModifier will be handled
+        // if (documentTitleModifier != null) {
+        //
+        // Attributes documentTitleModifierSequence = new Attributes(4);
+        // documentTitleModifierSequence.setString(Tag.RelationshipType, VR.CS, "HAS CONCEPT MOD");
+        // documentTitleModifierSequence.setString(Tag.ValueType, VR.CS, "CODE");
+        // documentTitleModifierSequence.newSequence(Tag.ConceptNameCodeSequence, 1).add(
+        // makeKOS.toCodeItem("DCM-113011"));
+        // documentTitleModifierSequence.newSequence(Tag.ConceptCodeSequence, 1).add(documentTitleModifier);
+        //
+        // contentSeq.add(documentTitleModifierSequence);
+        // }
+
+        if (keyObjectDescription != null && !"".equals(keyObjectDescription)) {
+
+            Attributes keyObjectDescriptionSequence = new Attributes(4);
+            keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
+            keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT");
+            keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1).add(
+                makeKOS.toCodeItem("DCM-113012"));
+            keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
+
+            contentSeq.add(keyObjectDescriptionSequence);
+        }
+
+        // TODO - Handle Identical Documents Sequence (see below)
+        /**
+         * @see DICOM standard PS 3.3 - § C.17.6 Key Object Selection Modules && § C.17.6.2.1 Identical Documents
+         * 
+         * @note The Unique identifier for the Study (studyInstanceUID) is supposed to be the same as to one of the
+         *       referenced image but it's not necessary. Standard says that if the Current Requested Procedure Evidence
+         *       Sequence (0040,A375) references SOP Instances both in the current study and in one or more other
+         *       studies, this document shall be duplicated into each of those other studies, and the duplicates shall
+         *       be referenced in the Identical Documents Sequence (0040,A525).
+         */
+
+        return dKOS;
     }
 }

@@ -8,7 +8,6 @@ import java.awt.image.ImageProducer;
 import java.awt.image.RGBImageFilter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.Icon;
@@ -258,25 +257,26 @@ public class KOManager {
             }
 
             if (dicomKO == null) {
-                String patientID = (String) currentImage.getTagValue(TagW.PatientID);
-                String patientName = (String) currentImage.getTagValue(TagW.PatientName);
-                Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
+                // create a new empty dicom KO
+                // String patientID = (String) currentImage.getTagValue(TagW.PatientID);
+                // String patientName = (String) currentImage.getTagValue(TagW.PatientName);
+                // Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
 
                 newDicomKO =
-                    DicomMediaUtils.createDicomKeyObject(patientID, patientName, patientBirthdate, description,
-                        currentStudyInstanceUID, null);
+                    DicomMediaUtils.createDicomKeyObject(currentImage.getMediaReader().getDicomObject(), description,
+                        null);
+
             } else {
-                // create a new dicom KO from the selected one
+                // create a new dicom KO from the selected one by copying its content selection
 
                 // TODO should remove from the current procedure evidence any SOPInstanceUID references outside
                 // the scope of the current seriesInstanceUID or at least give the choice to the user
 
                 newDicomKO =
-                    DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(), description,
-                        currentStudyInstanceUID, null);
+                    DicomMediaUtils.createDicomKeyObject(dicomKO.getMediaReader().getDicomObject(), description, null);
             }
 
-            new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // executed in the EDT
+            new LoadDicomObjects(dicomModel, newDicomKO).addSelectionAndnotify(); // must be executed in the EDT
 
             // Find the new KOSpecialElement just loaded and set it as default for this view
             for (KOSpecialElement ko : DicomModel.getKoSpecialElements(currentDicomSeries)) {
@@ -300,8 +300,8 @@ public class KOManager {
         ((View2d) defaultView2d).updateKOSelectionChange();
 
         // Fire an event since any view in the View2dContainner may have its KO selected state changed
-        // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, currentView,
-        // null, selectedKO));
+        // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, currentView, null,
+        // selectedKO));
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
