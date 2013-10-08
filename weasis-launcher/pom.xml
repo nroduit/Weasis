@@ -63,27 +63,23 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.metatype</artifactId>
-			<version>1.0.6</version>
+			<version>1.0.8</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.prefs</artifactId>
-			<version>1.0.4</version>
+			<version>1.0.6</version>
 			<scope>provided</scope>
 			<exclusions>
 				<!-- exclude these dependencies to avoid a mix with recent versions -->
 				<exclusion>
+					<groupId>org.apache.felix</groupId>
 					<artifactId>org.osgi.core</artifactId>
-					<groupId>org.apache.felix</groupId>
 				</exclusion>
 				<exclusion>
-					<artifactId>javax.servlet</artifactId>
 					<groupId>org.apache.felix</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>org.osgi.foundation</artifactId>
-					<groupId>org.apache.felix</groupId>
+					<artifactId>org.osgi.compendium</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
