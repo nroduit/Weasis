@@ -15,7 +15,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Sequence;
@@ -148,17 +150,17 @@ public class DicomSpecialElement extends MediaElement {
             if (element instanceof KOSpecialElement) {
                 KOSpecialElement koElement = (KOSpecialElement) element;
 
-                // Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
-                //
-                // if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
-                // koElement.getMediaReader().isWritableDicom()) {
-                //
-                // if (koElementSet == null) {
-                // // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
-                // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
-                // }
-                // koElementSet.add(koElement);
-                // }
+                Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+
+                if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
+                    koElement.getMediaReader().isWritableDicom()) {
+
+                    if (koElementSet == null) {
+                        // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);
+                        koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DATE);
+                    }
+                    koElementSet.add(koElement);
+                }
             }
         }
 

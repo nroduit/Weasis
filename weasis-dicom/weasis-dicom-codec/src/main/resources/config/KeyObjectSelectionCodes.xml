@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- A Mapping Resource that defines Templates and Context Groups for use in DICOM IODs. -->
+<!-- @see Dicom Standard PS 3.16 - Template ID 2010 & Context IDs 7010/7011/7012 -->
+
+<!-- DEFINITIONS -->
+<!-- DCMR : DICOM Content Mapping Resource> -->
+
+<!-- Defined Context Group Identifier (DCID): Identifier that specifies the Context Group for a Code Sequence Attribute that
+	shall be used. -->
+<!-- Context ID (CID): Identifier of a Context Group. -->
+<!-- Template ID (TID): Identifier of a Template. -->
+
+<!-- EV : Enumerated Value -->
+<!-- CV : Code Value -->
+<!-- CSD : Coding Scheme Designator  -->
+<!-- CM : Code Meaning -->
+
+<resources name="DICOM Key Object Selection Mapping Resource">
+
+	<resource name="Key Object Selection Document Concept Names">
+		<code scheme="DCM" value="113011" meaning="Document Title Modifier" />
+		<code scheme="DCM" value="113012" meaning="Key Object Description" />
+	</resource>
+
+	<resource name="Key Object Selection Document Title" contexId="7010">
+		<code scheme="DCM" value="113000" meaning="Of Interest" />
+		<code scheme="DCM" value="113001" meaning="Rejected for Quality Reasons" conceptMod="113011" contexId="7011" />
+		<code scheme="DCM" value="113002" meaning="For Referring Provider" />
+		<code scheme="DCM" value="113003" meaning="For Surgery" />
+		<code scheme="DCM" value="113004" meaning="For Teaching" />
+		<code scheme="DCM" value="113005" meaning="For Conference" />
+		<code scheme="DCM" value="113006" meaning="For Therapy" />
+		<code scheme="DCM" value="113007" meaning="For Patient" />
+		<code scheme="DCM" value="113008" meaning="For Peer Review" />
+		<code scheme="DCM" value="113009" meaning="For Research" />
+		<code scheme="DCM" value="113010" meaning="Quality Issue" conceptMod="113011" contexId="7011" />
+		<code scheme="DCM" value="113013" meaning="Best In Set" conceptMod="113011" contexId="7012" />
+		<code scheme="DCM" value="113018" meaning="For Printing" />
+		<code scheme="DCM" value="113020" meaning="For Report Attachment" />
+		<code scheme="DCM" value="113030" meaning="Manifest" />
+		<code scheme="DCM" value="113031" meaning="Signed Manifest" />
+		<code scheme="DCM" value="113032" meaning="Complete Study Content" />
+		<code scheme="DCM" value="113033" meaning="Signed Complete Study Content" />
+		<code scheme="DCM" value="113034" meaning="Complete Acquisition Content" />
+		<code scheme="DCM" value="113035" meaning="Signed Complete Acquisition Content" />
+		<code scheme="DCM" value="113036" meaning="Group of Frames for Display" />
+		<code scheme="DCM" value="113037" meaning="Rejected for Patient Safety Reasons" />
+		<code scheme="DCM" value="113038" meaning="Incorrect Modality Worklist Entry" />
+		<code scheme="DCM" value="113039" meaning="Data Retention Policy Expired" />
+	</resource>
+
+	<resource name="Rejected for Quality Reasons" contexId="7011">
+		<code scheme="DCM" value="111207" meaning="Image artifact(s)" />
+		<code scheme="DCM" value="111208" meaning="Grid artifact(s)" />
+		<code scheme="DCM" value="111209" meaning="Positioning" />
+		<code scheme="DCM" value="111210" meaning="Motion blur" />
+		<code scheme="DCM" value="111211" meaning="Under exposed" />
+		<code scheme="DCM" value="111212" meaning="Over exposed" />
+		<!-- ... -->
+		<!-- ... -->
+		<!-- ... -->
+		<!-- ... -->
+		<!-- ... -->
+	</resource>
+
+	<resource name="Best in Set" contexId="7012">
+		<code scheme="DCM" value="113014" meaning="Study" />
+		<code scheme="DCM" value="113015" meaning="Series" />
+		<code scheme="DCM" value="113016" meaning="Performed Procedure Step" />
+		<code scheme="DCM" value="113017" meaning="Stage-View" />
+	</resource>
+
+</resources>
