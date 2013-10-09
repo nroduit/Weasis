@@ -1089,7 +1089,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     // message.append(DecFormater.twoDecimal(imageElement.getPixelSizeY() * p.y));
                     // message.append(" " + unit.getAbbreviation() + ")");
                     // }
-                } catch (ArrayIndexOutOfBoundsException ex) {
+                } catch (Throwable e) {
+                    // when image tile is not available anymore (file stream closed)
+                    System.gc();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException et) {
+                    }
                 }
             } else {
                 message.append(Messages.getString("View2d.out_img")); //$NON-NLS-1$

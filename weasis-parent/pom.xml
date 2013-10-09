@@ -8,6 +8,10 @@
 	<version>2.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
+	<prerequisites>
+		<maven>2.2.1</maven>
+	</prerequisites>
+
 	<licenses>
 		<license>
 			<name>Eclipse Public License v1.0</name>
@@ -41,8 +45,6 @@
 		</dependencies>
 	</dependencyManagement>
 	<build>
-		<plugins>
-		</plugins>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -97,6 +99,46 @@
 						</instructions>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jarsigner-plugin</artifactId>
+					<version>1.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>2.6</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>3.3</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.16</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 		<resources>
@@ -150,13 +192,13 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
-			<version>1.9.4</version>
+			<version>1.9.6</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.sling</groupId>
 			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.0</version>
+			<version>3.0.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -192,7 +234,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>docking-frames</artifactId>
-			<version>1.1.2-p5</version>
+			<version>1.1.2-p8</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
