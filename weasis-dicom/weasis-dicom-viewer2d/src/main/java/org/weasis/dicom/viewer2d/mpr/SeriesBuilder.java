@@ -71,7 +71,7 @@ import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+    public static final File MPR_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
         AbstractProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
     public static void createMissingSeries(Thread thread, MPRContainer mprContainer, final MprView view)

@@ -447,7 +447,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             keepNames = false;
             writeDicomdir = true;
             cdCompatible = true;
-            writeDir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirecotry("tmp", "zip"));
+            writeDir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirectory("tmp", "zip"));
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
             keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$

@@ -79,10 +79,10 @@ import org.weasis.dicom.explorer.MimeSystemAppFactory;
 public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImporter {
 
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
-    public static final String CODOWNLOAD_IMAGES_NB = "wado.codownload.images.nb"; //$NON-NLS-1$
+    public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
 
-    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirecotry("dicom"); //$NON-NLS-1$
-    public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirecotry("downloading"); //$NON-NLS-1$
+    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
+    public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -90,14 +90,14 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         Downloading, Paused, Complete, Cancelled, Error
     };
 
-    public final int CODOWNLOAD_NUMBER;
+    public final int concurrentDownloads;
     private final DicomModel dicomModel;
     private final Series dicomSeries;
     private final JProgressBar progressBar;
     private DownloadPriority priority = null;
     private final boolean writeInCache;
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int simultaneousDownload, boolean writeInCache) {
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -121,10 +121,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             progressBar.setVisible(false);
         }
         this.dicomSeries.setSeriesLoader(this);
-        this.CODOWNLOAD_NUMBER = simultaneousDownload;
+        this.concurrentDownloads = concurrentDownloads;
     }
 
-    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int simultaneousDownload,
+    public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
@@ -134,7 +134,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         this.progressBar = progressBar;
         this.writeInCache = writeInCache;
         this.dicomSeries.setSeriesLoader(this);
-        this.CODOWNLOAD_NUMBER = simultaneousDownload;
+        this.concurrentDownloads = concurrentDownloads;
     }
 
     @Override
@@ -166,7 +166,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     public void resume() {
         if (isStopped()) {
             LoadSeries taskResume =
-                new LoadSeries(dicomSeries, dicomModel, progressBar, CODOWNLOAD_NUMBER, writeInCache);
+                new LoadSeries(dicomSeries, dicomModel, progressBar, concurrentDownloads, writeInCache);
             DownloadPriority p = this.getPriority();
             p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
             taskResume.setPriority(p);
@@ -264,7 +264,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         if (wado == null) {
             return false;
         }
-        ExecutorService imageDownloader = Executors.newFixedThreadPool(CODOWNLOAD_NUMBER);
+        ExecutorService imageDownloader = Executors.newFixedThreadPool(concurrentDownloads);
         ArrayList<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>(sopList.size());
         int[] dindex = generateDownladOrder(sopList.size());
         GuiExecutor.instance().execute(new Runnable() {
@@ -1090,7 +1090,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             if (s != this && StateValue.STARTED.equals(s.getState())) {
                                 LoadSeries taskResume =
                                     new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
-                                        s.getCODOWNLOAD_NUMBER(), s.writeInCache);
+                                        s.getConcurrentDownloads(), s.writeInCache);
                                 s.cancel(true);
                                 taskResume.setPriority(s.getPriority());
                                 Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
@@ -1110,8 +1110,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
     }
 
-    public int getCODOWNLOAD_NUMBER() {
-        return CODOWNLOAD_NUMBER;
+    public int getConcurrentDownloads() {
+        return concurrentDownloads;
     }
 
 }

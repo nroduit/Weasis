@@ -77,7 +77,7 @@ public abstract class AbstractProperties {
         } catch (Exception e1) {
         }
     }
-    public static final File FILE_CACHE_DIR = buildAccessibleTempDirecotry("cache"); //$NON-NLS-1$
+    public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 
     public static final String OPERATING_SYSTEM = System.getProperty("os.name", "unknown").toLowerCase(); //$NON-NLS-1$ //$NON-NLS-2$;
 
@@ -99,7 +99,7 @@ public abstract class AbstractProperties {
         return result;
     }
 
-    public static File buildAccessibleTempDirecotry(String... subFolderName) {
+    public static File buildAccessibleTempDirectory(String... subFolderName) {
         if (subFolderName != null) {
             StringBuffer buf = new StringBuffer();
             for (String s : subFolderName) {

@@ -114,7 +114,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
-                File dir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirecotry("tmp", "zip"));
+                File dir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirectory("tmp", "zip"));
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {

@@ -112,7 +112,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                 boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
                 final LoadSeries loadSeries =
                     new LoadSeries(dicomSeries, dicomModel, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                        LoadSeries.CODOWNLOAD_IMAGES_NB, 4), true);
+                        LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
                 if (!ps) {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }

@@ -34,13 +34,12 @@ import org.weasis.dicom.explorer.Messages;
 
 public class LoadRemoteDicomManifest extends ExplorerTask {
 
-    public static final String CODOWNLOAD_SERIES_NB = "wado.codownload.series.nb"; //$NON-NLS-1$
+    public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
     public static final BlockingQueue<Runnable> loadingQueue = new PriorityBlockingQueue<Runnable>(10,
         new PriorityTaskComparator());
-    public static final ThreadPoolExecutor executor =
-        new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_SERIES_NB, 3),
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty(CODOWNLOAD_SERIES_NB, 3), 0L, TimeUnit.MILLISECONDS,
-            loadingQueue);
+    public static final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, loadingQueue);
     public static final ArrayList<LoadSeries> currentTasks = new ArrayList<LoadSeries>();
     private final String[] xmlFiles;
     private final DicomModel dicomModel;
@@ -181,7 +180,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             if (currentTasks.size() == 0) {
                 // When all loadseries are ended, reset to default the number of simultaneous download (series)
                 LoadRemoteDicomManifest.executor.setCorePoolSize(BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                    CODOWNLOAD_SERIES_NB, 3));
+                    CONCURRENT_SERIES, 3));
             }
         }
     }

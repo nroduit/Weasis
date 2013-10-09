@@ -47,7 +47,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 
 public class Thumbnail extends JLabel {
-    public static final File THUMBNAIL_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+    public static final File THUMBNAIL_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
         AbstractProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
     public static final ExecutorService THUMB_LOADER = Executors.newFixedThreadPool(1);
     public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,

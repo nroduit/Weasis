@@ -24,7 +24,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class JIListModel extends AbstractListModel implements JIFileModel {
 
-    public static final File EXPLORER_CACHE_DIR = AbstractProperties.buildAccessibleTempDirecotry(
+    public static final File EXPLORER_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
         AbstractProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
 
     private final OrderedFileList sortedList;
