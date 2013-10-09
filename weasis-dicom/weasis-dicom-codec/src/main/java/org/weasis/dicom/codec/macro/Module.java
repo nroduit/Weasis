@@ -22,28 +22,28 @@ public class Module {
 
     protected void updateSequence(int tag, Module module) {
 
-        if (module == null) {
-            Sequence oldSequence = dcmItems.getSequence(tag);
-            if (oldSequence != null) {
-                oldSequence.clear();
-            }
-        } else {
+        Sequence oldSequence = dcmItems.getSequence(tag);
+        if (oldSequence != null) {
+            oldSequence.clear(); // Allows to remove parents of Attributes
+        }
+
+        if (module != null) {
             dcmItems.newSequence(tag, 1).add(module.getAttributes());
         }
     }
 
-    protected void updateSequence(int tag, Collection<? extends Module> moduleList) {
+    protected void updateSequence(int tag, Collection<? extends Module> modules) {
 
         Sequence oldSequence = dcmItems.getSequence(tag);
         if (oldSequence != null) {
-            // Allows to remove parents of Attributes
-            oldSequence.clear();
+            oldSequence.clear(); // Allows to remove parents of Attributes
         }
 
-        Sequence newSequence = dcmItems.newSequence(tag, moduleList.size());
-        for (Module module : moduleList) {
-            newSequence.add(module.getAttributes());
+        if (modules != null && modules.size() > 0) {
+            Sequence newSequence = dcmItems.newSequence(tag, modules.size());
+            for (Module module : modules) {
+                newSequence.add(module.getAttributes());
+            }
         }
-
     }
 }
