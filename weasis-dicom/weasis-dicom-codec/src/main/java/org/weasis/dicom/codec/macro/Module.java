@@ -34,16 +34,16 @@ public class Module {
 
     protected void updateSequence(int tag, Collection<? extends Module> moduleList) {
 
-        if (moduleList == null || moduleList.size() == 0) {
-            Sequence oldSequence = dcmItems.getSequence(tag);
-            if (oldSequence != null) {
-                oldSequence.clear();
-            }
-        } else {
-            Sequence newSequence = dcmItems.newSequence(tag, moduleList.size());
-            for (Module module : moduleList) {
-                newSequence.add(module.getAttributes());
-            }
+        Sequence oldSequence = dcmItems.getSequence(tag);
+        if (oldSequence != null) {
+            // Allows to remove parents of Attributes
+            oldSequence.clear();
         }
+
+        Sequence newSequence = dcmItems.newSequence(tag, moduleList.size());
+        for (Module module : moduleList) {
+            newSequence.add(module.getAttributes());
+        }
+
     }
 }
