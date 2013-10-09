@@ -17,22 +17,27 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.media.jai.LookupTableJAI;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
-import org.dcm4che.tool.common.CLIUtils;
-import org.dcm4che.tool.mkkos.MkKOS;
 import org.dcm4che.util.ByteUtils;
 import org.dcm4che.util.TagUtils;
 import org.dcm4che.util.UIDUtils;
@@ -42,6 +47,7 @@ import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -1278,17 +1284,9 @@ public class DicomMediaUtils {
             seriesInstanceUID = UIDUtils.createUID();
         }
 
-        // /////////////////////////////////////////////////////////////////////
-        // USE of MkKOS to manipulates predefined "Key Object Selection Document Code"
-        final MkKOS makeKOS = new MkKOS();
-
-        // /////////////////////////////////////////////////////////////////////////////////////////////////
-        // FOLLOWING re-creates what is done within MkKOS.configure static private method
-
         /**
-         * @note Loads properties that reference all "Key Object Codes" * In dcm4che2 it was defined in the following
-         *       class : org.dcm4che2.code.KeyObjectSelectionDocumentTitle <br>
-         *       In dcm4che3 it's defined as a resource : dcm4che-tool/dcm4che-tool-mkkos/src/etc/mkkos/code.properties
+         * @note Loads properties that reference all "Key Object Codes" defined in the following resource :
+         *       KeyObjectSelectionCodes.xml
          * 
          * @see These Codes are up to date regarding Dicom Conformance : <br>
          *      PS 3.16 - § Context ID 7010 Key Object Selection Document Title <br>
@@ -1296,24 +1294,32 @@ public class DicomMediaUtils {
          *      PS 3.16 - § Context ID 7012 Best In Set<br>
          *      Correction Proposal - § CP 1152 Parts 16 (Additional document titles for Key Object Selection Document)
          */
-        try {
-            makeKOS.setCodes(CLIUtils.loadProperties("resource:code.properties", null));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+
+        Map<String, KeyObjectSelectionCode> codeByValue = getKeyObjectSelectionMappingResources();
+        Map<String, Set<KeyObjectSelectionCode>> resourcesByContextID =
+            new HashMap<String, Set<KeyObjectSelectionCode>>();
+
+        for (KeyObjectSelectionCode code : codeByValue.values()) {
+            Set<KeyObjectSelectionCode> resourceSet = resourcesByContextID.get(code.contextGroupID);
+            if (resourceSet == null) {
+                resourcesByContextID.put(code.contextGroupID, resourceSet =
+                    new TreeSet<DicomMediaUtils.KeyObjectSelectionCode>());
+            }
+            resourceSet.add(code);
         }
 
         /**
-         * Document Title of created KOS - must be one of the values specified by etc/mkkos/code.properties <br>
+         * Document Title of created KOS - must be one of the values specified by "Context ID 7010" in
+         * KeyObjectSelectionCodes.xml<br>
          * 
-         * @note Default value is code [DCM-113000] with following attributes : <br>
-         *       Tag.CodeValue = 113000 <br>
+         * @note Default is code [DCM-113000] with following attributes : <br>
          *       Tag.CodingSchemeDesignator = "DCM" <br>
+         *       Tag.CodeValue = 113000 <br>
          *       Tag.CodeMeaning = "Of Interest"
          */
-        // makeKOS.setDocumentTitle(makeKOS.toCodeItem("DCM-113000"));
-        // TODO - the user or some preferences should be able to set this title value from the predefined list of code
-        final Attributes documentTitle = makeKOS.toCodeItem("DCM-113000");
+
+        final Attributes documentTitle = codeByValue.get("113000").toCodeItem();
+        // TODO - the user or some preferences should be able to set this title value from a predefined list of code
 
         /**
          * @note "Document Title Modifier" should be set when "Document Title" meets one of the following case : <br>
@@ -1323,38 +1329,15 @@ public class DicomMediaUtils {
          * 
          * @see PS 3.16 - Structured Reporting Templates § TID 2010 Key Object Selection
          */
-        // makeKOS.setDocumentTitleModifier(makeKOS.toCodeItem(""));
+
         // TODO - add ability to set "Optional Document Title Modifier" for created KOS from the predefined list of code
         // final Attributes documentTitleModifier = null;
 
-        // makeKOS.setKeyObjectDescription(keyObjectDescription); // optional Key Object Description of created KOS
-
-        // makeKOS.setSeriesNumber("999");
         final String seriesNumber = "999"; // A number that identifies the Series. (default: 999)
-        // makeKOS.setInstanceNumber("1");
         final String instanceNumber = "1"; // A number that identifies the Document. (default: 1)
 
-        // TODO - add ability to override default instanceNumber and setSeriesNumber from given parameters in case many
+        // TODO - add ability to override default instanceNumber and seriesNumber from given parameters in case many
         // KEY OBJECT DOCUMENT SERIES and KEY OBJECT DOCUMENT are build for the same Study in the same context
-
-        // makeKOS.setOutputFile(null); // use for writing process only
-        // makeKOS.setNoFileMetaInformation(false); // use for writing process only
-        // makeKOS.setTransferSyntax(UID.ExplicitVRLittleEndian);// use for writing process only
-        // makeKOS.setEncodingOptions(DicomEncodingOptions.DEFAULT);// use for writing process only
-        // CLIUtils.addAttributes(main.attrs, cl.getOptionValues("s")); // not to be used
-
-        // Specify suffix to be appended to the Study, Series and SOP Instance UID of referenced object(s)
-        // makeKOS.setUIDSuffix(null);
-
-        // /////////////////////////////////////////////////////////////////////////////////////////////////
-        // FOLLOWING re-creates what is done within MkKOS.createKOS(Attributes inst) private method
-
-        // final int[] PATIENT_AND_STUDY_ATTRS =
-        // { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime, Tag.AccessionNumber,
-        // Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName, Tag.PatientName, Tag.PatientID,
-        // Tag.IssuerOfPatientID, Tag.PatientBirthDate, Tag.PatientSex, Tag.StudyInstanceUID, Tag.StudyID };
-
-        // Attributes attrs = new Attributes(inst, PATIENT_AND_STUDY_ATTRS);
 
         final int[] PATIENT_AND_STUDY_ATTRS =
             { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime, Tag.AccessionNumber,
@@ -1363,8 +1346,8 @@ public class DicomMediaUtils {
         Arrays.sort(PATIENT_AND_STUDY_ATTRS);
 
         /**
-         * Add selected attributes from another Attributes object to this. The specified array of tag values must be
-         * sorted (as by the {@link java.util.Arrays#sort(int[])} method) prior to making this call.
+         * @note : Add selected attributes from another Attributes object to this. The specified array of tag values
+         *       must be sorted (as by the {@link java.util.Arrays#sort(int[])} method) prior to making this call.
          */
         Attributes dKOS = new Attributes(dicomSourceAttribute, PATIENT_AND_STUDY_ATTRS);
 
@@ -1388,7 +1371,7 @@ public class DicomMediaUtils {
 
         Sequence contentSeq = dKOS.newSequence(Tag.ContentSequence, 1);
 
-        // !! Dead Code !! uncomment this when documentTitleModifier will be handled
+        // !! Dead Code !! uncomment this when documentTitleModifier will be handled (see above)
         // if (documentTitleModifier != null) {
         //
         // Attributes documentTitleModifierSequence = new Attributes(4);
@@ -1407,7 +1390,7 @@ public class DicomMediaUtils {
             keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
             keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT");
             keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1).add(
-                makeKOS.toCodeItem("DCM-113012"));
+                codeByValue.get("113012").toCodeItem());
             keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
 
             contentSeq.add(keyObjectDescriptionSequence);
@@ -1425,5 +1408,130 @@ public class DicomMediaUtils {
          */
 
         return dKOS;
+    }
+
+    static Map<String, KeyObjectSelectionCode> getKeyObjectSelectionMappingResources() {
+
+        Map<String, KeyObjectSelectionCode> codeByValue = new HashMap<String, DicomMediaUtils.KeyObjectSelectionCode>();
+
+        XMLStreamReader xmler = null;
+        InputStream stream = null;
+        try {
+            XMLInputFactory xmlif = XMLInputFactory.newInstance();
+            stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml");
+            xmler = xmlif.createXMLStreamReader(stream);
+
+            int eventType;
+            while (xmler.hasNext()) {
+                eventType = xmler.next();
+                switch (eventType) {
+                    case XMLStreamConstants.START_ELEMENT:
+                        String key = xmler.getName().getLocalPart();
+                        if ("resources".equals(key)) {
+                            while (xmler.hasNext()) {
+                                eventType = xmler.next();
+                                switch (eventType) {
+                                    case XMLStreamConstants.START_ELEMENT:
+                                        key = xmler.getName().getLocalPart();
+                                        if ("resource".equals(key)) {
+                                            String resourceName = xmler.getAttributeValue(null, "name");
+                                            String contextGroupID = xmler.getAttributeValue(null, "contextId");
+
+                                            while (xmler.hasNext()) {
+                                                eventType = xmler.next();
+                                                switch (eventType) {
+                                                    case XMLStreamConstants.START_ELEMENT:
+                                                        key = xmler.getName().getLocalPart();
+                                                        if ("code".equals(key)) {
+
+                                                            String codingSchemeDesignator =
+                                                                xmler.getAttributeValue(null, "scheme");
+                                                            String codeValue = xmler.getAttributeValue(null, "value");
+                                                            String codeMeaning =
+                                                                xmler.getAttributeValue(null, "meaning");
+
+                                                            String conceptNameCodeModifier =
+                                                                xmler.getAttributeValue(null, "conceptMod");
+                                                            String contexGroupIdModifier =
+                                                                xmler.getAttributeValue(null, "contexId");
+
+                                                            codeByValue.put(codeValue,
+                                                                new DicomMediaUtils.KeyObjectSelectionCode(
+                                                                    resourceName, contextGroupID,
+                                                                    codingSchemeDesignator, codeValue, codeMeaning,
+                                                                    conceptNameCodeModifier, contexGroupIdModifier));
+                                                        }
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        catch (XMLStreamException e) {
+            e.printStackTrace();
+            codeByValue = null;
+        } finally {
+            FileUtil.safeClose(xmler);
+            FileUtil.safeClose(stream);
+        }
+        return codeByValue;
+    }
+
+    public static class KeyObjectSelectionCode implements Comparable<KeyObjectSelectionCode> {
+
+        public KeyObjectSelectionCode(String resourceName, String contextGroupID, String codingSchemeDesignator,
+            String codeValue, String codeMeaning, String conceptNameCodeModifier, String contexGroupIdModifier) {
+
+            this.resourceName = resourceName;
+            this.contextGroupID = contextGroupID;
+
+            this.codingSchemeDesignator = codingSchemeDesignator;
+            this.codeValue = codeValue;
+            this.codeMeaning = codeMeaning;
+
+            this.conceptNameCodeModifier = conceptNameCodeModifier;
+            this.contexGroupIdModifier = contexGroupIdModifier;
+        }
+
+        final String resourceName;
+        final String contextGroupID;
+
+        final String codingSchemeDesignator;
+        final String codeValue;
+        final String codeMeaning;
+
+        final String conceptNameCodeModifier;
+        final String contexGroupIdModifier;
+
+        final Boolean hasConceptModifier() {
+            return conceptNameCodeModifier != null;
+        }
+
+        @Override
+        public int compareTo(KeyObjectSelectionCode o) {
+            return this.codeValue.compareToIgnoreCase(o.codeValue);
+        }
+
+        public Attributes toCodeItem() {
+            Attributes attrs = new Attributes(3);
+            attrs.setString(Tag.CodeValue, VR.SH, codeValue);
+            attrs.setString(Tag.CodingSchemeDesignator, VR.SH, codingSchemeDesignator);
+            attrs.setString(Tag.CodeMeaning, VR.LO, codeMeaning);
+            return attrs;
+        }
+
     }
 }
