@@ -60,7 +60,7 @@ import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * 
+ *
  */
 public class ImageReaderFactory implements Serializable {
 
@@ -74,10 +74,13 @@ public class ImageReaderFactory implements Serializable {
         public final String className;
         public final PatchJPEGLS patchJPEGLS;
 
-        public ImageReaderParam(String formatName, String className, String patchJPEGLS) {
+        public ImageReaderParam(String formatName, String className,
+                String patchJPEGLS) {
             this.formatName = formatName;
             this.className = nullify(className);
-            this.patchJPEGLS = patchJPEGLS != null && !patchJPEGLS.isEmpty() ? PatchJPEGLS.valueOf(patchJPEGLS) : null;
+            this.patchJPEGLS = patchJPEGLS != null && !patchJPEGLS.isEmpty()
+                    ? PatchJPEGLS.valueOf(patchJPEGLS)
+                    : null;
         }
 
     }
@@ -87,12 +90,12 @@ public class ImageReaderFactory implements Serializable {
     }
 
     private static ImageReaderFactory defaultFactory;
-    private final HashMap<String, ImageReaderParam> map = new HashMap<String, ImageReaderParam>();
+    private final HashMap<String, ImageReaderParam> map = 
+            new HashMap<String, ImageReaderParam>();
 
     public static ImageReaderFactory getDefault() {
-        if (defaultFactory == null) {
+        if (defaultFactory == null)
             defaultFactory = initDefault();
-        }
 
         return defaultFactory;
     }
@@ -102,22 +105,21 @@ public class ImageReaderFactory implements Serializable {
     }
 
     public static void setDefault(ImageReaderFactory factory) {
-        if (factory == null) {
+        if (factory == null)
             throw new NullPointerException();
-        }
 
         defaultFactory = factory;
     }
 
     private static ImageReaderFactory initDefault() {
         ImageReaderFactory factory = new ImageReaderFactory();
-        String name =
-            System.getProperty(ImageReaderFactory.class.getName(),
+        String name = System.getProperty(ImageReaderFactory.class.getName(),
                 "org/dcm4che/imageio/codec/ImageReaderFactory.properties");
         try {
             factory.load(name);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load Image Reader Factory configuration from: " + name, e);
+            throw new RuntimeException(
+                    "Failed to load Image Reader Factory configuration from: " + name, e);
         }
         return factory;
     }
@@ -128,9 +130,8 @@ public class ImageReaderFactory implements Serializable {
             url = new URL(name);
         } catch (MalformedURLException e) {
             url = StringUtils.getResourceURL(name, this.getClass());
-            if (url == null) {
+            if (url == null)
                 throw new IOException("No such resource: " + name);
-            }
         }
         InputStream in = url.openStream();
         try {
@@ -145,7 +146,8 @@ public class ImageReaderFactory implements Serializable {
         props.load(in);
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String[] ss = StringUtils.split((String) entry.getValue(), ':');
-            map.put((String) entry.getKey(), new ImageReaderParam(ss[0], ss[1], ss[2]));
+            map.put((String) entry.getKey(),
+                    new ImageReaderParam(ss[0], ss[1], ss[2]));
         }
     }
 
@@ -153,7 +155,12 @@ public class ImageReaderFactory implements Serializable {
         return map.get(tsuid);
     }
 
-    public ImageReaderParam put(String tsuid, ImageReaderParam param) {
+    public boolean contains(String tsuid) {
+        return map.containsKey(tsuid);
+    }
+
+    public ImageReaderParam put(String tsuid,
+            ImageReaderParam param) {
         return map.put(tsuid, param);
     }
 
@@ -173,24 +180,28 @@ public class ImageReaderFactory implements Serializable {
         return getDefault().get(tsuid);
     }
 
+    public static boolean canDecompress(String tsuid) {
+        return getDefault().contains(tsuid);
+    }
+
     public static ImageReader getImageReader(ImageReaderParam param) {
-        Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName(param.formatName);
-        if (!iter.hasNext()) {
-            throw new RuntimeException("No Image Reader for format: " + param.formatName + " registered");
-        }
+        Iterator<ImageReader> iter =
+                ImageIO.getImageReadersByFormatName(param.formatName);
+        if (!iter.hasNext())
+            throw new RuntimeException("No Image Reader for format: "
+                    + param.formatName + " registered");
 
         String className = param.className;
-        if (className == null) {
+        if (className == null)
             return iter.next();
-        }
 
         do {
             ImageReader reader = iter.next();
-            if (reader.getClass().getName().equals(className)) {
+            if (reader.getClass().getName().equals(className))
                 return reader;
-            }
         } while (iter.hasNext());
 
-        throw new RuntimeException("Image Reader: " + className + " not registered");
+        throw new RuntimeException("Image Reader: " + className
+                + " not registered");
     }
 }
