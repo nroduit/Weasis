@@ -127,11 +127,6 @@ public class DicomImageElement extends ImageElement {
         }
     }
 
-    @Override
-    public DicomMediaIO getMediaReader() {
-        return (DicomMediaIO) super.getMediaReader();
-    }
-
     /**
      * @return return the min value after modality pixel transformation and after pixel padding operation if padding
      *         exists.

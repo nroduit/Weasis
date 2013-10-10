@@ -30,6 +30,7 @@ import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
@@ -262,9 +263,11 @@ public class KOManager {
                 // String patientName = (String) currentImage.getTagValue(TagW.PatientName);
                 // Date patientBirthdate = (Date) currentImage.getTagValue(TagW.PatientBirthDate);
 
-                newDicomKO =
-                    DicomMediaUtils.createDicomKeyObject(currentImage.getMediaReader().getDicomObject(), description,
-                        null);
+                if (currentImage.getMediaReader() instanceof DicomMediaIO) {
+                    newDicomKO =
+                        DicomMediaUtils.createDicomKeyObject(
+                            ((DicomMediaIO) currentImage.getMediaReader()).getDicomObject(), description, null);
+                }
 
             } else {
                 // create a new dicom KO from the selected one by copying its content selection
