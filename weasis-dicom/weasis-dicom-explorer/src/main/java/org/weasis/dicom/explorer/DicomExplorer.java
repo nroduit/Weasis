@@ -1429,14 +1429,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 else if (ObservableEvent.BasicAction.Update.equals(action)) {
                     if (newVal instanceof Series) {
                         Series dcm = (Series) newVal;
-                        if (DicomModel.isSpecialModality(dcm)) {
-                            // model.addSpecialModality(dcm);
-                            // addSpecialModalityToStudy(dcm);
-                        } else {
-                            Integer splitNb = (Integer) dcm.getTagValue(TagW.SplitSeriesNumber);
-                            if (splitNb != null) {
-                                updateSplitSeries(dcm);
-                            }
+                        Integer splitNb = (Integer) dcm.getTagValue(TagW.SplitSeriesNumber);
+                        if (splitNb != null) {
+                            updateSplitSeries(dcm);
                         }
                     }
                 } else if (ObservableEvent.BasicAction.LoadingStart.equals(action)) {

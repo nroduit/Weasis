@@ -34,6 +34,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
+import org.dcm4che.data.Sequence;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -84,6 +85,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
@@ -585,6 +587,22 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     specialElement = (DicomSpecialElement) newVal;
                 }
 
+                if (specialElement instanceof PRSpecialElement) {
+                    for (DefaultView2d<DicomImageElement> view : view2ds) {
+                        if (view instanceof View2d) {
+                            DicomImageElement img = view.getImage();
+                            if (img != null) {
+                                if (DicomSpecialElement.isSopuidInReferencedSeriesSequence(
+                                    (Sequence) specialElement.getTagValue(TagW.ReferencedSeriesSequence),
+                                    (String) img.getTagValue(TagW.SeriesInstanceUID),
+                                    (String) img.getTagValue(TagW.SOPInstanceUID), (Integer) img.getKey())) {
+                                    ((View2d) view).updatePR();
+
+                                }
+                            }
+                        }
+                    }
+                }
                 // Following is about setting visible KOpopupButton in any view concerned by the KO selection updated
                 // Also the KO Annotation and the view border is about to be repaint if needed
 

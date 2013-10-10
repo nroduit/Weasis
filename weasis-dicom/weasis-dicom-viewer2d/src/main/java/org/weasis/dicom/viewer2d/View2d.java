@@ -806,6 +806,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         updateButtonState(img, newImg);
     }
 
+    void updatePR() {
+        DicomImageElement img = imageLayer.getSourceImage();
+        if (img != null) {
+            updateButtonState(img, true);
+        }
+    }
+
     private void updateButtonState(DicomImageElement img, boolean newImg) {
         if (img == null || newImg) {
             // Remove old PR button

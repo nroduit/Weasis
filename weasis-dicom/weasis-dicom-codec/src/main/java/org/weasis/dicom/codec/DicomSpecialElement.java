@@ -93,7 +93,7 @@ public class DicomSpecialElement extends MediaElement {
         return filteredList;
     }
 
-    private static boolean isSopuidInReferencedSeriesSequence(Sequence seq, String seriesUID, String sopUID,
+    public static boolean isSopuidInReferencedSeriesSequence(Sequence seq, String seriesUID, String sopUID,
         Integer frameNumber) {
         if (seq != null) {
             for (Attributes item : seq) {
