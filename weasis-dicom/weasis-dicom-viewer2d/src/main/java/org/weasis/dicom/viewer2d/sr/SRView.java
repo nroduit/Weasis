@@ -108,6 +108,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             List<MediaElement<?>> specialElements =
                 (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
             if (specialElements != null && specialElements.size() > 0) {
+                // Should have only one object by series (if more, they are split in several sub-series in dicomModel)
                 displayLimitedDicomInfo((DicomSpecialElement) specialElements.get(0));
             }
         }

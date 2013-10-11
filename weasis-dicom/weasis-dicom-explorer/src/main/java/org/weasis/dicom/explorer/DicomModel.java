@@ -570,6 +570,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList =
                             new ArrayList<DicomSpecialElement>());
                     } else if ("SR".equals(dicomReader.getTagValue(TagW.Modality))) {
+                        // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         s.setTag(TagW.DicomSpecialElementList, specialElementList =
                             new ArrayList<DicomSpecialElement>());

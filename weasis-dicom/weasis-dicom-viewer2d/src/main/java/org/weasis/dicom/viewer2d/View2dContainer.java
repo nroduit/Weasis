@@ -666,7 +666,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                         if (currentSeries != null && //
                             (referencedSeriesInstanceUIDSet.contains(currentSeries.getTagValue(TagW.SeriesInstanceUID)) || //
-                            koElement.getMediaReader().isWritableDicom())) {
+                            koElement.getMediaReader().isEditableDicom())) {
 
                             // if (JMVUtils.getNULLtoFalse((Boolean) view.getActionValue(ActionW.KO_FILTER.cmd()))) {
                             // !!! following is useless when view isn't the SelectedImagePane
@@ -807,7 +807,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                         if (currentSeries != null && //
                             (referencedSeriesInstanceUIDSet.contains(currentSeries.getTagValue(TagW.SeriesInstanceUID)) || //
-                            koElement.getMediaReader().isWritableDicom())) {
+                            koElement.getMediaReader().isEditableDicom())) {
 
                             // if (JMVUtils.getNULLtoFalse((Boolean) view.getActionValue(ActionW.KO_FILTER.cmd()))) {
                             // !!! following is useless when view isn't the SelectedImagePane

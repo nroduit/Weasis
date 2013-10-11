@@ -153,7 +153,7 @@ public class DicomSpecialElement extends MediaElement {
                 Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
 
                 if (seriesUID == null || referencedSeriesInstanceUIDSet.contains(seriesUID) || //
-                    koElement.getMediaReader().isWritableDicom()) {
+                    koElement.getMediaReader().isEditableDicom()) {
 
                     if (koElementSet == null) {
                         // koElementSet = new TreeSet<KOSpecialElement>(ORDER_BY_DESCRIPTION);

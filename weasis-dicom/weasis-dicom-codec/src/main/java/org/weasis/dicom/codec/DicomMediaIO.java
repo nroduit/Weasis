@@ -202,7 +202,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     }
 
-    public boolean isWritableDicom() {
+    public boolean isEditableDicom() {
         return (dcmMetadata != null && uri == null);
     }
 

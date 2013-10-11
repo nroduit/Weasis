@@ -1,5 +1,7 @@
 package org.weasis.dicom.codec;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -10,8 +12,11 @@ import java.util.Set;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
+import org.dcm4che.io.DicomOutputStream;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
@@ -520,4 +525,23 @@ public class KOSpecialElement extends DicomSpecialElement {
         return filter;
     }
 
+    @Override
+    public File getFile() {
+        DicomMediaIO reader = getMediaReader();
+        if (reader != null && reader.isEditableDicom()) {
+            Attributes dcm = reader.getDicomObject();
+            if (dcm != null) {
+                DicomOutputStream out = null;
+                try {
+                    out = new DicomOutputStream(file);
+                    out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    FileUtil.safeClose(out);
+                }
+            }
+        }
+        return super.getFile();
+    }
 }

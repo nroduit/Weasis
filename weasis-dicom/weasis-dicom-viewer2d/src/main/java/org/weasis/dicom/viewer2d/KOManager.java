@@ -164,7 +164,7 @@ public class KOManager {
         if (selectedKO != null) {
 
             // Is it a new created dicom KO ?
-            if (selectedKO.getMediaReader().isWritableDicom()) {
+            if (selectedKO.getMediaReader().isEditableDicom()) {
 
                 // Does this selected KO refers to this studyUID or is it empty?
                 if (selectedKO.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
@@ -215,7 +215,7 @@ public class KOManager {
 
             if (koElements != null) {
                 for (KOSpecialElement koElement : koElements) {
-                    if (koElement.getMediaReader().isWritableDicom()) {
+                    if (koElement.getMediaReader().isEditableDicom()) {
                         if (koElement.getReferencedStudyInstanceUIDSet().contains(currentStudyInstanceUID)
                             || koElement.getReferencedSOPInstanceUIDSet().size() == 0) {
                             dicomKO = koElement;
@@ -244,7 +244,7 @@ public class KOManager {
             }
         }
 
-        if (dicomKO == null || !dicomKO.getMediaReader().isWritableDicom()) {
+        if (dicomKO == null || !dicomKO.getMediaReader().isEditableDicom()) {
 
             Attributes newDicomKO = null;
 

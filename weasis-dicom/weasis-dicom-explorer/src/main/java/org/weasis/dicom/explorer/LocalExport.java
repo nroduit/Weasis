@@ -59,6 +59,7 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -67,6 +68,7 @@ import org.weasis.core.ui.serialize.DefaultSerializer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -89,7 +91,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private File outputFolder;
     private JPanel panel;
     private final ExportTree exportTree;
-    // private final ApplicationProfile dicomStruct = new StdGenJPEGApplicationProfile();
 
     private JComboBox comboBoxImgFormat;
     private JButton btnNewButton;
@@ -481,122 +482,39 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             // Write only once the file for multiframe
                             continue TreePath;
                         }
-                        StringBuffer buffer = new StringBuffer();
-                        // Cannot keep folders names with DICOMDIR (could be not valid)
-                        if (keepNames && !writeDicomdir) {
-                            TreeNode[] objects = node.getPath();
-                            if (objects.length > 2) {
-                                for (int i = 1; i < objects.length - 1; i++) {
-                                    buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[i].toString()));
-                                    buffer.append(File.separator);
-                                }
-                            }
-                        } else {
-                            if (cdCompatible) {
-                                buffer.append("DICOM"); //$NON-NLS-1$
-                                buffer.append(File.separator);
-                            }
-                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
-                            buffer.append(File.separator);
-                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
-                            buffer.append(File.separator);
-                            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
-                            iuid = makeFileIDs(iuid);
-                        }
-                        File destinationDir = new File(writeDir, buffer.toString());
+
+                        String path = buildPath(img, keepNames, writeDicomdir, cdCompatible, node, iuid);
+                        File destinationDir = new File(writeDir, path);
                         destinationDir.mkdirs();
 
+                        // TODO handle mpr series
                         File destinationFile = new File(destinationDir, iuid);
                         if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
 
                             if (writeGraphics) {
+                                // TODO remove me and use PR
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
                             }
-
-                            if (writer != null) {
-                                Attributes fmi = null;
-                                Attributes dataset = null;
-                                // DicomInputStream din = null;
-                                // try {
-                                // din = new DicomInputStream(destinationFile);
-                                // din.setIncludeBulkData(IncludeBulkData.NO);
-                                // fmi = din.readFileMetaInformation();
-                                // dataset = din.readDataset(-1, Tag.PixelData);
-                                // } catch (IOException e) {
-                                //                                    LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
-                                // } finally {
-                                // FileUtil.safeClose(din);
-                                // }
-                                DicomMediaIO dicomImageLoader = (DicomMediaIO) img.getMediaReader();
-                                dataset = dicomImageLoader.getDicomObject();
-                                if (dataset == null) {
-                                    LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
-                                    continue TreePath;
-                                }
-                                fmi = dataset.createFileMetaInformation(UID.ImplicitVRLittleEndian);
-
-                                String miuid = fmi.getString(Tag.MediaStorageSOPInstanceUID, null);
-
-                                String pid = dataset.getString(Tag.PatientID, null);
-                                String styuid = dataset.getString(Tag.StudyInstanceUID, null);
-                                String seruid = dataset.getString(Tag.SeriesInstanceUID, null);
-
-                                if (styuid != null && seruid != null) {
-                                    if (pid == null) {
-                                        dataset.setString(Tag.PatientID, VR.LO, pid = styuid);
-                                    }
-                                    Attributes patRec = writer.findPatientRecord(pid);
-                                    if (patRec == null) {
-                                        patRec =
-                                            DicomDirLoader.RecordFactory.createRecord(RecordType.PATIENT, null,
-                                                dataset, null, null);
-                                        writer.addRootDirectoryRecord(patRec);
-                                    }
-                                    Attributes studyRec = writer.findStudyRecord(patRec, styuid);
-                                    if (studyRec == null) {
-                                        studyRec =
-                                            DicomDirLoader.RecordFactory.createRecord(RecordType.STUDY, null, dataset,
-                                                null, null);
-                                        writer.addLowerDirectoryRecord(patRec, studyRec);
-                                    }
-                                    Attributes seriesRec = writer.findSeriesRecord(studyRec, seruid);
-                                    if (seriesRec == null) {
-                                        seriesRec =
-                                            DicomDirLoader.RecordFactory.createRecord(RecordType.SERIES, null, dataset,
-                                                null, null);
-                                        // Icon Image Sequence (0088,0200).This Icon Image is representative of the
-                                        // Series.
-                                        // It may or may not correspond to one of the images of the Series.
-                                        if (seriesRec != null && node.getParent() instanceof DefaultMutableTreeNode) {
-                                            DicomImageElement midImage =
-                                                ((DicomSeries) ((DefaultMutableTreeNode) node.getParent())
-                                                    .getUserObject()).getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null,
-                                                    null);
-                                            Attributes iconItem = mkIconItem(midImage);
-                                            if (iconItem != null) {
-                                                seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
-                                            }
-                                        }
-                                        writer.addLowerDirectoryRecord(studyRec, seriesRec);
-                                    }
-                                    Attributes instRec;
-                                    if (writer.findLowerInstanceRecord(seriesRec, false, iuid) == null) {
-                                        instRec =
-                                            DicomDirLoader.RecordFactory.createRecord(dataset, fmi,
-                                                writer.toFileIDs(destinationFile));
-                                        writer.addLowerDirectoryRecord(seriesRec, instRec);
-                                    }
-                                } else {
-                                    if (writer.findRootInstanceRecord(false, miuid) == null) {
-                                        Attributes instRec =
-                                            DicomDirLoader.RecordFactory.createRecord(dataset, fmi,
-                                                writer.toFileIDs(destinationFile));
-                                        writer.addRootDirectoryRecord(instRec);
-                                    }
-                                }
+                            if (!writeInDicomDir(writer, img, node, iuid, destinationFile)) {
+                                continue TreePath;
                             }
                         } else {
                             LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
+                        }
+                    } else if (node.getUserObject() instanceof DicomSpecialElement) {
+                        DicomSpecialElement dcm = (DicomSpecialElement) node.getUserObject();
+                        String iuid = (String) dcm.getTagValue(TagW.SOPInstanceUID);
+                        String path = buildPath(dcm, keepNames, writeDicomdir, cdCompatible, node, iuid);
+                        File destinationDir = new File(writeDir, path);
+                        destinationDir.mkdirs();
+
+                        File destinationFile = new File(destinationDir, iuid);
+                        if (FileUtil.nioCopyFile(dcm.getFile(), destinationFile)) {
+                            if (!writeInDicomDir(writer, dcm, node, iuid, destinationFile)) {
+                                continue TreePath;
+                            }
+                        } else {
+                            //      LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
                         }
                     }
                 }
@@ -617,6 +535,101 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 FileUtil.recursiveDelete(writeDir);
             }
         }
+    }
+
+    private static String buildPath(MediaElement<PlanarImage> img, boolean keepNames, boolean writeDicomdir,
+        boolean cdCompatible, DefaultMutableTreeNode node, String iuid) {
+        StringBuffer buffer = new StringBuffer();
+        // Cannot keep folders names with DICOMDIR (could be not valid)
+        if (keepNames && !writeDicomdir) {
+            TreeNode[] objects = node.getPath();
+            if (objects.length > 2) {
+                for (int i = 1; i < objects.length - 1; i++) {
+                    buffer.append(FileUtil.getValidFileNameWithoutHTML(objects[i].toString()));
+                    buffer.append(File.separator);
+                }
+            }
+        } else {
+            if (cdCompatible) {
+                buffer.append("DICOM"); //$NON-NLS-1$
+                buffer.append(File.separator);
+            }
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
+            buffer.append(File.separator);
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.StudyInstanceUID)));
+            buffer.append(File.separator);
+            buffer.append(makeFileIDs((String) img.getTagValue(TagW.SeriesInstanceUID)));
+            iuid = makeFileIDs(iuid);
+        }
+        return buffer.toString();
+    }
+
+    private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement<PlanarImage> img,
+        DefaultMutableTreeNode node, String iuid, File destinationFile) throws IOException {
+        if (writer != null) {
+            Attributes fmi = null;
+            Attributes dataset = null;
+            DicomMediaIO dicomImageLoader = (DicomMediaIO) img.getMediaReader();
+            dataset = dicomImageLoader.getDicomObject();
+            if (dataset == null) {
+                LOGGER.error("Cannot export DICOM file: ", img.getFile()); //$NON-NLS-1$
+                return false;
+            }
+            fmi = dataset.createFileMetaInformation(UID.ImplicitVRLittleEndian);
+
+            String miuid = fmi.getString(Tag.MediaStorageSOPInstanceUID, null);
+
+            String pid = dataset.getString(Tag.PatientID, null);
+            String styuid = dataset.getString(Tag.StudyInstanceUID, null);
+            String seruid = dataset.getString(Tag.SeriesInstanceUID, null);
+
+            if (styuid != null && seruid != null) {
+                if (pid == null) {
+                    dataset.setString(Tag.PatientID, VR.LO, pid = styuid);
+                }
+                Attributes patRec = writer.findPatientRecord(pid);
+                if (patRec == null) {
+                    patRec = DicomDirLoader.RecordFactory.createRecord(RecordType.PATIENT, null, dataset, null, null);
+                    writer.addRootDirectoryRecord(patRec);
+                }
+                Attributes studyRec = writer.findStudyRecord(patRec, styuid);
+                if (studyRec == null) {
+                    studyRec = DicomDirLoader.RecordFactory.createRecord(RecordType.STUDY, null, dataset, null, null);
+                    writer.addLowerDirectoryRecord(patRec, studyRec);
+                }
+                Attributes seriesRec = writer.findSeriesRecord(studyRec, seruid);
+                if (seriesRec == null) {
+                    seriesRec = DicomDirLoader.RecordFactory.createRecord(RecordType.SERIES, null, dataset, null, null);
+                    /*
+                     * Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It may or may
+                     * not correspond to one of the images of the Series.
+                     */
+                    if (seriesRec != null && node.getParent() instanceof DefaultMutableTreeNode) {
+                        DicomImageElement midImage =
+                            ((DicomSeries) ((DefaultMutableTreeNode) node.getParent()).getUserObject()).getMedia(
+                                MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+                        Attributes iconItem = mkIconItem(midImage);
+                        if (iconItem != null) {
+                            seriesRec.newSequence(Tag.IconImageSequence, 1).add(iconItem);
+                        }
+                    }
+                    writer.addLowerDirectoryRecord(studyRec, seriesRec);
+                }
+                Attributes instRec;
+                if (writer.findLowerInstanceRecord(seriesRec, false, iuid) == null) {
+                    instRec =
+                        DicomDirLoader.RecordFactory.createRecord(dataset, fmi, writer.toFileIDs(destinationFile));
+                    writer.addLowerDirectoryRecord(seriesRec, instRec);
+                }
+            } else {
+                if (writer.findRootInstanceRecord(false, miuid) == null) {
+                    Attributes instRec =
+                        DicomDirLoader.RecordFactory.createRecord(dataset, fmi, writer.toFileIDs(destinationFile));
+                    writer.addRootDirectoryRecord(instRec);
+                }
+            }
+        }
+        return true;
     }
 
     private static String toHex(int val) {
