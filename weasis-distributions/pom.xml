@@ -34,7 +34,7 @@
 		<felix.configadmin.version>1.6.0</felix.configadmin.version>
 		<felix.prefs.version>1.0.6</felix.prefs.version>
 		<felix.scr.version>1.6.2</felix.scr.version>
-		<felix.metatype.version>1.0.8</felix.metatype.version>
+		<felix.metatype.version>1.0.6</felix.metatype.version>
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.2</sling.commons.log.version>
 
