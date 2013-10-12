@@ -13,47 +13,51 @@ import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.docking.Insertable;
 import org.weasis.core.ui.docking.Insertable.Type;
 import org.weasis.core.ui.docking.InsertableFactory;
 
 @Component(immediate = false)
 @Service
-@Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
-public class SampleToolbarFactory implements InsertableFactory {
-    private final Logger LOGGER = LoggerFactory.getLogger(SampleToolbarFactory.class);
+@Property(name = "org.weasis.dicom.viewer2d.View2dContainer", value = "true")
+public class SampleToolFactory implements InsertableFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SampleToolFactory.class);
+
+    private SampleTool toolPane = null;
 
     @Override
     public Type getType() {
-        return Type.TOOLBAR;
+        return Type.TOOL;
     }
 
     @Override
     public Insertable createInstance(Hashtable<String, Object> properties) {
-        return new SampleToolBar<ImageElement>();
+        if (toolPane == null) {
+            toolPane = new SampleTool(getType());
+        }
+        return toolPane;
     }
 
     @Override
-    public boolean isComponentCreatedByThisFactory(Insertable component) {
-        return component instanceof SampleToolBar;
-    }
-
-    @Override
-    public void dispose(Insertable bar) {
-        if (bar != null) {
-            // Remove all the registered listeners or other behaviors links with other existing components if exists.
+    public void dispose(Insertable tool) {
+        if (toolPane != null) {
+            toolPane = null;
         }
     }
 
+    @Override
+    public boolean isComponentCreatedByThisFactory(Insertable tool) {
+        return tool instanceof SampleTool;
+    }
+
     @Activate
-    protected void activate(ComponentContext context) throws Exception {
-        LOGGER.info("Activate the Sample tool bar");
+    protected void activate(ComponentContext context) {
+        LOGGER.info("Activate the Sample panel");
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the Sample tool bar");
+        LOGGER.info("Deactivate the Sample panel");
     }
 
 }

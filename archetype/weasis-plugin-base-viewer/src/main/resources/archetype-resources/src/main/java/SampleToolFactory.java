@@ -52,12 +52,12 @@ public class SampleToolFactory implements InsertableFactory {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the Point Counting panel");
+        LOGGER.info("Activate the Sample panel");
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the Point Counting panel");
+        LOGGER.info("Deactivate the Sample panel");
     }
 
 }

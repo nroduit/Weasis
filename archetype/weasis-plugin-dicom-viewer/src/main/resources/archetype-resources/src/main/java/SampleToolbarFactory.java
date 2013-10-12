@@ -20,7 +20,7 @@ import org.weasis.core.ui.docking.InsertableFactory;
 
 @Component(immediate = false)
 @Service
-@Property(name = "org.weasis.base.viewer2d.View2dContainer", value = "true")
+@Property(name = "org.weasis.dicom.viewer2d.View2dContainer", value = "true")
 public class SampleToolbarFactory implements InsertableFactory {
     private final Logger LOGGER = LoggerFactory.getLogger(SampleToolbarFactory.class);
 

@@ -46,8 +46,8 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.base</groupId>
-			<artifactId>weasis-base-viewer2d</artifactId>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-viewer2d</artifactId>
 			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>

@@ -5,4 +5,6 @@
 
 ## Generate a sample project ##
 - Execute the following command: **mvn archetype:generate -DarchetypeCatalog=local**
-- Select the archetype
+- Select the archetype:
+    * weasis-plugin-base-viewer-archetype (example of a toolbar and a tool for the non DICOM viewer)
+    * weasis-plugin-dicom-viewer-archetype (example of a toolbar and a tool for the DICOM viewer)
