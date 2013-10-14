@@ -14,6 +14,8 @@
 	</prerequisites>
 
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
@@ -348,6 +350,30 @@
 							</artifactItems>
 						</configuration>
 					</execution>
+
+					<execution>
+						<id>copy-bindex-lib</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+
+						<!-- Get lib to be used by antrun call to generate OSGI-OBR repository.xml -->
+						<configuration>
+							<stripVersion>true</stripVersion>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.osgi.impl.bundle/</groupId>
+									<artifactId>bindex</artifactId>
+									<version>2.2</version>
+									<type>jar</type>
+									<destFileName>bindex.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 
@@ -365,8 +391,7 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${basedir}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${project.build.directory}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
 									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
 									name="Weasis Bundle Repository">
@@ -390,6 +415,7 @@
 							<goal>attached</goal>
 						</goals>
 						<configuration>
+							<inherited>false</inherited>
 							<finalName>weasis</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<outputDirectory>${project.build.directory}/web-dist</outputDirectory>
@@ -481,7 +507,6 @@
 						<version>1.2</version>
 						<executions>
 							<execution>
-								<inherited>false</inherited>
 								<id>sign</id>
 								<phase>process-resources</phase>
 								<goals>
