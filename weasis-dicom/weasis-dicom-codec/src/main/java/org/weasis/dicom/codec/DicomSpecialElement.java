@@ -29,30 +29,37 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class DicomSpecialElement extends MediaElement {
 
-    protected final String label;
-    protected final String shortLabel;
+    protected String label;
+    protected String shortLabel;
 
     public DicomSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO, null);
-        Attributes dicom = mediaIO.getDicomObject();
-        String clabel = dicom.getString(Tag.ContentLabel);
-        if (clabel == null) {
-            clabel = dicom.getString(Tag.ContentDescription);
-            if (clabel == null) {
-                clabel = (String) getTagValue(TagW.SeriesDescription);
-                if (clabel == null) {
-                    clabel = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber); //$NON-NLS-1$
-                }
-            }
-        }
+        iniLabel();
+    }
 
-        label = clabel;
-        if (label.length() > 50) {
-            shortLabel = label.substring(0, 47) + "..."; //$NON-NLS-1$
-        } else {
-            shortLabel = label;
+    protected String getLabelPrefix() {
+        StringBuffer buf = new StringBuffer();
+        String modality = (String) getTagValue(TagW.Modality);
+        if (modality != null) {
+            buf.append(modality);
+            buf.append(" "); //$NON-NLS-1$
         }
+        Integer val = (Integer) getTagValue(TagW.InstanceNumber);
+        if (val != null) {
+            buf.append("["); //$NON-NLS-1$
+            buf.append(val);
+            buf.append("] "); //$NON-NLS-1$
+        }
+        return buf.toString();
+    }
 
+    protected void iniLabel() {
+        StringBuffer buf = new StringBuffer(getLabelPrefix());
+        String desc = (String) getTagValue(TagW.SeriesDescription);
+        if (desc != null) {
+            buf.append(desc);
+        }
+        label = buf.toString();
     }
 
     @Override
@@ -61,7 +68,7 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     public String getShortLabel() {
-        return shortLabel;
+        return label.length() > 50 ? label.substring(0, 47) + "..." : label;//$NON-NLS-1$
     }
 
     public String getLabel() {
@@ -70,7 +77,8 @@ public class DicomSpecialElement extends MediaElement {
 
     @Override
     public String toString() {
-        return shortLabel;
+        int length = label.length();
+        return length > 3 ? length > 50 ? label.substring(3, 47) + "..." : label.substring(3, length) : label;//$NON-NLS-1$
     }
 
     @Override

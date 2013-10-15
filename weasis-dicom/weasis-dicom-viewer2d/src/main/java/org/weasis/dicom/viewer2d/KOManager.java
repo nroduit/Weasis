@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -253,7 +254,7 @@ public class KOManager {
                 (String) JOptionPane.showInputDialog(null, message, "Key Object Selection",
                     JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
 
-            if (description == null || description.trim().length() == 0) {
+            if (StringUtil.hasText(description)) {
                 return; // no input is given meaning operation is cancelled
             }
 

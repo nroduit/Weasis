@@ -48,6 +48,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -1384,7 +1385,7 @@ public class DicomMediaUtils {
         // contentSeq.add(documentTitleModifierSequence);
         // }
 
-        if (keyObjectDescription != null && !"".equals(keyObjectDescription)) {
+        if (StringUtil.hasText(keyObjectDescription)) {
 
             Attributes keyObjectDescriptionSequence = new Attributes(4);
             keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
@@ -1394,6 +1395,7 @@ public class DicomMediaUtils {
             keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
 
             contentSeq.add(keyObjectDescriptionSequence);
+            dKOS.setString(Tag.SeriesDescription, VR.LO, keyObjectDescription);
         }
 
         // TODO - Handle Identical Documents Sequence (see below)

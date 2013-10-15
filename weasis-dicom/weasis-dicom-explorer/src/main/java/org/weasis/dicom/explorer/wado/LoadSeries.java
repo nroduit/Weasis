@@ -81,7 +81,6 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
 
-    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
     public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
@@ -883,7 +882,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                             return false;
                         }
                     }
-                    File renameFile = new File(DICOM_EXPORT_DIR, tempFile.getName());
+                    File renameFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, tempFile.getName());
                     if (tempFile.renameTo(renameFile)) {
                         tempFile = renameFile;
                     }

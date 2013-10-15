@@ -13,12 +13,15 @@ package org.weasis.dicom.explorer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
+import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+
+import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
 public class ExportTree extends JScrollPane {
 
@@ -34,7 +37,25 @@ public class ExportTree extends JScrollPane {
             throw new IllegalArgumentException();
         }
         this.model = model;
-        this.tree = new CheckboxTree(model.getModel());
+        this.tree = new CheckboxTree(model.getModel()) {
+            @Override
+            public String getToolTipText(MouseEvent evt) {
+                if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
+                    return null;
+                }
+                TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
+                if (curPath != null) {
+                    Object object = curPath.getLastPathComponent();
+                    if (object instanceof ToolTipTreeNode) {
+                        return ((ToolTipTreeNode) object).getToolTipText();
+                    }
+                }
+                return null;
+            }
+        };
+
+        // Register tooltips
+        this.tree.setToolTipText("");
         this.tree.setCheckingModel(model.getCheckingModel());
         this.tree.getCheckingModel().setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
         expandTree(tree, model.getRootNode(), 3);

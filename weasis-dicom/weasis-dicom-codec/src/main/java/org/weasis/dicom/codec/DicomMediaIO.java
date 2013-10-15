@@ -75,6 +75,7 @@ import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.util.CIELab;
@@ -102,6 +103,8 @@ import com.sun.media.jai.util.ImageUtil;
 public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
+
+    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
@@ -816,7 +819,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                                 image[0] = new PRSpecialElement(this);
                             } else if ("SR".equals(modality)) {
                                 image = new MediaElement[1];
-                                image[0] = new DicomSpecialElement(this);
+                                image[0] = new SRSpecialElement(this);
                             }
                         }
                         if (image == null) {

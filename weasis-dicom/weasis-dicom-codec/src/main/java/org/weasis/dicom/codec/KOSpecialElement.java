@@ -32,6 +32,23 @@ public class KOSpecialElement extends DicomSpecialElement {
         super(mediaIO);
     }
 
+    @Override
+    protected void iniLabel() {
+        /*
+         * DICOM PS 3.3 - 2011 - C.17.3 SR Document Content Module
+         * 
+         * Concept Name Code Sequence: mandatory when type is CONTAINER or the root content item.
+         */
+        StringBuffer buf = new StringBuffer(getLabelPrefix());
+
+        Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
+        Attributes item = dicom.getNestedDataset(Tag.ContentSequence);
+        if (item != null) {
+            buf.append(item.getString(Tag.TextValue));
+        }
+        label = buf.toString();
+    }
+
     public Set<String> getReferencedStudyInstanceUIDSet() {
         if (hierachicalSOPInstanceReferenceByStudyUID == null) {
             updateHierachicalSOPInstanceReference();
@@ -526,14 +543,15 @@ public class KOSpecialElement extends DicomSpecialElement {
     }
 
     @Override
-    public File getFile() {
+    public synchronized File getFile() {
         DicomMediaIO reader = getMediaReader();
         if (reader != null && reader.isEditableDicom()) {
             Attributes dcm = reader.getDicomObject();
             if (dcm != null) {
                 DicomOutputStream out = null;
                 try {
-                    out = new DicomOutputStream(file);
+                    File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
+                    out = new DicomOutputStream(tmpFile);
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                 } catch (IOException e) {
                     e.printStackTrace();
