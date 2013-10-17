@@ -7,6 +7,9 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -18,6 +21,9 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
+@Component(immediate = false)
+@Service
+@Property(name = "service.name", value = "DICOM SR Viewer")
 public class SRFactory implements SeriesViewerFactory {
 
     public static final String NAME = "DICOM SR";

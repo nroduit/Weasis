@@ -13,6 +13,9 @@ package org.weasis.dicom.codec;
 import java.net.URI;
 import java.util.Hashtable;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
 import org.dcm4che.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che.imageio.plugins.rle.RLEImageReaderSpi;
 import org.weasis.core.api.media.data.Codec;
@@ -20,6 +23,9 @@ import org.weasis.core.api.media.data.MediaReader;
 
 import com.sun.media.imageioimpl.plugins.raw.RawImageReaderSpi;
 
+@Component(immediate = false)
+@Service
+@Property(name = "service.name", value = "DICOM (dcm4chee toolkit)")
 public class DicomCodec implements Codec {
     public static final DicomImageReaderSpi DicomImageReaderSpi = new DicomImageReaderSpi();
     public static final RLEImageReaderSpi RLEImageReaderSpi = new RLEImageReaderSpi();

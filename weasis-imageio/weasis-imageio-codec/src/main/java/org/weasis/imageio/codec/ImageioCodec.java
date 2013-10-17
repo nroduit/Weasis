@@ -17,9 +17,15 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
+@Component(immediate = false)
+@Service
+@Property(name = "service.name", value = "Imageio Codec (additionnal java packages)")
 public class ImageioCodec implements Codec {
 
     @Override

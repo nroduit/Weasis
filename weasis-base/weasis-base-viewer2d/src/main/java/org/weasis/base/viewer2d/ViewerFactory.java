@@ -19,6 +19,9 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Service;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -32,6 +35,9 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
+@Component(immediate = false)
+@Service
+@Property(name = "service.pluginName", value = "Image Viewer")
 public class ViewerFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$

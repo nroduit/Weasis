@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
->
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
@@ -17,20 +16,20 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 	<repositories>
-		<!-- <repository>
-			<id>dcm4che</id>
-			<name>dcm4che Repository</name>
-			<url>http://www.dcm4che.org/maven2/dcm4che/</url>
-			</repository> -->
+		<!-- <repository> <id>dcm4che</id> <name>dcm4che Repository</name> <url>http://www.dcm4che.org/maven2/dcm4che/</url> </repository> -->
 	</repositories>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Service-Component>OSGI-INF/DicomCodec.xml,OSGI-INF/Preferences.xml</Service-Component>
+						<Service-Component>OSGI-INF/*.xml</Service-Component>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.dcm4che.*</Export-Package>
 					</instructions>
