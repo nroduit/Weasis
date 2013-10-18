@@ -429,8 +429,15 @@ public class DicomImageElement extends ImageElement {
             // Create a VOI LUT with pixel padding values at the extremity of the allocated values.
             fillLutOutside = true;
         }
-        int minValue = (int) (fillLutOutside ? getMinAllocatedValue(pixelPadding) : getMinValue(pixelPadding));
-        int maxValue = (int) (fillLutOutside ? getMaxAllocatedValue(pixelPadding) : getMaxValue(pixelPadding));
+        int minValue;
+        int maxValue;
+        if (fillLutOutside) {
+            minValue = getMinAllocatedValue(pixelPadding);
+            maxValue = getMaxAllocatedValue(pixelPadding);
+        } else {
+            minValue = (int) Math.min(level - window / 2.0f, getMinValue(pixelPadding));
+            maxValue = (int) Math.max(level + window / 2.0f, getMaxValue(pixelPadding));
+        }
 
         return DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false,
             isPhotometricInterpretationInverse());
@@ -701,8 +708,10 @@ public class DicomImageElement extends ImageElement {
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
             if (!isPhotometricInterpretationMonochrome()) {
-                // If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
-                // PALETTE_COLOR.
+                /*
+                 * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
+                 * PALETTE_COLOR.
+                 */
                 return imageModalityTransformed;
             }
             LookupTableJAI voiLookup =

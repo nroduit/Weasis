@@ -77,6 +77,15 @@ public class PresetWindowLevel {
         return keyCode;
     }
 
+    public float getMinBox() {
+        return level - window / 2.0f;
+
+    }
+
+    public float getMaxBox() {
+        return level + window / 2.0f;
+    }
+
     public void setKeyCode(int keyCode) {
         this.keyCode = keyCode;
     }
@@ -132,6 +141,8 @@ public class PresetWindowLevel {
 
             float minModLUT = image.getMinValue(pixelPadding);
             float maxModLUT = image.getMaxValue(pixelPadding);
+            float minAllocated = image.getMinAllocatedValue(pixelPadding);
+            float maxAllocated = image.getMaxAllocatedValue(pixelPadding);
             int k = 1;
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
@@ -146,20 +157,12 @@ public class PresetWindowLevel {
                     LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
                     continue;
                 }
-
-                // When window is larger than the dynamic, adapt it according the dynamic.
-                if (windowList[i] > maxModLUT - minModLUT) {
-                    float range = windowList[i];
-                    windowList[i] = maxModLUT - minModLUT;
-                    levelList[i] = (windowList[i] / range) * levelList[i];
-                }
-
-                // Level values seems not valid, set min or max pixel value
-                if (levelList[i] < minModLUT) {
-                    levelList[i] = minModLUT;
-                }
-                if (levelList[i] > maxModLUT) {
-                    levelList[i] = maxModLUT;
+                float minp = levelList[i] - windowList[i] / 2.0f;
+                float maxp = levelList[i] + windowList[i] / 2.0f;
+                if (minp > maxModLUT || maxp < minModLUT) {
+                    LOGGER.error("DICOM preset '{}' is outside the image spectrum. It is not added to the preset list",
+                        explanation);
+                    continue;
                 }
 
                 PresetWindowLevel preset =

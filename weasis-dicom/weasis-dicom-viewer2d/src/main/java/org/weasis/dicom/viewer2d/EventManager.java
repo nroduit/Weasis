@@ -501,8 +501,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (ActionW.PRESET.cmd().equals(command) && object instanceof PresetWindowLevel) {
             PresetWindowLevel preset = (PresetWindowLevel) object;
 
-            windowAction.setValueWithoutTriggerAction(preset.getWindow().intValue());
-            levelAction.setValueWithoutTriggerAction(preset.getLevel().intValue());
+            int minLevel = (int) preset.getMinBox();
+            int maxLevel = (int) preset.getMaxBox();
+            int window = preset.getWindow().intValue();
+
+            windowAction.setMinMaxValueWithoutTriggerAction(1, window, window);
+            levelAction.setMinMaxValueWithoutTriggerAction(minLevel, maxLevel, preset.getLevel().intValue());
             lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
 
             PresetWindowLevel defaultPreset = (PresetWindowLevel) presetAction.getFirstItem();
@@ -510,22 +514,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         } else {
             int w = windowAction.getValue();
             int l = levelAction.getValue();
-            DefaultComboBoxModel dataModel = presetAction.getModel();
-
-            for (int i = 0; i < dataModel.getSize(); i++) {
-                Object obj = dataModel.getElementAt(i);
-                if (obj instanceof PresetWindowLevel) {
-                    PresetWindowLevel p = (PresetWindowLevel) obj;
-                    if (p.getLutShape().equals(lutShapeAction.getSelectedItem()) && p.getLevel() != null
-                        && p.getWindow() != null) {
-                        if (p.getLevel().intValue() == l && p.getWindow().intValue() == w) {
-                            command = ActionW.PRESET.cmd();
-                            object = p;
-                            break;
-                        }
-                    }
-                }
-            }
+            // DefaultComboBoxModel dataModel = presetAction.getModel();
+            //
+            // for (int i = 0; i < dataModel.getSize(); i++) {
+            // Object obj = dataModel.getElementAt(i);
+            // if (obj instanceof PresetWindowLevel) {
+            // PresetWindowLevel p = (PresetWindowLevel) obj;
+            // if (p.getLutShape().equals(lutShapeAction.getSelectedItem()) && p.getLevel() != null
+            // && p.getWindow() != null) {
+            // if (p.getLevel().intValue() == l && p.getWindow().intValue() == w) {
+            // command = ActionW.PRESET.cmd();
+            // object = p;
+            // break;
+            // }
+            // }
+            // }
+            // }
             presetAction.setSelectedItemWithoutTriggerAction(object instanceof PresetWindowLevel ? object : null);
         }
         defaultPresetAction.setSelectedWithoutTriggerAction(isDefaultPresetSelected);
@@ -893,10 +897,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         defaultPresetAction.setSelectedWithoutTriggerAction(defaultPreset);
 
-        windowAction.setMinMaxValueWithoutTriggerAction(1, (int) image.getFullDynamicWidth(pixelPadding),
-            windowValue.intValue());
-        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
-            (int) image.getMaxValue(pixelPadding), levelValue.intValue());
+        int window;
+        int minLevel;
+        int maxLevel;
+        if (preset == null) {
+            minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
+            maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+            window = (int) Math.max(windowValue, image.getFullDynamicWidth(pixelPadding));
+        } else {
+            minLevel = (int) preset.getMinBox();
+            maxLevel = (int) preset.getMaxBox();
+            window = preset.getWindow().intValue();
+        }
+
+        windowAction.setMinMaxValueWithoutTriggerAction(1, window, windowValue.intValue());
+        levelAction.setMinMaxValueWithoutTriggerAction(minLevel, maxLevel, levelValue.intValue());
 
         List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
         if (pr) {
