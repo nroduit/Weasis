@@ -315,6 +315,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         }
                         actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
                         actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+                        actionsInView.put(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
+                        actionsInView.put(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
                         actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
                         imageLayer.updateImageOperation(WindowLevelOperation.name);
                     }
@@ -498,6 +500,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             PresetWindowLevel p = presets.get(0);
             actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
+            actionsInView.put(ActionW.LEVEL_MIN.cmd(), p.getMinBox());
+            actionsInView.put(ActionW.LEVEL_MAX.cmd(), p.getMaxBox());
             actionsInView.put(PresentationStateReader.PR_PRESETS, presets);
             actionsInView.put(ActionW.PRESET.cmd(), p);
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
@@ -850,6 +854,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.PRESET.cmd(), preset);
             actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+            actionsInView.put(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
+            actionsInView.put(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
             actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         } else {

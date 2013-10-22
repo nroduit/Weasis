@@ -326,11 +326,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         }
                     }
 
-                    Float windowValue = (newPreset != null) ? newPreset.getWindow() : windowAction.getValue();
-                    Float levelValue = (newPreset != null) ? newPreset.getLevel() : levelAction.getValue();
+                    Float windowValue = newPreset == null ? windowAction.getValue() : newPreset.getWindow();
+                    Float levelValue = newPreset == null ? levelAction.getValue() : newPreset.getLevel();
                     LutShape lutShapeItem =
-                        (newPreset != null) ? newPreset.getLutShape() : (LutShape) lutShapeAction.getSelectedItem();
+                        newPreset == null ? (LutShape) lutShapeAction.getSelectedItem() : newPreset.getLutShape();
 
+                    Float levelMin = (Float) view2d.getActionValue(ActionW.LEVEL_MIN.cmd());
+                    Float levelMax = (Float) view2d.getActionValue(ActionW.LEVEL_MAX.cmd());
+                    if (newPreset == null) {
+                        if (levelMin == null || levelMax == null) {
+                            levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
+                            levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+                        } else {
+                            levelMin = Math.min(levelMin, image.getMinValue(pixelPadding));
+                            levelMax = Math.max(levelMax, image.getMaxValue(pixelPadding));
+                        }
+                    } else {
+                        levelMin = newPreset.getMinBox();
+                        levelMax = newPreset.getMaxBox();
+                    }
                     // FIX : setting actionInView here without firing a propertyChange avoid another call to
                     // imageLayer.updateImageOperation(WindowLevelOperation.name.....
 
@@ -338,6 +352,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     view2d.setActionsInView(ActionW.PRESET.cmd(), newPreset);
                     view2d.setActionsInView(ActionW.WINDOW.cmd(), windowValue);
                     view2d.setActionsInView(ActionW.LEVEL.cmd(), levelValue);
+                    view2d.setActionsInView(ActionW.LEVEL_MIN.cmd(), levelMin);
+                    view2d.setActionsInView(ActionW.LEVEL_MAX.cmd(), levelMax);
                     view2d.setActionsInView(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
                     view2d.setActionsInView(ActionW.DEFAULT_PRESET.cmd(), isDefaultPresetSelected);
 
@@ -901,8 +917,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         int minLevel;
         int maxLevel;
         if (preset == null) {
-            minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
-            maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+            Float levelMin = (Float) view2d.getActionValue(ActionW.LEVEL_MIN.cmd());
+            Float levelMax = (Float) view2d.getActionValue(ActionW.LEVEL_MAX.cmd());
+            if (levelMin == null || levelMax == null) {
+                minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
+                maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+            } else {
+                minLevel = levelMin.intValue();
+                maxLevel = levelMax.intValue();
+            }
             window = (int) Math.max(windowValue, image.getFullDynamicWidth(pixelPadding));
         } else {
             minLevel = (int) preset.getMinBox();

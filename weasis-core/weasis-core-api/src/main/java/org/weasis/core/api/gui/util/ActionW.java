@@ -49,6 +49,9 @@ public class ActionW {
     public static final ActionW WINLEVEL =
         new ActionW(
             Messages.getString("ActionW.wl"), "winLevel", KeyEvent.VK_W, 0, getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final ActionW LEVEL_MIN = new ActionW("", "level_min", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW LEVEL_MAX = new ActionW("", "level_max", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+
     public static final ActionW FLIP = new ActionW(Messages.getString("ActionW.flip"), "flip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW PRESET = new ActionW(Messages.getString("ActionW.preset"), "preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW DEFAULT_PRESET = new ActionW("", "default_preset", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
