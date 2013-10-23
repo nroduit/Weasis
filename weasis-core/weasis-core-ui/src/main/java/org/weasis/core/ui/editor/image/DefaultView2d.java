@@ -911,7 +911,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
 
                 }
-                setImage(imgElement);
+
+                Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+                // Avoid to reset zoom when the mode is not best fit
+                if (zoomFactor != null && zoomFactor >= 0.0) {
+                    Object zoomType = actionsInView.get(DefaultView2d.zoomTypeCmd);
+                    actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.CURRENT);
+                    setImage(imgElement);
+                    actionsInView.put(DefaultView2d.zoomTypeCmd, zoomType);
+                } else {
+                    setImage(imgElement);
+                }
             } else {
                 propertyChange(synch);
             }

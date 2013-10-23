@@ -406,10 +406,10 @@ public class DicomImageElement extends ImageElement {
      * 
      * @return 8 bits unsigned Lookup Table
      */
-    public LookupTableJAI getVOILookup(LookupTableJAI modalityLookup, Float window, Float level, LutShape shape,
-        boolean fillLutOutside, boolean pixelPadding) {
+    public LookupTableJAI getVOILookup(LookupTableJAI modalityLookup, Float window, Float level, Float minLevel,
+        Float maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
 
-        if (window == null || level == null || shape == null) {
+        if (window == null || level == null || shape == null || minLevel == null || maxLevel == null) {
             return null;
         }
 
@@ -435,8 +435,8 @@ public class DicomImageElement extends ImageElement {
             minValue = getMinAllocatedValue(pixelPadding);
             maxValue = getMaxAllocatedValue(pixelPadding);
         } else {
-            minValue = (int) Math.min(level - window / 2.0f, getMinValue(pixelPadding));
-            maxValue = (int) Math.max(level + window / 2.0f, getMaxValue(pixelPadding));
+            minValue = minLevel.intValue();
+            maxValue = maxLevel.intValue();
         }
 
         return DicomImageUtils.createWindowLevelLut(shape, window, level, minValue, maxValue, 8, false,
@@ -669,13 +669,14 @@ public class DicomImageElement extends ImageElement {
      *            is center of window values. If null, getDefaultLevel() value is used
      * @param lutShape
      *            defines the shape of applied lookup table transformation. If null getDefaultLutShape() is used
-     * @param pixelPadding
+     * @param pixPadding
      *            indicates if some padding values defined in ImageElement should be applied or not. If null, TRUE is
      *            considered
      * @return
      */
     protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
-        LutShape lutShape, Boolean pixelPadding, Boolean inverseLUT, boolean fillLutOutside) {
+        Float levelMin, Float levelMax, LutShape lutShape, Boolean pixelPadding, Boolean inverseLUT,
+        boolean fillLutOutside) {
 
         if (imageSource == null) {
             return null;
@@ -686,16 +687,25 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
 
-        pixelPadding = JMVUtils.getNULLtoTrue(pixelPadding);
-        inverseLUT = JMVUtils.getNULLtoFalse(inverseLUT);
-        window = (window == null) ? getDefaultWindow(pixelPadding) : window;
-        level = (level == null) ? getDefaultLevel(pixelPadding) : level;
-        lutShape = (lutShape == null) ? getDefaultShape(pixelPadding) : lutShape;
+        boolean pixPadding = JMVUtils.getNULLtoTrue(pixelPadding);
+        boolean invLUT = JMVUtils.getNULLtoFalse(inverseLUT);
+        float windowValue = (window == null) ? getDefaultWindow(pixPadding) : window;
+        float levelValue = (level == null) ? getDefaultLevel(pixPadding) : level;
+        LutShape lut = (lutShape == null) ? getDefaultShape(pixPadding) : lutShape;
+        float minLevel;
+        float maxLevel;
+        if (levelMin == null || levelMax == null) {
+            minLevel = Math.min(levelValue - windowValue / 2.0f, getMinValue(pixPadding));
+            maxLevel = Math.max(levelValue + windowValue / 2.0f, getMaxValue(pixPadding));
+        } else {
+            minLevel = Math.min(levelMin, getMinValue(pixPadding));
+            maxLevel = Math.max(levelMax, getMaxValue(pixPadding));
+        }
 
         int datatype = sampleModel.getDataType();
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-            LookupTableJAI modalityLookup = getModalityLookup(pixelPadding, inverseLUT);
+            LookupTableJAI modalityLookup = getModalityLookup(pixPadding, invLUT);
 
             // RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(imageSource));
             RenderedImage imageModalityTransformed =
@@ -715,14 +725,15 @@ public class DicomImageElement extends ImageElement {
                 return imageModalityTransformed;
             }
             LookupTableJAI voiLookup =
-                getVOILookup(modalityLookup, window, level, lutShape, fillLutOutside, pixelPadding);
+                getVOILookup(modalityLookup, windowValue, levelValue, minLevel, maxLevel, lut, fillLutOutside,
+                    pixPadding);
             // BUG fix: for some images the color model is null. Creating 8 bits gray model layout fixes this issue.
             return LookupDescriptor.create(imageModalityTransformed, voiLookup, LayoutUtil.createGrayRenderedImage());
 
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
-            double low = level - window / 2.0;
-            double high = level + window / 2.0;
+            double low = minLevel;
+            double high = maxLevel;
             double range = high - low;
             if (range < 1.0) {
                 range = 1.0;
@@ -747,20 +758,28 @@ public class DicomImageElement extends ImageElement {
 
     @Override
     public RenderedImage getRenderedImage(final RenderedImage imageSource, ImageOperation imageOperation) {
+        Float window = null;
+        Float level = null;
+        Float levelMin = null;
+        Float levelMax = null;
+        LutShape lutShape = null;
+        Boolean pixelPadding = null;
+        Boolean inverseLUT = null;
+        Boolean fillLutOutside = null;
 
-        Float window = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
-        Float level = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
-        LutShape lutShape =
-            (imageOperation == null) ? null : (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
-        Boolean pixelPadding =
-            (imageOperation == null) ? null : (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
-        Boolean inverseLUT =
-            (imageOperation == null) ? null : (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
-        Boolean fillLutOutside =
-            (imageOperation == null) ? null : (Boolean) imageOperation
-                .getActionValue(DicomImageElement.FILL_OUTSIDE_LUT);
-        return this.getRenderedImage(imageSource, window, level, lutShape, pixelPadding, inverseLUT,
-            JMVUtils.getNULLtoFalse(fillLutOutside));
+        if (imageOperation != null) {
+            window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
+            level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
+            levelMin = (Float) imageOperation.getActionValue(ActionW.LEVEL_MIN.cmd());
+            levelMax = (Float) imageOperation.getActionValue(ActionW.LEVEL_MAX.cmd());
+            lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
+            pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+            inverseLUT = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
+            fillLutOutside = (Boolean) imageOperation.getActionValue(DicomImageElement.FILL_OUTSIDE_LUT);
+        }
+
+        return this.getRenderedImage(imageSource, window, level, levelMin, levelMax, lutShape, pixelPadding,
+            inverseLUT, JMVUtils.getNULLtoFalse(fillLutOutside));
     }
 
     public GeometryOfSlice getSliceGeometry() {

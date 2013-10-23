@@ -22,6 +22,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
 import org.dcm4che.data.UID;
+import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -38,7 +39,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
-import org.weasis.dicom.viewer2d.mpr.SeriesBuilder;
 
 public class MipView extends View2d {
     public static final ImageIcon MIP_ICON_SETTING = new ImageIcon(
@@ -81,8 +81,6 @@ public class MipView extends View2d {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
-        // Force to extend VOI LUT to pixel allocated
-        actionsInView.put(DicomImageElement.FILL_OUTSIDE_LUT, true);
         // Propagate the preset
         actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
@@ -111,12 +109,27 @@ public class MipView extends View2d {
         }
     }
 
+    @Override
+    protected void setImage(DicomImageElement img) {
+        // Avoid to listen synch events
+    }
+
     public void exitMipMode(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
         // reset current process
         this.setActionsInView(MipView.MIP.cmd(), null);
         this.setActionsInView(MipView.MIP_MIN_SLICE.cmd(), null);
         this.setActionsInView(MipView.MIP_MAX_SLICE.cmd(), null);
         this.applyMipParameters();
+        DicomImageElement img = getImage();
+        if (img != null) {
+            // Close stream
+            img.dispose();
+            // Delete file in cache
+            File file = img.getFile();
+            if (file != null) {
+                file.delete();
+            }
+        }
 
         ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
         container.setSelectedAndGetFocus();
@@ -232,7 +245,10 @@ public class MipView extends View2d {
                             DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
                             RawImage raw = null;
                             try {
-                                raw = new RawImage(File.createTempFile("mip_", ".raw", SeriesBuilder.MPR_CACHE_DIR));//$NON-NLS-1$ //$NON-NLS-2$);
+                                File mipDir =
+                                    AbstractProperties.buildAccessibleTempDirectory(
+                                        AbstractProperties.FILE_CACHE_DIR.getName(), "mip");
+                                raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$);
                                 writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -297,7 +313,18 @@ public class MipView extends View2d {
 
                             @Override
                             public void run() {
-                                setImage(dicom);
+                                DicomImageElement oldImage = getImage();
+                                // Trick: call super to change the image as "this" method is empty
+                                MipView.super.setImage(dicom);
+                                if (oldImage != null) {
+                                    // Close stream
+                                    oldImage.dispose();
+                                    // Delete file in cache
+                                    File file = oldImage.getFile();
+                                    if (file != null) {
+                                        file.delete();
+                                    }
+                                }
                                 progressBar.setVisible(false);
                             }
                         });
