@@ -365,7 +365,7 @@
 
 							<artifactItems>
 								<artifactItem>
-									<groupId>org.osgi.impl.bundle/</groupId>
+									<groupId>org.osgi.util</groupId>
 									<artifactId>bindex</artifactId>
 									<version>2.2</version>
 									<type>jar</type>
