@@ -27,7 +27,7 @@
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<Service-Component>OSGI-INF/*.xml</Service-Component>
+						<Service-Component>OSGI-INF/org.weasis.dicom.explorer.DicomExplorerFactory.xml,OSGI-INF/org.weasis.dicom.explorer.MimeSystemAppFactory.xml,OSGI-INF/org.weasis.dicom.explorer.pref.WadoPrefFactory.xml</Service-Component>
 					</instructions>
 				</configuration>
 			</plugin>
