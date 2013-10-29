@@ -18,7 +18,8 @@
   <target name="addTrustedLibraries">
     <ac:foreach target="addTrustedLibraryProperty" param="jarFile" xmlns:ac="antlib:net.sf.antcontrib">
       <path>
-        <fileset dir="target/tmp" includes="**/*.jar" />
+      	<!-- Process only the root jars managed by JWS -->
+        <fileset dir="target/tmp" includes="*.jar" />
       </path>
     </ac:foreach>
   </target>
