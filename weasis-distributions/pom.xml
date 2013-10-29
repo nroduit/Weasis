@@ -8,10 +8,18 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
 	<version>1.2.7-beta</version>
+	
+	<prerequisites>
+		<maven>2.2.1</maven>
+	</prerequisites>
+	
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
 		<!-- Remove "-SNAPSHOT" for release -->
 		<qualifier>-SNAPSHOT</qualifier>
-		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
+		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} 
+			in config.properties) -->
 		<dollar>$</dollar>
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 
@@ -19,18 +27,18 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>4.2.1</felix.framework.version>
+		<felix.framework.version>4.2.1-p1</felix.framework.version>
 		<felix.gogo.version>0.10.0</felix.gogo.version>
 		<felix.gogo.command.version>0.12.0</felix.gogo.command.version>
 
 		<felix.servlet.version>1.0.0</felix.servlet.version>
 		<felix.bundlerepository.version>1.6.6</felix.bundlerepository.version>
 		<felix.configadmin.version>1.6.0</felix.configadmin.version>
-		<felix.prefs.version>1.0.4</felix.prefs.version>
+		<felix.prefs.version>1.0.6</felix.prefs.version>
 		<felix.scr.version>1.6.2</felix.scr.version>
 		<felix.metatype.version>1.0.6</felix.metatype.version>
 		<slf4j.version>1.6.4</slf4j.version>
-		<sling.commons.log.version>3.0.0</sling.commons.log.version>
+		<sling.commons.log.version>3.0.2</sling.commons.log.version>
 
 		<weasis.launcher.version>0.5.17${qualifier}</weasis.launcher.version>
 		<weasis.core.version>0.5.17${qualifier}</weasis.core.version>
@@ -60,11 +68,55 @@
 		</pluginRepository>
 	</pluginRepositories>
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jarsigner-plugin</artifactId>
+					<version>1.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>2.6</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>3.3</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.16</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.3</version>
+				<version>2.8</version>
 				<executions>
 					<execution>
 						<id>copy-bundles</id>
@@ -296,11 +348,37 @@
 							</artifactItems>
 						</configuration>
 					</execution>
+
+					<execution>
+						<id>copy-bindex-lib</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+
+						<!-- Get lib to be used by antrun call to generate OSGI-OBR repository.xml -->
+						<configuration>
+							<stripVersion>true</stripVersion>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.osgi.util</groupId>
+									<artifactId>bindex</artifactId>
+									<version>2.2</version>
+									<type>jar</type>
+									<destFileName>bindex.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
 				<executions>
 					<execution>
 						<id>add-trusted-library-attribute</id>
@@ -315,6 +393,25 @@
 						<goals>
 							<goal>run</goal>
 						</goals>
+					</execution>
+					<execution>
+						<id>bindex</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<!-- Bindex Task helps to generate the repository.xml -->
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+									classpath="${project.build.directory}/lib/bindex.jar" />
+								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
+									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
+								</bindex>
+							</target>
+						</configuration>
 					</execution>
 				</executions>
 				<dependencies>
@@ -339,34 +436,8 @@
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<id>bindex</id>
-						<phase>package</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
-									classpath="${basedir}/lib/bindex.jar" />
-								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
-									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
-								</bindex>
-							</target>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.1</version>
+				<version>2.4</version>
 				<executions>
 					<execution>
 						<id>web</id>
@@ -375,6 +446,7 @@
 							<goal>attached</goal>
 						</goals>
 						<configuration>
+							<inherited>false</inherited>
 							<finalName>weasis</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<outputDirectory>${project.build.directory}/web-dist</outputDirectory>
@@ -408,7 +480,8 @@
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
+									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars 
+										are normalized -->
 									<signed>${jarsigner.alias}</signed>
 									<normalizeOnly>true</normalizeOnly>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
@@ -451,8 +524,8 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
-					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" 
+					-Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>
@@ -465,7 +538,6 @@
 						<version>1.2</version>
 						<executions>
 							<execution>
-								<inherited>false</inherited>
 								<id>sign</id>
 								<phase>process-resources</phase>
 								<goals>
