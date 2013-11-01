@@ -37,6 +37,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
 
     public StatisticsPrefView() {
         super(Messages.getString("MeasureTool.pix_stats")); //$NON-NLS-1$
+        setComponentPosition(10);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         init();
     }

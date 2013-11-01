@@ -20,10 +20,10 @@ import javax.swing.Icon;
 import javax.swing.JPanel;
 
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.docking.Insertable;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;

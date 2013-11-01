@@ -1,4 +1,4 @@
-package org.weasis.core.ui.docking;
+package org.weasis.core.api.gui;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Properties;
 
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.Insertable.Type;
 
 public class InsertableUtil {
     public final static String ALL_BUNDLE = "weasis";

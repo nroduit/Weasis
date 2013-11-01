@@ -82,6 +82,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     public GeneralSetting() {
         super(pageName);
+        setComponentPosition(0);
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {
             JMVUtils.setNumberModel(spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);

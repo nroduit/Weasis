@@ -18,6 +18,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.swing.JButton;
@@ -29,6 +30,8 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomExport extends AbstractWizardDialog {
@@ -94,11 +97,13 @@ public class DicomExport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalExport(dicomModel, treeModel)));
-
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.put(dicomModel.getClass().getName(), dicomModel);
         properties.put(treeModel.getClass().getName(), treeModel);
+
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        list.add(new LocalExport(dicomModel, treeModel));
+
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
             for (ServiceReference<DicomExportFactory> service : context.getServiceReferences(DicomExportFactory.class,
@@ -106,13 +111,18 @@ public class DicomExport extends AbstractWizardDialog {
                 DicomExportFactory factory = context.getService(service);
                 if (factory != null) {
                     ExportDicom page = factory.createDicomExportPage(properties);
-                    if (page != null) {
-                        pagesRoot.add(new DefaultMutableTreeNode(page));
+                    if (page instanceof AbstractItemDialogPage) {
+                        list.add((AbstractItemDialogPage) page);
                     }
                 }
             }
         } catch (InvalidSyntaxException e) {
             e.printStackTrace();
+        }
+
+        InsertableUtil.sortInsertable(list);
+        for (AbstractItemDialogPage page : list) {
+            pagesRoot.add(new DefaultMutableTreeNode(page));
         }
 
         iniTree();

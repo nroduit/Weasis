@@ -56,6 +56,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     public LabelsPrefView() {
         super(MeasureTool.LABEL_PREF_NAME);
+        setComponentPosition(20);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);
@@ -101,8 +102,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         panel1.add(panelList);
         panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
 
-        addSubPage(new StatisticsPrefView());
         addSubPage(new LabelPrefView(MeasureTool.viewSetting));
+        addSubPage(new StatisticsPrefView());
     }
 
     private void selectTool(Graphic graph) {

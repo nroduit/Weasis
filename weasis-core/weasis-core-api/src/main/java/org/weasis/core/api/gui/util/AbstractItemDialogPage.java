@@ -15,15 +15,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JPanel;
 
-public abstract class AbstractItemDialogPage extends JPanel implements PageProps {
+import org.weasis.core.api.gui.Insertable;
+
+public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
     protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
     private final String key;
     private final String title;
     private java.util.List<PageProps> subPageList;
+    private int pagePosition;
 
     public AbstractItemDialogPage(String title) {
         this.title = title == null ? "item" : title; //$NON-NLS-1$
         key = String.valueOf(keyGenerator.incrementAndGet());
+        this.pagePosition = 1000;
     }
 
     @Override
@@ -86,4 +90,35 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
         return title;
     }
 
+    @Override
+    public Type getType() {
+        return Insertable.Type.PREFERENCES;
+    }
+
+    @Override
+    public String getComponentName() {
+        return title;
+    }
+
+    @Override
+    public boolean isComponentEnabled() {
+        return isEnabled();
+    }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {
+        if (enabled != isComponentEnabled()) {
+            setEnabled(enabled);
+        }
+    }
+
+    @Override
+    public int getComponentPosition() {
+        return pagePosition;
+    }
+
+    @Override
+    public void setComponentPosition(int position) {
+        this.pagePosition = position;
+    }
 }

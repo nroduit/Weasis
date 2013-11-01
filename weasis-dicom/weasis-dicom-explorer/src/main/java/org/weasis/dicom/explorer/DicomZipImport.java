@@ -43,6 +43,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
     public DicomZipImport() {
         super("DICOM Zip");
+        setComponentPosition(3);
         initGUI();
         initialize(true);
     }

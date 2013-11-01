@@ -37,6 +37,7 @@ public class DicomPrefView extends AbstractItemDialogPage {
 
     public DicomPrefView() {
         super("DICOM"); //$NON-NLS-1$
+        setComponentPosition(5000);
         initGUI();
     }
 

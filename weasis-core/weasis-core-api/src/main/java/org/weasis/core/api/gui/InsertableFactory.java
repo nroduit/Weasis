@@ -1,8 +1,8 @@
-package org.weasis.core.ui.docking;
+package org.weasis.core.api.gui;
 
 import java.util.Hashtable;
 
-import org.weasis.core.ui.docking.Insertable.Type;
+import org.weasis.core.api.gui.Insertable.Type;
 
 public interface InsertableFactory {
 

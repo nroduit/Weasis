@@ -88,8 +88,8 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     }
 
     @Override
-    public void setComponentPosition(int postion) {
-        toolPosition = postion;
+    public void setComponentPosition(int position) {
+        toolPosition = position;
     }
 
     @Override

@@ -62,6 +62,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
             throw new IllegalArgumentException("ViewSetting cannot be null"); //$NON-NLS-1$
         }
         this.viewSetting = viewSetting;
+        setComponentPosition(5);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         try {
             JMVUtils.setList(jComboName,

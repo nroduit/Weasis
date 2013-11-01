@@ -30,7 +30,6 @@ import javax.swing.JSeparator;
 
 public class WtoolBar extends JPanel implements Toolbar {
 
-    private final Type type;
     private final String barName;
 
     private int barPosition = 100;
@@ -62,17 +61,12 @@ public class WtoolBar extends JPanel implements Toolbar {
     };
 
     public WtoolBar(String barName, int position) {
-        this(barName, Type.TOOLBAR, position);
-    }
-
-    WtoolBar(String barName, Type type, int index) {
         FlowLayout flowLayout = (FlowLayout) getLayout();
         flowLayout.setVgap(0);
         flowLayout.setHgap(0);
         flowLayout.setAlignment(FlowLayout.LEADING);
         this.barName = barName;
-        this.type = type;
-        this.barPosition = index;
+        this.barPosition = position;
         this.setAlignmentX(LEFT_ALIGNMENT);
         this.setAlignmentY(TOP_ALIGNMENT);
         setOpaque(false);
@@ -81,7 +75,7 @@ public class WtoolBar extends JPanel implements Toolbar {
 
     @Override
     public Type getType() {
-        return type;
+        return Type.TOOLBAR;
     }
 
     @Override

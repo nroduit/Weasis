@@ -17,8 +17,8 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import org.weasis.core.ui.docking.Insertable;
-import org.weasis.core.ui.docking.InsertableUtil;
+import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.InsertableUtil;
 
 public class ToolBarContainer extends JPanel {
     public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty"); //$NON-NLS-1$

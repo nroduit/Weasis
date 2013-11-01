@@ -1,9 +1,9 @@
-package org.weasis.core.ui.docking;
+package org.weasis.core.api.gui;
 
 public interface Insertable {
 
     public enum Type {
-        EXPLORER, TOOL, TOOLBAR, EMPTY,
+        EXPLORER, TOOL, TOOLBAR, EMPTY, PREFERENCES
     }
 
     String getComponentName();
@@ -16,6 +16,6 @@ public interface Insertable {
 
     int getComponentPosition();
 
-    void setComponentPosition(int postion);
+    void setComponentPosition(int position);
 
 }

@@ -17,6 +17,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,6 +26,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 
 public class DicomImport extends AbstractWizardDialog {
@@ -87,9 +90,10 @@ public class DicomImport extends AbstractWizardDialog {
 
     @Override
     protected void initializePages() {
-        pagesRoot.add(new DefaultMutableTreeNode(new LocalImport()));
-        pagesRoot.add(new DefaultMutableTreeNode(new DicomDirImport()));
-        pagesRoot.add(new DefaultMutableTreeNode(new DicomZipImport()));
+        ArrayList<AbstractItemDialogPage> list = new ArrayList<AbstractItemDialogPage>();
+        list.add(new LocalImport());
+        list.add(new DicomZipImport());
+        list.add(new DicomDirImport());
 
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         try {
@@ -98,8 +102,8 @@ public class DicomImport extends AbstractWizardDialog {
                 DicomImportFactory factory = context.getService(service);
                 if (factory != null) {
                     ImportDicom page = factory.createDicomImportPage(null);
-                    if (page != null) {
-                        pagesRoot.add(new DefaultMutableTreeNode(page));
+                    if (page instanceof AbstractItemDialogPage) {
+                        list.add((AbstractItemDialogPage) page);
                     }
                 }
             }
@@ -107,6 +111,10 @@ public class DicomImport extends AbstractWizardDialog {
             e.printStackTrace();
         }
 
+        InsertableUtil.sortInsertable(list);
+        for (AbstractItemDialogPage page : list) {
+            pagesRoot.add(new DefaultMutableTreeNode(page));
+        }
         iniTree();
     }
 

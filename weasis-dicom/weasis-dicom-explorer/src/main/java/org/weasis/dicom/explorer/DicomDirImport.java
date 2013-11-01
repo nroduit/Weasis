@@ -52,6 +52,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     public DicomDirImport() {
         super(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
+        setComponentPosition(5);
         initGUI();
         initialize(true);
     }

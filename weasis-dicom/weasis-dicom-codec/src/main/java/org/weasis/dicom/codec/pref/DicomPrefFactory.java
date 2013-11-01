@@ -4,6 +4,8 @@ import java.util.Hashtable;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
+import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
@@ -12,7 +14,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 public class DicomPrefFactory implements PreferencesPageFactory {
 
     @Override
-    public AbstractItemDialogPage createPreferencesPage(Hashtable<String, Object> properties) {
+    public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {
         if (properties != null) {
             if ("superuser".equals(properties.get("weasis.user.prefs"))) {
                 return new DicomPrefView();
@@ -20,4 +22,19 @@ public class DicomPrefFactory implements PreferencesPageFactory {
         }
         return null;
     }
+
+    @Override
+    public void dispose(Insertable component) {
+    }
+
+    @Override
+    public boolean isComponentCreatedByThisFactory(Insertable component) {
+        return component instanceof DicomPrefView;
+    }
+
+    @Override
+    public Type getType() {
+        return Insertable.Type.PREFERENCES;
+    }
+
 }

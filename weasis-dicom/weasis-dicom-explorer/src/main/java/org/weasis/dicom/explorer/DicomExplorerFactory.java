@@ -10,6 +10,8 @@ import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.felix.service.command.CommandProcessor;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
@@ -26,9 +28,7 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
 
     @Override
     public DataExplorerView createDataExplorerView(Hashtable<String, Object> properties) {
-        if (model == null) {
-            model = new DicomModel();
-        }
+        buildDicomModel(null);
         if (explorer == null) {
             explorer = new DicomExplorer(model);
             model.addPropertyChangeListener(explorer);
@@ -36,15 +36,34 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
-    @Activate
-    protected void activate(ComponentContext context) {
+    private void buildDicomModel(ComponentContext context) {
         if (model == null) {
             model = new DicomModel();
-            Dictionary<String, Object> dict = new Hashtable<String, Object>();
-            dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
-            dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
-            context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
+            if (context != null) {
+                Dictionary<String, Object> dict = new Hashtable<String, Object>();
+                dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
+                dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
+                context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
+            }
+        } else if (context != null) {
+            ServiceReference<?>[] val = null;
+            try {
+                val = context.getBundleContext().getServiceReferences(DicomModel.class.getName(), null);
+            } catch (InvalidSyntaxException e) {
+                // Do nothing
+            }
+            if (val == null || val.length == 0) {
+                Dictionary<String, Object> dict = new Hashtable<String, Object>();
+                dict.put(CommandProcessor.COMMAND_SCOPE, "dicom"); //$NON-NLS-1$
+                dict.put(CommandProcessor.COMMAND_FUNCTION, DicomModel.functions);
+                context.getBundleContext().registerService(DicomModel.class.getName(), model, dict);
+            }
         }
+    }
+
+    @Activate
+    protected void activate(ComponentContext context) {
+        buildDicomModel(context);
     }
 
     @Deactivate

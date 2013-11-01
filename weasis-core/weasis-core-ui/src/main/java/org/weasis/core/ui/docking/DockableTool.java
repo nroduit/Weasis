@@ -12,6 +12,7 @@ package org.weasis.core.ui.docking;
 
 import java.awt.Component;
 
+import org.weasis.core.api.gui.Insertable;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 

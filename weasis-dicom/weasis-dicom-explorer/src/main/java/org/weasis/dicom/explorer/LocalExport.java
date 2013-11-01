@@ -100,6 +100,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         super(Messages.getString("LocalExport.local_dev")); //$NON-NLS-1$
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(treeModel);
+        setComponentPosition(0);
         initGUI();
         initialize(true);
     }

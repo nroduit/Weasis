@@ -12,7 +12,7 @@ package org.weasis.core.ui.util;
 
 import java.awt.Dimension;
 
-import org.weasis.core.ui.docking.Insertable;
+import org.weasis.core.api.gui.Insertable;
 
 public interface Toolbar extends Insertable {
 

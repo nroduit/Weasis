@@ -55,6 +55,7 @@ public class WadoPrefView extends AbstractItemDialogPage {
 
     public WadoPrefView() {
         super(Messages.getString("WadoPrefView.wado")); //$NON-NLS-1$
+        setComponentPosition(5500);
         initGUI();
     }
 

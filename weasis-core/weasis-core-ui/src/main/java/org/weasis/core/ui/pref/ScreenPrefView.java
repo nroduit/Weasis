@@ -55,6 +55,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
     public ScreenPrefView() {
         super("Monitors");
+        setComponentPosition(100);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         BorderLayout borderLayout = new BorderLayout();
         setLayout(borderLayout);

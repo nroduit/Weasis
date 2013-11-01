@@ -53,6 +53,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     public ViewerPrefView() {
         super(View2dFactory.NAME); //$NON-NLS-1$
 
+        setComponentPosition(150);
         // JButton button = new JButton("Restore Defaults");
         // GridBagConstraints gbc_button = new GridBagConstraints();
         // gbc_button.insets = new Insets(15, 15, 15, 15);
