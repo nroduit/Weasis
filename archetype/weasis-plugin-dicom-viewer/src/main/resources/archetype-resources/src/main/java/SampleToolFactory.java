@@ -13,9 +13,9 @@ import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.ui.docking.Insertable;
-import org.weasis.core.ui.docking.Insertable.Type;
-import org.weasis.core.ui.docking.InsertableFactory;
+import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
 
 @Component(immediate = false)
 @Service
