@@ -254,7 +254,7 @@ public class KOManager {
                 (String) JOptionPane.showInputDialog(null, message, "Key Object Selection",
                     JOptionPane.INFORMATION_MESSAGE, null, null, "new KO selection");
 
-            if (StringUtil.hasText(description)) {
+            if (!StringUtil.hasText(description)) {
                 return; // no input is given meaning operation is cancelled
             }
 
