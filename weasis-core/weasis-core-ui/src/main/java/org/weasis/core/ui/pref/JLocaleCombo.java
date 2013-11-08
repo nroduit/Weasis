@@ -12,6 +12,7 @@ package org.weasis.core.ui.pref;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
@@ -32,14 +33,18 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
 
     private void sortLocales() {
         Locale[] locales = Locale.getAvailableLocales();
+
+        Locale defaultLocale = Locale.getDefault();
+        // Allow to sort correctly string in each language
+        final Collator collator = Collator.getInstance(defaultLocale);
         Arrays.sort(locales, new Comparator<Locale>() {
 
             @Override
             public int compare(Locale l1, Locale l2) {
-                return l1.getDisplayName().compareTo(l2.getDisplayName());
+                return collator.compare(l1.getDisplayName(), l2.getDisplayName());
             }
         });
-        Locale defaultLocale = Locale.getDefault();
+
         JLocale dloc = null;
         for (int i = 0; i < locales.length; i++) {
             if (locales[i].getCountry().length() > 0) {
@@ -79,13 +84,13 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
         if (iEvt.getStateChange() == ItemEvent.SELECTED) {
             Object item = getSelectedItem();
             if (item instanceof JLocale) {
+                removeItemListener(this);
                 Locale locale = ((JLocale) item).getLocale();
                 Locale.setDefault(locale);
                 firePropertyChange("locale", null, locale); //$NON-NLS-1$
                 BundleTools.SYSTEM_PREFERENCES.put("locale.language", locale.getLanguage()); //$NON-NLS-1$
                 BundleTools.SYSTEM_PREFERENCES.put("locale.country", locale.getCountry()); //$NON-NLS-1$
                 BundleTools.SYSTEM_PREFERENCES.put("locale.variant", locale.getVariant()); //$NON-NLS-1$
-                removeItemListener(this);
                 removeAllItems();
                 sortLocales();
                 addItemListener(this);

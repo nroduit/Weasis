@@ -33,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -144,12 +146,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final ArrayList<ExplorerTask> tasks = new ArrayList<ExplorerTask>();
 
     private final DicomModel model;
+    private final Collator collator = Collator.getInstance(Locale.getDefault());
 
     private final Comparator patientComparator = new Comparator() {
 
         @Override
         public int compare(Object o1, Object o2) {
-            return o1.toString().compareToIgnoreCase(o2.toString());
+            return collator.compare(o1.toString(), o2.toString());
         }
     };
     private final Comparator studyComparator = new Comparator() {
