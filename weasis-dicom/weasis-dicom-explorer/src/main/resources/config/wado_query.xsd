@@ -108,6 +108,14 @@
   	</xsd:restriction>
   </xsd:simpleType>
   
+    <!-- Severity of error message -->
+  <xsd:simpleType name="errorSeverity">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="INFO"/>
+      <xsd:enumeration value="WARN"/>
+      <xsd:enumeration value="ERROR"/>
+    </xsd:restriction>
+  </xsd:simpleType> 
 
 	<!--                           DESCRIPTION OF WADO_QUERY XML DOCUMENT                          -->
 	
@@ -118,6 +126,13 @@
 				<xsd:complexType>
 					<xsd:attribute name="key" type="xsd:string" use="required" />
 					<xsd:attribute name="value" type="xsd:string" use="required" />
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="error" minOccurs="0" maxOccurs="1">
+				<xsd:complexType>
+					<xsd:attribute name="title" type="xsd:string" use="required" />
+					<xsd:attribute name="description" type="xsd:string" use="required" />
+					<xsd:attribute name="severity" type="errorSeverity" />
 				</xsd:complexType>
 			</xsd:element>
 			<xsd:element name="Patient" type="Patient" minOccurs="1" maxOccurs="unbounded"/>
