@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -53,6 +55,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
@@ -164,6 +167,31 @@ public class DownloadManager {
                                             String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                                             String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                                             wadoParameters.addHttpTag(httpkey, httpvalue);
+                                            // <error> tag
+                                        } else if ("error".equals(xmler.getName().getLocalPart())) {
+                                            final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
+                                            final String desc = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
+                                            if (StringUtil.hasText(title) && StringUtil.hasText(desc)) {
+                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$
+                                                final int type =
+                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO"
+                                                        .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
+                                                        : JOptionPane.WARNING_MESSAGE;
+
+                                                GuiExecutor.instance().execute(new Runnable() {
+
+                                                    @Override
+                                                    public void run() {
+                                                        JOptionPane pane =
+                                                            new JOptionPane(desc, type, JOptionPane.DEFAULT_OPTION);
+                                                        JDialog dialog = pane.createDialog(title);
+                                                        dialog.setModal(false);
+                                                        dialog.pack();
+                                                        dialog.setVisible(true);
+                                                    }
+                                                });
+
+                                            }
                                         }
                                         break;
                                     default:
