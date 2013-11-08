@@ -763,7 +763,7 @@ public class WeasisLauncher {
         final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
-        getGeneralProperty("weasis.export.dicom", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+        getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Read default value for dicom root UID which should be registered at the http://www.iana.org
         getGeneralProperty("weasis.dicom.root.uid", "", config, s_prop, false, false);
