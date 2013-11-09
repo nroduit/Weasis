@@ -121,6 +121,14 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     public synchronized void reBuildThumbnail(File file, MediaSeries.MEDIA_POSITION position) {
         Object media = series.getMedia(mediaPosition, null, null);
+        // Handle special case for DICOM SR
+        if (media == null) {
+            List<MediaElement<?>> specialElements =
+                (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
+            if (specialElements != null && specialElements.size() > 0) {
+                media = specialElements.get(0);
+            }
+        }
         if (file != null || media instanceof MediaElement<?>) {
             mediaPosition = position;
             thumbnailPath = file;

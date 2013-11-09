@@ -50,6 +50,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
+import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
@@ -387,6 +388,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 DefaultMutableTreeNode node = new DefaultMutableTreeNode(obj, true);
                 drawings.add(node);
                 dtm.nodesWereInserted(drawings, new int[] { drawings.getIndex(node) });
+                if (event.getSeriesViewer() instanceof ImageViewerPlugin && node.getUserObject() instanceof Identifier) {
+                    DefaultView2d<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+                    if (pane != null) {
+                        AbstractLayer l = pane.getLayerModel().getLayer((Identifier) node.getUserObject());
+                        if (l != null && l.isVisible()) {
+                            tree.addCheckingPath(getTreePath(node));
+                        }
+                    }
+                }
             }
         } else if (EVENT.REMOVE_LAYER.equals(e)) {
             Object obj = event.getSharedObject();
