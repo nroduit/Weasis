@@ -79,110 +79,209 @@ public class SeriesBuilder {
         // TODO test images have all the same size and pixel spacing
         MediaSeries<DicomImageElement> series = view.getSeries();
         if (series != null) {
-            String seriesID = (String) series.getTagValue(TagW.SubseriesInstanceUID);
-
-            Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-
             SliceOrientation type1 = view.getSliceOrientation();
-            // Get image stack sort from Reference Coordinates System
-            DicomImageElement img =
-                SliceOrientation.CORONAL.equals(type1) ? series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter,
-                    SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
-                    SortSeriesStack.slicePosition);
-            if (img != null && img.getMediaReader() instanceof DicomMediaIO) {
-                GeometryOfSlice geometry = img.getSliceGeometry();
-                if (geometry != null) {
-                    // abort needs to be final array to be changed on "invoqueAndWhait()" block.
-                    final boolean[] abort = new boolean[] { false, false };
-                    Tuple3d voxelSpacing = geometry.getVoxelSpacing();
-                    if (voxelSpacing.x != voxelSpacing.y) {
-                        confirmMessage(view, "Images have non square pixels!", abort);
-                    }
+            if (type1 != null) {
 
-                    int width = (Integer) img.getTagValue(TagW.Columns);
-                    int height = (Integer) img.getTagValue(TagW.Rows);
+                String seriesID = (String) series.getTagValue(TagW.SubseriesInstanceUID);
+                Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
 
-                    Float tilt = (Float) img.getTagValue(TagW.GantryDetectorTilt);
-                    if (tilt != null && tilt != 0.0f) {
-                        confirmMessage(view, "Images have gantry tilt!", abort);
-                    }
-                    HashMap<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
-                    if (tags != null) {
-                        double[] row = geometry.getRowArray();
-                        double[] col = geometry.getColumnArray();
-                        Vector3d vr = new Vector3d(row);
-                        Vector3d vc = new Vector3d(col);
-                        Vector3d resr = new Vector3d();
-                        Vector3d resc = new Vector3d();
-
-                        final ViewParameter[] recParams = new ViewParameter[2];
-
-                        if (SliceOrientation.SAGITTAL.equals(type1)) {
-                            // The reference image is the first of the saggital stack (Left)
-                            rotate(vc, vr, Math.toRadians(270), resr);
-                            recParams[0] =
-                                new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x,
-                                    resr.y, resr.z, row[0], row[1], row[2] }, true, true, new Object[] { 0.0, false });
-                            recParams[1] =
-                                new ViewParameter(".3", SliceOrientation.CORONAL, false,
-                                    TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                        col[1], col[2] }, true, true, new Object[] { true, 0.0 });
-                        } else if (SliceOrientation.CORONAL.equals(type1)) {
-                            // The reference image is the first of the coronal stack (Anterior)
-                            rotate(vc, vr, Math.toRadians(90), resc);
-                            recParams[0] =
-                                new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0],
-                                    row[1], row[2], resc.x, resc.y, resc.z }, false, true, new Object[] { 0.0, false });
-
-                            rotate(vc, vr, Math.toRadians(90), resr);
-                            recParams[1] =
-                                new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
-                                    TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                        col[1], col[2] }, true, false, new Object[] { true, 0.0 });
-                        } else {
-                            // The reference image is the last of the axial stack (Head)
-                            rotate(vc, vr, Math.toRadians(270), resc);
-                            recParams[0] =
-                                new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] { row[0],
-                                    row[1], row[2], resc.x, resc.y, resc.z }, false, false, new Object[] { 0.0, false });
-
-                            rotate(vr, vc, Math.toRadians(90), resr);
-                            recParams[1] =
-                                new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
-                                    TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
-                                        resr.y, resr.z }, false, false, new Object[] { true, 0.0 });
-
+                // Get image stack sort from Reference Coordinates System
+                DicomImageElement img =
+                    SliceOrientation.CORONAL.equals(type1) ? series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, filter,
+                        SortSeriesStack.slicePosition) : series.getMedia(MediaSeries.MEDIA_POSITION.LAST, filter,
+                        SortSeriesStack.slicePosition);
+                if (img != null && img.getMediaReader() instanceof DicomMediaIO) {
+                    GeometryOfSlice geometry = img.getSliceGeometry();
+                    if (geometry != null) {
+                        // abort needs to be final array to be changed on "invoqueAndWhait()" block.
+                        final boolean[] abort = new boolean[] { false, false };
+                        Tuple3d voxelSpacing = geometry.getVoxelSpacing();
+                        if (voxelSpacing.x != voxelSpacing.y) {
+                            confirmMessage(view, "Images have non square pixels!", abort);
                         }
 
-                        final MprView[] recView = new MprView[2];
-                        recView[0] = mprContainer.getMprView(recParams[0].sliceOrientation);
-                        recView[1] = mprContainer.getMprView(recParams[1].sliceOrientation);
-                        if (recView[0] == null || recView[1] == null) {
-                            return;
-                        }
-                        final MprView mainView = mprContainer.getMprView(type1);
-                        mainView.zoom(0.0);
-                        mainView.center();
+                        int width = (Integer) img.getTagValue(TagW.Columns);
+                        int height = (Integer) img.getTagValue(TagW.Rows);
 
-                        final boolean[] needBuild = new boolean[2];
-                        MediaSeriesGroup study = null;
-                        DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
-                        TreeModel treeModel = null;
-                        if (model instanceof TreeModel) {
-                            treeModel = (TreeModel) model;
-                            study = treeModel.getParent(series, DicomModel.study);
-                            if (study != null) {
-                                for (int i = 0; i < 2; i++) {
-                                    final MediaSeriesGroup group =
-                                        treeModel.getHierarchyNode(study, seriesID + recParams[i].suffix);
-                                    needBuild[i] = group == null;
-                                    if (!needBuild[i]) {
-                                        final MprView mprView = recView[i];
+                        Float tilt = (Float) img.getTagValue(TagW.GantryDetectorTilt);
+                        if (tilt != null && tilt != 0.0f) {
+                            confirmMessage(view, "Images have gantry tilt!", abort);
+                        }
+                        HashMap<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
+                        if (tags != null) {
+                            double[] row = geometry.getRowArray();
+                            double[] col = geometry.getColumnArray();
+                            Vector3d vr = new Vector3d(row);
+                            Vector3d vc = new Vector3d(col);
+                            Vector3d resr = new Vector3d();
+                            Vector3d resc = new Vector3d();
+
+                            final ViewParameter[] recParams = new ViewParameter[2];
+
+                            if (SliceOrientation.SAGITTAL.equals(type1)) {
+                                // The reference image is the first of the saggital stack (Left)
+                                rotate(vc, vr, Math.toRadians(270), resr);
+                                recParams[0] =
+                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x,
+                                        resr.y, resr.z, row[0], row[1], row[2] }, true, true,
+                                        new Object[] { 0.0, false });
+                                recParams[1] =
+                                    new ViewParameter(".3", SliceOrientation.CORONAL, false,
+                                        TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
+                                            col[1], col[2] }, true, true, new Object[] { true, 0.0 });
+                            } else if (SliceOrientation.CORONAL.equals(type1)) {
+                                // The reference image is the first of the coronal stack (Anterior)
+                                rotate(vc, vr, Math.toRadians(90), resc);
+                                recParams[0] =
+                                    new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0],
+                                        row[1], row[2], resc.x, resc.y, resc.z }, false, true, new Object[] { 0.0,
+                                        false });
+
+                                rotate(vc, vr, Math.toRadians(90), resr);
+                                recParams[1] =
+                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
+                                        TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
+                                            col[1], col[2] }, true, false, new Object[] { true, 0.0 });
+                            } else {
+                                // The reference image is the last of the axial stack (Head)
+                                rotate(vc, vr, Math.toRadians(270), resc);
+                                recParams[0] =
+                                    new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] {
+                                        row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false, new Object[] {
+                                        0.0, false });
+
+                                rotate(vr, vc, Math.toRadians(90), resr);
+                                recParams[1] =
+                                    new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
+                                        TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
+                                            resr.y, resr.z }, false, false, new Object[] { true, 0.0 });
+
+                            }
+
+                            final MprView[] recView = new MprView[2];
+                            recView[0] = mprContainer.getMprView(recParams[0].sliceOrientation);
+                            recView[1] = mprContainer.getMprView(recParams[1].sliceOrientation);
+                            if (recView[0] == null || recView[1] == null) {
+                                return;
+                            }
+                            final MprView mainView = mprContainer.getMprView(type1);
+                            mainView.zoom(0.0);
+                            mainView.center();
+
+                            final boolean[] needBuild = new boolean[2];
+                            MediaSeriesGroup study = null;
+                            DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+                            TreeModel treeModel = null;
+                            if (model instanceof TreeModel) {
+                                treeModel = (TreeModel) model;
+                                study = treeModel.getParent(series, DicomModel.study);
+                                if (study != null) {
+                                    for (int i = 0; i < 2; i++) {
+                                        final MediaSeriesGroup group =
+                                            treeModel.getHierarchyNode(study, seriesID + recParams[i].suffix);
+                                        needBuild[i] = group == null;
+                                        if (!needBuild[i]) {
+                                            final MprView mprView = recView[i];
+                                            GuiExecutor.instance().execute(new Runnable() {
+
+                                                @Override
+                                                public void run() {
+                                                    mprView.setSeries((MediaSeries<DicomImageElement>) group);
+                                                    // Copy the synch values from the main view
+                                                    for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
+                                                        .getActions().keySet()) {
+                                                        mprView.setActionsInView(action, view.getActionValue(action));
+                                                    }
+                                                    mprView.zoom(mainView.getViewModel().getViewScale());
+                                                    mprView.center();
+                                                    mprView.repaint();
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+
+                            final int size = series.size(filter);
+                            final JProgressBar[] bar = new JProgressBar[2];
+                            GuiExecutor.instance().invokeAndWait(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    for (int i = 0; i < 2; i++) {
+                                        if (needBuild[i]) {
+                                            bar[i] = new JProgressBar(0, size);
+                                            Dimension dim = new Dimension(recView[i].getWidth() / 2, 30);
+                                            bar[i].setSize(dim);
+                                            bar[i].setPreferredSize(dim);
+                                            bar[i].setMaximumSize(dim);
+                                            bar[i].setValue(0);
+                                            bar[i].setStringPainted(true);
+                                            recView[i].setProgressBar(bar[i]);
+                                            recView[i].repaint();
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Get the image in the middle of the series for having better default W/L values
+                            img =
+                                series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter,
+                                    SortSeriesStack.slicePosition);
+
+                            for (int i = 0; i < 2; i++) {
+                                if (needBuild[i]) {
+                                    final MprView mprView = recView[i];
+                                    final ViewParameter viewParams = recParams[i];
+
+                                    Iterable<DicomImageElement> medias =
+                                        series.copyOfMedias(filter, viewParams.reverseSeriesOrder
+                                            ? SortSeriesStack.slicePosition.getReversOrderComparator()
+                                            : SortSeriesStack.slicePosition);
+                                    double origPixSize = img.getPixelSize();
+
+                                    RawImage[] secSeries = new RawImage[i == 0 ? height : width];
+                                    /*
+                                     * Write the new image by tacking the lines (from first to last) of all the images
+                                     * of the original series stack
+                                     */
+                                    double sPixSize =
+                                        writeBlock(secSeries, series, medias, viewParams, mprView, thread, abort,
+                                            seriesID);
+
+                                    if (thread.isInterrupted()) {
+                                        return;
+                                    }
+                                    /*
+                                     * Reconstruct dicom files, adapt position, orientation, pixel spacing, instance
+                                     * number and UIDs.
+                                     */
+                                    final DicomSeries dicomSeries =
+                                        buildDicomSeriesFromRaw(secSeries,
+                                            new Dimension(i == 0 ? width : height, size), img, viewParams, seriesID,
+                                            origPixSize, sPixSize, geometry, mprView);
+                                    final Attributes attributes =
+                                        ((DicomMediaIO) img.getMediaReader()).getDicomObject();
+
+                                    if (dicomSeries != null) {
+                                        if (study != null && treeModel != null) {
+                                            dicomSeries.setTag(TagW.ExplorerModel, model);
+                                            treeModel.addHierarchyNode(study, dicomSeries);
+                                            if (treeModel instanceof DicomModel) {
+                                                DicomModel dicomModel = (DicomModel) treeModel;
+                                                dicomModel.firePropertyChange(new ObservableEvent(
+                                                    ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
+                                            }
+                                        }
+
                                         GuiExecutor.instance().execute(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                mprView.setSeries((MediaSeries<DicomImageElement>) group);
+                                                mprView.setProgressBar(null);
+                                                // Copy tags from original dicom into series
+                                                DicomMediaUtils.writeMetaData(dicomSeries, attributes);
+                                                mprView.setSeries(dicomSeries);
                                                 // Copy the synch values from the main view
                                                 for (String action : MPRContainer.DEFAULT_MPR.getSynchData()
                                                     .getActions().keySet()) {
@@ -194,95 +293,6 @@ public class SeriesBuilder {
                                             }
                                         });
                                     }
-                                }
-                            }
-                        }
-
-                        final int size = series.size(filter);
-                        final JProgressBar[] bar = new JProgressBar[2];
-                        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                for (int i = 0; i < 2; i++) {
-                                    if (needBuild[i]) {
-                                        bar[i] = new JProgressBar(0, size);
-                                        Dimension dim = new Dimension(recView[i].getWidth() / 2, 30);
-                                        bar[i].setSize(dim);
-                                        bar[i].setPreferredSize(dim);
-                                        bar[i].setMaximumSize(dim);
-                                        bar[i].setValue(0);
-                                        bar[i].setStringPainted(true);
-                                        recView[i].setProgressBar(bar[i]);
-                                        recView[i].repaint();
-                                    }
-                                }
-                            }
-                        });
-
-                        // Get the image in the middle of the series for having better default W/L values
-                        img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, SortSeriesStack.slicePosition);
-
-                        for (int i = 0; i < 2; i++) {
-                            if (needBuild[i]) {
-                                final MprView mprView = recView[i];
-                                final ViewParameter viewParams = recParams[i];
-
-                                Iterable<DicomImageElement> medias =
-                                    series.copyOfMedias(filter, viewParams.reverseSeriesOrder
-                                        ? SortSeriesStack.slicePosition.getReversOrderComparator()
-                                        : SortSeriesStack.slicePosition);
-                                double origPixSize = img.getPixelSize();
-
-                                RawImage[] secSeries = new RawImage[i == 0 ? height : width];
-                                /*
-                                 * Write the new image by tacking the lines (from first to last) of all the images of
-                                 * the original series stack
-                                 */
-                                double sPixSize =
-                                    writeBlock(secSeries, series, medias, viewParams, mprView, thread, abort, seriesID);
-
-                                if (thread.isInterrupted()) {
-                                    return;
-                                }
-                                /*
-                                 * Reconstruct dicom files, adapt position, orientation, pixel spacing, instance number
-                                 * and UIDs.
-                                 */
-                                final DicomSeries dicomSeries =
-                                    buildDicomSeriesFromRaw(secSeries, new Dimension(i == 0 ? width : height, size),
-                                        img, viewParams, seriesID, origPixSize, sPixSize, geometry, mprView);
-                                final Attributes attributes = ((DicomMediaIO) img.getMediaReader()).getDicomObject();
-
-                                if (dicomSeries != null) {
-                                    if (study != null && treeModel != null) {
-                                        dicomSeries.setTag(TagW.ExplorerModel, model);
-                                        treeModel.addHierarchyNode(study, dicomSeries);
-                                        if (treeModel instanceof DicomModel) {
-                                            DicomModel dicomModel = (DicomModel) treeModel;
-                                            dicomModel.firePropertyChange(new ObservableEvent(
-                                                ObservableEvent.BasicAction.Add, dicomModel, null, dicomSeries));
-                                        }
-                                    }
-
-                                    GuiExecutor.instance().execute(new Runnable() {
-
-                                        @Override
-                                        public void run() {
-                                            mprView.setProgressBar(null);
-                                            // Copy tags from original dicom into series
-                                            DicomMediaUtils.writeMetaData(dicomSeries, attributes);
-                                            mprView.setSeries(dicomSeries);
-                                            // Copy the synch values from the main view
-                                            for (String action : MPRContainer.DEFAULT_MPR.getSynchData().getActions()
-                                                .keySet()) {
-                                                mprView.setActionsInView(action, view.getActionValue(action));
-                                            }
-                                            mprView.zoom(mainView.getViewModel().getViewScale());
-                                            mprView.center();
-                                            mprView.repaint();
-                                        }
-                                    });
                                 }
                             }
                         }

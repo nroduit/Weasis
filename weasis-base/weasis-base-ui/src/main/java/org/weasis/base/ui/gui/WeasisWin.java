@@ -642,6 +642,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             return;
         }
         ViewerPlugin oldPlugin = selectedPlugin;
+        if(selectedPlugin != null){
+            selectedPlugin.setSelected(false);
+        }
         selectedPlugin = plugin;
         selectedPlugin.setSelected(true);
         selectedPlugin.fillSelectedPluginMenu(menuSelectedPlugin);

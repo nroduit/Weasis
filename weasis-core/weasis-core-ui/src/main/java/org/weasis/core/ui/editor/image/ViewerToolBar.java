@@ -50,7 +50,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     public static final List<ActionW> actionsButtons = Collections.synchronizedList(new ArrayList<ActionW>(Arrays
         .asList(new ActionW[] { ActionW.PAN, ActionW.WINLEVEL, ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
-            ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.NO_ACTION })));
+            ActionW.MEASURE, ActionW.CONTEXTMENU, ActionW.CROSSHAIR, ActionW.NO_ACTION })));
 
     public static final ActionW[] actionsScroll = { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION,
         ActionW.NO_ACTION };

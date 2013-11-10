@@ -495,13 +495,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
                 setShutter(img);
 
-                // Fix issue with W/L values updated when scrolling image of the same series with Preset set to null
-                // Note : if setDefautWindowLevel is called here, every times setImage is called will render image with
-                // default W/L. This shouldn't behaves this way for instance when ActionW.SCROLL_SERIES propertyChange
-                // invoke setImage with custom W/L values
-
-                // setDefautWindowLevel(img);
-
                 Rectangle2D area = getViewModel().getModelArea();
                 if (!modelArea.equals(area)) {
                     ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
@@ -511,6 +504,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
                 if (panner != null) {
                     panner.updateImage();
+                }
+                if(lens != null){
+                    lens.updateZoom();
                 }
 
                 if (AuditLog.LOGGER.isInfoEnabled()) {

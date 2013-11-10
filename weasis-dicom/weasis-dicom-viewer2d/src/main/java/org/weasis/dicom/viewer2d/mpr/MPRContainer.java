@@ -137,6 +137,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     private static volatile boolean INI_COMPONENTS = false;
 
     private volatile Thread process;
+    private volatile String lastCommand;
 
     public MPRContainer() {
         this(VIEWS_1x1);
@@ -305,15 +306,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     @Override
     public void setSelected(boolean selected) {
+        final ViewerToolBar toolBar = getViewerToolBar();
         if (selected) {
-            if (ViewerToolBar.actionsButtons.indexOf(ActionW.CROSSHAIR) == -1) {
-                ViewerToolBar.actionsButtons.add(0, ActionW.CROSSHAIR);
-            }
-            final ViewerToolBar toolBar = getViewerToolBar();
             if (toolBar != null) {
                 String command = ActionW.CROSSHAIR.cmd();
                 MouseActions mouseActions = eventManager.getMouseActions();
-                if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
+                String lastAction = mouseActions.getAction(MouseActions.LEFT);
+                if (!command.equals(lastAction)) {
+                    lastCommand = lastAction;
                     mouseActions.setAction(MouseActions.LEFT, command);
                     setMouseActions(mouseActions);
                     toolBar.changeButtonState(MouseActions.LEFT, command);
@@ -330,6 +330,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             }
 
         } else {
+            if (lastCommand != null && toolBar != null) {
+                MouseActions mouseActions = eventManager.getMouseActions();
+                if (ActionW.CROSSHAIR.cmd().equals(mouseActions.getAction(MouseActions.LEFT))) {
+                    mouseActions.setAction(MouseActions.LEFT, lastCommand);
+                    setMouseActions(mouseActions);
+                    toolBar.changeButtonState(MouseActions.LEFT, lastCommand);
+                    lastCommand = null;
+                }
+            }
             eventManager.setSelectedView2dContainer(null);
         }
 
@@ -348,16 +357,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             @Override
             public void run() {
-                final ViewerToolBar toolBar = getViewerToolBar();
-                if (toolBar != null) {
-                    toolBar.removeMouseAction(ActionW.CROSSHAIR);
-                }
                 for (DefaultView2d v : view2ds) {
-                    MediaSeries s = v.getSeries();
                     v.dispose();
-                    if (s != null && s.toString().startsWith("m")) {
-                        s.dispose();
-                    }
                 }
             }
         });
@@ -518,7 +519,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public MprView getMprView(SliceOrientation sliceOrientation) {
         for (DefaultView2d v : view2ds) {
             if (v instanceof MprView) {
-                if ((((MprView) v).getSliceOrientation()).equals(sliceOrientation)) {
+                if (sliceOrientation != null && sliceOrientation.equals(((MprView) v).getSliceOrientation())) {
                     return (MprView) v;
                 }
             }

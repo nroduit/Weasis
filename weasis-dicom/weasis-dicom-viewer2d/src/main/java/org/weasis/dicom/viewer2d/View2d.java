@@ -54,6 +54,9 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
+import javax.vecmath.Point3d;
+import javax.vecmath.Tuple3d;
+import javax.vecmath.Vector3d;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,8 +121,10 @@ import org.weasis.core.ui.graphic.DragLayer;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.InvalidShapeException;
 import org.weasis.core.ui.graphic.LineGraphic;
+import org.weasis.core.ui.graphic.LineWithGapGraphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PolygonGraphic;
+import org.weasis.core.ui.graphic.RectangleGraphic;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -143,6 +148,7 @@ import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.OverlayOperation;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -153,6 +159,9 @@ import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.explorer.pref.ModalityPrefView;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton.eState;
+import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
@@ -341,6 +350,54 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.KO_STATE.cmd())) {
                     KOManager.toogleKoState(this);
                     updateKOselectedState();
+                } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
+                    if (series != null && val instanceof Point2D.Double) {
+                        Point2D.Double p = (Point2D.Double) val;
+                        GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
+                        String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                        if (sliceGeometry != null&& fruid != null) {
+                            Point3d p3 = sliceGeometry.getPosition(p);
+                            ImageViewerPlugin<DicomImageElement> container =
+                                this.eventManager.getSelectedView2dContainer();
+                            if (container != null) {
+                                ArrayList<DefaultView2d<DicomImageElement>> viewpanels = container.getImagePanels();
+                                for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                    MediaSeries<DicomImageElement> s = v.getSeries();
+                                    if (s == null) {
+                                        continue;
+                                    }
+                                    if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                        if (v != container.getSelectedImagePane()) {
+                                            GeometryOfSlice geometry = v.getImage().getSliceGeometry();
+                                            if (geometry != null) {
+                                                Vector3d vn = geometry.getNormal();
+                                                // vn.absolute();
+                                                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                                                DicomImageElement img =
+                                                    s.getNearestImage(location, 0,
+                                                        (Filter<DicomImageElement>) actionsInView
+                                                            .get(ActionW.FILTERED_SERIES.cmd()), v
+                                                            .getCurrentSortComparator());
+                                                if (img != null) {
+                                                    ((View2d) v).setImage(img);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                    MediaSeries<DicomImageElement> s = v.getSeries();
+                                    if (s == null) {
+                                        continue;
+                                    }
+                                    if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                        ((View2d) v).computeCrosshair(p3);
+                                        v.repaint();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } else if (name.equals(ActionW.IMAGE_OVERLAY.cmd())) {
@@ -1033,13 +1090,104 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return getAction(ActionW.SCROLL_SERIES);
         } else if (action.equals(ActionW.ZOOM.cmd())) {
             return getAction(ActionW.ZOOM);
+        } else if (action.equals(ActionW.CROSSHAIR.cmd())) {
+            return getAction(ActionW.CROSSHAIR);
         } else if (action.equals(ActionW.ROTATION.cmd())) {
             return getAction(ActionW.ROTATION);
         }
         return null;
     }
 
-    private void resetMouseAdapter() {
+    public void computeCrosshair(Point3d p3) {
+        DicomImageElement image = this.getImage();
+        AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.CROSSLINES);
+        if (image != null && layer != null) {
+            layer.deleteAllGraphic();
+            GeometryOfSlice sliceGeometry = image.getSliceGeometry();
+            if (sliceGeometry != null) {
+                SliceOrientation sliceOrientation = this.getSliceOrientation();
+                if (sliceOrientation != null) {
+                    Point2D p = sliceGeometry.getImagePosition(p3);
+                    Tuple3d dimensions = sliceGeometry.getDimensions();
+                    boolean axial = SliceOrientation.AXIAL.equals((sliceOrientation));
+                    Point2D centerPt = new Point2D.Double(p.getX(), p.getY());
+
+                    List<Point2D.Double> pts = new ArrayList<Point2D.Double>();
+                    pts.add(new Point2D.Double(p.getX(), 0.0));
+                    pts.add(new Point2D.Double(p.getX(), dimensions.x));
+
+                    boolean sagittal = SliceOrientation.SAGITTAL.equals(sliceOrientation);
+                    Color color1 = sagittal ? Color.GREEN : Color.BLUE;
+                    addCrosshairLine(layer, pts, color1, centerPt);
+
+                    List<Point2D.Double> pts2 = new ArrayList<Point2D.Double>();
+                    Color color2 = axial ? Color.GREEN : Color.RED;
+                    pts2.add(new Point2D.Double(0.0, p.getY()));
+                    pts2.add(new Point2D.Double(dimensions.y, p.getY()));
+                    addCrosshairLine(layer, pts2, color2, centerPt);
+
+                    RenderedImage dispImg = image.getImage();
+                    if (dispImg != null) {
+                        Rectangle2D rect =
+                            new Rectangle2D.Double(dispImg.getMinX() * image.getRescaleX(), dispImg.getMinY()
+                                * image.getRescaleY(), dispImg.getWidth() * image.getRescaleX(), dispImg.getHeight()
+                                * image.getRescaleY());
+                        addRectangle(layer, rect, axial ? Color.RED : sagittal ? Color.BLUE : Color.GREEN);
+                    }
+                }
+            }
+        }
+    }
+
+    protected void addCrosshairLine(AbstractLayer layer, List<Point2D.Double> pts, Color color, Point2D center) {
+        if (pts != null && pts.size() > 0 && layer != null) {
+            try {
+                Graphic graphic =
+                    pts.size() == 2 ? new LineWithGapGraphic(pts.get(0), pts.get(1), 1.0f, color, false, center, 75)
+                        : new PolygonGraphic(pts, color, 1.0f, false, false);
+                layer.addGraphic(graphic);
+            } catch (InvalidShapeException e) {
+                LOGGER.error(e.getMessage());
+            }
+
+        }
+    }
+
+    protected void addRectangle(AbstractLayer layer, Rectangle2D rect, Color color) {
+        if (rect != null && layer != null) {
+            try {
+                layer.addGraphic(new RectangleGraphic(rect, 1.0f, color, false, false));
+            } catch (InvalidShapeException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
+    }
+
+    public SliceOrientation getSliceOrientation() {
+        SliceOrientation sliceOrientation = null;
+        MediaSeries<DicomImageElement> s = getSeries();
+        if (s != null) {
+            Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+            if (img instanceof DicomImageElement) {
+                double[] v = (double[]) ((DicomImageElement) img).getTagValue(TagW.ImageOrientationPatient);
+                if (v != null && v.length == 6) {
+                    String orientation =
+                        ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1], v[2], v[3],
+                            v[4], v[5]);
+                    if (ImageOrientation.LABELS[1].equals(orientation)) {
+                        sliceOrientation = SliceOrientation.AXIAL;
+                    } else if (ImageOrientation.LABELS[3].equals(orientation)) {
+                        sliceOrientation = SliceOrientation.CORONAL;
+                    } else if (ImageOrientation.LABELS[2].equals(orientation)) {
+                        sliceOrientation = SliceOrientation.SAGITTAL;
+                    }
+                }
+            }
+        }
+        return sliceOrientation;
+    }
+
+    protected void resetMouseAdapter() {
         for (ActionState adapter : eventManager.getAllActionValues()) {
             if (adapter instanceof MouseActionAdapter) {
                 ((MouseActionAdapter) adapter).setButtonMaskEx(0);
