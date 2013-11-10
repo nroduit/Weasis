@@ -282,7 +282,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", false)) { //$NON-NLS-1$
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
                 DicomExport dialog = new DicomExport(WinUtil.getParentFrame(DicomExplorer.this), model);
                 dialog.showPage(BUTTON_NAME);
                 JMVUtils.showCenterScreen(dialog);

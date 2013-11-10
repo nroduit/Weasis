@@ -553,6 +553,7 @@ public class KOSpecialElement extends DicomSpecialElement {
                     File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
                     out = new DicomOutputStream(tmpFile);
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+                    return tmpFile ;
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
