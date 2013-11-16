@@ -114,7 +114,9 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
         init();
     }
 
+
     private void init() {
+
         this.setFont(FontTools.getFont10());
         // Activate tooltip
         ToolTipManager.sharedInstance().registerComponent(this);
@@ -209,6 +211,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 type = mime;
             }
         }
+
         setIcon(icon, type);
     }
 
@@ -278,6 +281,7 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                 public void run() {
 
                     if (thumbnailPath == null || !thumbnailPath.canRead()) {
+    
                         Object media = series.getMedia(mediaPosition, null, null);
                         if (media instanceof ImageElement) {
                             final ImageElement image = (ImageElement) media;
@@ -330,8 +334,14 @@ public class Thumbnail<E> extends JLabel implements MouseListener, DragGestureLi
                                         }
                                     }
                                 } finally {
-                                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-                                    image.removeImageFromCache();
+                                    /*
+                                     * Do not remove the image from the cache after building the thumbnail when the series is associated to a
+                                     * explorerModel (stream should be closed at least when closing the application or when free the cache).
+                                     */
+                                    if (series.getTagValue(TagW.ExplorerModel) == null) {
+                                        // Prevent too many files open on Linux (Ubuntu => 1024) and close image stream
+                                        image.removeImageFromCache();
+                                    }
                                 }
                             }
 
