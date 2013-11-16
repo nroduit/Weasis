@@ -33,6 +33,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
@@ -70,12 +71,16 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
                 media = specialElements.get(0);
             }
         }
-        init(media);
+        /*
+         * Do not remove the image from the cache after building the thumbnail when the series is associated to a
+         * explorerModel (stream should be closed at least when closing the application or when free the cache).
+         */
+        init(media, series.getTagValue(TagW.ExplorerModel) != null);
     }
 
     @Override
-    protected void init(MediaElement<?> media) {
-        super.init(media);
+    protected void init(MediaElement<?> media, boolean keepMediaCache) {
+        super.init(media, keepMediaCache);
         setBorder(outMouseOverBorder);
     }
 
@@ -133,7 +138,11 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             mediaPosition = position;
             thumbnailPath = file;
             readable = true;
-            buildThumbnail((MediaElement<?>) media);
+            /*
+             * Do not remove the image from the cache after building the thumbnail when the series is associated to a
+             * explorerModel (stream should be closed at least when closing the application or when free the cache).
+             */
+            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
         }
     }
 
@@ -147,7 +156,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             Object media = series.getMedia(mediaPosition, null, null);
             if (thumbnailPath != null || media instanceof MediaElement<?>) {
                 this.thumbnailSize = thumbnailSize;
-                buildThumbnail((MediaElement<?>) media);
+                buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
             }
         }
     }

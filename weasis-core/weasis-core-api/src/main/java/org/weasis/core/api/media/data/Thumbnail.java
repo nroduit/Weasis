@@ -70,18 +70,23 @@ public class Thumbnail extends JLabel {
         this.thumbnailSize = thumbnailSize;
     }
 
-    public Thumbnail(final MediaElement<?> media, int thumbnailSize) {
+    public Thumbnail(final MediaElement<?> media, int thumbnailSize, boolean keepMediaCache) {
         super(null, null, SwingConstants.CENTER);
         if (media == null) {
             throw new IllegalArgumentException("image cannot be null"); //$NON-NLS-1$
         }
         this.thumbnailSize = thumbnailSize;
-        init(media);
+        init(media, keepMediaCache);
     }
 
-    protected void init(MediaElement<?> media) {
+    /**
+     * @param media
+     * @param keepMediaCache
+     *            if true will remove the media from cache after building the thumbnail. Only when media is an image.
+     */
+    protected void init(MediaElement<?> media, boolean keepMediaCache) {
         this.setFont(FontTools.getFont10());
-        buildThumbnail(media);
+        buildThumbnail(media, keepMediaCache);
     }
 
     public void registerListeners() {
@@ -98,7 +103,7 @@ public class Thumbnail extends JLabel {
             .getRendering() : source;
     }
 
-    protected synchronized void buildThumbnail(MediaElement<?> media) {
+    protected synchronized void buildThumbnail(MediaElement<?> media, boolean keepMediaCache) {
         imageSoftRef = null;
         Icon icon = MimeInspector.unknownIcon;
         String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
@@ -131,10 +136,10 @@ public class Thumbnail extends JLabel {
                 }
             }
         }
-        setIcon(media, icon, type);
+        setIcon(media, icon, type, keepMediaCache);
     }
 
-    private void setIcon(final MediaElement<?> media, final Icon mime, final String type) {
+    private void setIcon(final MediaElement<?> media, final Icon mime, final String type, final boolean keepMediaCache) {
         this.setSize(thumbnailSize, thumbnailSize);
 
         ImageIcon icon = new ImageIcon() {
@@ -144,7 +149,7 @@ public class Thumbnail extends JLabel {
                 Graphics2D g2d = (Graphics2D) g;
                 int width = thumbnailSize;
                 int height = thumbnailSize;
-                final BufferedImage thumbnail = Thumbnail.this.getImage(media);
+                final BufferedImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache);
                 if (thumbnail == null) {
                     FontMetrics fontMetrics = g2d.getFontMetrics();
                     int fheight = y + (thumbnailSize - fontMetrics.getAscent() + 5 - mime.getIconHeight()) / 2;
@@ -184,7 +189,7 @@ public class Thumbnail extends JLabel {
         return thumbnailPath;
     }
 
-    public synchronized BufferedImage getImage(final MediaElement<?> media) {
+    public synchronized BufferedImage getImage(final MediaElement<?> media, final boolean keepMediaCache) {
         if ((imageSoftRef == null && readable) || (imageSoftRef != null && imageSoftRef.get() == null)) {
             readable = false;
             Runnable runnable = new Runnable() {
@@ -245,8 +250,10 @@ public class Thumbnail extends JLabel {
                                         }
                                     }
                                 } finally {
-                                    // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-                                    image.removeImageFromCache();
+                                    if (!keepMediaCache) {
+                                        // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
+                                        image.removeImageFromCache();
+                                    }
                                 }
                             }
                         }
