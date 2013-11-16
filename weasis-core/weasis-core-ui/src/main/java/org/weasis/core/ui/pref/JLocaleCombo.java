@@ -26,6 +26,11 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
 
     public JLocaleCombo() {
         super();
+        sortLocales();
+        addItemListener(this);
+    }
+
+    private void sortLocales() {
         Locale[] locales = Locale.getAvailableLocales();
         Arrays.sort(locales, new Comparator<Locale>() {
 
@@ -48,7 +53,6 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
         if (dloc != null) {
             this.setSelectedItem(dloc);
         }
-        addItemListener(this);
     }
 
     public void selectLocale(String language, String country, String variant) {
@@ -81,6 +85,10 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
                 BundleTools.SYSTEM_PREFERENCES.put("locale.language", locale.getLanguage()); //$NON-NLS-1$
                 BundleTools.SYSTEM_PREFERENCES.put("locale.country", locale.getCountry()); //$NON-NLS-1$
                 BundleTools.SYSTEM_PREFERENCES.put("locale.variant", locale.getVariant()); //$NON-NLS-1$
+                removeItemListener(this);
+                removeAllItems();
+                sortLocales();
+                addItemListener(this);
             }
         }
     }
