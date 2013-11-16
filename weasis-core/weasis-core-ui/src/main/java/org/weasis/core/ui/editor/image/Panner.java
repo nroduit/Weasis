@@ -43,8 +43,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     }
 
     @Override
-    protected void init(MediaElement<?> media) {
-        super.init(media);
+    protected void init(MediaElement<?> media, boolean keepMediaCache) {
+        super.init(media, keepMediaCache);
 
         // setBorder(outMouseOverBorder);
     }
@@ -91,7 +91,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
             if (img != null) {
                 thumbnailPath = null;
                 readable = true;
-                buildThumbnail(img);
+                buildThumbnail(img, false);
                 updateImageSize();
             }
         }
