@@ -65,6 +65,13 @@
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-scr-plugin</artifactId>
 					<version>1.15.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codehaus.plexus</groupId>
+                            <artifactId>plexus-utils</artifactId>
+                            <version>3.0.4</version>
+                        </dependency>
+                    </dependencies>
 					<executions>
 						<execution>
 							<id>generate-scr-scrdescriptor</id>
