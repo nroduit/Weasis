@@ -63,10 +63,13 @@ import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
+import java.io.EOFException;
 import java.io.IOException;
 
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageTypeSpecifier;
+
+import org.omg.CosNaming.IstringHelper;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ImageUtil;
@@ -119,7 +122,7 @@ public class RawRenderedImage extends SimpleRenderedImage {
     private BufferedImage destImage;
 
     /** The position of the first sample of this image in the stream. */
-    private long position;
+    private final long position;
 
     /** cache the size of the data for each tile in the stream. */
     private long tileDataSize;
@@ -213,12 +216,45 @@ public class RawRenderedImage extends SimpleRenderedImage {
             return currentTile;
         }
 
-        if (tileX >= getNumXTiles() || tileY >= getNumYTiles()) {
+        int originalNumYTiles = getNumYTiles();
+        if (tileX >= originalNumXTiles || tileY >= originalNumYTiles) {
             throw new IllegalArgumentException();
         }
 
         try {
-            iis.seek(position + (tileY * originalNumXTiles + tileX) * tileDataSize);
+            // Has more than one tile
+            boolean tiled = width != tileWidth || height != tileHeight;
+
+            long pStream;
+            int lineStep = 0;
+            int elementSize = (DataBuffer.getDataTypeSize(originalSampleModel.getDataType()) + 7) / 8;
+            int lineLength = tileWidth;
+            int nbLine = tileHeight;
+
+            if (tiled) {
+                // TODO does not handle band offset! and pixelinterleaved
+                int bands = originalSampleModel.getNumBands();
+                int tileRowOffset = (originalNumXTiles * tileWidth) - width;
+                int tileColumnOffset = (originalNumYTiles * tileHeight) - height;
+                // Position removing full tiles
+                pStream = position + tileY * originalNumXTiles * tileDataSize / bands;
+                // Remove partial tile size from previous rows.
+                pStream -= tileY * tileRowOffset * tileHeight * elementSize;
+                // Add current raw line offset
+                pStream += tileX * tileWidth * elementSize;
+
+                if (tileY == (originalNumYTiles - 1)) {
+                    nbLine = tileHeight - tileColumnOffset;
+                }
+                if (tileX == (originalNumXTiles - 1)) {
+                    lineLength = tileWidth - tileRowOffset;
+                }
+                lineStep = (width - lineLength) * elementSize;
+            } else {
+                pStream = position;
+            }
+
+            iis.seek(pStream);
 
             int x = tileXToX(tileX);
             int y = tileYToY(tileY);
@@ -229,39 +265,105 @@ public class RawRenderedImage extends SimpleRenderedImage {
                     case DataBuffer.TYPE_BYTE:
                         byte[][] buf = ((DataBufferByte) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < buf.length; i++) {
-                            iis.readFully(buf[i], 0, buf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(buf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(buf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(buf[i], 0, buf[i].length);
+                            }
                         }
                         break;
 
                     case DataBuffer.TYPE_SHORT:
                         short[][] sbuf = ((DataBufferShort) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < sbuf.length; i++) {
-                            iis.readFully(sbuf[i], 0, sbuf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(sbuf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(sbuf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(sbuf[i], 0, sbuf[i].length);
+                            }
                         }
                         break;
 
                     case DataBuffer.TYPE_USHORT:
                         short[][] usbuf = ((DataBufferUShort) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < usbuf.length; i++) {
-                            iis.readFully(usbuf[i], 0, usbuf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(usbuf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(usbuf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(usbuf[i], 0, usbuf[i].length);
+                            }
                         }
                         break;
                     case DataBuffer.TYPE_INT:
                         int[][] ibuf = ((DataBufferInt) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < ibuf.length; i++) {
-                            iis.readFully(ibuf[i], 0, ibuf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(ibuf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(ibuf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(ibuf[i], 0, ibuf[i].length);
+                            }
                         }
                         break;
                     case DataBuffer.TYPE_FLOAT:
                         float[][] fbuf = ((DataBufferFloat) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < fbuf.length; i++) {
-                            iis.readFully(fbuf[i], 0, fbuf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(fbuf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(fbuf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(fbuf[i], 0, fbuf[i].length);
+                            }
                         }
                         break;
                     case DataBuffer.TYPE_DOUBLE:
                         double[][] dbuf = ((DataBufferDouble) currentTile.getDataBuffer()).getBankData();
                         for (int i = 0; i < dbuf.length; i++) {
-                            iis.readFully(dbuf[i], 0, dbuf[i].length);
+                            if (tiled) {
+                                if (i > 0) {
+                                    iis.seek(pStream + i * (width * height * elementSize));
+                                }
+                                iis.readFully(dbuf[i], 0, lineLength);
+                                for (int j = 1; j < nbLine; j++) {
+                                    iis.skipBytes(lineStep);
+                                    iis.readFully(dbuf[i], tileWidth * j, lineLength);
+                                }
+                            } else {
+                                iis.readFully(dbuf[i], 0, dbuf[i].length);
+                            }
                         }
                         break;
                 }

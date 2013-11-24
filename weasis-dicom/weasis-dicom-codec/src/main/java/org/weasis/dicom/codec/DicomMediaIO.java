@@ -319,8 +319,25 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
         int width = (Integer) getTagValue(TagW.Columns);
         int height = (Integer) getTagValue(TagW.Rows);
         Arrays.fill(imageDimensions, new Dimension(width, height));
+
+        ColorModel cmodel = createColorModel(bitsStored, dataType);
+
+        SampleModel smodel;
+        if (pmi.isSubSambled()) {
+            // Cannot handle tiles with subsampled model
+            smodel = createSampleModel(dataType, banded);
+        } else {
+            Integer col = (Integer) getTagValue(TagW.Columns);
+            Integer row = (Integer) getTagValue(TagW.Rows);
+            if (col >= 1024 || row >= 1024) {
+                col = Math.min(col, ImageFiler.TILESIZE);
+                row = Math.min(row, ImageFiler.TILESIZE);
+            }
+            smodel = pmi.createSampleModel(dataType, col, row, (Integer) getTagValue(TagW.SamplesPerPixel), banded);
+        }
         RawImageInputStream riis =
-            new RawImageInputStream(iis, createImageType(bitsStored, dataType, banded), frameOffsets, imageDimensions);
+            new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
+
         // endianess is already in iis?
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
 
