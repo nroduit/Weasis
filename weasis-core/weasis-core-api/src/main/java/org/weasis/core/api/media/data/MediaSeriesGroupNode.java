@@ -95,6 +95,12 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         }
     }
 
+    public void removeTag(TagW tag) {
+        if (tag != null) {
+            tags.remove(tag);
+        }
+    }
+
     @Override
     public void setTagNoNull(TagW tag, Object value) {
         if (tag != null && value != null) {
