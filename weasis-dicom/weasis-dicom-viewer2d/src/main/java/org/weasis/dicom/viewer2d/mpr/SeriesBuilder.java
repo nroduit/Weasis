@@ -340,10 +340,15 @@ public class SeriesBuilder {
             boolean banded =
                 samplesPerPixel > 1
                     && DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PlanarConfiguration, 0) != 0;
-            dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_SHORT;
+            int pixelRepresentation =
+                DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PixelRepresentation, 0);
+            dataType =
+                bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT
+                    : DataBuffer.TYPE_USHORT;
             if (bitsAllocated > 16 && samplesPerPixel == 1) {
                 dataType = DataBuffer.TYPE_INT;
             }
+
             String photometricInterpretation = (String) img.getTagValue(TagW.PhotometricInterpretation);
             PhotometricInterpretation pmi = PhotometricInterpretation.fromString(photometricInterpretation);
             cm = pmi.createColorModel(bitsStored, dataType, attributes);

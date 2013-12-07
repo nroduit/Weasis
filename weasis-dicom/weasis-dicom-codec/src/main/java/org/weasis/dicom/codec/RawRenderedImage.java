@@ -63,13 +63,11 @@ import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
-import java.io.EOFException;
 import java.io.IOException;
 
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageTypeSpecifier;
 
-import org.omg.CosNaming.IstringHelper;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ImageUtil;
