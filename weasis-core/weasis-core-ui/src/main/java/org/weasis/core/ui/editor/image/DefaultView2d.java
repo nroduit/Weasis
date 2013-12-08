@@ -470,7 +470,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (img != null && !img.equals(oldImage)) {
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+
                 final Rectangle modelArea = getImageBounds(img);
+                Rectangle2D area = getViewModel().getModelArea();
+                if (!modelArea.equals(area)) {
+                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                    getViewModel().setModelArea(modelArea);
+                }
+
+                imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
+                resetZoom();
+                imageLayer.getDisplayOpManager().setEnabled(true);
+                imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+                ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
+                if (spUnitAction instanceof ComboItemListener) {
+                    ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
+                        .get(ActionW.SPATIAL_UNIT.cmd()));
+                }
                 AbstractLayer layer = getLayerModel().getLayer(AbstractLayer.MEASURE);
                 if (layer != null) {
                     synchronized (this) {
@@ -492,16 +509,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
 
-                Rectangle2D area = getViewModel().getModelArea();
-                if (!modelArea.equals(area)) {
-                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                    getViewModel().setModelArea(modelArea);
-                }
-
-                imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
-                resetZoom();
-                imageLayer.getDisplayOpManager().setEnabled(true);
-                imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
                 if (panner != null) {
                     panner.updateImage();
                 }
@@ -529,12 +536,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
             }
-        }
-
-        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener) {
-            ((ComboItemListener) spUnitAction).setSelectedItemWithoutTriggerAction(actionsInView
-                .get(ActionW.SPATIAL_UNIT.cmd()));
         }
     }
 

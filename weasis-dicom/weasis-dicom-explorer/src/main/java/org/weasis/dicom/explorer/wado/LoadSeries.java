@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,7 +62,9 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -82,6 +85,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
 
     public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
+    public static final TagW DOWNLOAD_START_TIME = new TagW("", TagType.Time, 3); //$NON-NLS-1$
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -187,7 +191,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     protected void done() {
         if (!isStopped()) {
             LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
+
+            AuditLog.LOGGER
+                .info(
+                    "{}:series uid:{} modality:{} nbImages:{} size:{} {}", new Object[] { getLoadType(), dicomSeries.toString(), //$NON-NLS-1$
+                        dicomSeries.getTagValue(TagW.Modality), getImageNumber(), (long) dicomSeries.getFileSize(),
+                        getDownloadTime() });
+            dicomSeries.removeTag(DOWNLOAD_START_TIME);
+
             final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+
             if (thumbnail != null) {
                 thumbnail.setProgressBar(null);
                 if (thumbnail.getThumbnailPath() == null
@@ -214,6 +227,59 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             }
             this.dicomSeries.setSeriesLoader(null);
         }
+    }
+
+    private String getLoadType() {
+        final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
+        if (wado == null || !StringUtil.hasText(wado.getWadoURL())) {
+            if (wado != null) {
+                return wado.isRequireOnlySOPInstanceUID() ? "DICOMDIR" : "URL";
+            }
+            return "local";
+        } else {
+            final List<DicomInstance> sopList =
+                (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
+            if (sopList.size() > 0) {
+                if (sopList.get(0).getDirectDownloadFile() != null) {
+                    return "URL";
+                }
+            }
+            return "WADO";
+        }
+    }
+
+    private int getImageNumber() {
+        int val = dicomSeries.size(null);
+        Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+        if (splitNb != null) {
+            MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+            if (study != null) {
+                String uid = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                if (uid != null) {
+                    Collection<MediaSeriesGroup> list = dicomModel.getChildren(study);
+                    list.remove(dicomSeries);
+                    for (MediaSeriesGroup s : list) {
+                        if (s instanceof Series && uid.equals(s.getTagValue(TagW.SeriesInstanceUID))) {
+                            val += ((Series) s).size(null);
+                        }
+                    }
+                }
+            }
+        }
+        return val;
+    }
+
+    private String getDownloadTime() {
+        Long val = (Long) dicomSeries.getTagValue(DOWNLOAD_START_TIME);
+        long time = val == null ? 0 : System.currentTimeMillis() - val;
+        StringBuilder buf = new StringBuilder();
+        buf.append("time:");
+        buf.append(time);
+        buf.append(" rate:");
+        // rate in kB/s or B/ms
+        DecimalFormat format = new DecimalFormat("#.##");
+        buf.append(val == null ? 0 : format.format(dicomSeries.getFileSize() / time));
+        return buf.toString();
     }
 
     private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String sopUID) {
@@ -361,6 +427,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         }
 
         try {
+            dicomSeries.setTag(DOWNLOAD_START_TIME, System.currentTimeMillis());
             imageDownloader.invokeAll(tasks);
         } catch (InterruptedException e) {
         }

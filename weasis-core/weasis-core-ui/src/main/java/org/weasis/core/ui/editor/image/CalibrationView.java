@@ -30,6 +30,9 @@ import javax.swing.JTextArea;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
+import org.weasis.core.api.gui.util.ActionState;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.Unit;
@@ -156,15 +159,7 @@ public class CalibrationView extends JPanel {
                 Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
                 Unit imgUnit = image.getPixelSpacingUnit();
                 if (!Unit.PIXEL.equals(unit)) {
-                    double unitRatio = 1.0;
-                    if (Unit.PIXEL.equals(imgUnit)) {
-                        image.setPixelSpacingUnit(unit);
-                    } else {
-                        unitRatio = 1.0;
-                        image.setPixelSpacingUnit(unit);
-                        // unitRatio = imgUnit.getConversionRatio(unit.getConvFactor());
-                    }
-
+                    image.setPixelSpacingUnit(unit);
                     Double lineLength = 0.0;
                     Point2D A = line.getStartPoint();
                     Point2D B = line.getEndPoint();
@@ -175,8 +170,8 @@ public class CalibrationView extends JPanel {
                     if (lineLength == null || lineLength < 1.0) {
                         lineLength = 1.0;
                     }
-                    double newRatio = (inputCalibVal.doubleValue() * unitRatio) / lineLength;
-                    if (imgRatio != newRatio) {
+                    double newRatio = inputCalibVal.doubleValue() / lineLength;
+                    if (imgRatio != newRatio || !unit.equals(imgUnit)) {
                         if (radioButtonSeries.isSelected()) {
                             MediaSeries seriesList = view2d.getSeries();
                             if (seriesList != null) {
@@ -185,24 +180,24 @@ public class CalibrationView extends JPanel {
                                     for (Object media : list) {
                                         if (media instanceof ImageElement) {
                                             ImageElement img = (ImageElement) media;
+                                            img.setPixelSpacingUnit(unit);
                                             img.setPixelSize(newRatio);
-                                            // updateLabel(img, view2d);
+                                            updateLabel(img, view2d);
                                         }
                                     }
                                 }
                             }
                         } else {
                             image.setPixelSize(newRatio);
+                            updateLabel(image, view2d);
                         }
-                        GraphicList gl = (GraphicList) image.getTagValue(TagW.MeasurementGraphics);
-                        if (gl != null) {
-                            synchronized (gl.list) {
-                                for (Graphic graphic : gl.list) {
-                                    graphic.updateLabel(image, view2d);
-                                }
+
+                        if (!unit.equals(imgUnit)) {
+                            ActionState spUnitAction = view2d.eventManager.getAction(ActionW.SPATIAL_UNIT);
+                            if (spUnitAction instanceof ComboItemListener) {
+                                ((ComboItemListener) spUnitAction).setSelectedItem(unit);
                             }
                         }
-                        view2d.repaint();
                     }
                 }
             }
