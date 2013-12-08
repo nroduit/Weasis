@@ -143,8 +143,11 @@ public class GraphicLabel implements Cloneable {
         if (view2d == null || labels == null || labels.length == 0) {
             reset();
         } else {
-            labelStringArray = labels;
             Graphics2D g2d = (Graphics2D) view2d.getGraphics();
+            if (g2d == null) {
+                return;
+            }
+            labelStringArray = labels;
             Font defaultFont = g2d.getFont();
             FontRenderContext fontRenderContext = ((Graphics2D) view2d.getGraphics()).getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);

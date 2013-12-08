@@ -17,6 +17,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
 import java.lang.ref.Reference;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -30,10 +31,11 @@ import javax.media.jai.operator.LookupDescriptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.LayoutUtil;
@@ -51,7 +53,6 @@ public class DicomImageElement extends ImageElement {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
 
-    public static final String FILL_OUTSIDE_LUT = "fill_outside_lut";
     private static final SoftHashMap<LutParameters, LookupTableJAI> LUT_Cache =
         new SoftHashMap<LutParameters, LookupTableJAI>() {
 
@@ -757,7 +758,7 @@ public class DicomImageElement extends ImageElement {
     }
 
     @Override
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, ImageOperation imageOperation) {
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, HashMap<String, Object> params) {
         Float window = null;
         Float level = null;
         Float levelMin = null;
@@ -767,15 +768,15 @@ public class DicomImageElement extends ImageElement {
         Boolean inverseLUT = null;
         Boolean fillLutOutside = null;
 
-        if (imageOperation != null) {
-            window = (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
-            level = (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
-            levelMin = (Float) imageOperation.getActionValue(ActionW.LEVEL_MIN.cmd());
-            levelMax = (Float) imageOperation.getActionValue(ActionW.LEVEL_MAX.cmd());
-            lutShape = (LutShape) imageOperation.getActionValue(ActionW.LUT_SHAPE.cmd());
-            pixelPadding = (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
-            inverseLUT = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
-            fillLutOutside = (Boolean) imageOperation.getActionValue(DicomImageElement.FILL_OUTSIDE_LUT);
+        if (params != null) {
+            window = (Float) params.get(ActionW.WINDOW.cmd());
+            level = (Float) params.get(ActionW.LEVEL.cmd());
+            levelMin = (Float) params.get(ActionW.LEVEL_MIN.cmd());
+            levelMax = (Float) params.get(ActionW.LEVEL_MAX.cmd());
+            lutShape = (LutShape) params.get(ActionW.LUT_SHAPE.cmd());
+            pixelPadding = (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
+            inverseLUT = (Boolean) params.get(PseudoColorOp.P_LUT_INVERSE);
+            fillLutOutside = (Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT);
         }
 
         return this.getRenderedImage(imageSource, window, level, levelMin, levelMax, lutShape, pixelPadding,

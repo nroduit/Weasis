@@ -31,7 +31,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
-import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -94,7 +94,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         panel_1.add(lblInterpolation);
         EventManager eventManager = EventManager.getInstance();
 
-        comboBoxInterpolation = new JComboBox(ZoomOperation.INTERPOLATIONS);
+        comboBoxInterpolation = new JComboBox(ZoomOp.INTERPOLATIONS);
         comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
         panel_1.add(comboBoxInterpolation);
 
@@ -255,6 +255,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
                 if (p instanceof View2dContainer) {
                     View2dContainer viewer = (View2dContainer) p;
                     for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
+                        // TODO Replace by an event
                         v.changeZoomInterpolation(interpolation);
                     }
                 }

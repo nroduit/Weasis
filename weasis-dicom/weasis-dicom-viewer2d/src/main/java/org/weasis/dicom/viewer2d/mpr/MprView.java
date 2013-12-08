@@ -1,42 +1,24 @@
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.JProgressBar;
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.graphic.Graphic;
-import org.weasis.core.ui.graphic.InvalidShapeException;
-import org.weasis.core.ui.graphic.LineWithGapGraphic;
-import org.weasis.core.ui.graphic.PolygonGraphic;
-import org.weasis.core.ui.graphic.RectangleGraphic;
-import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
-import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.View2d;
 
 public class MprView extends View2d {
@@ -63,10 +45,14 @@ public class MprView extends View2d {
         // head direction)
         // TODO This option should be fixed
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.slicePosition);
+
         // Propagate the preset
-        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
+        OpManager disOp = getDisplayOpManager();
+        disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+        // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
+    @Override
     public SliceOrientation getSliceOrientation() {
         return sliceOrientation;
     }

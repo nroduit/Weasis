@@ -12,12 +12,14 @@ package org.weasis.core.api.gui;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
+import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
-public interface Image2DViewer extends ImageOperation {
+public interface Image2DViewer {
 
     MediaSeries getSeries();
 
@@ -30,5 +32,11 @@ public interface Image2DViewer extends ImageOperation {
     ImageLayer getImageLayer();
 
     AffineTransform getAffineTransform();
+
+    ImageElement getImage();
+
+    RenderedImage getSourceImage();
+
+    Object getActionValue(String action);
 
 }

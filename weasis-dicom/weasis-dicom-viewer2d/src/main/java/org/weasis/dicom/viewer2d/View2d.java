@@ -64,7 +64,6 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -76,18 +75,18 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.CropOperation;
-import org.weasis.core.api.image.FilterOperation;
-import org.weasis.core.api.image.FlipOperation;
-import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.PseudoColorOperation;
-import org.weasis.core.api.image.RotationOperation;
-import org.weasis.core.api.image.ShutterOperation;
-import org.weasis.core.api.image.WindowLevelOperation;
-import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.CropOp;
+import org.weasis.core.api.image.FilterOp;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.ImageOpEvent;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -145,8 +144,10 @@ import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
-import org.weasis.dicom.codec.display.OverlayOperation;
+import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
+import org.weasis.dicom.codec.display.ShutterOp;
+import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.IntersectSlice;
@@ -159,8 +160,6 @@ import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.explorer.pref.ModalityPrefView;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton.eState;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
-import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
@@ -176,16 +175,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
-        OperationsManager manager = imageLayer.getOperationsManager();
-        manager.addImageOperationAction(new WindowLevelOperation());
-        manager.addImageOperationAction(new OverlayOperation());
-        manager.addImageOperationAction(new FilterOperation());
-        manager.addImageOperationAction(new PseudoColorOperation());
-        manager.addImageOperationAction(new ShutterOperation());
+        SimpleOpManager manager = imageLayer.getDisplayOpManager();
+        manager.addImageOperationAction(new WindowAndPresetsOp());
+        manager.addImageOperationAction(new OverlayOp());
+        manager.addImageOperationAction(new FilterOp());
+        manager.addImageOperationAction(new PseudoColorOp());
+        manager.addImageOperationAction(new ShutterOp());
         // Zoom and Rotation must be the last operations for the lens
-        manager.addImageOperationAction(new ZoomOperation());
-        manager.addImageOperationAction(new RotationOperation());
-        manager.addImageOperationAction(new FlipOperation());
+        manager.addImageOperationAction(new ZoomOp());
+        manager.addImageOperationAction(new RotationOp());
+        manager.addImageOperationAction(new FlipOp());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.CROSSLINES);
@@ -246,18 +245,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-
-        actionsInView.put(ActionW.PRESET.cmd(), null);
-        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
-        actionsInView.put(ActionW.LUT_SHAPE.cmd(), LutShape.LINEAR);
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
-        actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), true);
-        actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
         actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
         actionsInView.put(ActionW.PR_STATE.cmd(), null);
 
         // Preprocessing
         actionsInView.put(ActionW.CROP.cmd(), null);
+
+        OpManager disOp = getDisplayOpManager();
+        disOp.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_SHOW, true);
+        disOp.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, true);
+        disOp.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), true);
+        disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), true);
+        disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
 
         setDefaultKOActionWState();
     }
@@ -298,6 +298,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (series == null) {
             return;
         }
+
+        OpManager disOp = imageLayer.getDisplayOpManager();
         final String name = evt.getPropertyName();
         if (name.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
@@ -318,22 +320,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (val instanceof PresetWindowLevel) {
                         PresetWindowLevel preset = (PresetWindowLevel) val;
                         DicomImageElement img = getImage();
+                        ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
+
                         if (img == null || !img.containsPreset(preset)) {
                             // When series synchronization, do not synch preset from other series
-                            actionsInView.put(ActionW.PRESET.cmd(), null);
+                            node.setParam(ActionW.PRESET.cmd(), null);
                         }
-                        actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
-                        actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
-                        actionsInView.put(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
-                        actionsInView.put(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
-                        actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
-                        imageLayer.updateImageOperation(WindowLevelOperation.name);
+                        if (node != null) {
+                            node.setParam(ActionW.WINDOW.cmd(), preset.getWindow());
+                            node.setParam(ActionW.LEVEL.cmd(), preset.getLevel());
+                            node.setParam(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
+                            node.setParam(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
+                            node.setParam(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+                        }
+                        imageLayer.updateAllImageOperations();
                     }
                 } else if (command.equals(ActionW.DEFAULT_PRESET.cmd())) {
-                    actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), val);
+                    disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), val);
                 } else if (command.equals(ActionW.LUT_SHAPE.cmd())) {
-                    actionsInView.put(ActionW.LUT_SHAPE.cmd(), val);
-                    imageLayer.updateImageOperation(WindowLevelOperation.name); // usefull ???
+                    ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
+                    if (node != null) {
+                        node.setParam(ActionW.LUT_SHAPE.cmd(), val);
+                    }
+                    imageLayer.updateAllImageOperations();
                 } else if (command.equals(ActionW.SORTSTACK.cmd())) {
                     actionsInView.put(ActionW.SORTSTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
@@ -355,7 +364,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         Point2D.Double p = (Point2D.Double) val;
                         GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
-                        if (sliceGeometry != null&& fruid != null) {
+                        if (sliceGeometry != null && fruid != null) {
                             Point3d p3 = sliceGeometry.getPosition(p);
                             ImageViewerPlugin<DicomImageElement> container =
                                 this.eventManager.getSelectedView2dContainer();
@@ -400,9 +409,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                 }
             }
+        } else if (name.equals(ActionW.IMAGE_SHUTTER.cmd())) {
+            if (disOp.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_SHOW, evt.getNewValue())) {
+                imageLayer.updateAllImageOperations();
+            }
         } else if (name.equals(ActionW.IMAGE_OVERLAY.cmd())) {
-            actionsInView.put(ActionW.IMAGE_OVERLAY.cmd(), evt.getNewValue());
-            imageLayer.updateImageOperation(OverlayOperation.name);
+            if (disOp.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, evt.getNewValue())) {
+                imageLayer.updateAllImageOperations();
+            }
         }
     }
 
@@ -462,13 +476,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.PR_STATE.cmd(), val);
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
+        // Delete previous PR Layers
         ArrayList<AbstractLayer.Identifier> dcmLayers =
             (ArrayList<AbstractLayer.Identifier>) actionsInView.get(PresentationStateReader.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             PRManager.deleteDicomLayers(dcmLayers, getLayerModel());
             actionsInView.remove(PresentationStateReader.TAG_DICOM_LAYERS);
         }
+
         DicomImageElement m = getImage();
+        // Reset display parameter
+        imageLayer.getDisplayOpManager().setEnabled(false);
+        imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, m, null));
 
         if (m != null) {
             // Restore the original image pixel size
@@ -515,12 +534,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 // Keeps no PS property (for all the series)
                 actionsInView.put(ActionW.PR_STATE.cmd(), val);
             }
-            setDefautWindowLevel(getImage());
-            setShutter(m);
+            // setDefautWindowLevel(getImage());
+            // setShutter(m);
         } else {
             applyPresentationState(pr, m);
         }
-        imageLayer.setPreprocessing((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+
+        imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
+        imageLayer.getDisplayOpManager().setEnabled(true);
         imageLayer.updateAllImageOperations();
         resetZoom();
         eventManager.updateComponentsListener(this);
@@ -565,7 +587,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
         }
 
-        setShutter(reader.getDicom());
+        // setShutter(reader.getDicom());
         Rectangle area = (Rectangle) reader.getTagValue(ActionW.CROP.cmd(), null);
 
         double[] prPixSize = (double[]) reader.getTagValue(TagW.PixelSpacing.getName(), null);
@@ -588,41 +610,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (area.width > 1 && area.height > 1 && !area.equals(getViewModel().getModelArea())) {
                     ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
                     getViewModel().setModelArea(area);
-                    OperationsManager manager = new OperationsManager(new ImageOperation() {
-
-                        @Override
-                        public RenderedImage getSourceImage() {
-                            ImageElement image = getImage();
-                            if (image == null) {
-                                return null;
-                            }
-                            return image.getImage(null);
-                        }
-
-                        @Override
-                        public ImageElement getImage() {
-                            return View2d.this.getImage();
-                        }
-
-                        @Override
-                        public Object getActionValue(String action) {
-                            if (action == null) {
-                                return null;
-                            }
-                            return actionsInView.get(action);
-                        }
-
-                        @Override
-                        public MediaSeries getSeries() {
-                            return View2d.this.getSeries();
-                        }
-                    });
-                    manager.addImageOperationAction(new CropOperation());
+                    SimpleOpManager manager = new SimpleOpManager();
+                    manager.addImageOperationAction(new CropOp());
                     actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
                 }
             }
         }
         actionsInView.put(ActionW.CROP.cmd(), area);
+        actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
         double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
         actionsInView.put(ActionW.ZOOM.cmd(), zoom == 0.0 ? -getBestFitViewScale() : zoom);
 
@@ -892,31 +887,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             } else if (oldPR instanceof PRSpecialElement) {
                 setPresentationState(null);
             }
-        }
-    }
-
-    @Override
-    protected void setDefautWindowLevel(DicomImageElement img) {
-        if (img == null) {
-            return;
-        }
-
-        if (!img.isImageAvailable()) {
-            // Ensure to load image before calling the default preset that (requires pixel min and max)
-            img.getImage();
-        }
-        boolean pixelPadding = JMVUtils.getNULLtoTrue(getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
-        PresetWindowLevel preset = img.getDefaultPreset(pixelPadding);
-        if (preset != null) {
-            actionsInView.put(ActionW.PRESET.cmd(), preset);
-            actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
-            actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
-            actionsInView.put(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
-            actionsInView.put(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
-            actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
-            actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
-        } else {
-            super.setDefautWindowLevel(img);
         }
     }
 
@@ -1222,7 +1192,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     imgLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
 
                     if (image.getSampleModel().getNumBands() == 1) {
-                        boolean pixelPadding = JMVUtils.getNULLtoTrue(getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                        boolean pixelPadding =
+                            JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
+                                ActionW.IMAGE_PIX_PADDING.cmd()));
                         float val = dicom.pixel2mLUT(c[0], pixelPadding);
                         message.append((int) val);
                         if (dicom.getPixelValueUnit() != null) {

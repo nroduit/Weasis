@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Image;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.image.RenderedImage;
@@ -20,12 +19,13 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.Image2DViewer;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
 
     private static final DataFlavor flavors[] = { DataFlavor.imageFlavor };
-    private Image image;
+    private SimpleOpManager disOp;
 
     @Override
     public int getSourceActions(JComponent c) {
@@ -40,18 +40,24 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     @Override
     public Transferable createTransferable(JComponent comp) {
         // Clear
-        image = null;
-
+        disOp = null;
+        // TODO make only one export function with a dialog to choose to disable zoom (real size), add graphics,
+        // anonymize and other default remove annotations
         if (comp instanceof Image2DViewer) {
             Image2DViewer view2DPane = (Image2DViewer) comp;
-            ImageElement imageElement = view2DPane.getImage();
-            if (imageElement != null) {
-                RenderedImage result = imageElement.getRenderedImage(view2DPane.getSourceImage(), view2DPane);
-
-                if (result instanceof PlanarImage) {
-                    image = ((PlanarImage) result).getAsBufferedImage();
-                    return this;
+            RenderedImage src = view2DPane.getSourceImage();
+            if (src != null) {
+                SimpleOpManager opManager;
+                try {
+                    opManager = view2DPane.getImageLayer().getDisplayOpManager().clone();
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                    return null;
                 }
+                opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));
+                opManager.setFirstNode(src);
+                disOp = opManager;
+                return this;
             }
         }
         return null;
@@ -66,7 +72,10 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {
-            return image;
+            RenderedImage result = disOp.process();
+            if (result instanceof PlanarImage) {
+                return ((PlanarImage) result).getAsBufferedImage();
+            }
         }
         return null;
     }

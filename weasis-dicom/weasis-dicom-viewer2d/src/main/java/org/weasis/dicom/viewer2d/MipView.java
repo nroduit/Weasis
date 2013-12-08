@@ -26,6 +26,8 @@ import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
@@ -81,10 +83,13 @@ public class MipView extends View2d {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.BEST_FIT);
-        // Propagate the preset
-        actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), false);
         actionsInView.put(MIP_MIN_SLICE.cmd(), 1);
         actionsInView.put(MIP_MAX_SLICE.cmd(), 15);
+
+        // Propagate the preset
+        OpManager disOp = getDisplayOpManager();
+        disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+        // disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
     }
 
     public void setMIPSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {

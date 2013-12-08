@@ -33,20 +33,20 @@ import java.util.HashMap;
 
 import javax.swing.UIManager;
 
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.FlipOperation;
-import org.weasis.core.api.image.ImageOperationAction;
-import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.RotationOperation;
-import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
@@ -60,7 +60,7 @@ import org.weasis.core.ui.pref.ZoomSetting;
  * 
  * @author Nicolas Roduit
  */
-public class ZoomWin<E extends ImageElement> extends GraphicsPane implements ImageOperation, ImageLayerChangeListener {
+public class ZoomWin<E extends ImageElement> extends GraphicsPane implements ImageLayerChangeListener<E> {
 
     public enum SYNCH_TYPE {
         None, ParentImage, ParentParameters
@@ -78,7 +78,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private PopUpMenuOnZoom popup = null;
     private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
-    private OperationsManager freezeOperations;
+    private SimpleOpManager freezeOperations;
     private SYNCH_TYPE type = SYNCH_TYPE.None;
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
 
@@ -87,11 +87,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         this.view2d = view2d;
         this.setOpaque(false);
         ImageViewerEventManager<E> manager = view2d.getEventManager();
-        this.imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), false);
-        OperationsManager operations = imageLayer.getOperationsManager();
-        operations.addImageOperationAction(new ZoomOperation());
-        operations.addImageOperationAction(new RotationOperation());
-        operations.addImageOperationAction(new FlipOperation());
+        this.imageLayer = new RenderedImageLayer<E>(false);
+        SimpleOpManager operations = imageLayer.getDisplayOpManager();
+        operations.addImageOperationAction(new ZoomOp());
+        operations.addImageOperationAction(new RotationOp());
+        operations.addImageOperationAction(new FlipOp());
 
         ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
         if (zoomAction instanceof SliderChangeListener) {
@@ -104,12 +104,18 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         this.setCursor(MainLayerModel.MOVE_CURSOR);
 
         ZoomSetting z = manager.getZoomSetting();
-        actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
-        actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
+        OpManager disOp = getDisplayOpManager();
+
+        disOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
+            view2d.getDisplayOpManager().getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE));
+        disOp.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP,
+            view2d.getDisplayOpManager().getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        actionsInView.put(ZoomOp.P_INTERPOLATION, z.getInterpolation());
+        disOp.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, z.getInterpolation());
+
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
         actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
         actionsInView.put(FREEZE_CMD, null);
-        actionsInView.put(ZoomOperation.INTERPOLATION_CMD, z.getInterpolation());
 
         Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
         this.setLensDecoration(z.getLensLineWidth(), z.getLensLineColor(), bckColor, z.isLensRound());
@@ -126,7 +132,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     private void refreshZoomWin() {
-        imageLayer.setImage(view2d.getImage(), (OperationsManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
+        imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         Point loc = getLocation();
         if ((loc.x == -1 && loc.y == -1)) {
@@ -223,9 +229,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
-        // Get Rotation and flip from parent (it does not make sens to have different geometric position)
-        Boolean flip = (Boolean) view2d.getActionValue(ActionW.FLIP.cmd());
-        Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
+        OpManager dispOp = getDisplayOpManager();
+        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
         if (rotationAngle != null && rotationAngle > 0) {
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
@@ -310,10 +316,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     @Override
     public void zoom(double viewScale) {
-        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
-        super.zoom(getCenterX(), getCenterY(), Math.abs(viewScale));
-        imageLayer.updateImageOperation(ZoomOperation.name);
-        updateAffineTransform();
+        ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+        E img = getImage();
+        if (img != null && node != null) {
+            node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
+            actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
+            super.zoom(getCenterX(), getCenterY(), Math.abs(viewScale));
+            imageLayer.updateAllImageOperations();
+            updateAffineTransform();
+        }
     }
 
     public void updateZoom() {
@@ -323,17 +335,18 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         zoom(zoomFactor);
     }
 
-    @Override
     public E getImage() {
         return imageLayer.getSourceImage();
     }
 
-    @Override
     public RenderedImage getSourceImage() {
         RenderedImage img = (RenderedImage) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (img == null) {
             // return the image before the zoom operation from the parent view
-            return view2d.getImageLayer().getOperationsManager().getSourceImage(ZoomOperation.name);
+            ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+            if (node != null) {
+                return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
+            }
         }
         return img;
     }
@@ -350,91 +363,43 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     RenderedImage freezeParentImage() {
-        OperationsManager pManager = view2d.getImageLayer().getOperationsManager();
+        SimpleOpManager pManager = view2d.getImageLayer().getDisplayOpManager();
         freezeActionsInView.clear();
         view2d.copyActionWState(freezeActionsInView);
         final E image = view2d.getImage();
         final RenderedImage img = view2d.getSourceImage();
 
-        freezeOperations = new OperationsManager(new ImageOperation() {
-
-            @Override
-            public RenderedImage getSourceImage() {
-                return img;
-            }
-
-            @Override
-            public ImageElement getImage() {
-                return image;
-            }
-
-            @Override
-            public Object getActionValue(String action) {
-                if (action == null) {
-                    return null;
-                }
-                return freezeActionsInView.get(action);
-            }
-
-            @Override
-            public MediaSeries getSeries() {
-                return view2d.getSeries();
-            }
-        });
-        for (ImageOperationAction op : pManager.getOperations()) {
+        freezeOperations = new SimpleOpManager();
+        for (ImageOpNode op : pManager.getOperations()) {
             try {
-                if (!ZoomOperation.name.equals(op.getOperationName())) {
-                    ImageOperationAction operation = (ImageOperationAction) op.clone();
+                if (!ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
+                    ImageOpNode operation = op.clone();
                     freezeOperations.addImageOperationAction(operation);
                 }
             } catch (CloneNotSupportedException e) {
                 e.printStackTrace();
             }
         }
-        return freezeOperations.updateAllOperations();
+        return freezeOperations.getLastNodeOutputImage();
     }
 
     RenderedImage freezeParentParameters() {
-        OperationsManager pManager = view2d.getImageLayer().getOperationsManager();
+        SimpleOpManager pManager = view2d.getImageLayer().getDisplayOpManager();
         freezeActionsInView.clear();
         view2d.copyActionWState(freezeActionsInView);
 
-        freezeOperations = new OperationsManager(new ImageOperation() {
-
-            @Override
-            public RenderedImage getSourceImage() {
-                return view2d.getSourceImage();
-            }
-
-            @Override
-            public ImageElement getImage() {
-                return view2d.getImage();
-            }
-
-            @Override
-            public Object getActionValue(String action) {
-                if (action == null) {
-                    return null;
-                }
-                return freezeActionsInView.get(action);
-            }
-
-            @Override
-            public MediaSeries getSeries() {
-                return view2d.getSeries();
-            }
-        });
-        for (ImageOperationAction op : pManager.getOperations()) {
+        freezeOperations = new SimpleOpManager();
+        for (ImageOpNode op : pManager.getOperations()) {
             try {
-                if (!ZoomOperation.name.equals(op.getOperationName())) {
-                    ImageOperationAction operation = (ImageOperationAction) op.clone();
+                if (!ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
+                    ImageOpNode operation = op.clone();
                     freezeOperations.addImageOperationAction(operation);
                 }
             } catch (CloneNotSupportedException e) {
                 e.printStackTrace();
             }
         }
-        return freezeOperations.updateAllOperations();
+        return freezeOperations.getLastNodeOutputImage();
     }
 
     class MouseHandler extends MouseAdapter {
@@ -553,32 +518,37 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void setCommandFromParentView(String command, Object value) {
+        OpManager dispOp = getDisplayOpManager();
         if (ActionW.SCROLL_SERIES.cmd().equals(command)) {
             if (freezeOperations == null) {
                 // when image of parent has changed process some update
                 refreshZoomWin();
             } else if (SYNCH_TYPE.ParentParameters.equals(type)) {
                 refreshZoomWin();
-                setFreezeImage(freezeOperations.updateAllOperations(), type);
+                setFreezeImage(freezeOperations.getLastNodeOutputImage(), type);
             }
         } else if (freezeOperations != null
             && (ActionW.ROTATION.cmd().equals(command) || ActionW.FLIP.cmd().equals(command))) {
-            freezeActionsInView.put(command, value);
-            setFreezeImage(freezeOperations.updateAllOperations(), type);
-        } else if (command.equals(ActionW.ROTATION.cmd())) {
-            actionsInView.put(ActionW.ROTATION.cmd(), view2d.getActionValue(ActionW.ROTATION.cmd()));
-            refreshZoomWin();
+            setFreezeImage(freezeOperations.getLastNodeOutputImage(), type);
+        }
+
+        if (command.equals(ActionW.ROTATION.cmd())) {
+            if (dispOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, view2d.getDisplayOpManager()
+                .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))) {
+                refreshZoomWin();
+            }
         } else if (command.equals(ActionW.FLIP.cmd())) {
-            actionsInView.put(ActionW.FLIP.cmd(), view2d.getActionValue(ActionW.FLIP.cmd()));
-            refreshZoomWin();
+            if (dispOp.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP,
+                view2d.getDisplayOpManager().getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                refreshZoomWin();
+            }
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             refreshZoomWin();
         }
     }
 
-    @Override
-    public MediaSeries getSeries() {
-        return view2d.getSeries();
+    public OpManager getDisplayOpManager() {
+        return imageLayer.getDisplayOpManager();
     }
 
 }

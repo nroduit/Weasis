@@ -18,33 +18,38 @@ import javax.media.jai.JAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.ImageOperation;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.KernelData;
 
-public class FilterOperation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilterOperation.class);
+public class FilterOp extends AbstractOp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilterOp.class);
 
-    public static final String name = Messages.getString("FilterOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("FilterOperation.title"); //$NON-NLS-1$
 
-    public String getOperationName() {
-        return name;
+    /**
+     * Set the filter kernel (Required parameter).
+     * 
+     * org.weasis.core.api.image.util.KernelData value.
+     */
+    public static final String P_KERNEL_DATA = "kernel";
+
+    public FilterOp() {
+        setName(OP_NAME);
     }
 
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        KernelData kernel = (KernelData) imageOperation.getActionValue(ActionW.FILTER.cmd());
+    @Override
+    public void process() throws Exception {
+        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage result = source;
+        KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel == null) {
-            result = source;
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
-        } else if (kernel.equals(KernelData.NONE)) {
-            result = source;
-        } else {
+            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
+        } else if (!kernel.equals(KernelData.NONE)) {
             ParameterBlock paramBlock = new ParameterBlock();
             paramBlock.addSource(source);
             paramBlock.add(kernel.getKernelJAI());
             result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
         }
-        return result;
+        params.put(OUTPUT_IMG, result);
     }
 
 }

@@ -19,8 +19,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
-import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -31,7 +31,14 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.FilterOp;
+import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
@@ -336,7 +343,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
                         boolean pixelPadding =
-                            JMVUtils.getNULLtoTrue(defaultView2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
+                            JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
+                                ActionW.IMAGE_PIX_PADDING.cmd()));
                         windowAction.setValue((int) img.getDefaultWindow(pixelPadding));
                         levelAction.setValue((int) img.getDefaultLevel(pixelPadding));
                     }
@@ -376,19 +384,34 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         }
         ImageElement image = view2d.getImage();
         MediaSeries<ImageElement> series = view2d.getSeries();
-        boolean pixelPadding = JMVUtils.getNULLtoTrue(view2d.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
 
-        windowAction.setMinMaxValueWithoutTriggerAction(0,
-            (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)),
-            ((Float) view2d.getActionValue(ActionW.WINDOW.cmd())).intValue());
-        levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
-            (int) image.getMaxValue(pixelPadding), ((Float) view2d.getActionValue(ActionW.LEVEL.cmd())).intValue());
-        rotateAction.setValueWithoutTriggerAction((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()));
-        flipAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()));
+        OpManager dispOp = view2d.getDisplayOpManager();
+        ImageOpNode node = dispOp.getNode(WindowOp.OP_NAME);
+        if (node != null) {
+            Float windowValue = (Float) node.getParam(ActionW.WINDOW.cmd());
+            Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
+            boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+            windowAction.setMinMaxValueWithoutTriggerAction(0,
+                (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)), windowValue.intValue());
+            levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
+                (int) image.getMaxValue(pixelPadding), levelValue.intValue());
+        }
+
+        lutAction.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT));
+        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME,
+            PseudoColorOp.P_LUT_INVERSE));
+        filterAction
+            .setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA));
+        rotateAction.setValueWithoutTriggerAction((Integer) dispOp.getParamValue(RotationOp.OP_NAME,
+            RotationOp.P_ROTATE));
+        flipAction.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+
         spUnitAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()));
         zoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs((Double) view2d
             .getActionValue(ActionW.ZOOM.cmd()))));
         showLensAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.LENS.cmd()));
+        inverseStackAction.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
+
         Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
         if (lensZoom != null) {
             lensZoomAction.setValueWithoutTriggerAction(viewScaleToSliderValue(Math.abs(lensZoom)));
@@ -400,10 +423,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (speed != null) {
             moveTroughSliceAction.setSpeed(speed);
         }
-        lutAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.LUT.cmd()));
-        inverseLutAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSELUT.cmd()));
-        filterAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.FILTER.cmd()));
-        inverseStackAction.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
 

@@ -16,6 +16,7 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
 import java.lang.ref.Reference;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -28,10 +29,9 @@ import javax.media.jai.RenderedOp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.OperationsManager;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
@@ -300,12 +300,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
         return getRenderedImage(imageSource, null);
     }
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, ImageOperation imageOperation) {
+    public RenderedImage getRenderedImage(final RenderedImage imageSource, HashMap<String, Object> params) {
 
-        Float window = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.WINDOW.cmd());
-        Float level = (imageOperation == null) ? null : (Float) imageOperation.getActionValue(ActionW.LEVEL.cmd());
-        Boolean pixelPadding =
-            (imageOperation == null) ? null : (Boolean) imageOperation.getActionValue(ActionW.IMAGE_PIX_PADDING.cmd());
+        Float window = (params == null) ? null : (Float) params.get(ActionW.WINDOW.cmd());
+        Float level = (params == null) ? null : (Float) params.get(ActionW.LEVEL.cmd());
+        Boolean pixelPadding = (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
 
         return getRenderedImage(imageSource, window, level, pixelPadding);
     }
@@ -315,11 +314,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
      * 
      * @return
      */
-    public PlanarImage getImage(OperationsManager manager) {
+    public PlanarImage getImage(OpManager manager) {
         return getImage(manager, true);
     }
 
-    public synchronized PlanarImage getImage(OperationsManager manager, boolean findMinMax) {
+    public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
         PlanarImage cacheImage;
         try {
             cacheImage = startImageLoading();
@@ -344,7 +343,11 @@ public class ImageElement extends MediaElement<PlanarImage> {
             }
         }
         if (manager != null && cacheImage != null) {
-            cacheImage = PlanarImage.wrapRenderedImage(manager.getFinalImage());
+            manager.setFirstNode(cacheImage);
+            RenderedImage img = manager.process();
+            if (img != null) {
+                cacheImage = PlanarImage.wrapRenderedImage(img);
+            }
         }
         return cacheImage;
     }

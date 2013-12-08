@@ -23,6 +23,12 @@ import java.util.HashMap;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -86,6 +92,7 @@ public class InfoLayer implements AnnotationsLayer {
             return;
         }
 
+        OpManager disOp = view2DPane.getDisplayOpManager();
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
         float midy = bound.height / 2f;
@@ -131,8 +138,8 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.win") + ": " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) //$NON-NLS-1$ //$NON-NLS-2$
-                        + " " + Messages.getString("InfoLayer.level") + ": " + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    Messages.getString("InfoLayer.win") + ": " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) //$NON-NLS-1$ //$NON-NLS-2$
+                        + " " + Messages.getString("InfoLayer.level") + ": " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -147,7 +154,7 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.angle") + ": " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.angle") + ": " + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             drawY -= fontHeight;
         }
 
@@ -183,15 +190,19 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
+        OpManager disOp = view2DPane.getDisplayOpManager();
+        ImageOpNode pseudoColorOp = disOp.getNode(PseudoColorOp.OP_NAME);
+        ByteLut lut = null;
+        if (pseudoColorOp != null) {
+            lut = (ByteLut) pseudoColorOp.getParam(PseudoColorOp.P_LUT);
+        }
         if (lut != null && bound.height > 350) {
-
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
             byte[][] table =
-                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd()) ? lut.getInvertedLutTable() : lut
-                    .getLutTable();
+                JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE)) ? lut
+                    .getInvertedLutTable() : lut.getLutTable();
             float length = table[0].length;
             float x = bound.width - 30f;
             float y = bound.height / 2f - length / 2f;
@@ -214,8 +225,8 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()) / separation;
-            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()) - stepWindow * 2f;
+            float stepWindow = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) / separation;
+            float firstlevel = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()) - stepWindow * 2f;
             String str = "" + (int) firstlevel; //$NON-NLS-1$
             GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
             for (int i = 1; i < separation; i++) {

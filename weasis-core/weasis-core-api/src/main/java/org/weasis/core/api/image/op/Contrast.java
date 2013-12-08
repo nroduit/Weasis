@@ -205,12 +205,12 @@ public class Contrast extends JPanel {
     //
     // lut[i] = (byte) scale;
     // }
-    // return PseudoColorOperation.applyLookupTable(image, new LookupTableJAI(lut));
+    // return PseudoColorOp.applyLookupTable(image, new LookupTableJAI(lut));
     // }
     //
     // public static PlanarImage setGamma(PlanarImage image, float value) {
     // byte lut[][] = createGammaLUT(value, image.getNumBands());
-    // return PseudoColorOperation.applyLookupTable(image, new LookupTableJAI(lut));
+    // return PseudoColorOp.applyLookupTable(image, new LookupTableJAI(lut));
     // }
 
     private static byte[][] createGammaLUT(float f, int nbBand) {

@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
@@ -101,6 +102,17 @@ public final class FileUtil {
     }
 
     public static void safeClose(ImageInputStream stream) {
+        if (stream != null) {
+            try {
+                stream.flush();
+                stream.close();
+            } catch (IOException e) {
+                LOGGER.debug(e.getMessage());
+            }
+        }
+    }
+
+    public static void safeClose(ObjectOutput stream) {
         if (stream != null) {
             try {
                 stream.flush();

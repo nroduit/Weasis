@@ -21,7 +21,6 @@ import javax.media.jai.operator.CropDescriptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.image.util.ImageFiler;
 
 import com.sun.media.jai.util.ImageUtil;
@@ -31,26 +30,43 @@ import com.sun.media.jai.util.ImageUtil;
  * 
  * @version $Rev$ $Date$
  */
-public class CombineTwoImagesOperation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CombineTwoImagesOperation.class);
+public class MergeImgOp extends AbstractOp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MergeImgOp.class);
 
-    public static final String name = "CombineImage"; //$NON-NLS-1$
+    public static final String OP_NAME = "merge.img";
 
-    @Override
-    public String getOperationName() {
-        return name;
+    /**
+     * The second image for merging operation (Required parameter). Note: calling clearIOCache will remove the parameter
+     * value.
+     * 
+     * java.awt.image.RenderedImage value.
+     */
+    public static final String INPUT_IMG2 = "op.input.img.2";
+
+    /**
+     * Opacity of the top image (Optional parameter).
+     * 
+     * Integer value. Default value is 255 (highest value => no transparency).
+     */
+    public static final String P_OPACITY = "opacity";
+
+    public MergeImgOp() {
+        setName(OP_NAME);
     }
 
     @Override
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        RenderedImage source2 = (RenderedImage) imageOperation.getActionValue(name);
+    public void process() throws Exception {
+        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage source2 = (RenderedImage) params.get(INPUT_IMG2);
+        RenderedImage result = source;
+
         if (source2 == null) {
-            result = source;
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
+            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
         } else {
-            result = CombineTwoImagesOperation.combineTwoImages(source, source2, 255);
+            Integer transparency = (Integer) params.get(P_OPACITY);
+            result = MergeImgOp.combineTwoImages(source, source2, transparency == null ? 255 : transparency);
         }
-        return result;
+        params.put(OUTPUT_IMG, result);
     }
 
     public static PlanarImage combineTwoImages(RenderedImage sourceDown, RenderedImage sourceUp, int transparency) {
@@ -122,4 +138,5 @@ public class CombineTwoImagesOperation extends AbstractOperation {
         pb2.addSource(img);
         return JAI.create("bandMerge", pb2); //$NON-NLS-1$
     }
+
 }

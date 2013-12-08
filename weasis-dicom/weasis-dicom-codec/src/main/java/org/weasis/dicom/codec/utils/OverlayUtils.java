@@ -32,29 +32,39 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.HashMap;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.image.Overlays;
-import org.weasis.core.api.gui.ImageOperation;
-import org.weasis.core.api.gui.util.ActionW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.display.OverlayOp;
 
 public class OverlayUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OverlayUtils.class);
 
     private static final byte[] icmColorValues = new byte[] { (byte) 0xFF, (byte) 0x00 };
 
     /**
      * Merge the overlays into the buffered image.
      * 
+     * @param params
+     * 
      */
-    public static RenderedImage getOverlays(ImageOperation imageOperation, DicomMediaIO reader, int frameIndex,
-        int width, int height) throws IOException {
+    public static RenderedImage getOverlays(ImageElement image, DicomMediaIO reader, int frameIndex, int width,
+        int height, HashMap<String, Object> params) throws IOException {
         Attributes ds = reader.getDicomObject();
 
+        // TODO get grayscaleValue from PR
         int grayscaleValue = 0xFFFF;
         int outBits = 1;
         IndexColorModel icm =
@@ -62,12 +72,32 @@ public class OverlayUtils {
         BufferedImage overBi = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY, icm);
         WritableRaster raster = overBi.getRaster();
 
-        byte[][] data = (byte[][]) imageOperation.getImage().getTagValue(TagW.OverlayBurninData);
+        // Get serialized overlay (from pixel data)
+        byte[][] data = null;
+        String filePath = (String) image.getTagValue(TagW.OverlayBurninData);
+        if (filePath != null) {
+            FileInputStream fileIn = null;
+            ObjectInputStream objIn = null;
+            try {
+                fileIn = new FileInputStream(filePath);
+                objIn = new ObjectInputStream(fileIn);
+                Object o = objIn.readObject();
+                if (o instanceof byte[][]) {
+                    data = (byte[][]) o;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Cannot read serialized overlay: {}", e.getMessage());
+            } finally {
+                FileUtil.safeClose(objIn);
+                FileUtil.safeClose(fileIn);
+            }
+        }
+
         int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
 
         for (int i = 0; i < overlayGroupOffsets.length; i++) {
             byte[] ovlyData = null;
-            if (ds.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1) {
+            if (data != null && ds.getInt(Tag.OverlayBitsAllocated | overlayGroupOffsets[i], 1) != 1) {
                 if (data.length > i) {
                     ovlyData = data[i];
                 }
@@ -91,11 +121,12 @@ public class OverlayUtils {
                 grayscaleValue >>> (16 - outBits), ovlyData);
         }
 
-        Object pr = imageOperation.getActionValue(ActionW.PR_STATE.cmd());
+        Object pr = params.get(OverlayOp.P_PR_ELEMENT);
         if (pr instanceof PRSpecialElement) {
             Attributes ovlyAttrs = ((PRSpecialElement) pr).getMediaReader().getDicomObject();
             overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ovlyAttrs, 0xffff);
 
+            // grayscaleValue = Overlays.getRecommendedDisplayGrayscaleValue(psAttrs, gg0000);
             for (int i = 0; i < overlayGroupOffsets.length; i++) {
                 Overlays.applyOverlay(frameIndex, raster, ovlyAttrs, overlayGroupOffsets[i],
                     grayscaleValue >>> (16 - outBits), null);
@@ -116,6 +147,7 @@ public class OverlayUtils {
         int mask = 1 << bitPosition;
         int length = ovlyRows * ovlyColumns;
 
+        // Binary size = ((imageSize + 7) / 8 ) + 1 & (-2) = 32769 & (-2) = 1000000000000001 & 1111111111111111110
         byte[] ovlyData = new byte[(((length + 7) >>> 3) + 1) & (~1)];
         Overlays.extractFromPixeldata(raster, mask, ovlyData, 0, length);
         return ovlyData;

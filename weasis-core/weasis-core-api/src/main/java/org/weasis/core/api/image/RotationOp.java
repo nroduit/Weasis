@@ -21,35 +21,45 @@ import javax.media.jai.operator.TransposeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.ImageOperation;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.ImageToolkit;
 
-public class RotationOperation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RotationOperation.class);
+public class RotationOp extends AbstractOp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RotationOp.class);
+    private static final double EPSILON = 1e-5;
 
-    public static final String name = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
-    public static final double epsilon = 1e-5;
+    public static final String OP_NAME = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
+
+    /**
+     * Set the clockwise angle value in degree (Required parameter).
+     * 
+     * Integer value.
+     */
+    public static final String P_ROTATE = "rotate";
+
+    public RotationOp() {
+        setName(OP_NAME);
+    }
 
     @Override
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Integer rotationAngle = (Integer) imageOperation.getActionValue(ActionW.ROTATION.cmd());
+    public void process() throws Exception {
+        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage result = source;
+        Integer rotationAngle = (Integer) params.get(P_ROTATE);
+
         if (rotationAngle == null) {
             result = source;
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
-        } else if (rotationAngle == 0 || rotationAngle == 360) {
-            result = source;
-        } else {
+            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
+        } else if (rotationAngle != 0 && rotationAngle != 360) {
             // optimize rotation by right angles
             TransposeType rotOp = null;
 
-            if (Math.abs(rotationAngle - 90) < epsilon) {
+            if (Math.abs(rotationAngle - 90) < EPSILON) {
                 // 90 degree
                 rotOp = TransposeDescriptor.ROTATE_90;
-            } else if (Math.abs(rotationAngle - 180) < epsilon) {
+            } else if (Math.abs(rotationAngle - 180) < EPSILON) {
                 // 180 degree
                 rotOp = TransposeDescriptor.ROTATE_180;
-            } else if (Math.abs(rotationAngle - 270) < epsilon) {
+            } else if (Math.abs(rotationAngle - 270) < EPSILON) {
                 // 270 degree
                 rotOp = TransposeDescriptor.ROTATE_270;
             }
@@ -92,11 +102,8 @@ public class RotationOperation extends AbstractOperation {
                 // result = JAI.create("rotate", pb, hints);
             }
         }
-        return result;
+
+        params.put(OUTPUT_IMG, result);
     }
 
-    @Override
-    public String getOperationName() {
-        return name;
-    }
 }

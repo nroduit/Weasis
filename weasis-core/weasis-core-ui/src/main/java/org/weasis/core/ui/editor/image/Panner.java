@@ -35,7 +35,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         super((File) null, 156);
         this.view = view;
         // this.canvas = imageFrame.getImageCanvas();
-        // this.imageSource = CombineTwoImagesOperation.formatIfBinary(imageFrame.getSource());
+        // this.imageSource = MergeImgOp.formatIfBinary(imageFrame.getSource());
 
         setForeground(JMVUtils.TREE_SELECTION_BACKROUND);
         slider = new Rectangle(0, 0, 0, 0);

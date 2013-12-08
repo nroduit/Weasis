@@ -26,9 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.ImageOperationAction;
-import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.WindowLevelOperation;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
@@ -55,12 +54,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, false);
 
         // Copy image operations from view2d
-        OperationsManager operations = imageLayer.getOperationsManager();
-        for (ImageOperationAction op : view2d.getImageLayer().getOperationsManager().getOperations()) {
+        SimpleOpManager operations = imageLayer.getDisplayOpManager();
+        for (ImageOpNode op : view2d.getImageLayer().getDisplayOpManager().getOperations()) {
             try {
-                operations.addImageOperationAction((ImageOperationAction) op.clone());
+                operations.addImageOperationAction(op.clone());
             } catch (CloneNotSupportedException e) {
-                LOGGER.error("Cannot clone image operation: {}", op.getOperationName()); //$NON-NLS-1$
+                LOGGER.error("Cannot clone image operation: {}", op); //$NON-NLS-1$
             }
         }
         // Copy the current values of image operations
@@ -89,7 +88,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         actionsInView.put(ActionW.LUT_SHAPE.cmd(), view2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
         actionsInView.put(ActionW.WINDOW.cmd(), view2d.getActionValue(ActionW.WINDOW.cmd()));
         actionsInView.put(ActionW.LEVEL.cmd(), view2d.getActionValue(ActionW.LEVEL.cmd()));
-        imageLayer.updateImageOperation(WindowLevelOperation.name);
+        imageLayer.updateAllImageOperations();
     }
 
     @Override

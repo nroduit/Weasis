@@ -39,7 +39,14 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.LutShape;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -160,7 +167,7 @@ public class InfoLayer implements AnnotationsLayer {
         if (!visible || image == null) {
             return;
         }
-
+        OpManager disOp = view2DPane.getDisplayOpManager();
         ModalityInfoData modality;
         Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
         modality = ModalityPrefView.getModlatityInfos(mod);
@@ -253,8 +260,8 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.win") + " " + view2DPane.getActionValue(ActionW.WINDOW.cmd()) + " " + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                        + " " + view2DPane.getActionValue(ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$
+                    Messages.getString("InfoLayer.win") + " " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) + " " + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                        + " " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
@@ -269,7 +276,7 @@ public class InfoLayer implements AnnotationsLayer {
             GraphicLabel
                 .paintFontOutline(
                     g2,
-                    Messages.getString("InfoLayer.angle") + " " + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    Messages.getString("InfoLayer.angle") + " " + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " + Messages.getString("InfoLayer.angle_symb"), border, drawY); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             drawY -= fontHeight;
         }
 
@@ -390,10 +397,9 @@ public class InfoLayer implements AnnotationsLayer {
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
 
-                int angle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
-
-                if (angle != 0) {
-                    double rad = Math.toRadians(angle);
+                Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+                if (rotationAngle != null && rotationAngle != 0) {
+                    double rad = Math.toRadians(rotationAngle);
                     double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
                     if (normal != null && normal.length == 3) {
                         Vector3d result = new Vector3d(0.0, 0.0, 0.0);
@@ -407,7 +413,7 @@ public class InfoLayer implements AnnotationsLayer {
                     }
                 }
 
-                if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
+                if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                     vr.x = -vr.x;
                     vr.y = -vr.y;
                     vr.z = -vr.z;
@@ -418,9 +424,10 @@ public class InfoLayer implements AnnotationsLayer {
 
             } else {
                 String[] po = (String[]) dcm.getTagValue(TagW.PatientOrientation);
-                if (po != null && po.length == 2 && (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd()) == 0) {
+                Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+                if (po != null && po.length == 2 && (rotationAngle == null || rotationAngle == 0)) {
                     // Do not display if there is a transformation
-                    if ((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd())) {
+                    if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                         colLeft = po[0];
                     } else {
                         StringBuffer buf = new StringBuffer();
@@ -537,15 +544,19 @@ public class InfoLayer implements AnnotationsLayer {
     }
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        ByteLut lut = (ByteLut) view2DPane.getActionValue(ActionW.LUT.cmd());
+        OpManager disOp = view2DPane.getDisplayOpManager();
+        ImageOpNode pseudoColorOp = disOp.getNode(PseudoColorOp.OP_NAME);
+        ByteLut lut = null;
+        if (pseudoColorOp != null) {
+            lut = (ByteLut) pseudoColorOp.getParam(PseudoColorOp.P_LUT);
+        }
         if (lut != null && bound.height > 350) {
-
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
             byte[][] table =
-                (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd()) ? lut.getInvertedLutTable() : lut
-                    .getLutTable();
+                JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE)) ? lut
+                    .getInvertedLutTable() : lut.getLutTable();
             float length = table[0].length;
             float x = bound.width - 30f;
             float y = bound.height / 2f - length / 2f;
@@ -568,8 +579,8 @@ public class InfoLayer implements AnnotationsLayer {
             g2.setPaint(Color.white);
             Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
             g2.draw(line);
-            float stepWindow = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd()) / separation;
-            float firstlevel = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd()) - stepWindow * 2f;
+            float stepWindow = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) / separation;
+            float firstlevel = (Float) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()) - stepWindow * 2f;
             String str = "" + (int) firstlevel; //$NON-NLS-1$
             GraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f, y + midfontHeight);
             for (int i = 1; i < separation; i++) {
@@ -599,7 +610,6 @@ public class InfoLayer implements AnnotationsLayer {
 
     // TODO must be implemented as component of the layout (must inherit Jcomponent and implements SeriesViewerListener)
     public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
-        boolean pixelPadding = true;
 
         final Paint oldPaint = g2d.getPaint();
         final RenderingHints oldRenderingHints = g2d.getRenderingHints();
@@ -613,8 +623,16 @@ public class InfoLayer implements AnnotationsLayer {
         final int minOutputValue = 0;
         final int maxOutputValue = 255;
 
-        final float window = (Float) view2DPane.getActionValue(ActionW.WINDOW.cmd());
-        final float level = (Float) view2DPane.getActionValue(ActionW.LEVEL.cmd());
+        OpManager dispOp = view2DPane.getDisplayOpManager();
+        ImageOpNode wlOp = dispOp.getNode(WindowOp.NAME);
+        if (wlOp == null) {
+            return;
+        }
+
+        boolean pixelPadding = (Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd());
+
+        final float window = (Float) wlOp.getParam(ActionW.WINDOW.cmd());
+        final float level = (Float) wlOp.getParam(ActionW.LEVEL.cmd());
 
         final float lowLevel = Math.round(level - window / 2);
         final float highLevel = Math.round(level + window / 2);
@@ -624,9 +642,9 @@ public class InfoLayer implements AnnotationsLayer {
         int highInputValue =
             (int) (image.getMaxValue(pixelPadding) > highLevel ? highLevel : image.getMaxValue(pixelPadding));
 
-        final boolean inverseLut = (Boolean) view2DPane.getActionValue(ActionW.INVERSELUT.cmd());
+        final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERSELUT.cmd());
 
-        LutShape lutShape = (LutShape) view2DPane.getActionValue(ActionW.LUT_SHAPE.cmd());
+        LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
 
         LookupTableJAI lookup =
             image.getVOILookup(image.getModalityLookup(pixelPadding), window, level, null, null, lutShape, true,

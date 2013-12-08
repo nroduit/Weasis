@@ -27,7 +27,10 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -741,9 +744,14 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 img = NullDescriptor.create(buffer, LayoutUtil.createTiledLayoutHints(buffer));
             }
 
+            /*
+             * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
+             * pixel data.
+             */
             Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
             if (overlayBitMask != null) {
                 if (media.getTagValue(TagW.OverlayBurninData) == null) {
+                    // Serialize overlay (from pixel data)
                     Attributes ds = getDicomObject();
                     int[] overlayGroupOffsets = Overlays.getActiveOverlayGroupOffsets(ds, 0xffff);
                     byte[][] overlayData = new byte[overlayGroupOffsets.length][];
@@ -752,7 +760,20 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         overlayData[i] = OverlayUtils.extractOverlay(overlayGroupOffsets[i], raster, ds);
                     }
                     if (overlayGroupOffsets.length > 0) {
-                        setTagNoNull(TagW.OverlayBurninData, overlayData);
+                        FileOutputStream fileOut = null;
+                        ObjectOutput objOut = null;
+                        try {
+                            File file = File.createTempFile("ovly_", "", AbstractProperties.FILE_CACHE_DIR);
+                            fileOut = new FileOutputStream(file);
+                            objOut = new ObjectOutputStream(fileOut);
+                            objOut.writeObject(overlayData);
+                            media.setTag(TagW.OverlayBurninData, file.getPath());
+                        } catch (Exception e) {
+                            LOGGER.error("Cannot serialize overlay: {}", e.getMessage());
+                        } finally {
+                            FileUtil.safeClose(objOut);
+                            FileUtil.safeClose(fileOut);
+                        }
                     }
                 }
                 // Set to 0 all bits outside bitStored

@@ -77,20 +77,20 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.FilterOperation;
-import org.weasis.core.api.image.FlipOperation;
-import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.PseudoColorOperation;
-import org.weasis.core.api.image.RotationOperation;
-import org.weasis.core.api.image.ShutterOperation;
-import org.weasis.core.api.image.WindowLevelOperation;
-import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.FilterOp;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.ImageOpEvent;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -123,7 +123,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
  * @author Nicolas Roduit, Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
-    FocusListener, Image2DViewer, ImageLayerChangeListener, KeyListener {
+    FocusListener, Image2DViewer, ImageLayerChangeListener<E>, KeyListener {
     public enum ZoomType {
         CURRENT, BEST_FIT, PIXEL_SIZE, REAL
     };
@@ -182,9 +182,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.eventManager = eventManager;
         this.viewButtons = new ArrayList<ViewButton>();
         this.tileOffset = 0;
-        initActionWState();
 
-        imageLayer = new RenderedImageLayer<E>(new OperationsManager(this), true);
+        imageLayer = new RenderedImageLayer<E>(true);
+        initActionWState();
         // infoLayer = new InfoLayer(this);
 
         setBorder(normalBorder);
@@ -210,21 +210,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected void initActionWState() {
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
-        actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(zoomTypeCmd, ZoomType.BEST_FIT);
+        actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
-        actionsInView.put(ActionW.ROTATION.cmd(), 0);
-        actionsInView.put(ActionW.FLIP.cmd(), false);
-        actionsInView.put(ActionW.INVERSELUT.cmd(), false);
-        actionsInView.put(ActionW.LUT.cmd(), ByteLut.defaultLUT);
-        actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
-        actionsInView.put(ActionW.FILTER.cmd(), KernelData.NONE);
         actionsInView.put(ActionW.DRAW.cmd(), true);
-        actionsInView.put(ZoomOperation.INTERPOLATION_CMD, eventManager.getZoomSetting().getInterpolation());
-        actionsInView.put(ActionW.IMAGE_SHUTTER.cmd(), true);
-        actionsInView.put(ActionW.IMAGE_PIX_PADDING.cmd(), true);
-
+        actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
+
+        OpManager disOp = getDisplayOpManager();
+        disOp.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, eventManager.getZoomSetting().getInterpolation());
+        disOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
+        disOp.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
+        disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
+        disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ByteLut.defaultLUT);
+        disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
     }
 
     public ImageViewerEventManager<E> getEventManager() {
@@ -283,8 +282,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         ImageElement imageElement = imageLayer.getSourceImage();
         StringBuffer message = new StringBuffer(" "); //$NON-NLS-1$
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-            PlanarImage image =
-                imageElement.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+            PlanarImage image = imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             Point realPoint =
                 new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
                     / imageElement.getRescaleY() - 0.5));
@@ -388,8 +386,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
                         (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
             }
-
-            setDefautWindowLevel(media);
+            imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
             setImage(media);
         }
 
@@ -448,7 +445,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected Rectangle getImageBounds(E img) {
         if (img != null) {
-            RenderedImage source = img.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+            RenderedImage source = img.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
@@ -462,6 +459,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setImage(E img) {
+        imageLayer.getDisplayOpManager().setEnabled(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
             imageLayer.setImage(null, null);
@@ -493,19 +491,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         }
                     }
                 }
-                setShutter(img);
 
                 Rectangle2D area = getViewModel().getModelArea();
                 if (!modelArea.equals(area)) {
                     ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
                     getViewModel().setModelArea(modelArea);
                 }
+
+                imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
                 resetZoom();
-                imageLayer.setImage(img, (OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+                imageLayer.getDisplayOpManager().setEnabled(true);
+                imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
                 if (panner != null) {
                     panner.updateImage();
                 }
-                if(lens != null){
+                if (lens != null) {
                     lens.updateZoom();
                 }
 
@@ -596,7 +596,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image == null) {
             return null;
         }
-        return image.getImage((OperationsManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        return image.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
     }
 
     public final void center() {
@@ -755,12 +755,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (viewScale == 0.0) {
             viewScale = -getBestFitViewScale();
         }
-        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
-        super.zoom(Math.abs(viewScale));
-        imageLayer.updateImageOperation(ZoomOperation.name);
-        updateAffineTransform();
-        if (panner != null) {
-            panner.updateImageSize();
+        ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+        E img = getImage();
+        if (img != null && node != null) {
+            node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
+
+            actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
+            super.zoom(Math.abs(viewScale));
+            if (JMVUtils.getNULLtoTrue(actionsInView.get("op.update"))) {
+                imageLayer.updateAllImageOperations();
+            }
+            updateAffineTransform();
+            if (panner != null) {
+                panner.updateImageSize();
+            }
         }
     }
 
@@ -768,8 +777,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         double viewScale = getViewModel().getViewScale();
         affineTransform.setToScale(viewScale, viewScale);
 
-        Boolean flip = (Boolean) actionsInView.get(ActionW.FLIP.cmd());
-        Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
+        OpManager dispOp = getDisplayOpManager();
+        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+
         if (rotationAngle != null && rotationAngle > 0) {
             if (flip != null && flip) {
                 rotationAngle = 360 - rotationAngle;
@@ -810,32 +821,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    protected void setDefautWindowLevel(E img) {
-
-        // TODO - should it be called from within initActionWState instead ??
-        if (img != null) {
-            if (!img.isImageAvailable()) {
-                // Ensure to load image before calling the default preset that requires pixel min and max
-                img.getImage();
-            }
-            boolean pixelPadding = JMVUtils.getNULLtoTrue(getActionValue(ActionW.IMAGE_PIX_PADDING.cmd()));
-            actionsInView.put(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
-            actionsInView.put(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
-            actionsInView.put(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
-            actionsInView.put(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(pixelPadding));
-
-        }
-    }
-
-    protected void setShutter(MediaElement media) {
-        // If no image, reset the shutter
-        boolean noMedia = media == null;
-        actionsInView.put(TagW.ShutterFinalShape.getName(), noMedia ? null : media.getTagValue(TagW.ShutterFinalShape));
-        actionsInView.put(TagW.ShutterPSValue.getName(), noMedia ? null : media.getTagValue(TagW.ShutterPSValue));
-        actionsInView.put(TagW.ShutterRGBColor.getName(), noMedia ? null : media.getTagValue(TagW.ShutterRGBColor));
-
-    }
-
     public Object getLensActionValue(String action) {
         if (lens == null) {
             return null;
@@ -844,16 +829,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     public void changeZoomInterpolation(int interpolation) {
-        Integer val = (Integer) actionsInView.get(ZoomOperation.INTERPOLATION_CMD);
+        Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
         boolean update = val == null || val != interpolation;
         if (update) {
-            actionsInView.put(ZoomOperation.INTERPOLATION_CMD, interpolation);
+            getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
             if (lens != null) {
-                lens.setActionInView(ZoomOperation.INTERPOLATION_CMD, interpolation);
+                lens.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
                 lens.updateZoom();
             }
-            imageLayer.updateImageOperation(ZoomOperation.name);
+            imageLayer.updateAllImageOperations();
         }
+    }
+
+    public OpManager getDisplayOpManager() {
+        return imageLayer.getDisplayOpManager();
     }
 
     @Override
@@ -861,6 +850,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (series == null) {
             return;
         }
+        OpManager manager = imageLayer.getDisplayOpManager();
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SYNCH.cmd())) {
             SynchEvent synch = (SynchEvent) evt.getNewValue();
@@ -921,12 +911,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else {
                 propertyChange(synch);
             }
-        } else if (command.equals(ActionW.IMAGE_SHUTTER.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(ShutterOperation.name);
         } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
-            actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateImageOperation(WindowLevelOperation.name);
+            if (manager.setParamValue(WindowOp.OP_NAME, command, evt.getNewValue())) {
+                imageLayer.updateAllImageOperations();
+            }
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateAllImageOperations();
@@ -938,31 +926,31 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (synchData != null && Mode.None.equals(synchData.getMode())) {
             return;
         }
+
+        OpManager manager = imageLayer.getDisplayOpManager();
+
         for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
             String command = entry.getKey();
             if (synchData != null && !synchData.isActionEnable(command)) {
                 continue;
             }
-            if (command.equals(ActionW.WINDOW.cmd())) {
-                actionsInView.put(command, ((Integer) entry.getValue()).floatValue());
-                imageLayer.updateImageOperation(WindowLevelOperation.name);
-            } else if (command.equals(ActionW.LEVEL.cmd())) {
-                actionsInView.put(command, ((Integer) entry.getValue()).floatValue());
-                imageLayer.updateImageOperation(WindowLevelOperation.name);
+            if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
+                if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).floatValue())) {
+                    imageLayer.updateAllImageOperations();
+                }
             } else if (command.equals(ActionW.ROTATION.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(RotationOperation.name);
-                updateAffineTransform();
+                if (manager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, entry.getValue())) {
+                    imageLayer.updateAllImageOperations();
+                    updateAffineTransform();
+                }
             } else if (command.equals(ActionW.RESET.cmd())) {
                 reset();
             } else if (command.equals(ActionW.ZOOM.cmd())) {
-                double zoomFactor = (Double) entry.getValue();
-                zoom(zoomFactor);
+                zoom((Double) entry.getValue());
             } else if (command.equals(ActionW.LENSZOOM.cmd())) {
                 if (lens != null) {
                     lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
                 }
-
             } else if (command.equals(ActionW.LENS.cmd())) {
                 Boolean showLens = (Boolean) entry.getValue();
                 actionsInView.put(command, showLens);
@@ -996,19 +984,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             } else if (command.equals(ActionW.FLIP.cmd())) {
                 // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(FlipOperation.name);
-                updateAffineTransform();
+                if (manager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, entry.getValue())) {
+                    imageLayer.updateAllImageOperations();
+                    updateAffineTransform();
+                }
             } else if (command.equals(ActionW.LUT.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(PseudoColorOperation.name);
+                if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
+                    imageLayer.updateAllImageOperations();
+                }
             } else if (command.equals(ActionW.INVERSELUT.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                // Update VOI LUT if pixel padding
-                imageLayer.updateImageOperation(WindowLevelOperation.name);
+                if (manager.setParamValue(WindowOp.OP_NAME, command, entry.getValue())) {
+                    manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, entry.getValue());
+                    // Update VOI LUT if pixel padding
+                    imageLayer.updateAllImageOperations();
+                }
             } else if (command.equals(ActionW.FILTER.cmd())) {
-                actionsInView.put(command, entry.getValue());
-                imageLayer.updateImageOperation(FilterOperation.name);
+                if (manager.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, entry.getValue())) {
+                    imageLayer.updateAllImageOperations();
+                }
             } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
                 actionsInView.put(command, entry.getValue());
 
@@ -1642,9 +1635,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         initActionWState();
-        setDefautWindowLevel(getImage());
-
+        imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, getImage(), null));
         imageLayer.updateAllImageOperations();
+        // TODO should throw only image process
+        // imageLayer.getDisplayOpManager().setEnabled(true);
         resetZoom();
         resetPan();
         eventManager.updateComponentsListener(this);

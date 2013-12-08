@@ -22,47 +22,62 @@ import javax.media.jai.LookupTableJAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.ImageOperation;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.ImageToolkit;
 
-public class PseudoColorOperation extends AbstractOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PseudoColorOperation.class);
+public class PseudoColorOp extends AbstractOp {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PseudoColorOp.class);
 
-    public static final String name = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
 
-    public String getOperationName() {
-        return name;
+    /**
+     * Set the lookup table (Required parameter).
+     * 
+     * org.weasis.core.api.image.op.ByteLut value.
+     */
+    public static final String P_LUT = ActionW.LUT.cmd();
+
+    /**
+     * Whether the LUT must be inverted (Optional parameter).
+     * 
+     * Boolean value. Default value is false.
+     */
+
+    public static final String P_LUT_INVERSE = ActionW.INVERSELUT.cmd();
+
+    public PseudoColorOp() {
+        setName(OP_NAME);
     }
 
-    public RenderedImage getRenderedImage(RenderedImage source, ImageOperation imageOperation) {
-        Boolean invert = (Boolean) imageOperation.getActionValue(ActionW.INVERSELUT.cmd());
-        ByteLut lutTable = (ByteLut) imageOperation.getActionValue(ActionW.LUT.cmd());
-        if (invert == null) {
-            invert = false;
-        }
+    @Override
+    public void process() throws Exception {
+        RenderedImage source = (RenderedImage) params.get(INPUT_IMG);
+        RenderedImage result = source;
+        ByteLut lutTable = (ByteLut) params.get(P_LUT);
+
         if (lutTable == null) {
-            result = source;
-            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", name); //$NON-NLS-1$
+            LOGGER.warn("Cannot apply \"{}\" because a parameter is null", OP_NAME); //$NON-NLS-1$
         } else {
+            boolean invert = JMVUtils.getNULLtoFalse(params.get(P_LUT_INVERSE));
             byte[][] lut = invert ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
             if (lut == null) {
                 if (invert) {
                     ParameterBlock pb = new ParameterBlock();
                     pb.addSource(source);
                     result = JAI.create("invert", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-                } else {
-                    result = source;
                 }
             } else {
+                // TODO check LUT type with sample data type.
                 ParameterBlock pb = new ParameterBlock();
                 pb.addSource(source);
                 pb.add(new LookupTableJAI(lut));
                 result = JAI.create("lookup", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
             }
         }
-        return result;
+
+        params.put(OUTPUT_IMG, result);
     }
 
     public static BufferedImage getLUT(byte[][] lut) {

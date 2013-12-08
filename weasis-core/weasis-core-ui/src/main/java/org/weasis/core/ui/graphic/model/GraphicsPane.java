@@ -130,6 +130,10 @@ public class GraphicsPane extends JComponent {
         return actionsInView.get(action);
     }
 
+    public HashMap<String, Object> getActionsInView() {
+        return actionsInView;
+    }
+
     // /////////////////////////////////////////////////////////////////////////////////////
     // Utilities
     // public void setModelAreaFromLayerModel() {

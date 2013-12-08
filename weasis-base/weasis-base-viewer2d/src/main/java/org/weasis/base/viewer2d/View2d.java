@@ -47,13 +47,13 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.FilterOperation;
-import org.weasis.core.api.image.FlipOperation;
-import org.weasis.core.api.image.OperationsManager;
-import org.weasis.core.api.image.PseudoColorOperation;
-import org.weasis.core.api.image.RotationOperation;
-import org.weasis.core.api.image.WindowLevelOperation;
-import org.weasis.core.api.image.ZoomOperation;
+import org.weasis.core.api.image.FilterOp;
+import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.PseudoColorOp;
+import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -88,14 +88,14 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     public View2d(ImageViewerEventManager<ImageElement> eventManager) {
         super(eventManager);
-        OperationsManager manager = imageLayer.getOperationsManager();
-        manager.addImageOperationAction(new WindowLevelOperation());
-        manager.addImageOperationAction(new FilterOperation());
-        manager.addImageOperationAction(new PseudoColorOperation());
+        SimpleOpManager manager = imageLayer.getDisplayOpManager();
+        manager.addImageOperationAction(new WindowOp());
+        manager.addImageOperationAction(new FilterOp());
+        manager.addImageOperationAction(new PseudoColorOp());
         // Zoom and Rotation must be the last operations for the lens
-        manager.addImageOperationAction(new ZoomOperation());
-        manager.addImageOperationAction(new RotationOperation());
-        manager.addImageOperationAction(new FlipOperation());
+        manager.addImageOperationAction(new ZoomOp());
+        manager.addImageOperationAction(new RotationOp());
+        manager.addImageOperationAction(new FlipOp());
 
         infoLayer = new InfoLayer(this);
         DragLayer layer = new DragLayer(getLayerModel(), AbstractLayer.MEASURE);

@@ -38,6 +38,8 @@ import javax.swing.tree.TreePath;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.PluginTool;
@@ -50,8 +52,9 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer.Identifier;
-import org.weasis.core.ui.graphic.model.GraphicsPane;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.display.OverlayOp;
+import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 
@@ -249,17 +252,14 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     private void sendPropertyChangeEvent(ArrayList<DefaultView2d<DicomImageElement>> views, String cmd, boolean selected) {
         for (DefaultView2d<DicomImageElement> v : views) {
-            Boolean overlay = (Boolean) v.getActionValue(cmd);
-            if (overlay != null && selected != overlay) {
-                v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
-            }
+            v.propertyChange(new PropertyChangeEvent(EventManager.getInstance(), cmd, null, selected));
         }
     }
 
-    private void iniDicomView(DefaultView2d view, String cmd, int index) {
+    private void iniDicomView(OpManager disOp, String op, String param, int index) {
         TreeNode treeNode = image.getChildAt(index);
         if (treeNode != null) {
-            Boolean val = (Boolean) view.getActionValue(cmd);
+            Boolean val = (Boolean) disOp.getParamValue(op, param);
             initPathSelection(getTreePath(treeNode), val == null ? false : val);
         }
     }
@@ -276,10 +276,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         if (view != null) {
             initPathSelection = true;
             // Image node
+            OpManager disOp = view.getDisplayOpManager();
             initPathSelection(getTreePath(image), view.getImageLayer().isVisible());
-            iniDicomView(view, ActionW.IMAGE_OVERLAY.cmd(), 0);
-            iniDicomView(view, ActionW.IMAGE_SHUTTER.cmd(), 1);
-            iniDicomView(view, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
+            iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
+            iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
+            iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
 
             // Annotations node
             AnnotationsLayer layer = view.getInfoLayer();
