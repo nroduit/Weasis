@@ -168,13 +168,13 @@ public class DownloadManager {
                                             String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                                             wadoParameters.addHttpTag(httpkey, httpvalue);
                                             // <Message> tag
-                                        } else if ("Message".equals(xmler.getName().getLocalPart())) {
+                                        } else if ("Message".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                                             final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                                             final String desc = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                                             if (StringUtil.hasText(title) && StringUtil.hasText(desc)) {
-                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$
+                                                String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
                                                 final int type =
-                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO"
+                                                    "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO" //$NON-NLS-1$ //$NON-NLS-2$
                                                         .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
                                                         : JOptionPane.WARNING_MESSAGE;
 

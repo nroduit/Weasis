@@ -235,18 +235,18 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
         if (wado == null || !StringUtil.hasText(wado.getWadoURL())) {
             if (wado != null) {
-                return wado.isRequireOnlySOPInstanceUID() ? "DICOMDIR" : "URL";
+                return wado.isRequireOnlySOPInstanceUID() ? "DICOMDIR" : "URL"; //$NON-NLS-1$ //$NON-NLS-2$
             }
-            return "local";
+            return "local"; //$NON-NLS-1$
         } else {
             final List<DicomInstance> sopList =
                 (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
             if (sopList.size() > 0) {
                 if (sopList.get(0).getDirectDownloadFile() != null) {
-                    return "URL";
+                    return "URL"; //$NON-NLS-1$
                 }
             }
-            return "WADO";
+            return "WADO"; //$NON-NLS-1$
         }
     }
 
@@ -275,11 +275,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
         Long val = (Long) dicomSeries.getTagValue(DOWNLOAD_START_TIME);
         long time = val == null ? 0 : System.currentTimeMillis() - val;
         StringBuilder buf = new StringBuilder();
-        buf.append("time:");
+        buf.append("time:"); //$NON-NLS-1$
         buf.append(time);
-        buf.append(" rate:");
+        buf.append(" rate:"); //$NON-NLS-1$
         // rate in kB/s or B/ms
-        DecimalFormat format = new DecimalFormat("#.##");
+        DecimalFormat format = new DecimalFormat("#.##"); //$NON-NLS-1$
         buf.append(val == null ? 0 : format.format(dicomSeries.getFileSize() / time));
         return buf.toString();
     }

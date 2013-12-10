@@ -591,7 +591,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (TagW.ImageOrientationPlane.equals(tagElement)) {
                     String val = (String) firstMedia.getTagValue(TagW.ImageType);
                     // Exclude images that are MIP in different directions.
-                    if (val != null && val.contains("PROJECTION")) {
+                    if (val != null && val.contains("PROJECTION")) { //$NON-NLS-1$
                         continue;
                     }
                 }
