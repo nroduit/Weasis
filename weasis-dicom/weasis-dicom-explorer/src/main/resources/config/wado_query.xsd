@@ -128,7 +128,7 @@
 					<xsd:attribute name="value" type="xsd:string" use="required" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="error" minOccurs="0" maxOccurs="1">
+			<xsd:element name="Message" minOccurs="0" maxOccurs="1">
 				<xsd:complexType>
 					<xsd:attribute name="title" type="xsd:string" use="required" />
 					<xsd:attribute name="description" type="xsd:string" use="required" />
