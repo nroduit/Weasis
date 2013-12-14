@@ -12,15 +12,20 @@ package org.weasis.launcher;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,7 +38,7 @@ public class WebStartLoader {
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
     public static final String FRM_TITLE = String.format(
-        Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$
+        Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
     private volatile Window window;
@@ -83,9 +88,32 @@ public class WebStartLoader {
                 closing();
             }
         });
-        // TODO allow to change the splash screen
-        JLabel imagePane =
-            new JLabel(FRM_TITLE, new ImageIcon(getClass().getResource("/splash.png")), SwingConstants.CENTER); //$NON-NLS-1$
+
+        Icon icon = null;
+        try {
+            URL url = new URL(System.getProperty("weasis.codebase.url", null) + "/images/about.png"); //$NON-NLS-1$ //$NON-NLS-2$
+            icon = new ImageIcon(url);
+        } catch (MalformedURLException e) {
+            System.err.println("Cannot read the splash screen URL!"); //$NON-NLS-1$
+            icon = new Icon() {
+
+                @Override
+                public void paintIcon(Component c, Graphics g, int x, int y) {
+
+                }
+
+                @Override
+                public int getIconWidth() {
+                    return 350;
+                }
+
+                @Override
+                public int getIconHeight() {
+                    return 75;
+                }
+            };
+        }
+        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER); //$NON-NLS-1$
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
         imagePane.setHorizontalTextPosition(SwingConstants.CENTER);

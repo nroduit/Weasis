@@ -280,10 +280,10 @@ public class WeasisLauncher {
         // Define the sourceID for the temp and cache directory. The portable version will always have the same
         // sourceID.
         String sourceID =
-            toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode());
-        System.setProperty("weasis.source.id", sourceID);
+            toHex((portable == null ? System.getProperty("weasis.codebase.url", "unknown") : "portable").hashCode()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        System.setProperty("weasis.source.id", sourceID); //$NON-NLS-1$
 
-        cacheDir = configProps.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID;
+        cacheDir = configProps.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
         // If there is a passed in bundle cache directory, then
         // that overwrites anything in the config file.
         if (cacheDir != null) {
@@ -317,7 +317,7 @@ public class WeasisLauncher {
                             }
                         }
                         // Clean temp folder.
-                        String dir = System.getProperty("weasis.tmp.dir");
+                        String dir = System.getProperty("weasis.tmp.dir"); //$NON-NLS-1$
                         if (dir != null) {
                             FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
                         }
@@ -347,7 +347,8 @@ public class WeasisLauncher {
             // Use the system bundle context to process the auto-deploy
             // and auto-install/auto-start properties.
             loader.setFelix(configProps, m_activator.getBundleContext());
-            loader.writeLabel("Starting... Weasis"); //$NON-NLS-1$
+            loader.writeLabel(String.format(
+                Messages.getString("WeasisLauncher.starting"), System.getProperty("weasis.name"))); //$NON-NLS-1$
             m_tracker =
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
@@ -432,7 +433,7 @@ public class WeasisLauncher {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuffer command = new StringBuffer(args[i].substring(1));
                 // look for parameters
-                while (i + 1 < length && !args[i + 1].startsWith("$") && !args[i + 1].startsWith("-VMP")) { //$NON-NLS-1$
+                while (i + 1 < length && !args[i + 1].startsWith("$") && !args[i + 1].startsWith("-VMP")) { //$NON-NLS-1$ //$NON-NLS-2$
                     i++;
                     command.append(" "); //$NON-NLS-1$
                     if (args[i].indexOf(" ") != -1) { //$NON-NLS-1$
@@ -696,20 +697,20 @@ public class WeasisLauncher {
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
 
         String dir = new File(config.getProperty(Constants.FRAMEWORK_STORAGE)).getParent();
-        System.setProperty("weasis.name", config.getProperty("weasis.name", "Weasis"));
-        String profileName = config.getProperty("weasis.profile", "default");
-        System.setProperty("weasis.profile", profileName);
+        System.setProperty("weasis.name", config.getProperty("weasis.name", "Weasis")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        String profileName = config.getProperty("weasis.profile", "default"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("weasis.profile", profileName); //$NON-NLS-1$
         System.setProperty(P_WEASIS_PATH, dir);
 
         String user = System.getProperty("weasis.user", null); //$NON-NLS-1$
         boolean localSessionUser = user == null;
         if (user == null) {
-            user = System.getProperty("user.name", "local");
+            user = System.getProperty("user.name", "local"); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        System.setProperty("weasis.user", user);
+        System.setProperty("weasis.user", user); //$NON-NLS-1$
         StringBuffer bufDir = new StringBuffer(dir);
         bufDir.append(File.separator);
-        bufDir.append("preferences");
+        bufDir.append("preferences"); //$NON-NLS-1$
         bufDir.append(File.separator);
         bufDir.append(user);
         bufDir.append(File.separator);
@@ -766,7 +767,7 @@ public class WeasisLauncher {
         getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Read default value for dicom root UID which should be registered at the http://www.iana.org
-        getGeneralProperty("weasis.dicom.root.uid", "", config, s_prop, false, false);
+        getGeneralProperty("weasis.dicom.root.uid", "", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", config, s_prop, true, true); //$NON-NLS-1$ //$NON-NLS-2$
@@ -823,7 +824,7 @@ public class WeasisLauncher {
         if (look == null) {
             look = System.getProperty("weasis.look", null); //$NON-NLS-1$
             if (look == null) {
-                look = config.getProperty("weasis.look", null);
+                look = config.getProperty("weasis.look", null); //$NON-NLS-1$
             }
         }
 
@@ -851,7 +852,7 @@ public class WeasisLauncher {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    boolean substance = look.startsWith("org.pushingpixels");
+                    boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                     if (substance) { //$NON-NLS-1$
                         // TODO should be true: bug with docking-frame
                         JFrame.setDefaultLookAndFeelDecorated(false);
@@ -867,7 +868,7 @@ public class WeasisLauncher {
         s_prop.put("weasis.look", look); //$NON-NLS-1$
         System.out.println("weasis.look: " + look); //$NON-NLS-1$
 
-        File sourceID_props = new File(dir, System.getProperty("weasis.source.id") + ".properties");
+        File sourceID_props = new File(dir, System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
         Properties common_prop = readProperties(sourceID_props);
 
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
@@ -897,7 +898,7 @@ public class WeasisLauncher {
                 Version vOld = new Version(versionOld.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
                 if (vOld.getMajor() < 2) {
                     // Force to change some properties when the old version < 2.x
-                    s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$
+                    s_prop.put("weasis.confirm.closing", "false"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             } catch (Exception e) {
                 System.err.println("Cannot read old Weasis version!"); //$NON-NLS-1$
@@ -938,7 +939,7 @@ public class WeasisLauncher {
                         Object[] options =
                             { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                        String appName = System.getProperty("weasis.name");
+                        String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
                         int response =
                             JOptionPane.showOptionDialog(
                                 loader.getWindow(),
@@ -960,7 +961,7 @@ public class WeasisLauncher {
                 final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
                 message
                     .append(String.format(
-                        Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$
+                        Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$ //$NON-NLS-2$
 
                 EventQueue.invokeLater(new Runnable() {
                     @Override
@@ -1061,7 +1062,7 @@ public class WeasisLauncher {
             laf = UIManager.getSystemLookAndFeelClassName();
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12));
+        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$
         return laf;
     }
 
@@ -1101,7 +1102,7 @@ public class WeasisLauncher {
     static class HaltTask extends TimerTask {
         @Override
         public void run() {
-            System.out.println("Force to close the application");
+            System.out.println("Force to close the application"); //$NON-NLS-1$
             Runtime.getRuntime().halt(1);
         }
     }
