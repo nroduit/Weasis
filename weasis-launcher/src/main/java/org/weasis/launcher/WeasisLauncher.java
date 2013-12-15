@@ -354,12 +354,19 @@ public class WeasisLauncher {
                     null);
             m_tracker.open();
 
+            // Loads the logo images
+            String logoPath = configProps.getProperty("weasis.logo.url");
+            if (logoPath != null) {
+                FileUtil.writeLogoFiles(logoPath, cacheDir);
+            }
+
             // Start the framework.
             m_felix.start();
 
             // End of splash screen
             loader.close();
             loader = null;
+
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
@@ -882,7 +889,7 @@ public class WeasisLauncher {
         final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
-        final WebStartLoader loader = new WebStartLoader();
+        final WebStartLoader loader = new WebStartLoader(config.getProperty("weasis.logo.url"));
         // Display splash screen
         loader.open();
 

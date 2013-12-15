@@ -20,7 +20,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -45,8 +44,10 @@ public class WebStartLoader {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
+    private final String logoPath;
 
-    public WebStartLoader() {
+    public WebStartLoader(String logoPath) {
+        this.logoPath = logoPath;
     }
 
     public void writeLabel(String text) {
@@ -90,11 +91,15 @@ public class WebStartLoader {
         });
 
         Icon icon = null;
-        try {
-            URL url = new URL(System.getProperty("weasis.codebase.url", null) + "/images/about.png"); //$NON-NLS-1$ //$NON-NLS-2$
-            icon = new ImageIcon(url);
-        } catch (MalformedURLException e) {
-            System.err.println("Cannot read the splash screen URL!"); //$NON-NLS-1$
+        URL url = null;
+        if (logoPath != null) {
+            try {
+                url = new URL(logoPath + "/about.png");
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+        if (url == null) {
             icon = new Icon() {
 
                 @Override
@@ -112,6 +117,8 @@ public class WebStartLoader {
                     return 75;
                 }
             };
+        } else {
+            icon = new ImageIcon(url);
         }
         JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER); //$NON-NLS-1$
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$

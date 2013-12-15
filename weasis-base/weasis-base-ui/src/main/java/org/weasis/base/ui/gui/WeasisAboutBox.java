@@ -21,7 +21,6 @@ import java.util.Enumeration;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -38,6 +37,7 @@ import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.SimpleTableModel;
 
 public class WeasisAboutBox extends JDialog implements java.awt.event.ActionListener {
@@ -118,8 +118,8 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         message.append("</div>"); //$NON-NLS-1$
         jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
-        // TODO allow to change the splash screen
-        jLabel1.setIcon(new ImageIcon(getClass().getResource("/about.png"))); //$NON-NLS-1$
+
+        jLabel1.setIcon(ResourceUtil.getLargeLogo()); //$NON-NLS-1$
         jPanel3.setLayout(borderLayout3);
 
         jTabbedPane1.add(jPanel3, this.getTitle()); //$NON-NLS-1$

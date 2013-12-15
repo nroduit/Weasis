@@ -73,6 +73,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -150,7 +151,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
         this.setTitle(AbstractProperties.WEASIS_NAME
             + " v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
-        this.setIconImage(new ImageIcon(UIManager.class.getResource("/icon/logo-button.png")).getImage()); //$NON-NLS-1$
+        ImageIcon icon = ResourceUtil.getIconLogo64();
+        if (icon != null) {
+            this.setIconImage(icon.getImage()); //$NON-NLS-1$
+        }
     }
 
     public static WeasisWin getInstance() {
@@ -642,7 +646,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             return;
         }
         ViewerPlugin oldPlugin = selectedPlugin;
-        if(selectedPlugin != null){
+        if (selectedPlugin != null) {
             selectedPlugin.setSelected(false);
         }
         selectedPlugin = plugin;

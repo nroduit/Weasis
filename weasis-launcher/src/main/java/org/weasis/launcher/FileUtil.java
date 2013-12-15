@@ -15,6 +15,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.Properties;
 
 import javax.imageio.stream.ImageInputStream;
@@ -93,6 +96,39 @@ public class FileUtil {
                 e.printStackTrace();
             } finally {
                 FileUtil.safeClose(fout);
+            }
+        }
+    }
+
+    public static void writeFile(InputStream inputStream, OutputStream out) {
+        if (inputStream == null || out == null) {
+            return;
+        }
+        try {
+            byte[] buf = new byte[4096];
+            int offset;
+            while ((offset = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+            }
+            out.flush();
+        } catch (IOException e) {
+            System.err.println("Error when writing file"); //$NON-NLS-1$
+        }
+
+        finally {
+            FileUtil.safeClose(inputStream);
+            FileUtil.safeClose(out);
+        }
+    }
+
+    public static void writeLogoFiles(String srcPath, String outputDir) {
+        String[] files = { "about.png", "logo-button.png" };
+        for (String lf : files) {
+            try {
+                URL url = new URL(srcPath + "/" + lf);
+                writeFile(url.openStream(), new FileOutputStream(new File(outputDir, lf)));
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
             }
         }
     }
