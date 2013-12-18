@@ -135,7 +135,7 @@
 					<xsd:attribute name="severity" type="errorSeverity" />
 				</xsd:complexType>
 			</xsd:element>
-			<xsd:element name="Patient" type="Patient" minOccurs="1" maxOccurs="unbounded"/>
+			<xsd:element name="Patient" type="Patient" minOccurs="0" maxOccurs="unbounded"/>
 		</xsd:sequence>
 		<xsd:attribute name="wadoURL" type="xsd:anyURI" use="required"/>
 		<xsd:attribute name="webLogin" type="xsd:string"/>
