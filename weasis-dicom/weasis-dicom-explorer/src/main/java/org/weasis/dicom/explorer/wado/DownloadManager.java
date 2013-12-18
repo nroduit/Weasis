@@ -168,8 +168,8 @@ public class DownloadManager {
                                             String httpkey = getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                                             String httpvalue = getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                                             wadoParameters.addHttpTag(httpkey, httpvalue);
-                                            // <error> tag
-                                        } else if ("error".equals(xmler.getName().getLocalPart())) {
+                                            // <Message> tag
+                                        } else if ("Message".equals(xmler.getName().getLocalPart())) {
                                             final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                                             final String desc = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                                             if (StringUtil.hasText(title) && StringUtil.hasText(desc)) {
@@ -259,6 +259,7 @@ public class DownloadManager {
         String name =
             DicomMediaUtils.buildPatientName(getTagAttribute(xmler, TagW.PatientName.getTagName(),
                 DicomMediaIO.NO_VALUE));
+
         String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name, null);
 
         MediaSeriesGroup patient = model.getHierarchyNode(TreeModel.rootNode, patientPseudoUID);
