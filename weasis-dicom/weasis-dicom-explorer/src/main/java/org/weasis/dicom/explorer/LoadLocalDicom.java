@@ -92,7 +92,7 @@ public class LoadLocalDicom extends ExplorerTask {
                 }
             } else {
                 if (file[i].canRead()) {
-                    if (FileUtil.isFielExtensionMatching(file[i], DicomCodec.FILE_EXTENSIONS)
+                    if (FileUtil.isFileExtensionMatching(file[i], DicomCodec.FILE_EXTENSIONS)
                         || MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.isReadableDicom()) {

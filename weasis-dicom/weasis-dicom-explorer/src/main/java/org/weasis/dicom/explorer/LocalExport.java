@@ -244,7 +244,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (saveFile) {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
-            FileFormatFilter.creatOneFilter(fileChooser, "zip", "ZIP", false);
+            FileFormatFilter filter = new FileFormatFilter("zip", "ZIP");
+            fileChooser.addChoosableFileFilter(filter);
+            fileChooser.setFileFilter(filter);
         } else {
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         }

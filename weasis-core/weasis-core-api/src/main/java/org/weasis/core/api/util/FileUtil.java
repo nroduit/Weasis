@@ -267,7 +267,7 @@ public final class FileUtil {
         return ""; //$NON-NLS-1$
     }
 
-    public static boolean isFielExtensionMatching(File file, String[] extensions) {
+    public static boolean isFileExtensionMatching(File file, String[] extensions) {
         if (file != null && extensions != null) {
             String fileExt = getExtension(file.getName());
             if (StringUtil.hasLength(fileExt)) {

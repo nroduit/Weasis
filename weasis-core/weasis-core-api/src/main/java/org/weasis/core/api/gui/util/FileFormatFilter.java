@@ -12,14 +12,14 @@ package org.weasis.core.api.gui.util;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -33,22 +33,22 @@ import com.sun.media.jai.codec.ImageCodec;
  */
 public class FileFormatFilter extends FileFilter {
 
-    private final Map fExtensions;
+    private final Map<String, FileFormatFilter> fExtensions;
     private String fDescription;
     private String fFullDescription;
     private String fDefaultExtension;
     private boolean fUseExtensionsInDescription;
-    protected static Map sExtToCodec;
+    protected static Map<String, String> sExtToCodec;
     static {
         // extension alternatives : more than one is separated by comma
-        sExtToCodec = new HashMap();
+        sExtToCodec = new HashMap<String, String>();
         sExtToCodec.put("jpg,jpe", "jpeg"); //$NON-NLS-1$ //$NON-NLS-2$
         sExtToCodec.put("tif", "tiff"); //$NON-NLS-1$ //$NON-NLS-2$
         sExtToCodec.put("pbm,ppm,pgm", "pnm"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public FileFormatFilter(String extension, String description) {
-        fExtensions = new TreeMap();
+        fExtensions = new TreeMap<String, FileFormatFilter>();
         fDescription = null;
         fFullDescription = null;
         fDefaultExtension = null;
@@ -66,7 +66,7 @@ public class FileFormatFilter extends FileFilter {
     }
 
     public FileFormatFilter(String filters[], String description) {
-        fExtensions = new TreeMap();
+        fExtensions = new TreeMap<String, FileFormatFilter>();
         fDescription = null;
         fFullDescription = null;
         fDefaultExtension = null;
@@ -123,13 +123,13 @@ public class FileFormatFilter extends FileFilter {
         if (fFullDescription == null) {
             if (fDescription == null || isExtensionListInDescription()) {
                 fFullDescription = fDescription != null ? fDescription + " (" : "("; //$NON-NLS-1$ //$NON-NLS-2$
-                Collection extensions = fExtensions.keySet();
-                Iterator it = extensions.iterator();
+                Set<String> extensions = fExtensions.keySet();
+                Iterator<String> it = extensions.iterator();
                 if (it.hasNext()) {
-                    fFullDescription += "*." + (String) it.next(); //$NON-NLS-1$
+                    fFullDescription += "*." + it.next(); //$NON-NLS-1$
                 }
                 while (it.hasNext()) {
-                    fFullDescription += ", *." + (String) it.next(); //$NON-NLS-1$
+                    fFullDescription += ", *." + it.next(); //$NON-NLS-1$
                 }
                 fFullDescription += ")"; //$NON-NLS-1$
             } else {
@@ -154,40 +154,37 @@ public class FileFormatFilter extends FileFilter {
     }
 
     public static void setImageDecodeFilters(JFileChooser chooser) {
-        // get the current available codecs in jai lib
-        Enumeration codecs = ImageCodec.getCodecs();
+        // Get the current available codecs from ImageIO.
+        Enumeration<?> codecs = ImageCodec.getCodecs();
         ArrayList<String> namesList = new ArrayList<String>(20);
         ImageCodec ic;
         for (; codecs.hasMoreElements(); namesList.add(ic.getFormatName())) {
             ic = (ImageCodec) codecs.nextElement();
         }
         Collections.sort(namesList);
-        Iterator it = namesList.iterator();
+        Iterator<String> it = namesList.iterator();
         String desc = "All supported files"; //$NON-NLS-1$
-        Vector names = new Vector();
+        ArrayList<String> names = new ArrayList<String>();
         do {
             if (!it.hasNext()) {
                 break;
             }
-            String name = (String) it.next();
-            names.addElement(name);
+            String name = it.next();
+            names.add(name);
             String altExt = getAlternateExtension(name);
             if (altExt != null) {
                 if (altExt.indexOf(",") != -1) { //$NON-NLS-1$
                     String[] tab = altExt.split(","); //$NON-NLS-1$
                     for (int i = 0; i < tab.length; i++) {
-                        names.addElement(tab[i]);
+                        names.add(tab[i]);
                     }
                 } else {
-                    names.addElement(altExt);
+                    names.add(altExt);
                 }
             }
         } while (true);
-        String[] list = new String[names.size()];
-        for (int i = 0; i < names.size(); i++) {
-            list[i] = (String) names.elementAt(i);
-        }
-        FileFormatFilter allfilter = new FileFormatFilter(list, desc);
+
+        FileFormatFilter allfilter = new FileFormatFilter(names.toArray(new String[names.size()]), desc);
         allfilter.setFFullDescription(desc);
         chooser.addChoosableFileFilter(allfilter);
         it = namesList.iterator();
@@ -195,7 +192,7 @@ public class FileFormatFilter extends FileFilter {
             if (!it.hasNext()) {
                 break;
             }
-            String name = (String) it.next();
+            String name = it.next();
             desc = name.toUpperCase();
             FileFormatFilter filter = new FileFormatFilter(name, desc);
             String altExt = getAlternateExtension(name);
@@ -211,47 +208,19 @@ public class FileFormatFilter extends FileFilter {
             }
             chooser.addChoosableFileFilter(filter);
         } while (true);
-        // ajoute à la fin tous les fichiers
+        // Add All filter
         chooser.setAcceptAllFileFilterUsed(true);
-        // filtre par défaut, tous les types d'image
+        // Set default selected filter
         chooser.setFileFilter(allfilter);
     }
 
-    public static void creatOneFilter(JFileChooser chooser, String name, String desc, boolean allfiles) {
-        FileFormatFilter filter = new FileFormatFilter(name, desc);
-        chooser.addChoosableFileFilter(filter);
-        if (allfiles) {
-            // ajoute à la fin tous les fichiers
-            chooser.setAcceptAllFileFilterUsed(true);
-        }
-        chooser.setFileFilter(filter);
-    }
-
-    public static synchronized void setTifFilters(JFileChooser chooser, boolean allfiles) {
-        String name = "tif"; //$NON-NLS-1$
-        String desc = "Tiled TIFF"; //$NON-NLS-1$
-        creatOneFilter(chooser, name, desc, allfiles);
-    }
-
-    public static synchronized void setJpgFilters(JFileChooser chooser, boolean allfiles) {
-        String name = "jpg"; //$NON-NLS-1$
-        String desc = "JPEG"; //$NON-NLS-1$
-        creatOneFilter(chooser, name, desc, allfiles);
-    }
-
-    public static synchronized void setPngFilters(JFileChooser chooser, boolean allfiles) {
-        String name = "png"; //$NON-NLS-1$
-        String desc = "PNG"; //$NON-NLS-1$
-        creatOneFilter(chooser, name, desc, allfiles);
-    }
-
     public static String getAlternateExtension(String codecName) {
-        Collection maps = sExtToCodec.entrySet();
-        for (Iterator it = maps.iterator(); it.hasNext();) {
-            java.util.Map.Entry me = (java.util.Map.Entry) it.next();
-            String value = (String) me.getValue();
+        Set<Entry<String, String>> maps = sExtToCodec.entrySet();
+        for (Iterator<Entry<String, String>> it = maps.iterator(); it.hasNext();) {
+            Entry<String, String> me = it.next();
+            String value = me.getValue();
             if (value.equals(codecName)) {
-                return (String) me.getKey();
+                return me.getKey();
             }
         }
         return null;
