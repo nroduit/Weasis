@@ -118,7 +118,7 @@ public class Tree<T> {
             value[i] = ' ';
         }
         String inc = new String(value);
-        StringBuffer s = new StringBuffer(inc + head);
+        StringBuilder s = new StringBuilder(inc + head);
         for (Tree<T> child : leafs) {
             s.append("\n"); //$NON-NLS-1$
             s.append(child.printTree(increment + 2));

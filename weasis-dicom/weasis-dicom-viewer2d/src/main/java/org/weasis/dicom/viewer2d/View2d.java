@@ -1179,7 +1179,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imgLayer) {
         DicomImageElement dicom = imgLayer.getSourceImage();
-        StringBuffer message = new StringBuffer(" "); //$NON-NLS-1$
+        StringBuilder message = new StringBuilder(" "); //$NON-NLS-1$
         if (dicom != null && imgLayer.getReadIterator() != null) {
             RenderedImage image = imgLayer.getSourceRenderedImage();
             Point realPoint =

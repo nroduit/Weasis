@@ -95,7 +95,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             p.setAlignmentX(Component.LEFT_ALIGNMENT);
             p.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
 
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append(i + 1);
             buf.append(". ");
             buf.append("Monitor");
@@ -319,7 +319,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                         "To obtain a correct real zoom factor, make sure that the size of \nthe two white lines must match exactly with the real measurement",
                         "Spatial calibration", JOptionPane.WARNING_MESSAGE);
 
-                StringBuffer buf = new StringBuffer("screen.");
+                StringBuilder buf = new StringBuilder("screen.");
                 buf.append(monitor.getMonitorID());
                 Rectangle b = monitor.getBounds();
                 buf.append(".");

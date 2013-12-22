@@ -272,7 +272,7 @@ public abstract class GeometryOfVolume {
      */
     @Override
     public final String toString() {
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
         for (int f = 0; f < frames.length; ++f) {
             str.append("["); //$NON-NLS-1$
             str.append(f);

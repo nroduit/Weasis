@@ -359,7 +359,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     studyUID = (String) study.getTagValue(TagW.StudyInstanceUID);
                     seriesUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
                 }
-                StringBuffer request = new StringBuffer(wado.getWadoURL());
+                StringBuilder request = new StringBuilder(wado.getWadoURL());
                 if (instance.getDirectDownloadFile() == null) {
                     request.append("?requestType=WADO&studyUID="); //$NON-NLS-1$
                     request.append(studyUID);
@@ -806,7 +806,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
         private String replaceToDefaultTSUID(URL url) {
             String old = url.toString();
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             int start = old.indexOf("&transferSyntax="); //$NON-NLS-1$
             if (start != -1) {
                 int end = old.indexOf("&", start + 16); //$NON-NLS-1$

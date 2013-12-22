@@ -92,7 +92,7 @@ public class MeasureDialog extends PropertiesDialog {
                 panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15), new TitledBorder(null, "Text",
                     TitledBorder.LEADING, TitledBorder.TOP, null, null)));
                 panel.setPreferredSize(new Dimension(400, 140));
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 String[] labels = ((AnnotationGraphic) graphic).labelStringArray;
                 for (String s : labels) {
                     buf.append(s);

@@ -157,7 +157,7 @@ public abstract class ImageOrientation {
      * @return the string describing the orientation of the vector
      */
     public static final String makePatientOrientationFromPatientRelativeDirectionCosine(double x, double y, double z) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         String orientationX = x < 0 ? "R" : "L"; //$NON-NLS-1$ //$NON-NLS-2$
         String orientationY = y < 0 ? "A" : "P"; //$NON-NLS-1$ //$NON-NLS-2$

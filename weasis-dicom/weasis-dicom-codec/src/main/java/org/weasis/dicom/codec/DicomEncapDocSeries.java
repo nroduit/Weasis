@@ -84,7 +84,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
     @Override
     public String getToolTips() {
-        StringBuffer toolTips = new StringBuffer();
+        StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagW.PatientName); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagW.Modality); //$NON-NLS-1$

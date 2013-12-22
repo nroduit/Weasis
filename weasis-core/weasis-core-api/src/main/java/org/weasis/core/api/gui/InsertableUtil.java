@@ -104,7 +104,7 @@ public class InsertableUtil {
         if (props != null && bundleName != null && className != null && key != null) {
             for (String bundle : new String[] { bundleName, ALL_BUNDLE }) {
                 for (String cl : new String[] { className, ALL }) {
-                    StringBuffer buf = new StringBuffer(bundle);
+                    StringBuilder buf = new StringBuilder(bundle);
                     buf.append('.');
                     buf.append(cl);
                     buf.append('.');
@@ -130,7 +130,7 @@ public class InsertableUtil {
         if (props != null && bundleName != null && className != null && key != null) {
             for (String bundle : new String[] { bundleName, ALL_BUNDLE }) {
                 for (String cl : new String[] { className, ALL }) {
-                    StringBuffer buf = new StringBuffer(bundle);
+                    StringBuilder buf = new StringBuilder(bundle);
                     buf.append('.');
                     buf.append(cl);
                     buf.append('.');

@@ -501,7 +501,7 @@ public class MagicMimeEntry {
      * NOTE: not all regular escape sequences are added yet. add them, if you don't find one here
      */
     private static String stringWithEscapeSubstitutions(String s) {
-        StringBuffer ret = new StringBuffer();
+        StringBuilder ret = new StringBuilder();
         int len = s.length();
         int indx = 0;
         int c;

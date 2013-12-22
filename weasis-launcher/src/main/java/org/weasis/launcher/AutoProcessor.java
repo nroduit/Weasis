@@ -395,7 +395,7 @@ public class AutoProcessor {
         if (WeasisLauncher.modulesi18n != null) {
             // Version v = b.getVersion();
             if (b != null) {
-                StringBuffer p = new StringBuffer(b.getSymbolicName());
+                StringBuilder p = new StringBuilder(b.getSymbolicName());
                 p.append("-i18n-"); //$NON-NLS-1$
                 // From 1.1.0, i18n module can be plugged in any version. The SVN revision (the qualifier)
                 // will update the version.
@@ -453,7 +453,7 @@ public class AutoProcessor {
 
         if (st.countTokens() > 0) {
             String tokenList = "\" "; //$NON-NLS-1$
-            StringBuffer tokBuf = new StringBuffer(10);
+            StringBuilder tokBuf = new StringBuilder(10);
             String tok = null;
             boolean inQuote = false;
             boolean tokStarted = false;
@@ -472,7 +472,7 @@ public class AutoProcessor {
                     if (tokStarted) {
                         retVal = tokBuf.toString();
                         tokStarted = false;
-                        tokBuf = new StringBuffer(10);
+                        tokBuf = new StringBuilder(10);
                         exit = true;
                     }
                 } else {

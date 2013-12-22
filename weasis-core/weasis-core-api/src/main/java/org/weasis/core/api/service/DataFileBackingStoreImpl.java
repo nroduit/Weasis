@@ -43,7 +43,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     public DataFileBackingStoreImpl(BundleContext context) {
         super(context);
         this.context = context;
-        StringBuffer bufDir = new StringBuffer(AbstractProperties.WEASIS_PATH);
+        StringBuilder bufDir = new StringBuilder(AbstractProperties.WEASIS_PATH);
         bufDir.append(File.separator);
         bufDir.append("preferences");
         bufDir.append(File.separator);

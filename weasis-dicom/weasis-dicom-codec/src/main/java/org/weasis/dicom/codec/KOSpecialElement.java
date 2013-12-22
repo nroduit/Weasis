@@ -39,7 +39,7 @@ public class KOSpecialElement extends DicomSpecialElement {
          * 
          * Concept Name Code Sequence: mandatory when type is CONTAINER or the root content item.
          */
-        StringBuffer buf = new StringBuffer(getLabelPrefix());
+        StringBuilder buf = new StringBuilder(getLabelPrefix());
 
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
         Attributes item = dicom.getNestedDataset(Tag.ContentSequence);

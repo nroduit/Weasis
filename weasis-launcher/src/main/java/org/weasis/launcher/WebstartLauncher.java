@@ -38,7 +38,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         // org.weasis.imageio.codec.internal.Activator.java
         IIORegistry registry = IIORegistry.getDefaultInstance();
         Iterator<Class<?>> categories = registry.getCategories();
-        ArrayList toRemove = new ArrayList();
+        ArrayList<Object> toRemove = new ArrayList<Object>();
         while (categories.hasNext()) {
             Class<?> class1 = categories.next();
             Iterator<?> providers = registry.getServiceProviders(class1, false);
@@ -85,11 +85,11 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                         m_tracker.open();
                         Object commandSession = getCommandSession(m_tracker.getService());
                         if (commandSession != null) {
-                            List<StringBuffer> commandList = splitCommand(argv);
+                            List<StringBuilder> commandList = splitCommand(argv);
                             // Set the main window visible and to the front
                             commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$
                             // execute the commands from main argv
-                            for (StringBuffer command : commandList) {
+                            for (StringBuilder command : commandList) {
                                 commandSession_execute(commandSession, command);
                             }
                             commandSession_close(commandSession);

@@ -423,7 +423,7 @@ public class TagW implements Transferable, Serializable {
             }
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
-            StringBuffer s = new StringBuffer();
+            StringBuilder s = new StringBuilder();
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {
@@ -433,7 +433,7 @@ public class TagW implements Transferable, Serializable {
             str = s.toString();
         } else if (value instanceof double[]) {
             double[] array = (double[]) value;
-            StringBuffer s = new StringBuffer();
+            StringBuilder s = new StringBuilder();
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {
@@ -443,7 +443,7 @@ public class TagW implements Transferable, Serializable {
             str = s.toString();
         } else if (value instanceof int[]) {
             int[] array = (int[]) value;
-            StringBuffer s = new StringBuffer();
+            StringBuilder s = new StringBuilder();
             for (int i = 0; i < array.length; i++) {
                 s.append(array[i]);
                 if (i < array.length - 1) {

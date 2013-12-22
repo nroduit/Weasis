@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
-import java.awt.Container;
 import java.util.List;
 
 import javax.jnlp.ServiceManager;
@@ -35,7 +34,6 @@ public class AppletLauncher extends JApplet implements SingleInstanceListener {
 
     @Override
     public void init() {
-        Container content = getContentPane();
         try {
             WeasisLauncher.launch(new String[] {});
         } catch (Exception e) {
@@ -43,6 +41,7 @@ public class AppletLauncher extends JApplet implements SingleInstanceListener {
         }
     }
 
+    @Override
     public void newActivation(String[] argv) {
         ServiceTracker m_tracker = WeasisLauncher.m_tracker;
         if (m_tracker != null) {
@@ -50,13 +49,13 @@ public class AppletLauncher extends JApplet implements SingleInstanceListener {
                 m_tracker.open();
                 Object commandSession = WeasisLauncher.getCommandSession(m_tracker.getService());
                 System.out.println("New Activation: Session" + commandSession); //$NON-NLS-1$
-                List<StringBuffer> commandList = WeasisLauncher.splitCommand(argv);
+                List<StringBuilder> commandList = WeasisLauncher.splitCommand(argv);
                 System.out.println("New Activation: command List" + commandList); //$NON-NLS-1$
                 if (commandSession != null) {
                     // Set the main window visible and to the front
                     WeasisLauncher.commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$
                     // execute the commands from main argv
-                    for (StringBuffer command : commandList) {
+                    for (StringBuilder command : commandList) {
                         WeasisLauncher.commandSession_execute(commandSession, command);
                     }
                     WeasisLauncher.commandSession_close(commandSession);

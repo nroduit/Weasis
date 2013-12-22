@@ -61,7 +61,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     public void updateSliderProoperties(JSliderW slider) {
         JPanel panel = (JPanel) slider.getParent();
         int rate = getCurrentCineRate();
-        StringBuffer buffer = new StringBuffer(Messages.getString("SliderCineListener.img")); //$NON-NLS-1$
+        StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img")); //$NON-NLS-1$
         buffer.append(' ');
         buffer.append(getValueToDisplay());
 

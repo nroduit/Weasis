@@ -177,7 +177,7 @@ public class GridBagLayoutModel implements GUIEntry, Cloneable {
         private int increment = 0;
 
         private int tag = -1;
-        private StringBuffer name = new StringBuffer(80);
+        private StringBuilder name = new StringBuilder(80);
 
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {

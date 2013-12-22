@@ -112,7 +112,7 @@ public class SRReader {
         return null;
     }
 
-    public void readDocumentGeneralModule(StringBuffer html, Map<String, SRImageReference> map) {
+    public void readDocumentGeneralModule(StringBuilder html, Map<String, SRImageReference> map) {
         if (dcmItems != null) {
             SRDocumentContentModule content = new SRDocumentContentModule(dcmItems);
             addCodeMeaning(html, content.getConceptNameCode(), "<h1>", "</h1>");
@@ -203,7 +203,7 @@ public class SRReader {
         }
     }
 
-    private void convertContentToHTML(StringBuffer html, SRDocumentContent c, boolean continuous, boolean noCodeName,
+    private void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous, boolean noCodeName,
         Map<String, SRImageReference> map, String level) {
         if (c != null) {
             html.append("<A name=\"");
@@ -322,7 +322,7 @@ public class SRReader {
             int[] refs = c.getReferencedContentItemIdentifier();
             if (refs != null) {
                 html.append("Content Item by reference: ");
-                StringBuffer r = new StringBuffer();
+                StringBuilder r = new StringBuilder();
                 for (int j = 0; j < refs.length - 1; j++) {
                     r.append(refs[j]);
                     r.append('.');
@@ -342,7 +342,7 @@ public class SRReader {
         }
     }
 
-    private void addContent(StringBuffer html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
+    private void addContent(StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
         Sequence cts = c.getContent();
         if (cts != null) {
             boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent());
@@ -368,7 +368,7 @@ public class SRReader {
         }
     }
 
-    private void addCodeMeaning(StringBuffer html, Code code, String startTag, String endTag) {
+    private void addCodeMeaning(StringBuilder html, Code code, String startTag, String endTag) {
         if (code != null) {
             if (startTag != null) {
                 html.append(startTag);
@@ -380,7 +380,7 @@ public class SRReader {
         }
     }
 
-    private void convertTextToHTML(StringBuffer html, String text) {
+    private void convertTextToHTML(StringBuilder html, String text) {
         if (text != null) {
             String[] lines = EscapeChars.convertToLines(text);
             if (lines.length > 0) {
@@ -393,7 +393,7 @@ public class SRReader {
         }
     }
 
-    private void writeItem(TagW tag, StringBuffer html) {
+    private void writeItem(TagW tag, StringBuilder html) {
         if (tag != null && html != null) {
             html.append("<B>");
             html.append(tag.toString());
@@ -408,7 +408,7 @@ public class SRReader {
         }
     }
 
-    private void writeItem(String tagName, int tag, StringBuffer html) {
+    private void writeItem(String tagName, int tag, StringBuilder html) {
         if (tagName != null && html != null && dcmItems != null) {
             html.append("<B>");
             html.append(tagName);
@@ -420,7 +420,7 @@ public class SRReader {
         }
     }
 
-    private void writeVerifyingObservers(StringBuffer html) {
+    private void writeVerifyingObservers(StringBuilder html) {
         if (html != null && dcmItems != null) {
             Sequence seq = dcmItems.getSequence(Tag.VerifyingObserverSequence);
             if (seq != null && !seq.isEmpty()) {

@@ -410,7 +410,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             for (int i = 0; i < labels.length; i++) {
                 MeasureItem m = measList.get(i);
                 Object[] row = new Object[2];
-                StringBuffer buffer = new StringBuffer(m.getMeasurement().getName());
+                StringBuilder buffer = new StringBuilder(m.getMeasurement().getName());
                 if (m.getLabelExtension() != null) {
                     buffer.append(m.getLabelExtension());
                 }

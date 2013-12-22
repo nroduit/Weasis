@@ -341,7 +341,7 @@ public final class FileUtil {
     }
 
     public static String formatSize(double size) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (size >= GB) {
             buf.append(DEC_FORMAT.format(size / GB));
             buf.append(' ');

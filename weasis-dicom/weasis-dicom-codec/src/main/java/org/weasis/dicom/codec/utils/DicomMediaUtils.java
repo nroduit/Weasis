@@ -643,7 +643,7 @@ public class DicomMediaUtils {
          * or Hanga) representation and then a phonetic representation (Hiragana or Hangul). These are separated by ‘=’
          * (0x3d) characters.
          */
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String[] names = name.split("=");
         for (int k = 0; k < names.length; k++) {
             if (k > 0) {
@@ -685,7 +685,7 @@ public class DicomMediaUtils {
          * Creator).
          */
         // Build a global identifier for the patient.
-        StringBuffer buffer = new StringBuffer(patientID == null ? DicomMediaIO.NO_VALUE : patientID);
+        StringBuilder buffer = new StringBuilder(patientID == null ? DicomMediaIO.NO_VALUE : patientID);
         if (issuerOfPatientID != null && !"".equals(issuerOfPatientID.trim())) { //$NON-NLS-1$
             // patientID + issuerOfPatientID => should be unique globally
             buffer.append(issuerOfPatientID);

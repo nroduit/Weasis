@@ -101,7 +101,7 @@ public abstract class AbstractProperties {
 
     public static File buildAccessibleTempDirectory(String... subFolderName) {
         if (subFolderName != null) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (String s : subFolderName) {
                 buf.append(s);
                 buf.append(File.separator);
@@ -206,11 +206,11 @@ public abstract class AbstractProperties {
         }
         char[] c = retStr.toCharArray();
         String[] val = new String[3];
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0, k = 0; i < c.length; i++) {
             if (c[i] == '_') {
                 val[k] = buffer.toString();
-                buffer = new StringBuffer();
+                buffer = new StringBuilder();
                 k++;
             } else {
                 buffer.append(c[i]);
@@ -285,7 +285,7 @@ public abstract class AbstractProperties {
     }
 
     protected static String boolToText(boolean[] value) {
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
         for (int i = 0; i < value.length; i++) {
             str.append(value[i] ? 'Y' : 'N');
         }

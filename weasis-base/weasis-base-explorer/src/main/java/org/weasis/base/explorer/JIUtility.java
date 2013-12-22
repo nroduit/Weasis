@@ -52,7 +52,7 @@ public final class JIUtility {
 
     public static String portablePath(final String path) {
 
-        final StringBuffer result = new StringBuffer();
+        final StringBuilder result = new StringBuilder();
         // startIdx and idxOld delimit various chunks of aInput; these
         // chunks always end where aOldPattern begins
         int startIdx = 0;
@@ -76,7 +76,7 @@ public final class JIUtility {
     public static String systemPath(final String path) {
 
         if (File.separator.equals("\\")) {
-            final StringBuffer result = new StringBuffer();
+            final StringBuilder result = new StringBuilder();
             // startIdx and idxOld delimit various chunks of aInput; these
             // chunks always end where aOldPattern begins
             int startIdx = 0;
@@ -167,7 +167,7 @@ public final class JIUtility {
 
     public static String getNumericPaddedString(final int value, final int radix, final int padding) {
         final String str = Integer.toString(value, radix);
-        final StringBuffer strBuf = new StringBuffer();
+        final StringBuilder strBuf = new StringBuilder();
 
         while ((padding > str.length()) && (strBuf.length() < (padding - str.length()))) {
             strBuf.append("0");

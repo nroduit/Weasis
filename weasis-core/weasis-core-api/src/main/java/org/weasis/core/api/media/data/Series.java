@@ -344,7 +344,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
 
     @Override
     public String getToolTips() {
-        StringBuffer toolTips = new StringBuffer();
+        StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
 
         // int seqSize = this.getLoadSeries() == null ? this.size() :
@@ -368,7 +368,7 @@ public abstract class Series<E extends MediaElement<?>> extends MediaSeriesGroup
         return toolTips.toString();
     }
 
-    protected void addToolTipsElement(StringBuffer toolTips, String title, TagW tag) {
+    protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag) {
         Object tagValue = getTagValue(tag);
         toolTips.append(title);
         toolTips.append(' ');

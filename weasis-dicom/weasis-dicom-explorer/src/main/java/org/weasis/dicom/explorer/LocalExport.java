@@ -355,7 +355,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     DicomImageElement img = (DicomImageElement) node.getUserObject();
                     // Get instance number instead SOPInstanceUID to handle multiframe
                     String instance = getinstanceFileName(img);
-                    StringBuffer buffer = new StringBuffer();
+                    StringBuilder buffer = new StringBuilder();
                     if (keepNames) {
                         TreeNode[] objects = node.getPath();
                         if (objects.length > 3) {
@@ -542,7 +542,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String buildPath(MediaElement<PlanarImage> img, boolean keepNames, boolean writeDicomdir,
         boolean cdCompatible, DefaultMutableTreeNode node, String iuid) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         // Cannot keep folders names with DICOMDIR (could be not valid)
         if (keepNames && !writeDicomdir) {
             TreeNode[] objects = node.getPath();

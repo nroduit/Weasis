@@ -122,7 +122,7 @@ public class ViewSetting {
             }
 
             Monitor monitor = new Monitor(gd[i]);
-            StringBuffer buf = new StringBuffer("screen.");
+            StringBuilder buf = new StringBuilder("screen.");
             buf.append(monitor.getMonitorID());
             Rectangle b = monitor.getBounds();
             buf.append(".");
@@ -140,7 +140,7 @@ public class ViewSetting {
         return "1".equals(val.trim()); //$NON-NLS-1$
     }
 
-    private void writeLabels(StringBuffer buffer, Measurement m) {
+    private void writeLabels(StringBuilder buffer, Measurement m) {
         buffer.append(m.getId());
         buffer.append(":"); //$NON-NLS-1$
         buffer.append((m.isGraphicLabel() ? "1" : "0")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -162,7 +162,7 @@ public class ViewSetting {
             Preferences stats = p.node("statistics"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); //$NON-NLS-1$
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[0]);
             for (int i = 1; i < ImageStatistics.ALL_MEASUREMENTS.length; i++) {
                 buffer.append(","); //$NON-NLS-1$
@@ -176,7 +176,7 @@ public class ViewSetting {
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && list.size() > 0) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
-                    buffer = new StringBuffer();
+                    buffer = new StringBuilder();
                     writeLabels(buffer, list.get(0));
                     for (int j = 1; j < list.size(); j++) {
                         buffer.append(","); //$NON-NLS-1$

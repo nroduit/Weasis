@@ -232,7 +232,7 @@ public class InfoLayer implements AnnotationsLayer {
             if ("01".equals(dcm.getTagValue(TagW.LossyImageCompression))) {
                 double[] rates = (double[]) dcm.getTagValue(TagW.LossyImageCompressionRatio);
                 String[] methods = (String[]) dcm.getTagValue(TagW.LossyImageCompressionMethod);
-                StringBuffer buf = new StringBuffer(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
+                StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
                 if (rates != null && rates.length > 0) {
                     if (methods != null && methods.length > 0) {
                         buf.append(methods[0]);
@@ -374,7 +374,7 @@ public class InfoLayer implements AnnotationsLayer {
             double[] v = (double[]) dcm.getTagValue(TagW.ImageOrientationPatient);
             Integer rows = (Integer) dcm.getTagValue(TagW.Rows);
             Integer columns = (Integer) dcm.getTagValue(TagW.Columns);
-            StringBuffer orientation = new StringBuffer(mod.name());
+            StringBuilder orientation = new StringBuilder(mod.name());
             if (rows != null && columns != null) {
                 orientation.append(" (");//$NON-NLS-1$ 
                 orientation.append(dcm.getTagValue(TagW.Columns));
@@ -430,13 +430,13 @@ public class InfoLayer implements AnnotationsLayer {
                     if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                         colLeft = po[0];
                     } else {
-                        StringBuffer buf = new StringBuffer();
+                        StringBuilder buf = new StringBuilder();
                         for (char c : po[0].toCharArray()) {
                             buf.append(getImageOrientationOposite(c));
                         }
                         colLeft = buf.toString();
                     }
-                    StringBuffer buf = new StringBuffer();
+                    StringBuilder buf = new StringBuilder();
                     for (char c : po[1].toCharArray()) {
                         buf.append(getImageOrientationOposite(c));
                     }

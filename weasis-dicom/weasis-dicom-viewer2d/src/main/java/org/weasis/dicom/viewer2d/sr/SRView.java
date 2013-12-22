@@ -128,7 +128,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
     private void displayLimitedDicomInfo(DicomSpecialElement media) {
 
-        StringBuffer html = new StringBuffer();
+        StringBuilder html = new StringBuilder();
         if (media != null) {
             SRReader reader = new SRReader(series, media);
             map.clear();

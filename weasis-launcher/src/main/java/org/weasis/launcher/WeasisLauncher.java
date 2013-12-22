@@ -222,13 +222,13 @@ public class WeasisLauncher {
             }
         }
 
-        final List<StringBuffer> commandList = splitCommand(argv);
+        final List<StringBuilder> commandList = splitCommand(argv);
         // Look for bundle directory and/or cache directory.
         // We support at most one argument, which is the bundle
         // cache directory.
         String bundleDir = null;
         String cacheDir = null;
-        for (StringBuffer c : commandList) {
+        for (StringBuilder c : commandList) {
             String command = c.toString();
             if (command.startsWith("felix")) { //$NON-NLS-1$
                 String[] params = command.split(" "); //$NON-NLS-1$
@@ -375,7 +375,7 @@ public class WeasisLauncher {
                     Object commandSession = getCommandSession(m_tracker.getService());
                     if (commandSession != null) {
                         // execute the commands from main argv
-                        for (StringBuffer command : commandList) {
+                        for (StringBuilder command : commandList) {
                             commandSession_execute(commandSession, command);
                         }
                         commandSession_close(commandSession);
@@ -433,12 +433,12 @@ public class WeasisLauncher {
         return String.valueOf(ch8);
     }
 
-    public static List<StringBuffer> splitCommand(String[] args) {
+    public static List<StringBuilder> splitCommand(String[] args) {
         int length = args.length;
-        ArrayList<StringBuffer> list = new ArrayList<StringBuffer>(5);
+        ArrayList<StringBuilder> list = new ArrayList<StringBuilder>(5);
         for (int i = 0; i < length; i++) {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
-                StringBuffer command = new StringBuffer(args[i].substring(1));
+                StringBuilder command = new StringBuilder(args[i].substring(1));
                 // look for parameters
                 while (i + 1 < length && !args[i + 1].startsWith("$") && !args[i + 1].startsWith("-VMP")) { //$NON-NLS-1$ //$NON-NLS-2$
                     i++;
@@ -454,7 +454,7 @@ public class WeasisLauncher {
                 list.add(command);
             }
         }
-        // for (StringBuffer stringBuffer : list) {
+        // for (StringBuilder stringBuffer : list) {
         // System.out.println("Command:" + stringBuffer);
         // }
         return list;
@@ -715,7 +715,7 @@ public class WeasisLauncher {
             user = System.getProperty("user.name", "local"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         System.setProperty("weasis.user", user); //$NON-NLS-1$
-        StringBuffer bufDir = new StringBuffer(dir);
+        StringBuilder bufDir = new StringBuilder(dir);
         bufDir.append(File.separator);
         bufDir.append("preferences"); //$NON-NLS-1$
         bufDir.append(File.separator);
@@ -965,7 +965,7 @@ public class WeasisLauncher {
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             String val = getGeneralProperty("weasis.show.release", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
-                final StringBuffer message = new StringBuffer("<P>"); //$NON-NLS-1$
+                final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
                 message
                     .append(String.format(
                         Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$ //$NON-NLS-2$

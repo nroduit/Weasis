@@ -38,7 +38,7 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     protected String getLabelPrefix() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         String modality = (String) getTagValue(TagW.Modality);
         if (modality != null) {
             buf.append(modality);
@@ -54,7 +54,7 @@ public class DicomSpecialElement extends MediaElement {
     }
 
     protected void iniLabel() {
-        StringBuffer buf = new StringBuffer(getLabelPrefix());
+        StringBuilder buf = new StringBuilder(getLabelPrefix());
         String desc = (String) getTagValue(TagW.SeriesDescription);
         if (desc != null) {
             buf.append(desc);

@@ -496,7 +496,7 @@ public class GeometryOfSlice {
         double[] dimensionsArray = new double[3];
         dimensions.get(dimensionsArray);
 
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
         str.append("Row ("); //$NON-NLS-1$
         str.append(rowArray[0]);
         str.append(","); //$NON-NLS-1$
@@ -548,7 +548,7 @@ public class GeometryOfSlice {
      *         orthogonal axes, or empty string (not null) if fails
      */
     public static final String getOrientation(double orientation[]) {
-        StringBuffer strbuf = new StringBuffer();
+        StringBuilder strbuf = new StringBuilder();
         if (orientation != null && orientation.length == 3) {
             char orientationX = orientation[0] < 0 ? 'R' : 'L';
             char orientationY = orientation[1] < 0 ? 'A' : 'P';

@@ -304,7 +304,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     private String getInstalledLanguages() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         String langs = System.getProperty("weasis.languages", null); //$NON-NLS-1$
         if (langs != null) {
             String[] items = langs.split(","); //$NON-NLS-1$

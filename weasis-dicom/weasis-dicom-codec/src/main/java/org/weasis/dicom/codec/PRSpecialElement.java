@@ -36,7 +36,7 @@ public class PRSpecialElement extends DicomSpecialElement {
         if (clabel == null) {
             super.iniLabel();
         } else {
-            StringBuffer buf = new StringBuffer(getLabelPrefix());
+            StringBuilder buf = new StringBuilder(getLabelPrefix());
             buf.append(clabel);
             label = buf.toString();
         }

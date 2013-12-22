@@ -1390,7 +1390,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void synch(String[] argv) throws IOException {
-        StringBuffer buffer = new StringBuffer("{"); //$NON-NLS-1$
+        StringBuilder buffer = new StringBuilder("{"); //$NON-NLS-1$
         for (SynchView synch : View2dContainer.SYNCH_LIST) {
             buffer.append(synch.getCommand());
             buffer.append(" "); //$NON-NLS-1$

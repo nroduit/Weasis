@@ -280,7 +280,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public String getPixelInfo(Point p, RenderedImageLayer<E> imageLayer) {
         ImageElement imageElement = imageLayer.getSourceImage();
-        StringBuffer message = new StringBuffer(" "); //$NON-NLS-1$
+        StringBuilder message = new StringBuilder(" "); //$NON-NLS-1$
         if (imageElement != null && imageLayer.getReadIterator() != null) {
             PlanarImage image = imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
             Point realPoint =
@@ -519,7 +519,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
                     if (image != null) {
-                        StringBuffer pixSize = new StringBuffer();
+                        StringBuilder pixSize = new StringBuilder();
                         SampleModel sm = image.getSampleModel();
                         if (sm != null) {
                             int[] spsize = sm.getSampleSize();

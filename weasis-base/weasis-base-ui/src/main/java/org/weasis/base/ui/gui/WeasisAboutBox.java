@@ -103,7 +103,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
 
         jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
-        final StringBuffer message = new StringBuffer("<div align=\"center\"><H2>"); //$NON-NLS-1$
+        final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
         message.append(AbstractProperties.WEASIS_NAME); //$NON-NLS-1$
         message.append(" "); //$NON-NLS-1$
         message.append(AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$

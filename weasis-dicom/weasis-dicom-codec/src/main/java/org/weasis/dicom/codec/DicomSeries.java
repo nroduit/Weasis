@@ -90,7 +90,7 @@ public class DicomSeries extends Series<DicomImageElement> {
 
     @Override
     public String getToolTips() {
-        StringBuffer toolTips = new StringBuffer();
+        StringBuilder toolTips = new StringBuilder();
         toolTips.append("<html>"); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagW.PatientName); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagW.Modality); //$NON-NLS-1$

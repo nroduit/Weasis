@@ -90,7 +90,7 @@ public class CheckTreeModel {
                                     public String toString() {
                                         DicomImageElement d = (DicomImageElement) getUserObject();
                                         Integer val = (Integer) d.getTagValue(TagW.InstanceNumber);
-                                        StringBuffer buffer = new StringBuffer();
+                                        StringBuilder buffer = new StringBuilder();
                                         if (val != null) {
                                             buffer.append("["); //$NON-NLS-1$
                                             buffer.append(val);
@@ -135,7 +135,7 @@ public class CheckTreeModel {
                     if (path != null) {
                         url = path.toURI().toURL();
                         if (url != null) {
-                            StringBuffer buf = new StringBuffer();
+                            StringBuilder buf = new StringBuilder();
                             buf.append("<html>");
                             buf.append("<img src=\"");
                             buf.append(url.toString());
@@ -159,7 +159,7 @@ public class CheckTreeModel {
         @Override
         public String toString() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             String modality = (String) s.getTagValue(TagW.Modality);
             if (modality != null) {
                 buf.append(modality);

@@ -42,7 +42,7 @@ public class BundleTools {
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
     static {
-        StringBuffer bufDir = new StringBuffer(AbstractProperties.WEASIS_PATH);
+        StringBuilder bufDir = new StringBuilder(AbstractProperties.WEASIS_PATH);
         bufDir.append(File.separator);
         bufDir.append("preferences");
         bufDir.append(File.separator);

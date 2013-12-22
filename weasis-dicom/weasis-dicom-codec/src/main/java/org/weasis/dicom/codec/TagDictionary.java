@@ -78,7 +78,7 @@ public class TagDictionary {
     private final class SAXAdapter extends DefaultHandler {
 
         int tag = -1;
-        StringBuffer name = new StringBuffer(80);
+        StringBuilder name = new StringBuilder(80);
         String vr = null;
         String vm = null;
         String format = null;
