@@ -114,8 +114,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
                 // }
                 // }
                 // }
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), getActionW().cmd(),
-                    mediaEvent));
+
+                firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
                 if (image != null) {
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));

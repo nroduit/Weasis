@@ -25,20 +25,10 @@ public class SimpleOpManager implements OpManager {
 
     private final HashMap<String, ImageOpNode> nodes;
     private final List<ImageOpNode> operations;
-    private boolean enabled;
 
     public SimpleOpManager() {
         this.operations = new ArrayList<ImageOpNode>();
         this.nodes = new HashMap<String, ImageOpNode>();
-        this.enabled = true;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     public List<ImageOpNode> getOperations() {
@@ -167,6 +157,8 @@ public class SimpleOpManager implements OpManager {
                     op.setParam(ImageOpNode.OUTPUT_IMG, op.getParam(ImageOpNode.INPUT_IMG));
                 }
             }
+        } else {
+            clearNodeIOCache();
         }
         return getLastNodeOutputImage();
     }

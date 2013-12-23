@@ -186,7 +186,8 @@ public class ImageFiler extends AbstractBufferHandler {
             param.setWriteTiled(true);
             param.setTileSize(TILESIZE, TILESIZE);
         }
-        if (ImageUtil.isBinary(source.getSampleModel())) {
+        boolean binary = ImageUtil.isBinary(source.getSampleModel());
+        if (binary) {
             param.setCompression(TIFFEncodeParam.COMPRESSION_GROUP4);
         } else if (jpegCompression) {
             param.setCompression(TIFFEncodeParam.COMPRESSION_JPEG_TTN2);
@@ -223,10 +224,12 @@ public class ImageFiler extends AbstractBufferHandler {
                 .add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AbstractProperties.WEASIS_NAME }));
             param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
 
-            ArrayList list = new ArrayList();
-            list.add(Thumbnail.createThumbnail(getReadableImage(source)));
-
-            param.setExtraImages(list.iterator());
+            if (!binary) {
+                // Doesn't support bilevel image (or binary to grayscale).
+                ArrayList<RenderedImage> list = new ArrayList<RenderedImage>();
+                list.add(Thumbnail.createThumbnail(source));
+                param.setExtraImages(list.iterator());
+            }
         }
 
         ImageEncoder enc = ImageCodec.createImageEncoder("TIFF", os, param);

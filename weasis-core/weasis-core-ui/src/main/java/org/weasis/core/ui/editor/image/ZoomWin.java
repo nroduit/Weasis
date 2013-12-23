@@ -323,7 +323,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
             actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
             super.zoom(getCenterX(), getCenterY(), Math.abs(viewScale));
-            imageLayer.updateAllImageOperations();
+            imageLayer.updateDisplayOperations();
             updateAffineTransform();
         }
     }
@@ -359,7 +359,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
             freezeOperations = null;
             this.type = SYNCH_TYPE.None;
         }
-        imageLayer.updateAllImageOperations();
+        imageLayer.updateDisplayOperations();
     }
 
     RenderedImage freezeParentImage() {

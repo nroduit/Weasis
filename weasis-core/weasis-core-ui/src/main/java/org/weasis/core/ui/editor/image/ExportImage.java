@@ -44,6 +44,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
         this.view2d = view2d;
         // No need to have random pixel iterator
         this.imageLayer.setBuildIterator(false);
+        // Remove OpEventListener to avoid reseting some parameters when setting the series
+        this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
         setFont(FontTools.getFont8());
         this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
         infoLayer.setVisible(view2d.getInfoLayer().isVisible());
@@ -81,14 +83,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d {
             new Point2D.Double(view2d.viewToModelX(viewFullImg.getX() - canvas.getX() + (viewFullImg.getWidth() - 1)
                 * 0.5), view2d.viewToModelY(viewFullImg.getY() - canvas.getY() + (viewFullImg.getHeight() - 1) * 0.5));
         actionsInView.put("origin.center", p); //$NON-NLS-1$
-
-        setSeries(view2d.getSeries(), view2d.getImage());
-
-        // Restore previous W/L that is reset to default in setSeries()
-        actionsInView.put(ActionW.LUT_SHAPE.cmd(), view2d.getActionValue(ActionW.LUT_SHAPE.cmd()));
-        actionsInView.put(ActionW.WINDOW.cmd(), view2d.getActionValue(ActionW.WINDOW.cmd()));
-        actionsInView.put(ActionW.LEVEL.cmd(), view2d.getActionValue(ActionW.LEVEL.cmd()));
-        imageLayer.updateAllImageOperations();
+        // Do not use setSeries() because the view will be reset
+        this.series = view2d.getSeries();
+        setImage(view2d.getImage());
     }
 
     @Override

@@ -6,19 +6,19 @@ import java.awt.Rectangle;
 
 public class Monitor {
     private final GraphicsDevice graphicsDevice;
-    private double pitch;
+    private double realScaleFactor;
 
     public Monitor(GraphicsDevice graphicsDevice) {
-        this.pitch = 0.0;
+        this.realScaleFactor = 0.0;
         this.graphicsDevice = graphicsDevice;
     }
 
-    public double getPitch() {
-        return pitch;
+    public synchronized double getRealScaleFactor() {
+        return realScaleFactor;
     }
 
-    public void setPitch(double realScaleFactor) {
-        this.pitch = realScaleFactor;
+    public synchronized void setRealScaleFactor(double realScaleFactor) {
+        this.realScaleFactor = realScaleFactor;
     }
 
     public String getMonitorID() {

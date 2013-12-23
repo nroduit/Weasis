@@ -33,9 +33,10 @@ import org.weasis.core.api.gui.model.ViewModelChangeListener;
 public class GraphicsPane extends JComponent {
 
     protected AbstractLayerModel layerModel;
-    private final LayerModelHandler layerModelHandler;
     private ViewModel viewModel;
-    private final ViewModelHandler viewModelHandler;
+
+    protected final LayerModelHandler layerModelHandler;
+    protected final ViewModelHandler viewModelHandler;
     protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
     protected final HashMap<String, Object> actionsInView = new HashMap<String, Object>();
     protected final AffineTransform affineTransform = new AffineTransform();

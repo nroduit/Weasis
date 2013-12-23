@@ -55,6 +55,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     private boolean buildIterator = false;
     private RenderedImage displayImage;
     private boolean visible = true;
+    private boolean enableDispOperations = true;
 
     public RenderedImageLayer(boolean buildIterator) {
         this(null, buildIterator);
@@ -108,8 +109,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
     }
 
     public void setPreprocessing(OpManager preprocessing) {
-        this.preprocessing = preprocessing;
-        fireImageChanged();
+        setImage(sourceImage, preprocessing);
     }
 
     @Override
@@ -119,11 +119,10 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         this.preprocessing = preprocessing;
         if (init) {
             disOpManager.setFirstNode(getSourceRenderedImage());
-            displayImage = disOpManager.process();
-            fireImageChanged();
+            updateDisplayOperations();
         } else if (image == null) {
-            displayImage = null;
-            fireImageChanged();
+            disOpManager.setFirstNode(null);
+            updateDisplayOperations();
         }
     }
 
@@ -222,14 +221,27 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
     }
 
-    public void updateAllImageOperations() {
-        displayImage = disOpManager.process();
-        fireImageChanged();
+    public void updateDisplayOperations() {
+        if (isEnableDispOperations()) {
+            displayImage = disOpManager.process();
+            fireImageChanged();
+        }
     }
 
     @Override
     public SimpleOpManager getDisplayOpManager() {
         return disOpManager;
+    }
+
+    public synchronized boolean isEnableDispOperations() {
+        return enableDispOperations;
+    }
+
+    public synchronized void setEnableDispOperations(boolean enabled) {
+        this.enableDispOperations = enabled;
+        if (enabled) {
+            updateDisplayOperations();
+        }
     }
 
     @Override

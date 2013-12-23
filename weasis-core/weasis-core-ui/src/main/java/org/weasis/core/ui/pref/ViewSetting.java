@@ -110,6 +110,15 @@ public class ViewSetting {
         return new ArrayList<Monitor>(monitors);
     }
 
+    public Monitor getMonitor(GraphicsDevice device) {
+        for (Monitor m : monitors) {
+            if (m.getGraphicsDevice() == device) {
+                return m;
+            }
+        }
+        return null;
+    }
+
     public void initMonitors() {
         monitors.clear();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -131,7 +140,7 @@ public class ViewSetting {
             buf.append(b.height);
             buf.append(".pitch");
             double pitch = BundleTools.LOCAL_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
-            monitor.setPitch(pitch);
+            monitor.setRealScaleFactor(pitch);
             monitors.add(monitor);
         }
     }

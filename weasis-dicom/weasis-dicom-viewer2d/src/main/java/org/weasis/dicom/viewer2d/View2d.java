@@ -213,10 +213,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             @Override
             public void componentResized(ComponentEvent e) {
                 Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                // Resize in best fit window only if the previous value is also a best fit value.
+                /*
+                 * Negative value means a default value according to the zoom type (pixel size, best fit...). Set again
+                 * to default value to compute again the position. For instance, the image cannot be center aligned
+                 * until the view has been repaint once (because the size is null).
+                 */
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
-                    center();
                 }
                 if (panner != null) {
                     panner.updateImageSize();
@@ -333,7 +336,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             node.setParam(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
                             node.setParam(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
                         }
-                        imageLayer.updateAllImageOperations();
+                        imageLayer.updateDisplayOperations();
                     }
                 } else if (command.equals(ActionW.DEFAULT_PRESET.cmd())) {
                     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), val);
@@ -342,7 +345,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     if (node != null) {
                         node.setParam(ActionW.LUT_SHAPE.cmd(), val);
                     }
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                 } else if (command.equals(ActionW.SORTSTACK.cmd())) {
                     actionsInView.put(ActionW.SORTSTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
@@ -411,11 +414,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
         } else if (name.equals(ActionW.IMAGE_SHUTTER.cmd())) {
             if (disOp.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_SHOW, evt.getNewValue())) {
-                imageLayer.updateAllImageOperations();
+                imageLayer.updateDisplayOperations();
             }
         } else if (name.equals(ActionW.IMAGE_OVERLAY.cmd())) {
             if (disOp.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, evt.getNewValue())) {
-                imageLayer.updateAllImageOperations();
+                imageLayer.updateDisplayOperations();
             }
         }
     }
@@ -486,7 +489,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         DicomImageElement m = getImage();
         // Reset display parameter
-        imageLayer.getDisplayOpManager().setEnabled(false);
+        imageLayer.setEnableDispOperations(false);
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, m, null));
 
         if (m != null) {
@@ -542,9 +545,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
-        imageLayer.getDisplayOpManager().setEnabled(true);
-        imageLayer.updateAllImageOperations();
-        resetZoom();
+        // resetZoom();
+        imageLayer.setEnableDispOperations(true);
         eventManager.updateComponentsListener(this);
     }
 
@@ -619,7 +621,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.CROP.cmd(), area);
         actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
         double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
-        actionsInView.put(ActionW.ZOOM.cmd(), zoom == 0.0 ? -getBestFitViewScale() : zoom);
+        actionsInView.put(ActionW.ZOOM.cmd(), zoom);
 
     }
 

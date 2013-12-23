@@ -799,8 +799,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(),
                 true));
         } else if (ResetTools.Zoom.equals(action)) {
-            // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
-            // value is adjusted by the BoundedRangeModel
+            // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
+            // otherwise the value is adjusted by the BoundedRangeModel
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
 
@@ -1163,7 +1163,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             {
                 "Change the zoom value of the selected image (0.0 is the best fit value in the window", //$NON-NLS-1$
                 "Usage: dcmview2d:zoom [set | increase | decrease] [VALUE]", //$NON-NLS-1$
-                "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 is the best fit in window value)", //$NON-NLS-1$
+                "  -s --set [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 => default, -200.0 => best fit, -100.0 => real size)", //$NON-NLS-1$
                 "  -i --increase [integer value]  increase of some amount", //$NON-NLS-1$
                 "  -d --decrease [integer value]  decrease of some amount", //$NON-NLS-1$
                 "  -? --help       show help" }; //$NON-NLS-1$ 
@@ -1188,9 +1188,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         zoomAction.setValue(zoomAction.getValue() - val);
                     } else if (opt.isSet("set")) { //$NON-NLS-1$
                         double val = Double.parseDouble(args.get(0));
-                        if (val == 0.0) {
+                        if (val <= 0.0) {
                             firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(),
-                                ActionW.ZOOM.cmd(), 0.0));
+                                ActionW.ZOOM.cmd(), val));
                         } else {
                             zoomAction.setValue(viewScaleToSliderValue(val));
                         }

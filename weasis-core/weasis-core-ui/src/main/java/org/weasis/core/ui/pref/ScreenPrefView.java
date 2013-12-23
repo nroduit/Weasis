@@ -107,11 +107,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             buf.append(mb.height);
             final String title = buf.toString();
 
-            if (monitor.getPitch() > 0) {
+            if (monitor.getRealScaleFactor() > 0) {
                 buf.append(" ");
-                buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
+                buf.append((int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append("x");
-                buf.append((int) Math.round(mb.height * Unit.MILLIMETER.getConversionRatio(monitor.getPitch())));
+                buf.append((int) Math.round(mb.height
+                    * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
                 buf.append(" ");
                 buf.append(Unit.MILLIMETER.getAbbreviation());
             }
@@ -216,12 +217,14 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             verticalLength = yv2 - yv1;
             g2d.drawLine(xv1, yv1, xv2, yv2);
 
-            if (monitor.getPitch() > 0) {
+            if (monitor.getRealScaleFactor() > 0) {
                 String hlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch()) * horizontalLength)
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
+                        * horizontalLength)
                         + " " + Unit.MILLIMETER.getAbbreviation();
                 String vlength =
-                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getPitch()) * verticalLength)
+                    DecFormater.oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
+                        * verticalLength)
                         + " " + Unit.MILLIMETER.getAbbreviation();
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);
@@ -290,26 +293,26 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             if (object instanceof Long) {
                 double val = ((Long) object).doubleValue();
                 if (val <= 0) {
-                    monitor.setPitch(0.0);
+                    monitor.setRealScaleFactor(0.0);
                 } else {
                     Unit unit = (Unit) jComboBoxUnit.getSelectedItem();
                     int index = jComboBoxType.getSelectedIndex();
                     if (index == 0) {
                         int lineLength = cross.getHorizontalLength();
                         if (lineLength > 100) {
-                            monitor.setPitch(unit.getConvFactor() * val / lineLength);
+                            monitor.setRealScaleFactor(unit.getConvFactor() * val / lineLength);
                         }
                     } else if (index == 1) {
                         int lineLength = cross.getVerticalLength();
                         if (lineLength > 100) {
-                            monitor.setPitch(unit.getConvFactor() * val / lineLength);
+                            monitor.setRealScaleFactor(unit.getConvFactor() * val / lineLength);
                         }
                     } else if (index == 2) {
                         Rectangle bound = monitor.getBounds();
                         double w = bound.getWidth() * bound.getWidth();
                         double h = bound.getHeight() * bound.getHeight();
                         double realHeight = Math.sqrt(val * val * h / (w + h));
-                        monitor.setPitch(unit.getConvFactor() * realHeight / bound.getHeight());
+                        monitor.setRealScaleFactor(unit.getConvFactor() * realHeight / bound.getHeight());
                     }
                 }
                 cross.repaint();
@@ -327,7 +330,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 buf.append("x");
                 buf.append(b.height);
                 buf.append(".pitch");
-                BundleTools.LOCAL_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getPitch());
+                BundleTools.LOCAL_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
             }
         }
 

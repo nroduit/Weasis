@@ -49,9 +49,9 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
-import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
@@ -117,10 +117,13 @@ public class View2d extends DefaultView2d<ImageElement> {
             @Override
             public void componentResized(ComponentEvent e) {
                 Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-                // Resize in best fit window only if the previous value is also a best fit value.
+                /*
+                 * Negative value means a default value according to the zoom type (pixel size, best fit...). Set again
+                 * to default value to compute again the position. For instance, the image cannot be center aligned
+                 * until the view has been repaint once (because the size is null).
+                 */
                 if (currentZoom <= 0.0) {
                     zoom(0.0);
-                    center();
                 }
                 if (panner != null) {
                     panner.updateImageSize();
@@ -150,7 +153,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     @Override
     protected void initActionWState() {
         super.initActionWState();
-        actionsInView.put(ActionW.ZOOM.cmd(), 1.0);
+        actionsInView.put(ActionW.ZOOM.cmd(), -1.0);
         actionsInView.put(DefaultView2d.zoomTypeCmd, ZoomType.PIXEL_SIZE);
     }
 

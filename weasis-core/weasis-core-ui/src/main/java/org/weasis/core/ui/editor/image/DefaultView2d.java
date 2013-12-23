@@ -18,6 +18,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
@@ -26,6 +27,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -77,6 +79,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -116,6 +119,7 @@ import org.weasis.core.ui.graphic.model.AbstractLayerModel;
 import org.weasis.core.ui.graphic.model.DefaultViewModel;
 import org.weasis.core.ui.graphic.model.GraphicList;
 import org.weasis.core.ui.graphic.model.GraphicsPane;
+import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 
@@ -459,7 +463,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void setImage(E img) {
-        imageLayer.getDisplayOpManager().setEnabled(false);
+        imageLayer.setEnableDispOperations(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
             imageLayer.setImage(null, null);
@@ -480,7 +484,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
                 resetZoom();
-                imageLayer.getDisplayOpManager().setEnabled(true);
+                // Update zoom operation to the current image (Reset update to the previous one)
+                ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+                if (node != null) {
+                    double viewScale = getViewModel().getViewScale();
+                    node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
+                    node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
+                }
                 imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
                 ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
@@ -536,12 +546,39 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
             }
+            imageLayer.setEnableDispOperations(true);
         }
     }
 
     @Override
     public double getBestFitViewScale() {
-        double viewScale = super.getBestFitViewScale();
+        return adjustViewScale(super.getBestFitViewScale());
+    }
+
+    public double getRealWorldViewScale() {
+        double viewScale = 0.0;
+        E img = getImage();
+        if (img != null) {
+            Window win = WinUtil.getParentDialogOrFrame(this);
+            if (win != null) {
+                GraphicsConfiguration config = win.getGraphicsConfiguration();
+                Monitor monitor = MeasureTool.viewSetting.getMonitor(config.getDevice());
+                if (monitor != null) {
+                    double realFactor = monitor.getRealScaleFactor();
+                    if (realFactor > 0.0) {
+                        Unit imgUnit = img.getPixelSpacingUnit();
+                        if (!Unit.PIXEL.equals(imgUnit)) {
+                            viewScale = img.getPixelSize() / imgUnit.getConversionRatio(realFactor);
+                            viewScale = -adjustViewScale(viewScale);
+                        }
+                    }
+                }
+            }
+        }
+        return viewScale;
+    }
+
+    protected double adjustViewScale(double viewScale) {
         ActionState zoom = eventManager.getAction(ActionW.ZOOM);
         if (zoom instanceof SliderChangeListener) {
             SliderChangeListener z = (SliderChangeListener) zoom;
@@ -753,24 +790,39 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void zoom(double viewScale) {
-        if (viewScale == 0.0) {
-            viewScale = -getBestFitViewScale();
+        boolean defSize = viewScale == 0.0;
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (defSize) {
+            if (ZoomType.BEST_FIT.equals(type)) {
+                viewScale = -getBestFitViewScale();
+            } else if (ZoomType.REAL.equals(type)) {
+                viewScale = -getRealWorldViewScale();
+            }
+
+            if (viewScale == 0.0) {
+                viewScale = -1.0;
+            }
+        }
+
+        actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
+        super.zoom(Math.abs(viewScale));
+        if (defSize) {
+            /*
+             * If the view has not been repainted once (the width and the height of the view is 0), it will be done
+             * later and the componentResized event will call again the zoom.
+             */
+            center();
+        }
+        updateAffineTransform();
+        if (panner != null) {
+            panner.updateImageSize();
         }
         ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         E img = getImage();
         if (img != null && node != null) {
             node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
             node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
-
-            actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
-            super.zoom(Math.abs(viewScale));
-            if (JMVUtils.getNULLtoTrue(actionsInView.get("op.update"))) {
-                imageLayer.updateAllImageOperations();
-            }
-            updateAffineTransform();
-            if (panner != null) {
-                panner.updateImageSize();
-            }
+            imageLayer.updateDisplayOperations();
         }
     }
 
@@ -838,7 +890,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 lens.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
                 lens.updateZoom();
             }
-            imageLayer.updateAllImageOperations();
+            imageLayer.updateDisplayOperations();
         }
     }
 
@@ -914,11 +966,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
         } else if (command.equals(ActionW.IMAGE_PIX_PADDING.cmd())) {
             if (manager.setParamValue(WindowOp.OP_NAME, command, evt.getNewValue())) {
-                imageLayer.updateAllImageOperations();
+                imageLayer.updateDisplayOperations();
             }
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
             actionsInView.put(command, evt.getNewValue());
-            imageLayer.updateAllImageOperations();
+            imageLayer.updateDisplayOperations();
         }
     }
 
@@ -937,17 +989,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
                 if (manager.setParamValue(WindowOp.OP_NAME, command, ((Integer) entry.getValue()).floatValue())) {
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.ROTATION.cmd())) {
                 if (manager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, entry.getValue())) {
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                     updateAffineTransform();
                 }
             } else if (command.equals(ActionW.RESET.cmd())) {
                 reset();
             } else if (command.equals(ActionW.ZOOM.cmd())) {
-                zoom((Double) entry.getValue());
+                double val = (Double) entry.getValue();
+                // Special Cases: -200.0 => best fit, -100.0 => real world size
+                if (val != -200.0 && val != -100.0) {
+                    zoom(val);
+                } else {
+                    Object zoomType = actionsInView.get(DefaultView2d.zoomTypeCmd);
+                    actionsInView.put(DefaultView2d.zoomTypeCmd, val == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    zoom(0.0);
+                    actionsInView.put(DefaultView2d.zoomTypeCmd, zoomType);
+                }
             } else if (command.equals(ActionW.LENSZOOM.cmd())) {
                 if (lens != null) {
                     lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
@@ -986,22 +1047,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.FLIP.cmd())) {
                 // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
                 if (manager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, entry.getValue())) {
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                     updateAffineTransform();
                 }
             } else if (command.equals(ActionW.LUT.cmd())) {
                 if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.INVERSELUT.cmd())) {
                 if (manager.setParamValue(WindowOp.OP_NAME, command, entry.getValue())) {
                     manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, entry.getValue());
                     // Update VOI LUT if pixel padding
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.FILTER.cmd())) {
                 if (manager.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, entry.getValue())) {
-                    imageLayer.updateAllImageOperations();
+                    imageLayer.updateDisplayOperations();
                 }
             } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
                 actionsInView.put(command, entry.getValue());
@@ -1611,25 +1672,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public void resetZoom() {
         ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
         if (!ZoomType.CURRENT.equals(type)) {
-            if (ZoomType.BEST_FIT.equals(type)) {
-                zoom(-getBestFitViewScale());
-                center();
-            } else {
-                zoom(1.0);
-            }
+            zoom(0.0);
         }
     }
 
     public void resetPan() {
-        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
-        if (ZoomType.BEST_FIT.equals(type)) {
-            center();
-        } else {
-            setOrigin(0, 0);
-        }
+        center();
     }
 
     public void reset() {
+        imageLayer.setEnableDispOperations(false);
         ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
         if (pane != null) {
             pane.resetMaximizedSelectedImagePane(this);
@@ -1637,11 +1689,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         initActionWState();
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, getImage(), null));
-        imageLayer.updateAllImageOperations();
-        // TODO should throw only image process
-        // imageLayer.getDisplayOpManager().setEnabled(true);
         resetZoom();
         resetPan();
+        imageLayer.setEnableDispOperations(true);
         eventManager.updateComponentsListener(this);
     }
 

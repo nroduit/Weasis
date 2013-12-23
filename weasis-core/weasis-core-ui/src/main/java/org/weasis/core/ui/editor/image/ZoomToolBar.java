@@ -46,18 +46,37 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Pass the value 0.0 (convention: best fit zoom value) directly to the property change, otherwise the
+                // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the property change,
+                // otherwise the
                 // value is adjusted by the BoundedRangeModel
-                eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
-                    new SynchEvent(null, ActionW.ZOOM.cmd(), 0.0));
-                AuditLog.LOGGER.info("action:{} val:0.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
+                eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(null, ActionW.ZOOM.cmd(),
+                    -200.0));
+                AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
             }
         });
         add(jButtonBestFit);
+        // TODO add real size button (option in pref)
+        // final JButton jButtonRealSize =
+        //            new JButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-bestfit.png"))); //$NON-NLS-1$
+        //        jButtonRealSize.setToolTipText(Messages.getString("ViewerToolBar.zoom_b")); //$NON-NLS-1$
+        // jButtonRealSize.addActionListener(new ActionListener() {
+        //
+        // @Override
+        // public void actionPerformed(ActionEvent e) {
+        // // Pass the value -100.0 (convention: -100.0 => real world size) directly to the property change, otherwise
+        // the
+        // // value is adjusted by the BoundedRangeModel
+        // eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(null, ActionW.ZOOM.cmd(),
+        // -100.0));
+        //                AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
+        // }
+        // });
+        // add(jButtonRealSize);
         ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
         if (zoomAction != null) {
             zoomAction.registerActionState(jButtonActualZoom);
             zoomAction.registerActionState(jButtonBestFit);
+            // zoomAction.registerActionState(jButtonRealSize);
         }
 
         final JToggleButton jButtonLens =

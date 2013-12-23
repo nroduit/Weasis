@@ -33,6 +33,10 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
+        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
+        if (dataFolder != null) {
+            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
+        }
         MeasureTool.viewSetting.initMonitors();
         MeasureTool.viewSetting.applyPreferences(BundlePreferences.getDefaultPreferences(bundleContext));
 
@@ -58,10 +62,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
         bundleContext.addServiceListener(this,
             String.format("(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()));//$NON-NLS-1$
-        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
-        if (dataFolder != null) {
-            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
-        }
     }
 
     @Override
