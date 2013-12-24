@@ -16,8 +16,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.image.RenderedImage;
 
-import javax.media.jai.PlanarImage;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
 import javax.swing.JPanel;
@@ -34,8 +34,8 @@ public class PickerView extends JPanel {
     private int nbBand;
     private RectIter rectIter;
     private final PickerOwner pickerOwner;
-    private PlanarImage imageView;
-    private PlanarImage imageData;
+    private RenderedImage imageView;
+    private RenderedImage imageData;
 
     public PickerView(PickerOwner pickerOwner) {
         this.pickerOwner = pickerOwner;
@@ -130,11 +130,11 @@ public class PickerView extends JPanel {
         this.matrixSize = matrixSize;
     }
 
-    public void setImageView(PlanarImage imageView) {
+    public void setImageView(RenderedImage imageView) {
         this.imageView = imageView;
     }
 
-    public void setImageData(PlanarImage imageData) {
+    public void setImageData(RenderedImage imageData) {
         this.imageData = imageData;
     }
 
