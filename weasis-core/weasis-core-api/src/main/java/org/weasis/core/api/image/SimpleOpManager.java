@@ -22,13 +22,37 @@ import org.slf4j.LoggerFactory;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
+    public static final String NAME = "Image Operations";
+
+    public enum Position {
+        BEFORE, AFTER
+    }
 
     private final HashMap<String, ImageOpNode> nodes;
     private final List<ImageOpNode> operations;
+    private String name;
 
     public SimpleOpManager() {
+        this(null);
+    }
+
+    public SimpleOpManager(String name) {
         this.operations = new ArrayList<ImageOpNode>();
         this.nodes = new HashMap<String, ImageOpNode>();
+        setName(name);
+    }
+
+    public synchronized String getName() {
+        return name;
+    }
+
+    public synchronized void setName(String name) {
+        this.name = name == null ? NAME : name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public List<ImageOpNode> getOperations() {
@@ -36,19 +60,49 @@ public class SimpleOpManager implements OpManager {
     }
 
     public void addImageOperationAction(ImageOpNode action) {
+        addImageOperationAction(action, null, null);
+    }
+
+    public void addImageOperationAction(ImageOpNode action, Position pos, ImageOpNode positionRef) {
         if (action != null) {
-            operations.add(action);
-            Object name = action.getParam(ImageOpNode.NAME);
-            if (name instanceof String) {
-                nodes.put((String) name, action);
+            String title = action.getName();
+            int k = 2;
+            while (nodes.get(title) != null) {
+                title += " " + k;
+                k++;
+            }
+            if (k > 2) {
+                action.setName(title);
+                LOGGER.warn("This name already exists, rename to {}.", title);
+            }
+            nodes.put(title, action);
+            if (positionRef != null) {
+                int index = operations.indexOf(positionRef);
+                if (Position.AFTER.equals(pos)) {
+                    index++;
+                }
+                if (index >= 0) {
+                    operations.add(index, action);
+                } else {
+                    operations.add(action);
+                }
+            } else {
+                operations.add(action);
             }
         }
     }
 
     public void removeImageOperationAction(ImageOpNode action) {
         if (action != null) {
-            operations.remove(action);
-            nodes.remove(action);
+            boolean remove = operations.remove(action);
+            if (nodes.remove(action.getName()) == null && remove) {
+                for (Entry<String, ImageOpNode> entry : nodes.entrySet()) {
+                    if (entry.getValue() == action) {
+                        nodes.remove(entry.getKey());
+                        break;
+                    }
+                }
+            }
         }
     }
 

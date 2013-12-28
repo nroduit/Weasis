@@ -41,4 +41,10 @@ public interface ImageLayer<E extends ImageElement> {
     void setTransform(AffineTransform transform);
 
     SimpleOpManager getDisplayOpManager();
+
+    void updateDisplayOperations();
+
+    boolean isEnableDispOperations();
+
+    void setEnableDispOperations(boolean enabled);
 }

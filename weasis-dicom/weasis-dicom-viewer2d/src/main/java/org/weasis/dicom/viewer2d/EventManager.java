@@ -906,7 +906,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         ImageOpNode node = view2d.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
-            Boolean defaultPreset = (Boolean) node.getParam(ActionW.DEFAULT_PRESET.cmd());
+            boolean defaultPreset = JMVUtils.getNULLtoTrue(node.getParam(ActionW.DEFAULT_PRESET.cmd()));
             Float windowValue = (Float) node.getParam(ActionW.WINDOW.cmd());
             Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
             LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
@@ -919,6 +919,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             int minLevel;
             int maxLevel;
             if (preset == null) {
+                if (windowValue == null) {
+                    windowValue = (float) windowAction.getValue();
+                }
+                if (levelValue == null) {
+                    levelValue = (float) levelAction.getValue();
+                }
                 Float levelMin = (Float) node.getParam(ActionW.LEVEL_MIN.cmd());
                 Float levelMax = (Float) node.getParam(ActionW.LEVEL_MAX.cmd());
                 if (levelMin == null || levelMax == null) {

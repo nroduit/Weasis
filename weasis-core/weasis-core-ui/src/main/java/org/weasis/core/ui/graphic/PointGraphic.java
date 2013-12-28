@@ -66,6 +66,13 @@ public class PointGraphic extends BasicGraphic {
         }
     }
 
+    public Point2D getPoint() {
+        if (this.handlePointList.size() == 1) {
+            return (Point2D) this.handlePointList.get(0).clone();
+        }
+        return null;
+    }
+
     public int getPointSize() {
         return pointSize;
     }

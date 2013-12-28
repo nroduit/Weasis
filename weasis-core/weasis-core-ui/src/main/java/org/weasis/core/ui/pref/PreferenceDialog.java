@@ -10,11 +10,15 @@
  ******************************************************************************/
 package org.weasis.core.ui.pref;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import javax.swing.Box;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.osgi.framework.BundleContext;
@@ -34,6 +38,14 @@ public class PreferenceDialog extends AbstractWizardDialog {
             Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, new Dimension(700, 520)); //$NON-NLS-1$
         initializePages();
         pack();
+
+        Component horizontalStrut = Box.createHorizontalStrut(20);
+        GridBagConstraints gbc_horizontalStrut = new GridBagConstraints();
+        gbc_horizontalStrut.weightx = 1.0;
+        gbc_horizontalStrut.insets = new Insets(0, 0, 0, 5);
+        gbc_horizontalStrut.gridx = 0;
+        gbc_horizontalStrut.gridy = 0;
+        jPanelButtom.add(horizontalStrut, gbc_horizontalStrut);
         showPageFirstPage();
     }
 

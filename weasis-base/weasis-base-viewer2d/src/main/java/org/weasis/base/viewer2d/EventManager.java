@@ -393,11 +393,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (node != null) {
             Float windowValue = (Float) node.getParam(ActionW.WINDOW.cmd());
             Float levelValue = (Float) node.getParam(ActionW.LEVEL.cmd());
-            boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-            windowAction.setMinMaxValueWithoutTriggerAction(0,
-                (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)), windowValue.intValue());
-            levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
-                (int) image.getMaxValue(pixelPadding), levelValue.intValue());
+            if (windowValue != null && levelValue != null) {
+                boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                windowAction.setMinMaxValueWithoutTriggerAction(0,
+                    (int) (image.getMaxValue(pixelPadding) - image.getMinValue(pixelPadding)), windowValue.intValue());
+                levelAction.setMinMaxValueWithoutTriggerAction((int) image.getMinValue(pixelPadding),
+                    (int) image.getMaxValue(pixelPadding), levelValue.intValue());
+            }
         }
 
         lutAction.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT));

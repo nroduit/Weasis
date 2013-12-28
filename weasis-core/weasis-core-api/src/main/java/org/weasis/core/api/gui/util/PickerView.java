@@ -138,6 +138,14 @@ public class PickerView extends JPanel {
         this.imageData = imageData;
     }
 
+    public RenderedImage getImageData() {
+        return imageData;
+    }
+
+    public RenderedImage getImageView() {
+        return imageView;
+    }
+
     public void setArea(Rectangle area, boolean updateTresh) {
         this.area = area;
         try {

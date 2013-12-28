@@ -81,7 +81,7 @@ public abstract class AbstractWizardDialog extends JDialog {
         jPanelRootPanel.add(splitPane, BorderLayout.CENTER);
         jPanelMain.add(jScrollPanePage, BorderLayout.CENTER);
         jPanelRootPanel.add(jPanelButtom, BorderLayout.SOUTH);
-        jPanelButtom.add(jButtonClose, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST,
+        jPanelButtom.add(jButtonClose, new GridBagConstraints(5, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
             GridBagConstraints.NONE, new Insets(10, 10, 10, 15), 0, 0));
         jScrollPane1.setViewportView(tree);
 

@@ -221,6 +221,7 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         }
     }
 
+    @Override
     public void updateDisplayOperations() {
         if (isEnableDispOperations()) {
             displayImage = disOpManager.process();
@@ -233,10 +234,12 @@ public class RenderedImageLayer<E extends ImageElement> implements Layer, ImageL
         return disOpManager;
     }
 
+    @Override
     public synchronized boolean isEnableDispOperations() {
         return enableDispOperations;
     }
 
+    @Override
     public synchronized void setEnableDispOperations(boolean enabled) {
         this.enableDispOperations = enabled;
         if (enabled) {

@@ -13,7 +13,6 @@ package org.weasis.dicom.explorer;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,9 +37,6 @@ public class DicomImport extends AbstractWizardDialog {
         super(parent,
             Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, new Dimension(640, 480)); //$NON-NLS-1$
         this.dicomModel = dicomModel;
-        jPanelButtom.removeAll();
-        final GridBagLayout gridBagLayout = new GridBagLayout();
-        jPanelButtom.setLayout(gridBagLayout);
 
         final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
         importandClose.addActionListener(new ActionListener() {
@@ -73,15 +69,7 @@ public class DicomImport extends AbstractWizardDialog {
         gridBagConstraints_1.anchor = GridBagConstraints.EAST;
         gridBagConstraints_1.gridy = 0;
         gridBagConstraints_1.gridx = 1;
-        // gridBagConstraints_1.weightx = 1.0;
         jPanelButtom.add(importButton, gridBagConstraints_1);
-
-        jButtonClose.setText(Messages.getString("DicomExport.close")); //$NON-NLS-1$
-        final GridBagConstraints gridBagConstraints_2 = new GridBagConstraints();
-        gridBagConstraints_2.insets = new Insets(10, 15, 10, 15);
-        gridBagConstraints_2.gridy = 0;
-        gridBagConstraints_2.gridx = 2;
-        jPanelButtom.add(jButtonClose, gridBagConstraints_2);
 
         initializePages();
         pack();
