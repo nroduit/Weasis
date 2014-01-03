@@ -78,6 +78,7 @@ import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
@@ -432,11 +433,16 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                         @Override
                         public void actionPerformed(ActionEvent e) {
+                            ColorLayerUI layer =
+                                            ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
                             String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                             CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this);
                             int res =
                                 JOptionPane.showConfirmDialog(calibMenu, calibrationDialog, title,
                                     JOptionPane.OK_CANCEL_OPTION);
+                            if (layer != null) {
+                                layer.hideUI();
+                            }
                             if (res == JOptionPane.OK_OPTION) {
                                 calibrationDialog.applyNewCalibration();
                             }
@@ -452,9 +458,14 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
+                        ColorLayerUI layer =
+                            ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2d.this));
                         JDialog dialog = new MeasureDialog(View2d.this, list);
                         WinUtil.adjustLocationToFitScreen(dialog, evt.getLocationOnScreen());
                         dialog.setVisible(true);
+                        if (layer != null) {
+                            layer.hideUI();
+                        }
                     }
                 });
                 popupMenu.add(properties);

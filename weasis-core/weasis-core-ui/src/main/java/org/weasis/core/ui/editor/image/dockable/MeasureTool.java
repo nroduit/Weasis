@@ -39,6 +39,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -75,6 +76,7 @@ import org.weasis.core.ui.graphic.Measurement;
 import org.weasis.core.ui.graphic.model.GraphicsListener;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.pref.ViewSetting;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.ui.util.TableNumberRenderer;
@@ -196,7 +198,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
             public void actionPerformed(ActionEvent e) {
                 JButton button = (JButton) e.getSource();
                 Color newColor =
-                    JColorChooser.showDialog(WinUtil.getParentDialogOrFrame(MeasureTool.this),
+                    JColorChooser.showDialog(SwingUtilities.getWindowAncestor(MeasureTool.this),
                         Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
                         button.getBackground());
                 if (newColor != null) {
@@ -294,9 +296,13 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         btnGerenralOptions.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                PreferenceDialog dialog = new PreferenceDialog(WinUtil.getParentWindow(MeasureTool.this));
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MeasureTool.this));
+                PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(MeasureTool.this));
                 dialog.showPage(LABEL_PREF_NAME);
                 JMVUtils.showCenterScreen(dialog);
+                if (layer != null) {
+                    layer.hideUI();
+                }
             }
         });
         transform.add(panel_2);
@@ -328,7 +334,7 @@ public class MeasureTool extends PluginTool implements GraphicsListener {
         // @Override
         // public void actionPerformed(ActionEvent e) {
         // if (selectedGraphic != null && selectedGraphic.size() > 0) {
-        // JDialog dialog = new MeasureDialog(WinUtil.getParentWindow(MeasureTool.this), selectedGraphic);
+        // JDialog dialog = new MeasureDialog(SwingUtilities.getWindowAncestor(MeasureTool.this), selectedGraphic);
         // Point location = btnGerenralOptions.getLocation();
         // SwingUtilities.convertPointToScreen(location, btnGerenralOptions);
         // WinUtil.adjustLocationToFitScreen(dialog, location);

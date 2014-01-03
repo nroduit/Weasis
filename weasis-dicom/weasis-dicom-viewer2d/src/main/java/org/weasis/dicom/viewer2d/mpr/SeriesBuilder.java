@@ -370,7 +370,7 @@ public class SeriesBuilder {
                 DataBuffer dataBuffer = null;
                 if (dataType == DataBuffer.TYPE_BYTE) {
                     dataBuffer = new DataBufferByte(byteBuffer.array(), byteBuffer.limit());
-                } else if (dataType == DataBuffer.TYPE_SHORT) {
+                } else if (dataType <= DataBuffer.TYPE_SHORT) {
                     ShortBuffer sBuffer = byteBuffer.asShortBuffer();
                     short[] data;
                     if (sBuffer.hasArray()) {
@@ -383,7 +383,9 @@ public class SeriesBuilder {
                             }
                         }
                     }
-                    dataBuffer = new DataBufferShort(data, data.length);
+                    dataBuffer =
+                        dataType == DataBuffer.TYPE_SHORT ? new DataBufferShort(data, data.length)
+                            : new DataBufferUShort(data, data.length);
                 } else if (dataType == DataBuffer.TYPE_INT) {
                     IntBuffer sBuffer = byteBuffer.asIntBuffer();
                     int[] data;

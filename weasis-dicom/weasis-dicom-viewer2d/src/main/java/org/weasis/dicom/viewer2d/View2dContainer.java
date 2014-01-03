@@ -33,6 +33,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 
 import org.dcm4che.data.Sequence;
 import org.osgi.framework.BundleContext;
@@ -43,8 +44,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -78,6 +79,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
@@ -1006,9 +1008,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                    ColorLayerUI layer =
+                        ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2dContainer.this));
+                    Window parent = SwingUtilities.getWindowAncestor(View2dContainer.this);
                     PrintDialog dialog = new PrintDialog(parent, title, eventManager);
                     JMVUtils.showCenterScreen(dialog, parent);
+                    if (layer != null) {
+                        layer.hideUI();
+                    }
                 }
             };
         actions.add(printStd);
@@ -1018,9 +1025,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Window parent = WinUtil.getParentWindow(View2dContainer.this);
+                ColorLayerUI layer =
+                    ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(View2dContainer.this));
+                Window parent = SwingUtilities.getWindowAncestor(View2dContainer.this);
                 DicomPrintDialog dialog = new DicomPrintDialog(parent, title2, eventManager);
                 JMVUtils.showCenterScreen(dialog, parent);
+                if (layer != null) {
+                    layer.hideUI();
+                }
             }
         };
         actions.add(printStd2);

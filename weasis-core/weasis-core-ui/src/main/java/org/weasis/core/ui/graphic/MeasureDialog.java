@@ -17,11 +17,11 @@ import java.util.List;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -32,7 +32,7 @@ public class MeasureDialog extends PropertiesDialog {
     private DefaultView2d view2D;
 
     public MeasureDialog(DefaultView2d view2d, List<AbstractDragGraphic> selectedGraphic) {
-        super(WinUtil.getParentWindow(view2d), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
+        super(SwingUtilities.getWindowAncestor(view2d), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
         if (selectedGraphic == null) {
             throw new IllegalArgumentException("Selected Graphics cannot be null!"); //$NON-NLS-1$
         }

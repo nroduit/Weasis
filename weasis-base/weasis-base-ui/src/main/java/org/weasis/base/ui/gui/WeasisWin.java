@@ -84,6 +84,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 
@@ -526,7 +527,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         GraphicsDevice[] gd = ge.getScreenDevices();
         if (gd.length > 1) {
             // dockable.setExternalizable(true);
-            Rectangle bound = WinUtil.getClosedScreenBound(WinUtil.getParentFrame(this).getBounds());
+            Rectangle bound = WinUtil.getClosedScreenBound(instance.getBounds());
             // LocationHint hint =
             // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
             // DefaultDockActionSource source = new DefaultDockActionSource(hint);
@@ -774,8 +775,12 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(instance);
                 WeasisAboutBox about = new WeasisAboutBox();
                 JMVUtils.showCenterScreen(about, instance);
+                if (layer != null) {
+                    layer.hideUI();
+                }
             }
         });
         helpMenuItem.add(aboutMenuItem);

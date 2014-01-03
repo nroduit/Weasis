@@ -22,6 +22,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -30,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -62,6 +63,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
@@ -163,8 +165,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
                 String className = this.getClass().getSimpleName().toLowerCase();
-                InsertableUtil.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(),
-                    className, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, context.getBundle().getSymbolicName(), className,
+                    Type.TOOLBAR);
             }
         }
     }
@@ -495,9 +497,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    Window parent = WinUtil.getParentWindow(MPRContainer.this);
+                    ColorLayerUI layer =
+                        ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MPRContainer.this));
+                    Window parent = SwingUtilities.getWindowAncestor(MPRContainer.this);
                     PrintDialog dialog = new PrintDialog(parent, title, eventManager);
                     JMVUtils.showCenterScreen(dialog, parent);
+                    if (layer != null) {
+                        layer.hideUI();
+                    }
                 }
             };
         actions.add(printStd);
@@ -507,9 +514,13 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Window parent = WinUtil.getParentWindow(MPRContainer.this);
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(MPRContainer.this));
+                Window parent = SwingUtilities.getWindowAncestor(MPRContainer.this);
                 DicomPrintDialog dialog = new DicomPrintDialog(parent, title2, eventManager);
                 JMVUtils.showCenterScreen(dialog, parent);
+                if (layer != null) {
+                    layer.hideUI();
+                }
             }
         };
         actions.add(printStd2);

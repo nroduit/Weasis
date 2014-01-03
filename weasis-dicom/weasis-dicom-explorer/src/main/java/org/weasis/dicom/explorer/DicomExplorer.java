@@ -110,6 +110,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -273,9 +274,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
             DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
             dialog.showPage(BUTTON_NAME);
             JMVUtils.showCenterScreen(dialog);
+            if (layer != null) {
+                layer.hideUI();
+            }
         }
     };
     private final AbstractAction exportAction = new AbstractAction(BUTTON_NAME) {
@@ -283,9 +288,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         @Override
         public void actionPerformed(ActionEvent e) {
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
                 DicomExport dialog = new DicomExport(WinUtil.getParentFrame(DicomExplorer.this), model);
                 dialog.showPage(BUTTON_NAME);
                 JMVUtils.showCenterScreen(dialog);
+                if (layer != null) {
+                    layer.hideUI();
+                }
             } else {
                 JOptionPane.showMessageDialog((Component) e.getSource(),
                     Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
@@ -2027,14 +2036,19 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         int response =
                             JOptionPane
                                 .showConfirmDialog(
-                                    WinUtil.getParentWindow(DicomExplorer.this),
+                                    SwingUtilities.getWindowAncestor(DicomExplorer.this),
                                     "Cannot find DICOMDIR on media device, do you want to import manually?", (String) this.getValue(Action.NAME),//$NON-NLS-1$ 
                                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {
+                            ColorLayerUI layer =
+                                ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(DicomExplorer.this));
                             DicomImport dialog = new DicomImport(WinUtil.getParentFrame(DicomExplorer.this), model);
                             dialog.showPage(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
                             JMVUtils.showCenterScreen(dialog);
+                            if (layer != null) {
+                                layer.hideUI();
+                            }
                         }
                     } else {
                         DicomDirImport.loadDicomDir(file, model);

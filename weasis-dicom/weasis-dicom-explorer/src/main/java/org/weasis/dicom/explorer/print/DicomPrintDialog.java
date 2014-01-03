@@ -33,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -41,6 +42,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.Messages;
 
@@ -540,17 +542,25 @@ public class DicomPrintDialog extends JDialog {
     }
 
     private void addPrinterButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_addPrinterButtonActionPerformed
-        Window parent = WinUtil.getParentWindow(this);
+        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(this));
+        Window parent = SwingUtilities.getWindowAncestor(this);
         PrinterDialog dialog = new PrinterDialog(parent, "", null, printersComboBox); //$NON-NLS-1$
         JMVUtils.showCenterScreen(dialog);
+        if (layer != null) {
+            layer.hideUI();
+        }
         enableOrDisableColorPrint();
     }
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_editButtonActionPerformed
-        Window parent = WinUtil.getParentWindow(this);
+        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WinUtil.getParentJFrame(this));
+        Window parent = SwingUtilities.getWindowAncestor(this);
         PrinterDialog dialog =
             new PrinterDialog(parent, "", (DicomPrinter) printersComboBox.getSelectedItem(), printersComboBox); //$NON-NLS-1$
         JMVUtils.showCenterScreen(dialog);
+        if (layer != null) {
+            layer.hideUI();
+        }
         enableOrDisableColorPrint();
     }
 

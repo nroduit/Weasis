@@ -26,7 +26,9 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.util.ArrayList;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  * The Class WinUtil.
@@ -40,37 +42,35 @@ public abstract class WinUtil {
     private WinUtil() {
     }
 
-    public static Frame getParentFrame(Component component) {
-        Object obj;
-        for (obj = component; !(obj instanceof Frame) && obj != null; obj = ((Component) (obj)).getParent()) {
-            ;
+    public static JFrame getParentJFrame(Component c) {
+        for (Container p = c.getParent(); p != null; p = p.getParent()) {
+            if (p instanceof JFrame) {
+                return (JFrame) p;
+            }
         }
-        return (Frame) obj;
+        return null;
     }
 
-    public static Dialog getParentDialog(Component component) {
-        Object obj;
-        for (obj = component; !(obj instanceof Dialog) && obj != null; obj = ((Component) (obj)).getParent()) {
-            ;
+    public static Frame getParentFrame(Component c) {
+        for (Container p = c.getParent(); p != null; p = p.getParent()) {
+            if (p instanceof Frame) {
+                return (Frame) p;
+            }
         }
-        return (Dialog) obj;
+        return null;
+    }
+
+    public static Dialog getParentDialog(Component c) {
+        for (Container p = c.getParent(); p != null; p = p.getParent()) {
+            if (p instanceof Dialog) {
+                return (Dialog) p;
+            }
+        }
+        return null;
     }
 
     public static Window getParentWindow(Component component) {
-        Object obj;
-        for (obj = component; !(obj instanceof Window) && obj != null; obj = ((Component) (obj)).getParent()) {
-            ;
-        }
-        return (Window) obj;
-    }
-
-    public static Window getParentDialogOrFrame(Component component) {
-        Object obj;
-        for (obj = component; !(obj instanceof Frame) && !(obj instanceof Dialog) && obj != null; obj =
-            ((Component) (obj)).getParent()) {
-            ;
-        }
-        return (Window) obj;
+        return SwingUtilities.getWindowAncestor(component);
     }
 
     public static Component getParentOfClass(Component component, Class class1) {
@@ -208,7 +208,7 @@ public abstract class WinUtil {
 
     private static void center(Component component) {
         Container container = component != null ? component.getParent() : null;
-        Window window = getParentDialogOrFrame(container);
+        Window window = SwingUtilities.getWindowAncestor(container);
         if (window == null) {
             centerOnScreen(component);
         } else {

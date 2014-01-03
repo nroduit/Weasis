@@ -15,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -27,7 +28,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.image.ShowPopup;
 
 public class MipPopup implements ShowPopup {
@@ -38,7 +38,7 @@ public class MipPopup implements ShowPopup {
             return null;
         }
         final JDialog dialog =
-            new JDialog(WinUtil.getParentWindow(view), "MIP Options", ModalityType.APPLICATION_MODAL);
+            new JDialog(SwingUtilities.getWindowAncestor(view), "MIP Options", ModalityType.APPLICATION_MODAL);
         dialog.setIconImage(MipView.MIP_ICON_SETTING.getImage());
         final Container panel_1 = dialog.getContentPane();
         panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));

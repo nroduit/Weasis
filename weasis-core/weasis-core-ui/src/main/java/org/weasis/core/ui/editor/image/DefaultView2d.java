@@ -63,6 +63,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
@@ -79,7 +80,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -559,7 +559,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         double viewScale = 0.0;
         E img = getImage();
         if (img != null) {
-            Window win = WinUtil.getParentDialogOrFrame(this);
+            Window win = SwingUtilities.getWindowAncestor(this);
             if (win != null) {
                 GraphicsConfiguration config = win.getGraphicsConfiguration();
                 Monitor monitor = MeasureTool.viewSetting.getMonitor(config.getDevice());

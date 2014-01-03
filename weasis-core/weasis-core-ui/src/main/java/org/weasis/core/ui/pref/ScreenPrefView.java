@@ -38,13 +38,13 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -141,7 +141,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     }
 
                     final CalibDialog dialog =
-                        new CalibDialog(WinUtil.getParentWindow((Component) e.getSource()), title,
+                        new CalibDialog(SwingUtilities.getWindowAncestor((Component) e.getSource()), title,
                             ModalityType.APPLICATION_MODAL, monitor);
                     dialog.setBounds(frame.getBounds());
                     frame.dispose();

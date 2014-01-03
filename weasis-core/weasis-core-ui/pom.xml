@@ -25,7 +25,9 @@
 						<!-- xpp3 lib is not required if stax is available -->
 						<Import-Package>!org.xmlpull.*,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.simpleframework.xml.*,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.simpleframework.xml.*,com.xeiam.xchart.*,org.jdesktop.jxlayer.*,com.xeiam.xchart.internal.markers.*</Export-Package>
+						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
+						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
 					</instructions>
 				</configuration>
 			</plugin>
@@ -43,8 +45,7 @@
 			<artifactId>simple-xml</artifactId>
 			<version>2.7</version>
 			<exclusions>
-				<!-- Stax is not required as there is an implementation in Java 6. xpp3 lib is not required if stax 
-					is available -->
+				<!-- Stax is not required as there is an implementation in Java 6. xpp3 lib is not required if stax is available -->
 				<exclusion>
 					<artifactId>stax</artifactId>
 					<groupId>stax</groupId>
@@ -60,10 +61,12 @@
 			<artifactId>lablib-checkboxtree</artifactId>
 			<version>3.3</version>
 		</dependency>
-<!-- 		<dependency>
-			<groupId>com.xeiam.xchart</groupId>
-			<artifactId>xchart</artifactId>
-			<version>2.2.2-SNAPSHOT</version>
-		</dependency> -->
+		<dependency>
+			<groupId>org.swinglabs</groupId>
+			<artifactId>jxlayer</artifactId>
+			<version>3.0.4</version>
+		</dependency>
+		<!-- <dependency> <groupId>com.xeiam.xchart</groupId> <artifactId>xchart</artifactId> <version>2.2.2-SNAPSHOT</version> 
+			</dependency> -->
 	</dependencies>
 </project>
