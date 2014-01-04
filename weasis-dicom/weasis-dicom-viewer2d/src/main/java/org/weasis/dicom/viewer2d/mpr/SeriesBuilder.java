@@ -410,7 +410,7 @@ public class SeriesBuilder {
                 if (dataBuffer instanceof DataBufferByte) {
                     byteBuffer = ByteBuffer.wrap(((DataBufferByte) dataBuffer).getData());
                     writToFile(inFile, byteBuffer);
-                } else if (dataBuffer instanceof DataBufferShort) {
+                } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
                     short[] data =
                         dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
                             : ((DataBufferUShort) dataBuffer).getData();
