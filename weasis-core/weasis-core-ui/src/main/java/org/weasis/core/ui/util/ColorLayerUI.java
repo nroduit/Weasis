@@ -50,13 +50,13 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
     public synchronized void ShowUI() {
         this.alpha = 0.0f;
-        final Timer timer = new Timer(5, null);
+        final Timer timer = new Timer(3, null);
         timer.setRepeats(true);
         timer.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                alpha = Math.min(alpha + 0.15f, 1.0F);
+                alpha = Math.min(alpha + 0.1f, 1.0F);
                 if (alpha >= 1.0) {
                     timer.stop();
                 }
@@ -70,13 +70,13 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
     public synchronized void hideUI() {
         this.alpha = 1.0f;
-        final Timer timer = new Timer(5, null);
+        final Timer timer = new Timer(3, null);
         timer.setRepeats(true);
         timer.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                alpha = Math.max(alpha - 0.15f, 0.0F);
+                alpha = Math.max(alpha - 0.1f, 0.0F);
                 if (alpha <= 0.0) {
                     timer.stop();
                     parent.setContentPane(xlayer.getView());
