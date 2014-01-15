@@ -1162,8 +1162,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     LOGGER.debug("Finished decompressing frame #" + (frameIndex + 1));
                 }
             } else {
-                // Rewrite image with subsample model (cannot not be display as Renderedimage)
-                if (pmi.isSubSambled()) {
+                // Rewrite image with subsampled model (otherwise cannot not be displayed as RenderedImage)
+                // Convert YBR_FULL into RBG as the ybr model is not well supported.
+                if (pmi.isSubSambled() || pmi.name().startsWith("YBR")) {
                     // TODO improve this
                     WritableRaster raster = (WritableRaster) readRaster(frameIndex, param);
                     ColorModel cm = createColorModel(bitsStored, dataType);
@@ -1192,10 +1193,6 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         }
                     }
                     bi = new BufferedImage(cmodel, rasterDst, false, null);
-                    //                    File imgCacheFile = File.createTempFile("tiled_", ".tif", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    // ImageFiler.writeTIFF(imgCacheFile, bi, false, false, false);
-                    // ImageFiler.writeJPG(File.createTempFile("raw", "jpg", AbstractProperties.APP_TEMP_DIR), bi,
-                    // 1.0f);
                 } else {
                     ImageReader reader = initRawImageReader();
                     bi = reader.readAsRenderedImage(frameIndex, param);
