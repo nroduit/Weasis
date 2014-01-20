@@ -11,13 +11,14 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -29,7 +30,7 @@ import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 
-import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
@@ -45,9 +46,11 @@ import javax.xml.validation.Validator;
 import org.dcm4che.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -57,14 +60,17 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.wado.WadoParameters;
+import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.xml.sax.SAXException;
 
@@ -85,25 +91,64 @@ public class DownloadManager {
             String path = uri.getPath();
 
             URL url = uri.toURL();
-            URLConnection httpCon = url.openConnection();
+            URLConnection urlConnection = url.openConnection();
 
             if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
                 for (Iterator<Entry<String, String>> iter = BundleTools.SESSION_TAGS_MANIFEST.entrySet().iterator(); iter
                     .hasNext();) {
                     Entry<String, String> element = iter.next();
-                    httpCon.setRequestProperty(element.getKey(), element.getValue());
+                    urlConnection.setRequestProperty(element.getKey(), element.getValue());
                 }
             }
 
             LOGGER.info("Downloading WADO references: {}", url); //$NON-NLS-1$
+
+            if (urlConnection instanceof HttpURLConnection) {
+                HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
+
+                LOGGER.debug("HttpURLConnection previous ConnectTimeout : {} sec",
+                    httpURLConnection.getConnectTimeout() / 1000);
+                int newConnectTimeout = 5000;
+                httpURLConnection.setConnectTimeout(newConnectTimeout);
+                LOGGER.debug("HttpURLConnection new ConnectTimeout : {} sec",
+                    httpURLConnection.getConnectTimeout() / 1000);
+
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
+                    // Following is only intended LOG more info about Http Server Error
+
+                    InputStream errorStream = httpURLConnection.getErrorStream();
+                    if (errorStream != null) {
+                        BufferedReader reader = null;
+                        try {
+                            reader = new BufferedReader(new InputStreamReader(errorStream, "UTF-8"));
+                            StringBuilder stringBuilder = new StringBuilder();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                stringBuilder.append(line);
+                            }
+                            String errorDescription = stringBuilder.toString();
+                            if (StringUtil.hasText(errorDescription)) {
+                                LOGGER.warn("HttpURLConnection - HTTP Status {} - {}", responseCode + " ["
+                                    + httpURLConnection.getResponseMessage() + "]", errorDescription);
+                            }
+                        } finally {
+                            if (reader != null) {
+                                reader.close();
+                            }
+                        }
+                    }
+                }
+            }
+
             if (path.endsWith(".gz")) { //$NON-NLS-1$
-                stream = GzipManager.gzipUncompressToStream(httpCon.getInputStream());
+                stream = GzipManager.gzipUncompressToStream(urlConnection.getInputStream());
             } else if (path.endsWith(".xml")) { //$NON-NLS-1$
-                stream = httpCon.getInputStream();
+                stream = urlConnection.getInputStream();
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeFile(httpCon.getInputStream(), new FileOutputStream(outFile)) == -1) {
+                if (FileUtil.writeFile(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
                     } else {
@@ -171,10 +216,10 @@ public class DownloadManager {
                                             // <Message> tag
                                         } else if ("Message".equals(xmler.getName().getLocalPart())) {
                                             final String title = getTagAttribute(xmler, "title", null); //$NON-NLS-1$
-                                            final String desc = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
-                                            if (StringUtil.hasText(title) && StringUtil.hasText(desc)) {
+                                            final String message = getTagAttribute(xmler, "description", null); //$NON-NLS-1$
+                                            if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
                                                 String severity = getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$
-                                                final int type =
+                                                final int messageType =
                                                     "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE : "INFO"
                                                         .equals(severity) ? JOptionPane.INFORMATION_MESSAGE
                                                         : JOptionPane.WARNING_MESSAGE;
@@ -183,12 +228,21 @@ public class DownloadManager {
 
                                                     @Override
                                                     public void run() {
-                                                        JOptionPane pane =
-                                                            new JOptionPane(desc, type, JOptionPane.DEFAULT_OPTION);
-                                                        JDialog dialog = pane.createDialog(title);
-                                                        dialog.setModal(false);
-                                                        dialog.pack();
-                                                        dialog.setVisible(true);
+                                                        
+                                                        JFrame rootFrame = null;
+                                                        DataExplorerView dicomExplorer =
+                                                            UIManager.getExplorerplugin(DicomExplorer.NAME);
+                                                        if (dicomExplorer instanceof PluginTool) {
+                                                            rootFrame =
+                                                                WinUtil.getParentJFrame((PluginTool) dicomExplorer);
+                                                        }
+                                                        ColorLayerUI layer =
+                                                            ColorLayerUI.createTransparentLayerUI(rootFrame);
+                                                        JOptionPane.showOptionDialog(rootFrame, message, title,
+                                                            JOptionPane.DEFAULT_OPTION, messageType, null, null, null);
+                                                        if (layer != null) {
+                                                            layer.hideUI();
+                                                        }
                                                     }
                                                 });
 
@@ -230,12 +284,39 @@ public class DownloadManager {
                         break;
                 }
             }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (XMLStreamException e) {
-            e.printStackTrace();
+
+        } catch (Throwable t) {
+            final String message = "Error on loading wadoXML from : " + uri.toString();
+            LOGGER.error(message);
+
+            if (LOGGER.isDebugEnabled()) {
+                t.printStackTrace();
+            } else {
+                LOGGER.error(t.toString());
+            }
+
+            final String title = "LOADING ERROR";
+            final int messageType = JOptionPane.ERROR_MESSAGE;
+
+            GuiExecutor.instance().execute(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    JFrame rootFrame = null;
+                    DataExplorerView dicomExplorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+                    if (dicomExplorer instanceof PluginTool) {
+                        rootFrame = WinUtil.getParentJFrame((PluginTool) dicomExplorer);
+                    }
+                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootFrame);
+                    JOptionPane.showOptionDialog(rootFrame, message, title, JOptionPane.DEFAULT_OPTION, messageType,
+                        null, null, null);
+                    if (layer != null) {
+                        layer.hideUI();
+                    }
+                }
+            });
+
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
