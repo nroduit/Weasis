@@ -789,8 +789,13 @@ public class DicomMediaUtils {
             group.setTag(TagW.Modality, header.getString(Tag.Modality, DicomMediaIO.NO_VALUE));
             // -------- End of Mandatory Tags --------
 
-            group.setTagNoNull(TagW.SeriesDate,
-                header.getDate(Tag.SeriesDate, getDateFromDicomElement(header, Tag.StudyDate, null)));
+            // Merge date and time, used in display
+            group.setTagNoNull(
+                TagW.SeriesDate,
+                header.getDate(
+                    Tag.SeriesDate,
+                    TagW.dateTime(getDateFromDicomElement(header, Tag.StudyDate, null),
+                        getDateFromDicomElement(header, Tag.SeriesTime, null))));
 
             group.setTagNoNull(TagW.SeriesDescription, header.getString(Tag.SeriesDescription));
             group.setTagNoNull(TagW.RetrieveAETitle, header.getString(Tag.RetrieveAETitle));

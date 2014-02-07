@@ -42,10 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
 import java.util.Locale;
-import java.util.Map;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -538,6 +535,27 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                             "Sort Series {} by orientation: {}, index: {} ", new Object[] { val1, //$NON-NLS-1$
                                                 p1, i });
                                         break;
+                                    } else {
+                                        Date d1 = (Date) series.getTagValue(TagW.SeriesDate);
+                                        Date d2 = (Date) series.getTagValue(TagW.SeriesDate);
+                                        if (d1 != null && d2 != null && d1.compareTo(d2) < 0) {
+                                            LOGGER.debug("Sort Series {} by date: {}, index: {} ", new Object[] { d1, //$NON-NLS-1$
+                                                d1, i });
+                                            break;
+                                        } else {
+                                            d1 =
+                                                TagW.dateTime((Date) media1.getTagValue(TagW.AcquisitionDate),
+                                                    (Date) media1.getTagValue(TagW.AcquisitionTime));
+                                            d2 =
+                                                TagW.dateTime((Date) media2.getTagValue(TagW.AcquisitionDate),
+                                                    (Date) media2.getTagValue(TagW.AcquisitionTime));
+                                            if (d1 != null && d2 != null && d1.compareTo(d2) < 0) {
+                                                LOGGER.debug(
+                                                    "Sort Series {} by date: {}, index: {} ", new Object[] { d1, //$NON-NLS-1$
+                                                        d2, i });
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1197,6 +1215,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 thumb.reBuildThumbnail();
             }
         }
+
         Integer nb = (Integer) dcmSeries.getTagValue(TagW.SplitSeriesNumber);
         // Convention -> split number inferior to 0 is a Series that has been replaced (ex. when a DicomSeries is
         // converted DicomVideoSeries after downloading files).
@@ -1206,30 +1225,20 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
         if (repaintStudy) {
             studyPane.removeAll();
-            Comparator<SeriesPane> comp = new Comparator<SeriesPane>() {
-
-                @Override
-                public int compare(SeriesPane s1, SeriesPane s2) {
-                    int val1 = getIntValue((Integer) s1.getSequence().getTagValue(TagW.SeriesNumber));
-                    int val2 = getIntValue((Integer) s2.getSequence().getTagValue(TagW.SeriesNumber));
-                    if (val1 == val2) {
-                        if (val1 == 0) {
-                            return 1;
-                        } else {
-                            int split1 = getIntValue((Integer) s1.getSequence().getTagValue(TagW.SplitSeriesNumber));
-                            int split2 = getIntValue((Integer) s2.getSequence().getTagValue(TagW.SplitSeriesNumber));
-                            return (split1 < split2 ? -1 : (split1 == split2 ? 0 : 1));
-                        }
-                    }
-                    return (val1 < val2 ? -1 : 1);
-                }
-            };
-            Collections.sort(seriesList, comp);
             for (int i = 0; i < seriesList.size(); i++) {
-                studyPane.addPane(seriesList.get(i), i);
+                SeriesPane s = seriesList.get(i);
+                studyPane.addPane(s, i);
             }
             studyPane.revalidate();
             studyPane.repaint();
+
+            int k = 1;
+            for (SeriesPane s : studyPane.getSeriesPaneList()) {
+                if (list.contains(s.getSequence())) {
+                    s.getSequence().setTag(TagW.SplitSeriesNumber, k);
+                    k++;
+                }
+            }
         }
 
     }
