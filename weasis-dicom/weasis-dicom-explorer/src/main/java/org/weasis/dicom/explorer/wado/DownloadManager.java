@@ -148,7 +148,7 @@ public class DownloadManager {
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                if (FileUtil.writeFile(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
+                if (FileUtil.writeStream(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
                     } else {
@@ -162,7 +162,7 @@ public class DownloadManager {
                 tempFile = new File(path);
             } else {
                 tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                FileUtil.writeFile(stream, new FileOutputStream(tempFile));
+                FileUtil.writeStream(stream, new FileOutputStream(tempFile));
             }
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));
 

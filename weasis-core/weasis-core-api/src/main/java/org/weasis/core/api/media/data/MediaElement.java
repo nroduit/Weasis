@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.weasis.core.api.util.FileUtil;
+
 public abstract class MediaElement<E> {
 
     // Metadata of the media
@@ -107,6 +109,10 @@ public abstract class MediaElement<E> {
 
     public Object getKey() {
         return key;
+    }
+
+    public boolean saveToFile(File output) {
+        return FileUtil.nioCopyFile(file, output);
     }
 
     public long getLength() {

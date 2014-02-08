@@ -490,10 +490,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         File destinationDir = new File(writeDir, path);
                         destinationDir.mkdirs();
 
-                        // TODO handle mpr series
                         File destinationFile = new File(destinationDir, iuid);
-                        if (FileUtil.nioCopyFile(img.getFile(), destinationFile)) {
-
+                        if (img.saveToFile(destinationFile)) {
                             if (writeGraphics) {
                                 // TODO remove me and use PR
                                 DefaultSerializer.writeMeasurementGraphics(img, destinationFile);
@@ -512,7 +510,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         destinationDir.mkdirs();
 
                         File destinationFile = new File(destinationDir, iuid);
-                        if (FileUtil.nioCopyFile(dcm.getFile(), destinationFile)) {
+                        if (dcm.saveToFile(destinationFile)) {
                             if (!writeInDicomDir(writer, dcm, node, iuid, destinationFile)) {
                                 continue TreePath;
                             }

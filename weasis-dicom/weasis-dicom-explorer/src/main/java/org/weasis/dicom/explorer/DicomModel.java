@@ -750,7 +750,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (int i = 0; i < xmlFiles.length; i++) {
                         try {
                             File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            if (FileUtil.writeFile(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
+                            if (FileUtil.writeStream(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
                                 new FileOutputStream(tempFile)) == -1) {
                                 xmlFiles[i] = tempFile;
                             }

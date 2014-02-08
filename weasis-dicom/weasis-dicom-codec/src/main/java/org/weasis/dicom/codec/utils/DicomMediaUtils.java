@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.ElementDictionary;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
@@ -46,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -1533,6 +1536,61 @@ public class DicomMediaUtils {
             attrs.setString(Tag.CodingSchemeDesignator, VR.SH, codingSchemeDesignator);
             attrs.setString(Tag.CodeMeaning, VR.LO, codeMeaning);
             return attrs;
+        }
+
+    }
+
+    public static void fillAttributes(Map<TagW, Object> tags, Attributes dataset) {
+
+        if (tags != null && dataset != null) {
+            ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
+
+            for (Entry<TagW, Object> entry : tags.entrySet()) {
+                final TagW tag = entry.getKey();
+                final Object val = entry.getValue();
+
+                TagType type = tag.getType();
+                int id = tag.getId();
+                String key = dic.keywordOf(id);
+                if (val == null || !StringUtil.hasLength(key)) {
+                    continue;
+                }
+
+                if (TagType.String.equals(type)) {
+                    dataset.setString(id, dic.vrOf(id), val.toString());
+                } else if ((TagType.Date.equals(type) || TagType.Time.equals(type)) && val instanceof Date) {
+                    dataset.setDate(id, (Date) val);
+                } else if (TagType.Integer.equals(type) && val instanceof Number) {
+                    dataset.setInt(id, dic.vrOf(id), ((Number) val).intValue());
+                } else if (TagType.Float.equals(type) && val instanceof Number) {
+                    dataset.setFloat(id, dic.vrOf(id), ((Number) val).floatValue());
+                } else if (TagType.Double.equals(type) && val instanceof Number) {
+                    dataset.setDouble(id, dic.vrOf(id), ((Number) val).doubleValue());
+                } else if (TagType.DoubleArray.equals(type) && val instanceof double[]) {
+                    dataset.setDouble(id, dic.vrOf(id), (double[]) val);
+                } else if (TagType.FloatArray.equals(type)) {
+                    if (val instanceof Float[]) {
+                        Float[] array = (Float[]) val;
+                        float[] array2 = new float[array.length];
+                        for (int i = 0; i < array2.length; i++) {
+                            array2[i] = array[i];
+                        }
+                        dataset.setFloat(id, dic.vrOf(id), array2);
+                    } else if (val instanceof float[]) {
+                        dataset.setFloat(id, dic.vrOf(id), (float[]) val);
+                    }
+                } else if (TagType.IntegerArray.equals(type) && val instanceof int[]) {
+                    dataset.setInt(id, dic.vrOf(id), (int[]) val);
+                } else if (TagType.StringArray.equals(type) && val instanceof String[]) {
+                    dataset.setString(id, dic.vrOf(id), (String[]) val);
+                } else if (TagType.Sequence.equals(type) && val instanceof Sequence) {
+                    Sequence sIn = (Sequence) val;
+                    Sequence sOut = dataset.newSequence(id, sIn.size());
+                    for (Attributes attributes : sIn) {
+                        sOut.add(attributes);
+                    }
+                }
+            }
         }
 
     }

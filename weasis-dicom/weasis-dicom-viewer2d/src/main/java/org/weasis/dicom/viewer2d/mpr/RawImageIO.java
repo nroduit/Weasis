@@ -10,6 +10,7 @@ import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.renderable.ParameterBlock;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteOrder;
@@ -24,6 +25,12 @@ import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.NullDescriptor;
 
+import org.dcm4che.data.Attributes;
+import org.dcm4che.data.BulkData;
+import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
+import org.dcm4che.data.VR;
+import org.dcm4che.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -36,6 +43,8 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.jai.util.ImageUtil;
@@ -260,5 +269,27 @@ public class RawImageIO implements MediaReader<PlanarImage> {
             sm = new PixelInterleavedSampleModel(dataType, width, height, 3, width * 3, OFFSETS_0_1_2);
         }
         return new ImageTypeSpecifier(cm, sm);
+    }
+
+    public File getDicomFile() {
+        Attributes dcm = new Attributes();
+        DicomMediaUtils.fillAttributes(tags, dcm);
+
+        DicomOutputStream out = null;
+        try {
+            File file = new File(uri);
+            BulkData bdl = new BulkData(uri.toString(), 0, (int) file.length(), false);
+            dcm.setValue(Tag.PixelData, VR.OW, bdl);
+            File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
+            out = new DicomOutputStream(tmpFile);
+            out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
+            return tmpFile;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            FileUtil.safeClose(out);
+        }
+        return null;
+
     }
 }

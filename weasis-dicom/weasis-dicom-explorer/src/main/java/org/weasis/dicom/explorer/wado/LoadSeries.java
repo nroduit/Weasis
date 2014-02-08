@@ -902,7 +902,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                     int bytesTransferred = 0;
                     if (overrideList == null && wado != null) {
                         bytesTransferred =
-                            FileUtil.writeFile(new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString()
+                            FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, url.toString()
                                 .contains("?requestType=WADO")), new FileOutputStream(tempFile)); //$NON-NLS-1$
                     } else if (wado != null) {
                         bytesTransferred =
@@ -930,7 +930,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                         size = -1;
                         if (overrideList == null && wado != null) {
                             bytesTransferred =
-                                FileUtil.writeFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
+                                FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false),
                                     new FileOutputStream(tempFile));
                         } else if (wado != null) {
                             bytesTransferred =

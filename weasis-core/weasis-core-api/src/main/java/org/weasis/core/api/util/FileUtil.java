@@ -302,7 +302,7 @@ public final class FileUtil {
             LOGGER.error(e.getMessage());
             return 0;
         }
-        return writeFile(input, outputStream);
+        return writeStream(input, outputStream);
     }
 
     /**
@@ -311,7 +311,7 @@ public final class FileUtil {
      * @return bytes transferred. O = error, -1 = all bytes has been transferred, other = bytes transferred before
      *         interruption
      */
-    public static int writeFile(InputStream inputStream, OutputStream out) {
+    public static int writeStream(InputStream inputStream, OutputStream out) {
         if (inputStream == null || out == null) {
             return 0;
         }

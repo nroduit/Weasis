@@ -48,6 +48,7 @@ import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
 import org.dcm4che.image.PhotometricInterpretation;
 import org.dcm4che.util.TagUtils;
+import org.dcm4che.util.UIDUtils;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -117,6 +118,11 @@ public class SeriesBuilder {
                             Vector3d resc = new Vector3d();
 
                             final ViewParameter[] recParams = new ViewParameter[2];
+                            String frUID = (String) series.getTagValue(TagW.FrameOfReferenceUID);
+                            if (frUID == null) {
+                                frUID = UIDUtils.createUID();
+                                series.setTag(TagW.FrameOfReferenceUID, frUID);
+                            }
 
                             if (SliceOrientation.SAGITTAL.equals(type1)) {
                                 // The reference image is the first of the saggital stack (Left)
@@ -124,37 +130,37 @@ public class SeriesBuilder {
                                 recParams[0] =
                                     new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { resr.x,
                                         resr.y, resr.z, row[0], row[1], row[2] }, true, true,
-                                        new Object[] { 0.0, false });
+                                        new Object[] { 0.0, false }, frUID);
                                 recParams[1] =
                                     new ViewParameter(".3", SliceOrientation.CORONAL, false,
                                         TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                            col[1], col[2] }, true, true, new Object[] { true, 0.0 });
+                                            col[1], col[2] }, true, true, new Object[] { true, 0.0 }, frUID);
                             } else if (SliceOrientation.CORONAL.equals(type1)) {
                                 // The reference image is the first of the coronal stack (Anterior)
                                 rotate(vc, vr, Math.toRadians(90), resc);
                                 recParams[0] =
                                     new ViewParameter(".2", SliceOrientation.AXIAL, false, null, new double[] { row[0],
                                         row[1], row[2], resc.x, resc.y, resc.z }, false, true, new Object[] { 0.0,
-                                        false });
+                                        false }, frUID);
 
                                 rotate(vc, vr, Math.toRadians(90), resr);
                                 recParams[1] =
                                     new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
                                         TransposeDescriptor.ROTATE_270, new double[] { resr.x, resr.y, resr.z, col[0],
-                                            col[1], col[2] }, true, false, new Object[] { true, 0.0 });
+                                            col[1], col[2] }, true, false, new Object[] { true, 0.0 }, frUID);
                             } else {
                                 // The reference image is the last of the axial stack (Head)
                                 rotate(vc, vr, Math.toRadians(270), resc);
                                 recParams[0] =
                                     new ViewParameter(".2", SliceOrientation.CORONAL, true, null, new double[] {
                                         row[0], row[1], row[2], resc.x, resc.y, resc.z }, false, false, new Object[] {
-                                        0.0, false });
+                                        0.0, false }, frUID);
 
                                 rotate(vr, vc, Math.toRadians(90), resr);
                                 recParams[1] =
                                     new ViewParameter(".3", SliceOrientation.SAGITTAL, true,
                                         TransposeDescriptor.ROTATE_270, new double[] { col[0], col[1], col[2], resr.x,
-                                            resr.y, resr.z }, false, false, new Object[] { true, 0.0 });
+                                            resr.y, resr.z }, false, false, new Object[] { true, 0.0 }, frUID);
 
                             }
 
@@ -446,9 +452,15 @@ public class SeriesBuilder {
             rawIO.setTag(TagW.BitsAllocated, bitsAllocated);
             rawIO.setTag(TagW.BitsStored, bitsStored);
 
+            // Mandatory tags
+            TagW[] mtagList =
+                { TagW.PatientID, TagW.PatientName, TagW.PatientBirthDate, TagW.PatientPseudoUID,
+                    TagW.StudyInstanceUID, TagW.SOPClassUID };
+            rawIO.copyTags(mtagList, img, true);
+
             TagW[] tagList =
                 { TagW.PhotometricInterpretation, TagW.PixelRepresentation, TagW.Units, TagW.ImageType,
-                    TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality, };
+                    TagW.SamplesPerPixel, TagW.MonoChrome, TagW.Modality };
             rawIO.copyTags(tagList, img, true);
 
             TagW[] tagList2 =
@@ -459,7 +471,7 @@ public class SeriesBuilder {
             // TagW.SmallestImagePixelValue,TagW.LargestImagePixelValue,
             rawIO.copyTags(tagList2, img, false);
 
-            // Clone array, because values are adapted accordint the min and max pixel values.
+            // Clone array, because values are adapted according to the min and max pixel values.
             TagW[] tagList3 = { TagW.WindowWidth, TagW.WindowCenter };
             for (int j = 0; j < tagList3.length; j++) {
                 Float[] val = (Float[]) img.getTagValue(tagList3[j]);
@@ -470,7 +482,9 @@ public class SeriesBuilder {
 
             // Image specific tags
             int index = i;
-            rawIO.setTag(TagW.SOPInstanceUID, (params.reverseIndexOrder ? last - index : index + 1) + params.suffix);
+            rawIO.setTag(TagW.SOPInstanceUID, UIDUtils.createUID());
+            rawIO.setTag(TagW.FrameOfReferenceUID, params.frameOfReferenceUID);
+
             rawIO.setTag(TagW.InstanceNumber, params.reverseIndexOrder ? last - index : index + 1);
 
             double x =
@@ -489,7 +503,13 @@ public class SeriesBuilder {
             if (loc != null) {
                 rawIO.setTag(TagW.SliceLocation, loc[0] + loc[1] + loc[2]);
             }
-            DicomImageElement dcm = new DicomImageElement(rawIO, 0);
+            DicomImageElement dcm = new DicomImageElement(rawIO, 0) {
+                @Override
+                public boolean saveToFile(File output) {
+                    RawImageIO reader = (RawImageIO) getMediaReader();
+                    return FileUtil.nioCopyFile(reader.getDicomFile(), output);
+                }
+            };
             dcms.add(dcm);
         }
 
@@ -723,11 +743,11 @@ public class SeriesBuilder {
         final boolean rotateOutputImg;
         final boolean reverseIndexOrder;
         final Object[] imgPosition;
+        final String frameOfReferenceUID;
 
         public ViewParameter(String suffix, SliceOrientation sliceOrientation, boolean reverseSeriesOrder,
             TransposeType transposeImage, double[] imgOrientation, boolean rotateOutputImg, boolean reverseIndexOrder,
-            Object[] imgPosition) {
-            super();
+            Object[] imgPosition, String frameOfReferenceUID) {
             this.suffix = suffix;
             this.sliceOrientation = sliceOrientation;
             this.reverseSeriesOrder = reverseSeriesOrder;
@@ -736,6 +756,7 @@ public class SeriesBuilder {
             this.rotateOutputImg = rotateOutputImg;
             this.reverseIndexOrder = reverseIndexOrder;
             this.imgPosition = imgPosition;
+            this.frameOfReferenceUID = frameOfReferenceUID;
         }
     }
 }
