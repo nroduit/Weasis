@@ -76,10 +76,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.noos.xing.mydoggy.DockedTypeDescriptor;
-import org.noos.xing.mydoggy.ToolWindow;
-import org.noos.xing.mydoggy.ToolWindowAnchor;
-import org.noos.xing.mydoggy.ToolWindowType;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -537,7 +533,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                                         break;
                                     } else {
                                         Date d1 = (Date) series.getTagValue(TagW.SeriesDate);
-                                        Date d2 = (Date) series.getTagValue(TagW.SeriesDate);
+                                        Date d2 = (Date) sp.getSequence().getTagValue(TagW.SeriesDate);
                                         if (d1 != null && d2 != null && d1.compareTo(d2) < 0) {
                                             LOGGER.debug("Sort Series {} by date: {}, index: {} ", new Object[] { d1, //$NON-NLS-1$
                                                 d1, i });
@@ -1229,8 +1225,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 SeriesPane s = seriesList.get(i);
                 studyPane.addPane(s, i);
             }
-            studyPane.revalidate();
-            studyPane.repaint();
 
             int k = 1;
             for (SeriesPane s : studyPane.getSeriesPaneList()) {
@@ -1239,6 +1233,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     k++;
                 }
             }
+
+            studyPane.revalidate();
+            studyPane.repaint();
         }
 
     }
