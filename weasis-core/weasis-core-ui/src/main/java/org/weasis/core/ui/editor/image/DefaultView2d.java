@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -28,6 +28,7 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -45,6 +46,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.ColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.beans.PropertyChangeEvent;
@@ -282,33 +284,69 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
     }
 
-    public String getPixelInfo(Point p, RenderedImageLayer<E> imageLayer) {
-        ImageElement imageElement = imageLayer.getSourceImage();
-        StringBuilder message = new StringBuilder(" "); //$NON-NLS-1$
+    protected PlanarImage getPreprocessedImage(E imageElement) {
+        return imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+    }
+
+    protected void fillPixelInfo(final PixelInfo pixelInfo, final E imageElement, final double[] c) {
+        if (c != null && c.length > 0) {
+            pixelInfo.setValues(c);
+        }
+    }
+
+    public PixelInfo getPixelInfo(final Point p, RenderedImageLayer<E> imageLayer) {
+        PixelInfo pixelInfo = new PixelInfo();
+        E imageElement = imageLayer.getSourceImage();
         if (imageElement != null && imageLayer.getReadIterator() != null) {
-            PlanarImage image = imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+            PlanarImage image = getPreprocessedImage(imageElement);
+            // realPoint to handle special case: non square pixel image
             Point realPoint =
                 new Point((int) Math.ceil(p.x / imageElement.getRescaleX() - 0.5), (int) Math.ceil(p.y
                     / imageElement.getRescaleY() - 0.5));
             if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
                 && realPoint.y < image.getHeight()) {
                 try {
-                    int[] c = { 0, 0, 0 };
-                    imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
+                    pixelInfo.setPosition(p);
+                    pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
+                    pixelInfo.setPixelSize(imageElement.getPixelSize());
 
-                    if (image.getSampleModel().getNumBands() == 1) {
-                        message.append(c[0]);
-                    } else {
-                        message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    double[] c = imageLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, (double[]) null); // read
+                                                                                                                   // the
+                                                                                                                   // pixel
+                    pixelInfo.setPixelValueUnit(imageElement.getPixelValueUnit());
+                    fillPixelInfo(pixelInfo, imageElement, c);
+                    if (c != null && c.length >= 1) {
+                        pixelInfo.setChannelNames(getChannelNames(image));
                     }
-                    message.append(" - (" + p.x + "," + p.y + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                } catch (ArrayIndexOutOfBoundsException ex) {
+
+                } catch (Throwable e) {
+                    // when image tile is not available anymore (file stream closed)
+                    System.gc();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException et) {
+                    }
                 }
-            } else {
-                message.append(Messages.getString("DefaultView2d.out")); //$NON-NLS-1$
             }
         }
-        return message.toString();
+        return pixelInfo;
+    }
+
+    protected static String[] getChannelNames(PlanarImage image) {
+        if (image != null) {
+            ColorModel cm = image.getColorModel();
+            if (cm != null) {
+                ColorSpace space = cm.getColorSpace();
+                if (space != null) {
+                    String[] val = new String[space.getNumComponents()];
+                    for (int i = 0; i < val.length; i++) {
+                        val[i] = space.getName(i);
+                    }
+                    return val;
+                }
+            }
+        }
+        return null;
     }
 
     protected static class BulkDragSequence implements DragSequence {
@@ -449,7 +487,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     protected Rectangle getImageBounds(E img) {
         if (img != null) {
-            RenderedImage source = img.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+            RenderedImage source = getPreprocessedImage(img);
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             int width =
                 source == null || img.getRescaleX() != img.getRescaleY() ? img.getRescaleWidth(getImageSize(img,
@@ -634,7 +672,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image == null) {
             return null;
         }
-        return image.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        return getPreprocessedImage(image);
     }
 
     public final void center() {
@@ -1249,14 +1287,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (infoLayer != null) {
             Point2D pModel = getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
             Rectangle oldBound = infoLayer.getPixelInfoBound();
-            String str =
+            PixelInfo pixelInfo =
                 getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())), imageLayer);
             oldBound.width =
                 Math.max(
                     oldBound.width,
                     this.getGraphics().getFontMetrics(getLayerFont())
-                        .stringWidth(Messages.getString("DefaultView2d.pix") + str) + 4); //$NON-NLS-1$
-            infoLayer.setPixelInfo(str);
+                        .stringWidth(Messages.getString("DefaultView2d.pix") + pixelInfo) + 4); //$NON-NLS-1$
+            infoLayer.setPixelInfo(pixelInfo);
             repaint(oldBound);
         }
     }

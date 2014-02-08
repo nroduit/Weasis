@@ -39,7 +39,9 @@ public interface AnnotationsLayer extends Layer {
 
     Rectangle getPixelInfoBound();
 
-    void setPixelInfo(String pixelInfo);
+    void setPixelInfo(PixelInfo pixelInfo);
+
+    PixelInfo getPixelInfo();
 
     int getBorder();
 
@@ -52,4 +54,5 @@ public interface AnnotationsLayer extends Layer {
     boolean isShowBottomScale();
 
     void setShowBottomScale(boolean showBottomScale);
+
 }

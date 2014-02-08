@@ -24,6 +24,7 @@ public class DefaultSerializer {
         this.classMap = new HashMap<String, Class<?>>();
         classMap.put("angle", org.weasis.core.ui.graphic.AngleToolGraphic.class);
         classMap.put("annotation", org.weasis.core.ui.graphic.AnnotationGraphic.class);
+        classMap.put("pixelInfo", org.weasis.core.ui.graphic.PixelInfoGraphic.class);
         classMap.put("cobbAngle", org.weasis.core.ui.graphic.CobbAngleToolGraphic.class);
         classMap.put("openAngle", org.weasis.core.ui.graphic.OpenAngleToolGraphic.class);
         classMap.put("ellipse", org.weasis.core.ui.graphic.EllipseGraphic.class);

@@ -15,7 +15,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -41,6 +40,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.media.jai.PlanarImage;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -108,6 +108,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PannerListener;
+import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
@@ -124,7 +125,6 @@ import org.weasis.core.ui.graphic.LineWithGapGraphic;
 import org.weasis.core.ui.graphic.MeasureDialog;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.RectangleGraphic;
-import org.weasis.core.ui.graphic.RenderedImageLayer;
 import org.weasis.core.ui.graphic.TempLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
 import org.weasis.core.ui.graphic.model.AbstractLayerModel;
@@ -1180,64 +1180,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     @Override
-    public String getPixelInfo(Point p, RenderedImageLayer<DicomImageElement> imgLayer) {
-        DicomImageElement dicom = imgLayer.getSourceImage();
-        StringBuilder message = new StringBuilder(" "); //$NON-NLS-1$
-        if (dicom != null && imgLayer.getReadIterator() != null) {
-            RenderedImage image = imgLayer.getSourceRenderedImage();
-            Point realPoint =
-                new Point((int) Math.ceil(p.x / dicom.getRescaleX() - 0.5), (int) Math.ceil(p.y / dicom.getRescaleY()
-                    - 0.5));
-            if (image != null && realPoint.x >= 0 && realPoint.y >= 0 && realPoint.x < image.getWidth()
-                && realPoint.y < image.getHeight()) {
-                try {
-                    int[] c = { 0, 0, 0 };
-                    imgLayer.getReadIterator().getPixel(realPoint.x, realPoint.y, c); // read the pixel
+    protected PlanarImage getPreprocessedImage(DicomImageElement imageElement) {
+        return imageElement.getImage();
+    }
 
-                    if (image.getSampleModel().getNumBands() == 1) {
-                        boolean pixelPadding =
-                            JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
-                                ActionW.IMAGE_PIX_PADDING.cmd()));
-                        float val = dicom.pixel2mLUT(c[0], pixelPadding);
-                        message.append((int) val);
-                        if (dicom.getPixelValueUnit() != null) {
-                            message.append(" " + dicom.getPixelValueUnit()); //$NON-NLS-1$
-                        }
-                    } else {
-                        // TODO add preference for Pixel value type (RGB, IHS...) and pixel position (pix, real)
-                        message.append("R=" + c[0] + " G=" + c[1] + " B=" + c[2]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        // float[] ihs = IHSColorSpace.getInstance().fromRGB(new float[]
-                        // {
-                        // c[0] / 255f, c[1] / 255f, c[2] / 255f
-                        // });
-                        // c[0] = (int) (ihs[0] * 255f);
-                        // c[1] = (int) ((ihs[1] / (Math.PI * 2)) * 255f);
-                        // c[2] = (int) (ihs[2] * 255f);
-                        //
-                        // message.append(" (I = " + c[0] + ", H = " + c[1] + ", S = " + c[2] + ")");
-                    }
-                    message.append(" - (" + p.x + "," + p.y + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    // double[] pixelSpacing = (double[]) imageElement.getTagValue(TagW.PixelSpacing);
-                    // Unit unit = pixelSpacing == null ? Unit.PIXEL : Unit.MILLIMETER;
-                    // if (pixelSpacing != null) {
-                    // message.append(" (" + DecFormater.twoDecimal(imageElement.getPixelSizeX() * p.x));
-                    // message.append(" " + unit.getAbbreviation() + ",");
-                    // message.append(DecFormater.twoDecimal(imageElement.getPixelSizeY() * p.y));
-                    // message.append(" " + unit.getAbbreviation() + ")");
-                    // }
-                } catch (Throwable e) {
-                    // when image tile is not available anymore (file stream closed)
-                    System.gc();
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException et) {
-                    }
-                }
+    @Override
+    protected void fillPixelInfo(final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
+        if (c != null && c.length >= 1) {
+            if (c.length == 1) {
+                boolean pixelPadding =
+                    JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
+                        ActionW.IMAGE_PIX_PADDING.cmd()));
+                pixelInfo.setValues(new double[] { imageElement.pixel2mLUT((float) c[0], pixelPadding) });
             } else {
-                message.append(Messages.getString("View2d.out_img")); //$NON-NLS-1$
+                super.fillPixelInfo(pixelInfo, imageElement, c);
             }
         }
-        return message.toString();
     }
 
     @Override

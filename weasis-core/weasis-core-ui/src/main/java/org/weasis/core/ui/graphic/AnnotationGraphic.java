@@ -124,7 +124,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             DefaultView2d view = getDefaultView2d(mouseEvent);
             if (labelStringArray == null) {
                 if (view != null) {
-                    setLabel(new String[] { "Text box" }, view, ptBox);
+                    setLabel(new String[] { getInitialText(view) }, view, ptBox);
                     // call buildShape
                     return;
                 }
@@ -157,6 +157,10 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         }
 
         setShape(newShape, mouseEvent);
+    }
+
+    protected String getInitialText(DefaultView2d view) {
+        return "Text box";
     }
 
     @Override

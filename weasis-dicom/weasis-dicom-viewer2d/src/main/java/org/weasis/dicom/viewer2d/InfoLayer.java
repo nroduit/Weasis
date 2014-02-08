@@ -59,6 +59,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.AnnotationsLayer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.graphic.GraphicLabel;
 import org.weasis.core.ui.graphic.model.AbstractLayer;
@@ -88,7 +89,7 @@ public class InfoLayer implements AnnotationsLayer {
     private static final int BORDER = 10;
     private final DefaultView2d view2DPane;
     private final DicomModel model;
-    private String pixelInfo = ""; //$NON-NLS-1$
+    private PixelInfo pixelInfo = null;
     private final Rectangle pixelInfoBound;
     private final Rectangle preloadingProgressBound;
     private int border = BORDER;
@@ -249,7 +250,14 @@ public class InfoLayer implements AnnotationsLayer {
         }
 
         if (getDisplayPreferences(PIXEL)) {
-            String str = Messages.getString("InfoLayer.pixel") + pixelInfo; //$NON-NLS-1$
+            StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
+            sb.append(": ");
+            if (pixelInfo != null) {
+                sb.append(pixelInfo.getPixelValueText());
+                sb.append(" - ");
+                sb.append(pixelInfo.getPixelPositionText());
+            }
+            String str = sb.toString();
             GraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics(view2DPane.getLayerFont())
@@ -1329,11 +1337,6 @@ public class InfoLayer implements AnnotationsLayer {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setDisplayPreferencesValue(java.lang.String, boolean)
-     */
     @Override
     public boolean setDisplayPreferencesValue(String displayItem, boolean selected) {
         boolean selected2 = getDisplayPreferences(displayItem);
@@ -1341,34 +1344,24 @@ public class InfoLayer implements AnnotationsLayer {
         return selected != selected2;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPreloadingProgressBound()
-     */
     @Override
     public Rectangle getPreloadingProgressBound() {
         return preloadingProgressBound;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.dicom.viewer2d.AnnotationsLayer#getPixelInfoBound()
-     */
     @Override
     public Rectangle getPixelInfoBound() {
         return pixelInfoBound;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.weasis.dicom.viewer2d.AnnotationsLayer#setPixelInfo(java.lang.String)
-     */
     @Override
-    public void setPixelInfo(String pixelInfo) {
+    public void setPixelInfo(PixelInfo pixelInfo) {
         this.pixelInfo = pixelInfo;
+    }
+
+    @Override
+    public PixelInfo getPixelInfo() {
+        return pixelInfo;
     }
 
     @Override

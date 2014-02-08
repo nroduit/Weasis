@@ -48,6 +48,7 @@ import org.weasis.core.ui.graphic.LineGraphic;
 import org.weasis.core.ui.graphic.OpenAngleToolGraphic;
 import org.weasis.core.ui.graphic.ParallelLineGraphic;
 import org.weasis.core.ui.graphic.PerpendicularLineGraphic;
+import org.weasis.core.ui.graphic.PixelInfoGraphic;
 import org.weasis.core.ui.graphic.PolygonGraphic;
 import org.weasis.core.ui.graphic.PolylineGraphic;
 import org.weasis.core.ui.graphic.RectangleGraphic;
@@ -76,6 +77,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
     public static final FourPointsAngleToolGraphic fourPointsAngleToolGraphic = new FourPointsAngleToolGraphic(1.0f,
         Color.YELLOW, true);
     public static final CobbAngleToolGraphic cobbAngleToolGraphic = new CobbAngleToolGraphic(1.0f, Color.YELLOW, true);
+    public static final PixelInfoGraphic pixelInfoGraphic = new PixelInfoGraphic(1.0f, Color.YELLOW, true);
     public static final AnnotationGraphic textGrahic = new AnnotationGraphic(1.0f, new Color(166, 196, 231), true);
 
     public static final Icon MeasureIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png")); //$NON-NLS-1$
@@ -121,6 +123,9 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         if (p.getBooleanProperty("weasis.measure.cobbangle", true)) {
             graphicList.add(cobbAngleToolGraphic);
         }
+        if (p.getBooleanProperty("weasis.measure.pixelinfo", true)) {
+            graphicList.add(pixelInfoGraphic);
+        }
         if (p.getBooleanProperty("weasis.measure.textGrahic", true)) {
             graphicList.add(textGrahic);
         }
@@ -139,7 +144,7 @@ public class MeasureToolBar<E extends ImageElement> extends WtoolBar {
         }
         this.eventManager = eventManager;
 
-        // Do not apply to selectionGraphic and textGrahic
+        // Do not apply to textGrahic
         for (int i = 1; i < graphicList.size() - 1; i++) {
             applyDefaultSetting(MeasureTool.viewSetting, graphicList.get(i));
         }
