@@ -139,10 +139,6 @@ public class PresetWindowLevel {
             int windowLevelDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
             String defaultExplanation = "Default";
 
-            float minModLUT = image.getMinValue(pixelPadding);
-            float maxModLUT = image.getMaxValue(pixelPadding);
-            float minAllocated = image.getMinAllocatedValue(pixelPadding);
-            float maxAllocated = image.getMaxAllocatedValue(pixelPadding);
             int k = 1;
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
@@ -155,13 +151,6 @@ public class PresetWindowLevel {
                 if (windowList[i] == null || levelList[i] == null) {
                     // Level value is not consistent, do not add to the list
                     LOGGER.error("DICOM preset '{}' is not valid. It is not added to the preset list", explanation);
-                    continue;
-                }
-                float minp = levelList[i] - windowList[i] / 2.0f;
-                float maxp = levelList[i] + windowList[i] / 2.0f;
-                if (minp > maxModLUT || maxp < minModLUT) {
-                    LOGGER.error("DICOM preset '{}' is outside the image spectrum. It is not added to the preset list",
-                        explanation);
                     continue;
                 }
 

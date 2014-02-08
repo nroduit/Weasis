@@ -257,11 +257,37 @@ public class InfoLayer implements AnnotationsLayer {
             // g2.draw(pixelInfoBound);
         }
         if (getDisplayPreferences(WINDOW_LEVEL)) {
-            GraphicLabel
-                .paintFontOutline(
-                    g2,
-                    Messages.getString("InfoLayer.win") + " " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd()) + " " + Messages.getString("InfoLayer.level") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                        + " " + disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd()), border, drawY); //$NON-NLS-1$
+            StringBuilder sb = new StringBuilder();
+            Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
+            Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
+            boolean outside = false;
+            if (window != null && level != null) {
+                sb.append(Messages.getString("InfoLayer.win"));//$NON-NLS-1$
+                sb.append(" ");//$NON-NLS-1$
+                sb.append(DecFormater.oneDecimal(window));
+                sb.append(" ");//$NON-NLS-1$
+                sb.append(Messages.getString("InfoLayer.level"));//$NON-NLS-1$
+                sb.append(" ");//$NON-NLS-1$
+                sb.append(DecFormater.oneDecimal(window));
+                if (dcm != null) {
+                    boolean pixelPadding =
+                        (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
+                    float minModLUT = image.getMinValue(pixelPadding);
+                    float maxModLUT = image.getMaxValue(pixelPadding);
+                    float minp = level.floatValue() - window.floatValue() / 2.0f;
+                    float maxp = level.floatValue() + window.floatValue() / 2.0f;
+                    if (minp > maxModLUT || maxp < minModLUT) {
+                        outside = true;
+                        sb.append(" - ");
+                        sb.append("Values outside of the image spectrum!");
+                    }
+                }
+            }
+            if (outside) {
+                GraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
+            } else {
+                GraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+            }
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
