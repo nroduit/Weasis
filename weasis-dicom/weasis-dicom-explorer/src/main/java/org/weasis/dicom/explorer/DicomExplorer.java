@@ -110,6 +110,7 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -909,6 +910,30 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
+            JPanel downloadPanel = new JPanel();
+            downloadPanel.setBorder(new TitledBorder("Download"));
+            downloadPanel.setLayout(new FlowLayout());
+
+            JButton stopButton = new JButton("Stop");
+            stopButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    LoadRemoteDicomManifest.stop();
+                }
+            });
+            downloadPanel.add(stopButton);
+
+            JButton resumeButton = new JButton("Resume");
+            resumeButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    LoadRemoteDicomManifest.resume();
+                }
+            });
+            downloadPanel.add(resumeButton);
+
+            panel_1.add(downloadPanel, BorderLayout.SOUTH);
+
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) {
                 GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
                 gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
@@ -920,7 +945,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         if (btnMoreOptions.isSelected()) {
-                            panel_1.add(panel_2, BorderLayout.SOUTH);
+                            panel_1.add(panel_2);
                         } else {
                             panel_1.remove(panel_2);
                         }

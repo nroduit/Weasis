@@ -10,10 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -117,6 +114,16 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             @Override
             public void run() {
                 bar[0] = new CircularProgressBar(0, sopList.size());
+                bar[0].addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        LoadSeries loadSeries = LoadSeries.this;
+                        if (loadSeries.isStopped())
+                            loadSeries.resume();
+                        else
+                            loadSeries.stop();
+                    }
+                });
             }
         });
         this.progressBar = bar[0];

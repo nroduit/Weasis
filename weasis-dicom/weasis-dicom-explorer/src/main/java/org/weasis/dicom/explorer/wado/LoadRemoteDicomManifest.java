@@ -25,12 +25,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.pref.GeneralSetting;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefUtils;
 
 public class LoadRemoteDicomManifest extends ExplorerTask {
 
@@ -129,9 +133,23 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                         uri = new URL(xmlFiles[i]).toURI();
                     }
                     ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
+
                     if (wadoTasks != null) {
-                        for (LoadSeries s : wadoTasks) {
-                            loadingQueue.offer(s);
+                        {
+                            boolean downloadImmediately = SeriesDownloadPrefUtils.downloadImmediately();
+                            for (final LoadSeries loadSeries : wadoTasks) {
+                                if (downloadImmediately)
+                                    loadingQueue.offer(loadSeries);
+                                else
+                                    GuiExecutor.instance().execute(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            loadSeries.getProgressBar().setValue(0);
+                                            loadSeries.stop();
+                                            currentTasks.add(loadSeries);
+                                        }
+                                    });
+                            }
                         }
                     }
                 } catch (URISyntaxException e) {
@@ -203,4 +221,36 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             }
         }
     }
+
+    public static void resume() {
+        handleAllSeries(new LoadSeriesHandler() {
+            @Override
+            public void handle(LoadSeries loadSeries) {
+                loadSeries.resume();
+            }
+        });
+    }
+
+    public static void stop() {
+        handleAllSeries(new LoadSeriesHandler() {
+            @Override
+            public void handle(LoadSeries loadSeries) {
+                loadSeries.stop();
+            }
+        });
+    }
+
+    private static void handleAllSeries(LoadSeriesHandler handler) {
+        for (LoadSeries loadSeries : new ArrayList<LoadSeries>(currentTasks)) {
+            handler.handle(loadSeries);
+            Thumbnail thumbnail = (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
+            if (thumbnail != null)
+                thumbnail.repaint();
+        }
+    }
+
+    private static interface LoadSeriesHandler {
+        void handle(LoadSeries loadSeries);
+    }
+
 }
