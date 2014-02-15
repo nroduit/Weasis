@@ -761,8 +761,7 @@ public class WeasisLauncher {
         // General Preferences priority order:
         // 1) Last value (does not exist for first launch of Weasis in an operating system session).
         // 2) Java System property
-        // 3) Property defined in weasis/conf/config.properties or in weasis/conf/ext-config.properties (extension of
-        // config)
+        // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
         final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -772,6 +771,8 @@ public class WeasisLauncher {
 
         getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+        // Audit log for giving statistics about usage of Weasis
+        getGeneralProperty("audit.log", "false", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
 
         // Read default value for dicom root UID which should be registered at the http://www.iana.org
         getGeneralProperty("weasis.dicom.root.uid", "", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
@@ -883,8 +884,6 @@ public class WeasisLauncher {
         String versionNew = config.getProperty(P_WEASIS_VERSION);
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
-        // Transmit the audit log property to the bundle context
-        config.setProperty("audit.log", common_prop.getProperty("audit.log", "false").trim()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
 
