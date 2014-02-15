@@ -6,6 +6,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -104,15 +105,33 @@ public class CheckTreeModel {
                                     }
                                 });
                             }
-                            studyNode.add(seriesNode);
+
+                            List children = Collections.list(studyNode.children());
+                            int index = Collections.binarySearch(children, seriesNode, DicomModel.SERIES_COMPARATOR);
+                            if (index < 0) {
+                                studyNode.insert(seriesNode, -(index + 1));
+                            } else {
+                                studyNode.insert(seriesNode, index);
+                            }
                         }
                     }
-                    patientNode.add(studyNode);
+                    List children = Collections.list(patientNode.children());
+                    int index = Collections.binarySearch(children, studyNode, DicomModel.STUDY_COMPARATOR);
+                    if (index < 0) {
+                        patientNode.insert(studyNode, -(index + 1));
+                    } else {
+                        patientNode.insert(studyNode, index);
+                    }
                 }
-                rootNode.add(patientNode);
+                List children = Collections.list(rootNode.children());
+                int index = Collections.binarySearch(children, patientNode, DicomModel.PATIENT_COMPARATOR);
+                if (index < 0) {
+                    rootNode.insert(patientNode, -(index + 1));
+                } else {
+                    rootNode.insert(patientNode, index);
+                }
             }
         }
-
         return new DefaultTreeModel(rootNode, false);
     }
 
@@ -160,16 +179,16 @@ public class CheckTreeModel {
         public String toString() {
             MediaSeries<?> s = (MediaSeries<?>) getUserObject();
             StringBuilder buf = new StringBuilder();
-            String modality = (String) s.getTagValue(TagW.Modality);
-            if (modality != null) {
-                buf.append(modality);
-                buf.append(" "); //$NON-NLS-1$
-            }
             Integer val = (Integer) s.getTagValue(TagW.SeriesNumber);
             if (val != null) {
                 buf.append("["); //$NON-NLS-1$
                 buf.append(val);
                 buf.append("] "); //$NON-NLS-1$
+            }
+            String modality = (String) s.getTagValue(TagW.Modality);
+            if (modality != null) {
+                buf.append(modality);
+                buf.append(" "); //$NON-NLS-1$
             }
             String desc = (String) s.getTagValue(TagW.SeriesDescription);
             if (desc != null) {
