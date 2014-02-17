@@ -16,17 +16,22 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +63,9 @@ import org.weasis.dicom.codec.DicomVideoElement;
 import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
+import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -81,6 +89,209 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         modelStrucure.add(series);
     }
     public static final Executor loadingExecutor = Executors.newSingleThreadExecutor();
+    private static final Collator collator = Collator.getInstance(Locale.getDefault());
+
+    public static final Comparator PATIENT_COMPARATOR = new Comparator() {
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            return collator.compare(o1.toString(), o2.toString());
+        }
+    };
+
+    public static final Comparator STUDY_COMPARATOR = new Comparator() {
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            if (o1 instanceof StudyPane && o2 instanceof StudyPane) {
+                o1 = ((StudyPane) o1).dicomStudy;
+                o2 = ((StudyPane) o2).dicomStudy;
+            } else if (o1 instanceof DefaultMutableTreeNode && o2 instanceof DefaultMutableTreeNode) {
+                o1 = ((DefaultMutableTreeNode) o1).getUserObject();
+                o2 = ((DefaultMutableTreeNode) o2).getUserObject();
+            }
+
+            if (o1 instanceof MediaSeriesGroup && o2 instanceof MediaSeriesGroup) {
+                MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
+                MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
+                Date date1 = (Date) st1.getTagValue(TagW.StudyDate);
+                Date date2 = (Date) st2.getTagValue(TagW.StudyDate);
+                // LOGGER.debug("date1: {} date2: {}", date1, date2);
+                int c = -1;
+                if (date1 != null && date2 != null) {
+                    // Reverse chronological order. StudyDate combines DICOM StudyDate and DICOM StudyTime
+                    c = date2.compareTo(date1);
+                    if (c != 0) {
+                        return c;
+                    }
+                }
+
+                if (c == 0 || (date1 == null && date2 == null)) {
+                    String d1 = (String) st1.getTagValue(TagW.StudyDescription);
+                    String d2 = (String) st2.getTagValue(TagW.StudyDescription);
+                    if (d1 != null && d2 != null) {
+                        c = collator.compare(d1, d2);
+                        if (c != 0) {
+                            return c;
+                        }
+                    }
+                    if (d1 == null && d2 != null) {
+                        // Add o1 after o2
+                        return 1;
+                    }
+                    // Add o2 after o1
+                    return -1;
+                } else {
+                    if (date1 == null) {
+                        // Add o1 after o2
+                        return 1;
+                    }
+                    if (date2 == null) {
+                        return -1;
+                    }
+                }
+            } else {
+                // Set non MediaSeriesGroup at the beginning of the list
+                if (o1 instanceof MediaSeriesGroup) {
+                    // Add o1 after o2
+                    return 1;
+                }
+                if (o2 instanceof MediaSeriesGroup) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    };
+
+    public static final Comparator SERIES_COMPARATOR = new Comparator() {
+
+        @Override
+        public int compare(Object o1, Object o2) {
+
+            if (o1 instanceof SeriesPane && o2 instanceof SeriesPane) {
+                o1 = ((SeriesPane) o1).sequence;
+                o2 = ((SeriesPane) o2).sequence;
+            } else if (o1 instanceof DefaultMutableTreeNode && o2 instanceof DefaultMutableTreeNode) {
+                o1 = ((DefaultMutableTreeNode) o1).getUserObject();
+                o2 = ((DefaultMutableTreeNode) o2).getUserObject();
+            }
+
+            if (o1 instanceof MediaSeriesGroup && o2 instanceof MediaSeriesGroup) {
+                MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
+                MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
+
+                Integer val1 = (Integer) st1.getTagValue(TagW.SeriesNumber);
+                Integer val2 = (Integer) st2.getTagValue(TagW.SeriesNumber);
+                int c = -1;
+                if (val1 != null && val2 != null) {
+                    c = val1.compareTo(val2);
+                    if (c != 0) {
+                        return c;
+                    }
+                }
+
+                if (c == 0 || (val1 == null && val2 == null)) {
+                    Date date1 = (Date) st1.getTagValue(TagW.SeriesDate);
+                    Date date2 = (Date) st2.getTagValue(TagW.SeriesDate);
+                    if (date1 != null && date2 != null) {
+                        // Chronological order.
+                        c = date1.compareTo(date2);
+                        if (c != 0) {
+                            return c;
+                        }
+                    }
+
+                    if ((c == 0 || (date1 == null && date2 == null)) && st1 instanceof MediaSeries
+                        && st2 instanceof MediaSeries) {
+                        MediaElement media1 = (MediaElement) ((MediaSeries) st1).getMedia(0, null, null);
+                        MediaElement media2 = (MediaElement) ((MediaSeries) st2).getMedia(0, null, null);
+                        if (media1 != null && media2 != null) {
+
+                            date1 =
+                                TagW.dateTime((Date) media1.getTagValue(TagW.AcquisitionDate),
+                                    (Date) media1.getTagValue(TagW.AcquisitionTime));
+                            date2 =
+                                TagW.dateTime((Date) media2.getTagValue(TagW.AcquisitionDate),
+                                    (Date) media2.getTagValue(TagW.AcquisitionTime));
+                            if (date1 != null && date2 != null) {
+                                // Chronological order.
+                                c = date1.compareTo(date2);
+                                if (c != 0) {
+                                    return c;
+                                }
+                            }
+                            if (c == 0 || (date1 == null && date2 == null)) {
+
+                                Float tag1 = (Float) media1.getTagValue(TagW.SliceLocation);
+                                Float tag2 = (Float) media2.getTagValue(TagW.SliceLocation);
+                                if (tag1 != null && tag2 != null) {
+                                    c = tag1.compareTo(tag2);
+                                    if (c != 0) {
+                                        return c;
+                                    }
+                                }
+                                if (c == 0 || (tag1 == null && tag2 == null)) {
+                                    String nb1 = (String) media1.getTagValue(TagW.StackID);
+                                    String nb2 = (String) media2.getTagValue(TagW.StackID);
+                                    if (nb1 != null && nb2 != null) {
+                                        c = nb1.compareTo(nb2);
+                                        if (c != 0) {
+                                            try {
+                                                c = new Integer(Integer.parseInt(nb1)).compareTo(Integer.parseInt(nb2));
+                                            } catch (Exception ex) {
+                                            }
+                                            return c;
+                                        }
+                                    }
+                                    if (c == 0 || (nb1 == null && nb2 == null)) {
+                                        return -1;
+                                    }
+                                    if (nb1 == null) {
+                                        return 1;
+                                    }
+                                    return -1;
+                                }
+                                if (tag1 == null) {
+                                    return 1;
+                                }
+                                return -1;
+                            }
+                            if (date1 == null) {
+                                // Add o1 after o2
+                                return 1;
+                            }
+                            // Add o2 after o1
+                            return -1;
+                        }
+                        if (media2 == null) {
+                            // Add o2 after o1
+                            return -1;
+                        }
+                        return 1;
+                    }
+                    if (date1 == null) {
+                        return 1;
+                    }
+                    return -1;
+                }
+                if (val1 == null) {
+                    return 1;
+                }
+                return -1;
+            }
+            // Set non MediaSeriesGroup at the beginning of the list
+            if (o1 instanceof MediaSeriesGroup) {
+                // Add o1 after o2
+                return 1;
+            }
+            if (o2 instanceof MediaSeriesGroup) {
+                return -1;
+            }
+            return -1;
+        }
+    };
+
     private final Tree<MediaSeriesGroup> model;
     private PropertyChangeSupport propertyChange = null;
     private final TagW[] multiframeSplittingRules = new TagW[] { TagW.ImageType, TagW.SOPInstanceUID, TagW.FrameType,
@@ -116,6 +327,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
         }
         return codecPlugins;
+    }
+
+    private static final Integer getOrientationLabelPosition(String orientationPlane) {
+        if (orientationPlane == null) {
+            return 0;
+        }
+        for (int i = 0; i < ImageOrientation.LABELS.length; i++) {
+            if (ImageOrientation.LABELS[i].equals(orientationPlane)) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     @Override

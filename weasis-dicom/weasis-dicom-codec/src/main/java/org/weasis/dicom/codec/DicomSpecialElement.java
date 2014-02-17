@@ -32,22 +32,51 @@ public class DicomSpecialElement extends MediaElement<URI> {
             return "PR".equals(dicom.getTagValue(TagW.Modality)); //$NON-NLS-1$
         }
     };
+    protected String label;
+    protected String shortLabel;
 
     public DicomSpecialElement(MediaReader mediaIO, Object key) {
         super(mediaIO, key);
+        iniLabel();
+    }
+
+    protected String getLabelPrefix() {
+        StringBuilder buf = new StringBuilder();
+        String modality = (String) getTagValue(TagW.Modality);
+        if (modality != null) {
+            buf.append(modality);
+            buf.append(" "); //$NON-NLS-1$
+        }
+        Integer val = (Integer) getTagValue(TagW.InstanceNumber);
+        if (val != null) {
+            buf.append("["); //$NON-NLS-1$
+            buf.append(val);
+            buf.append("] "); //$NON-NLS-1$
+        }
+        return buf.toString();
+    }
+
+    protected void iniLabel() {
+        StringBuilder buf = new StringBuilder(getLabelPrefix());
+        String desc = (String) getTagValue(TagW.SeriesDescription);
+        if (desc != null) {
+            buf.append(desc);
+        }
+        label = buf.toString();
+    }
+
+    public String getShortLabel() {
+        return label.length() > 50 ? label.substring(0, 47) + "..." : label;//$NON-NLS-1$
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     @Override
     public String toString() {
-        String desc = (String) getTagValue(TagW.SeriesDescription);
-        if (desc == null) {
-            desc = getTagValue(TagW.Modality) + " " + getTagValue(TagW.InstanceNumber); //$NON-NLS-1$
-        } else {
-            if (desc.length() > 30) {
-                desc = desc.substring(0, 27) + "..."; //$NON-NLS-1$
-            }
-        }
-        return desc;
+        int length = label.length();
+        return length > 3 ? length > 50 ? label.substring(3, 47) + "..." : label.substring(3, length) : label;//$NON-NLS-1$
     }
 
     @Override
