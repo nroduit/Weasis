@@ -11,8 +11,6 @@ import javax.swing.RootPaneContainer;
  */
 public interface WeasisAppletMBean {
 
-    void addWindow(Window window);
-
     RootPaneContainer getRootPaneContainer();
 
 }

@@ -10,29 +10,17 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
-import java.awt.Window;
+import java.awt.*;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
 import javax.management.*;
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 
 import org.osgi.framework.BundleContext;
+import org.slf4j.LoggerFactory;
 
 public class WebStartLoader {
 
@@ -47,6 +35,7 @@ public class WebStartLoader {
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
     private final String logoPath;
+    private Container container;
 
     public WebStartLoader(String logoPath) {
         this.logoPath = logoPath;
@@ -67,14 +56,34 @@ public class WebStartLoader {
         downloadProgress.setFont(font);
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
-        window = new Window(null);
-        window.addWindowListener(new java.awt.event.WindowAdapter() {
 
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                closing();
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
+            if (containerObj instanceof RootPaneContainer) {
+                RootPaneContainer rootPaneContainer = (RootPaneContainer) containerObj;
+                JPanel panel = new JPanel(new GridBagLayout());
+                rootPaneContainer.getContentPane().add(panel);
+                container = panel;
             }
-        });
+
+        } catch (InstanceNotFoundException ignored) {
+        } catch (JMException e) {
+            LoggerFactory.getLogger(WebStartLoader.class).debug("Error while receiving main window", e);
+        }
+
+        if (container == null) {
+            container = window = new Window(null);
+            window.addWindowListener(new java.awt.event.WindowAdapter() {
+
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent evt) {
+                    closing();
+                }
+            });
+
+        }
 
         loadingLabel.setText(LBL_LOADING);
         loadingLabel.setFocusable(false);
@@ -140,8 +149,24 @@ public class WebStartLoader {
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        window.add(panel, BorderLayout.CENTER);
-        window.pack();
+        container.add(panel);
+
+        if (window != null)
+        {
+            window.pack();
+
+            try {
+                Rectangle bounds =
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
+                        .getBounds();
+                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
+                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+                window.setLocation(x, y);
+            } catch (HeadlessException e) {
+                e.printStackTrace();
+            }
+            window.setVisible(true);
+        }
     }
 
     public Window getWindow() {
@@ -188,7 +213,7 @@ public class WebStartLoader {
     }
 
     public boolean isClosed() {
-        return window == null;
+        return container == null;
     }
 
     public void open() {
@@ -197,10 +222,9 @@ public class WebStartLoader {
 
                 @Override
                 public void run() {
-                    if (window == null) {
+                    if (container == null) {
                         initGUI();
                     }
-                    displayOnScreen();
                 }
             });
         } catch (InterruptedException e) {
@@ -218,32 +242,19 @@ public class WebStartLoader {
 
             @Override
             public void run() {
-                window.setVisible(false);
-                window.dispose();
-                window = null;
+                container.setVisible(false);
+                if (container.getParent() != null)
+                    container.getParent().remove(container);
+                if (window != null) {
+                    window.dispose();
+                    window = null;
+                }
+                container = null;
                 cancelButton = null;
                 downloadProgress = null;
                 loadingLabel = null;
             }
         });
-    }
-
-    private void displayOnScreen() {
-        try {
-            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
-            try {
-                server.invoke(objectName, "addWindow", new Object[] { window }, new String[] { Window.class.getName() });
-            } catch (InstanceNotFoundException e) {
-                Rectangle bound =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-                        .getBounds();
-                WindowBoundsUtils.setWindowLocation(window, bound);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        window.setVisible(true);
     }
 
     public void setFelix(Properties configProps, BundleContext bundleContext) {

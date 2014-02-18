@@ -148,6 +148,7 @@ public class WeasisWin {
                 rootPaneContainer.getRootPane().updateUI();
                 if (rootPaneContainer.getContentPane() instanceof JPanel)
                     ((JPanel) rootPaneContainer.getContentPane()).updateUI();
+                rootPaneContainer.getContentPane().removeAll();
             }
 
         } catch (InstanceNotFoundException ignored) {
