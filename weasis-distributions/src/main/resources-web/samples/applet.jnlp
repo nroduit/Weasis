@@ -29,7 +29,6 @@
     <resources>
         <!-- Requires Java SE 6 update 10 release for jnlp extension without codebase (substance.jnlp) -->
         <j2se version="1.6.0_10+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="128m" max-heap-size="768m" />
-        <j2se version="1.6.0_10+" initial-heap-size="128m" max-heap-size="768m" />
 
         <!-- Allows to get the file in pack200 compression -->
         <property name="jnlp.packEnabled" value="true" />
