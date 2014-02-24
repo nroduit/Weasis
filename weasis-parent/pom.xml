@@ -4,7 +4,7 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>1.19-SNAPSHOT</version>
+	<version>1.19</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>
