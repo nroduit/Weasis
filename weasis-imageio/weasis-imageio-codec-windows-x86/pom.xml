@@ -10,7 +10,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-imageio-codec-windows-x86</artifactId>
 	<name>ImageIO native Windows x86 codec</name>
-	<version>1.2-b05-SNAPSHOT</version>
+	<version>1.2-b04</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
