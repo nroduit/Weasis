@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier>-u1</qualifier>
+		<qualifier></qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home}
 			in config.properties) -->
 		<dollar>$</dollar>
