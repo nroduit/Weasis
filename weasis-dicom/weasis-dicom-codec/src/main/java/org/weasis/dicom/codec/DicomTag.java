@@ -10,7 +10,7 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-import org.dcm4che.data.VR;
+import org.dcm4che3.data.VR;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 

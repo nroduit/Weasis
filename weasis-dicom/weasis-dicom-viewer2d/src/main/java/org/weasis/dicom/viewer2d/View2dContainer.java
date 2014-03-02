@@ -35,7 +35,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
-import org.dcm4che.data.Sequence;
+import org.dcm4che3.data.Sequence;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;

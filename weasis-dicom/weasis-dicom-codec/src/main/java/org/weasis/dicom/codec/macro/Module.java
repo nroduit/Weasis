@@ -2,8 +2,8 @@ package org.weasis.dicom.codec.macro;
 
 import java.util.Collection;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
 
 public class Module {
 

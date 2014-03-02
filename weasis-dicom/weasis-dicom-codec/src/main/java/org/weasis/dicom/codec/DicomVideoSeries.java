@@ -17,11 +17,11 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.dcm4che.data.BulkData;
-import org.dcm4che.data.Fragments;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.VR;
-import org.dcm4che.util.StreamUtils;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.util.StreamUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;

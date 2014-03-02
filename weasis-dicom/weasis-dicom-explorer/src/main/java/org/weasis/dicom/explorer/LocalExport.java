@@ -45,12 +45,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.media.DicomDirWriter;
-import org.dcm4che.media.RecordType;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.media.DicomDirWriter;
+import org.dcm4che3.media.RecordType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.VR;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 
 public class Code extends Module {
 

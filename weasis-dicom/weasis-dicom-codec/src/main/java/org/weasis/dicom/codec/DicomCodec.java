@@ -16,8 +16,8 @@ import java.util.Hashtable;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
-import org.dcm4che.imageio.plugins.dcm.DicomImageReaderSpi;
-import org.dcm4che.imageio.plugins.rle.RLEImageReaderSpi;
+import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
+import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 

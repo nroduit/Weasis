@@ -41,14 +41,14 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Attributes.Visitor;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.image.PhotometricInterpretation;
-import org.dcm4che.util.TagUtils;
-import org.dcm4che.util.UIDUtils;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Attributes.Visitor;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.image.PhotometricInterpretation;
+import org.dcm4che3.util.TagUtils;
+import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -671,13 +671,14 @@ public class SeriesBuilder {
         Visitor visitor = new Visitor() {
 
             @Override
-            public void visit(Attributes item, int tag, VR vr, Object value) {
+            public boolean visit(Attributes item, int tag, VR vr, Object value) {
                 if (TagUtils.isPrivateTag(tag)) {
                     item.setNull(tag, vr);
                 }
+                return true;
             }
         };
-        item.accept(visitor);
+        item.accept(visitor, true);
     }
 
     public static ByteBuffer getBytesFromFile(File file) {

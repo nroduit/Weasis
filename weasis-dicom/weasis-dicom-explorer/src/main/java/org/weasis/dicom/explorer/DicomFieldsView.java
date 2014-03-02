@@ -34,12 +34,12 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.ElementDictionary;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.VR;
-import org.dcm4che.imageio.plugins.dcm.DicomMetaData;
-import org.dcm4che.util.TagUtils;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.ElementDictionary;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.util.TagUtils;
+import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;

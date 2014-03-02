@@ -5,10 +5,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Code;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Code;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.media.data.MediaElement;

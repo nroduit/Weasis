@@ -1,7 +1,7 @@
 package org.weasis.dicom.codec.macro;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class ImageSOPInstanceReference extends SOPInstanceReference {

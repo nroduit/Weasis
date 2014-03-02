@@ -20,9 +20,9 @@ import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;

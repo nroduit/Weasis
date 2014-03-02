@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.io.DicomOutputStream;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
