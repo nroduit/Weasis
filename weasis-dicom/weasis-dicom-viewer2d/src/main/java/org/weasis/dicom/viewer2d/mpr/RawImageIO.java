@@ -25,12 +25,12 @@ import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.NullDescriptor;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.BulkData;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;

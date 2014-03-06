@@ -20,7 +20,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.dcm4che.data.VR;
+import org.dcm4che3.data.VR;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;

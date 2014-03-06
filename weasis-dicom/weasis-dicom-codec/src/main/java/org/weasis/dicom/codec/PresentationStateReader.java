@@ -7,9 +7,9 @@ import java.awt.color.ICC_Profile;
 import java.util.HashMap;
 import java.util.List;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;

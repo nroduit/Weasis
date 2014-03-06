@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;

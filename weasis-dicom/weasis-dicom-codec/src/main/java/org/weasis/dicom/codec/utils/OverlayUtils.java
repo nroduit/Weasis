@@ -37,9 +37,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
-import org.dcm4che.image.Overlays;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.image.Overlays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;

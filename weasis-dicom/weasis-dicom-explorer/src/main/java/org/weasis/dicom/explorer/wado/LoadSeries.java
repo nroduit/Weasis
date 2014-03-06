@@ -40,12 +40,12 @@ import java.util.concurrent.Executors;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.ElementDictionary;
-import org.dcm4che.io.DicomInputStream;
-import org.dcm4che.io.DicomInputStream.IncludeBulkData;
-import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.util.SafeClose;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.ElementDictionary;
+import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.io.DicomOutputStream;
+import org.dcm4che3.util.SafeClose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;

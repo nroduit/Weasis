@@ -18,10 +18,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.BulkData;
-import org.dcm4che.data.Tag;
-import org.dcm4che.util.StreamUtils;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.util.StreamUtils;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;

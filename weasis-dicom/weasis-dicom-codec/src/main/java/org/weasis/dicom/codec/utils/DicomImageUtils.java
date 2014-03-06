@@ -8,7 +8,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.media.jai.LookupTableJAI;
 
-import org.dcm4che.data.Attributes;
+import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagW;
 
