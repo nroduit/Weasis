@@ -1,5 +1,6 @@
 Weasis
 ======
 
+Building Weasis: http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source
 
-To build the master branch, it requires to build first dcm4che3 from https://github.com/nroduit/dcm4che (mvn clean install)
+General information: http://www.dcm4che.org/confluence/display/WEA/Home

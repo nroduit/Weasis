@@ -175,7 +175,7 @@ public class TagW implements Transferable, Serializable {
         "Referenced Image Sequence", TagType.Sequence); //$NON-NLS-1$
     public static final TagW FrameType = new TagW(0x00089007, "Frame Type", TagType.String, 4); //$NON-NLS-1$
 
-    public static final TagW ContrastBolusAgent = new TagW(0x00180010, "Contras tBolus Agent", TagType.String); //$NON-NLS-1$
+    public static final TagW ContrastBolusAgent = new TagW(0x00180010, "Contrast/Bolus Agent", TagType.String); //$NON-NLS-1$
     public static final TagW ScanningSequence = new TagW(0x00180020, "Scanning Sequence", TagType.String); //$NON-NLS-1$
 
     public static final TagW SequenceVariant = new TagW(0x00180021, "Sequence Variant", TagType.String); //$NON-NLS-1$
