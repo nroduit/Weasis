@@ -55,6 +55,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 
 import org.dcm4che3.util.Property;
+import org.dcm4che3.util.ResourceLocator;
 import org.dcm4che3.util.SafeClose;
 import org.dcm4che3.util.StringUtils;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
@@ -144,7 +145,7 @@ public class ImageWriterFactory implements Serializable {
         try {
             url = new URL(name);
         } catch (MalformedURLException e) {
-            url = StringUtils.getResourceURL(name, this.getClass());
+            url = ResourceLocator.getResourceURL(name, this.getClass());
             if (url == null)
                 throw new IOException("No such resource: " + name);
         }
