@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -29,7 +30,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.pref.GeneralSetting;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
@@ -63,28 +63,16 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             if (rep != 0) {
                 return rep;
             }
-            rep = val1.getPatientName().compareTo(val2.getPatientName());
+            rep = DicomModel.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
             if (rep != 0) {
                 return rep;
             }
-            if (val1.getStudyDate() != null && val2.getStudyDate() != null) {
-                // inverse time
-                rep = val2.getStudyDate().compareTo(val1.getStudyDate());
-                if (rep != 0) {
-                    return rep;
-                }
-            }
-            rep = val1.getStudyInstanceUID().compareTo(val2.getStudyInstanceUID());
+
+            rep = DicomModel.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
             if (rep != 0) {
                 return rep;
             }
-            rep = val1.getSeriesNumber().compareTo(val2.getSeriesNumber());
-            if (rep != 0) {
-                return rep;
-            }
-            String s1 = (String) o1.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
-            String s2 = (String) o2.getDicomSeries().getTagValue(TagW.SubseriesInstanceUID);
-            return s1.compareTo(s2);
+            return DicomModel.SERIES_COMPARATOR.compare(val1.getSeries(), val2.getSeries());
         }
     }
 
@@ -138,17 +126,21 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                         {
                             boolean downloadImmediately = SeriesDownloadPrefUtils.downloadImmediately();
                             for (final LoadSeries loadSeries : wadoTasks) {
-                                if (downloadImmediately)
+                                if (downloadImmediately) {
                                     loadingQueue.offer(loadSeries);
-                                else
+                                } else {
+                                    currentTasks.add(loadSeries);
                                     GuiExecutor.instance().execute(new Runnable() {
                                         @Override
                                         public void run() {
                                             loadSeries.getProgressBar().setValue(0);
                                             loadSeries.stop();
-                                            currentTasks.add(loadSeries);
                                         }
                                     });
+                                }
+                            }
+                            if (!downloadImmediately) {
+                                Collections.sort(currentTasks, Collections.reverseOrder(new PriorityTaskComparator()));
                             }
                         }
                     }
@@ -244,8 +236,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
         for (LoadSeries loadSeries : new ArrayList<LoadSeries>(currentTasks)) {
             handler.handle(loadSeries);
             Thumbnail thumbnail = (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
-            if (thumbnail != null)
+            if (thumbnail != null) {
                 thumbnail.repaint();
+            }
         }
     }
 

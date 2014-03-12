@@ -7,7 +7,6 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.dcm4che3.data.Attributes;
@@ -226,11 +225,7 @@ public class DicomDirLoader {
                     dicomSeries.setTag(TagW.ReadFromDicomdir, true);
                     final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, writeInCache);
 
-                    DownloadPriority priority =
-                        new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
-                            (String) study.getTagValue(TagW.StudyInstanceUID),
-                            (Date) study.getTagValue(TagW.StudyDate),
-                            (Integer) dicomSeries.getTagValue(TagW.SeriesNumber));
+                    DownloadPriority priority = new DownloadPriority(patient, study, dicomSeries);
                     loadSeries.setPriority(priority);
                     seriesList.add(loadSeries);
                 }

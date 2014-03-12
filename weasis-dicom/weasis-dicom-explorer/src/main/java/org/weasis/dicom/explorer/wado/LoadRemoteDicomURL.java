@@ -13,7 +13,6 @@ package org.weasis.dicom.explorer.wado;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -117,11 +116,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }
 
-                Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
-
-                DownloadPriority priority =
-                    new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
-                        (String) study.getTagValue(TagW.StudyInstanceUID), (Date) study.getTagValue(TagW.StudyDate), sn);
+                DownloadPriority priority = new DownloadPriority(patient, study, dicomSeries);
                 loadSeries.setPriority(priority);
                 LoadRemoteDicomManifest.loadingQueue.offer(loadSeries);
                 LoadRemoteDicomManifest.addLoadSeries(loadSeries, dicomModel);

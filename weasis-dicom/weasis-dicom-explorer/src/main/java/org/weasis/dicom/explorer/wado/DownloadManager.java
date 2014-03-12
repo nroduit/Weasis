@@ -228,7 +228,7 @@ public class DownloadManager {
 
                                                     @Override
                                                     public void run() {
-                                                        
+
                                                         JFrame rootFrame = null;
                                                         DataExplorerView dicomExplorer =
                                                             UIManager.getExplorerplugin(DicomExplorer.NAME);
@@ -514,16 +514,11 @@ public class DownloadManager {
                 model.addHierarchyNode(study, dicomSeries);
             }
 
-            String modality = (String) dicomSeries.getTagValue(TagW.Modality);
-            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             final LoadSeries loadSeries =
                 new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                     LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
 
-            Integer sn = (Integer) (ps ? Integer.MAX_VALUE : dicomSeries.getTagValue(TagW.SeriesNumber));
-            DownloadPriority priority =
-                new DownloadPriority((String) patient.getTagValue(TagW.PatientName),
-                    (String) study.getTagValue(TagW.StudyInstanceUID), (Date) study.getTagValue(TagW.StudyDate), sn);
+            DownloadPriority priority = new DownloadPriority(patient, study, dicomSeries);
             loadSeries.setPriority(priority);
             seriesList.add(loadSeries);
         }

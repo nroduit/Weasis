@@ -10,42 +10,33 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.weasis.dicom.explorer.Messages;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 
 public class DownloadPriority {
 
     public static final AtomicInteger COUNTER = new AtomicInteger(Integer.MAX_VALUE - 1);
-    private final String patientName;
-    private final String studyInstanceUID;
-    private final Date studyDate;
-    private final Integer seriesNumber;
+    private final MediaSeriesGroup patient, study, series;
     private Integer priority;
 
-    public DownloadPriority(String patientName, String studyInstanceUID, Date studyDate, Integer seriesNumber) {
-        this.patientName = patientName == null ? "" : patientName; //$NON-NLS-1$
-        this.studyInstanceUID = studyInstanceUID == null ? "" : studyInstanceUID; //$NON-NLS-1$
-        this.studyDate = studyDate;
-        this.seriesNumber = seriesNumber == null ? 0 : seriesNumber;
+    public DownloadPriority(MediaSeriesGroup patient, MediaSeriesGroup study, MediaSeriesGroup series) {
+        this.patient = patient;
+        this.study = study;
+        this.series = series;
         priority = Integer.MAX_VALUE;
     }
 
-    public String getPatientName() {
-        return patientName;
+    public MediaSeriesGroup getPatient() {
+        return patient;
     }
 
-    public Date getStudyDate() {
-        return studyDate;
+    public MediaSeriesGroup getStudy() {
+        return study;
     }
 
-    public Integer getSeriesNumber() {
-        return seriesNumber;
-    }
-
-    public String getStudyInstanceUID() {
-        return studyInstanceUID;
+    public MediaSeriesGroup getSeries() {
+        return series;
     }
 
     public Integer getPriority() {

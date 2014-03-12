@@ -1,6 +1,15 @@
 package org.weasis.core.api.media.data;
 
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Composite;
+import java.awt.Container;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -36,6 +45,8 @@ import org.weasis.core.api.util.FontTools;
 public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGestureListener, DragSourceListener,
     DragSourceMotionListener, FocusListener {
 
+    private static final Composite SOLID_COMPOSITE = AlphaComposite.SrcOver;
+    private static final Composite TRANSPARENT_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
     // Get the closest cursor size regarding to the platform
     private final Border onMouseOverBorderFocused = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
@@ -50,18 +61,8 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     private static final int BUTTON_SIZE_HALF = 7;
 
-    private Polygon startButton = new Polygon();
-    {
-        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10);
-        startButton.addPoint(thumbnailSize - 4 * BUTTON_SIZE_HALF, 10 + BUTTON_SIZE_HALF);
-        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10 + 2 * BUTTON_SIZE_HALF);
-    }
-
-    private Rectangle stopButton = new Rectangle();
-
-    {
-        stopButton.setBounds(thumbnailSize - 3 * BUTTON_SIZE_HALF, 10, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
-    }
+    private final Polygon startButton;
+    private final Rectangle stopButton;
 
     private Rectangle progressBarRectangle;
 
@@ -71,6 +72,14 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
         this.series = sequence;
+        startButton = new Polygon();
+        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10);
+        startButton.addPoint(thumbnailSize - 4 * BUTTON_SIZE_HALF, 10 + BUTTON_SIZE_HALF);
+        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10 + 2 * BUTTON_SIZE_HALF);
+
+        stopButton =
+            new Rectangle(thumbnailSize - 3 * BUTTON_SIZE_HALF, 10, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
+
         // media can be null for seriesThumbnail
         MediaElement<?> media = (MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         // Handle special case for DICOM SR
@@ -281,9 +290,6 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
     public String getToolTipText() {
         return series.getToolTips();
     }
-
-    private static final Composite SOLID_COMPOSITE = AlphaComposite.SrcOver;
-    private static final Composite TRANSPARENT_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
 
     @Override
     protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
