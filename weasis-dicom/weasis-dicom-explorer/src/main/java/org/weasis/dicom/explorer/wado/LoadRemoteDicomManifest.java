@@ -77,7 +77,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     public LoadRemoteDicomManifest(String[] xmlFiles, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -86,7 +86,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
     }
 
     public LoadRemoteDicomManifest(File[] xmlFiles, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -123,26 +123,23 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
                     ArrayList<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
 
                     if (wadoTasks != null) {
-                        {
-                            boolean downloadImmediately = SeriesDownloadPrefUtils.downloadImmediately();
-                            for (final LoadSeries loadSeries : wadoTasks) {
-                                if (downloadImmediately) {
-                                    loadingQueue.offer(loadSeries);
-                                } else {
-                                    currentTasks.add(loadSeries);
-                                    GuiExecutor.instance().execute(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            loadSeries.getProgressBar().setValue(0);
-                                            loadSeries.stop();
-                                        }
-                                    });
-                                }
-                            }
-                            if (!downloadImmediately) {
-                                Collections.sort(currentTasks, Collections.reverseOrder(new PriorityTaskComparator()));
+                        boolean downloadImmediately = SeriesDownloadPrefUtils.downloadImmediately();
+                        for (final LoadSeries loadSeries : wadoTasks) {
+                            addLoadSeries(loadSeries, dicomModel);
+                            if (downloadImmediately) {
+                                loadingQueue.offer(loadSeries);
+                            } else {
+                                GuiExecutor.instance().execute(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        loadSeries.getProgressBar().setValue(0);
+                                        loadSeries.stop();
+                                    }
+                                });
                             }
                         }
+                        // Sort tasks from the download priority order
+                        Collections.sort(currentTasks, Collections.reverseOrder(new PriorityTaskComparator()));
                     }
                 } catch (URISyntaxException e) {
                     e.printStackTrace();
@@ -152,13 +149,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask {
             }
         }
 
-        // TODO show be in loop above ?
-        Runnable[] tasks = loadingQueue.toArray(new Runnable[loadingQueue.size()]);
-        for (int i = 0; i < tasks.length; i++) {
-            addLoadSeries((LoadSeries) tasks[i], dicomModel);
-        }
         executor.prestartAllCoreThreads();
-
         return true;
     }
 

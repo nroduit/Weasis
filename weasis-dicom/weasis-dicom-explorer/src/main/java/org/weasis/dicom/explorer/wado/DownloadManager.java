@@ -517,9 +517,7 @@ public class DownloadManager {
             final LoadSeries loadSeries =
                 new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                     LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
-
-            DownloadPriority priority = new DownloadPriority(patient, study, dicomSeries);
-            loadSeries.setPriority(priority);
+            loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries));
             seriesList.add(loadSeries);
         }
         return dicomSeries;

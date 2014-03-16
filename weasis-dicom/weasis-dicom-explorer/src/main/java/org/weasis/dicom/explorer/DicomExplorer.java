@@ -243,6 +243,53 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JButton btnExport = new JButton(exportAction);
     private final JButton btnImport = new JButton(importAction);
 
+    private final JLabel globalLoadingLabel = new JLabel();
+    private final JButton globalResumeButton = new JButton(new Icon() {
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(Color.GREEN);
+            x += 3;
+            y += 3;
+            int[] xPoints = { x, x + 14, x };
+            int[] yPoints = { y, y + 7, y + 14 };
+            g2d.fillPolygon(xPoints, yPoints, xPoints.length);
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 20;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 20;
+        }
+    });
+
+    private final JButton globalStopButton = new JButton(new Icon() {
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(Color.RED);
+            x += 3;
+            y += 3;
+            g2d.fillRect(x, y, 14, 14);
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 20;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 20;
+        }
+    });
+
     public DicomExplorer() {
         this(null);
     }
@@ -910,30 +957,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panel_1.setLayout(new BorderLayout());
             panel_1.add(panel, BorderLayout.NORTH);
 
-            JPanel downloadPanel = new JPanel();
-            downloadPanel.setBorder(new TitledBorder("Download"));
-            downloadPanel.setLayout(new FlowLayout());
-
-            JButton stopButton = new JButton("Stop");
-            stopButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    LoadRemoteDicomManifest.stop();
-                }
-            });
-            downloadPanel.add(stopButton);
-
-            JButton resumeButton = new JButton("Resume");
-            resumeButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    LoadRemoteDicomManifest.resume();
-                }
-            });
-            downloadPanel.add(resumeButton);
-
-            panel_1.add(downloadPanel, BorderLayout.SOUTH);
-
             if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) {
                 GridBagConstraints gbc_btnMoreOptions = new GridBagConstraints();
                 gbc_btnMoreOptions.anchor = GridBagConstraints.EAST;
@@ -1427,8 +1450,25 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private JPanel getLoadingPanel() {
         if (panel_4 == null) {
             panel_4 = new JPanel();
+
+            globalResumeButton.setToolTipText("Resume All");
+            globalResumeButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    LoadRemoteDicomManifest.resume();
+                }
+            });
+            panel_4.add(globalResumeButton);
+            globalStopButton.setToolTipText("Stop All");
+            globalStopButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    LoadRemoteDicomManifest.stop();
+                }
+            });
+            panel_4.add(globalStopButton);
             panel_4.add(globalProgress);
-            panel_4.add(new JLabel());
+            panel_4.add(globalLoadingLabel);
         }
         return panel_4;
     }
@@ -1441,14 +1481,22 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     @Override
                     public void run() {
                         JPanel loadingPanel = getLoadingPanel();
-                        Component label = loadingPanel.getComponent(1);
-                        if (label instanceof JLabel) {
-                            ((JLabel) label).setText(task.getMessage());
+                        globalLoadingLabel.setText(task.getMessage());
+                        if (globalProgress.isVisible()) {
+                            if (task.isInterruptible()) {
+                                globalProgress.setVisible(false);
+                                globalResumeButton.setVisible(true);
+                                globalStopButton.setVisible(true);
+                            } else {
+                                globalResumeButton.setVisible(false);
+                                globalStopButton.setVisible(false);
+                            }
                         }
+
                         if (getComponentZOrder(loadingPanel) == -1) {
-                            globalProgress.setIndeterminate(true);
-                            // boolean vertical =
-                            // ToolWindowAnchor.RIGHT.equals(getAnchor()) || ToolWindowAnchor.LEFT.equals(getAnchor());
+                            if (globalProgress.isVisible()) {
+                                globalProgress.setIndeterminate(true);
+                            }
                             boolean vertical = true;
                             add(loadingPanel, vertical ? BorderLayout.SOUTH : BorderLayout.EAST);
                             revalidate();
@@ -1473,8 +1521,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
                     @Override
                     public void run() {
-                        globalProgress.setIndeterminate(false);
                         remove(getLoadingPanel());
+                        globalProgress.setIndeterminate(false);
+                        globalProgress.setVisible(true);
                         revalidate();
                         repaint();
                     }
@@ -1954,7 +2003,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                             }
                         }
                     } else {
-                        DicomDirImport.loadDicomDir(file, model);
+                        DicomDirImport.loadDicomDir(file, model, true);
                     }
 
                 }

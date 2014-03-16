@@ -293,7 +293,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            ExplorerTask task = new ExplorerTask("Exporting...") {
+            ExplorerTask task = new ExplorerTask("Exporting...", false) {
 
                 @Override
                 protected Boolean doInBackground() throws Exception {

@@ -26,6 +26,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JViewport;
@@ -44,27 +45,26 @@ import org.weasis.core.api.util.FontTools;
 
 public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGestureListener, DragSourceListener,
     DragSourceMotionListener, FocusListener {
+    private static final int BUTTON_SIZE_HALF = 7;
+    private static final Polygon startButton = new Polygon(new int[] { 0, 2 * BUTTON_SIZE_HALF, 0 }, new int[] { 0,
+        BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF }, 3);
+    private static final Rectangle stopButton = new Rectangle(0, 0, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
 
     private static final Composite SOLID_COMPOSITE = AlphaComposite.SrcOver;
     private static final Composite TRANSPARENT_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
+
     private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
     // Get the closest cursor size regarding to the platform
     private final Border onMouseOverBorderFocused = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(
         Color.orange, 2));
     private final Border onMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(new Color(
         255, 224, 178), 2));
-    private final Border outMouseOverBorder = new EmptyBorder(4, 4, 2, 4);
+    private final Border outMouseOverBorder = new CompoundBorder(new EmptyBorder(2, 2, 0, 2),
+        BorderFactory.createEtchedBorder());
     private JProgressBar progressBar;
     private final MediaSeries<?> series;
     private Point dragPressed = null;
     private DragSource dragSource = null;
-
-    private static final int BUTTON_SIZE_HALF = 7;
-
-    private final Polygon startButton;
-    private final Rectangle stopButton;
-
-    private Rectangle progressBarRectangle;
 
     public SeriesThumbnail(final MediaSeries<?> sequence, int thumbnailSize) {
         super((File) null, thumbnailSize);
@@ -72,13 +72,6 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
         }
         this.series = sequence;
-        startButton = new Polygon();
-        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10);
-        startButton.addPoint(thumbnailSize - 4 * BUTTON_SIZE_HALF, 10 + BUTTON_SIZE_HALF);
-        startButton.addPoint(thumbnailSize - 6 * BUTTON_SIZE_HALF, 10 + 2 * BUTTON_SIZE_HALF);
-
-        stopButton =
-            new Rectangle(thumbnailSize - 3 * BUTTON_SIZE_HALF, 10, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
 
         // media can be null for seriesThumbnail
         MediaElement<?> media = (MediaElement<?>) sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null);
@@ -110,12 +103,6 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
     public void setProgressBar(JProgressBar progressBar) {
         removeMouseListener(this);
         this.progressBar = progressBar;
-        if (progressBar != null) {
-            addMouseListener(this);
-            progressBarRectangle =
-                new Rectangle(thumbnailSize - progressBar.getWidth(), thumbnailSize - progressBar.getHeight(),
-                    progressBar.getWidth(), progressBar.getHeight());
-        }
     }
 
     @Override
@@ -176,10 +163,8 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
         boolean update = this.thumbnailSize != thumbnailSize;
         if (update) {
             Object media = series.getMedia(mediaPosition, null, null);
-            if (thumbnailPath != null || media instanceof MediaElement<?>) {
-                this.thumbnailSize = thumbnailSize;
-                buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
-            }
+            this.thumbnailSize = thumbnailSize;
+            buildThumbnail((MediaElement<?>) media, series.getTagValue(TagW.ExplorerModel) != null);
         }
     }
 
@@ -321,24 +306,33 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
                 g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
             }
             if (bar.isVisible()) {
-                // Draw in the bottom right corner of thumbnail space;
+                // Draw in the bottom right corner of thumbnail;
                 int shiftx = thumbnailSize - bar.getWidth();
                 int shifty = thumbnailSize - bar.getHeight();
                 g2d.translate(shiftx, shifty);
                 bar.paint(g2d);
-                g2d.translate(-shiftx, -shifty);
 
+                // Draw in the top right corner;
                 SeriesImporter seriesLoader = series.getSeriesLoader();
                 boolean stopped = seriesLoader.isStopped();
 
-                g2d.setColor(Color.GREEN);
-                g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
-                g2d.fill(startButton);
-
+                g2d.translate(-shiftx, -shifty);
+                shiftx = thumbnailSize - stopButton.width;
+                shifty = 5;
+                g2d.translate(shiftx, shifty);
                 g2d.setColor(Color.RED);
                 g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
                 g2d.fill(stopButton);
 
+                g2d.translate(-shiftx, -shifty);
+                shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
+                shifty = 5;
+                g2d.translate(shiftx, shifty);
+                g2d.setColor(Color.GREEN);
+                g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
+                g2d.fill(startButton);
+
+                g2d.translate(-shiftx, -shifty);
             }
         }
     }
@@ -357,34 +351,25 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
             // To avoid concurrency issue
             JProgressBar bar = progressBar;
             if (bar.isVisible()) {
-
-                if (progressBarRectangle.contains(e.getPoint())) {
-                    SeriesImporter loader = series.getSeriesLoader();
-                    if (loader != null) {
-                        if (loader.isStopped()) {
-                            loader.resume();
-                        } else {
-                            loader.stop();
-                        }
-                    }
-                }
-
-                if (startButton.contains(e.getPoint())) {
-                    SeriesImporter loader = series.getSeriesLoader();
-                    if (loader != null) {
-                        loader.resume();
-                    }
-                }
-
-                if (stopButton.contains(e.getPoint())) {
+                Point p = e.getPoint();
+                p.translate(-(thumbnailSize - stopButton.width), -5);
+                if (stopButton.contains(p)) {
                     SeriesImporter loader = series.getSeriesLoader();
                     if (loader != null) {
                         loader.stop();
                     }
+                    repaint();
+                    return;
                 }
 
-                repaint();
-
+                p.translate(3 * BUTTON_SIZE_HALF, 0);
+                if (startButton.getBounds().contains(p)) {
+                    SeriesImporter loader = series.getSeriesLoader();
+                    if (loader != null) {
+                        loader.resume();
+                    }
+                    repaint();
+                }
             }
         }
     }

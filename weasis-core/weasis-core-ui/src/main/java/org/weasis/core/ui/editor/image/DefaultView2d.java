@@ -410,7 +410,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         MediaSeries<E> oldsequence = this.series;
         this.series = newSeries;
 
-        if ((oldsequence != null && oldsequence.equals(newSeries)) || (oldsequence == null && newSeries == null)) {
+        if (oldsequence == null && newSeries == null) {
+            return;
+        }
+        if (oldsequence != null && oldsequence.equals(newSeries) && imageLayer.getSourceImage() != null) {
             return;
         }
 
@@ -430,6 +433,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             }
             imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
             setImage(media);
+            if (media == null && !imageLayer.isEnableDispOperations()) {
+                imageLayer.setEnableDispOperations(true);
+                // For null image need to force the update
+                imageLayer.updateDisplayOperations();
+                imageLayer.setEnableDispOperations(false);
+            }
         }
 
         eventManager.updateComponentsListener(this);

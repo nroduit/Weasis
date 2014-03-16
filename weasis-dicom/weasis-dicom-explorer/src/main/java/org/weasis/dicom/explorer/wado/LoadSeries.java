@@ -10,7 +10,10 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer.wado;
 
-import java.awt.event.*;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,7 +38,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.JProgressBar;
-import javax.swing.SwingWorker;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
@@ -49,7 +51,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -65,6 +66,8 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -74,9 +77,11 @@ import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExplorerTask;
+import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 
-public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImporter {
+public class LoadSeries extends ExplorerTask implements SeriesImporter {
 
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
@@ -94,10 +99,11 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
     private final DicomModel dicomModel;
     private final Series dicomSeries;
     private final JProgressBar progressBar;
-    private DownloadPriority priority = null;
+    private volatile DownloadPriority priority = null;
     private final boolean writeInCache;
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
+        super(Messages.getString("DicomExplorer.loading"), writeInCache); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -114,20 +120,10 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
             @Override
             public void run() {
                 bar[0] = new CircularProgressBar(0, sopList.size());
-                bar[0].addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        LoadSeries loadSeries = LoadSeries.this;
-                        if (loadSeries.isStopped())
-                            loadSeries.resume();
-                        else
-                            loadSeries.stop();
-                    }
-                });
             }
         });
         this.progressBar = bar[0];
-        if (JMVUtils.getNULLtoFalse(dicomSeries.getTagValue(TagW.ReadFromDicomdir))) {
+        if (!writeInCache) {
             progressBar.setVisible(false);
         }
         this.dicomSeries.setSeriesLoader(this);
@@ -136,6 +132,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
 
     public LoadSeries(Series dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
+        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -213,6 +210,7 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                 if (thumbnail.getThumbnailPath() == null
                     || dicomSeries.getTagValue(TagW.DirectDownloadThumbnail) != null) {
                     thumbnail.reBuildThumbnail(MediaSeries.MEDIA_POSITION.MIDDLE);
+                    thumbnail.revalidate();
                 }
                 thumbnail.repaint();
 
@@ -557,6 +555,8 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                 SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                                 if (thumbnail != null) {
                                     thumbnail.reBuildThumbnail(finalfile, MediaSeries.MEDIA_POSITION.MIDDLE);
+                                    thumbnail.revalidate();
+                                    thumbnail.repaint();
                                 }
                             }
                         });
@@ -1030,6 +1030,15 @@ public class LoadSeries extends SwingWorker<Boolean, Void> implements SeriesImpo
                                         synchronized (UIManager.VIEWER_PLUGINS) {
                                             for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
                                                 if (entry1.equals(p.getGroupID())) {
+                                                    if (p instanceof ImageViewerPlugin) {
+                                                        DefaultView2d pane =
+                                                            ((ImageViewerPlugin) p).getSelectedImagePane();
+                                                        if (pane != null
+                                                            && pane.getImageLayer().getSourceImage() == null) {
+                                                            // When the selected view has no image send, open in it.
+                                                            break;
+                                                        }
+                                                    }
                                                     openNewTab = false;
                                                     break;
                                                 }

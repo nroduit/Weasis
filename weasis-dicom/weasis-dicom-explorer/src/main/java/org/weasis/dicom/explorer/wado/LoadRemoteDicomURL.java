@@ -37,7 +37,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
     private final DicomModel dicomModel;
 
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -56,7 +56,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
     }
 
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading")); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -115,9 +115,7 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                 if (!ps) {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }
-
-                DownloadPriority priority = new DownloadPriority(patient, study, dicomSeries);
-                loadSeries.setPriority(priority);
+                loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries));
                 LoadRemoteDicomManifest.loadingQueue.offer(loadSeries);
                 LoadRemoteDicomManifest.addLoadSeries(loadSeries, dicomModel);
                 LoadRemoteDicomManifest.executor.prestartAllCoreThreads();
