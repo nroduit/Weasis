@@ -115,10 +115,9 @@ public class LoadRemoteDicomURL extends ExplorerTask {
                 if (!ps) {
                     loadSeries.startDownloadImageReference(wadoParameters);
                 }
-                loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries));
-                LoadRemoteDicomManifest.loadingQueue.offer(loadSeries);
-                LoadRemoteDicomManifest.addLoadSeries(loadSeries, dicomModel);
-                LoadRemoteDicomManifest.executor.prestartAllCoreThreads();
+                loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
+                DownloadManager.addLoadSeries(loadSeries, dicomModel, true);
+                DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
             }
         }
         return true;

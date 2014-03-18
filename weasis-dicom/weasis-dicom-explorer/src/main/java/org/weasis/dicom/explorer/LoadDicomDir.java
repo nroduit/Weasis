@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
+import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class LoadDicomDir extends ExplorerTask {
@@ -33,16 +33,14 @@ public class LoadDicomDir extends ExplorerTask {
 
     @Override
     protected Boolean doInBackground() throws Exception {
-        LoadRemoteDicomManifest.executor.setCorePoolSize(1);
         dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel, null,
             this));
 
         for (LoadSeries s : seriesList) {
-            LoadRemoteDicomManifest.loadingQueue.offer(s);
-            LoadRemoteDicomManifest.addLoadSeries(s, dicomModel);
+            DownloadManager.addLoadSeries(s, dicomModel, true);
         }
 
-        LoadRemoteDicomManifest.executor.prestartAllCoreThreads();
+        DownloadManager.UNIQUE_EXECUTOR.prestartAllCoreThreads();
         return true;
     }
 

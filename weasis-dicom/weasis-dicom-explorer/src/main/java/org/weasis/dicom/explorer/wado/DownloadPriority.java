@@ -18,12 +18,15 @@ public class DownloadPriority {
 
     public static final AtomicInteger COUNTER = new AtomicInteger(Integer.MAX_VALUE - 1);
     private final MediaSeriesGroup patient, study, series;
+    private final boolean concurrentDownload;
     private Integer priority;
 
-    public DownloadPriority(MediaSeriesGroup patient, MediaSeriesGroup study, MediaSeriesGroup series) {
+    public DownloadPriority(MediaSeriesGroup patient, MediaSeriesGroup study, MediaSeriesGroup series,
+        boolean concurrentDownload) {
         this.patient = patient;
         this.study = study;
         this.series = series;
+        this.concurrentDownload = concurrentDownload;
         priority = Integer.MAX_VALUE;
     }
 
@@ -37,6 +40,10 @@ public class DownloadPriority {
 
     public MediaSeriesGroup getSeries() {
         return series;
+    }
+
+    public boolean hasConcurrentDownload() {
+        return concurrentDownload;
     }
 
     public Integer getPriority() {

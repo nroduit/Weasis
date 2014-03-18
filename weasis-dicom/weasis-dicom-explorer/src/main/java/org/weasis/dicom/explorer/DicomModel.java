@@ -71,6 +71,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 import org.weasis.dicom.explorer.wado.DicomManager;
+import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -511,9 +512,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeSeries(MediaSeriesGroup dicomSeries) {
         if (dicomSeries != null) {
-            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
+            if (DownloadManager.TASKS.size() > 0) {
                 if (dicomSeries instanceof DicomSeries) {
-                    LoadRemoteDicomManifest.stopDownloading((DicomSeries) dicomSeries, this);
+                    DownloadManager.stopDownloading((DicomSeries) dicomSeries, this);
                 }
             }
             // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -529,12 +530,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removeStudy(MediaSeriesGroup studyGroup) {
         if (studyGroup != null) {
-            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
+            if (DownloadManager.TASKS.size() > 0) {
                 Collection<MediaSeriesGroup> seriesList = getChildren(studyGroup);
                 for (Iterator<MediaSeriesGroup> it = seriesList.iterator(); it.hasNext();) {
                     MediaSeriesGroup group = it.next();
                     if (group instanceof DicomSeries) {
-                        LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
+                        DownloadManager.stopDownloading((DicomSeries) group, this);
                     }
                 }
             }
@@ -553,7 +554,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void removePatient(MediaSeriesGroup patientGroup) {
         if (patientGroup != null) {
-            if (LoadRemoteDicomManifest.currentTasks.size() > 0) {
+            if (DownloadManager.TASKS.size() > 0) {
                 Collection<MediaSeriesGroup> studyList = getChildren(patientGroup);
                 for (Iterator<MediaSeriesGroup> it = studyList.iterator(); it.hasNext();) {
                     MediaSeriesGroup studyGroup = it.next();
@@ -561,7 +562,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     for (Iterator<MediaSeriesGroup> it2 = seriesList.iterator(); it2.hasNext();) {
                         MediaSeriesGroup group = it2.next();
                         if (group instanceof DicomSeries) {
-                            LoadRemoteDicomManifest.stopDownloading((DicomSeries) group, this);
+                            DownloadManager.stopDownloading((DicomSeries) group, this);
                         }
                     }
                 }
@@ -1020,6 +1021,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         ArrayList<LoadSeries> loadSeries = null;
                         File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
                         if (dcmDirFile.canRead()) {
+                            // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
                             DicomDirLoader dirImport =
                                 new DicomDirLoader(dcmDirFile, DicomModel.this, DicomManager.getInstance()
                                     .isPortableDirCache());
@@ -1027,7 +1029,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                         }
                         if (loadSeries != null && loadSeries.size() > 0) {
                             loadingExecutor.execute(new LoadDicomDir(loadSeries, DicomModel.this));
-
                         } else {
                             loadingExecutor.execute(new LoadLocalDicom(files, true, DicomModel.this));
                         }

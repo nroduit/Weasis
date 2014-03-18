@@ -18,20 +18,27 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker.StateValue;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -47,6 +54,7 @@ import org.dcm4che3.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -56,6 +64,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.GzipManager;
@@ -78,7 +87,153 @@ public class DownloadManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
-    public DownloadManager() {
+    public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
+    public static final ArrayList<LoadSeries> TASKS = new ArrayList<LoadSeries>();
+
+    // Executor without concurrency (only one task is executed at the same time)
+    private static final BlockingQueue<Runnable> UNIQUE_QUEUE = new PriorityBlockingQueue<Runnable>(10,
+        new PriorityTaskComparator());
+    public static final ThreadPoolExecutor UNIQUE_EXECUTOR = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+        UNIQUE_QUEUE);
+
+    // Executor with simultaneous tasks
+    private static final BlockingQueue<Runnable> PRIORITY_QUEUE = new PriorityBlockingQueue<Runnable>(10,
+        new PriorityTaskComparator());
+    public static final ThreadPoolExecutor CONCURRENT_EXECUTOR = new ThreadPoolExecutor(
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS, PRIORITY_QUEUE);
+
+    public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
+
+        private static final long serialVersionUID = 513213203958362767L;
+
+        @Override
+        public int compare(final Runnable r1, final Runnable r2) {
+            LoadSeries o1 = (LoadSeries) r1;
+            LoadSeries o2 = (LoadSeries) r2;
+            DownloadPriority val1 = o1.getPriority();
+            DownloadPriority val2 = o2.getPriority();
+
+            int rep = val1.getPriority().compareTo(val2.getPriority());
+            if (rep != 0) {
+                return rep;
+            }
+            rep = DicomModel.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
+            if (rep != 0) {
+                return rep;
+            }
+
+            rep = DicomModel.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
+            if (rep != 0) {
+                return rep;
+            }
+            return DicomModel.SERIES_COMPARATOR.compare(val1.getSeries(), val2.getSeries());
+        }
+    }
+
+    private DownloadManager() {
+    }
+
+    public static boolean removeSeriesInQueue(final LoadSeries series) {
+        return series.getPriority().hasConcurrentDownload() ? DownloadManager.PRIORITY_QUEUE.remove(series)
+            : DownloadManager.UNIQUE_QUEUE.remove(series);
+    }
+
+    public static void offerSeriesInQueue(final LoadSeries series) {
+        if (series.getPriority().hasConcurrentDownload()) {
+            DownloadManager.PRIORITY_QUEUE.offer(series);
+        } else {
+            DownloadManager.UNIQUE_QUEUE.offer(series);
+        }
+    }
+
+    public static synchronized void addLoadSeries(final LoadSeries series, DicomModel dicomModel, boolean startLoading) {
+        if (series != null) {
+            if (startLoading) {
+                offerSeriesInQueue(series);
+            } else {
+                GuiExecutor.instance().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        series.getProgressBar().setValue(0);
+                        series.stop();
+                    }
+                });
+            }
+            if (dicomModel != null) {
+                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStart, dicomModel,
+                    null, series));
+            }
+            if (!DownloadManager.TASKS.contains(series)) {
+                DownloadManager.TASKS.add(series);
+            }
+        }
+    }
+
+    public static synchronized void removeLoadSeries(LoadSeries series, DicomModel dicomModel) {
+        if (series != null) {
+            DownloadManager.TASKS.remove(series);
+            if (dicomModel != null) {
+                dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LoadingStop, dicomModel,
+                    null, series));
+            }
+            if (DownloadManager.TASKS.size() == 0) {
+                // When all loadseries are ended, reset to default the number of simultaneous download (series)
+                DownloadManager.CONCURRENT_EXECUTOR.setCorePoolSize(BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                    DownloadManager.CONCURRENT_SERIES, 3));
+            }
+        }
+    }
+
+    public static void stopDownloading(DicomSeries series, DicomModel dicomModel) {
+        if (series != null) {
+            synchronized (DownloadManager.TASKS) {
+                for (final LoadSeries loading : DownloadManager.TASKS) {
+                    if (loading.getDicomSeries() == series) {
+                        removeLoadSeries(loading, dicomModel);
+                        removeSeriesInQueue(loading);
+                        if (StateValue.STARTED.equals(loading.getState())) {
+                            loading.cancel(true);
+                        }
+                        // Ensure to stop downloading
+                        series.setSeriesLoader(null);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public static void resume() {
+        handleAllSeries(new LoadSeriesHandler() {
+            @Override
+            public void handle(LoadSeries loadSeries) {
+                loadSeries.resume();
+            }
+        });
+    }
+
+    public static void stop() {
+        handleAllSeries(new LoadSeriesHandler() {
+            @Override
+            public void handle(LoadSeries loadSeries) {
+                loadSeries.stop();
+            }
+        });
+    }
+
+    private static void handleAllSeries(LoadSeriesHandler handler) {
+        for (LoadSeries loadSeries : new ArrayList<LoadSeries>(DownloadManager.TASKS)) {
+            handler.handle(loadSeries);
+            Thumbnail thumbnail = (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
+            if (thumbnail != null) {
+                thumbnail.repaint();
+            }
+        }
+    }
+
+    private static interface LoadSeriesHandler {
+        void handle(LoadSeries loadSeries);
     }
 
     public static ArrayList<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model) {
@@ -517,7 +672,7 @@ public class DownloadManager {
             final LoadSeries loadSeries =
                 new LoadSeries(dicomSeries, model, BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                     LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
-            loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries));
+            loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
             seriesList.add(loadSeries);
         }
         return dicomSeries;

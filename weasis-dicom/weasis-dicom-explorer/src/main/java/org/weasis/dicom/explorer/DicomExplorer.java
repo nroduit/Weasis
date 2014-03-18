@@ -110,7 +110,7 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
+import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 import bibliothek.gui.dock.common.CLocation;
@@ -1455,7 +1455,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             globalResumeButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    LoadRemoteDicomManifest.resume();
+                    DownloadManager.resume();
                 }
             });
             panel_4.add(globalResumeButton);
@@ -1463,7 +1463,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             globalStopButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    LoadRemoteDicomManifest.stop();
+                    DownloadManager.stop();
                 }
             });
             panel_4.add(globalStopButton);

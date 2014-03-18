@@ -224,7 +224,7 @@ public class DicomDirLoader {
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
                     dicomSeries.setTag(TagW.ReadFromDicomdir, true);
                     final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, writeInCache);
-                    loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries));
+                    loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, false));
                     seriesList.add(loadSeries);
                 }
             }

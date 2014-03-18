@@ -185,16 +185,15 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                 thumbnail.addKeyListener(DicomExplorer.createThumbnailKeyListener(taskResume.getDicomSeries(),
                     dicomModel));
             }
-            LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
-            LoadRemoteDicomManifest.addLoadSeries(taskResume, dicomModel);
-            LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
+            DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+            DownloadManager.removeLoadSeries(this, dicomModel);
         }
     }
 
     @Override
     protected void done() {
         if (!isStopped()) {
-            LoadRemoteDicomManifest.removeLoadSeries(this, dicomModel);
+            DownloadManager.removeLoadSeries(this, dicomModel);
 
             AuditLog.LOGGER
                 .info(
@@ -1163,12 +1162,13 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
         DownloadPriority p = getPriority();
         if (p != null) {
             if (StateValue.PENDING.equals(getState())) {
-                boolean change = LoadRemoteDicomManifest.loadingQueue.remove(this);
+                boolean change = DownloadManager.removeSeriesInQueue(this);
                 if (change) {
+                    // Set the priority to the current loadingSeries and stop a task.
                     p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
-                    LoadRemoteDicomManifest.loadingQueue.offer(this);
-                    synchronized (LoadRemoteDicomManifest.currentTasks) {
-                        for (LoadSeries s : LoadRemoteDicomManifest.currentTasks) {
+                    DownloadManager.offerSeriesInQueue(this);
+                    synchronized (DownloadManager.TASKS) {
+                        for (LoadSeries s : DownloadManager.TASKS) {
                             if (s != this && StateValue.STARTED.equals(s.getState())) {
                                 LoadSeries taskResume =
                                     new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
@@ -1180,9 +1180,8 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
                                     LoadSeries.removeAnonymousMouseAndKeyListener(thumbnail);
                                     addListenerToThumbnail(thumbnail, taskResume, dicomModel);
                                 }
-                                LoadRemoteDicomManifest.loadingQueue.offer(taskResume);
-                                LoadRemoteDicomManifest.addLoadSeries(taskResume, dicomModel);
-                                LoadRemoteDicomManifest.removeLoadSeries(s, dicomModel);
+                                DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+                                DownloadManager.removeLoadSeries(s, dicomModel);
                                 break;
                             }
                         }

@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -23,15 +22,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
@@ -53,9 +49,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     private JTextField textField;
     private JButton btnSearch;
     private JButton btncdrom;
-    private JPanel panel;
-    private JRadioButton rdbtnCddvd;
-    private JRadioButton rdbtnOthers;
     private JCheckBox chckbxWriteInCache;
 
     public DicomDirImport() {
@@ -67,8 +60,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
-        gridBagLayout.columnWeights = new double[] { 1.0, 0.0, 0.0 };
         setLayout(gridBagLayout);
         setBorder(new TitledBorder(null,
             Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
@@ -122,7 +113,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             }
         });
         GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
-        gbc_btnNewButton.gridwidth = 2;
+        gbc_btnNewButton.gridwidth = 3;
         gbc_btnNewButton.anchor = GridBagConstraints.WEST;
         gbc_btnNewButton.insets = new Insets(5, 5, 5, 5);
         gbc_btnNewButton.gridx = 0;
@@ -137,28 +128,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_chckbxWriteInCache.gridx = 0;
         gbc_chckbxWriteInCache.gridy = 2;
         add(chckbxWriteInCache, gbc_chckbxWriteInCache);
-
-        panel = new JPanel();
-        panel.setBorder(new TitledBorder("Reading from device"));
-        FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-        flowLayout.setAlignment(FlowLayout.LEFT);
-        GridBagConstraints gbc_panel = new GridBagConstraints();
-        gbc_panel.anchor = GridBagConstraints.NORTHWEST;
-        gbc_panel.gridwidth = 1;
-        gbc_panel.insets = new Insets(0, 0, 5, 5);
-        gbc_panel.gridx = 0;
-        gbc_panel.gridy = 3;
-        add(panel, gbc_panel);
-
-        ButtonGroup group = new ButtonGroup();
-        rdbtnCddvd = new JRadioButton("CD/DVD");
-        group.add(rdbtnCddvd);
-        panel.add(rdbtnCddvd);
-
-        rdbtnOthers = new JRadioButton("Others");
-        rdbtnOthers.setSelected(true);
-        group.add(rdbtnOthers);
-        panel.add(rdbtnOthers);
 
         final JLabel label = new JLabel();
         final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
@@ -272,9 +241,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 loadSeries = dirImport.readDicomDir();
             }
             if (loadSeries != null && loadSeries.size() > 0) {
-                // TODO separate the options (reading from CD/DVD => only one concurrent file, and copy images into
-                // temp)
-                // Copy images in cache if property weasis.portable.dicom.cache = true
                 DicomModel.loadingExecutor.execute(new LoadDicomDir(loadSeries, dicomModel));
             } else {
                 LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
