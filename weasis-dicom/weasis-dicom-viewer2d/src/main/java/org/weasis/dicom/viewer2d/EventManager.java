@@ -838,6 +838,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         if (view2d.getSourceImage() == null) {
             enableActions(false);
+            if (view2d.getSeries() != null) {
+                // Let scrolling if only one image is corrupted in the series
+                moveTroughSliceAction.enableAction(true);
+            }
             return false;
         }
 

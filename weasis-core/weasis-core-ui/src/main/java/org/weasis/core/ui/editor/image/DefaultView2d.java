@@ -72,6 +72,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -130,6 +132,8 @@ import org.weasis.core.ui.util.TitleMenuItem;
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements PropertyChangeListener,
     FocusListener, Image2DViewer, ImageLayerChangeListener<E>, KeyListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
+
     public enum ZoomType {
         CURRENT, BEST_FIT, PIXEL_SIZE, REAL
     };
@@ -421,27 +425,33 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         getLayerModel().deleteAllGraphics();
         initActionWState();
 
-        if (newSeries == null) {
+        try {
+            if (newSeries == null) {
+                imageLayer.setImage(null, null);
+                closeLens();
+            } else {
+                E media = selectedMedia;
+                if (selectedMedia == null) {
+                    media =
+                        newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
+                            (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
+                }
+                imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
+                setImage(media);
+                if (media == null && !imageLayer.isEnableDispOperations()) {
+                    imageLayer.setEnableDispOperations(true);
+                    // For null image need to force the update
+                    imageLayer.updateDisplayOperations();
+                    imageLayer.setEnableDispOperations(false);
+                }
+            }
+        } catch (Throwable e) {
+            AuditLog.logError(LOGGER, e, "Unexpected error:");
             imageLayer.setImage(null, null);
             closeLens();
-        } else {
-            E media = selectedMedia;
-            if (selectedMedia == null) {
-                media =
-                    newSeries.getMedia(tileOffset < 0 ? 0 : tileOffset,
-                        (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
-            }
-            imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
-            setImage(media);
-            if (media == null && !imageLayer.isEnableDispOperations()) {
-                imageLayer.setEnableDispOperations(true);
-                // For null image need to force the update
-                imageLayer.updateDisplayOperations();
-                imageLayer.setEnableDispOperations(false);
-            }
+        } finally {
+            eventManager.updateComponentsListener(this);
         }
-
-        eventManager.updateComponentsListener(this);
 
         // Set the sequence to the state OPEN
         if (newSeries != null) {
