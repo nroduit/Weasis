@@ -70,6 +70,7 @@ import org.dcm4che3.image.Overlays;
 import org.dcm4che3.io.DicomEncodingOptions;
 import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.util.Property;
+import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageOutputStream;
 import org.slf4j.Logger;
@@ -153,13 +154,11 @@ public class Compressor extends Decompressor implements Closeable {
         }
 
         if (maxPixelValueError >= 0) {
-            ImageReaderFactory.ImageReaderParam readerParam =
-                    ImageReaderFactory.getImageReaderParam(tsuid);
-            if (readerParam == null)
+            ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
+            if (readerItem == null)
                 throw new UnsupportedOperationException(
-                        "Unsupported Transfer Syntax: " + tsuid);
-
-            this.verifier = ImageReaderFactory.getImageReader(readerParam);
+                    "Unsupported Transfer Syntax: " + tsuid);
+            this.verifier = readerItem.getImageReader();
             this.verifyParam = verifier.getDefaultReadParam();
             LOG.debug("Verifier: {}", verifier.getClass().getName());
         }

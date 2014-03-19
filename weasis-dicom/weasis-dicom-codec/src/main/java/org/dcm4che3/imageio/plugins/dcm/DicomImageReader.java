@@ -75,6 +75,7 @@ import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
+import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
@@ -490,12 +491,11 @@ public class DicomImageReader extends ImageReader {
                 this.pixeldata = (BulkData) pixeldata;
             } else {
                 String tsuid = dis.getTransferSyntax();
-                ImageReaderParam param =
-                        ImageReaderFactory.getImageReaderParam(tsuid);
-                if (param == null)
+                ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
+                if (readerItem == null)
                     throw new IOException("Unsupported Transfer Syntax: " + tsuid);
-                this.decompressor = ImageReaderFactory.getImageReader(param);
-                this.patchJpegLS = param.patchJPEGLS;
+                this.decompressor = readerItem.getImageReader();
+                this.patchJpegLS = readerItem.getImageReaderParam().getPatchJPEGLS();
                 this.pixeldataFragments = (Fragments) pixeldata;
             }
         }

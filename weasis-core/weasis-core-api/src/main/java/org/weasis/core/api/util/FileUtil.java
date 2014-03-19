@@ -570,4 +570,17 @@ public final class FileUtil {
             out.close();
         }
     }
+
+    public static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
+        if (attribute != null) {
+            try {
+                String val = xmler.getAttributeValue(null, attribute);
+                if (val != null) {
+                    return Integer.valueOf(val);
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
+        return defaultValue;
+    }
 }

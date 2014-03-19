@@ -653,6 +653,7 @@ public class DicomImageUtils {
 
     }
 
+    // TODO needs to be adapted
     public static boolean hasPlatformNativeImageioCodecs() {
         return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
     }

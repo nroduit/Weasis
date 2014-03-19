@@ -277,13 +277,13 @@ public class PresetWindowLevel {
                                                     Float.parseFloat(xmler.getAttributeValue(null, "window"));//$NON-NLS-1$
                                                 float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
                                                 String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
-                                                String keyCode = xmler.getAttributeValue(null, "key");//$NON-NLS-1$
+                                                Integer keyCode =  FileUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
                                                 LutShape lutShape = LutShape.getLutShape(shape);
                                                 PresetWindowLevel preset =
                                                     new PresetWindowLevel(name, window, level, lutShape == null
                                                         ? LutShape.LINEAR : lutShape);
                                                 if (keyCode != null) {
-                                                    preset.setKeyCode(Integer.parseInt(keyCode));
+                                                    preset.setKeyCode(keyCode);
                                                 }
                                                 List<PresetWindowLevel> presetList = presetListByModality.get(modality);
                                                 if (presetList == null) {

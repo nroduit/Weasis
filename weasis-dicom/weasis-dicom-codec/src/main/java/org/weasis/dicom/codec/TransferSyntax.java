@@ -10,7 +10,6 @@
  ******************************************************************************/
 package org.weasis.dicom.codec;
 
-
 public enum TransferSyntax {
     NONE(null, "None", null), //$NON-NLS-1$
 
@@ -76,6 +75,7 @@ public enum TransferSyntax {
         return NONE;
     }
 
+    // TODO needs to be adapted
     public static boolean requiresNativeImageioCodecs(String tsuid) {
         if (tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
             try {

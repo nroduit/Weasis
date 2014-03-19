@@ -593,7 +593,7 @@ public class DownloadManager {
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
 
             dicomSeries.setTagNoNull(TagW.SeriesNumber,
-                getIntegerTagAttribute(xmler, TagW.SeriesNumber.getTagName(), null));
+                FileUtil.getIntegerTagAttribute(xmler, TagW.SeriesNumber.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.SeriesDescription,
                 getTagAttribute(xmler, TagW.SeriesDescription.getTagName(), null));
             dicomSeries
@@ -602,7 +602,7 @@ public class DownloadManager {
             dicomSeries.setTagNoNull(TagW.WadoTransferSyntaxUID,
                 getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.WadoCompressionRate,
-                getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getTagName(), null));
+                FileUtil.getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getTagName(), null));
             dicomSeries.setTagNoNull(TagW.DirectDownloadThumbnail,
                 getTagAttribute(xmler, TagW.DirectDownloadThumbnail.getTagName(), null));
             model.addHierarchyNode(study, dicomSeries);
@@ -642,7 +642,7 @@ public class DownloadManager {
                             if (containsInstance && dicomInstances.contains(dcmInstance)) {
                                 LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
                             } else {
-                                dcmInstance.setInstanceNumber(getIntegerTagAttribute(xmler,
+                                dcmInstance.setInstanceNumber(FileUtil.getIntegerTagAttribute(xmler,
                                     TagW.InstanceNumber.getTagName(), -1));
                                 dcmInstance.setDirectDownloadFile(getTagAttribute(xmler,
                                     TagW.DirectDownloadFile.getTagName(), null));
@@ -683,19 +683,6 @@ public class DownloadManager {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
                 return val;
-            }
-        }
-        return defaultValue;
-    }
-
-    private static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
-        if (attribute != null) {
-            try {
-                String val = xmler.getAttributeValue(null, attribute);
-                if (val != null) {
-                    return Integer.valueOf(val);
-                }
-            } catch (NumberFormatException e) {
             }
         }
         return defaultValue;

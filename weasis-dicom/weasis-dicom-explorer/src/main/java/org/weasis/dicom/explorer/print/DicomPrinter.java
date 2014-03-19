@@ -99,7 +99,7 @@ public class DicomPrinter {
                                                         .setDescription(xmler.getAttributeValue(null, "description")); //$NON-NLS-1$
                                                     printer.setAeTitle(xmler.getAttributeValue(null, "aeTitle")); //$NON-NLS-1$
                                                     printer.setHostname(xmler.getAttributeValue(null, "hostname")); //$NON-NLS-1$
-                                                    printer.setPort(getIntegerTagAttribute(xmler, "port", 0)); //$NON-NLS-1$
+                                                    printer.setPort(FileUtil.getIntegerTagAttribute(xmler, "port", 0)); //$NON-NLS-1$
                                                     printer.setColorPrintSupported(Boolean.parseBoolean(xmler
                                                         .getAttributeValue(null, "colorPrintSupported"))); //$NON-NLS-1$
                                                     printersComboBox.addItem(printer);
@@ -169,16 +169,4 @@ public class DicomPrinter {
         return description;
     }
 
-    private static Integer getIntegerTagAttribute(XMLStreamReader xmler, String attribute, Integer defaultValue) {
-        if (attribute != null) {
-            try {
-                String val = xmler.getAttributeValue(null, attribute);
-                if (val != null) {
-                    return Integer.valueOf(val);
-                }
-            } catch (NumberFormatException e) {
-            }
-        }
-        return defaultValue;
-    }
 }

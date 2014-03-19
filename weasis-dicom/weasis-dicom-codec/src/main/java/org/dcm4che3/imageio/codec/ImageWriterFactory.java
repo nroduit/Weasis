@@ -130,7 +130,7 @@ public class ImageWriterFactory implements Serializable {
     private static ImageWriterFactory initDefault() {
         ImageWriterFactory factory = new ImageWriterFactory();
         String name = System.getProperty(ImageWriterFactory.class.getName(),
-                "org/dcm4che/imageio/codec/ImageWriterFactory.properties");
+                "org/dcm4che3/imageio/codec/ImageWriterFactory.properties");
         try {
             factory.load(name);
         } catch (Exception e) {
