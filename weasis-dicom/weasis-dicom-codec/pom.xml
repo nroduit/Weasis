@@ -16,7 +16,11 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 	<repositories>
-		<!-- <repository> <id>dcm4che</id> <name>dcm4che Repository</name> <url>http://www.dcm4che.org/maven2/dcm4che/</url> </repository> -->
+		<repository>
+			<id>dcm4che</id>
+			<name>dcm4che Repository</name>
+			<url>http://www.dcm4che.org/maven2</url>
+		</repository>
 	</repositories>
 	<build>
 		<plugins>
@@ -41,17 +45,17 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-core</artifactId>
-			<version>3.3.1-SNAPSHOT</version>
+			<version>3.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-image</artifactId>
-			<version>3.3.1-SNAPSHOT</version>
+			<version>3.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-net</artifactId>
-			<version>3.3.1-SNAPSHOT</version>
+			<version>3.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
