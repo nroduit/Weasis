@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;

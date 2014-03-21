@@ -276,7 +276,7 @@ public class InfoLayer implements AnnotationsLayer {
                 sb.append(" ");//$NON-NLS-1$
                 sb.append(Messages.getString("InfoLayer.level"));//$NON-NLS-1$
                 sb.append(" ");//$NON-NLS-1$
-                sb.append(DecFormater.oneDecimal(window));
+                sb.append(DecFormater.oneDecimal(level));
                 if (dcm != null) {
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());

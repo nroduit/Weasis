@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -31,6 +31,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.util.Toolbar;
@@ -39,8 +40,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.EventManager;
-import org.weasis.dicom.viewer2d.Messages;
 
 public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
@@ -74,7 +73,20 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     public SRContainer(GridBagLayoutModel layoutModel) {
-        super(EventManager.getInstance(), layoutModel, SRFactory.NAME, SRFactory.ICON, null);
+        super(new ImageViewerEventManager<DicomImageElement>() {
+
+            @Override
+            public boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+            @Override
+            public void resetDisplay() {
+                // TODO Auto-generated method stub
+
+            }
+        }, layoutModel, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -95,7 +107,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
             List<Action> actions = getPrintActions();
             if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("View2dContainer.print")); //$NON-NLS-1$
+                JMenu printMenu = new JMenu(Messages.getString("SRContainer.print")); //$NON-NLS-1$
                 for (Action action : actions) {
                     JMenuItem item = new JMenuItem(action);
                     printMenu.add(item);
@@ -249,7 +261,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<Action>(1);
-        final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
+        final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
         AbstractAction printStd =
             new AbstractAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) { //$NON-NLS-1$
 

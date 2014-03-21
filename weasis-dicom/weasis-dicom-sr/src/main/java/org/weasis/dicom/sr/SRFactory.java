@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @Property(name = "service.name", value = "DICOM SR Viewer")
 public class SRFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "DICOM SR";
+    public static final String NAME = "DICOM SR Viewer";
     public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/text-x-generic.png")); //$NON-NLS-1$
 
     public SRFactory() {

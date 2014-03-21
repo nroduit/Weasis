@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -44,6 +44,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -102,16 +103,57 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         return series;
     }
 
-    public synchronized void setSeries(Series<?> series) {
-        this.series = series;
+    public synchronized void setSeries(Series<?> newSeries) {
+        MediaSeries<?> oldsequence = this.series;
+        this.series = newSeries;
+
+        if (oldsequence == null && newSeries == null) {
+            return;
+        }
+        if (oldsequence != null && oldsequence.equals(newSeries)) {
+            // && htmlPanel.getText().length() > 5) {
+            return;
+        }
+
+        closingSeries(oldsequence);
+
         if (series != null) {
+            DicomSpecialElement s = null;
             List<MediaElement<?>> specialElements =
                 (List<MediaElement<?>>) series.getTagValue(TagW.DicomSpecialElementList);
             if (specialElements != null && specialElements.size() > 0) {
                 // Should have only one object by series (if more, they are split in several sub-series in dicomModel)
-                displayLimitedDicomInfo((DicomSpecialElement) specialElements.get(0));
+                s = (DicomSpecialElement) specialElements.get(0);
+            }
+            displayLimitedDicomInfo(s);
+            series.setOpen(true);
+        }
+    }
+
+    private void closingSeries(MediaSeries<?> mediaSeries) {
+        if (mediaSeries == null) {
+            return;
+        }
+        boolean open = false;
+        synchronized (UIManager.VIEWER_PLUGINS) {
+            List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+            pluginList: for (final ViewerPlugin<?> plugin : plugins) {
+                List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
+                if (openSeries != null) {
+                    for (MediaSeries<?> s : openSeries) {
+                        if (mediaSeries == s) {
+                            // The sequence is still open in another view or plugin
+                            open = true;
+                            break pluginList;
+                        }
+                    }
+                }
             }
         }
+        mediaSeries.setOpen(open);
+        // TODO setSelected and setFocused must be global to all view as open
+        mediaSeries.setSelected(false, null);
+        mediaSeries.setFocused(false);
     }
 
     public void dispose() {

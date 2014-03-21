@@ -29,8 +29,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -41,7 +41,6 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
-import org.weasis.dicom.viewer2d.sr.SRContainer;
 
 public class Activator implements BundleActivator, ServiceListener {
 
@@ -82,7 +81,6 @@ public class Activator implements BundleActivator, ServiceListener {
         EventManager.getInstance().savePreferences(bundleContext);
         UIManager.closeSeriesViewerType(MPRContainer.class);
         UIManager.closeSeriesViewerType(View2dContainer.class);
-        UIManager.closeSeriesViewerType(SRContainer.class);
     }
 
     @Override

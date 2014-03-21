@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import java.awt.Color;
 import java.util.Date;
@@ -25,7 +25,7 @@ import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.PRManager;
+import org.weasis.dicom.explorer.GraphicUtil;
 
 public class SRReader {
 
@@ -298,7 +298,7 @@ public class SRReader {
                 Attributes graphicsItems = c.getAttributes();
                 try {
                     Graphic graphic =
-                        PRManager.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false, null, true);
+                        GraphicUtil.buildGraphicFromPR(graphicsItems, Color.MAGENTA, false, 1, 1, false, null, true);
                     if (graphic != null) {
                         imgRef.addGraphic(graphic);
                     }

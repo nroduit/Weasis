@@ -1,4 +1,4 @@
-package org.weasis.dicom.viewer2d.sr;
+package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.awt.Insets;
