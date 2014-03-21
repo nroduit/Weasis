@@ -118,9 +118,9 @@ public class Activator implements BundleActivator, ServiceListener {
             if (BundleTools.CODEC_PLUGINS.contains(codec)) {
                 LOGGER.info("Unregister Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
                 BundleTools.CODEC_PLUGINS.remove(codec);
-                // Unget service object and null references.
-                context.ungetService(m_ref);
             }
+            // Unget service object and null references.
+            context.ungetService(m_ref);
         }
     }
 

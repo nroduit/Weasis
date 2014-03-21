@@ -122,13 +122,11 @@ public class DicomSeries extends Series<DicomImageElement> {
     @Override
     public String getMimeType() {
         String modality = (String) getTagValue(TagW.Modality);
-        if ("PR".equals(modality)) { //$NON-NLS-1$
-            return DicomMediaIO.SERIES_PR_MIMETYPE;
-        } else if ("KO".equals(modality)) { //$NON-NLS-1$
-            return DicomMediaIO.SERIES_KO_MIMETYPE;
-        } else if ("SR".equals(modality)) { //$NON-NLS-1$
-            return DicomMediaIO.SERIES_SR_MIMETYPE;
+        DicomSpecialElementFactory factory = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
+        if (factory != null) {
+            return factory.getSeriesMimeType();
         }
+        // Type for the default 2D viewer
         return DicomMediaIO.SERIES_MIMETYPE;
     }
 

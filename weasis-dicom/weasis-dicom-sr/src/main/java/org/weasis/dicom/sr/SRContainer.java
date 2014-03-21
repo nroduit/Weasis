@@ -77,14 +77,13 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
             @Override
             public boolean updateComponentsListener(DefaultView2d<DicomImageElement> defaultView2d) {
-                // TODO Auto-generated method stub
-                return false;
+                // Do nothing
+                return true;
             }
 
             @Override
             public void resetDisplay() {
-                // TODO Auto-generated method stub
-
+                // Do nothing
             }
         }, layoutModel, SRFactory.NAME, SRFactory.ICON, null);
         setSynchView(SynchView.NONE);
@@ -126,8 +125,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     @Override
     public void setSelected(boolean selected) {
         if (selected) {
-            eventManager.setSelectedView2dContainer(this);
-
             // Send event to select the related patient in Dicom Explorer.
             DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
             if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
@@ -135,8 +132,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     new ObservableEvent(ObservableEvent.BasicAction.Select, this, null, getGroupID()));
             }
 
-        } else {
-            eventManager.setSelectedView2dContainer(null);
         }
     }
 

@@ -160,9 +160,9 @@ public class Activator implements BundleActivator, ServiceListener {
                                     // BundleTools.logger.log(LogService.LOG_INFO,
                                     // "Unregister data explorer Plug-in: " +
                                     // m_ref.toString());
-                                    // Unget service object and null references.
-                                    context.ungetService(m_ref);
                                 }
+                                // Unget service object and null references.
+                                context.ungetService(m_ref);
                             }
                         });
                     }

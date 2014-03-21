@@ -15,15 +15,26 @@ import java.util.Hashtable;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.ImageioUtil;
 import org.weasis.dicom.codec.DicomCodec;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.dicom.codec.pref.DicomPrefManager;
 
-public class Activator implements BundleActivator {
+public class Activator implements BundleActivator, ServiceListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
     private static final String LOGGER_KEY = "always.info.ItemParser";
     private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser";
@@ -55,6 +66,27 @@ public class Activator implements BundleActivator {
                 logConfiguration.update(loggingProperties);
             }
         }
+
+        try {
+            for (ServiceReference<DicomSpecialElementFactory> service : bundleContext.getServiceReferences(
+                DicomSpecialElementFactory.class, null)) {
+                DicomSpecialElementFactory factory = bundleContext.getService(service);
+                if (factory != null) {
+                    for (String modality : factory.getModalities()) {
+                        DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
+                        if (prev != null) {
+                            LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass());
+                        }
+                        LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass());
+                    }
+                }
+            }
+        } catch (InvalidSyntaxException e) {
+            e.printStackTrace();
+        }
+
+        bundleContext.addServiceListener(this,
+            String.format("(%s=%s)", Constants.OBJECTCLASS, DicomSpecialElementFactory.class.getName()));//$NON-NLS-1$
     }
 
     // @Override
@@ -65,4 +97,37 @@ public class Activator implements BundleActivator {
         ImageioUtil.deregisterServiceProvider(DicomCodec.DicomImageReaderSpi);
     }
 
+    @Override
+    public synchronized void serviceChanged(final ServiceEvent event) {
+        ServiceReference<?> m_ref = event.getServiceReference();
+        BundleContext context = FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
+        DicomSpecialElementFactory factory = (DicomSpecialElementFactory) context.getService(m_ref);
+        if (factory == null) {
+            return;
+        }
+
+        if (event.getType() == ServiceEvent.REGISTERED) {
+            for (String modality : factory.getModalities()) {
+                DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
+                if (prev != null) {
+                    LOGGER.warn("{} factory has been replaced by {}", prev.getClass(), factory.getClass());
+                }
+                LOGGER.debug("Register DicomSpecialElementFactory: {}", factory.getClass());
+            }
+
+        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+            for (String modality : factory.getModalities()) {
+                DicomSpecialElementFactory f = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
+                if (factory.equals(f)) {
+                    DicomMediaIO.DCM_ELEMENT_FACTORIES.remove(modality);
+                } else {
+                    LOGGER.warn("Cannot unregister {}, {} is registered instead", factory.getClass(), f.getClass());
+                }
+                LOGGER.debug("Unregister DicomSpecialElementFactory: {}", factory.getClass());
+            }
+            // Unget service object and null references.
+            context.ungetService(m_ref);
+        }
+
+    }
 }

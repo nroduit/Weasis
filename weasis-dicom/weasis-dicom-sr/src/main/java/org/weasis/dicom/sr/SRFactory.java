@@ -17,7 +17,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
@@ -79,7 +78,7 @@ public class SRFactory implements SeriesViewerFactory {
 
     @Override
     public boolean canReadMimeType(String mimeType) {
-        return DicomMediaIO.SERIES_SR_MIMETYPE.equals(mimeType);
+        return SRElementFactory.SERIES_SR_MIMETYPE.equals(mimeType);
     }
 
     @Override

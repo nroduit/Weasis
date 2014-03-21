@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -64,18 +65,17 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
-import org.dcm4che3.io.BulkDataDescriptor;
-import org.dcm4che3.io.DicomInputStream;
-import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderItem;
-import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
 import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
+import org.dcm4che3.io.BulkDataDescriptor;
+import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -116,11 +116,55 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     public static final String SERIES_MIMETYPE = "series/dicom"; //$NON-NLS-1$
     public static final String SERIES_PR_MIMETYPE = "pr/dicom"; //$NON-NLS-1$
     public static final String SERIES_KO_MIMETYPE = "ko/dicom"; //$NON-NLS-1$
-    public static final String SERIES_SR_MIMETYPE = "sr/dicom"; //$NON-NLS-1$
+
     public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; //$NON-NLS-1$
     public static final String UNREADABLE = "unreadable/dicom"; //$NON-NLS-1$
     public static final String SERIES_XDSI = "xds-i/dicom"; //$NON-NLS-1$
     public static final String NO_VALUE = org.weasis.dicom.codec.Messages.getString("DicomMediaIO.unknown");//$NON-NLS-1$
+
+    public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES =
+        new HashMap<String, DicomSpecialElementFactory>();
+
+    static {
+        /*
+         * DICOM PR and KO are not displayed with a special viewer but are transversally managed objects. So they are
+         * not registered from a viewer.
+         */
+        DCM_ELEMENT_FACTORIES.put("PR", new DicomSpecialElementFactory() {
+
+            @Override
+            public String getSeriesMimeType() {
+                return SERIES_PR_MIMETYPE;
+            }
+
+            @Override
+            public String[] getModalities() {
+                return new String[] { "PR" };
+            }
+
+            @Override
+            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                return new PRSpecialElement(mediaIO);
+            }
+        });
+        DCM_ELEMENT_FACTORIES.put("KO", new DicomSpecialElementFactory() {
+
+            @Override
+            public String getSeriesMimeType() {
+                return SERIES_KO_MIMETYPE;
+            }
+
+            @Override
+            public String[] getModalities() {
+                return new String[] { "KO" };
+            }
+
+            @Override
+            public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+                return new KOSpecialElement(mediaIO);
+            }
+        });
+    }
 
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
@@ -358,14 +402,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
     private boolean setDicomSpecialType(Attributes header) {
         String modality = header.getString(Tag.Modality);
         if (modality != null) {
-            if ("PR".equals(modality)) {//$NON-NLS-1$
-                mimeType = SERIES_PR_MIMETYPE;
-                return true;
-            } else if ("KO".equals(modality)) {//$NON-NLS-1$
-                mimeType = SERIES_KO_MIMETYPE;
-                return true;
-            } else if ("SR".equals(modality)) {//$NON-NLS-1$
-                mimeType = SERIES_SR_MIMETYPE;
+            DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
+            if (factory != null) {
+                mimeType = factory.getSeriesMimeType();
                 return true;
             } else {
                 String encap = header.getString(Tag.MIMETypeOfEncapsulatedDocument);
@@ -850,15 +889,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                     } else {
                         String modality = (String) getTagValue(TagW.Modality);
                         if (modality != null) {
-                            if ("KO".equals(modality)) {
+                            DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
+                            if (factory != null) {
                                 image = new MediaElement[1];
-                                image[0] = new KOSpecialElement(this);
-                            } else if ("PR".equals(modality)) {
-                                image = new MediaElement[1];
-                                image[0] = new PRSpecialElement(this);
-                            } else if ("SR".equals(modality)) {
-                                image = new MediaElement[1];
-                                image[0] = new SRSpecialElement(this);
+                                image[0] = factory.buildDicomSpecialElement(this);
                             }
                         }
                         if (image == null) {
@@ -1450,8 +1484,9 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         }
                     } else if (pixdata instanceof Fragments) {
                         ImageReaderItem readerItem = ImageReaderFactory.getImageReader(tsuid);
-                        if (readerItem == null)
+                        if (readerItem == null) {
                             throw new IOException("Unsupported Transfer Syntax: " + tsuid);
+                        }
                         this.decompressor = readerItem.getImageReader();
                         // this.patchJpegLS = param.patchJPEGLS;
                         this.pixeldataFragments = (Fragments) pixdata;

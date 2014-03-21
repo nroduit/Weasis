@@ -101,9 +101,9 @@ public class Activator implements BundleActivator, ServiceListener {
                     if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
                         // Activator.log(LogService.LOG_INFO, "Unregister viewer Plug-in: " + m_ref.toString());
                         UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
-                        // Unget service object and null references.
-                        context.ungetService(m_ref);
                     }
+                    // Unget service object and null references.
+                    context.ungetService(m_ref);
                 }
             }
         });

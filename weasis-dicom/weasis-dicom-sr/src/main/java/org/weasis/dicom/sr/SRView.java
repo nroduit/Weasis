@@ -110,8 +110,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         if (oldsequence == null && newSeries == null) {
             return;
         }
-        if (oldsequence != null && oldsequence.equals(newSeries)) {
-            // && htmlPanel.getText().length() > 5) {
+        if (oldsequence != null && oldsequence.equals(newSeries) && htmlPanel.getText().length() > 5) {
             return;
         }
 
@@ -127,6 +126,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             }
             displayLimitedDicomInfo(s);
             series.setOpen(true);
+            series.setFocused(true);
+            series.setSelected(true, null);
         }
     }
 
@@ -157,7 +158,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     }
 
     public void dispose() {
-
+        if (series != null) {
+            closingSeries(series);
+            series = null;
+        }
     }
 
     @Override
@@ -199,7 +203,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                             Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
                             props.put(ViewerPluginBuilder.KOS, buildKO(ref));
-                            props.put(ViewerPluginBuilder.PR, buildKO(ref));
+                            props.put(ViewerPluginBuilder.PR, buildPR(imgRef));
                             ArrayList<MediaSeries<? extends MediaElement<?>>> list =
                                 new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
                             list.add(s);
@@ -209,7 +213,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
                         }
                     } else {
-                        // TODO try to download through WADO
+                        // TODO try to download if IHE IID has been configured
                         JOptionPane.showMessageDialog(this, "Cannot find the image!", "Open Image",
                             JOptionPane.WARNING_MESSAGE);
                     }
