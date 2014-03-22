@@ -356,6 +356,12 @@
 									<version>${weasis.dicom.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+                                    <groupId>org.codehaus.mojo.webstart</groupId>
+                                    <artifactId>webstart-jnlp-servlet</artifactId>
+                                    <version>1.0-6.0-02_ea_b02</version>
+									<outputDirectory>${tmp.dir}/weblib</outputDirectory>
+								</artifactItem>
 							</artifactItems>
 						</configuration>
 					</execution>

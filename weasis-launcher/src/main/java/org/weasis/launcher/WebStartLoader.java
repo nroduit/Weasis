@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -19,10 +19,12 @@ import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
+import javax.management.*;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -228,11 +230,16 @@ public class WebStartLoader {
 
     private void displayOnScreen() {
         try {
-            Rectangle bound =
-                GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-                    .getBounds();
-            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
-                bound.y + (bound.height - window.getHeight()) / 2);
+            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+            try {
+                server.invoke(objectName, "addWindow", new Object[] { window }, new String[] { Window.class.getName() });
+            } catch (InstanceNotFoundException e) {
+                Rectangle bound =
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
+                        .getBounds();
+                WindowBoundsUtils.setWindowLocation(window, bound);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

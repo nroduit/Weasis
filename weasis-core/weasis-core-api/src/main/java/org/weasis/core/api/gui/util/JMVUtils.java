@@ -148,7 +148,7 @@ public class JMVUtils {
         window.setVisible(true);
     }
 
-    public static void showCenterScreen(Window window, Window parent) {
+    public static void showCenterScreen(Window window, Component parent) {
         Dimension sSize = parent.getSize();
         Dimension wSize = window.getSize();
         window.setLocation(((sSize.width - wSize.width) / 2), ((sSize.height - wSize.height) / 2));

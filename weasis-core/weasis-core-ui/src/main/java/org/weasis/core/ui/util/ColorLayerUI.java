@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.RootPaneContainer;
 import javax.swing.Timer;
 
 import org.jdesktop.jxlayer.JXLayer;
@@ -16,11 +17,11 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
     protected static final float MAX_ALPHA = 0.75f;
 
-    private final JFrame parent;
+    private final RootPaneContainer parent;
     protected final JXLayer<JComponent> xlayer;
     protected volatile float alpha;
 
-    public ColorLayerUI(final JXLayer<JComponent> comp, JFrame parent) {
+    public ColorLayerUI(final JXLayer<JComponent> comp, RootPaneContainer parent) {
         if (parent == null || comp == null) {
             throw new IllegalArgumentException();
         }
@@ -28,7 +29,7 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
         this.xlayer = comp;
     }
 
-    public static ColorLayerUI createTransparentLayerUI(JFrame parent) {
+    public static ColorLayerUI createTransparentLayerUI(RootPaneContainer parent) {
         if (parent != null) {
             JXLayer<JComponent> layer = new JXLayer(parent.getContentPane());
             final ColorLayerUI ui = new ColorLayerUI(layer, parent);

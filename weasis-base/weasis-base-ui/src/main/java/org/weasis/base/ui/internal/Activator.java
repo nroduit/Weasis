@@ -24,6 +24,7 @@ import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.weasis.base.ui.WeasisApp;
 import org.weasis.base.ui.gui.WeasisWin;
+import org.weasis.base.ui.gui.WeasisWinPropertyChangeListener;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -68,7 +69,7 @@ public class Activator implements BundleActivator, ServiceListener {
             @Override
             public void run() {
                 // Register default model
-                ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWin.getInstance());
+                ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
 
                 try {
                     for (ServiceReference<DataExplorerViewFactory> serviceReference : bundleContext
@@ -79,7 +80,7 @@ public class Activator implements BundleActivator, ServiceListener {
                             UIManager.EXPLORER_PLUGINS.add(explorer);
 
                             if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWin.getInstance());
+                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
                             }
 
                             if (explorer instanceof DockableTool) {
@@ -108,7 +109,7 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // UnRegister default model
-        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWin.getInstance());
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
     }
 
     @Override
@@ -134,7 +135,7 @@ public class Activator implements BundleActivator, ServiceListener {
                             UIManager.EXPLORER_PLUGINS.add(explorer);
                             // }
                             if (explorer.getDataExplorerModel() != null) {
-                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWin.getInstance());
+                                explorer.getDataExplorerModel().addPropertyChangeListener(WeasisWinPropertyChangeListener.getInstance());
                             }
                             if (explorer instanceof DockableTool) {
                                 final DockableTool dockable = (DockableTool) explorer;
@@ -152,7 +153,7 @@ public class Activator implements BundleActivator, ServiceListener {
                                 if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
                                     if (explorer.getDataExplorerModel() != null) {
                                         explorer.getDataExplorerModel().removePropertyChangeListener(
-                                            WeasisWin.getInstance());
+                                            WeasisWinPropertyChangeListener.getInstance());
                                     }
                                     UIManager.EXPLORER_PLUGINS.remove(explorer);
                                     explorer.dispose();

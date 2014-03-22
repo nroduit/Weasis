@@ -10,45 +10,27 @@
  ******************************************************************************/
 package org.weasis.base.ui.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Frame;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JSeparator;
-import javax.swing.LookAndFeel;
-import javax.swing.TransferHandler;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.swing.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +38,6 @@ import org.weasis.base.ui.Messages;
 import org.weasis.base.ui.action.ExitAction;
 import org.weasis.base.ui.action.OpenPreferencesAction;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
@@ -75,7 +56,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -112,8 +92,9 @@ import bibliothek.gui.dock.util.Priority;
 import bibliothek.gui.dock.util.color.ColorManager;
 import bibliothek.gui.dock.util.laf.LookAndFeelColors;
 import bibliothek.util.Colors;
+import sun.applet.AppletViewer;
 
-public class WeasisWin extends JFrame implements PropertyChangeListener {
+public class WeasisWin {
 
     private static final Logger log = LoggerFactory.getLogger(WeasisWin.class);
 
@@ -121,6 +102,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private static final JMenu menuDisplay = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
     private static final JMenu menuSelectedPlugin = new JMenu();
     private static ViewerPlugin selectedPlugin = null;
+
     private static final WeasisWin instance = new WeasisWin();
 
     private final ToolBarContainer toolbarContainer;
@@ -128,6 +110,18 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     private volatile boolean busy = false;
 
     private final List<Runnable> runOnClose = new ArrayList<Runnable>();
+
+    private RootPaneContainer rootPaneContainer;
+
+    public RootPaneContainer getRootPaneContainer() {
+        return rootPaneContainer;
+    }
+
+    private Frame frame;
+
+    public Frame getFrame() {
+        return frame;
+    }
 
     private CFocusListener selectionListener = new CFocusListener() {
 
@@ -144,17 +138,51 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     };
 
     private WeasisWin() {
+
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
+            if (containerObj instanceof RootPaneContainer) {
+                rootPaneContainer = (RootPaneContainer) containerObj;
+                rootPaneContainer.getRootPane().updateUI();
+                if (rootPaneContainer.getContentPane() instanceof JPanel)
+                    ((JPanel) rootPaneContainer.getContentPane()).updateUI();
+            }
+
+        } catch (InstanceNotFoundException ignored) {
+        } catch (JMException e) {
+            log.debug("Error while receiving main window", e);
+        }
+
+        if (rootPaneContainer == null) {
+            JFrame jFrame = new JFrame();
+            frame = jFrame;
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    closeWindow();
+                }
+            });
+            rootPaneContainer = jFrame;
+        }
+
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
-            this.setJMenuBar(createMenuBar());
+            rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
         }
         toolbarContainer = new ToolBarContainer();
         setSelectedPlugin(null);
-        this.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
-        this.setTitle(AbstractProperties.WEASIS_NAME
-            + " v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
-        ImageIcon icon = ResourceUtil.getIconLogo64();
-        if (icon != null) {
-            this.setIconImage(icon.getImage()); //$NON-NLS-1$
+        rootPaneContainer.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
+
+        rootPaneContainer.setGlassPane(AbstractProperties.glassPane);
+
+        if (frame != null) {
+            frame.setTitle(AbstractProperties.WEASIS_NAME
+                + " v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
+            ImageIcon icon = ResourceUtil.getIconLogo64();
+            if (icon != null) {
+                frame.setIconImage(icon.getImage()); //$NON-NLS-1$
+            }
         }
     }
 
@@ -163,15 +191,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     // Overridden so we can exit when window is closed
-    @Override
-    protected void processWindowEvent(WindowEvent e) {
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            if (!closeWindow()) {
-                return;
-            }
-        }
-        super.processWindowEvent(e);
-    }
+    /*
+     * @Override protected void processWindowEvent(WindowEvent e) { if (e.getID() == WindowEvent.WINDOW_CLOSING) { if
+     * (!closeWindow()) { return; } } new Frame().processWindowEvent(e); }
+     */
 
     public boolean closeWindow() {
         if (busy) {
@@ -179,7 +202,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
             return false;
         }
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", true)) { //$NON-NLS-1$
-            int option = JOptionPane.showConfirmDialog(instance, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
+            int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
             if (option == JOptionPane.YES_OPTION) {
                 closeAllRunnable();
                 System.exit(0);
@@ -214,13 +237,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     public void createMainPanel() throws Exception {
         // initToolWindowManager();
-        this.setGlassPane(AbstractProperties.glassPane);
+        rootPaneContainer.setGlassPane(AbstractProperties.glassPane);
         // Do not disable check when debugging
         if (System.getProperty("maven.localRepository") == null) {
             DockUtilities.disableCheckLayoutLocked();
         }
         CControl control = UIManager.DOCKING_CONTROL;
-        control.setRootWindow(new DirectWindowProvider(this));
+        control.setRootWindow(new DirectWindowProvider(frame));
         destroyOnClose(control);
         ThemeMap themes = control.getThemes();
         themes.select(ThemeMap.KEY_ECLIPSE_THEME);
@@ -268,7 +291,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
         // control.setDefaultLocation(UIManager.BASE_AREA.
         // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
-        this.add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        rootPaneContainer.getContentPane().add(UIManager.BASE_AREA, BorderLayout.CENTER);
         // Allow to drop series into the empty main area
         UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
         UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
@@ -276,129 +299,8 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
     }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        // Get only ObservableEvent
-        if (evt instanceof ObservableEvent) {
-            ObservableEvent event = (ObservableEvent) evt;
-            ObservableEvent.BasicAction action = event.getActionCommand();
-            Object source = event.getNewValue();
-            if (evt.getSource() instanceof DataExplorerModel) {
-                if (ObservableEvent.BasicAction.Select.equals(action)) {
-                    if (source instanceof DataExplorerModel) {
-                        DataExplorerModel model = (DataExplorerModel) source;
-                        DataExplorerView view = null;
-                        synchronized (UIManager.EXPLORER_PLUGINS) {
-                            List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-                            for (DataExplorerView dataExplorerView : explorers) {
-                                if (dataExplorerView.getDataExplorerModel() == model) {
-                                    view = dataExplorerView;
-                                    break;
-                                }
-                            }
-                            if (view instanceof PluginTool) {
-                                PluginTool tool = (PluginTool) view;
-                                tool.showDockable();
-                            }
-                        }
-                    }
-                    // Select a plugin from that as the same key as the
-                    // MediaSeriesGroup
-                    else if (source instanceof MediaSeriesGroup) {
-                        MediaSeriesGroup group = (MediaSeriesGroup) source;
-                        // If already selected do not reselect or select a second window
-                        if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
-                            synchronized (UIManager.VIEWER_PLUGINS) {
-                                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                                    ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
-                                    if (group.equals(p.getGroupID())) {
-                                        p.setSelectedAndGetFocus();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (ObservableEvent.BasicAction.Register.equals(action)) {
-                    if (source instanceof ViewerPlugin) {
-                        registerPlugin((ViewerPlugin) source);
-                    } else if (source instanceof ViewerPluginBuilder) {
-                        ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
-                        DataExplorerModel model = builder.getModel();
-                        List<MediaSeries<? extends MediaElement<?>>> series = builder.getSeries();
-                        Map<String, Object> props = builder.getProperties();
-                        if (series != null
-                            && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
-                            && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
-                            TreeModel treeModel = (TreeModel) model;
-                            boolean inSelView =
-                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
-                                    && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
-
-                            if (series.size() == 1) {
-                                MediaSeries s = series.get(0);
-                                MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) {
-                                    // Change the group attribution. DO NOT use it with DICOM.
-                                    group = selectedPlugin.getGroupID();
-                                }
-                                openSeriesInViewerPlugin(builder, group);
-                            } else if (series.size() > 1) {
-                                HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
-                                    getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
-                                for (Iterator<Entry<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>> iterator =
-                                    map.entrySet().iterator(); iterator.hasNext();) {
-                                    Entry<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> entry =
-                                        iterator.next();
-                                    MediaSeriesGroup group = entry.getKey();
-
-                                    if (inSelView) {
-                                        List<MediaSeries<? extends MediaElement<?>>> seriesList = entry.getValue();
-                                        if (seriesList.size() > 0) {
-                                            // Change the group attribution. DO NOT use it with DICOM.
-                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) {
-                                                group = selectedPlugin.getGroupID();
-                                            }
-                                        }
-                                    }
-                                    openSeriesInViewerPlugin(builder, group);
-                                }
-                            }
-
-                        } else {
-                            openSeriesInViewerPlugin(builder, null);
-                        }
-                    }
-                } else if (ObservableEvent.BasicAction.Unregister.equals(action)) {
-                    if (source instanceof SeriesViewerFactory) {
-                        SeriesViewerFactory viewerFactory = (SeriesViewerFactory) source;
-                        final List<ViewerPlugin<?>> pluginsToRemove = new ArrayList<ViewerPlugin<?>>();
-                        String name = viewerFactory.getUIName();
-                        synchronized (UIManager.VIEWER_PLUGINS) {
-                            for (final ViewerPlugin<?> plugin : UIManager.VIEWER_PLUGINS) {
-                                if (name.equals(plugin.getName())) {
-                                    // Do not close Series directly, it can produce deadlock.
-                                    pluginsToRemove.add(plugin);
-                                }
-                            }
-                        }
-                        UIManager.closeSeriesViewer(pluginsToRemove);
-                    }
-                }
-            } else if (event.getSource() instanceof ViewerPlugin) {
-                ViewerPlugin plugin = (ViewerPlugin) event.getSource();
-                if (ObservableEvent.BasicAction.UpdateToolbars.equals(action)) {
-                    List toolaBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
-                    updateToolbars(toolaBars, toolaBars, true);
-                } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
-                    setSelectedPlugin(null);
-                }
-            }
-        }
-    }
-
-    private HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(
-        TreeModel treeModel, List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
+    HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> getSeriesByEntry(TreeModel treeModel,
+        List<MediaSeries<? extends MediaElement<?>>> series, TreeModelNode entry) {
         HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>> map =
             new HashMap<MediaSeriesGroup, List<MediaSeries<? extends MediaElement<?>>>>();
         if (series != null && treeModel != null && entry != null) {
@@ -415,7 +317,7 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         return map;
     }
 
-    private void openSeriesInViewerPlugin(ViewerPluginBuilder builder, MediaSeriesGroup group) {
+    void openSeriesInViewerPlugin(ViewerPluginBuilder builder, MediaSeriesGroup group) {
         if (builder == null) {
             return;
         }
@@ -522,12 +424,14 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
     }
 
     private void setExternalPosition(final DefaultSingleCDockable dockable) {
+        if (frame == null)
+            return;
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();
         if (gd.length > 1) {
             // dockable.setExternalizable(true);
-            Rectangle bound = WinUtil.getClosedScreenBound(instance.getBounds());
+            Rectangle bound = WinUtil.getClosedScreenBound(frame.getBounds());
             // LocationHint hint =
             // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
             // DefaultDockActionSource source = new DefaultDockActionSource(hint);
@@ -676,15 +580,10 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         updateToolbars(oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
     }
 
-    private void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
+    void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
         if (force || toolBars != oldToolBars) {
             toolbarContainer.registerToolBar(toolBars);
         }
-    }
-
-    @Override
-    public GhostGlassPane getGlassPane() {
-        return AbstractProperties.glassPane;
     }
 
     public void showWindow() throws Exception {
@@ -711,11 +610,13 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
         // setMaximizedBounds(bound);
 
         // set a valid size, insets of screen is often non consistent
-        setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
-        setVisible(true);
+        if (frame != null) {
+            frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
+            frame.setVisible(true);
 
-        setExtendedState((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH ? JFrame.NORMAL
-            : JFrame.MAXIMIZED_BOTH);
+            frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
+                ? JFrame.NORMAL : JFrame.MAXIMIZED_BOTH);
+        }
         log.info("End of loading the GUI..."); //$NON-NLS-1$
     }
 
@@ -775,9 +676,9 @@ public class WeasisWin extends JFrame implements PropertyChangeListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(instance);
+                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
                 WeasisAboutBox about = new WeasisAboutBox();
-                JMVUtils.showCenterScreen(about, instance);
+                JMVUtils.showCenterScreen(about, rootPaneContainer.getRootPane());
                 if (layer != null) {
                     layer.hideUI();
                 }

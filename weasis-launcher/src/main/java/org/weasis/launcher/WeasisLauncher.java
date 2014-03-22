@@ -195,7 +195,7 @@ public class WeasisLauncher {
      * launcher during the framework startup process.
      * </p>
      * 
-     * @param args
+     * @param argv
      *            Accepts arguments to set the auto-deploy directory and/or the bundle cache directory.
      * @throws Exception
      *             If an error occurs.

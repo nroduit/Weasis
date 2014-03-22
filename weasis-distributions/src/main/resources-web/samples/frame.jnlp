@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.6+" codebase="$$context">
+    <information>
+        <title>Weasis</title>
+        <vendor>Weasis Team</vendor>
+
+        <description>DICOM images viewer</description>
+        <description kind="short">An application to visualize and analyze
+            DICOM images.
+        </description>
+
+        <description kind="one-line">DICOM images viewer</description>
+        <description kind="tooltip">Weasis</description>
+
+        <icon href="images/logo-button.png" kind="default" />
+        <icon href="images/about.png" kind="splash" />
+
+        <shortcut online="false">
+            <desktop />
+            <menu submenu="Weasis" />
+        </shortcut>
+
+    </information>
+
+    <security>
+        <all-permissions />
+    </security>
+
+    <resources>
+        <!-- Requires Java SE 6 update 10 release for jnlp extension without codebase (substance.jnlp) -->
+        <j2se version="1.6.0_10+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="128m" max-heap-size="768m" />
+        <j2se version="1.6.0_10+" initial-heap-size="128m" max-heap-size="768m" />
+
+        <!-- Allows to get the file in pack200 compression -->
+        <property name="jnlp.packEnabled" value="true" />
+
+        <jar href="weasis-launcher.jar" main="true" />
+        <jar href="felix.jar" />
+
+        <!-- Optional library (Substance Look and feel, only since version 1.0.8). Requires the new Java Plug-in introduced in
+            the Java SE 6 update 10 release.For previous JRE 6, substance.jnlp needs a static codebase URL -->
+        <extension href="$$context/substance.jnlp" />
+    </resources>
+
+    <application-desc main-class="org.weasis.launcher.WebstartLauncher">
+        <!-- Should be in property tag of resources. Workaround for having a fully trusted application with dynamic jnlp (only
+            since weasis 1.1.2, for previous version see revision=16573), http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241 -->
+
+        <!-- Required parameter. Define the location of config.properties (the OSGI configuration and the list of plug-ins to install/start) -->
+        <argument>-VMPfelix.config.properties="$$context/conf/config.properties"</argument>
+
+        <!-- Optional parameter. Define the location of ext-config.properties (extend/override config.properties) -->
+        <argument>-VMPfelix.extended.config.properties="$$context/conf/ext-config.properties"</argument>
+
+        <!-- Required parameter. Define the code base of Weasis for the JNLP -->
+        <argument>-VMPweasis.codebase.url="$$context"</argument>
+
+        <!-- Required parameter. Start local OSGI console on the port 17179 -->
+        <argument>-VMPgosh.args="--nointeractive"</argument>
+    </application-desc>
+
+</jnlp>
