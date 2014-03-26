@@ -39,10 +39,5 @@
 			<outputDirectory>/conf</outputDirectory>
 			<filtered>true</filtered>
 		</fileSet>
-		<fileSet>
-			<!-- copy web libs -->
-			<directory>target/tmp/weblib</directory>
-			<outputDirectory>/WEB-INF/lib</outputDirectory>
-		</fileSet>
 	</fileSets>
 </assembly>
