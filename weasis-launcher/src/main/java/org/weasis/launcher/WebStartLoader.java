@@ -10,14 +10,33 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagLayout;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
-import javax.management.*;
-import javax.swing.*;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
 import org.slf4j.LoggerFactory;
@@ -131,7 +150,7 @@ public class WebStartLoader {
         } else {
             icon = new ImageIcon(url);
         }
-        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER); //$NON-NLS-1$
+        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
         imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -151,22 +170,10 @@ public class WebStartLoader {
 
         container.add(panel);
 
-        if (window != null)
-        {
+        if (window != null) {
             window.pack();
-
-            try {
-                Rectangle bounds =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-                        .getBounds();
-                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
-                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
-                window.setLocation(x, y);
-            } catch (HeadlessException e) {
-                e.printStackTrace();
-            }
-            window.setVisible(true);
         }
+
     }
 
     public Window getWindow() {
@@ -225,6 +232,7 @@ public class WebStartLoader {
                     if (container == null) {
                         initGUI();
                     }
+                    displayOnScreen();
                 }
             });
         } catch (InterruptedException e) {
@@ -243,8 +251,9 @@ public class WebStartLoader {
             @Override
             public void run() {
                 container.setVisible(false);
-                if (container.getParent() != null)
+                if (container.getParent() != null) {
                     container.getParent().remove(container);
+                }
                 if (window != null) {
                     window.dispose();
                     window = null;
@@ -255,6 +264,23 @@ public class WebStartLoader {
                 loadingLabel = null;
             }
         });
+    }
+
+    private void displayOnScreen() {
+        if (window != null) {
+            try {
+                Rectangle bounds =
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                        .getDefaultConfiguration().getBounds();
+                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
+                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+
+                window.setLocation(x, y);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            window.setVisible(true);
+        }
     }
 
     public void setFelix(Properties configProps, BundleContext bundleContext) {

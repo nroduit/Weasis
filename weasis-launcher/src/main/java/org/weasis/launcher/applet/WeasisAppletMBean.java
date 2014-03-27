@@ -1,16 +1,12 @@
 package org.weasis.launcher.applet;
 
-import java.awt.Window;
-
 import javax.swing.RootPaneContainer;
 
 /**
- * User: boraldo
- * Date: 03.02.14
- * Time: 14:23
+ * User: boraldo Date: 03.02.14 Time: 14:23
  */
 public interface WeasisAppletMBean {
 
-    RootPaneContainer getRootPaneContainer();
+    public RootPaneContainer getRootPaneContainer();
 
 }

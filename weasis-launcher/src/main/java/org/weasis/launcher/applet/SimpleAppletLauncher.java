@@ -10,25 +10,18 @@
  ******************************************************************************/
 package org.weasis.launcher.applet;
 
-import java.awt.Window;
 import java.lang.management.ManagementFactory;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
-import javax.jnlp.ServiceManager;
-import javax.jnlp.SingleInstanceListener;
-import javax.jnlp.SingleInstanceService;
-import javax.jnlp.UnavailableServiceException;
-import javax.management.*;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.swing.JApplet;
 
-import org.osgi.util.tracker.ServiceTracker;
 import org.weasis.launcher.WeasisLauncher;
 
-import sun.awt.SunToolkit;
-
 public class SimpleAppletLauncher extends JApplet {
+
+    private static final long serialVersionUID = -3060663263099612730L;
 
     public static final String PREFIX = "jnlp.weasis.";
     public static final int PREFIX_LENGTH = PREFIX.length();
@@ -62,5 +55,4 @@ public class SimpleAppletLauncher extends JApplet {
             }
         }.start();
     }
-
 }
