@@ -11,7 +11,6 @@
 package org.weasis.launcher.applet;
 
 import java.lang.management.ManagementFactory;
-import java.util.Properties;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -19,12 +18,9 @@ import javax.swing.JApplet;
 
 import org.weasis.launcher.WeasisLauncher;
 
-public class SimpleAppletLauncher extends JApplet {
+public class AppletLauncher extends JApplet {
 
-    private static final long serialVersionUID = -3060663263099612730L;
-
-    public static final String PREFIX = "jnlp.weasis.";
-    public static final int PREFIX_LENGTH = PREFIX.length();
+    private static final long serialVersionUID = -5661026047717759806L;
 
     @Override
     public void init() {
@@ -33,26 +29,19 @@ public class SimpleAppletLauncher extends JApplet {
             @Override
             public void run() {
                 try {
-
                     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
                     ObjectName objectName = new ObjectName("weasis:name=MainWindow");
-                    server.registerMBean(new WeasisApplet(SimpleAppletLauncher.this), objectName);
-
-                    Properties properties = System.getProperties();
-                    for (String key : properties.stringPropertyNames()) {
-                        if (key.startsWith(PREFIX)) {
-                            String value = properties.getProperty(key);
-                            key = key.substring(PREFIX_LENGTH);
-                            System.setProperty(key, value);
-                        }
-                    }
+                    server.registerMBean(new WeasisApplet(AppletLauncher.this), objectName);
 
                     String commands = getParameter("commands");
-                    WeasisLauncher.launch(commands == null ? new String[0] : commands.split(" "));
+                    System.out.println("WeasisLauncher init JApplet : " + commands);
+                    WeasisLauncher.launch(commands == null ? new String[0] : new String[] { commands });
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }.start();
     }
+
 }

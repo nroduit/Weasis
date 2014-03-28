@@ -204,9 +204,28 @@ public class WeasisLauncher {
         launch(argv);
     }
 
+    public static void setJnlpSystemProperties() {
+
+        final String PREFIX = "jnlp.weasis.";
+        final int PREFIX_LENGTH = PREFIX.length();
+
+        Properties properties = System.getProperties();
+
+        for (String propertyName : properties.stringPropertyNames()) {
+            if (propertyName.startsWith(PREFIX)) {
+                String value = properties.getProperty(propertyName);
+                System.setProperty(propertyName.substring(PREFIX_LENGTH), value);
+                properties.remove(propertyName);
+            }
+        }
+    }
+
     public static void launch(String[] argv) throws Exception {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setSystemSpecification();
+
+        // transform "jnlp.weasis" System Properties to suffix name only System Properties
+        setJnlpSystemProperties();
 
         // Getting VM arguments, workaround for having a fully trusted application with JWS,
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
@@ -253,8 +272,8 @@ public class WeasisLauncher {
                 baseURL = basePortableDir.toURI().toURL().toString() + "weasis"; //$NON-NLS-1$
                 System.setProperty("weasis.codebase.url", baseURL); //$NON-NLS-1$
                 baseURL += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
-                System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
-                System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
+                System.setProperty(CONFIG_PROPERTIES_PROP, baseURL + CONFIG_PROPERTIES_FILE_VALUE);
+                System.setProperty(EXTENDED_PROPERTIES_PROP, baseURL + EXTENDED_PROPERTIES_FILE_VALUE);
                 // Allow export feature for portable version
                 System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
@@ -390,7 +409,7 @@ public class WeasisLauncher {
             if (!mainUI.equals("")) { //$NON-NLS-1$
                 boolean uiStarted = false;
                 for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                    if (b.getSymbolicName().equals(mainUI) && b.getState() == Bundle.ACTIVE) { //$NON-NLS-1$
+                    if (b.getSymbolicName().equals(mainUI) && b.getState() == Bundle.ACTIVE) {
                         uiStarted = true;
                         break;
                     }
@@ -400,6 +419,7 @@ public class WeasisLauncher {
                 }
             }
             frameworkLoaded = true;
+
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -736,7 +756,7 @@ public class WeasisLauncher {
             Iterator<RemotePreferences> commandsIterator = prefs.iterator();
             while (commandsIterator.hasNext()) {
                 REMOTE_PREFS = commandsIterator.next();
-                REMOTE_PREFS.initialize(user, localSessionUser, profileName, bufDir.toString()); //$NON-NLS-1$
+                REMOTE_PREFS.initialize(user, localSessionUser, profileName, bufDir.toString());
                 System.out.println("Loading remote preferences for : " + user); //$NON-NLS-1$
                 break;
             }
@@ -861,7 +881,7 @@ public class WeasisLauncher {
                 @Override
                 public void run() {
                     boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
-                    if (substance) { //$NON-NLS-1$
+                    if (substance) {
                         // TODO should be true: bug with docking-frame
                         JFrame.setDefaultLookAndFeelDecorated(false);
                         JDialog.setDefaultLookAndFeelDecorated(true);

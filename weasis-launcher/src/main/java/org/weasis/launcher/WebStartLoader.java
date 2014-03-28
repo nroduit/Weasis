@@ -41,6 +41,8 @@ import javax.swing.SwingConstants;
 import org.osgi.framework.BundleContext;
 import org.slf4j.LoggerFactory;
 
+//TODO should be rename to WeasisLoader till it has nothing to deal with webstart mechanism
+
 public class WebStartLoader {
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
@@ -82,9 +84,10 @@ public class WebStartLoader {
             Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
             if (containerObj instanceof RootPaneContainer) {
                 RootPaneContainer rootPaneContainer = (RootPaneContainer) containerObj;
-                JPanel panel = new JPanel(new GridBagLayout());
-                rootPaneContainer.getContentPane().add(panel);
-                container = panel;
+
+                JPanel splashScreenPanel = new JPanel(new GridBagLayout());
+                rootPaneContainer.getContentPane().add(splashScreenPanel);
+                container = splashScreenPanel;
             }
 
         } catch (InstanceNotFoundException ignored) {
@@ -101,7 +104,6 @@ public class WebStartLoader {
                     closing();
                 }
             });
-
         }
 
         loadingLabel.setText(LBL_LOADING);
@@ -150,6 +152,7 @@ public class WebStartLoader {
         } else {
             icon = new ImageIcon(url);
         }
+
         JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
@@ -159,16 +162,18 @@ public class WebStartLoader {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.add(imagePane, BorderLayout.CENTER);
+
         JPanel panelProgress = new JPanel(new BorderLayout());
         panelProgress.setBackground(Color.WHITE);
         panelProgress.add(loadingLabel, BorderLayout.NORTH);
         panelProgress.add(downloadProgress, BorderLayout.CENTER);
         panelProgress.add(cancelButton, BorderLayout.EAST);
+
         panel.add(panelProgress, BorderLayout.SOUTH);
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        container.add(panel);
+        container.add(panel, BorderLayout.CENTER);
 
         if (window != null) {
             window.pack();
