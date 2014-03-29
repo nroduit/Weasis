@@ -38,8 +38,8 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
+import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -100,7 +100,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         addTab(Messages.getString("DicomFieldsView.all"), null, dump, null); //$NON-NLS-1$
         dump.add(allPane, BorderLayout.CENTER);
 
-        setPreferredSize(new Dimension(1024, 1024));
+        setPreferredSize(new Dimension(4096, 4096));
+        setMinimumSize(new Dimension(150, 50));
 
         ChangeListener changeListener = new ChangeListener() {
             @Override

@@ -15,6 +15,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
@@ -735,17 +736,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     }
                 }
 
-                double totalWidth = 0.0;
-                double totalHeight = 0.0;
-
-                for (DragLayoutElement el : list) {
-                    if (el.originalConstraints.gridy == 0) {
-                        totalWidth += el.originalBound.width;
-                    }
-                    if (el.originalConstraints.gridx == 0) {
-                        totalHeight += el.originalBound.height;
-                    }
-                }
+                Rectangle b = grid.getBounds();
+                double totalWidth = b.getWidth();
+                double totalHeight = b.getHeight();
 
                 for (DragLayoutElement el : list) {
                     el.originalConstraints.weightx = el.originalBound.width / totalWidth;
@@ -775,13 +768,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         LayoutConstraints key = element.getConstraints();
                         if (key.gridx == point.x) {
                             int width = element.getOriginalBound().width - dx;
-                            if (width < 50) {
-                                limitdx = dx - (50 - width);
+                            Dimension min = element.getComponent().getMinimumSize();
+                            int minsize = min == null ? 50 : min.width;
+                            if (width < minsize) {
+                                limitdx = dx - (minsize - width);
                             }
                         } else if (key.gridx + key.gridwidth == point.x) {
                             int width = element.getOriginalBound().width + dx;
-                            if (width < 50) {
-                                limitdx = dx + (50 - width);
+                            Dimension min = element.getComponent().getMinimumSize();
+                            int minsize = min == null ? 50 : min.width;
+                            if (width < minsize) {
+                                limitdx = dx + (minsize - width);
                             }
                         }
                     }
@@ -803,13 +800,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                         LayoutConstraints key = element.getConstraints();
                         if (key.gridy == point.y) {
                             int height = element.getOriginalBound().height - dy;
-                            if (height < 50) {
-                                limitdy = dy - (50 - height);
+                            Dimension min = element.getComponent().getMinimumSize();
+                            int minsize = min == null ? 50 : min.height;
+                            if (height < minsize) {
+                                limitdy = dy - (minsize - height);
                             }
                         } else if (key.gridy + key.gridheight == point.y) {
                             int height = element.getOriginalBound().height + dy;
-                            if (height < 50) {
-                                limitdy = dy + (50 - height);
+                            Dimension min = element.getComponent().getMinimumSize();
+                            int minsize = min == null ? 50 : min.height;
+                            if (height < minsize) {
+                                limitdy = dy + (minsize - height);
                             }
                         }
                     }
@@ -826,9 +827,16 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
                     }
                 }
+                Rectangle b = grid.getBounds();
+                double totalWidth = b.getWidth();
+                double totalHeight = b.getHeight();
                 grid.removeAll();
                 for (DragLayoutElement element : list) {
-                    grid.add(element.getComponent(), element.getConstraints());
+                    Component c = element.getComponent();
+                    LayoutConstraints l = element.getConstraints();
+                    c.setPreferredSize(new Dimension((int) Math.round(totalWidth * l.weightx), (int) Math
+                        .round(totalHeight * l.weighty)));
+                    grid.add(c, l);
                 }
                 setCursor(Cursor.getPredefinedCursor(splitVertical ? Cursor.E_RESIZE_CURSOR : Cursor.S_RESIZE_CURSOR));
                 grid.revalidate();

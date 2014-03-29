@@ -199,7 +199,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         setBorder(normalBorder);
         setFocusable(true);
-        setPreferredSize(new Dimension(1024, 1024));
+        // Must be larger to the screens to be resize correctly by the container
+        setPreferredSize(new Dimension(4096, 4096));
+        setMinimumSize(new Dimension(50, 50));
     }
 
     public void registerDefaultListeners() {
