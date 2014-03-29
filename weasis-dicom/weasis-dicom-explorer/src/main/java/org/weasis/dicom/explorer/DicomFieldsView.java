@@ -100,7 +100,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         addTab(Messages.getString("DicomFieldsView.all"), null, dump, null); //$NON-NLS-1$
         dump.add(allPane, BorderLayout.CENTER);
 
-        setPreferredSize(new Dimension(1024, 1024));
+        setPreferredSize(new Dimension(4096, 4096));
+        setMinimumSize(new Dimension(150, 50));
 
         ChangeListener changeListener = new ChangeListener() {
             @Override
