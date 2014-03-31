@@ -145,6 +145,7 @@ public class TagW implements Transferable, Serializable {
     public static final TagW StudyDate = new TagW(0x00080020, "Study Date", TagType.Date, 2); //$NON-NLS-1$
     public static final TagW SeriesDate = new TagW(0x00080021, "Series Date", TagType.Date, 3); //$NON-NLS-1$
     public static final TagW AcquisitionDate = new TagW(0x00080022, "Acquisition Date", TagType.Date, 4); //$NON-NLS-1$
+    public static final TagW ContentDate = new TagW(0x00080023, "Content Date", TagType.Date, 4); //$NON-NLS-1$
 
     public static final TagW StudyTime = new TagW(0x00080030, "Study Time", TagType.Time, 2); //$NON-NLS-1$
     public static final TagW AcquisitionTime = new TagW(0x00080032, "Acquisition Time", TagType.Time, 4); //$NON-NLS-1$
