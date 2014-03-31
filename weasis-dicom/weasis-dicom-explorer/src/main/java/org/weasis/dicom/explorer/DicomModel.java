@@ -214,6 +214,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             date2 =
                                 TagW.dateTime((Date) media2.getTagValue(TagW.AcquisitionDate),
                                     (Date) media2.getTagValue(TagW.AcquisitionTime));
+                            if (date1 == null) {
+                                date1 =
+                                    TagW.dateTime((Date) media1.getTagValue(TagW.ContentDate),
+                                        (Date) media1.getTagValue(TagW.ContentTime));
+                            }
+                            if (date2 == null) {
+                                date2 =
+                                    TagW.dateTime((Date) media2.getTagValue(TagW.ContentDate),
+                                        (Date) media2.getTagValue(TagW.ContentTime));
+                            }
                             if (date1 != null && date2 != null) {
                                 // Chronological order.
                                 c = date1.compareTo(date2);

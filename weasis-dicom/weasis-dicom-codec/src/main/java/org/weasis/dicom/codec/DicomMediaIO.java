@@ -491,6 +491,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                 DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionDate, null));
             setTagNoNull(TagW.AcquisitionTime,
                 DicomMediaUtils.getDateFromDicomElement(header, Tag.AcquisitionTime, null));
+            setTagNoNull(TagW.ContentDate, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentDate, null));
             setTagNoNull(TagW.ContentTime, DicomMediaUtils.getDateFromDicomElement(header, Tag.ContentTime, null));
 
             setTagNoNull(TagW.ImagePositionPatient, header.getDoubles(Tag.ImagePositionPatient, (double[]) null));
