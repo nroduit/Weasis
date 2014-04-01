@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.2.9</version>
+	<version>1.2.10-beta</version>
 	
 	<prerequisites>
 		<maven>2.2.1</maven>
@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier></qualifier>
+		<qualifier>-SNAPSHOT</qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home}
 			in config.properties) -->
 		<dollar>$</dollar>
@@ -42,11 +42,11 @@
 		<slf4j.version>1.6.4</slf4j.version>
 		<sling.commons.log.version>3.0.2</sling.commons.log.version>
 
-		<weasis.launcher.version>0.5.20${qualifier}</weasis.launcher.version>
-		<weasis.core.version>0.5.20${qualifier}</weasis.core.version>
-		<weasis.imageio.version>0.7.18${qualifier}</weasis.imageio.version>
-		<weasis.base.version>0.5.20${qualifier}</weasis.base.version>
-		<weasis.dicom.version>0.5.20${qualifier}</weasis.dicom.version>
+		<weasis.launcher.version>0.5.21${qualifier}</weasis.launcher.version>
+		<weasis.core.version>0.5.21${qualifier}</weasis.core.version>
+		<weasis.imageio.version>0.7.19${qualifier}</weasis.imageio.version>
+		<weasis.base.version>0.5.21${qualifier}</weasis.base.version>
+		<weasis.dicom.version>0.5.21${qualifier}</weasis.dicom.version>
 
 		<mydoggy.version>1.5.0-b05</mydoggy.version>
 		<substance.version>7.2.1</substance.version>
