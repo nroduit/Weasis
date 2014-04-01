@@ -5,11 +5,11 @@
 	<artifactId>weasis-dicom</artifactId>
 	<packaging>pom</packaging>
 	<name>DICOM Plug-ins [${project.artifactId}]</name>
-	<version>1.19</version>
+	<version>1.20-SNAPSHOT</version>
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>1.20</version>
+		<version>1.21-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modules>
