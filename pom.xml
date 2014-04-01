@@ -9,7 +9,7 @@
 	</parent>
 	<artifactId>weasis-framework</artifactId>
 	<!-- Remove "-SNAPSHOT" for release -->
-	<version>1.2.9-SNAPSHOT</version>
+	<version>1.2.9</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 	<licenses>

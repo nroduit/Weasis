@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 	<!-- Remove "-beta" for release -->
-	<version>1.2.9-beta</version>
+	<version>1.2.9</version>
 	
 	<prerequisites>
 		<maven>2.2.1</maven>
@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Remove "-SNAPSHOT" for release -->
-		<qualifier>-SNAPSHOT</qualifier>
+		<qualifier></qualifier>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home}
 			in config.properties) -->
 		<dollar>$</dollar>
