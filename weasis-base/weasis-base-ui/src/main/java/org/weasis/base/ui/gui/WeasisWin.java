@@ -10,7 +10,18 @@
  ******************************************************************************/
 package org.weasis.base.ui.gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,8 +30,6 @@ import java.awt.event.WindowEvent;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +39,21 @@ import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.LookAndFeel;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +67,6 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
-import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -92,7 +114,6 @@ import bibliothek.gui.dock.util.Priority;
 import bibliothek.gui.dock.util.color.ColorManager;
 import bibliothek.gui.dock.util.laf.LookAndFeelColors;
 import bibliothek.util.Colors;
-import sun.applet.AppletViewer;
 
 public class WeasisWin {
 
@@ -111,17 +132,8 @@ public class WeasisWin {
 
     private final List<Runnable> runOnClose = new ArrayList<Runnable>();
 
-    private RootPaneContainer rootPaneContainer;
-
-    public RootPaneContainer getRootPaneContainer() {
-        return rootPaneContainer;
-    }
-
-    private Frame frame;
-
-    public Frame getFrame() {
-        return frame;
-    }
+    private final Frame frame;
+    private final RootPaneContainer rootPaneContainer;
 
     private CFocusListener selectionListener = new CFocusListener() {
 
@@ -140,15 +152,17 @@ public class WeasisWin {
     private WeasisWin() {
 
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        RootPaneContainer container = null;
         try {
             ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
             Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
             if (containerObj instanceof RootPaneContainer) {
-                rootPaneContainer = (RootPaneContainer) containerObj;
-                rootPaneContainer.getRootPane().updateUI();
-                if (rootPaneContainer.getContentPane() instanceof JPanel)
-                    ((JPanel) rootPaneContainer.getContentPane()).updateUI();
-                rootPaneContainer.getContentPane().removeAll();
+                container = (RootPaneContainer) containerObj;
+                container.getRootPane().updateUI();
+                if (container.getContentPane() instanceof JPanel) {
+                    ((JPanel) container.getContentPane()).updateUI();
+                }
+                container.getContentPane().removeAll();
             }
 
         } catch (InstanceNotFoundException ignored) {
@@ -156,7 +170,7 @@ public class WeasisWin {
             log.debug("Error while receiving main window", e);
         }
 
-        if (rootPaneContainer == null) {
+        if (container == null) {
             JFrame jFrame = new JFrame();
             frame = jFrame;
             frame.addWindowListener(new WindowAdapter() {
@@ -166,6 +180,10 @@ public class WeasisWin {
                 }
             });
             rootPaneContainer = jFrame;
+        } else {
+            rootPaneContainer = container;
+            // Get Frame of JApplet to pass a parent frame to JDialog.
+            frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, (Component) rootPaneContainer);
         }
 
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
@@ -191,11 +209,13 @@ public class WeasisWin {
         return instance;
     }
 
-    // Overridden so we can exit when window is closed
-    /*
-     * @Override protected void processWindowEvent(WindowEvent e) { if (e.getID() == WindowEvent.WINDOW_CLOSING) { if
-     * (!closeWindow()) { return; } } new Frame().processWindowEvent(e); }
-     */
+    public Frame getFrame() {
+        return frame;
+    }
+
+    public RootPaneContainer getRootPaneContainer() {
+        return rootPaneContainer;
+    }
 
     public boolean closeWindow() {
         if (busy) {
@@ -361,7 +381,6 @@ public class WeasisWin {
         } else if (seriesViewer instanceof ViewerPlugin) {
             ViewerPlugin viewer = (ViewerPlugin) seriesViewer;
             String title;
-
             if (factory.canExternalizeSeries()) {
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 GraphicsDevice[] gd = ge.getScreenDevices();
@@ -425,14 +444,12 @@ public class WeasisWin {
     }
 
     private void setExternalPosition(final DefaultSingleCDockable dockable) {
-        if (frame == null)
-            return;
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();
         if (gd.length > 1) {
             // dockable.setExternalizable(true);
-            Rectangle bound = WinUtil.getClosedScreenBound(frame.getBounds());
+            Rectangle bound = WinUtil.getClosedScreenBound(rootPaneContainer.getRootPane().getBounds());
             // LocationHint hint =
             // new LocationHint(LocationHint.DOCKABLE, bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
             // DefaultDockActionSource source = new DefaultDockActionSource(hint);
@@ -610,8 +627,9 @@ public class WeasisWin {
         log.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
         // setMaximizedBounds(bound);
 
-        // set a valid size, insets of screen is often non consistent
-        if (frame != null) {
+        // Do not apply to JApplet
+        if (frame != rootPaneContainer) {
+            // set a valid size, insets of screen is often non consistent
             frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
             frame.setVisible(true);
 

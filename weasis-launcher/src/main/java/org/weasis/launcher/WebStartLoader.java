@@ -18,7 +18,9 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.lang.management.ManagementFactory;
@@ -173,7 +175,12 @@ public class WebStartLoader {
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        container.add(panel, BorderLayout.CENTER);
+        if (container.getLayout() instanceof GridBagLayout) {
+            container.add(panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
+                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        } else {
+            container.add(panel, BorderLayout.CENTER);
+        }
 
         if (window != null) {
             window.pack();
