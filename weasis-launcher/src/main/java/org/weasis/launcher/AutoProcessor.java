@@ -94,12 +94,12 @@ public class AutoProcessor {
      *            Map of configuration properties.
      * @param context
      *            The system bundle context.
-     * @param webStartLoader
+     * @param weasisLoader
      **/
-    public static void process(Map configMap, BundleContext context, WebStartLoader webStartLoader) {
+    public static void process(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
         configMap = (configMap == null) ? new HashMap() : configMap;
-        processAutoDeploy(configMap, context, webStartLoader);
-        processAutoProperties(configMap, context, webStartLoader);
+        processAutoDeploy(configMap, context, weasisLoader);
+        processAutoProperties(configMap, context, weasisLoader);
     }
 
     /**
@@ -107,7 +107,7 @@ public class AutoProcessor {
      * Processes bundles in the auto-deploy directory, performing the specified deploy actions.
      * </p>
      */
-    private static void processAutoDeploy(Map configMap, BundleContext context, WebStartLoader webStartLoader) {
+    private static void processAutoDeploy(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
         // Determine if auto deploy actions to perform.
         String action = (String) configMap.get(AUTO_DEPLOY_ACTION_PROPERY);
         action = (action == null) ? "" : action; //$NON-NLS-1$
@@ -161,7 +161,7 @@ public class AutoProcessor {
                     }
                 }
             }
-            webStartLoader.setMax(jarList.size());
+            weasisLoader.setMax(jarList.size());
             // Install bundle JAR files and remember the bundle objects.
             final List startBundleList = new ArrayList();
             for (int i = 0; i < jarList.size(); i++) {
@@ -171,7 +171,7 @@ public class AutoProcessor {
                 File jar = (File) jarList.get(i);
                 Bundle b = (Bundle) installedBundleMap.remove((jar).toURI().toString());
                 try {
-                    webStartLoader.writeLabel(WebStartLoader.LBL_DOWNLOADING + " " + jar.getName()); //$NON-NLS-1$
+                    weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + jar.getName()); //$NON-NLS-1$
 
                     // If the bundle is not already installed, then install it
                     // if the 'install' action is present.
@@ -188,7 +188,7 @@ public class AutoProcessor {
                     // then add it to the list of bundles to potentially start
                     // and also set its start level accordingly.
                     if (b != null) {
-                        webStartLoader.setValue(i + 1);
+                        weasisLoader.setValue(i + 1);
                         if (!isFragment(b)) {
                             startBundleList.add(b);
                             sl.setBundleStartLevel(b, startLevel);
@@ -237,7 +237,7 @@ public class AutoProcessor {
      * Processes the auto-install and auto-start properties from the specified configuration properties.
      * </p>
      */
-    private static void processAutoProperties(Map configMap, BundleContext context, WebStartLoader webStartLoader) {
+    private static void processAutoProperties(Map configMap, BundleContext context, WeasisLoader weasisLoader) {
         // Retrieve the Start Level service, since it will be needed
         // to set the start level of the installed bundles.
         StartLevel sl =
@@ -282,7 +282,7 @@ public class AutoProcessor {
                 }
             }
         }
-        webStartLoader.setMax(bundleList.size());
+        weasisLoader.setMax(bundleList.size());
 
         final Map<String, Bundle> installedBundleMap = new HashMap<String, Bundle>();
         Bundle[] bundles = context.getBundles();
@@ -327,7 +327,7 @@ public class AutoProcessor {
                 continue;
             }
             try {
-                webStartLoader.writeLabel(WebStartLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
+                weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
                 // Do not download again the same bundle version but with different location or already in installed
                 // in cache from a previous version of Weasis
                 Bundle b = installedBundleMap.get(bundleName);
@@ -348,12 +348,12 @@ public class AutoProcessor {
                 }
             } finally {
                 bundleIter++;
-                webStartLoader.setValue(bundleIter);
+                weasisLoader.setValue(bundleIter);
             }
 
         }
 
-        webStartLoader.writeLabel(Messages.getString("AutoProcessor.start")); //$NON-NLS-1$
+        weasisLoader.writeLabel(Messages.getString("AutoProcessor.start")); //$NON-NLS-1$
         // Now loop through the auto-start bundles and start them.
         for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator(); iter.hasNext();) {
             Entry<String, BundleElement> element = iter.next();

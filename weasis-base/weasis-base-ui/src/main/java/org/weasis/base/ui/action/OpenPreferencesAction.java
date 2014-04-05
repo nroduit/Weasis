@@ -44,8 +44,8 @@ public class OpenPreferencesAction extends AbstractUIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WeasisWin.getInstance());
-        PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance());
+        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WeasisWin.getInstance().getRootPaneContainer());
+        PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance().getFrame());
         JMVUtils.showCenterScreen(dialog);
         if (layer != null) {
             layer.hideUI();

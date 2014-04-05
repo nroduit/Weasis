@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
@@ -13,26 +13,37 @@ package org.weasis.launcher;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
+import org.slf4j.LoggerFactory;
 
-public class WebStartLoader {
+public class WeasisLoader {
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
@@ -45,8 +56,9 @@ public class WebStartLoader {
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
     private final String logoPath;
+    private Container container;
 
-    public WebStartLoader(String logoPath) {
+    public WeasisLoader(String logoPath) {
         this.logoPath = logoPath;
     }
 
@@ -65,14 +77,34 @@ public class WebStartLoader {
         downloadProgress.setFont(font);
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
-        window = new Window(null);
-        window.addWindowListener(new java.awt.event.WindowAdapter() {
 
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                closing();
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
+            if (containerObj instanceof RootPaneContainer) {
+                RootPaneContainer rootPaneContainer = (RootPaneContainer) containerObj;
+
+                JPanel splashScreenPanel = new JPanel(new GridBagLayout());
+                rootPaneContainer.getContentPane().add(splashScreenPanel);
+                container = splashScreenPanel;
             }
-        });
+
+        } catch (InstanceNotFoundException ignored) {
+        } catch (JMException e) {
+            LoggerFactory.getLogger(WeasisLoader.class).debug("Error while receiving main window", e);
+        }
+
+        if (container == null) {
+            container = window = new Window(null);
+            window.addWindowListener(new java.awt.event.WindowAdapter() {
+
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent evt) {
+                    closing();
+                }
+            });
+        }
 
         loadingLabel.setText(LBL_LOADING);
         loadingLabel.setFocusable(false);
@@ -120,7 +152,8 @@ public class WebStartLoader {
         } else {
             icon = new ImageIcon(url);
         }
-        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER); //$NON-NLS-1$
+
+        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
         imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
         imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -129,17 +162,28 @@ public class WebStartLoader {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.add(imagePane, BorderLayout.CENTER);
+
         JPanel panelProgress = new JPanel(new BorderLayout());
         panelProgress.setBackground(Color.WHITE);
         panelProgress.add(loadingLabel, BorderLayout.NORTH);
         panelProgress.add(downloadProgress, BorderLayout.CENTER);
         panelProgress.add(cancelButton, BorderLayout.EAST);
+
         panel.add(panelProgress, BorderLayout.SOUTH);
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        window.add(panel, BorderLayout.CENTER);
-        window.pack();
+        if (container.getLayout() instanceof GridBagLayout) {
+            container.add(panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
+                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        } else {
+            container.add(panel, BorderLayout.CENTER);
+        }
+
+        if (window != null) {
+            window.pack();
+        }
+
     }
 
     public Window getWindow() {
@@ -186,7 +230,7 @@ public class WebStartLoader {
     }
 
     public boolean isClosed() {
-        return window == null;
+        return container == null;
     }
 
     public void open() {
@@ -195,7 +239,7 @@ public class WebStartLoader {
 
                 @Override
                 public void run() {
-                    if (window == null) {
+                    if (container == null) {
                         initGUI();
                     }
                     displayOnScreen();
@@ -216,9 +260,15 @@ public class WebStartLoader {
 
             @Override
             public void run() {
-                window.setVisible(false);
-                window.dispose();
-                window = null;
+                container.setVisible(false);
+                if (container.getParent() != null) {
+                    container.getParent().remove(container);
+                }
+                if (window != null) {
+                    window.dispose();
+                    window = null;
+                }
+                container = null;
                 cancelButton = null;
                 downloadProgress = null;
                 loadingLabel = null;
@@ -227,16 +277,20 @@ public class WebStartLoader {
     }
 
     private void displayOnScreen() {
-        try {
-            Rectangle bound =
-                GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-                    .getBounds();
-            window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
-                bound.y + (bound.height - window.getHeight()) / 2);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (window != null) {
+            try {
+                Rectangle bounds =
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                        .getDefaultConfiguration().getBounds();
+                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
+                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+
+                window.setLocation(x, y);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            window.setVisible(true);
         }
-        window.setVisible(true);
     }
 
     public void setFelix(Properties configProps, BundleContext bundleContext) {

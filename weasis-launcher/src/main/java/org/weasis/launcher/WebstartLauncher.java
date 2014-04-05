@@ -24,6 +24,7 @@ import javax.swing.SwingUtilities;
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
 
     private static final WebstartLauncher instance = new WebstartLauncher();
+
     static {
         try {
             SingleInstanceService singleInstanceService =
@@ -52,10 +53,6 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         for (Object provider : toRemove) {
             registry.deregisterServiceProvider(provider);
         }
-    }
-
-    public static void main(String[] argv) throws Exception {
-        launch(argv);
     }
 
     @Override
@@ -100,5 +97,13 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 });
             }
         }
+    }
+
+    public static void launch(String[] argv) throws Exception {
+        WeasisLauncher.launch(argv);
+    }
+
+    public static void main(String[] argv) throws Exception {
+        launch(argv);
     }
 }

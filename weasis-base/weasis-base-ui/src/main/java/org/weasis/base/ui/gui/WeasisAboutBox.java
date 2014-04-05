@@ -65,7 +65,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
     private final JScrollPane jScrollPane3 = new JScrollPane();
 
     public WeasisAboutBox() {
-        super(WeasisWin.getInstance(), String.format(
+        super(WeasisWin.getInstance().getFrame(), String.format(
             Messages.getString("WeasisAboutBox.about"), AbstractProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
             sysTable =

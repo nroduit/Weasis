@@ -10,10 +10,7 @@
  ******************************************************************************/
 package org.weasis.base.ui;
 
-import java.awt.AWTException;
-import java.awt.Frame;
-import java.awt.Point;
-import java.awt.Robot;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.IOException;
 
@@ -61,7 +58,7 @@ public class WeasisApp {
             GuiExecutor.instance().execute(new Runnable() {
 
                 public void run() {
-                    WeasisWin app = WeasisWin.getInstance();
+                    Frame app = WeasisWin.getInstance().getFrame();
                     app.setVisible(true);
                     int state = app.getExtendedState();
                     state &= ~Frame.ICONIFIED;
