@@ -43,9 +43,7 @@ import javax.swing.SwingConstants;
 import org.osgi.framework.BundleContext;
 import org.slf4j.LoggerFactory;
 
-//TODO should be rename to WeasisLoader till it has nothing to deal with webstart mechanism
-
-public class WebStartLoader {
+public class WeasisLoader {
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
@@ -60,7 +58,7 @@ public class WebStartLoader {
     private final String logoPath;
     private Container container;
 
-    public WebStartLoader(String logoPath) {
+    public WeasisLoader(String logoPath) {
         this.logoPath = logoPath;
     }
 
@@ -94,7 +92,7 @@ public class WebStartLoader {
 
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
-            LoggerFactory.getLogger(WebStartLoader.class).debug("Error while receiving main window", e);
+            LoggerFactory.getLogger(WeasisLoader.class).debug("Error while receiving main window", e);
         }
 
         if (container == null) {

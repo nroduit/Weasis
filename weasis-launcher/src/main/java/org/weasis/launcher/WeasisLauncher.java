@@ -310,7 +310,7 @@ public class WeasisLauncher {
         }
 
         // Load local properties and clean if necessary the previous version
-        WebStartLoader loader = loadProperties(configProps);
+        WeasisLoader loader = loadProperties(configProps);
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
@@ -718,7 +718,7 @@ public class WeasisLauncher {
         }
     }
 
-    public static WebStartLoader loadProperties(Properties config) {
+    public static WeasisLoader loadProperties(Properties config) {
         System.out.println();
         System.out.println("***** Starting Configuration *****"); //$NON-NLS-1$
         System.out.println("Operating system: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -908,7 +908,7 @@ public class WeasisLauncher {
         final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
-        final WebStartLoader loader = new WebStartLoader(config.getProperty("weasis.logo.url"));
+        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"));
         // Display splash screen
         loader.open();
 

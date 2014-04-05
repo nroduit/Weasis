@@ -628,7 +628,7 @@ public class WeasisWin {
         // setMaximizedBounds(bound);
 
         // Do not apply to JApplet
-        if (frame != rootPaneContainer) {
+        if (frame == rootPaneContainer) {
             // set a valid size, insets of screen is often non consistent
             frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
             frame.setVisible(true);
