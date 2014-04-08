@@ -27,7 +27,6 @@
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<Service-Component>OSGI-INF/*.xml</Service-Component>
 					</instructions>
 				</configuration>
 			</plugin>

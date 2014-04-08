@@ -27,7 +27,6 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Service-Component>OSGI-INF/org.weasis.imageio.codec.ImageioCodec.xml</Service-Component>
 						<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except 
 							any containing 'impl' or 'internal' -->
 						<!-- <_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents> -->
