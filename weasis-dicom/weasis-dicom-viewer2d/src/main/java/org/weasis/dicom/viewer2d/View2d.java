@@ -303,6 +303,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return;
         }
 
+        RenderedImage dispImage = imageLayer.getDisplayImage();
         OpManager disOp = imageLayer.getDisplayOpManager();
         final String name = evt.getPropertyName();
         if (name.equals(ActionW.SYNCH.cmd())) {
@@ -420,6 +421,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (name.equals(ActionW.IMAGE_OVERLAY.cmd())) {
             if (disOp.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, evt.getNewValue())) {
                 imageLayer.updateDisplayOperations();
+            }
+        }
+
+        if (lens != null) {
+            if (dispImage != imageLayer.getDisplayImage()) {
+                /*
+                 * Transmit to the lens the command in case the source image has been freeze (for updating rotation and
+                 * flip => will keep consistent display)
+                 */
+                lens.setCommandFromParentView(name, evt.getNewValue());
+                lens.updateZoom();
             }
         }
     }

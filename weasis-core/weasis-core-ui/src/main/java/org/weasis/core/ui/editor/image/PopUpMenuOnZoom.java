@@ -89,7 +89,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(zoomWin.freezeParentParameters(), SYNCH_TYPE.ParentParameters);
+                zoomWin.setFreezeImage(SYNCH_TYPE.ParentParameters);
             }
         });
         jMenuImage.add(freezParams);
@@ -98,7 +98,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(zoomWin.freezeParentImage(), SYNCH_TYPE.ParentImage);
+                zoomWin.setFreezeImage(SYNCH_TYPE.ParentImage);
             }
         });
         jMenuImage.add(freeze);
@@ -107,7 +107,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                zoomWin.setFreezeImage(null, SYNCH_TYPE.None);
+                zoomWin.setFreezeImage(null);
             }
         });
         jMenuImage.add(resetFreeze);
@@ -147,11 +147,10 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         // Do not trigger actionLinstener
         jCheckBoxMenutemSychronize.setSelected((Boolean) zoomWin.getActionValue(ZoomWin.SYNCH_CMD));
         jCheckBoxMenuItemDraw.setSelected((Boolean) zoomWin.getActionValue(ActionW.DRAW.cmd()));
-        Object img = zoomWin.getActionValue(ZoomWin.FREEZE_CMD);
-        resetFreeze.setEnabled(img != null);
+        Object type = zoomWin.getActionValue(ZoomWin.FREEZE_CMD);
+        resetFreeze.setEnabled(SYNCH_TYPE.ParentParameters.equals(type) || SYNCH_TYPE.ParentImage.equals(type));
 
-        // essaie de récupérer le magnitude du zoom, si ne correspond pas aux
-        // magnitude possible : pas de sélection
+        // Get current zoom magnitude
         boolean noselection = true;
         if (jRadioButtonMenuItemMagnify.length < jMenuMagnify.getItemCount()) {
             jMenuMagnify.remove(jMenuItemMagnifyOther);
@@ -164,7 +163,6 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         for (int i = 0; i < jRadioButtonMenuItemMagnify.length; i++) {
             if ((magnify[i] * 100) == currentZoomRatio) {
                 JRadioButtonMenuItem item3 = jRadioButtonMenuItemMagnify[i];
-                // action setSelected ne déclenche pas l'actionLinstener
                 item3.setSelected(true);
                 noselection = false;
                 break;

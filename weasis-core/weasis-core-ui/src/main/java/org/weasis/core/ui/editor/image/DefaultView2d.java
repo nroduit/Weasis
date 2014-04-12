@@ -425,7 +425,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         closingSeries(oldsequence);
         getLayerModel().deleteAllGraphics();
+        // Preserve show lens property
+        Object showLens = actionsInView.get(ActionW.LENS.cmd());
         initActionWState();
+        actionsInView.put(ActionW.LENS.cmd(), showLens);
 
         try {
             if (newSeries == null) {
@@ -439,6 +442,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                             (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
                 }
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
+                if (lens != null) {
+                    lens.setFreezeImage(null);
+                }
                 setImage(media);
                 if (media == null && !imageLayer.isEnableDispOperations()) {
                     imageLayer.setEnableDispOperations(true);
@@ -578,13 +584,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
 
-                if (panner != null) {
-                    panner.updateImage();
-                }
-                if (lens != null) {
-                    lens.updateZoom();
-                }
-
                 if (AuditLog.LOGGER.isInfoEnabled()) {
                     PlanarImage image = img.getImage();
                     if (image != null) {
@@ -605,7 +604,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     }
                 }
             }
+            // Apply all image processing operation for visualization
             imageLayer.setEnableDispOperations(true);
+
+            if (panner != null) {
+                panner.updateImage();
+            }
+            if (lens != null) {
+                lens.updateImage();
+                lens.updateZoom();
+            }
         }
     }
 
@@ -962,6 +970,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (series == null) {
             return;
         }
+        RenderedImage dispImage = imageLayer.getDisplayImage();
         OpManager manager = imageLayer.getDisplayOpManager();
         final String command = evt.getPropertyName();
         if (command.equals(ActionW.SYNCH.cmd())) {
@@ -1031,6 +1040,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             actionsInView.put(command, evt.getNewValue());
             imageLayer.updateDisplayOperations();
         }
+
+        if (lens != null) {
+            if (dispImage != imageLayer.getDisplayImage()) {
+                /*
+                 * Transmit to the lens the command in case the source image has been freeze (for updating rotation and
+                 * flip => will keep consistent display)
+                 */
+                lens.setCommandFromParentView(command, evt.getNewValue());
+                lens.updateZoom();
+            }
+        }
     }
 
     private void propertyChange(final SynchEvent synch) {
@@ -1071,6 +1091,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.LENSZOOM.cmd())) {
                 if (lens != null) {
                     lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
+                    lens.updateZoom();
                 }
             } else if (command.equals(ActionW.LENS.cmd())) {
                 Boolean showLens = (Boolean) entry.getValue();
@@ -1132,13 +1153,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     graphic.updateLabel(true, this);
                 }
 
-            }
-            if (lens != null) {
-                // Transmit to the lens the command in case the source image has been freeze (for updating rotation and
-                // flip
-                // => will keep consistent display)
-                lens.setCommandFromParentView(command, entry.getValue());
-                lens.updateZoom();
             }
         }
     }

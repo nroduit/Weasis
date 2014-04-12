@@ -30,6 +30,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 import java.awt.image.RenderedImage;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import javax.swing.UIManager;
 
@@ -40,6 +41,7 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
@@ -47,6 +49,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.graphic.ImageLayerChangeListener;
 import org.weasis.core.ui.graphic.RenderedImageLayer;
@@ -79,7 +82,6 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     private final RenderedImageLayer<E> imageLayer;
     private final MouseHandler mouseHandler;
     private SimpleOpManager freezeOperations;
-    private SYNCH_TYPE type = SYNCH_TYPE.None;
     private final HashMap<String, Object> freezeActionsInView = new HashMap<String, Object>();
 
     public ZoomWin(DefaultView2d<E> view2d) {
@@ -115,7 +117,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
         actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
         actionsInView.put(ActionW.DRAW.cmd(), z.isLensShowDrawings());
-        actionsInView.put(FREEZE_CMD, null);
+        actionsInView.put(FREEZE_CMD, SYNCH_TYPE.None);
 
         Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
         this.setLensDecoration(z.getLensLineWidth(), z.getLensLineColor(), bckColor, z.isLensRound());
@@ -132,8 +134,6 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     private void refreshZoomWin() {
-        imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
-        getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         Point loc = getLocation();
         if ((loc.x == -1 && loc.y == -1)) {
             centerZoomWin();
@@ -149,9 +149,23 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     }
 
+    public void updateImage() {
+        imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
+        getViewModel().setModelArea(view2d.getViewModel().getModelArea());
+        SYNCH_TYPE type = (SYNCH_TYPE) actionsInView.get(ZoomWin.FREEZE_CMD);
+        if (SYNCH_TYPE.ParentParameters.equals(type)) {
+            freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
+            freezeOperations.handleImageOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, view2d.getSeries(),
+                view2d.getImage(), null));
+            freezeOperations.process();
+        }
+    }
+
     public void showLens(boolean val) {
         if (val) {
+            updateImage();
             refreshZoomWin();
+            updateZoom();
             enableMouseListener();
             setVisible(true);
         } else {
@@ -317,8 +331,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     @Override
     public void zoom(double viewScale) {
         ImageOpNode node = imageLayer.getDisplayOpManager().getNode(ZoomOp.OP_NAME);
-        E img = getImage();
+        E img = imageLayer.getSourceImage();
         if (img != null && node != null) {
+            node.setParam(ImageOpNode.INPUT_IMG, getSourceImage());
             node.setParam(ZoomOp.P_RATIO_X, viewScale * img.getRescaleX());
             node.setParam(ZoomOp.P_RATIO_Y, viewScale * img.getRescaleY());
             actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
@@ -335,71 +350,52 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         zoom(zoomFactor);
     }
 
-    public E getImage() {
-        return imageLayer.getSourceImage();
-    }
-
-    public RenderedImage getSourceImage() {
-        RenderedImage img = (RenderedImage) actionsInView.get(ZoomWin.FREEZE_CMD);
-        if (img == null) {
-            // return the image before the zoom operation from the parent view
-            ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
-            if (node != null) {
-                return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
-            }
+    protected RenderedImage getSourceImage() {
+        SYNCH_TYPE type = (SYNCH_TYPE) actionsInView.get(ZoomWin.FREEZE_CMD);
+        if (SYNCH_TYPE.ParentParameters.equals(type) || SYNCH_TYPE.ParentImage.equals(type)) {
+            return freezeOperations.getLastNodeOutputImage();
         }
-        return img;
+
+        // return the image before the zoom operation from the parent view
+        ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
+        if (node != null) {
+            return (RenderedImage) node.getParam(ImageOpNode.INPUT_IMG);
+        }
+        return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }
 
-    public void setFreezeImage(RenderedImage image, SYNCH_TYPE type) {
-        this.type = type;
-        actionsInView.put(ZoomWin.FREEZE_CMD, image);
-        if (image == null) {
+    public void setFreezeImage(SYNCH_TYPE type) {
+        actionsInView.put(ZoomWin.FREEZE_CMD, type);
+        if (type == null || SYNCH_TYPE.None.equals(type)) {
             freezeActionsInView.clear();
             freezeOperations = null;
-            this.type = SYNCH_TYPE.None;
+            actionsInView.put(ZoomWin.FREEZE_CMD, SYNCH_TYPE.None);
+        } else {
+            freezeParentParameters();
         }
         imageLayer.updateDisplayOperations();
+        updateZoom();
     }
 
-    RenderedImage freezeParentImage() {
-        SimpleOpManager pManager = view2d.getImageLayer().getDisplayOpManager();
-        freezeActionsInView.clear();
-        view2d.copyActionWState(freezeActionsInView);
-        final E image = view2d.getImage();
-        final RenderedImage img = view2d.getSourceImage();
-
-        freezeOperations = new SimpleOpManager();
-        for (ImageOpNode op : pManager.getOperations()) {
-            try {
-                if (!ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
-                    ImageOpNode operation = op.clone();
-                    freezeOperations.addImageOperationAction(operation);
-                }
-            } catch (CloneNotSupportedException e) {
-                e.printStackTrace();
-            }
-        }
-        return freezeOperations.getLastNodeOutputImage();
-    }
-
-    RenderedImage freezeParentParameters() {
+    void freezeParentParameters() {
         SimpleOpManager pManager = view2d.getImageLayer().getDisplayOpManager();
         freezeActionsInView.clear();
         view2d.copyActionWState(freezeActionsInView);
 
         freezeOperations = new SimpleOpManager();
         for (ImageOpNode op : pManager.getOperations()) {
+            if (ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
+                break;
+            }
             try {
-                if (!ZoomOp.OP_NAME.equals(op.getParam(ImageOpNode.NAME))) {
-                    ImageOpNode operation = op.clone();
-                    freezeOperations.addImageOperationAction(operation);
-                }
+                ImageOpNode operation = op.clone();
+                freezeOperations.addImageOperationAction(operation);
             } catch (CloneNotSupportedException e) {
                 e.printStackTrace();
             }
         }
-        return freezeOperations.getLastNodeOutputImage();
+        freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
+        freezeOperations.process();
     }
 
     class MouseHandler extends MouseAdapter {
@@ -518,20 +514,28 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
     }
 
     public void setCommandFromParentView(String command, Object value) {
-        OpManager dispOp = getDisplayOpManager();
-        if (ActionW.SCROLL_SERIES.cmd().equals(command)) {
-            if (freezeOperations == null) {
-                // when image of parent has changed process some update
-                refreshZoomWin();
-            } else if (SYNCH_TYPE.ParentParameters.equals(type)) {
-                refreshZoomWin();
-                setFreezeImage(freezeOperations.getLastNodeOutputImage(), type);
-            }
-        } else if (freezeOperations != null
-            && (ActionW.ROTATION.cmd().equals(command) || ActionW.FLIP.cmd().equals(command))) {
-            setFreezeImage(freezeOperations.getLastNodeOutputImage(), type);
-        }
+        if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent) {
+            if (!(value instanceof SynchCineEvent)) {
+                SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
+                if (synchData != null && Mode.None.equals(synchData.getMode())) {
+                    return;
+                }
 
+                for (Entry<String, Object> entry : ((SynchEvent) value).getEvents().entrySet()) {
+                    String cmd = entry.getKey();
+                    if (synchData != null && !synchData.isActionEnable(cmd)) {
+                        continue;
+                    }
+                    applyCommandFromParentView(cmd, entry.getValue());
+                }
+            }
+        } else {
+            applyCommandFromParentView(command, value);
+        }
+    }
+
+    protected void applyCommandFromParentView(String command, Object value) {
+        OpManager dispOp = getDisplayOpManager();
         if (command.equals(ActionW.ROTATION.cmd())) {
             if (dispOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, view2d.getDisplayOpManager()
                 .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))) {
@@ -543,6 +547,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
                 refreshZoomWin();
             }
         } else if (command.equals(ActionW.PROGRESSION.cmd())) {
+            updateImage();
             refreshZoomWin();
         }
     }
