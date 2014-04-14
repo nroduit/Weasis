@@ -118,12 +118,16 @@ public class DownloadManager {
             if (rep != 0) {
                 return rep;
             }
-            rep = DicomModel.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
+            if (val1.getPatient() != val2.getPatient()) {
+                rep = DicomModel.PATIENT_COMPARATOR.compare(val1.getPatient(), val2.getPatient());
+            }
             if (rep != 0) {
                 return rep;
             }
 
-            rep = DicomModel.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
+            if (val1.getStudy() != val2.getStudy()) {
+                rep = DicomModel.STUDY_COMPARATOR.compare(val1.getStudy(), val2.getStudy());
+            }
             if (rep != 0) {
                 return rep;
             }
