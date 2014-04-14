@@ -28,6 +28,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
@@ -54,9 +55,10 @@ public class OverlayOp extends AbstractOp {
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                PRSpecialElement pr = (PRSpecialElement) p.get(ActionW.PR_STATE.cmd());
+                Object pr = p.get(ActionW.PR_STATE.cmd());
                 setParam(P_IMAGE_ELEMENT, event.getImage());
-                setParam(P_PR_ELEMENT, pr);
+                setParam(P_PR_ELEMENT,
+                    pr instanceof PresentationStateReader ? ((PresentationStateReader) pr).getDicom() : null);
             }
         }
     }

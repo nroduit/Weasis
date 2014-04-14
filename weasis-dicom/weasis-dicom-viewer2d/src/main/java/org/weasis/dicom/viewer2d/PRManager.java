@@ -210,8 +210,8 @@ public class PRManager {
                                 AnnotationGraphic line;
                                 try {
                                     line =
-                                        new AnnotationGraphic(GraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility)
-                                            ? ptAnchor : null, ptBox, 1.0f, rgb, true);
+                                        new AnnotationGraphic(GraphicUtil.getBooleanValue(txo,
+                                            Tag.AnchorPointVisibility) ? ptAnchor : null, ptBox, 1.0f, rgb, true);
                                     line.setLabel(lines, view);
                                     layer.addGraphic(line);
                                 } catch (InvalidShapeException e) {
@@ -240,7 +240,6 @@ public class PRManager {
     }
 
     /** Indicate if the graphic is to be filled in */
-
 
     public static void deleteDicomLayers(ArrayList<AbstractLayer.Identifier> layerIDs, LayerModel layerModel) {
         if (layerIDs != null && layerModel != null) {
@@ -293,6 +292,9 @@ public class PRManager {
                             if (pr == null) {
                                 pr = ActionState.NONE;
                             }
+                            pr =
+                                (pr instanceof PresentationStateReader) ? ((PresentationStateReader) pr).getDicom()
+                                    : pr;
                             JPopupMenu popupMenu = new JPopupMenu();
                             TitleMenuItem itemTitle =
                                 new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
@@ -309,8 +311,7 @@ public class PRManager {
                                         if (e.getSource() instanceof RadioMenuItem) {
                                             RadioMenuItem item = (RadioMenuItem) e.getSource();
                                             Object val = item.getUserObject();
-                                            view.setPresentationState((PRSpecialElement) (val instanceof PRSpecialElement
-                                                ? val : null));
+                                            view.setPresentationState(val);
                                         }
                                     }
                                 });

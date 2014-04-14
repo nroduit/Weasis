@@ -49,7 +49,8 @@ public class DefaultViewModel implements ViewModel {
     /**
      * The list of change listeners
      */
-    private final ArrayList viewModelChangeListenerList;
+    private final ArrayList<ViewModelChangeListener> viewModelChangeListenerList;
+    private boolean enableViewModelChangeListeners;
 
     public DefaultViewModel(double viewScaleMin, double viewScaleMax) {
         this.modelOffsetX = 0;
@@ -58,21 +59,33 @@ public class DefaultViewModel implements ViewModel {
         this.viewScaleMin = viewScaleMin;
         this.viewScaleMax = viewScaleMax;
         this.modelArea = new Rectangle2D.Double();
-        this.viewModelChangeListenerList = new ArrayList();
+        this.viewModelChangeListenerList = new ArrayList<ViewModelChangeListener>();
+        this.enableViewModelChangeListeners = true;
     }
 
     public DefaultViewModel() {
         this(SCALE_MIN, SCALE_MAX);
     }
 
+    public boolean isEnableViewModelChangeListeners() {
+        return enableViewModelChangeListeners;
+    }
+
+    public void setEnableViewModelChangeListeners(boolean enableViewModelChangeListeners) {
+        this.enableViewModelChangeListeners = enableViewModelChangeListeners;
+    }
+
+    @Override
     public double getModelOffsetX() {
         return modelOffsetX;
     }
 
+    @Override
     public double getModelOffsetY() {
         return modelOffsetY;
     }
 
+    @Override
     public void setModelOffset(double modelOffsetX, double modelOffsetY) {
         if (this.modelOffsetX != modelOffsetX || this.modelOffsetY != modelOffsetY) {
             this.modelOffsetX = modelOffsetX;
@@ -81,6 +94,7 @@ public class DefaultViewModel implements ViewModel {
         }
     }
 
+    @Override
     public void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale) {
         viewScale = maybeCropViewScale(viewScale);
         if (this.modelOffsetX != modelOffsetX || this.modelOffsetY != modelOffsetY || this.viewScale != viewScale) {
@@ -91,10 +105,12 @@ public class DefaultViewModel implements ViewModel {
         }
     }
 
+    @Override
     public double getViewScale() {
         return viewScale;
     }
 
+    @Override
     public void setViewScale(double viewScale) {
         viewScale = maybeCropViewScale(viewScale);
         if (this.viewScale != viewScale) {
@@ -103,22 +119,27 @@ public class DefaultViewModel implements ViewModel {
         }
     }
 
+    @Override
     public double getViewScaleMax() {
         return viewScaleMax;
     }
 
+    @Override
     public void setViewScaleMax(double viewScaleMax) {
         this.viewScaleMax = viewScaleMax;
     }
 
+    @Override
     public Rectangle2D getModelArea() {
         return new Rectangle2D.Double(modelArea.getX(), modelArea.getY(), modelArea.getWidth(), modelArea.getHeight());
     }
 
+    @Override
     public double getViewScaleMin() {
         return viewScaleMin;
     }
 
+    @Override
     public void setModelArea(Rectangle2D modelArea) {
         if (!this.modelArea.equals(modelArea)) {
             this.modelArea =
@@ -127,22 +148,26 @@ public class DefaultViewModel implements ViewModel {
         }
     }
 
+    @Override
     public void setViewScaleMin(double viewScaleMin) {
         this.viewScaleMin = viewScaleMin;
     }
 
+    @Override
     public ViewModelChangeListener[] getViewModelChangeListeners() {
         final ViewModelChangeListener[] viewModelChangeListeners =
             new ViewModelChangeListener[viewModelChangeListenerList.size()];
-        return (ViewModelChangeListener[]) viewModelChangeListenerList.toArray(viewModelChangeListeners);
+        return viewModelChangeListenerList.toArray(viewModelChangeListeners);
     }
 
+    @Override
     public void addViewModelChangeListener(ViewModelChangeListener l) {
         if (l != null && !viewModelChangeListenerList.contains(l)) {
             viewModelChangeListenerList.add(l);
         }
     }
 
+    @Override
     public void removeViewModelChangeListener(ViewModelChangeListener l) {
         if (l != null) {
             viewModelChangeListenerList.remove(l);
@@ -150,9 +175,11 @@ public class DefaultViewModel implements ViewModel {
     }
 
     protected void fireViewModelChanged() {
-        for (int i = 0; i < viewModelChangeListenerList.size(); i++) {
-            ViewModelChangeListener l = (ViewModelChangeListener) viewModelChangeListenerList.get(i);
-            l.handleViewModelChanged(this);
+        if (enableViewModelChangeListeners) {
+            for (int i = 0; i < viewModelChangeListenerList.size(); i++) {
+                ViewModelChangeListener l = viewModelChangeListenerList.get(i);
+                l.handleViewModelChanged(this);
+            }
         }
     }
 

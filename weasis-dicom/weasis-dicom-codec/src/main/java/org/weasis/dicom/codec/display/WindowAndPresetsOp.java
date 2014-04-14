@@ -10,6 +10,8 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
+import java.util.HashMap;
+
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -39,21 +41,43 @@ public class WindowAndPresetsOp extends WindowOp {
                 if (img instanceof DicomImageElement) {
                     preset = ((DicomImageElement) img).getDefaultPreset(pixelPadding);
                 }
-
-                boolean p = preset != null;
-                setParam(ActionW.PRESET.cmd(), preset);
-                setParam(ActionW.DEFAULT_PRESET.cmd(), true);
-
-                setParam(ActionW.WINDOW.cmd(), p ? preset.getWindow() : img.getDefaultWindow(pixelPadding));
-                setParam(ActionW.LEVEL.cmd(), p ? preset.getLevel() : img.getDefaultLevel(pixelPadding));
-                setParam(ActionW.LEVEL_MIN.cmd(), p ? preset.getMinBox() : img.getMinValue(pixelPadding));
-                setParam(ActionW.LEVEL_MAX.cmd(), p ? preset.getMaxBox() : img.getMaxValue(pixelPadding));
-                setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(pixelPadding));
-                // node.setParam(ActionW.IMAGE_PIX_PADDING.cmd(), pixelPadding);
-                // node.setParam(ActionW.INVERSELUT.cmd(), false);
-                // node.setParam(WindowOp.P_FILL_OUTSIDE_LUT, false);
+                setPreset(preset, img, pixelPadding);
+            }
+        } else if (OpEvent.ApplyPR.equals(type)) {
+            ImageElement img = event.getImage();
+            setParam(P_IMAGE_ELEMENT, img);
+            if (img != null) {
+                if (!img.isImageAvailable()) {
+                    // Ensure to load image before calling the default preset that requires pixel min and max
+                    img.getImage();
+                }
+                boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                HashMap<String, Object> p = event.getParams();
+                if (p != null) {
+                    PresetWindowLevel preset = (PresetWindowLevel) p.get(ActionW.PRESET.cmd());
+                    if (preset == null && img instanceof DicomImageElement) {
+                        preset = ((DicomImageElement) img).getDefaultPreset(pixelPadding);
+                    }
+                    setPreset(preset, img, pixelPadding);
+                }
             }
         }
+
+    }
+
+    private void setPreset(PresetWindowLevel preset, ImageElement img, boolean pixelPadding) {
+        boolean p = preset != null;
+        setParam(ActionW.PRESET.cmd(), preset);
+        setParam(ActionW.DEFAULT_PRESET.cmd(), true);
+
+        setParam(ActionW.WINDOW.cmd(), p ? preset.getWindow() : img.getDefaultWindow(pixelPadding));
+        setParam(ActionW.LEVEL.cmd(), p ? preset.getLevel() : img.getDefaultLevel(pixelPadding));
+        setParam(ActionW.LEVEL_MIN.cmd(), p ? preset.getMinBox() : img.getMinValue(pixelPadding));
+        setParam(ActionW.LEVEL_MAX.cmd(), p ? preset.getMaxBox() : img.getMaxValue(pixelPadding));
+        setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(pixelPadding));
+        // node.setParam(ActionW.IMAGE_PIX_PADDING.cmd(), pixelPadding);
+        // node.setParam(ActionW.INVERSELUT.cmd(), false);
+        // node.setParam(WindowOp.P_FILL_OUTSIDE_LUT, false);
     }
 
 }

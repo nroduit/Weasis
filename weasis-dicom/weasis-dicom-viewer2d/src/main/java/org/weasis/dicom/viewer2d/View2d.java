@@ -439,7 +439,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(null);
+        setPresentationState(ActionState.NONE);
     }
 
     @Deprecated
@@ -482,14 +482,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // setSeries(series, getImage());
     }
 
-    void setPresentationState(PRSpecialElement val) {
-        ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
-        if (pane != null) {
-            pane.resetMaximizedSelectedImagePane(this);
+    void setPresentationState(Object val) {
+
+        Object old = actionsInView.get(ActionW.PR_STATE.cmd());
+        if (val == null && old == null
+            || (old instanceof PresentationStateReader && ((PresentationStateReader) old).getDicom() == val)) {
+            return;
         }
-        // TODO use PR reader for other frame when changing image of the series
-        PresentationStateReader pr = val == null ? null : new PresentationStateReader(val);
-        actionsInView.put(ActionW.PR_STATE.cmd(), val);
+        PresentationStateReader pr =
+            val instanceof PRSpecialElement ? new PresentationStateReader((PRSpecialElement) val) : null;
+        actionsInView.put(ActionW.PR_STATE.cmd(), pr == null ? val : pr);
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
         // Delete previous PR Layers
@@ -502,6 +504,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         DicomImageElement m = getImage();
         // Reset display parameter
+        ((DefaultViewModel) getViewModel()).setEnableViewModelChangeListeners(false);
         imageLayer.setEnableDispOperations(false);
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, m, null));
 
@@ -555,12 +558,34 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else {
             applyPresentationState(pr, m);
         }
-        imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
-        imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
-        // resetZoom();
+        Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
+        if (area != null && !area.equals(getViewModel().getModelArea())) {
+            ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
+            getViewModel().setModelArea(area);
+        }
+        imageLayer.setPreprocessing((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
+        if (pr != null) {
+            imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
+            ImageOpNode rotation = imageLayer.getDisplayOpManager().getNode(RotationOp.OP_NAME);
+            if (rotation != null) {
+                rotation.setParam(RotationOp.P_ROTATE, actionsInView.get(ActionW.ROTATION.cmd()));
+            }
+            ImageOpNode flip = imageLayer.getDisplayOpManager().getNode(FlipOp.OP_NAME);
+            if (flip != null) {
+                flip.setParam(FlipOp.P_FLIP, actionsInView.get(ActionW.FLIP.cmd()));
+            }
+        }
+        ZoomType type = (ZoomType) actionsInView.get(zoomTypeCmd);
+        if (!ZoomType.CURRENT.equals(type)) {
+            Double zoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+            zoom(zoom == null ? 0.0 : zoom);
+        }
+
+        ((DefaultViewModel) getViewModel()).setEnableViewModelChangeListeners(true);
         imageLayer.setEnableDispOperations(true);
         eventManager.updateComponentsListener(this);
+
     }
 
     private void applyPresentationState(PresentationStateReader reader, DicomImageElement img) {
@@ -609,6 +634,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (prPixSize != null && prPixSize.length == 2) {
             actionsInView.put(PresentationStateReader.TAG_OLD_PIX_SIZE, img.getDisplayPixelSize());
             img.setPixelSize(prPixSize[0], prPixSize[1]);
+
+            // if (area != null && img.getRescaleX() != img.getRescaleY()) {
+            // area =
+            // new Rectangle((int) Math.ceil(area.getX() * img.getRescaleX() - 0.5), (int) Math.ceil(area.getY()
+            // * img.getRescaleY() - 0.5), (int) Math.ceil(area.getWidth() * img.getRescaleX() - 0.5),
+            // (int) Math.ceil(area.getHeight() * img.getRescaleY() - 0.5));
+            // }
+
         }
         if (area != null) {
             Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());
@@ -623,10 +656,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     area.intersection(new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source
                         .getHeight()));
                 if (area.width > 1 && area.height > 1 && !area.equals(getViewModel().getModelArea())) {
-                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
-                    getViewModel().setModelArea(area);
                     SimpleOpManager manager = new SimpleOpManager();
-                    manager.addImageOperationAction(new CropOp());
+                    CropOp crop = new CropOp();
+                    crop.setParam(CropOp.P_AREA, area);
+                    crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
+                    manager.addImageOperationAction(crop);
                     actionsInView.put(ActionW.PREPROCESSING.cmd(), manager);
                 }
             }
@@ -635,7 +669,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
         double zoom = (Double) reader.getTagValue(ActionW.ZOOM.cmd(), 0.0d);
         actionsInView.put(ActionW.ZOOM.cmd(), zoom);
-
     }
 
     void updateKOButtonVisibleState() {
@@ -899,7 +932,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             ViewButton prButton = PRManager.buildPrSelection(this, series, img);
             if (prButton != null) {
                 getViewButtons().add(prButton);
-            } else if (oldPR instanceof PRSpecialElement) {
+            } else if (oldPR != null) {
                 setPresentationState(null);
             }
         }

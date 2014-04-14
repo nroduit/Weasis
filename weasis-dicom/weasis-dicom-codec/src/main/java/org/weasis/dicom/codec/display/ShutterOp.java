@@ -36,6 +36,7 @@ import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 
 public class ShutterOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShutterOp.class);
@@ -69,11 +70,13 @@ public class ShutterOp extends AbstractOp {
         } else if (OpEvent.ApplyPR.equals(type)) {
             HashMap<String, Object> p = event.getParams();
             if (p != null) {
-                PRSpecialElement pr = (PRSpecialElement) p.get(ActionW.PR_STATE.cmd());
-                boolean noMedia = pr == null;
-                setParam(P_SHAPE, noMedia ? null : pr.getTagValue(TagW.ShutterFinalShape));
-                setParam(P_PS_VALUE, noMedia ? null : pr.getTagValue(TagW.ShutterPSValue));
-                setParam(P_RGB_COLOR, noMedia ? null : pr.getTagValue(TagW.ShutterRGBColor));
+                Object prReader = p.get(ActionW.PR_STATE.cmd());
+                PRSpecialElement pr =
+                    (prReader instanceof PresentationStateReader) ? ((PresentationStateReader) prReader).getDicom()
+                        : null;
+                setParam(P_SHAPE, pr == null ? null : pr.getTagValue(TagW.ShutterFinalShape));
+                setParam(P_PS_VALUE, pr == null ? null : pr.getTagValue(TagW.ShutterPSValue));
+                setParam(P_RGB_COLOR, pr == null ? null : pr.getTagValue(TagW.ShutterRGBColor));
 
                 // if (area != null) {
                 // Area shape = (Area) actionsInView.get(TagW.ShutterFinalShape.getName());

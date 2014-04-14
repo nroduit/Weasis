@@ -43,6 +43,11 @@ public class PresentationStateReader {
         return prSpecialElement;
     }
 
+    @Override
+    public String toString() {
+        return prSpecialElement.toString();
+    }
+
     public Attributes getDcmobj() {
         return dcmobj;
     }
@@ -137,9 +142,7 @@ public class PresentationStateReader {
                             }
                         }
                     }
-                    if (pixelsize == null || pixelsize.length != 2) {
-                        tags.put(TagW.PixelSpacing.getName(), pixelsize);
-                    }
+                    tags.put(TagW.PixelSpacing.getName(), pixelsize);
 
                     String presentationMode = item.getString(Tag.PresentationSizeMode);
                     int[] tlhc =

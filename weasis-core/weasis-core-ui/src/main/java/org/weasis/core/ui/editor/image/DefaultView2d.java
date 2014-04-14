@@ -543,8 +543,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 final Rectangle modelArea = getImageBounds(img);
                 Rectangle2D area = getViewModel().getModelArea();
                 if (!modelArea.equals(area)) {
-                    ((DefaultViewModel) getViewModel()).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
-                    getViewModel().setModelArea(modelArea);
+                    DefaultViewModel m = (DefaultViewModel) getViewModel();
+                    boolean oldVal = m.isEnableViewModelChangeListeners();
+                    m.setEnableViewModelChangeListeners(false);
+                    m.adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+                    m.setModelArea(modelArea);
+                    m.setEnableViewModelChangeListeners(oldVal);
                 }
 
                 imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
