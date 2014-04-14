@@ -2012,4 +2012,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         return actions;
     }
 
+    @Override
+    public boolean canImportFiles() {
+        return true;
+    }
+
 }

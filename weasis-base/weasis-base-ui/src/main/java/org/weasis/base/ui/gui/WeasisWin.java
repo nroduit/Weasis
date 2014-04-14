@@ -22,11 +22,13 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,6 +51,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
@@ -89,6 +92,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.ui.util.UriListFlavor;
 
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabDockActionLocation;
@@ -257,8 +261,7 @@ public class WeasisWin {
     }
 
     public void createMainPanel() throws Exception {
-        // initToolWindowManager();
-        rootPaneContainer.setGlassPane(AbstractProperties.glassPane);
+
         // Do not disable check when debugging
         if (System.getProperty("maven.localRepository") == null) {
             DockUtilities.disableCheckLayoutLocked();
@@ -928,7 +931,12 @@ public class WeasisWin {
             if (!support.isDrop()) {
                 return false;
             }
-            return support.isDataFlavorSupported(Series.sequenceDataFlavor);
+            if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
+                || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                || support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                return true;
+            }
+            return false;
         }
 
         @Override
@@ -936,33 +944,122 @@ public class WeasisWin {
             if (!canImport(support)) {
                 return false;
             }
+
+            Transferable transferable = support.getTransferable();
+
+            List<File> files = null;
+            // Not supported on Linux
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                try {
+                    files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropDicomFiles(files, support.getDropLocation());
+            }
+            // When dragging a file or group of files from a Gnome or Kde environment
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
+            else if (support.isDataFlavorSupported(UriListFlavor.uriListFlavor)) {
+                try {
+                    // Files with spaces in the filename trigger an error
+                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
+                    String val = (String) transferable.getTransferData(UriListFlavor.uriListFlavor);
+                    files = UriListFlavor.textURIListToFileList(val);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return dropDicomFiles(files, support.getDropLocation());
+            }
+
+            Series seq;
             try {
-                Transferable transferable = support.getTransferable();
-                Series seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-                if (seq != null) {
-                    synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-                        for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
-                            if (factory.canReadMimeType(seq.getMimeType())) {
-                                DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-                                if (model instanceof TreeModel) {
-                                    ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                                        new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
-                                    list.add(seq);
-                                    ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
-                                    openSeriesInViewerPlugin(builder,
-                                        ((TreeModel) model).getParent(seq, model.getTreeModelNodeForNewPlugin()));
-                                }
-                                break;
+                seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
+                // Do not add series without medias. BUG WEA-100
+                if (seq == null || seq.size(null) == 0) {
+                    return false;
+                }
+
+                synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
+                    for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
+                        if (factory.canReadMimeType(seq.getMimeType())) {
+                            DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
+                            if (model instanceof TreeModel) {
+                                ArrayList<MediaSeries<? extends MediaElement<?>>> list =
+                                    new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
+                                list.add(seq);
+                                ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
+                                openSeriesInViewerPlugin(builder,
+                                    ((TreeModel) model).getParent(seq, model.getTreeModelNodeForNewPlugin()));
+                            } else {
+                                ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model == null
+                                    ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
                             }
+                            break;
                         }
                     }
-
                 }
+
             } catch (Exception e) {
                 return false;
             }
             return true;
+        }
 
+        private boolean dropDicomFiles(final List<File> files, DropLocation dropLocation) {
+            if (files != null) {
+                List<DataExplorerView> explorers = new ArrayList<DataExplorerView>(UIManager.EXPLORER_PLUGINS);
+                for (int i = explorers.size() - 1; i >= 0; i--) {
+                    if (!explorers.get(i).canImportFiles()) {
+                        explorers.remove(i);
+                    }
+                }
+
+                int size = explorers.size();
+
+                if (size == 1) {
+                    explorers.get(0).importFiles(files.toArray(new File[files.size()]), true);
+                } else {
+                    Point p;
+                    if (dropLocation == null) {
+                        Rectangle b = WeasisWin.this.getFrame().getBounds();
+                        p = new Point((int) b.getCenterX(), (int) b.getCenterY());
+                    } else {
+                        p = dropLocation.getDropPoint();
+                    }
+
+                    JPopupMenu popup = new JPopupMenu();
+
+                    for (final DataExplorerView dataExplorerView : explorers) {
+                        JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
+                        item.addActionListener(new ActionListener() {
+
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                dataExplorerView.importFiles(files.toArray(new File[files.size()]), true);
+                            }
+                        });
+                        popup.add(item);
+                    }
+
+                    // popup.addSeparator();
+                    // JMenuItem item = new JMenuItem("Open files directly with associated viewers");
+                    // item.addActionListener(new ActionListener() {
+                    //
+                    // @Override
+                    // public void actionPerformed(ActionEvent e) {
+                    // for (File file : files) {
+                    // ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
+                    // }
+                    // }
+                    // });
+                    // popup.add(item);
+
+                    popup.show(WeasisWin.this.getFrame(), p.x, p.y);
+                }
+
+                return true;
+            }
+            return false;
         }
     }
 

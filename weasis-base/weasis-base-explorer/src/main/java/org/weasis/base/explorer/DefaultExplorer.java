@@ -414,8 +414,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             JMenu scansub = new JMenu("Import subfolders to");
 
             synchronized (UIManager.EXPLORER_PLUGINS) {
-                List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-                for (final DataExplorerView dataExplorerView : explorers) {
+                for (final DataExplorerView dataExplorerView : UIManager.EXPLORER_PLUGINS) {
                     if (dataExplorerView != DefaultExplorer.this) {
                         importAction = true;
                         JMenuItem item = new JMenuItem(new AbstractAction(dataExplorerView.getUIName()) {
@@ -639,4 +638,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     }
 
+    @Override
+    public boolean canImportFiles() {
+        return false;
+    }
 }

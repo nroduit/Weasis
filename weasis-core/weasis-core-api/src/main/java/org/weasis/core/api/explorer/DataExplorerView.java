@@ -31,4 +31,6 @@ public interface DataExplorerView extends PropertyChangeListener, GUIEntry {
     List<Action> getOpenExportDialogAction();
 
     void importFiles(File[] files, boolean recursive);
+
+    boolean canImportFiles();
 }
