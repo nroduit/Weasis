@@ -33,37 +33,29 @@ public class MouseActions {
     public static final String RIGHT = "right"; //$NON-NLS-1$
     public static final String WHEEL = "wheel"; //$NON-NLS-1$
 
-    private String left = ActionW.WINLEVEL.cmd();
-    private String middle = ActionW.PAN.cmd();
-    private String right = ActionW.CONTEXTMENU.cmd();
-    private String wheel = ActionW.SCROLL_SERIES.cmd();
-    private int activeButtons = InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK
-        | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK;
-
-    // public MouseActions(String left, String middle, String right, String wheel) {
-    // super();
-    // this.left = left;
-    // this.middle = middle;
-    // this.right = right;
-    // this.wheel = wheel;
-    //
-    // this.activeButtons =
-    // BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
-    //
-    // }
+    private String left;
+    private String middle;
+    private String right;
+    private String wheel;
+    private int activeButtons;
 
     public MouseActions(Preferences prefs) {
-
         this.activeButtons =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", activeButtons);
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", InputEvent.BUTTON1_DOWN_MASK
+                | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK);
+        this.left = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd());
+        this.middle = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd());
+        this.right =
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd());
+        this.wheel =
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd());
 
         applyPreferences(prefs);
 
         int numberOfButtons = java.awt.MouseInfo.getNumberOfButtons();
-
         if (numberOfButtons < 3) {
-            this.activeButtons &= ~(1 << 11); // Invalidate middle button clic when doesn't exist (ie : OK with genuine
-                                              // Mac mouses )
+            // Invalidate middle button click when doesn't exist (OK with genuine Mac mouses)
+            this.activeButtons &= ~(1 << 11);
         }
     }
 
