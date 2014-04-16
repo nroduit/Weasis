@@ -370,30 +370,33 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                         GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
                         String fruid = (String) series.getTagValue(TagW.FrameOfReferenceUID);
                         if (sliceGeometry != null && fruid != null) {
-                            Point3d p3 = sliceGeometry.getPosition(p);
+                            Point3d p3 = Double.isNaN(p.x) ? null : sliceGeometry.getPosition(p);
                             ImageViewerPlugin<DicomImageElement> container =
                                 this.eventManager.getSelectedView2dContainer();
                             if (container != null) {
                                 ArrayList<DefaultView2d<DicomImageElement>> viewpanels = container.getImagePanels();
-                                for (DefaultView2d<DicomImageElement> v : viewpanels) {
-                                    MediaSeries<DicomImageElement> s = v.getSeries();
-                                    if (s == null) {
-                                        continue;
-                                    }
-                                    if (v instanceof View2d && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
-                                        if (v != container.getSelectedImagePane()) {
-                                            GeometryOfSlice geometry = v.getImage().getSliceGeometry();
-                                            if (geometry != null) {
-                                                Vector3d vn = geometry.getNormal();
-                                                // vn.absolute();
-                                                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                                                DicomImageElement img =
-                                                    s.getNearestImage(location, 0,
-                                                        (Filter<DicomImageElement>) actionsInView
-                                                            .get(ActionW.FILTERED_SERIES.cmd()), v
-                                                            .getCurrentSortComparator());
-                                                if (img != null) {
-                                                    ((View2d) v).setImage(img);
+                                if (p3 != null) {
+                                    for (DefaultView2d<DicomImageElement> v : viewpanels) {
+                                        MediaSeries<DicomImageElement> s = v.getSeries();
+                                        if (s == null) {
+                                            continue;
+                                        }
+                                        if (v instanceof View2d
+                                            && fruid.equals(s.getTagValue(TagW.FrameOfReferenceUID))) {
+                                            if (v != container.getSelectedImagePane()) {
+                                                GeometryOfSlice geometry = v.getImage().getSliceGeometry();
+                                                if (geometry != null) {
+                                                    Vector3d vn = geometry.getNormal();
+                                                    // vn.absolute();
+                                                    double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                                                    DicomImageElement img =
+                                                        s.getNearestImage(location, 0,
+                                                            (Filter<DicomImageElement>) actionsInView
+                                                                .get(ActionW.FILTERED_SERIES.cmd()), v
+                                                                .getCurrentSortComparator());
+                                                    if (img != null) {
+                                                        ((View2d) v).setImage(img);
+                                                    }
                                                 }
                                             }
                                         }
@@ -1124,7 +1127,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             GeometryOfSlice sliceGeometry = image.getSliceGeometry();
             if (sliceGeometry != null) {
                 SliceOrientation sliceOrientation = this.getSliceOrientation();
-                if (sliceOrientation != null) {
+                if (sliceOrientation != null && p3 != null) {
                     Point2D p = sliceGeometry.getImagePosition(p3);
                     Tuple3d dimensions = sliceGeometry.getDimensions();
                     boolean axial = SliceOrientation.AXIAL.equals((sliceOrientation));

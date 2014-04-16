@@ -85,6 +85,16 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     public abstract void pointChanged(Point2D point);
 
     @Override
+    public void setButtonMaskEx(int buttonMask) {
+        // Zero is used to disable the mouse adapter
+        if (buttonMask == 0 && this.buttonMaskEx != 0) {
+            // Convention to delete cross-lines on the views when selecting another action
+            this.setPoint(new Point2D.Double(Double.NaN, Double.NaN));
+        }
+        super.setButtonMaskEx(buttonMask);
+    }
+
+    @Override
     public String toString() {
         return basicState.getActionW().getTitle();
     }

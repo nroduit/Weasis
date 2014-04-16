@@ -23,34 +23,42 @@ public abstract class MouseActionAdapter implements MouseListener, MouseWheelLis
     static final int JDK_1_3_MODIFIERS = (1 << 6) - 1;
     static final int HIGH_MODIFIERS = ~((1 << 14) - 1);
 
-    private int buttonMaskEx = 0;
+    protected int buttonMaskEx = 0;
     protected int lastPosition = 0;
     private boolean inverse = false;
     private boolean moveOnX = false;
     private double mouseSensivity = 1.0;
     protected double dragAccumulator = Double.MAX_VALUE;
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
+    @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
     }
 
