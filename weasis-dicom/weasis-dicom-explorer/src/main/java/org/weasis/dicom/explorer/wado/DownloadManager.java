@@ -266,11 +266,10 @@ public class DownloadManager {
                 HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
 
                 LOGGER.debug("HttpURLConnection previous ConnectTimeout : {} sec",
-                    httpURLConnection.getConnectTimeout() / 1000);
-                int newConnectTimeout = 5000;
-                httpURLConnection.setConnectTimeout(newConnectTimeout);
+                    TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
+                httpURLConnection.setConnectTimeout(5000);
                 LOGGER.debug("HttpURLConnection new ConnectTimeout : {} sec",
-                    httpURLConnection.getConnectTimeout() / 1000);
+                    TimeUnit.MILLISECONDS.toSeconds(httpURLConnection.getConnectTimeout()));
 
                 int responseCode = httpURLConnection.getResponseCode();
                 if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {

@@ -62,6 +62,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -212,6 +213,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             moveTroughSliceAction.setMouseSensivity(prefNode.getDouble(moveTroughSliceAction.getActionW().cmd(), 0.1));
             rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
+
+            prefNode = prefs.node("other"); //$NON-NLS-1$
+            WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.FALSE.toString());
         }
 
         initializeParameters();
@@ -1158,6 +1162,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 rotateAction.getMouseSensivity());
             BundlePreferences.putDoublePreferences(prefNode, zoomAction.getActionW().cmd(),
                 zoomAction.getMouseSensivity());
+
+            prefNode = prefs.node("other"); //$NON-NLS-1$
+            BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_APPLY_WL_COLOR,
+                options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, false));
 
             Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);

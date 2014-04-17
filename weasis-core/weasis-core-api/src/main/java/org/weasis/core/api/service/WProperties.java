@@ -15,6 +15,7 @@ import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.util.Base64;
 
 public class WProperties extends Properties {
@@ -171,5 +172,15 @@ public class WProperties extends Properties {
 
     private boolean isKeyValid(String key) {
         return key != null;
+    }
+
+    public static void setProperty(WProperties properties, String key, Preferences prefNode, String defaultValue) {
+        if (properties != null && key != null) {
+            String val = prefNode.get(key, null);
+            if (val == null) {
+                val = BundleTools.SYSTEM_PREFERENCES.getProperty(key, defaultValue);
+            }
+            properties.setProperty(key, val);
+        }
     }
 }

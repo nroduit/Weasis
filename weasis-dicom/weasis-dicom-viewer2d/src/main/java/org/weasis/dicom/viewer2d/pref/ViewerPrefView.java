@@ -20,6 +20,7 @@ import java.util.Hashtable;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,6 +32,8 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -42,26 +45,18 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
-    private final Hashtable labels = new Hashtable();
+    private final Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
     private JSlider sliderWindow;
     private JSlider sliderLevel;
     private JSlider sliderZoom;
     private JSlider sliderRotation;
     private JSlider sliderScroll;
     private JComboBox comboBoxInterpolation;
+    private JCheckBox checkBoxWLcolor;
 
     public ViewerPrefView() {
-        super(View2dFactory.NAME); //$NON-NLS-1$
-
+        super(View2dFactory.NAME);
         setComponentPosition(150);
-        // JButton button = new JButton("Restore Defaults");
-        // GridBagConstraints gbc_button = new GridBagConstraints();
-        // gbc_button.insets = new Insets(15, 15, 15, 15);
-        // gbc_button.anchor = GridBagConstraints.SOUTHEAST;
-        // gbc_button.gridx = 1;
-        // gbc_button.gridy = 5;
-        // panel.add(button, gbc_button);
-
         initGUI();
     }
 
@@ -84,8 +79,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         panel.setLayout(gbl_panel);
 
         JPanel panel_1 = new JPanel();
-        FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
-        flowLayout.setAlignment(FlowLayout.LEADING);
+        ((FlowLayout) panel_1.getLayout()).setAlignment(FlowLayout.LEADING);
         panel_1.setBorder(new TitledBorder(null,
             Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, TitledBorder.TOP, null, null)); //$NON-NLS-1$
         add(panel_1);
@@ -97,6 +91,16 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         comboBoxInterpolation = new JComboBox(ZoomOp.INTERPOLATIONS);
         comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
         panel_1.add(comboBoxInterpolation);
+
+        JPanel winlevelPanel = new JPanel();
+        ((FlowLayout) winlevelPanel.getLayout()).setAlignment(FlowLayout.LEADING);
+        winlevelPanel.setBorder(new TitledBorder(null, "Other", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        add(winlevelPanel);
+
+        checkBoxWLcolor =
+            new JCheckBox("Apply Window/Level on color images", eventManager.getOptions().getBooleanProperty(
+                WindowOp.P_APPLY_WL_COLOR, false));
+        winlevelPanel.add(checkBoxWLcolor);
 
         JPanel panel_2 = new JPanel();
         FlowLayout flowLayout_1 = (FlowLayout) panel_2.getLayout();
@@ -228,6 +232,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     @Override
     public void closeAdditionalWindow() {
         EventManager eventManager = EventManager.getInstance();
+
         ActionState winAction = eventManager.getAction(ActionW.WINDOW);
         if (winAction instanceof MouseActionAdapter) {
             ((MouseActionAdapter) winAction).setMouseSensivity(sliderToRealValue(sliderWindow.getValue()));
@@ -250,11 +255,17 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         }
         int interpolation = comboBoxInterpolation.getSelectedIndex();
         eventManager.getZoomSetting().setInterpolation(interpolation);
+        boolean applyWLcolor = checkBoxWLcolor.isSelected();
+        eventManager.getOptions().setProperty(WindowOp.P_APPLY_WL_COLOR, String.valueOf(applyWLcolor));
+
         synchronized (UIManager.VIEWER_PLUGINS) {
             for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                 if (p instanceof View2dContainer) {
                     View2dContainer viewer = (View2dContainer) p;
                     for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
+                        OpManager disOp = v.getDisplayOpManager();
+                        disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
+
                         // TODO Replace by an event
                         v.changeZoomInterpolation(interpolation);
                     }
@@ -271,6 +282,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         sliderRotation.setValue(realValueToslider(0.25));
         sliderZoom.setValue(realValueToslider(0.1));
         comboBoxInterpolation.setSelectedIndex(1);
+        checkBoxWLcolor.setSelected(false);
     }
 
     private void formatSlider(JSlider slider) {

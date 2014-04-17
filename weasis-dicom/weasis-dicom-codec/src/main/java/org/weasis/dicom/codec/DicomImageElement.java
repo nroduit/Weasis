@@ -677,7 +677,7 @@ public class DicomImageElement extends ImageElement {
      */
     protected RenderedImage getRenderedImage(final RenderedImage imageSource, Float window, Float level,
         Float levelMin, Float levelMax, LutShape lutShape, Boolean pixelPadding, Boolean inverseLUT,
-        boolean fillLutOutside) {
+        boolean fillLutOutside, boolean applyWLcolor) {
 
         if (imageSource == null) {
             return null;
@@ -718,7 +718,7 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if (!isPhotometricInterpretationMonochrome()) {
+            if (!applyWLcolor && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.
@@ -767,6 +767,7 @@ public class DicomImageElement extends ImageElement {
         Boolean pixelPadding = null;
         Boolean inverseLUT = null;
         Boolean fillLutOutside = null;
+        Boolean wlOnColorImage = null;
 
         if (params != null) {
             window = (Float) params.get(ActionW.WINDOW.cmd());
@@ -777,10 +778,11 @@ public class DicomImageElement extends ImageElement {
             pixelPadding = (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
             inverseLUT = (Boolean) params.get(PseudoColorOp.P_LUT_INVERSE);
             fillLutOutside = (Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT);
+            wlOnColorImage = (Boolean) params.get(WindowOp.P_APPLY_WL_COLOR);
         }
 
         return this.getRenderedImage(imageSource, window, level, levelMin, levelMax, lutShape, pixelPadding,
-            inverseLUT, JMVUtils.getNULLtoFalse(fillLutOutside));
+            inverseLUT, JMVUtils.getNULLtoFalse(fillLutOutside), JMVUtils.getNULLtoFalse(wlOnColorImage));
     }
 
     public GeometryOfSlice getSliceGeometry() {

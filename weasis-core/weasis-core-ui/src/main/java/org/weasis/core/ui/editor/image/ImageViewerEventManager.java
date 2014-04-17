@@ -36,6 +36,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -58,6 +59,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     protected final ArrayList<SeriesViewerListener> seriesViewerListeners = new ArrayList<SeriesViewerListener>();
     protected final MouseActions mouseActions = new MouseActions(null);
     protected final ZoomSetting zoomSetting = new ZoomSetting();
+    protected final WProperties options = new WProperties();
     protected ImageViewerPlugin<E> selectedView2dContainer;
     // Manages all PropertyChangeListeners in EDT
     protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
@@ -595,6 +597,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
 
     public ZoomSetting getZoomSetting() {
         return zoomSetting;
+    }
+
+    public WProperties getOptions() {
+        return options;
     }
 
     public static int viewScaleToSliderValue(double viewScale) {
