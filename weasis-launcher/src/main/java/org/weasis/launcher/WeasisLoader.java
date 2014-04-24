@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
@@ -23,25 +24,21 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
-import org.slf4j.LoggerFactory;
+import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLoader {
 
@@ -57,9 +54,11 @@ public class WeasisLoader {
     private volatile javax.swing.JProgressBar downloadProgress;
     private final String logoPath;
     private Container container;
+    private final WeasisFrame mainFrame;
 
-    public WeasisLoader(String logoPath) {
+    public WeasisLoader(String logoPath, WeasisFrame mainFrame) {
         this.logoPath = logoPath;
+        this.mainFrame = mainFrame;
     }
 
     public void writeLabel(String text) {
@@ -78,25 +77,10 @@ public class WeasisLoader {
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
 
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        try {
-            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
-            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
-            if (containerObj instanceof RootPaneContainer) {
-                RootPaneContainer rootPaneContainer = (RootPaneContainer) containerObj;
+        RootPaneContainer frame = mainFrame.getRootPaneContainer();
 
-                JPanel splashScreenPanel = new JPanel(new GridBagLayout());
-                rootPaneContainer.getContentPane().add(splashScreenPanel);
-                container = splashScreenPanel;
-            }
-
-        } catch (InstanceNotFoundException ignored) {
-        } catch (JMException e) {
-            LoggerFactory.getLogger(WeasisLoader.class).debug("Error while receiving main window", e);
-        }
-
-        if (container == null) {
-            container = window = new Window(null);
+        if (frame instanceof JFrame) {
+            container = window = new Window((Frame) frame);
             window.addWindowListener(new java.awt.event.WindowAdapter() {
 
                 @Override
@@ -104,6 +88,10 @@ public class WeasisLoader {
                     closing();
                 }
             });
+        } else {
+            JPanel splashScreenPanel = new JPanel(new BorderLayout());
+            frame.getContentPane().add(splashScreenPanel, BorderLayout.CENTER);
+            container = splashScreenPanel;
         }
 
         loadingLabel.setText(LBL_LOADING);

@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,6 +33,10 @@ import java.util.ServiceLoader;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -50,6 +55,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLauncher {
     public enum STATE {
@@ -875,11 +881,20 @@ public class WeasisLauncher {
         if (localLook != null) {
             look = localLook;
         }
-        // Set look and feels
+
+        /*
+         * Build a Frame or catch it from JApplet
+         * 
+         * This will ensure the popup message or other dialogs to have frame parent. When the parent is null the dialog
+         * can be hidden under the main frame
+         */
+        final WeasisFrame mainFrame = new WeasisFrame();
+
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
+                    // Set look and feels
                     boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                     if (substance) {
                         // TODO should be true: bug with docking-frame
@@ -887,6 +902,29 @@ public class WeasisLauncher {
                         JDialog.setDefaultLookAndFeelDecorated(true);
                     }
                     look = setLookAndFeel(look);
+
+                    ObjectInstance instance = null;
+                    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+                    try {
+                        ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+                        // Try to get frame from an Applet
+                        instance = server.getObjectInstance(objectName);
+                    } catch (InstanceNotFoundException e) {
+
+                    } catch (Exception e) {
+                        // ignored
+                    } finally {
+                        try {
+                            if (instance == null) {
+                                // Build a JFrame which will be used later in base.ui module
+                                ObjectName objectName = new ObjectName("weasis:name=MainWindow");
+                                mainFrame.setRootPaneContainer(new JFrame());
+                                server.registerMBean(mainFrame, objectName);
+                            }
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                    }
                 }
             });
         } catch (Exception e) {
@@ -908,7 +946,7 @@ public class WeasisLauncher {
         final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
 
         // Splash screen that shows bundles loading
-        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"));
+        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"), mainFrame);
         // Display splash screen
         loader.open();
 
@@ -968,7 +1006,8 @@ public class WeasisLauncher {
                         String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
                         int response =
                             JOptionPane.showOptionDialog(
-                                loader.getWindow(),
+                                mainFrame.getRootPaneContainer() == null ? null : mainFrame.getRootPaneContainer()
+                                    .getContentPane(),
                                 String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
                                 String.format(Messages.getString("WeasisLauncher.first"), appName), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
                                 null, options, null);
@@ -1035,8 +1074,9 @@ public class WeasisLauncher {
                             releaseNotesUrl));
                         message.append("</P>"); //$NON-NLS-1$
                         jTextPane1.setText(message.toString());
-                        JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
-                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(mainFrame.getRootPaneContainer() == null ? null : mainFrame
+                            .getRootPaneContainer().getContentPane(), jTextPane1, Messages
+                            .getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
                     }
                 });
             }
