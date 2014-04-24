@@ -159,11 +159,13 @@ import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.explorer.pref.ModalityPrefView;
-import org.weasis.dicom.viewer2d.KOManager.KOViewButton;
-import org.weasis.dicom.viewer2d.KOManager.KOViewButton.eState;
+import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
+import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
+    private static final long serialVersionUID = 8334123827855840782L;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 
     public static final ImageIcon KO_ICON = new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png"));
@@ -176,6 +178,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
         super(eventManager);
+
         SimpleOpManager manager = imageLayer.getDisplayOpManager();
         manager.addImageOperationAction(new WindowAndPresetsOp());
         manager.addImageOperationAction(new OverlayOp());
@@ -199,8 +202,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         oldSize = new Dimension(0, 0);
 
         // TODO should be a lazy instantiation
-        getViewButtons().add(KOManager.buildKoSelectionButton(this));
-        koStarButton = KOManager.buildKoStarButton(this);
+        getViewButtons().add(KOComponentFactory.buildKoSelectionButton(this));
+        koStarButton = KOComponentFactory.buildKoStarButton(this);
         koStarButton.setPosition(GridBagConstraints.NORTHEAST);
         getViewButtons().add(koStarButton);
     }
