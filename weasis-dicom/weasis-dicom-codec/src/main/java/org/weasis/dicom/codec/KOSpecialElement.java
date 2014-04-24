@@ -33,7 +33,7 @@ public class KOSpecialElement extends DicomSpecialElement {
     }
 
     @Override
-    protected void iniLabel() {
+    protected void initLabel() {
         /*
          * DICOM PS 3.3 - 2011 - C.17.3 SR Document Content Module
          * 

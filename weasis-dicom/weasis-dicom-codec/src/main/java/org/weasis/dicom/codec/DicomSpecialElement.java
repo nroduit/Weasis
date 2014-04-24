@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.media.jai.PlanarImage;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -27,14 +29,14 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class DicomSpecialElement extends MediaElement {
+public class DicomSpecialElement extends MediaElement<PlanarImage> {
 
     protected String label;
     protected String shortLabel;
 
     public DicomSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO, null);
-        iniLabel();
+        initLabel();
     }
 
     protected String getLabelPrefix() {
@@ -53,7 +55,7 @@ public class DicomSpecialElement extends MediaElement {
         return buf.toString();
     }
 
-    protected void iniLabel() {
+    protected void initLabel() {
         StringBuilder buf = new StringBuilder(getLabelPrefix());
         String desc = (String) getTagValue(TagW.SeriesDescription);
         if (desc != null) {

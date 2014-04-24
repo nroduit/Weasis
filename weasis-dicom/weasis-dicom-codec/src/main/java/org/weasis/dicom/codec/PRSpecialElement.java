@@ -17,7 +17,7 @@ public class PRSpecialElement extends DicomSpecialElement {
     }
 
     @Override
-    protected void iniLabel() {
+    protected void initLabel() {
 
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
         /*
@@ -34,7 +34,7 @@ public class PRSpecialElement extends DicomSpecialElement {
         }
 
         if (clabel == null) {
-            super.iniLabel();
+            super.initLabel();
         } else {
             StringBuilder buf = new StringBuilder(getLabelPrefix());
             buf.append(clabel);
