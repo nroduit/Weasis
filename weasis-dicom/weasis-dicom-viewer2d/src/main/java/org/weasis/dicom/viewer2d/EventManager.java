@@ -214,8 +214,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
 
+            /*
+             * Get first the local value if exist, otherwise try to get the default server configuration and finally if
+             * no value take the default value in parameter.
+             */
             prefNode = prefs.node("other"); //$NON-NLS-1$
-            WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.FALSE.toString());
+            WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.TRUE.toString());
         }
 
         initializeParameters();
@@ -1151,7 +1155,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             prefNode = prefs.node("other"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_APPLY_WL_COLOR,
-                options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, false));
+                options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
 
             Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
