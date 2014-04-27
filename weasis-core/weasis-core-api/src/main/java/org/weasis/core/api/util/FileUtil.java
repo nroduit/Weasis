@@ -251,6 +251,11 @@ public final class FileUtil {
             out.flush();
             return -1;
         } catch (InterruptedIOException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.error("Error when writing file", e); //$NON-NLS-1$
+            } else {
+                LOGGER.error(e.getMessage());
+            }
             return e.bytesTransferred;
         } catch (IOException e) {
             if (LOGGER.isDebugEnabled()) {

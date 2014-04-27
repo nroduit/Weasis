@@ -926,6 +926,7 @@ public class DicomImageUtils {
 
     }
 
+    // TODO needs to be adapted with new codecs (only works with native sun decoders)
     public static boolean hasPlatformNativeImageioCodecs() {
         return ImageIO.getImageReadersByFormatName("JPEG-LS").hasNext(); //$NON-NLS-1$
     }
