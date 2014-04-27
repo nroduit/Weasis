@@ -12,18 +12,33 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
     private volatile boolean wadoRequest;
+    private volatile byte[] header;
 
     public DicomSeriesProgressMonitor(final Series series, InputStream in, boolean wadoRequest) {
         super(series, in);
         this.wadoRequest = wadoRequest;
+        if (wadoRequest) {
+            header = new byte[512];
+        }
     }
 
     @Override
     public int read(byte b[]) throws IOException {
         int nr = super.read(b);
-        if (wadoRequest && nread > 132) {
-            wadoRequest = false;
-            readMetaInfo(this, b);
+        if (wadoRequest) {
+            /*
+             * header.length (512) is an empirical value: 132 is the magic number position + something to be sure to get
+             * TSUID
+             */
+            if (nread < header.length) {
+                System.arraycopy(b, 0, header, nread - nr, nr);
+            } else {
+                wadoRequest = false;
+                int length = header.length - (nread - nr);
+                System.arraycopy(b, 0, header, nread - nr, length);
+                readMetaInfo(this, header);
+                header = null;
+            }
         }
         return nr;
     }
@@ -31,10 +46,16 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     @Override
     public int read(byte b[], int off, int len) throws IOException {
         int nr = super.read(b, off, len);
-        // 200 is an empirical value: 132 is the magic number position + something to be sure to get TSUID
-        if (wadoRequest && nread > 200 && b.length >= 512) {
-            wadoRequest = false;
-            readMetaInfo(this, b);
+        if (wadoRequest) {
+            if (nread < header.length) {
+                System.arraycopy(b, off, header, nread - nr, nr);
+            } else {
+                wadoRequest = false;
+                int length = header.length - (nread - nr);
+                System.arraycopy(b, off, header, nread - nr, length);
+                readMetaInfo(this, header);
+                header = null;
+            }
         }
         return nr;
     }
@@ -85,6 +106,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
                         progress.nread = 0;
                         throw exc;
                     }
+                    break;
                 }
                 byteOffset += vl;
             }
