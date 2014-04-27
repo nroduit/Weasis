@@ -19,9 +19,6 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
@@ -42,23 +39,29 @@ import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLoader {
 
+    public enum LoadingMessageType {
+        No, Disclaimer, NewVersion
+    };
+
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
     public static final String FRM_TITLE = String.format(
         Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
-    private volatile Window window;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
     private final String logoPath;
     private Container container;
-    private final WeasisFrame mainFrame;
 
-    public WeasisLoader(String logoPath, WeasisFrame mainFrame) {
+    private final WeasisFrame mainFrame;
+    private final Properties serverProperties;
+
+    public WeasisLoader(String logoPath, WeasisFrame mainFrame, Properties serverProperties) {
         this.logoPath = logoPath;
         this.mainFrame = mainFrame;
+        this.serverProperties = serverProperties;
     }
 
     public void writeLabel(String text) {
@@ -79,15 +82,16 @@ public class WeasisLoader {
 
         RootPaneContainer frame = mainFrame.getRootPaneContainer();
 
-        if (frame instanceof JFrame) {
-            container = window = new Window((Frame) frame);
-            window.addWindowListener(new java.awt.event.WindowAdapter() {
+        if (frame == null || frame instanceof JFrame) {
+            Window win = new Window((Frame) frame);
+            win.addWindowListener(new java.awt.event.WindowAdapter() {
 
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent evt) {
                     closing();
                 }
             });
+            container = win;
         } else {
             JPanel splashScreenPanel = new JPanel(new BorderLayout());
             frame.getContentPane().add(splashScreenPanel, BorderLayout.CENTER);
@@ -161,21 +165,20 @@ public class WeasisLoader {
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        if (container.getLayout() instanceof GridBagLayout) {
-            container.add(panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
-                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-        } else {
-            container.add(panel, BorderLayout.CENTER);
-        }
+        container.add(panel, BorderLayout.CENTER);
 
-        if (window != null) {
-            window.pack();
+        if (container instanceof Window) {
+            ((Window) container).pack();
         }
 
     }
 
-    public Window getWindow() {
-        return window;
+    public WeasisFrame getMainFrame() {
+        return mainFrame;
+    }
+
+    public Properties getServerProperties() {
+        return serverProperties;
     }
 
     /*
@@ -252,9 +255,8 @@ public class WeasisLoader {
                 if (container.getParent() != null) {
                     container.getParent().remove(container);
                 }
-                if (window != null) {
-                    window.dispose();
-                    window = null;
+                if (container instanceof Window) {
+                    ((Window) container).dispose();
                 }
                 container = null;
                 cancelButton = null;
@@ -265,19 +267,19 @@ public class WeasisLoader {
     }
 
     private void displayOnScreen() {
-        if (window != null) {
+        if (container instanceof Window) {
             try {
                 Rectangle bounds =
                     GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
                         .getDefaultConfiguration().getBounds();
-                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
-                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+                int x = bounds.x + (bounds.width - container.getWidth()) / 2;
+                int y = bounds.y + (bounds.height - container.getHeight()) / 2;
 
-                window.setLocation(x, y);
+                container.setLocation(x, y);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            window.setVisible(true);
+            container.setVisible(true);
         }
     }
 
