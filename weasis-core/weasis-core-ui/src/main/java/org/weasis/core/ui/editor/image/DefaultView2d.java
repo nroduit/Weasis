@@ -642,7 +642,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (realFactor > 0.0) {
                         Unit imgUnit = img.getPixelSpacingUnit();
                         if (!Unit.PIXEL.equals(imgUnit)) {
-                            viewScale = img.getPixelSize() / imgUnit.getConversionRatio(realFactor);
+                            viewScale = imgUnit.getConvFactor() * img.getPixelSize() / realFactor;
                             viewScale = -adjustViewScale(viewScale);
                         }
                     }

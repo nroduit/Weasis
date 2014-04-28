@@ -28,7 +28,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
         if (wadoRequest) {
             /*
              * header.length (512) is an empirical value: 132 is the magic number position + something to be sure to get
-             * TSUID
+             * Transfer Syntax UID (0x0002, 0x0010)
              */
             if (nread < header.length) {
                 System.arraycopy(b, 0, header, nread - nr, nr);
