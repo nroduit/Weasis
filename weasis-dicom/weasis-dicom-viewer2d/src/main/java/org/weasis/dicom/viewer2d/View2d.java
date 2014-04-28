@@ -272,7 +272,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void setDefaultKOActionWState() {
 
         actionsInView.put(ActionW.KO_FILTER.cmd(), false);
-        actionsInView.put(ActionW.KO_STATE.cmd(), false);
+        actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), false);
 
         // Set the more recent KO by default
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
@@ -291,7 +291,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
 
                     if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
-                        actionsInView.put(ActionW.KO_STATE.cmd(), true);
+                        actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), true);
                     }
                 }
             }
@@ -364,7 +364,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     setKeyObjectSelection(val);
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
                     setKeyObjectSelectionFilterState((Boolean) val);
-                } else if (command.equals(ActionW.KO_STATE.cmd())) {
+                } else if (command.equals(ActionW.KO_TOOGLE_STATE.cmd())) {
                     KOManager.toogleKoState(this);
                     updateKOselectedState();
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
@@ -764,8 +764,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         // TODO - fix this DIRTY code
         Boolean selected = koStarButton.getState().equals(eState.SELECTED) ? true : false;
-        actionsInView.put(ActionW.KO_STATE.cmd(), selected);
-        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_STATE)).setSelectedWithoutTriggerAction(selected);
+        actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), selected);
+        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_TOOGLE_STATE)).setSelectedWithoutTriggerAction(selected);
 
         return (previousState != newSelectionState);
     }

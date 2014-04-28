@@ -583,7 +583,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private ToggleButtonListener newKOToggleAction() {
-        return new ToggleButtonListener(ActionW.KO_STATE, false) {
+        return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean selected) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
@@ -698,7 +698,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             break;
                         }
                     }
-                } else if (keyEvent == ActionW.KO_STATE.getKeyCode()) {
+                } else if (keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
                     koToggleAction.setSelected(!koToggleAction.isSelected());
                 } else {
                     DefaultComboBoxModel model = presetAction.getModel();
@@ -889,7 +889,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         viewingProtocolAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.VIEWINGPROTOCOL.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
-        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_STATE.cmd()));
+        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
         koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
 
         koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());

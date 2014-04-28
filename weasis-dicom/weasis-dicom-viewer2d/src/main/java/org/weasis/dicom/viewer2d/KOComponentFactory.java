@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2010 Nicolas Roduit.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ ******************************************************************************/
+
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
@@ -21,6 +32,11 @@ import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
 
+/**
+ * @author benoit jacquemoud
+ * 
+ * @version $Rev$ $Date$
+ */
 public final class KOComponentFactory {
 
     public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png"));
@@ -42,6 +58,8 @@ public final class KOComponentFactory {
     private KOComponentFactory() {
     }
 
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public static ViewButton buildKoSelectionButton(final View2d currentView) {
 
         return new ViewButton(new ShowPopup() {
@@ -50,9 +68,7 @@ public final class KOComponentFactory {
             public void showPopup(Component invoker, int x, int y) {
 
                 final EventManager evtMgr = EventManager.getInstance();
-
                 ComboItemListener koSelectionAction = ((ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION));
-
                 JPopupMenu popupMenu = new JPopupMenu();
 
                 popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
@@ -62,21 +78,20 @@ public final class KOComponentFactory {
                 for (RadioMenuItem item : groupRadioMenu.getRadioMenuItemListCopy()) {
                     popupMenu.add(item);
                 }
+                popupMenu.addSeparator();
 
                 ToggleButtonListener koFilterAction = (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
-
                 final JCheckBoxMenuItem menuItem =
                     koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
 
-                popupMenu.addSeparator();
                 popupMenu.add(menuItem);
-
                 popupMenu.setEnabled(koSelectionAction.isActionEnabled());
-
                 popupMenu.show(invoker, x, y);
             }
         }, View2d.KO_ICON);
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static KOViewButton buildKoStarButton(final View2d currentView) {
 
@@ -85,7 +100,7 @@ public final class KOComponentFactory {
             public void showPopup(Component invoker, int x, int y) {
 
                 ToggleButtonListener koToggleAction =
-                    ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_STATE));
+                    ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_TOOGLE_STATE));
 
                 koToggleAction.setSelected(!koToggleAction.isSelected());
             }
@@ -111,6 +126,8 @@ public final class KOComponentFactory {
             return (argb & 0xff000000) | (r << 16) | (g << 8) | (b);
         }
     }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static class KOViewButton extends ViewButton {
 
