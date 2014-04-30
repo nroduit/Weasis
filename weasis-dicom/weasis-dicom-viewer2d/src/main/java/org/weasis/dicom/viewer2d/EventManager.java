@@ -586,18 +586,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
-            }
-        };
-    }
 
-    private ToggleButtonListener newKOFilterAction() {
-        return new ToggleButtonListener(ActionW.KO_FILTER, false) {
-            @Override
-            public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
+                if (KOManager.setKeyObjectReference(selected, getSelectedViewPane())) {
+                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                        selected));
+                } else {
+                    setSelectedWithoutTriggerAction(!selected); // canceled
+                }
             }
         };
     }
@@ -608,6 +603,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void itemStateChanged(Object object) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     object));
+            }
+        };
+    }
+
+    private ToggleButtonListener newKOFilterAction() {
+        return new ToggleButtonListener(ActionW.KO_FILTER, false) {
+            @Override
+            public void actionPerformed(boolean selected) {
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
         };
     }

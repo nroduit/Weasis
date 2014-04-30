@@ -61,7 +61,6 @@ import javax.vecmath.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -365,7 +364,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
                     setKeyObjectSelectionFilterState((Boolean) val);
                 } else if (command.equals(ActionW.KO_TOOGLE_STATE.cmd())) {
-                    KOManager.toogleKoState(this);
+                    // KOManager.toogleKoState(this);
                     updateKOselectedState();
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
@@ -677,6 +676,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.ZOOM.cmd(), zoom);
     }
 
+    @Deprecated
     void updateKOButtonVisibleState() {
 
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
@@ -765,7 +765,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // TODO - fix this DIRTY code
         Boolean selected = koStarButton.getState().equals(eState.SELECTED) ? true : false;
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), selected);
-        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_TOOGLE_STATE)).setSelectedWithoutTriggerAction(selected);
+        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_TOOGLE_STATE))
+            .setSelectedWithoutTriggerAction(selected);
 
         return (previousState != newSelectionState);
     }
@@ -814,14 +815,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (currentImg != null && dicomSeries != null && selectedKO instanceof KOSpecialElement) {
 
-            ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-            SliderCineListener sliceAction = null;
-            if (seqAction instanceof SliderCineListener) {
-                sliceAction = (SliderCineListener) seqAction;
-            } else {
-                return;
-            }
-
             if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
 
                 int newImageIndex = getFrameIndex();
@@ -829,11 +822,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 // FILTERED_SERIES and the current SortComparator
 
                 // If the current image is not part anymore of the KO FILTERED_SERIES then it has been removed from the
-                // selection. Hence, another image should be selected, that is the nearest.
+                // selection. Hence, the nearest image should be selected.
 
                 Filter<DicomImageElement> dicomFilter =
                     (Filter<DicomImageElement>) getActionValue(ActionW.FILTERED_SERIES.cmd());
-
                 if (newImageIndex < 0) {
 
                     double[] val = (double[]) currentImg.getTagValue(TagW.SlicePosition);
@@ -844,7 +836,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
 
                     if (dicomSeries.size(dicomFilter) > 0) {
-
                         newImageIndex =
                             dicomSeries.getNearestImageIndex(location, getTileOffset(), dicomFilter,
                                 getCurrentSortComparator());
@@ -865,14 +856,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 // This avoids to call eventManager.updateComponentsListener since only moveTroughSliceAction should be
                 // updated
 
+                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                SliderCineListener sliceAction = null;
+                if (seqAction instanceof SliderCineListener) {
+                    sliceAction = (SliderCineListener) seqAction;
+                } else {
+                    return;
+                }
+
                 sliceAction.setMinMaxValue(1, dicomSeries.size(dicomFilter), newImageIndex + 1);
             }
 
-            DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
+            // DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
             // Fire an event since any view in the View2dContainner may have its KO selected state changed
-            dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
-                selectedKO));
+            // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
+            // selectedKO));
         }
 
         updateKOButtonVisibleState();
