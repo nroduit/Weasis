@@ -214,8 +214,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             rotateAction.setMouseSensivity(prefNode.getDouble(rotateAction.getActionW().cmd(), 0.25));
             zoomAction.setMouseSensivity(prefNode.getDouble(zoomAction.getActionW().cmd(), 0.1));
 
+            /*
+             * Get first the local value if exist, otherwise try to get the default server configuration and finally if
+             * no value take the default value in parameter.
+             */
             prefNode = prefs.node("other"); //$NON-NLS-1$
-            WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.FALSE.toString());
+            WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.TRUE.toString());
         }
 
         initializeParameters();
@@ -346,18 +350,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MIN.cmd());
                     Float levelMax =
                         (Float) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
-                    if (newPreset == null) {
-                        if (levelMin == null || levelMax == null) {
-                            levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
-                            levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
-                        } else {
-                            levelMin = Math.min(levelMin, image.getMinValue(pixelPadding));
-                            levelMax = Math.max(levelMax, image.getMaxValue(pixelPadding));
-                        }
+
+                    if (levelMin == null || levelMax == null) {
+                        levelMin = Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
+                        levelMax = Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
                     } else {
-                        levelMin = newPreset.getMinBox();
-                        levelMax = newPreset.getMaxBox();
+                        levelMin = Math.min(levelMin, image.getMinValue(pixelPadding));
+                        levelMax = Math.max(levelMax, image.getMaxValue(pixelPadding));
                     }
+
                     // FIX : setting actionInView here without firing a propertyChange avoid another call to
                     // imageLayer.updateImageOperation(WindowOp.name.....
                     // TODO pass to mediaEvent with PR and KO
@@ -531,13 +532,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         boolean isDefaultPresetSelected = false;
         if (ActionW.PRESET.cmd().equals(command) && object instanceof PresetWindowLevel) {
             PresetWindowLevel preset = (PresetWindowLevel) object;
-
-            int minLevel = (int) preset.getMinBox();
-            int maxLevel = (int) preset.getMaxBox();
-            int window = preset.getWindow().intValue();
-
-            windowAction.setMinMaxValueWithoutTriggerAction(1, window, window);
-            levelAction.setMinMaxValueWithoutTriggerAction(minLevel, maxLevel, preset.getLevel().intValue());
+            windowAction.setValueWithoutTriggerAction(preset.getWindow().intValue());
+            levelAction.setValueWithoutTriggerAction(preset.getLevel().intValue());
             lutShapeAction.setSelectedItemWithoutTriggerAction(preset.getLutShape());
 
             PresetWindowLevel defaultPreset = (PresetWindowLevel) presetAction.getFirstItem();
@@ -931,28 +927,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             int window;
             int minLevel;
             int maxLevel;
-            if (preset == null) {
-                if (windowValue == null) {
-                    windowValue = (float) windowAction.getValue();
-                }
-                if (levelValue == null) {
-                    levelValue = (float) levelAction.getValue();
-                }
-                Float levelMin = (Float) node.getParam(ActionW.LEVEL_MIN.cmd());
-                Float levelMax = (Float) node.getParam(ActionW.LEVEL_MAX.cmd());
-                if (levelMin == null || levelMax == null) {
-                    minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
-                    maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
-                } else {
-                    minLevel = levelMin.intValue();
-                    maxLevel = levelMax.intValue();
-                }
-                window = (int) Math.max(windowValue, image.getFullDynamicWidth(pixelPadding));
-            } else {
-                minLevel = (int) preset.getMinBox();
-                maxLevel = (int) preset.getMaxBox();
-                window = preset.getWindow().intValue();
+            if (windowValue == null) {
+                windowValue = (float) windowAction.getValue();
             }
+            if (levelValue == null) {
+                levelValue = (float) levelAction.getValue();
+            }
+            Float levelMin = (Float) node.getParam(ActionW.LEVEL_MIN.cmd());
+            Float levelMax = (Float) node.getParam(ActionW.LEVEL_MAX.cmd());
+            if (levelMin == null || levelMax == null) {
+                minLevel = (int) Math.min(levelValue - windowValue / 2.0f, image.getMinValue(pixelPadding));
+                maxLevel = (int) Math.max(levelValue + windowValue / 2.0f, image.getMaxValue(pixelPadding));
+            } else {
+                minLevel = (int) Math.min(levelMin, image.getMinValue(pixelPadding));
+                maxLevel = (int) Math.max(levelMax, image.getMaxValue(pixelPadding));
+            }
+            window = (int) Math.max(windowValue, maxLevel - minLevel);
 
             windowAction.setMinMaxValueWithoutTriggerAction(1, window, windowValue.intValue());
             levelAction.setMinMaxValueWithoutTriggerAction(minLevel, maxLevel, levelValue.intValue());
@@ -1170,7 +1160,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             prefNode = prefs.node("other"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_APPLY_WL_COLOR,
-                options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, false));
+                options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
 
             Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);

@@ -31,8 +31,9 @@ public class WebStartAppletLauncher extends JApplet {
                 try {
                     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
                     ObjectName objectName = new ObjectName("weasis:name=MainWindow");
-                    server.registerMBean(new WeasisApplet(WebStartAppletLauncher.this), objectName);
+                    server.registerMBean(new WeasisFrame(WebStartAppletLauncher.this), objectName);
 
+                    // TODO test commands with quotes (path) in html page
                     String commands = getParameter("commands");
                     System.out.println("WebstartLauncher init JApplet : " + commands);
                     WebstartLauncher.launch(commands == null ? new String[0] : commands.split(" "));

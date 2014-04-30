@@ -168,14 +168,13 @@ public class WeasisWin {
                 }
                 container.getContentPane().removeAll();
             }
-
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
             log.debug("Error while receiving main window", e);
         }
 
-        if (container == null) {
-            JFrame jFrame = new JFrame();
+        if (container == null || container instanceof JFrame) {
+            JFrame jFrame = container == null ? new JFrame() : (JFrame) container;
             frame = jFrame;
             frame.addWindowListener(new WindowAdapter() {
                 @Override

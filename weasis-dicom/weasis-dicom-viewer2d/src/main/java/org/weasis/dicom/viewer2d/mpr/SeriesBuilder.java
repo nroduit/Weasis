@@ -501,7 +501,7 @@ public class SeriesBuilder {
             DicomMediaUtils.computeSlicePositionVector(tagList4);
             double[] loc = (double[]) tagList4.get(TagW.SlicePosition);
             if (loc != null) {
-                rawIO.setTag(TagW.SliceLocation, loc[0] + loc[1] + loc[2]);
+                rawIO.setTag(TagW.SliceLocation, (float) (loc[0] + loc[1] + loc[2]));
             }
             DicomImageElement dcm = new DicomImageElement(rawIO, 0) {
                 @Override

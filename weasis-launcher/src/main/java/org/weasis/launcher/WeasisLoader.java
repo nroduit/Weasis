@@ -16,34 +16,32 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Properties;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
-import org.slf4j.LoggerFactory;
+import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLoader {
+
+    public enum LoadingMessageType {
+        No, Disclaimer, NewVersion
+    };
 
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
@@ -51,15 +49,19 @@ public class WeasisLoader {
         Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
     public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
 
-    private volatile Window window;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
     private final String logoPath;
     private Container container;
 
-    public WeasisLoader(String logoPath) {
+    private final WeasisFrame mainFrame;
+    private final Properties serverProperties;
+
+    public WeasisLoader(String logoPath, WeasisFrame mainFrame, Properties serverProperties) {
         this.logoPath = logoPath;
+        this.mainFrame = mainFrame;
+        this.serverProperties = serverProperties;
     }
 
     public void writeLabel(String text) {
@@ -78,32 +80,22 @@ public class WeasisLoader {
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
 
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        try {
-            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
-            Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
-            if (containerObj instanceof RootPaneContainer) {
-                RootPaneContainer rootPaneContainer = (RootPaneContainer) containerObj;
+        RootPaneContainer frame = mainFrame.getRootPaneContainer();
 
-                JPanel splashScreenPanel = new JPanel(new GridBagLayout());
-                rootPaneContainer.getContentPane().add(splashScreenPanel);
-                container = splashScreenPanel;
-            }
-
-        } catch (InstanceNotFoundException ignored) {
-        } catch (JMException e) {
-            LoggerFactory.getLogger(WeasisLoader.class).debug("Error while receiving main window", e);
-        }
-
-        if (container == null) {
-            container = window = new Window(null);
-            window.addWindowListener(new java.awt.event.WindowAdapter() {
+        if (frame == null || frame instanceof JFrame) {
+            Window win = new Window((Frame) frame);
+            win.addWindowListener(new java.awt.event.WindowAdapter() {
 
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent evt) {
                     closing();
                 }
             });
+            container = win;
+        } else {
+            JPanel splashScreenPanel = new JPanel(new BorderLayout());
+            frame.getContentPane().add(splashScreenPanel, BorderLayout.CENTER);
+            container = splashScreenPanel;
         }
 
         loadingLabel.setText(LBL_LOADING);
@@ -173,21 +165,20 @@ public class WeasisLoader {
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        if (container.getLayout() instanceof GridBagLayout) {
-            container.add(panel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
-                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-        } else {
-            container.add(panel, BorderLayout.CENTER);
-        }
+        container.add(panel, BorderLayout.CENTER);
 
-        if (window != null) {
-            window.pack();
+        if (container instanceof Window) {
+            ((Window) container).pack();
         }
 
     }
 
-    public Window getWindow() {
-        return window;
+    public WeasisFrame getMainFrame() {
+        return mainFrame;
+    }
+
+    public Properties getServerProperties() {
+        return serverProperties;
     }
 
     /*
@@ -264,9 +255,8 @@ public class WeasisLoader {
                 if (container.getParent() != null) {
                     container.getParent().remove(container);
                 }
-                if (window != null) {
-                    window.dispose();
-                    window = null;
+                if (container instanceof Window) {
+                    ((Window) container).dispose();
                 }
                 container = null;
                 cancelButton = null;
@@ -277,19 +267,19 @@ public class WeasisLoader {
     }
 
     private void displayOnScreen() {
-        if (window != null) {
+        if (container instanceof Window) {
             try {
                 Rectangle bounds =
                     GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
                         .getDefaultConfiguration().getBounds();
-                int x = bounds.x + (bounds.width - window.getWidth()) / 2;
-                int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+                int x = bounds.x + (bounds.width - container.getWidth()) / 2;
+                int y = bounds.y + (bounds.height - container.getHeight()) / 2;
 
-                window.setLocation(x, y);
+                container.setLocation(x, y);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            window.setVisible(true);
+            container.setVisible(true);
         }
     }
 

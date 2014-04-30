@@ -334,10 +334,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             node.setParam(ActionW.PRESET.cmd(), null);
                         }
                         if (node != null) {
+                            boolean pixelPadding =
+                                JMVUtils.getNULLtoTrue(disOp.getParamValue(WindowOp.OP_NAME,
+                                    ActionW.IMAGE_PIX_PADDING.cmd()));
                             node.setParam(ActionW.WINDOW.cmd(), preset.getWindow());
                             node.setParam(ActionW.LEVEL.cmd(), preset.getLevel());
-                            node.setParam(ActionW.LEVEL_MIN.cmd(), preset.getMinBox());
-                            node.setParam(ActionW.LEVEL_MAX.cmd(), preset.getMaxBox());
+                            // node.setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
+                            // node.setParam(ActionW.LEVEL_MAX.cmd(), img.getMinValue(pixelPadding));
                             node.setParam(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
                         }
                         imageLayer.updateDisplayOperations();
@@ -444,7 +447,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     public void reset() {
         super.reset();
-        setPresentationState(ActionState.NONE);
+        setPresentationState(null);
     }
 
     @Deprecated
@@ -624,8 +627,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             PresetWindowLevel p = presets.get(0);
             actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
             actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
-            actionsInView.put(ActionW.LEVEL_MIN.cmd(), p.getMinBox());
-            actionsInView.put(ActionW.LEVEL_MAX.cmd(), p.getMaxBox());
+            boolean pixelPadding =
+                JMVUtils.getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME,
+                    ActionW.IMAGE_PIX_PADDING.cmd()));
+            // actionsInView.put(ActionW.LEVEL_MIN.cmd(), img.getMinValue(pixelPadding));
+            // actionsInView.put(ActionW.LEVEL_MAX.cmd(), img.getMinValue(pixelPadding));
             actionsInView.put(PresentationStateReader.PR_PRESETS, presets);
             actionsInView.put(ActionW.PRESET.cmd(), p);
             actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());

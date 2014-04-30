@@ -35,6 +35,7 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -99,7 +100,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         checkBoxWLcolor =
             new JCheckBox("Apply Window/Level on color images", eventManager.getOptions().getBooleanProperty(
-                WindowOp.P_APPLY_WL_COLOR, false));
+                WindowOp.P_APPLY_WL_COLOR, true));
         winlevelPanel.add(checkBoxWLcolor);
 
         JPanel panel_2 = new JPanel();
@@ -265,8 +266,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
                     for (DefaultView2d<DicomImageElement> v : viewer.getImagePanels()) {
                         OpManager disOp = v.getDisplayOpManager();
                         disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
-
-                        // TODO Replace by an event
                         v.changeZoomInterpolation(interpolation);
                     }
                 }
@@ -282,7 +281,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         sliderRotation.setValue(realValueToslider(0.25));
         sliderZoom.setValue(realValueToslider(0.1));
         comboBoxInterpolation.setSelectedIndex(1);
-        checkBoxWLcolor.setSelected(false);
+
+        // Get the default server configuration and if no value take the default value in parameter.
+        checkBoxWLcolor.setSelected(BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
     }
 
     private void formatSlider(JSlider slider) {

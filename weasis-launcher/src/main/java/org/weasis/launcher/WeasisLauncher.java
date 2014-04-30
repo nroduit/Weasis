@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,10 +33,14 @@ import java.util.ServiceLoader;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
+import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
@@ -50,6 +55,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLauncher {
     public enum STATE {
@@ -311,6 +317,8 @@ public class WeasisLauncher {
 
         // Load local properties and clean if necessary the previous version
         WeasisLoader loader = loadProperties(configProps);
+        final WeasisFrame mainFrame = loader.getMainFrame();
+        final Properties serverProperties = loader.getServerProperties();
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
@@ -420,6 +428,8 @@ public class WeasisLauncher {
             }
             frameworkLoaded = true;
 
+            showMessage(mainFrame, configProps, serverProperties);
+
             // Wait for framework to stop to exit the VM.
             m_felix.waitForStop(0);
             System.exit(0);
@@ -441,6 +451,105 @@ public class WeasisLauncher {
             FileUtil.storeProperties(common_file, common_prop, null);
         } finally {
             Runtime.getRuntime().halt(exitStatus);
+        }
+    }
+
+    private static void showMessage(final WeasisFrame mainFrame, Properties config, Properties s_prop) {
+        String versionOld = config.getProperty("prev." + P_WEASIS_VERSION);
+        String versionNew = config.getProperty(P_WEASIS_VERSION);
+        // First time launch
+        if (versionOld == null) {
+            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            if (Boolean.valueOf(val)) {
+
+                EventQueue.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Object[] options =
+                            { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
+
+                        String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
+                        int response =
+                            JOptionPane.showOptionDialog(
+                                mainFrame.getRootPaneContainer() == null ? null : mainFrame.getRootPaneContainer()
+                                    .getContentPane(),
+                                String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
+                                String.format(Messages.getString("WeasisLauncher.first"), appName), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
+                                null, options, null);
+                        if (response != 0) {
+                            File sourceID_props =
+                                new File(
+                                    System.getProperty(P_WEASIS_PATH, ""), System.getProperty("weasis.source.id") + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
+                            // delete the properties file to ask again
+                            sourceID_props.delete();
+                            System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
+                            System.exit(-1);
+                        }
+                    }
+                });
+            }
+        } else if (versionNew != null && !versionNew.equals(versionOld)) {
+            String val = getGeneralProperty("weasis.show.release", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
+            if (Boolean.valueOf(val)) {
+                final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
+                final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
+                message
+                    .append(String.format(
+                        Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$ //$NON-NLS-2$
+
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        JTextPane jTextPane1 = new JTextPane();
+                        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
+                        jTextPane1.setEditable(false);
+                        jTextPane1.addHyperlinkListener(new HyperlinkListener() {
+                            @Override
+                            public void hyperlinkUpdate(HyperlinkEvent e) {
+                                JTextPane pane = (JTextPane) e.getSource();
+                                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                                    pane.setToolTipText(e.getDescription());
+                                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                                    pane.setToolTipText(null);
+                                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                    if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                        try {
+                                            String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
+                                            Runtime.getRuntime().exec(cmd);
+                                        } catch (IOException e1) {
+                                            System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
+                                            e1.printStackTrace();
+                                        }
+                                    } else if (Desktop.isDesktopSupported()) {
+                                        final Desktop desktop = Desktop.getDesktop();
+                                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                                            try {
+                                                desktop.browse(e.getURL().toURI());
+
+                                            } catch (Exception ex) {
+                                                System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        jTextPane1.setBackground(Color.WHITE);
+                        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
+                        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
+                        message.append("<BR>"); //$NON-NLS-1$
+                        String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
+                        message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
+                            releaseNotesUrl));
+                        message.append("</P>"); //$NON-NLS-1$
+                        jTextPane1.setText(message.toString());
+                        JOptionPane.showMessageDialog(mainFrame.getRootPaneContainer() == null ? null : mainFrame
+                            .getRootPaneContainer().getContentPane(), jTextPane1, Messages
+                            .getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
+                    }
+                });
+            }
         }
     }
 
@@ -484,7 +593,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
@@ -875,11 +984,20 @@ public class WeasisLauncher {
         if (localLook != null) {
             look = localLook;
         }
-        // Set look and feels
+
+        /*
+         * Build a Frame or catch it from JApplet
+         * 
+         * This will ensure the popup message or other dialogs to have frame parent. When the parent is null the dialog
+         * can be hidden under the main frame
+         */
+        final WeasisFrame mainFrame = new WeasisFrame();
+
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
+                    // Set look and feels
                     boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                     if (substance) {
                         // TODO should be true: bug with docking-frame
@@ -887,6 +1005,32 @@ public class WeasisLauncher {
                         JDialog.setDefaultLookAndFeelDecorated(true);
                     }
                     look = setLookAndFeel(look);
+
+                    Object instance = null;
+                    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+                    try {
+                        ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");
+                        // Try to get frame from an Applet
+                        instance = server.getAttribute(objectName, "RootPaneContainer");
+                        if (instance instanceof RootPaneContainer) {
+                            mainFrame.setRootPaneContainer((RootPaneContainer) instance);
+                        }
+                    } catch (InstanceNotFoundException e) {
+
+                    } catch (Exception e) {
+                        // ignored
+                    } finally {
+                        try {
+                            if (instance == null) {
+                                // Build a JFrame which will be used later in base.ui module
+                                ObjectName objectName = new ObjectName("weasis:name=MainWindow");
+                                mainFrame.setRootPaneContainer(new JFrame());
+                                server.registerMBean(mainFrame, objectName);
+                            }
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                    }
                 }
             });
         } catch (Exception e) {
@@ -901,14 +1045,15 @@ public class WeasisLauncher {
 
         String versionOld = common_prop.getProperty(P_WEASIS_VERSION);
         System.out.println("Last running version: " + versionOld); //$NON-NLS-1$
+        if (versionOld != null) {
+            config.setProperty("prev." + P_WEASIS_VERSION, versionOld);
+        }
         String versionNew = config.getProperty(P_WEASIS_VERSION);
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
 
-        final String releaseNotesUrl = config.getProperty("weasis.releasenotes"); //$NON-NLS-1$
-
         // Splash screen that shows bundles loading
-        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"));
+        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"), mainFrame, s_prop);
         // Display splash screen
         loader.open();
 
@@ -951,95 +1096,6 @@ public class WeasisLauncher {
 
         if (update) {
             FileUtil.storeProperties(sourceID_props, common_prop, null);
-        }
-
-        final File file = sourceID_props;
-        // Test if it is the first time launch
-        if (versionOld == null) {
-            String val = getGeneralProperty("weasis.show.disclaimer", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-            if (Boolean.valueOf(val)) {
-                EventQueue.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Object[] options =
-                            { Messages.getString("WeasisLauncher.ok"), Messages.getString("WeasisLauncher.no") }; //$NON-NLS-1$ //$NON-NLS-2$
-
-                        String appName = System.getProperty("weasis.name"); //$NON-NLS-1$
-                        int response =
-                            JOptionPane.showOptionDialog(
-                                loader.getWindow(),
-                                String.format(Messages.getString("WeasisLauncher.msg"), appName), //$NON-NLS-1$
-                                String.format(Messages.getString("WeasisLauncher.first"), appName), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, //$NON-NLS-1$
-                                null, options, null);
-                        if (response == 1) {
-                            // delete the properties file to ask again
-                            file.delete();
-                            System.err.println("Refusing the disclaimer"); //$NON-NLS-1$
-                            System.exit(-1);
-                        }
-                    }
-                });
-            }
-        } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            String val = getGeneralProperty("weasis.show.release", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-            if (Boolean.valueOf(val)) {
-                final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
-                message
-                    .append(String.format(
-                        Messages.getString("WeasisLauncher.change.version"), System.getProperty("weasis.name"), versionOld, versionNew)); //$NON-NLS-1$ //$NON-NLS-2$
-
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        JTextPane jTextPane1 = new JTextPane();
-                        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
-                        jTextPane1.setEditable(false);
-                        jTextPane1.addHyperlinkListener(new HyperlinkListener() {
-                            @Override
-                            public void hyperlinkUpdate(HyperlinkEvent e) {
-                                JTextPane pane = (JTextPane) e.getSource();
-                                if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                                    pane.setToolTipText(e.getDescription());
-                                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                                    pane.setToolTipText(null);
-                                } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                    if (System.getProperty("os.name", "unknown").toLowerCase().startsWith("linux")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                        try {
-                                            String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
-                                            Runtime.getRuntime().exec(cmd);
-                                        } catch (IOException e1) {
-                                            System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
-                                            e1.printStackTrace();
-                                        }
-                                    } else if (Desktop.isDesktopSupported()) {
-                                        final Desktop desktop = Desktop.getDesktop();
-                                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                                            try {
-                                                desktop.browse(e.getURL().toURI());
-
-                                            } catch (Exception ex) {
-                                                System.err.println("Unable to launch the WEB browser"); //$NON-NLS-1$
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        jTextPane1.setBackground(Color.WHITE);
-                        StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                        ss.addRule("p {font-size:12}"); //$NON-NLS-1$
-                        message.append("<BR>"); //$NON-NLS-1$
-                        String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
-                        message.append(String.format("<a href=\"%s\">" + rn + "</a>.", //$NON-NLS-1$ //$NON-NLS-2$
-                            releaseNotesUrl));
-                        message.append("</P>"); //$NON-NLS-1$
-                        jTextPane1.setText(message.toString());
-                        JOptionPane.showMessageDialog(loader.getWindow(), jTextPane1,
-                            Messages.getString("WeasisLauncher.News"), JOptionPane.PLAIN_MESSAGE); //$NON-NLS-1$
-                    }
-                });
-            }
         }
         System.out.println("***** End of Configuration *****"); //$NON-NLS-1$
         return loader;

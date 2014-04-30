@@ -232,7 +232,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         OpManager disOp = getDisplayOpManager();
 
         disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR,
-            eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, false));
+            eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
         disOp.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, eventManager.getZoomSetting().getInterpolation());
         disOp.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
         disOp.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
@@ -642,7 +642,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (realFactor > 0.0) {
                         Unit imgUnit = img.getPixelSpacingUnit();
                         if (!Unit.PIXEL.equals(imgUnit)) {
-                            viewScale = img.getPixelSize() / imgUnit.getConversionRatio(realFactor);
+                            viewScale = imgUnit.getConvFactor() * img.getPixelSize() / realFactor;
                             viewScale = -adjustViewScale(viewScale);
                         }
                     }
