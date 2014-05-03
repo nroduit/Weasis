@@ -15,7 +15,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dialog;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
@@ -23,6 +26,8 @@ import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -32,6 +37,7 @@ import java.util.Map.Entry;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 
@@ -39,6 +45,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
@@ -447,58 +454,73 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     public void maximizedSelectedImagePane(final DefaultView2d<E> defaultView2d, MouseEvent evt) {
         final LinkedHashMap<LayoutConstraints, Component> elements = layoutModel.getConstraints();
-        if (elements.size() > 1) {
-            // Prevent conflict with double click for stopping to draw a graphic (like polyline)
-            List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
-            if (selGraphics != null) {
-                for (AbstractDragGraphic g : selGraphics) {
-                    if (g.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
-                        return;
-                    }
-                }
-            }
-            if (evt != null) {
-                // Do not maximize when click hits a graphic
-                MouseEventDouble mouseEvt = new MouseEventDouble(evt);
-                mouseEvt.setImageCoordinates(defaultView2d.getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
-                Graphic firstGraphicIntersecting = defaultView2d.getLayerModel().getFirstGraphicIntersecting(mouseEvt);
-                if (firstGraphicIntersecting != null) {
+        // Prevent conflict with double click for stopping to draw a graphic (like polyline)
+        List<AbstractDragGraphic> selGraphics = defaultView2d.getLayerModel().getSelectedDragableGraphics();
+        if (selGraphics != null) {
+            for (AbstractDragGraphic g : selGraphics) {
+                if (g.getHandlePointTotalNumber() == AbstractDragGraphic.UNDEFINED) {
                     return;
                 }
             }
-
-            for (DefaultView2d<E> v : view2ds) {
-                v.removeFocusListener(v);
-            }
-            int nb = grid.getComponentCount();
-            grid.removeAll();
-            if (nb > 1) {
-                Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-                while (enumVal.hasNext()) {
-                    Entry<LayoutConstraints, Component> entry = enumVal.next();
-                    if (entry.getValue().equals(defaultView2d)) {
-                        GridBagConstraints c = (GridBagConstraints) entry.getKey().clone();
-                        c.weightx = 1.0;
-                        c.weighty = 1.0;
-                        grid.add(defaultView2d, c);
-                        defaultView2d.addFocusListener(defaultView2d);
-                        break;
-                    }
-                }
-            } else {
-                Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-                while (enumVal.hasNext()) {
-                    Entry<LayoutConstraints, Component> entry = enumVal.next();
-                    grid.add(entry.getValue(), entry.getKey());
-                }
-                for (DefaultView2d<E> v : view2ds) {
-                    v.addFocusListener(v);
-                }
-            }
-            grid.revalidate();
-            grid.repaint();
-            defaultView2d.requestFocusInWindow();
         }
+        if (evt != null) {
+            // Do not maximize when click hits a graphic
+            MouseEventDouble mouseEvt = new MouseEventDouble(evt);
+            mouseEvt.setImageCoordinates(defaultView2d.getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
+            Graphic firstGraphicIntersecting = defaultView2d.getLayerModel().getFirstGraphicIntersecting(mouseEvt);
+            if (firstGraphicIntersecting != null) {
+                return;
+            }
+        }
+
+        for (DefaultView2d<E> v : view2ds) {
+            v.removeFocusListener(v);
+        }
+
+        Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
+        grid.removeAll();
+        if (fullscreenDialog == null) {
+            remove(grid);
+            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, Component> entry = enumVal.next();
+                if (entry.getValue().equals(defaultView2d)) {
+                    GridBagConstraints c = (GridBagConstraints) entry.getKey().clone();
+                    c.weightx = 1.0;
+                    c.weighty = 1.0;
+                    grid.add(defaultView2d, c);
+                    defaultView2d.addFocusListener(defaultView2d);
+                    break;
+                }
+            }
+            Frame frame = WinUtil.getParentFrame(this);
+            fullscreenDialog = new JDialog(frame, "Fullscreen view", ModalityType.APPLICATION_MODAL);
+            fullscreenDialog.add(grid, BorderLayout.CENTER);
+            fullscreenDialog.setBounds(frame.getGraphicsConfiguration().getBounds());
+            fullscreenDialog.addWindowListener(new WindowAdapter() {
+
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    maximizedSelectedImagePane(defaultView2d, null);
+                }
+            });
+            fullscreenDialog.setVisible(true);
+        } else {
+            Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
+            while (enumVal.hasNext()) {
+                Entry<LayoutConstraints, Component> entry = enumVal.next();
+                grid.add(entry.getValue(), entry.getKey());
+            }
+            for (DefaultView2d<E> v : view2ds) {
+                v.addFocusListener(v);
+            }
+
+            fullscreenDialog.removeAll();
+            fullscreenDialog.dispose();
+            add(grid, BorderLayout.CENTER);
+        }
+
+        defaultView2d.requestFocusInWindow();
     }
 
     public synchronized void setDrawActions(Graphic graphic) {
