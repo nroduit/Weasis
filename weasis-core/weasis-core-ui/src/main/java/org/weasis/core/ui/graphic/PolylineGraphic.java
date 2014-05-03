@@ -82,12 +82,18 @@ public class PolylineGraphic extends AbstractDragGraphic {
             int lastPointIndex = handlePointList.size() - 1;
             if (lastPointIndex > 0) {
                 Point2D checkPoint = handlePointList.get(lastPointIndex);
-                // Must not have two points with the same position at the end of the list (convention to have a
-                // uncompleted shape when drawing)
-                if (checkPoint.equals(handlePointList.get(lastPointIndex - 1))) {
-                    handlePointList.remove(lastPointIndex - 1);
-                    this.handlePointTotalNumber = handlePointList.size();
+                /*
+                 * Must not have two or several points with the same position at the end of the list (two points is the
+                 * convention to have a uncompleted shape when drawing)
+                 */
+                for (int i = lastPointIndex - 1; i >= 0; i--) {
+                    if (checkPoint.equals(handlePointList.get(i))) {
+                        handlePointList.remove(i);
+                    } else {
+                        break;
+                    }
                 }
+                this.handlePointTotalNumber = handlePointList.size();
             }
             if (!isShapeValid() || handlePointList.size() < 2) {
                 throw new IllegalStateException("This Polyline cannot be drawn");
