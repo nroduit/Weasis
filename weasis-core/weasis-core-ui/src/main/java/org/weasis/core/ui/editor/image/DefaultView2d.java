@@ -435,8 +435,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         try {
             if (newSeries == null) {
-                imageLayer.setImage(null, null);
-                closeLens();
+                setImage(null);
             } else {
                 E media = selectedMedia;
                 if (selectedMedia == null) {
@@ -449,12 +448,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     lens.setFreezeImage(null);
                 }
                 setImage(media);
-                if (media == null && !imageLayer.isEnableDispOperations()) {
-                    imageLayer.setEnableDispOperations(true);
-                    // For null image need to force the update
-                    imageLayer.updateDisplayOperations();
-                    imageLayer.setEnableDispOperations(false);
-                }
             }
         } catch (Throwable e) {
             AuditLog.logError(LOGGER, e, "Unexpected error:");
@@ -534,7 +527,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         imageLayer.setEnableDispOperations(false);
         if (img == null) {
             actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
+            // Force the update for null image
+            imageLayer.setEnableDispOperations(true);
             imageLayer.setImage(null, null);
+            imageLayer.setEnableDispOperations(false);
             getLayerModel().deleteAllGraphics();
             closeLens();
         } else {
@@ -1022,6 +1018,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
                             AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                         }
+                    } else {
+                        // When no 3D information on the slice position
+                        imgElement =
+                            series.getMedia(value.getSeriesIndex() + tileOffset,
+                                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                                getCurrentSortComparator());
+
+                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
                     }
 
                 }
