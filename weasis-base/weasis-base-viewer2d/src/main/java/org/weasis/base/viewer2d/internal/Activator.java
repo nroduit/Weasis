@@ -10,6 +10,9 @@
  ******************************************************************************/
 package org.weasis.base.viewer2d.internal;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -18,6 +21,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
@@ -25,10 +29,12 @@ import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -46,7 +52,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 InsertableFactory.class, null)) {
                 // The View2dContainer name should be referenced as a property in the provided service
                 if (Boolean.valueOf((String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-                    registerComponent(bundleContext, bundleContext.getService(serviceReference), false);
+                    registerComponent(bundleContext, bundleContext.getService(serviceReference));
                 }
             }
         } catch (InvalidSyntaxException e1) {
@@ -80,7 +86,7 @@ public class Activator implements BundleActivator, ServiceListener {
             if (service instanceof InsertableFactory) {
                 InsertableFactory factory = (InsertableFactory) service;
                 if (event.getType() == ServiceEvent.REGISTERED) {
-                    registerComponent(context, factory, true);
+                    registerComponent(context, factory);
                 } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                     if (Type.TOOLBAR.equals(factory.getType())) {
                         boolean updateGUI = false;
@@ -88,6 +94,14 @@ public class Activator implements BundleActivator, ServiceListener {
                             for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
                                 Insertable b = View2dContainer.TOOLBARS.get(i);
                                 if (factory.isComponentCreatedByThisFactory(b)) {
+                                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+                                    if (prefs != null) {
+                                        List<Insertable> list = Arrays.asList(b);
+                                        InsertableUtil.savePreferences(list,
+                                            prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
+                                            Type.TOOLBAR);
+                                    }
+
                                     View2dContainer.TOOLBARS.remove(i);
                                     factory.dispose(b);
                                     updateGUI = true;
@@ -102,6 +116,13 @@ public class Activator implements BundleActivator, ServiceListener {
                             for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
                                 DockableTool t = View2dContainer.TOOLS.get(i);
                                 if (factory.isComponentCreatedByThisFactory(t)) {
+                                    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+                                    if (prefs != null) {
+                                        Preferences containerNode =
+                                            prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
+                                        InsertableUtil.savePreferences(Arrays.asList(t), containerNode, Type.TOOL);
+                                    }
+
                                     View2dContainer.TOOLS.remove(i);
                                     factory.dispose(t);
                                     t.closeDockable();
@@ -114,8 +135,7 @@ public class Activator implements BundleActivator, ServiceListener {
         }
     }
 
-    private void registerComponent(final BundleContext bundleContext, final InsertableFactory factory,
-        final boolean updateGUI) {
+    private void registerComponent(final BundleContext bundleContext, final InsertableFactory factory) {
         // Instantiate UI components in EDT (necessary with Substance Theme)
         GuiExecutor.instance().execute(new Runnable() {
 
@@ -127,9 +147,7 @@ public class Activator implements BundleActivator, ServiceListener {
                         if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
                             Toolbar bar = (Toolbar) instance;
                             View2dContainer.TOOLBARS.add(bar);
-                            if (updateGUI) {
-                                updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
-                            }
+                            updateViewerUI(ObservableEvent.BasicAction.UpdateToolbars);
                             LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
                         }
                     } else if (Type.TOOL.equals(factory.getType())) {
@@ -137,7 +155,9 @@ public class Activator implements BundleActivator, ServiceListener {
                         if (instance instanceof DockableTool && !View2dContainer.TOOLS.contains(factory)) {
                             DockableTool tool = (DockableTool) instance;
                             View2dContainer.TOOLS.add(tool);
-                            if (updateGUI) {
+                            ImageViewerPlugin<ImageElement> view =
+                                EventManager.getInstance().getSelectedView2dContainer();
+                            if (view instanceof View2dContainer) {
                                 tool.showDockable();
                             }
                             LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName());
