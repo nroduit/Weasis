@@ -46,7 +46,7 @@ public class InsertableUtil {
             synchronized (list) {
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
-                        String nodeName = c.getClass().getSimpleName().toLowerCase();
+                        String nodeName = getCName(c.getClass());
                         String key = "visible";
                         Preferences node = prefNode.node(nodeName);
                         String valString = node.get(key, null);
@@ -89,7 +89,7 @@ public class InsertableUtil {
             synchronized (list) {
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
-                        String cname = c.getClass().getSimpleName().toLowerCase();
+                        String cname = getCName(c.getClass());
                         Preferences node = prefNode.node(cname);
                         BundlePreferences.putBooleanPreferences(node, "visible", c.isComponentEnabled());
                         BundlePreferences.putIntPreferences(node, "cPosition", c.getComponentPosition());
@@ -149,5 +149,12 @@ public class InsertableUtil {
             }
         }
         return def;
+    }
+
+    public static String getCName(Class<?> clazz) {
+        if (clazz != null) {
+            return clazz.getSimpleName().toLowerCase();
+        }
+        return "";
     }
 }

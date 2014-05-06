@@ -672,7 +672,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             // TODO - following key action handling do not return nothing and execute code instead
             // should be called from within an outer method like keyPressed(KeyEvent e)
 
-            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier) {
+            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier
+                && moveTroughSliceAction.isActionEnabled()) {
                 if (moveTroughSliceAction.isCining()) {
                     moveTroughSliceAction.stop();
                 } else {
@@ -680,23 +681,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
             } else if (modifier == 0) {
                 // No modifier, otherwise it will conflict with other shortcuts like ctrl+a and ctrl+d
-                if (keyEvent == KeyEvent.VK_D) {
+                if (keyEvent == KeyEvent.VK_D && measureAction.isActionEnabled()) {
                     for (Object obj : measureAction.getAllItem()) {
                         if (obj instanceof LineGraphic) {
                             setMeasurement(obj);
                             break;
                         }
                     }
-                } else if (keyEvent == KeyEvent.VK_A) {
+                } else if (keyEvent == KeyEvent.VK_A && measureAction.isActionEnabled()) {
                     for (Object obj : measureAction.getAllItem()) {
                         if (obj instanceof AngleToolGraphic) {
                             setMeasurement(obj);
                             break;
                         }
                     }
-                } else if (keyEvent == ActionW.KO_STATE.getKeyCode()) {
+                } else if (keyEvent == ActionW.KO_STATE.getKeyCode() && koToggleAction.isActionEnabled()) {
                     koToggleAction.setSelected(!koToggleAction.isSelected());
-                } else {
+                } else if (presetAction.isActionEnabled()) {
                     DefaultComboBoxModel model = presetAction.getModel();
                     for (int i = 0; i < model.getSize(); i++) {
                         PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
@@ -709,7 +710,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         }
 
-        return action;
+        ActionState a1 = getAction(action);
+        if (a1 == null || a1.isActionEnabled()) {
+            return action;
+        }
+        return null;
     }
 
     private void setMeasurement(Object obj) {

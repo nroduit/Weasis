@@ -64,7 +64,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         final JMenuItem actualZoomMenu =
             new JMenuItem(
-                Messages.getString("ViewerToolBar.zoom_1"), new ImageIcon(MouseActions.class.getResource("/icon/16x16/zoom-original.png"))); //$NON-NLS-1$
+                Messages.getString("ViewerToolBar.zoom_1"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
         actualZoomMenu.addActionListener(new ActionListener() {
 
             @Override
@@ -86,7 +86,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
                 if (realFactor > 0.0) {
                     final JMenuItem realSizeMenu =
                         new JMenuItem("Real-world zoom", new ImageIcon(
-                            MouseActions.class.getResource("/icon/16x16/zoom-bestfit.png")));
+                            MouseActions.class.getResource("/icon/22x22/zoom-original.png")));
                     realSizeMenu.addActionListener(new ActionListener() {
 
                         @Override
@@ -106,7 +106,7 @@ public class ZoomToolBar<E extends ImageElement> extends WtoolBar {
 
         final JMenuItem bestFitMenu =
             new JMenuItem(
-                Messages.getString("ViewerToolBar.zoom_b"), new ImageIcon(MouseActions.class.getResource("/icon/16x16/zoom-bestfit.png"))); //$NON-NLS-1$
+                Messages.getString("ViewerToolBar.zoom_b"), new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$
         bestFitMenu.addActionListener(new ActionListener() {
 
             @Override
