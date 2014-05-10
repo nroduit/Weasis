@@ -1,7 +1,8 @@
 package org.weasis.core.api.util;
 
-
 public class StringUtil {
+
+    public static final String COLON = ":";
 
     private StringUtil() {
     }

@@ -10,8 +10,6 @@
  ******************************************************************************/
 package org.weasis.core.ui.pref;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,16 +17,13 @@ import java.util.Locale;
 
 import javax.swing.JComboBox;
 
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LocalUtil;
 
-public class JLocaleCombo extends JComboBox implements ItemListener {
+public class JLocaleFormat extends JComboBox {
 
-    private static final long serialVersionUID = -5355456986860584918L;
-
-    public JLocaleCombo() {
+    public JLocaleFormat() {
         super();
         sortLocales();
-        addItemListener(this);
     }
 
     private void sortLocales() {
@@ -60,61 +55,22 @@ public class JLocaleCombo extends JComboBox implements ItemListener {
         }
     }
 
-    public void selectLocale(String language, String country, String variant) {
+    public void selectLocale() {
+        Locale sLoc = LocalUtil.getLocaleFormat();
         Object item = getSelectedItem();
         if (item instanceof JLocale) {
-            Locale l = ((JLocale) item).getLocale();
-            if (l.getLanguage().equals(language) && l.getCountry().equals(country) && l.getVariant().equals(variant)) {
+            if (sLoc.equals(((JLocale) item).getLocale())) {
                 return;
             }
         }
 
         for (int i = 0; i < getItemCount(); i++) {
             Locale l = ((JLocale) getItemAt(i)).getLocale();
-            if (l.getLanguage().equals(language) && l.getCountry().equals(country) && l.getVariant().equals(variant)) {
+            if (l.equals(sLoc)) {
                 setSelectedIndex(i);
                 break;
             }
         }
-
     }
 
-    @Override
-    public void itemStateChanged(ItemEvent iEvt) {
-        if (iEvt.getStateChange() == ItemEvent.SELECTED) {
-            Object item = getSelectedItem();
-            if (item instanceof JLocale) {
-                removeItemListener(this);
-                Locale locale = ((JLocale) item).getLocale();
-                Locale.setDefault(locale);
-                firePropertyChange("locale", null, locale); //$NON-NLS-1$
-                BundleTools.SYSTEM_PREFERENCES.put("locale.language", locale.getLanguage()); //$NON-NLS-1$
-                BundleTools.SYSTEM_PREFERENCES.put("locale.country", locale.getCountry()); //$NON-NLS-1$
-                BundleTools.SYSTEM_PREFERENCES.put("locale.variant", locale.getVariant()); //$NON-NLS-1$
-                removeAllItems();
-                sortLocales();
-                addItemListener(this);
-            }
-        }
-    }
-
-    static class JLocale {
-        private final Locale locale;
-
-        JLocale(Locale l) {
-            if (l == null) {
-                throw new IllegalArgumentException("locale cannot be null"); //$NON-NLS-1$
-            }
-            locale = l;
-        }
-
-        @Override
-        public String toString() {
-            return locale.getDisplayName();
-        }
-
-        public Locale getLocale() {
-            return locale;
-        }
-    }
 }

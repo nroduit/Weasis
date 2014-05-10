@@ -15,6 +15,8 @@ import java.text.NumberFormat;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import org.weasis.core.api.util.LocalUtil;
+
 /**
  * @author Nicolas Roduit
  */
@@ -26,7 +28,7 @@ public class TableNumberRenderer extends DefaultTableCellRenderer {
     }
 
     public TableNumberRenderer(int maxDecimal) {
-        this.formatter = NumberFormat.getNumberInstance();
+        this.formatter = LocalUtil.getNumberInstance();
         formatter.setMaximumFractionDigits(maxDecimal);
     }
 

@@ -19,7 +19,11 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 import javax.swing.Box;
@@ -50,6 +54,8 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 
 public class GeneralSetting extends AbstractItemDialogPage {
@@ -61,8 +67,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
     private final JLabel jLabelMLook = new JLabel();
     private final JComboBox jComboBoxlnf = new JComboBox();
-    private final JLabel labelLocale = new JLabel(Messages.getString("LookSetting.locale")); //$NON-NLS-1$
-    private final JLocaleCombo comboBox = new JLocaleCombo();
+    private final JLabel labelLocale = new JLabel("Language" + StringUtil.COLON);
+    private final JLocaleLanguage comboBoxLang = new JLocaleLanguage();
+    private final JLabel labelLocale2 = new JLabel("Regional Format" + StringUtil.COLON);
+    private final JLocaleFormat comboBoxFormat = new JLocaleFormat();
     private final JTextPane txtpnNote = new JTextPane();
     private final JCheckBox chckbxConfirmClosing = new JCheckBox(
         Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
@@ -79,6 +87,20 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final JSpinner spinner_1 = new JSpinner();
     private final Component horizontalStrut_1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut_2 = Box.createHorizontalStrut(10);
+    private final ItemListener formatItemListener = new ItemListener() {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                Object item = e.getItem();
+                if (item instanceof JLocale) {
+                    Locale locale = ((JLocale) item).getLocale();
+                    LocalUtil.setLocaleFormat(locale);
+                    txtpnNote.setText(getText());
+                }
+            }
+        }
+    };
 
     public GeneralSetting() {
         super(pageName);
@@ -103,25 +125,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
         this.setLayout(gridBagLayout1);
         jLabelMLook.setText(Messages.getString("LookSetting.lf")); //$NON-NLS-1$
 
-        GridBagConstraints gbc_label = new GridBagConstraints();
-        gbc_label.insets = new Insets(15, 10, 5, 5);
-        gbc_label.anchor = GridBagConstraints.LINE_START;
-        gbc_label.gridx = 0;
-        gbc_label.gridy = 0;
-        add(labelLocale, gbc_label);
-
-        GridBagConstraints gbc_comboBox = new GridBagConstraints();
-        gbc_comboBox.gridwidth = 3;
-        gbc_comboBox.anchor = GridBagConstraints.WEST;
-        gbc_comboBox.insets = new Insets(15, 0, 5, 0);
-        gbc_comboBox.gridx = 1;
-        gbc_comboBox.gridy = 0;
-        add(comboBox, gbc_comboBox);
-
         GridBagConstraints gbc_button = new GridBagConstraints();
         gbc_button.insets = new Insets(7, 5, 5, 15);
         gbc_button.gridx = 2;
-        gbc_button.gridy = 1;
+        gbc_button.gridy = 0;
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -145,20 +152,51 @@ public class GeneralSetting extends AbstractItemDialogPage {
         });
         add(button, gbc_button);
 
+        GridBagConstraints gbc_label = new GridBagConstraints();
+        gbc_label.insets = new Insets(15, 10, 5, 5);
+        gbc_label.anchor = GridBagConstraints.LINE_END;
+        gbc_label.gridx = 0;
+        gbc_label.gridy = 1;
+        add(labelLocale, gbc_label);
+
+        GridBagConstraints gbc_comboBox = new GridBagConstraints();
+        gbc_comboBox.gridwidth = 3;
+        gbc_comboBox.anchor = GridBagConstraints.WEST;
+        gbc_comboBox.insets = new Insets(15, 0, 5, 0);
+        gbc_comboBox.gridx = 1;
+        gbc_comboBox.gridy = 1;
+        add(comboBoxLang, gbc_comboBox);
+
+        GridBagConstraints gbc_label2 = new GridBagConstraints();
+        gbc_label2.insets = new Insets(15, 10, 5, 5);
+        gbc_label2.anchor = GridBagConstraints.LINE_END;
+        gbc_label2.gridx = 0;
+        gbc_label2.gridy = 2;
+        add(labelLocale2, gbc_label2);
+
+        GridBagConstraints gbc_comboBox2 = new GridBagConstraints();
+        gbc_comboBox2.gridwidth = 3;
+        gbc_comboBox2.anchor = GridBagConstraints.WEST;
+        gbc_comboBox2.insets = new Insets(5, 0, 5, 0);
+        gbc_comboBox2.gridx = 1;
+        gbc_comboBox2.gridy = 2;
+        add(comboBoxFormat, gbc_comboBox2);
+        comboBoxFormat.addItemListener(formatItemListener);
+
         GridBagConstraints gbc_txtpnNote = new GridBagConstraints();
         gbc_txtpnNote.anchor = GridBagConstraints.WEST;
         gbc_txtpnNote.gridwidth = 4;
         gbc_txtpnNote.insets = new Insets(5, 10, 5, 10);
         gbc_txtpnNote.fill = GridBagConstraints.HORIZONTAL;
         gbc_txtpnNote.gridx = 0;
-        gbc_txtpnNote.gridy = 2;
+        gbc_txtpnNote.gridy = 3;
         txtpnNote.setEditable(false);
         txtpnNote.setContentType("text/html"); //$NON-NLS-1$
         StyleSheet ss = ((HTMLEditorKit) txtpnNote.getEditorKit()).getStyleSheet();
         ss.addRule("body {font-family:sans-serif;font-size:12pt;color:#" //$NON-NLS-1$
             + Integer.toHexString((labelLocale.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
             + ";margin-right:0;margin-left:0;font-weight:normal;}"); //$NON-NLS-1$
-        txtpnNote.setText(String.format(Messages.getString("GeneralSetting.txtpnNote"), getInstalledLanguages())); //$NON-NLS-1$
+        txtpnNote.setText(getText());
         add(txtpnNote, gbc_txtpnNote);
 
         GridBagConstraints gbc_chckbxConfirmationMessageWhen = new GridBagConstraints();
@@ -166,7 +204,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_chckbxConfirmationMessageWhen.anchor = GridBagConstraints.WEST;
         gbc_chckbxConfirmationMessageWhen.insets = new Insets(10, 10, 5, 0);
         gbc_chckbxConfirmationMessageWhen.gridx = 0;
-        gbc_chckbxConfirmationMessageWhen.gridy = 3;
+        gbc_chckbxConfirmationMessageWhen.gridy = 4;
         add(chckbxConfirmClosing, gbc_chckbxConfirmationMessageWhen);
 
         GridBagConstraints gbc_panel = new GridBagConstraints();
@@ -175,7 +213,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_panel.insets = new Insets(5, 10, 5, 10);
         gbc_panel.fill = GridBagConstraints.HORIZONTAL;
         gbc_panel.gridx = 0;
-        gbc_panel.gridy = 4;
+        gbc_panel.gridy = 5;
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEADING);
         add(panel, gbc_panel);
@@ -201,9 +239,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         panel.add(labelSize);
 
         panel.add(spinner_1);
-        this.add(jLabelMLook, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+        this.add(jLabelMLook, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.LINE_END,
             GridBagConstraints.NONE, new Insets(7, 10, 5, 5), 0, 0));
-        this.add(jComboBoxlnf, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+        this.add(jComboBoxlnf, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(7, 2, 5, 15), 5, -2));
 
         JPanel panel_2 = new JPanel();
@@ -219,7 +257,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbc_panel_2.insets = new Insets(5, 10, 5, 10);
         gbc_panel_2.fill = GridBagConstraints.HORIZONTAL;
         gbc_panel_2.gridx = 0;
-        gbc_panel_2.gridy = 5;
+        gbc_panel_2.gridy = 6;
         add(panel_2, gbc_panel_2);
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
         panel_2.add(btnNewButton);
@@ -230,6 +268,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
                 initialize(false);
             }
         });
+
+    }
+
+    private String getText() {
+        return String.format(
+            Messages.getString("GeneralSetting.txtNote"),//$NON-NLS-1$
+            new Object[] { LocalUtil.getDateInstance(DateFormat.SHORT).format(new Date()),
+                LocalUtil.getDateInstance(DateFormat.MEDIUM).format(new Date()),
+                LocalUtil.getNumberInstance().format(2543456.3465) });
     }
 
     private void checkRolingLog() {
@@ -271,8 +318,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         spinner_1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
         checkRolingLog();
 
-        comboBox.selectLocale(prfs.getProperty("locale.language"), prfs.getProperty("locale.country"), //$NON-NLS-1$ //$NON-NLS-2$
-            prfs.getProperty("locale.variant")); //$NON-NLS-1$
+        comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); //$NON-NLS-1$
+        comboBoxFormat.selectLocale(); //$NON-NLS-1$
 
         String className = prfs.getProperty("weasis.look"); //$NON-NLS-1$
         if (className == null) {
@@ -301,101 +348,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
             oldUILook = oldLaf;
         }
 
-    }
-
-    private String getInstalledLanguages() {
-        StringBuilder buffer = new StringBuilder();
-        String langs = System.getProperty("weasis.languages", null); //$NON-NLS-1$
-        if (langs != null) {
-            String[] items = langs.split(","); //$NON-NLS-1$
-            for (int i = 0; i < items.length; i++) {
-                String item = items[i].trim();
-                int index = item.indexOf(' ');
-                String autor = null;
-                String lg;
-                if (index > 0) {
-                    lg = item.substring(0, index);
-                    autor = item.substring(index);
-                } else {
-                    lg = item;
-                }
-                Locale l = toLocale(lg);
-                if (l == null) {
-                    continue;
-                }
-                buffer.append("<BR>"); //$NON-NLS-1$
-                buffer.append(l.getDisplayName());
-                if (autor != null) {
-                    buffer.append(" - "); //$NON-NLS-1$
-                    buffer.append("<i>"); //$NON-NLS-1$
-                    buffer.append(autor);
-                    buffer.append("</i>"); //$NON-NLS-1$
-                }
-            }
-        }
-
-        return buffer.toString();
-    }
-
-    /**
-     * <p>
-     * Converts a String to a Locale.
-     * </p>
-     * <p>
-     * This method validates the input strictly. The language code must be lowercase. The country code must be
-     * uppercase. The separator must be an underscore. The length must be correct.
-     * </p>
-     * 
-     * @param input
-     *            the locale String to convert, null returns null
-     * @return a Locale, null if null input
-     * @throws IllegalArgumentException
-     *             if the string is an invalid format
-     */
-    public static Locale toLocale(String input) {
-        if (input == null) {
-            return null;
-        }
-
-        int len = input.length();
-        if (len != 2 && len != 5 && len < 7) {
-            return null;
-        }
-
-        char ch0 = input.charAt(0);
-        char ch1 = input.charAt(1);
-
-        if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
-            return null;
-        }
-
-        if (len == 2) {
-            return new Locale(input, ""); //$NON-NLS-1$
-        }
-
-        if (input.charAt(2) != '_') {
-            return null;
-        }
-
-        char ch3 = input.charAt(3);
-        if (ch3 == '_') {
-            return new Locale(input.substring(0, 2), "", input.substring(4)); //$NON-NLS-1$
-        }
-
-        char ch4 = input.charAt(4);
-        if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
-            return null;
-        }
-
-        if (len == 5) {
-            return new Locale(input.substring(0, 2), input.substring(3, 5));
-        }
-
-        if (input.charAt(5) != '_') {
-            return null;
-        }
-
-        return new Locale(input.substring(0, 2), input.substring(3, 5), input.substring(6));
     }
 
     public void setList(JComboBox jComboBox, LookAndFeelInfo[] look) {
@@ -473,9 +425,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE,
             ctx.getProperty("def." + AuditLog.LOG_FILE_SIZE)); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.put("locale.language", ctx.getProperty("def.weasis.language")); //$NON-NLS-1$ //$NON-NLS-2$
-        BundleTools.SYSTEM_PREFERENCES.put("locale.country", ctx.getProperty("def.weasis.country")); //$NON-NLS-1$ //$NON-NLS-2$
-        BundleTools.SYSTEM_PREFERENCES.put("locale.variant", ctx.getProperty("def.weasis.variant")); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.put("locale.lang.code", ctx.getProperty("def.weasis.lang.code")); //$NON-NLS-1$ //$NON-NLS-2$
+        LocalUtil.setLocaleFormat(null);
 
         BundleTools.SYSTEM_PREFERENCES.put("weasis.look", ctx.getProperty("def.weasis.look")); //$NON-NLS-1$ //$NON-NLS-2$
 

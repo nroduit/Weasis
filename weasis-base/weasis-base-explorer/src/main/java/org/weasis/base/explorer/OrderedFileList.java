@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
 import org.weasis.core.api.media.data.MediaElement;
 
 public class OrderedFileList extends Vector<MediaElement> {
@@ -20,6 +19,7 @@ public class OrderedFileList extends Vector<MediaElement> {
     private static final int SORT_BY_NAME = 0;
 
     private static final Vector<Comparator<MediaElement>> comparators = new Vector<Comparator<MediaElement>>(5);
+    private static boolean descendingOrder = false;
 
     static {
         comparators.add(SORT_BY_NAME, new SortName());
@@ -118,85 +118,87 @@ public class OrderedFileList extends Vector<MediaElement> {
         this.currentIndex = currentIndex;
     }
 
-}
+    static class SortDate implements Comparator<MediaElement> {
 
-class SortDate implements Comparator<MediaElement> {
+        @Override
+        public int compare(final MediaElement a, final MediaElement b) {
+            if (a == null) {
+                return descendingOrder ? -1 : 1;
+            }
+            if (b == null) {
+                return (descendingOrder) ? 1 : -1;
+            }
+            final int result =
+                (!descendingOrder) ? (int) (a.getLastModified() - b.getLastModified()) : (int) (b.getLastModified() - a
+                    .getLastModified());
 
-    public int compare(final MediaElement a, final MediaElement b) {
-        if (a == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? -1 : 1;
+            return (result != 0) ? result : ((!descendingOrder) ? a.getFile().getAbsolutePath()
+                .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath()
+                .compareTo(a.getFile().getAbsolutePath()));
         }
-        if (b == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? 1 : -1;
-        }
-        final int result =
-            (!AbstractProperties.isThumbnailSortDesend()) ? (int) (a.getLastModified() - b.getLastModified())
-                : (int) (b.getLastModified() - a.getLastModified());
-
-        return (result != 0) ? result : ((!AbstractProperties.isThumbnailSortDesend()) ? a.getFile().getAbsolutePath()
-            .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath().compareTo(
-            a.getFile().getAbsolutePath()));
     }
-}
 
-class SortSize implements Comparator<MediaElement> {
+    static class SortSize implements Comparator<MediaElement> {
 
-    public int compare(final MediaElement a, final MediaElement b) {
-        if (a == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? -1 : 1;
+        @Override
+        public int compare(final MediaElement a, final MediaElement b) {
+            if (a == null) {
+                return (descendingOrder) ? -1 : 1;
+            }
+            if (b == null) {
+                return (descendingOrder) ? 1 : -1;
+            }
+            final int result =
+                (!descendingOrder) ? (int) (a.getLength() - b.getLength()) : (int) (b.getLength() - a.getLength());
+
+            return (result != 0) ? result : ((!descendingOrder) ? a.getFile().getAbsolutePath()
+                .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath()
+                .compareTo(a.getFile().getAbsolutePath()));
         }
-        if (b == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? 1 : -1;
-        }
-        final int result =
-            (!AbstractProperties.isThumbnailSortDesend()) ? (int) (a.getLength() - b.getLength()) : (int) (b
-                .getLength() - a.getLength());
-
-        return (result != 0) ? result : ((!AbstractProperties.isThumbnailSortDesend()) ? a.getFile().getAbsolutePath()
-            .compareTo(b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath().compareTo(
-            a.getFile().getAbsolutePath()));
     }
-}
 
-class SortType implements Comparator<MediaElement> {
+    static class SortType implements Comparator<MediaElement> {
 
-    public int compare(final MediaElement a, final MediaElement b) {
-        if (a == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? -1 : 1;
+        @Override
+        public int compare(final MediaElement a, final MediaElement b) {
+            if (a == null) {
+                return (descendingOrder) ? -1 : 1;
+            }
+            if (b == null) {
+                return (descendingOrder) ? 1 : -1;
+            }
+            return (!descendingOrder) ? (a.getMimeType() + a.getName()).compareToIgnoreCase((b.getMimeType() + b
+                .getName())) : (b.getMimeType() + b.getName()).compareToIgnoreCase((a.getMimeType() + a.getName()));
         }
-        if (b == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? 1 : -1;
-        }
-        return (!AbstractProperties.isThumbnailSortDesend()) ? (a.getMimeType() + a.getName()).compareToIgnoreCase((b
-            .getMimeType() + b.getName())) : (b.getMimeType() + b.getName()).compareToIgnoreCase((a.getMimeType() + a
-            .getName()));
     }
-}
 
-class SortName implements Comparator<MediaElement> {
+    static class SortName implements Comparator<MediaElement> {
 
-    public int compare(final MediaElement a, final MediaElement b) {
-        if (a == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? -1 : 1;
+        @Override
+        public int compare(final MediaElement a, final MediaElement b) {
+            if (a == null) {
+                return (descendingOrder) ? -1 : 1;
+            }
+            if (b == null) {
+                return (descendingOrder) ? 1 : -1;
+            }
+            return (!descendingOrder) ? a.getName().compareToIgnoreCase(b.getName()) : b.getName().compareToIgnoreCase(
+                a.getName());
         }
-        if (b == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? 1 : -1;
-        }
-        return (!AbstractProperties.isThumbnailSortDesend()) ? a.getName().compareToIgnoreCase(b.getName()) : b
-            .getName().compareToIgnoreCase(a.getName());
     }
-}
 
-class SortPath implements Comparator<MediaElement> {
+    static class SortPath implements Comparator<MediaElement> {
 
-    public int compare(final MediaElement a, final MediaElement b) {
-        if (a == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? -1 : 1;
+        @Override
+        public int compare(final MediaElement a, final MediaElement b) {
+            if (a == null) {
+                return (descendingOrder) ? -1 : 1;
+            }
+            if (b == null) {
+                return (descendingOrder) ? 1 : -1;
+            }
+            return (!descendingOrder) ? a.getFile().getAbsolutePath().compareTo(b.getFile().getAbsolutePath()) : b
+                .getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath());
         }
-        if (b == null) {
-            return (AbstractProperties.isThumbnailSortDesend()) ? 1 : -1;
-        }
-        return (!AbstractProperties.isThumbnailSortDesend()) ? a.getFile().getAbsolutePath().compareTo(
-            b.getFile().getAbsolutePath()) : b.getFile().getAbsolutePath().compareTo(a.getFile().getAbsolutePath());
     }
 }

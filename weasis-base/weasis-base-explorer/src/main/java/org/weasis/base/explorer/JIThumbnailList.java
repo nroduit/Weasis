@@ -51,6 +51,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -60,7 +61,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
     DragSourceMotionListener {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
-    private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
+    private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
     static {
         intGroupFormat.setGroupingUsed(true);
     }

@@ -893,10 +893,8 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        final String country =
-            getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final String lang =
+            getGeneralProperty("weasis.lang.code", "locale.lang.code", "en_US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
@@ -941,11 +939,11 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
-        if (lang.equals("en") && country.equals("US")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (lang.equals("en_US")) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         }
-        Locale.setDefault(new Locale(lang, country, variant));
+        Locale.setDefault(textToLocale(lang));
 
         String nativeLook = null;
         String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1187,5 +1185,17 @@ public class WeasisLauncher {
             System.out.println("Force to close the application"); //$NON-NLS-1$
             Runtime.getRuntime().halt(1);
         }
+    }
+
+    public static Locale textToLocale(String value) {
+        if (value == null || value.trim().equals("")) {
+            return Locale.US;
+        }
+        String[] val = value.split("_", 3);
+        String language = val.length > 0 ? val[0] : "";
+        String country = val.length > 1 ? val[1] : "";
+        String variant = val.length > 2 ? val[2] : "";
+
+        return new Locale(language, country, variant);
     }
 }
