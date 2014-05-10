@@ -46,7 +46,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -968,7 +968,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public List<Action> getExportActions() {
         List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
         // TODO Add option in properties to deactivate this option
-        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
                 new AbstractAction(
                     Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$//$NON-NLS-2$
@@ -990,7 +990,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         } else {
-                            File file = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+                            File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
                             if (file.canRead()) {
                                 cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
                             }

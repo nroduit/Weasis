@@ -18,11 +18,11 @@ import org.osgi.framework.BundleContext;
 import org.weasis.core.api.util.FileUtil;
 
 /**
- * The Class AbstractProperties.
+ * The Class AppProperties.
  * 
  * @author Nicolas Roduit
  */
-public class AbstractProperties {
+public class AppProperties {
 
     /**
      * The version of the application (for display)
@@ -80,7 +80,7 @@ public class AbstractProperties {
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 
-    private AbstractProperties() {
+    private AppProperties() {
 
     }
 
@@ -88,7 +88,7 @@ public class AbstractProperties {
         if (context == null) {
             return null;
         }
-        return new File(AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$;
+        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$;
     }
 
     public static File buildAccessibleTempDirectory(String... subFolderName) {
@@ -98,7 +98,7 @@ public class AbstractProperties {
                 buf.append(s);
                 buf.append(File.separator);
             }
-            File file = new File(AbstractProperties.APP_TEMP_DIR, buf.toString());
+            File file = new File(AppProperties.APP_TEMP_DIR, buf.toString());
             try {
                 file.mkdirs();
                 return file;
@@ -106,11 +106,11 @@ public class AbstractProperties {
                 e.printStackTrace();
             }
         }
-        return AbstractProperties.APP_TEMP_DIR;
+        return AppProperties.APP_TEMP_DIR;
     }
 
     public static boolean isMacNativeLookAndFeel() {
-        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             LookAndFeel laf = javax.swing.UIManager.getLookAndFeel();
             if (laf != null && laf.isNativeLookAndFeel()) {
                 return true;

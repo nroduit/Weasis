@@ -37,7 +37,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FileUtil;
@@ -174,7 +174,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
     public void dragGestureRecognized(DragGestureEvent dge) {
         Component comp = dge.getComponent();
         try {
-            GhostGlassPane glassPane = AbstractProperties.glassPane;
+            GhostGlassPane glassPane = AppProperties.glassPane;
             glassPane.setIcon(getIcon());
             Point p = (Point) dge.getDragOrigin().clone();
             dragPressed = new Point(p.x - 4, p.y - 4);
@@ -210,7 +210,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-        GhostGlassPane glassPane = AbstractProperties.glassPane;
+        GhostGlassPane glassPane = AppProperties.glassPane;
         dragPressed = null;
         glassPane.setImagePosition(null);
         glassPane.setIcon(null);
@@ -223,7 +223,7 @@ public class SeriesThumbnail extends Thumbnail implements MouseListener, DragGes
 
     public void drawGlassPane(Point p) {
         if (dragPressed != null) {
-            GhostGlassPane glassPane = AbstractProperties.glassPane;
+            GhostGlassPane glassPane = AppProperties.glassPane;
             SwingUtilities.convertPointFromScreen(p, glassPane);
             p.translate(-dragPressed.x, -dragPressed.y);
             glassPane.setImagePosition(p);

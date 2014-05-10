@@ -34,7 +34,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 
 import org.weasis.base.ui.Messages;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
@@ -66,7 +66,7 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
 
     public WeasisAboutBox() {
         super(WeasisWin.getInstance().getFrame(), String.format(
-            Messages.getString("WeasisAboutBox.about"), AbstractProperties.WEASIS_NAME), true); //$NON-NLS-1$
+            Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
         try {
             sysTable =
                 new JTable(
@@ -104,9 +104,9 @@ public class WeasisAboutBox extends JDialog implements java.awt.event.ActionList
         jTextPane1.setBackground(Color.WHITE);
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
         final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
-        message.append(AbstractProperties.WEASIS_NAME); //$NON-NLS-1$
+        message.append(AppProperties.WEASIS_NAME); //$NON-NLS-1$
         message.append(" "); //$NON-NLS-1$
-        message.append(AbstractProperties.WEASIS_VERSION); //$NON-NLS-1$
+        message.append(AppProperties.WEASIS_VERSION); //$NON-NLS-1$
         message.append("</H2>"); //$NON-NLS-1$
 
         String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$

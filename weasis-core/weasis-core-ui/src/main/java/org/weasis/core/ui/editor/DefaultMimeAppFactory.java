@@ -18,7 +18,7 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -46,9 +46,9 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
                         // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
                         // in KDE session, but actually does not support it.
                         // http://bugs.sun.com/view_bug.do?bug_id=6486393
-                        if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+                        if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
                             startAssociatedProgramFromLinux(m.getFile());
-                        } else if (AbstractProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                        } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
                             // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
                             startAssociatedProgramFromWinCMD(m.getFile());
                         } else if (Desktop.isDesktopSupported()) {

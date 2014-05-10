@@ -52,7 +52,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -72,8 +72,8 @@ import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class SeriesBuilder {
-    public static final File MPR_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
-        AbstractProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
+    public static final File MPR_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
+        AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
 
     public static void createMissingSeries(Thread thread, MPRContainer mprContainer, final MprView view)
         throws Exception {

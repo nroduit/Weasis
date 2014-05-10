@@ -46,7 +46,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -364,7 +364,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
         String logFile =
-            chckbxFileLog.isSelected() ? AbstractProperties.WEASIS_PATH + File.separator + "log" + File.separator //$NON-NLS-1$
+            chckbxFileLog.isSelected() ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator //$NON-NLS-1$
                 + "default.log" : ""; //$NON-NLS-1$ //$NON-NLS-2$
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
         String fileNb = null;

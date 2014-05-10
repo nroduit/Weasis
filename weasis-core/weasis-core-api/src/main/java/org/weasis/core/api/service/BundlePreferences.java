@@ -17,7 +17,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.prefs.Preferences;
 import org.osgi.service.prefs.PreferencesService;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 
 public class BundlePreferences {
 
@@ -28,20 +28,20 @@ public class BundlePreferences {
         if (context != null) {
             File dataFolder =
                 new File(
-                    AbstractProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+                    AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
             dataFolder.mkdirs();
             return dataFolder;
         }
-        return new File(AbstractProperties.WEASIS_PATH, "data");
+        return new File(AppProperties.WEASIS_PATH, "data");
     }
 
     public static Preferences getDefaultPreferences(BundleContext context) {
-        return getUserPreferences(context, AbstractProperties.WEASIS_USER);
+        return getUserPreferences(context, AppProperties.WEASIS_USER);
     }
 
     public static Preferences getUserPreferences(BundleContext context, String name) {
         if (context != null) {
-            String user = name == null ? AbstractProperties.WEASIS_USER : name;
+            String user = name == null ? AppProperties.WEASIS_USER : name;
             PreferencesService prefService = BundlePreferences.getService(context, PreferencesService.class);
             if (prefService != null) {
                 return prefService.getUserPreferences(user);

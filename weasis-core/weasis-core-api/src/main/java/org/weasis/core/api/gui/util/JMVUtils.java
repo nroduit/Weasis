@@ -421,7 +421,7 @@ public class JMVUtils {
 
     public static void OpenInDefaultBrowser(Component parent, URL url) {
         if (url != null) {
-            if (AbstractProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+            if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
                 try {
                     String cmd = String.format("xdg-open %s", url); //$NON-NLS-1$
                     Runtime.getRuntime().exec(cmd);
