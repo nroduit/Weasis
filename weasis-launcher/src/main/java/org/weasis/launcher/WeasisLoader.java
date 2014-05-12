@@ -21,8 +21,8 @@ import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -52,14 +52,14 @@ public class WeasisLoader {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
     private volatile javax.swing.JProgressBar downloadProgress;
-    private final String logoPath;
     private Container container;
 
+    private final File resPath;
     private final WeasisFrame mainFrame;
     private final Properties serverProperties;
 
-    public WeasisLoader(String logoPath, WeasisFrame mainFrame, Properties serverProperties) {
-        this.logoPath = logoPath;
+    public WeasisLoader(File resPath, WeasisFrame mainFrame, Properties serverProperties) {
+        this.resPath = resPath;
         this.mainFrame = mainFrame;
         this.serverProperties = serverProperties;
     }
@@ -115,15 +115,14 @@ public class WeasisLoader {
         });
 
         Icon icon = null;
-        URL url = null;
-        if (logoPath != null) {
-            try {
-                url = new URL(logoPath + "/about.png");
-            } catch (Exception e) {
-                // Do nothing
+        File iconFile = null;
+        if (resPath != null) {
+            iconFile = new File(resPath, "images" + File.separator + "about.png");
+            if (!iconFile.canRead()) {
+                iconFile = null;
             }
         }
-        if (url == null) {
+        if (iconFile == null) {
             icon = new Icon() {
 
                 @Override
@@ -142,7 +141,7 @@ public class WeasisLoader {
                 }
             };
         } else {
-            icon = new ImageIcon(url);
+            icon = new ImageIcon(iconFile.getAbsolutePath());
         }
 
         JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);

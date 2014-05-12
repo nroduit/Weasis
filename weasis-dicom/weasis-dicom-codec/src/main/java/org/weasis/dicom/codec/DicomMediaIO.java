@@ -551,6 +551,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.ImageType, DicomMediaUtils.getStringFromDicomElement(header, Tag.ImageType));
             setTagNoNull(TagW.ImageComments, header.getString(Tag.ImageComments));
             setTagNoNull(TagW.ImageLaterality, header.getString(Tag.ImageLaterality, header.getString(Tag.Laterality)));
+            // TODO test sequence
+            // Sequence bolusSeq = header.getSequence(Tag.ContrastBolusAgentSequence);
+            // setTagNoNull(TagW.ContrastBolusAgent, bolusSeq != null && bolusSeq.size() > 0 ? bolusSeq.toString()
+            // : header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
             setTagNoNull(TagW.ScanningSequence, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));

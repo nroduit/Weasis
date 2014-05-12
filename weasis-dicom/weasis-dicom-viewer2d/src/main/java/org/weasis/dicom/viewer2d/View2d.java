@@ -145,9 +145,11 @@ import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
+import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ShutterOp;
+import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -158,7 +160,6 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
-import org.weasis.dicom.explorer.pref.ModalityPrefView;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton;
 import org.weasis.dicom.viewer2d.KOManager.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
@@ -250,7 +251,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected void initActionWState() {
         super.initActionWState();
         actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
-        actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), Modality.ImageModality);
         actionsInView.put(ActionW.PR_STATE.cmd(), null);
 
         // Preprocessing
@@ -354,9 +354,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.SORTSTACK.cmd())) {
                     actionsInView.put(ActionW.SORTSTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
-                } else if (command.equals(ActionW.VIEWINGPROTOCOL.cmd())) {
-                    actionsInView.put(ActionW.VIEWINGPROTOCOL.cmd(), val);
-                    repaint();
                 } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
                     actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
@@ -779,16 +776,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // TODO - find a better way to get infoLayer TOP-RIGHT available position for drawing something else
 
         Modality mod = Modality.getModality((String) getSeries().getTagValue(TagW.Modality));
-        ModalityInfoData infoData = ModalityPrefView.getModlatityInfos(mod);
+        ModalityInfoData infoData = ModalityView.getModlatityInfos(mod);
         CornerInfoData corner = infoData.getCornerInfo(CornerDisplay.TOP_RIGHT);
 
         final float fontHeight = FontTools.getAccurateFontHeight(g2d);
         boolean anonymize = infoLayer.getDisplayPreferences(AnnotationsLayer.ANONYM_ANNOTATIONS);
 
         float drawY = 0;
-        TagW[] infos = corner.getInfos();
-        for (TagW tag : infos) {
-            if (tag != null && (!anonymize || tag.getAnonymizationType() != 1)) {
+        TagView[] infos = corner.getInfos();
+        for (TagView tag : infos) {
+            if (tag != null) {
                 drawY += fontHeight;
             }
         }

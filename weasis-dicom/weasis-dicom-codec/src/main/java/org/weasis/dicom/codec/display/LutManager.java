@@ -11,50 +11,31 @@
 package org.weasis.dicom.codec.display;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.ResourceUtil;
 
 public class LutManager {
 
     public static final String LUT_DIR = "luts"; //$NON-NLS-1$
 
     public static ByteLut[] getLutCollection() {
-        List<ByteLut> luts = ByteLutCollection.getLutCollection();
-        readLutFiles(luts);
-        readLutFilesFromConfigDir(luts);
+        List<ByteLut> luts = new ArrayList<ByteLut>();
+        luts.add(ByteLut.grayLUT);
+        readLutFilesFromResourcesDir(luts);
+        luts.add(0, ByteLut.defaultLUT);
         return luts.toArray(new ByteLut[luts.size()]);
     }
 
-    public static void readLutFiles(List<ByteLut> luts) {
-        String[] files =
-            { "BlackBody.txt", "Cardiac.txt", "Flow.txt", "GEcolor.txt", "GrayRainbow.txt", "Hue1.txt", "Hue2.txt", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-                "Stern.txt", "Ucla.txt", "VR Bones.txt" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Scanner scan = null;
-        for (int i = 0; i < files.length; i++) {
-            try {
-                scan = new Scanner(LutManager.class.getResourceAsStream("/config/luts/" + files[i]), "UTF-8");
-                byte[][] lut = readLutFile(scan); //$NON-NLS-1$ //$NON-NLS-2$
-                luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i]), lut, ByteLutCollection.invert(lut)));
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (scan != null) {
-                    scan.close();
-                }
-            }
-        }
-    }
-
-    public static void readLutFilesFromConfigDir(List<ByteLut> luts) {
-        final BundleContext context = FrameworkUtil.getBundle(LutManager.class).getBundleContext();
-        File lutFolder = new File(BundlePreferences.getDataFolder(context), LUT_DIR);
+    public static void readLutFilesFromResourcesDir(List<ByteLut> luts) {
+        File lutFolder = ResourceUtil.getResource(LUT_DIR);
         if (lutFolder.exists() && lutFolder.isDirectory()) {
             File[] files = lutFolder.listFiles();
             Scanner scan = null;
@@ -74,6 +55,13 @@ public class LutManager {
                     }
                 }
             }
+            Collections.sort(luts, new Comparator<ByteLut>() {
+
+                @Override
+                public int compare(ByteLut o1, ByteLut o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
         }
     }
 
@@ -86,7 +74,7 @@ public class LutManager {
                 break;
             }
 
-            String[] line = scan.nextLine().split("\t"); //$NON-NLS-1$
+            String[] line = scan.nextLine().split("\\s+"); //$NON-NLS-1$
             if (line.length == 3) {
                 lut[0][lineIndex] = (byte) Integer.parseInt(line[0]);
                 lut[1][lineIndex] = (byte) Integer.parseInt(line[1]);

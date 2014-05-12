@@ -475,6 +475,9 @@ public final class FileUtil {
     }
 
     public static void zip(File directory, File zipfile) throws IOException {
+        if (zipfile == null || directory == null) {
+            return;
+        }
         URI base = directory.toURI();
         Deque<File> queue = new LinkedList<File>();
         queue.push(directory);
@@ -508,6 +511,9 @@ public final class FileUtil {
     }
 
     public static void unzip(InputStream inputStream, File directory) throws IOException {
+        if (inputStream == null || directory == null) {
+            return;
+        }
         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
         try {
             ZipEntry entry;
@@ -527,6 +533,9 @@ public final class FileUtil {
     }
 
     public static void unzip(File zipfile, File directory) throws IOException {
+        if (zipfile == null || directory == null) {
+            return;
+        }
         ZipFile zfile = new ZipFile(zipfile);
         Enumeration<? extends ZipEntry> entries = zfile.entries();
         while (entries.hasMoreElements()) {

@@ -318,14 +318,12 @@ public class TagW implements Transferable, Serializable {
     protected final int level;
     protected final String name;
     protected final TagType type;
-    protected String format;
     protected int anonymizationType;
 
     public TagW(int id, String name, TagType type, int level) {
         this.id = id;
         this.name = name;
         this.type = type == null ? TagType.String : type;
-        this.format = null;
         this.level = level;
         this.anonymizationType = 0;
     }
@@ -511,16 +509,8 @@ public class TagW implements Transferable, Serializable {
         return format.substring(beginIndex + 1, endIndex);
     }
 
-    public String getFormattedText(Object value) {
+    public String getFormattedText(Object value, String format) {
         return getFormattedText(value, type, format);
-    }
-
-    public synchronized void setFormat(String format) {
-        this.format = format;
-    }
-
-    public synchronized String getFormat() {
-        return format;
     }
 
     public synchronized int getAnonymizationType() {

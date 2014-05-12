@@ -70,10 +70,11 @@ import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.CornerInfoData;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
+import org.weasis.dicom.codec.display.ModalityView;
+import org.weasis.dicom.codec.display.TagView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.pref.ModalityPrefView;
 
 /**
  * The Class InfoLayer.
@@ -171,7 +172,7 @@ public class InfoLayer implements AnnotationsLayer {
         OpManager disOp = view2DPane.getDisplayOpManager();
         ModalityInfoData modality;
         Modality mod = Modality.getModality((String) view2DPane.getSeries().getTagValue(TagW.Modality));
-        modality = ModalityPrefView.getModlatityInfos(mod);
+        modality = ModalityView.getModlatityInfos(mod);
 
         final Rectangle bound = view2DPane.getBounds();
         float midx = bound.width / 2f;
@@ -348,15 +349,21 @@ public class InfoLayer implements AnnotationsLayer {
             CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
             boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
             drawY = fontHeight;
-            TagW[] infos = corner.getInfos();
+            TagView[] infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
-                    Object value = getTagValue(infos[j], patient, study, series, dcm);
-                    if (value != null) {
-                        String str = infos[j].getFormattedText(value);
-                        if (StringUtil.hasText(str)) {
-                            GraphicLabel.paintFontOutline(g2, str, border, drawY);
-                            drawY += fontHeight;
+                if (infos[j] != null) {
+                    Object value = null;
+                    for (TagW tag : infos[j].getTag()) {
+                        if (!anonymize || tag.getAnonymizationType() != 1) {
+                            value = getTagValue(tag, patient, study, series, dcm);
+                            if (value != null) {
+                                String str = tag.getFormattedText(value, infos[j].getFormat());
+                                if (StringUtil.hasText(str)) {
+                                    GraphicLabel.paintFontOutline(g2, str, border, drawY);
+                                    drawY += fontHeight;
+                                }
+                                break;
+                            }
                         }
                     }
                 }
@@ -367,14 +374,20 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = fontHeight;
             infos = corner.getInfos();
             for (int j = 0; j < infos.length; j++) {
-                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
-                    Object value = getTagValue(infos[j], patient, study, series, dcm);
-                    if (value != null) {
-                        String str = infos[j].getFormattedText(value);
-                        if (StringUtil.hasText(str)) {
-                            GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
-                                - border, drawY);
-                            drawY += fontHeight;
+                if (infos[j] != null) {
+                    Object value = null;
+                    for (TagW tag : infos[j].getTag()) {
+                        if (!anonymize || tag.getAnonymizationType() != 1) {
+                            value = getTagValue(tag, patient, study, series, dcm);
+                            if (value != null) {
+                                String str = tag.getFormattedText(value, infos[j].getFormat());
+                                if (StringUtil.hasText(str)) {
+                                    GraphicLabel.paintFontOutline(g2, str, bound.width
+                                        - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                    drawY += fontHeight;
+                                }
+                                break;
+                            }
                         }
                     }
                 }
@@ -385,14 +398,20 @@ public class InfoLayer implements AnnotationsLayer {
             drawY = bound.height - border - 1.5f; // -1.5 for outline
             infos = corner.getInfos();
             for (int j = infos.length - 1; j >= 0; j--) {
-                if (infos[j] != null && (!anonymize || infos[j].getAnonymizationType() != 1)) {
-                    Object value = getTagValue(infos[j], patient, study, series, dcm);
-                    if (value != null) {
-                        String str = infos[j].getFormattedText(value);
-                        if (StringUtil.hasText(str)) {
-                            GraphicLabel.paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str)
-                                - border, drawY);
-                            drawY -= fontHeight;
+                if (infos[j] != null) {
+                    Object value = null;
+                    for (TagW tag : infos[j].getTag()) {
+                        if (!anonymize || tag.getAnonymizationType() != 1) {
+                            value = getTagValue(tag, patient, study, series, dcm);
+                            if (value != null) {
+                                String str = tag.getFormattedText(value, infos[j].getFormat());
+                                if (StringUtil.hasText(str)) {
+                                    GraphicLabel.paintFontOutline(g2, str, bound.width
+                                        - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                    drawY -= fontHeight;
+                                }
+                                break;
+                            }
                         }
                     }
                 }

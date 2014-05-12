@@ -41,17 +41,9 @@
 			<directoryMode>0755</directoryMode>
 		</fileSet>
 		<fileSet>
-			<!-- Direct resources copy -->
-			<directory>src/main/resources-web</directory>
-			<outputDirectory>/weasis</outputDirectory>
-			<excludes>
-				<exclude>WEB-INF/**</exclude>
-			</excludes>
-		</fileSet>
-		<fileSet>
-			<!-- copy images -->
-			<directory>etc/images</directory>
-			<outputDirectory>/weasis/images</outputDirectory>
+			<!-- copy resources -->
+			<directory>resources</directory>
+			<outputDirectory>/weasis/resources</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- copy OSGI framework config -->

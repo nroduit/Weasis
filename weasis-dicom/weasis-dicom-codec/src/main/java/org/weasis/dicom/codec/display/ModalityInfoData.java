@@ -10,23 +10,19 @@
  ******************************************************************************/
 package org.weasis.dicom.codec.display;
 
-import java.io.Serializable;
+public class ModalityInfoData {
 
-import org.weasis.dicom.codec.Messages;
-
-public class ModalityInfoData implements Serializable {
-
-    private static final long serialVersionUID = -3493098593501958898L;
     private final Modality modality;
+    private final Modality extendModality;
+    private final CornerInfoData[] cornerInfo;
 
-    private CornerInfoData[] cornerInfo;
-
-    public ModalityInfoData(Modality modality) {
+    public ModalityInfoData(Modality modality, Modality extendModality) {
         this.modality = modality;
+        this.extendModality = extendModality;
         CornerDisplay[] corners = CornerDisplay.values();
         this.cornerInfo = new CornerInfoData[corners.length];
         for (int i = 0; i < corners.length; i++) {
-            cornerInfo[i] = new CornerInfoData(corners[i]);
+            cornerInfo[i] = new CornerInfoData(corners[i], extendModality);
         }
     }
 
@@ -34,8 +30,8 @@ public class ModalityInfoData implements Serializable {
         return modality;
     }
 
-    public void setCornerInfo(CornerInfoData[] cornerInfo) {
-        this.cornerInfo = cornerInfo;
+    public Modality getExtendModality() {
+        return extendModality;
     }
 
     public CornerInfoData[] getCornerInfo() {
