@@ -42,7 +42,7 @@ import javax.media.jai.TiledImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractBufferHandler;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -148,7 +148,7 @@ public class ImageFiler extends AbstractBufferHandler {
     // PlanarImage src = null;
     // if (stream != null) {
     // try {
-    // ImageInputStream in = new FileCacheImageInputStream(stream, AbstractProperties.APP_TEMP_DIR);
+    // ImageInputStream in = new FileCacheImageInputStream(stream, AppProperties.APP_TEMP_DIR);
     // // Tile image while reading to handle large images
     // ImageLayout layout = new ImageLayout();
     // layout.setTileWidth(TILESIZE);
@@ -221,7 +221,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
             }
             extraFields
-                .add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AbstractProperties.WEASIS_NAME }));
+                .add(new TIFFField(305, TIFFField.TIFF_ASCII, 1, new String[] { AppProperties.WEASIS_NAME }));
             param.setExtraFields(extraFields.toArray(new TIFFField[extraFields.size()]));
 
             if (!binary) {
@@ -478,7 +478,7 @@ public class ImageFiler extends AbstractBufferHandler {
         if ((img.getWidth() > 2 * ImageFiler.TILESIZE || img.getHeight() > 2 * ImageFiler.TILESIZE)) {
             File imgCacheFile = null;
             try {
-                imgCacheFile = File.createTempFile("tiled_", ".tif", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                imgCacheFile = File.createTempFile("tiled_", ".tif", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (IOException e) {
                 e.printStackTrace();
             }

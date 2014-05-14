@@ -55,7 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.ImageFiler;
@@ -451,7 +451,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             keepNames = false;
             writeDicomdir = true;
             cdCompatible = true;
-            writeDir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirectory("tmp", "zip"));
+            writeDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip"));
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
             keepNames = Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$

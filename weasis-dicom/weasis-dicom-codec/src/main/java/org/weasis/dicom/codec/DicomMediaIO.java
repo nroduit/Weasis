@@ -79,7 +79,7 @@ import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
 import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
 import org.weasis.core.api.image.util.CIELab;
@@ -108,7 +108,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
-    public static final File DICOM_EXPORT_DIR = AbstractProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
+    public static final File DICOM_EXPORT_DIR = AppProperties.buildAccessibleTempDirectory("dicom"); //$NON-NLS-1$
 
     public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
@@ -551,6 +551,10 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
             setTagNoNull(TagW.ImageType, DicomMediaUtils.getStringFromDicomElement(header, Tag.ImageType));
             setTagNoNull(TagW.ImageComments, header.getString(Tag.ImageComments));
             setTagNoNull(TagW.ImageLaterality, header.getString(Tag.ImageLaterality, header.getString(Tag.Laterality)));
+            // TODO test sequence
+            // Sequence bolusSeq = header.getSequence(Tag.ContrastBolusAgentSequence);
+            // setTagNoNull(TagW.ContrastBolusAgent, bolusSeq != null && bolusSeq.size() > 0 ? bolusSeq.toString()
+            // : header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.ContrastBolusAgent, header.getString(Tag.ContrastBolusAgent));
             setTagNoNull(TagW.SOPClassUID, header.getString(Tag.SOPClassUID));
             setTagNoNull(TagW.ScanningSequence, DicomMediaUtils.getStringFromDicomElement(header, Tag.ScanningSequence));
@@ -804,7 +808,7 @@ public class DicomMediaIO extends ImageReader implements MediaReader<PlanarImage
                         FileOutputStream fileOut = null;
                         ObjectOutput objOut = null;
                         try {
-                            File file = File.createTempFile("ovly_", "", AbstractProperties.FILE_CACHE_DIR);
+                            File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR);
                             fileOut = new FileOutputStream(file);
                             objOut = new ObjectOutputStream(fileOut);
                             objOut.writeObject(overlayData);

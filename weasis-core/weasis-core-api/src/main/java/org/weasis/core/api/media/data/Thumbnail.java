@@ -41,14 +41,14 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FontTools;
 
 public class Thumbnail extends JLabel {
-    public static final File THUMBNAIL_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
-        AbstractProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
+    public static final File THUMBNAIL_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
+        AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
     public static final ExecutorService THUMB_LOADER = Executors.newFixedThreadPool(1);
     public static final RenderingHints DownScaleQualityHints = new RenderingHints(RenderingHints.KEY_RENDERING,
         RenderingHints.VALUE_RENDER_QUALITY);

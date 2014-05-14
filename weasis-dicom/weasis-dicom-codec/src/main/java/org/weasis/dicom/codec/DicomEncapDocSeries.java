@@ -22,7 +22,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.StreamUtils;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
@@ -64,7 +64,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                     FileInputStream in = null;
                     FileOutputStream out = null;
                     try {
-                        File file = File.createTempFile("encap_", "." + extension, AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                        File file = File.createTempFile("encap_", "." + extension, AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                         in = new FileInputStream(dcmEnc.getFile());
                         out = new FileOutputStream(file);
                         StreamUtils.skipFully(in, bulkData.offset);

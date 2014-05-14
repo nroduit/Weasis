@@ -10,13 +10,11 @@
  ******************************************************************************/
 package org.weasis.core.api.image.op;
 
-import org.weasis.core.api.Messages;
-
 public class ByteLut {
 
-    public static final ByteLut defaultLUT = new ByteLut("Default", null, null); //$NON-NLS-1$
-    public static final ByteLut grayLUT =
-        new ByteLut("Gray", ByteLutCollection.grays, ByteLutCollection.invert(ByteLutCollection.grays)); //$NON-NLS-1$
+    public static final ByteLut defaultLUT = new ByteLut("Default (from image)", null, null);
+    public static final ByteLut grayLUT = new ByteLut("Gray", ByteLutCollection.grays,
+        ByteLutCollection.invert(ByteLutCollection.grays));
     private final String name;
     private final byte[][] lutTable;
     private final byte[][] invertedLutTable;

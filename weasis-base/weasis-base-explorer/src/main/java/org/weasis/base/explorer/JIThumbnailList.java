@@ -43,7 +43,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -51,6 +51,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -60,7 +61,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
     DragSourceMotionListener {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
-    private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
+    private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
     static {
         intGroupFormat.setGroupingUsed(true);
     }
@@ -813,7 +814,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
                 MediaElement media = (MediaElement) getSelectedValue();
                 MediaSeries series = buildSeriesFromMediaElement(media);
                 if (series != null) {
-                    GhostGlassPane glassPane = AbstractProperties.glassPane;
+                    GhostGlassPane glassPane = AppProperties.glassPane;
                     Icon icon = null;
                     if (media instanceof ImageElement) {
                         icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) media, this, index);
@@ -858,7 +859,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
 
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-        GhostGlassPane glassPane = AbstractProperties.glassPane;
+        GhostGlassPane glassPane = AppProperties.glassPane;
         dragPressed = null;
         glassPane.setImagePosition(null);
         glassPane.setIcon(null);
@@ -871,7 +872,7 @@ public final class JIThumbnailList extends JList implements JIObservable, DragGe
 
     public void drawGlassPane(Point p) {
         if (dragPressed != null) {
-            GhostGlassPane glassPane = AbstractProperties.glassPane;
+            GhostGlassPane glassPane = AppProperties.glassPane;
             SwingUtilities.convertPointFromScreen(p, glassPane);
             p.translate(-dragPressed.x, -dragPressed.y);
             glassPane.setImagePosition(p);

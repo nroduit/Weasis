@@ -22,7 +22,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 
 import org.dcm4che3.data.UID;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -251,8 +251,8 @@ public class MipView extends View2d {
                             RawImage raw = null;
                             try {
                                 File mipDir =
-                                    AbstractProperties.buildAccessibleTempDirectory(
-                                        AbstractProperties.FILE_CACHE_DIR.getName(), "mip");
+                                    AppProperties.buildAccessibleTempDirectory(
+                                        AppProperties.FILE_CACHE_DIR.getName(), "mip");
                                 raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$);
                                 writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
                             } catch (Exception e) {

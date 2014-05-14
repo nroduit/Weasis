@@ -20,7 +20,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
@@ -33,7 +33,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
-        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
+        File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
             FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
         }
@@ -68,7 +68,7 @@ public class Activator implements BundleActivator, ServiceListener {
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences
         MeasureTool.viewSetting.savePreferences(BundlePreferences.getDefaultPreferences(bundleContext));
-        File dataFolder = AbstractProperties.getBundleDataFolder(bundleContext);
+        File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
             File file = new File(dataFolder, "persitence.properties"); //$NON-NLS-1$
             FileUtil.prepareToWriteFile(file);

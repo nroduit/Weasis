@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.display;
 
 import java.awt.event.KeyEvent;
 import java.awt.image.DataBuffer;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ import java.util.TreeMap;
 import javax.media.jai.LookupTableJAI;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
@@ -32,6 +32,7 @@ import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.LutShape.eFunction;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
 
@@ -248,13 +249,13 @@ public class PresetWindowLevel {
 
     private static Map<String, List<PresetWindowLevel>> getPresetListByModality() {
 
-        Map<String, List<PresetWindowLevel>> presetListByModality = new TreeMap<String, List<PresetWindowLevel>>();
+        Map<String, List<PresetWindowLevel>> presets = new TreeMap<String, List<PresetWindowLevel>>();
 
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = PresetWindowLevel.class.getResourceAsStream("/config/presets.xml"); //$NON-NLS-1$
+            stream = new FileInputStream(ResourceUtil.getResource("presets.xml")); //$NON-NLS-1$
             xmler = xmlif.createXMLStreamReader(stream);
 
             int eventType;
@@ -277,7 +278,7 @@ public class PresetWindowLevel {
                                                     Float.parseFloat(xmler.getAttributeValue(null, "window"));//$NON-NLS-1$
                                                 float level = Float.parseFloat(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$;
                                                 String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
-                                                Integer keyCode =  FileUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
+                                                Integer keyCode = FileUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
                                                 LutShape lutShape = LutShape.getLutShape(shape);
                                                 PresetWindowLevel preset =
                                                     new PresetWindowLevel(name, window, level, lutShape == null
@@ -285,9 +286,9 @@ public class PresetWindowLevel {
                                                 if (keyCode != null) {
                                                     preset.setKeyCode(keyCode);
                                                 }
-                                                List<PresetWindowLevel> presetList = presetListByModality.get(modality);
+                                                List<PresetWindowLevel> presetList = presets.get(modality);
                                                 if (presetList == null) {
-                                                    presetListByModality.put(modality, presetList =
+                                                    presets.put(modality, presetList =
                                                         new ArrayList<PresetWindowLevel>());
                                                 }
                                                 presetList.add(preset);
@@ -308,13 +309,12 @@ public class PresetWindowLevel {
             }
         }
 
-        catch (XMLStreamException e) {
-            e.printStackTrace();
-            // logger.error("Cannot read presets file!");
+        catch (Exception e) {
+            LOGGER.error("Cannot read presets file! " + e.getMessage());
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
         }
-        return presetListByModality;
+        return presets;
     }
 }

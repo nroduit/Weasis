@@ -397,9 +397,9 @@ public class AutoProcessor {
             if (b != null) {
                 StringBuilder p = new StringBuilder(b.getSymbolicName());
                 p.append("-i18n-"); //$NON-NLS-1$
-                // From 1.1.0, i18n module can be plugged in any version. The SVN revision (the qualifier)
+                // From 2.0.0, i18n module can be plugged in any version. The date (the qualifier)
                 // will update the version.
-                p.append("1.1.0"); //$NON-NLS-1$
+                p.append("2.0.0"); //$NON-NLS-1$
                 // p.append(v.getMajor());
                 // p.append("."); //$NON-NLS-1$
                 // p.append(v.getMinor());

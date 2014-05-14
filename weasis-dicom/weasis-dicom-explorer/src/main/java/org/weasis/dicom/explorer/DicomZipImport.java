@@ -26,7 +26,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -115,7 +115,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         if (file != null) {
             ArrayList<LoadSeries> loadSeries = null;
             if (file.canRead()) {
-                File dir = FileUtil.createTempDir(AbstractProperties.buildAccessibleTempDirectory("tmp", "zip"));
+                File dir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip"));
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {

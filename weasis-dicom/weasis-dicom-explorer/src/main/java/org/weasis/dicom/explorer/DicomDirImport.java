@@ -35,7 +35,7 @@ import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -249,7 +249,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public static File getDcmDirFromMedia() {
-        String os = AbstractProperties.OPERATING_SYSTEM;
+        String os = AppProperties.OPERATING_SYSTEM;
         File[] drives = null;
         if (os.startsWith("win")) { //$NON-NLS-1$
             drives = File.listRoots();

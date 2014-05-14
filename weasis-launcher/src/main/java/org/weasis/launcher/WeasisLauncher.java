@@ -118,6 +118,7 @@ public class WeasisLauncher {
     private static String APP_PROPERTY_FILE = "weasis.properties"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION = "weasis.version"; //$NON-NLS-1$
     public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
+    private static final String P_WEASIS_RES_DATE = "weasis.resources.date"; //$NON-NLS-1$
     static Properties modulesi18n = null;
     private static String look = null;
 
@@ -311,9 +312,7 @@ public class WeasisLauncher {
         cacheDir = configProps.getProperty(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
         // If there is a passed in bundle cache directory, then
         // that overwrites anything in the config file.
-        if (cacheDir != null) {
-            configProps.setProperty(Constants.FRAMEWORK_STORAGE, cacheDir);
-        }
+        configProps.setProperty(Constants.FRAMEWORK_STORAGE, cacheDir);
 
         // Load local properties and clean if necessary the previous version
         WeasisLoader loader = loadProperties(configProps);
@@ -380,12 +379,6 @@ public class WeasisLauncher {
                 new ServiceTracker(m_activator.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", //$NON-NLS-1$
                     null);
             m_tracker.open();
-
-            // Loads the logo images
-            String logoPath = configProps.getProperty("weasis.logo.url");
-            if (logoPath != null) {
-                FileUtil.writeLogoFiles(logoPath, cacheDir);
-            }
 
             // Start the framework.
             m_felix.start();
@@ -893,10 +886,8 @@ public class WeasisLauncher {
         // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension of config)
         // 4) default value
 
-        final String lang = getGeneralProperty("weasis.language", "locale.language", "en", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        final String country =
-            getGeneralProperty("weasis.country", "locale.country", "US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        final String variant = getGeneralProperty("weasis.variant", "locale.variant", "", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        final String lang =
+            getGeneralProperty("weasis.lang.code", "locale.lang.code", "en_US", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         getGeneralProperty("weasis.confirm.closing", "false", config, s_prop, false, true); //$NON-NLS-1$ //$NON-NLS-2$
         getGeneralProperty("weasis.export.dicom", "true", config, s_prop, false, false); //$NON-NLS-1$ //$NON-NLS-2$
@@ -941,11 +932,11 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
         }
-        if (lang.equals("en") && country.equals("US")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (lang.equals("en_US")) { //$NON-NLS-1$
             // if English no need to load i18n bundle fragments
             modulesi18n = null;
         }
-        Locale.setDefault(new Locale(lang, country, variant));
+        Locale.setDefault(textToLocale(lang));
 
         String nativeLook = null;
         String sys_spec = System.getProperty("native.library.spec", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1052,12 +1043,43 @@ public class WeasisLauncher {
         System.out.println("Current version: " + versionNew); //$NON-NLS-1$
         String cleanCacheAfterCrash = common_prop.getProperty("weasis.clean.cache"); //$NON-NLS-1$
 
+        boolean update = false;
+        // Loads the resource files
+        String resPath =
+            config
+                .getProperty("weasis.resources.url", System.getProperty("weasis.codebase.url", "") + "/resources.zip");
+        File cacheDir = null;
+        try {
+            if (resPath.endsWith(".zip")) {
+                cacheDir =
+                    new File(dir + File.separator + "data" + File.separator + System.getProperty("weasis.source.id"),
+                        "resources");
+                String date = FileUtil.writeResources(resPath, cacheDir, common_prop.getProperty(P_WEASIS_RES_DATE));
+                if (date != null) {
+                    update = true;
+                    common_prop.put(P_WEASIS_RES_DATE, date);
+                }
+            }
+        } catch (Throwable e) {
+            cacheDir = null;
+            System.err.println(e.getMessage());
+        }
+        if (cacheDir == null) {
+            if (portable != null) {
+                cacheDir = new File(portable, "weasis" + File.separator + "resources");
+            } else {
+                File f = new File(System.getProperty("user.dir"));
+                cacheDir = new File(f.getParent(), "weasis-distributions" + File.separator + "resources");
+            }
+        }
+        System.out.println("weasis.resources.path: " + cacheDir.getPath());
+        config.setProperty("weasis.resources.path", cacheDir.getPath());
+
         // Splash screen that shows bundles loading
-        final WeasisLoader loader = new WeasisLoader(config.getProperty("weasis.logo.url"), mainFrame, s_prop);
+        final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame, s_prop);
         // Display splash screen
         loader.open();
 
-        boolean update = false;
         if (versionNew != null) {
             // Add also to java properties for the about
             System.setProperty(P_WEASIS_VERSION, versionNew);
@@ -1187,5 +1209,17 @@ public class WeasisLauncher {
             System.out.println("Force to close the application"); //$NON-NLS-1$
             Runtime.getRuntime().halt(1);
         }
+    }
+
+    public static Locale textToLocale(String value) {
+        if (value == null || value.trim().equals("")) {
+            return Locale.US;
+        }
+        String[] val = value.split("_", 3);
+        String language = val.length > 0 ? val[0] : "";
+        String country = val.length > 1 ? val[1] : "";
+        String variant = val.length > 2 ? val[2] : "";
+
+        return new Locale(language, country, variant);
     }
 }

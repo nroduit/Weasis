@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.core.api.service;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -141,6 +142,16 @@ public class WProperties extends Properties {
         return result;
     }
 
+    public Color getColorProperty(String key) {
+        return hexadecimal2Color(this.getProperty(key));
+    }
+
+    public void setColorProperty(String key, Color color) {
+        if (isValid(key, color)) {
+            this.put(key, color2Hexadecimal(color));
+        }
+    }
+
     public void putByteArrayProperty(String key, byte[] value) {
         if (isValid(key, value)) {
             try {
@@ -172,6 +183,22 @@ public class WProperties extends Properties {
 
     private boolean isKeyValid(String key) {
         return key != null;
+    }
+
+    public static String color2Hexadecimal(Color c) {
+        int val = c == null ? 0 : c.getRGB() & 0x00ffffff;
+        return Integer.toHexString(val);
+    }
+
+    public static Color hexadecimal2Color(String hexColor) {
+        int intValue = 0;
+        if (hexColor != null) {
+            try {
+                intValue = Integer.parseInt(hexColor, 16);
+            } catch (NumberFormatException e) {
+            }
+        }
+        return new Color(intValue);
     }
 
     public static void setProperty(WProperties properties, String key, Preferences prefNode, String defaultValue) {

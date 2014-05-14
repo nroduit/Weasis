@@ -29,9 +29,12 @@
 			<outputDirectory>/</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<!-- copy images -->
-			<directory>etc/images</directory>
-			<outputDirectory>/images</outputDirectory>
+			<!-- copy resources.zip -->
+			<directory>${project.build.directory}</directory>
+			<includes>
+				<include>/resources.zip</include>
+			</includes>
+			<outputDirectory>/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- copy OSGI framework config -->

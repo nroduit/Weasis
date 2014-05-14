@@ -31,7 +31,7 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.op.FormatBinaryDescriptor;
 import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
 import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
@@ -131,8 +131,8 @@ public class Activator implements BundleActivator, ServiceListener {
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         String audit = bundleContext.getProperty(loggerKey);
         if (audit != null && audit.equalsIgnoreCase("true")) { //$NON-NLS-1$
-            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AbstractProperties.WEASIS_PATH //$NON-NLS-1$
-                + File.separator + "log" + File.separator + "audit-" + AbstractProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", AppProperties.WEASIS_PATH //$NON-NLS-1$
+                + File.separator + "log" + File.separator + "audit-" + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null); //$NON-NLS-1$
             AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
         } else {

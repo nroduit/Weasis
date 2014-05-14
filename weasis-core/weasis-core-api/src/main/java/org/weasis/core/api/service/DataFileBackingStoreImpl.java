@@ -30,7 +30,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.util.FileUtil;
 
 public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
@@ -43,13 +43,13 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     public DataFileBackingStoreImpl(BundleContext context) {
         super(context);
         this.context = context;
-        StringBuilder bufDir = new StringBuilder(AbstractProperties.WEASIS_PATH);
+        StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
         bufDir.append(File.separator);
         bufDir.append("preferences");
         bufDir.append(File.separator);
-        bufDir.append(AbstractProperties.WEASIS_USER);
+        bufDir.append(AppProperties.WEASIS_USER);
         bufDir.append(File.separator);
-        bufDir.append(AbstractProperties.WEASIS_PROFILE);
+        bufDir.append(AppProperties.WEASIS_PROFILE);
         this.prefRootDirectory = new File(bufDir.toString());
         prefRootDirectory.mkdirs();
     }
@@ -92,7 +92,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
             Bundle[] bundles = context.getBundles();
             for (Bundle bundle : bundles) {
                 if (bundle.getSymbolicName().equals(key)) {
-                    return new PreferencesDescription(bundle.getBundleId(), AbstractProperties.WEASIS_USER);
+                    return new PreferencesDescription(bundle.getBundleId(), AppProperties.WEASIS_USER);
                 }
             }
         }
@@ -114,7 +114,7 @@ public class DataFileBackingStoreImpl extends StreamBackingStoreImpl {
     public PreferencesImpl[] loadAll(BackingStoreManager manager, Long bundleId) throws BackingStoreException {
         this.checkAccess();
 
-        PreferencesImpl pref = load(manager, new PreferencesDescription(bundleId, AbstractProperties.WEASIS_USER));
+        PreferencesImpl pref = load(manager, new PreferencesDescription(bundleId, AppProperties.WEASIS_USER));
 
         return pref == null ? new PreferencesImpl[0] : new PreferencesImpl[] { pref };
     }

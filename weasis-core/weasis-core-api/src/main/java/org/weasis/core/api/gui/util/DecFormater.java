@@ -11,10 +11,13 @@
 package org.weasis.core.api.gui.util;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
+
+import org.weasis.core.api.util.LocalUtil;
 
 /**
  * The Class DecFormater.
@@ -23,15 +26,16 @@ import javax.swing.text.NumberFormatter;
  */
 public class DecFormater {
 
-    private static NumberFormat df1 = NumberFormat.getNumberInstance(); // 1 decimals
-    private static NumberFormat df2 = NumberFormat.getNumberInstance(); // 2 decimals
-    private static NumberFormat df4 = NumberFormat.getNumberInstance(); // 4 decimals
+    private static NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
+    private static NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
+    private static NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
+    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 decimals //$NON-NLS-1$
     static {
         df1.setMaximumFractionDigits(1);
         df2.setMaximumFractionDigits(2);
         df4.setMaximumFractionDigits(4);
+        dfSci.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(LocalUtil.getLocaleFormat()));
     }
-    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); // Scientific format with 4 decimals //$NON-NLS-1$
 
     public static String oneDecimal(Number val) {
         return df1.format(val);

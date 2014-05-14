@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
@@ -305,7 +305,7 @@ public class DownloadManager {
                 stream = urlConnection.getInputStream();
             } else {
                 // In case wado file has no extension
-                File outFile = File.createTempFile("wado_", "", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 if (FileUtil.writeStream(urlConnection.getInputStream(), new FileOutputStream(outFile)) == -1) {
                     if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                         stream = new BufferedInputStream((new GZIPInputStream(new FileInputStream((outFile)))));
@@ -319,7 +319,7 @@ public class DownloadManager {
             if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { //$NON-NLS-1$ //$NON-NLS-2$
                 tempFile = new File(path);
             } else {
-                tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 FileUtil.writeStream(stream, new FileOutputStream(tempFile));
             }
             xmler = xmlif.createXMLStreamReader(new FileReader(tempFile));

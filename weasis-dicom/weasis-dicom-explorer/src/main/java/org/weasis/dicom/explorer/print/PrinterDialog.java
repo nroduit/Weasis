@@ -34,6 +34,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.NumberFormatter;
 
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.explorer.Messages;
 
 /**
@@ -149,7 +150,7 @@ public class PrinterDialog extends JDialog {
         gbc_portLabel.gridx = 2;
         gbc_portLabel.gridy = 2;
         content.add(portLabel, gbc_portLabel);
-        NumberFormat myFormat = NumberFormat.getInstance();
+        NumberFormat myFormat = LocalUtil.getNumberInstance();
         myFormat.setMinimumIntegerDigits(0);
         myFormat.setMaximumIntegerDigits(65535);
         myFormat.setMaximumFractionDigits(0);

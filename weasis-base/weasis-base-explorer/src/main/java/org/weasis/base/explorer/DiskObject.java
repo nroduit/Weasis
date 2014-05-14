@@ -6,11 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
+import java.text.DateFormat;
 import java.text.Format;
-import java.text.SimpleDateFormat;
 import java.util.Comparator;
 
 import javax.swing.filechooser.FileSystemView;
+
+import org.weasis.core.api.util.LocalUtil;
 
 public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
@@ -21,7 +23,7 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     private static final String osName = System.getProperty("os.name").toLowerCase();
 
-    private static final Format formatter = new SimpleDateFormat("yyyy/MMM/dd");
+    private static final Format formatter = LocalUtil.getDateInstance();
 
     public static final String MIMETYPE_JPEG = "image/jpeg";
     public static final String MIMETYPE_GIF = "image/gif";
@@ -82,25 +84,30 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
     }
 
     public String getMimeType() {
-        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg"))
+        if (getSuffix().equals("jpg") || getSuffix().equals("jpeg")) {
             return MIMETYPE_JPEG;
-        if (getSuffix().equals("gif"))
+        }
+        if (getSuffix().equals("gif")) {
             return MIMETYPE_GIF;
-        if (getSuffix().equals("png"))
+        }
+        if (getSuffix().equals("png")) {
             return MIMETYPE_PNG;
-        if (getSuffix().equals("tiff") || getSuffix().equals("tif"))
+        }
+        if (getSuffix().equals("tiff") || getSuffix().equals("tif")) {
             return MIMETYPE_TIFF;
+        }
         return null;
     }
 
     public String getShortDate() {
-        final Format formatter = new SimpleDateFormat("dd/MM/yy hh:mm a");
+        final Format formatter = LocalUtil.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
         return formatter.format(new java.util.Date(this.lastModified));
     }
 
     public String getDim() {
-        if ((this.width > 0) && (this.height > 0))
+        if ((this.width > 0) && (this.height > 0)) {
             return this.width + " x " + this.height;
+        }
         return "";
     }
 
@@ -118,10 +125,11 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
     }
 
     public File getFile() {
-        if (absolutePath != null)
+        if (absolutePath != null) {
             return new File(absolutePath);
-        else
+        } else {
             return new File(path);
+        }
 
     }
 
@@ -132,8 +140,9 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     @Override
     public boolean equals(final Object obj) {
-        if (obj instanceof DiskObject)
+        if (obj instanceof DiskObject) {
             return (compare(this, (DiskObject) obj) == 0) ? true : false;
+        }
         return false;
     }
 
@@ -154,11 +163,13 @@ public final class DiskObject implements Comparator<DiskObject>, Serializable {
 
     public boolean validate() throws FileNotFoundException, IOException {
         if (!this.validated) {
-            if (!getFile().exists())
+            if (!getFile().exists()) {
                 throw new FileNotFoundException(getFile().getAbsolutePath());
+            }
 
-            if (!getFile().canRead())
+            if (!getFile().canRead()) {
                 throw new IOException("Cannot read " + getFile().getAbsolutePath());
+            }
         }
         return (this.validated = true);
     }

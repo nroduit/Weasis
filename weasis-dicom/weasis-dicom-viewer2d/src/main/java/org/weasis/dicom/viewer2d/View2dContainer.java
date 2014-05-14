@@ -46,7 +46,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -143,22 +143,53 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
-            // Add standard toolbars
 
+            // Add standard toolbars
+            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
-                BundleTools.SYSTEM_PREFERENCES, 10));
-            TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-            TOOLBARS.add(new ZoomToolBar(evtMg, 20));
-            TOOLBARS.add(new RotationToolBar(evtMg, 30));
-            TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
-            TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
-            TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
-            TOOLBARS.add(new KeyObjectToolBar<DicomImageElement>(90));
+
+            String bundleName = context.getBundle().getSymbolicName();
+            String componentName = InsertableUtil.getCName(this.getClass());
+            String key = "enable";
+
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
+                TOOLBARS.add(new ViewerToolBar<DicomImageElement>(evtMg, evtMg.getMouseActions().getActiveButtons(),
+                    BundleTools.SYSTEM_PREFERENCES, 10));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureToolBar.class), key, true)) {
+                TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ZoomToolBar.class), key, true)) {
+                TOOLBARS.add(new ZoomToolBar(evtMg, 20));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(RotationToolBar.class), key, true)) {
+                TOOLBARS.add(new RotationToolBar(evtMg, 30));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(LutToolBar.class), key, true)) {
+                TOOLBARS.add(new LutToolBar<DicomImageElement>(40));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(Basic3DToolBar.class), key, true)) {
+                TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(CineToolBar.class), key, true)) {
+                TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(KeyObjectToolBar.class), key, true)) {
+                TOOLBARS.add(new KeyObjectToolBar<DicomImageElement>(90));
+            }
 
             PluginTool tool = null;
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.minitools", true)) {
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MiniTool.class), key, true)) {
                 tool = new MiniTool(Messages.getString("View2dContainer.mini")) { //$NON-NLS-1$
 
                         @Override
@@ -187,23 +218,25 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 TOOLS.add(tool);
             }
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.imagestools", true)) {
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImageTool.class), key, true)) {
                 tool = new ImageTool(Messages.getString("View2dContainer.image_tools")); //$NON-NLS-1$
                 TOOLS.add(tool);
             }
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.display", true)) {
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(DisplayTool.class), key, true)) {
                 tool = new DisplayTool(DisplayTool.BUTTON_NAME);
                 TOOLS.add(tool);
                 eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
             }
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.dockable.menu.measuretools", true)) {
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(MeasureTool.class), key, true)) {
                 tool = new MeasureTool(eventManager);
                 TOOLS.add(tool);
             }
 
-            // TODO doesn't work
             InsertableUtil.sortInsertable(TOOLS);
 
             // Send event to synchronize the series selection.
@@ -212,13 +245,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
             }
 
-            final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             Preferences prefs = BundlePreferences.getDefaultPreferences(context);
             if (prefs != null) {
-                String className = this.getClass().getSimpleName().toLowerCase();
-                String bundleName = context.getBundle().getSymbolicName();
-                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, className, Type.TOOLBAR);
-                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, className, Type.TOOL);
+                InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
+                InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
             }
         }
     }
@@ -798,7 +828,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public List<Action> getExportActions() {
         List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
         // TODO Add option in properties to deactivate this option
-        if (AbstractProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
             AbstractAction importAll =
                 new AbstractAction(
                     Messages.getString("View2dContainer.expOsirixMes"), new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osririx.png"))) { //$NON-NLS-1$//$NON-NLS-2$
@@ -820,7 +850,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                                 }
                             }
                         } else {
-                            File file = new File(AbstractProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
+                            File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
                             if (file.canRead()) {
                                 cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
                             }

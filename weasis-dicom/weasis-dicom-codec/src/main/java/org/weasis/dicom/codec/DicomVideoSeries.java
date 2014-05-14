@@ -22,7 +22,7 @@ import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.StreamUtils;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -66,7 +66,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements FileE
                             FileOutputStream out = null;
                             try {
                                 File videoFile =
-                                    File.createTempFile("video_", ".mpg", AbstractProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                    File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 in = new FileInputStream(dcmVideo.getFile());
                                 out = new FileOutputStream(videoFile);
                                 StreamUtils.skipFully(in, bulkData.offset);

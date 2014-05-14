@@ -17,15 +17,15 @@ import java.util.Vector;
 import javax.swing.AbstractListModel;
 import javax.swing.JList;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 public class JIListModel extends AbstractListModel implements JIFileModel {
 
-    public static final File EXPLORER_CACHE_DIR = AbstractProperties.buildAccessibleTempDirectory(
-        AbstractProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
+    public static final File EXPLORER_CACHE_DIR = AppProperties.buildAccessibleTempDirectory(
+        AppProperties.FILE_CACHE_DIR.getName(), "explorer"); //$NON-NLS-1$
 
     private final OrderedFileList sortedList;
 

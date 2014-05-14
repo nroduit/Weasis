@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
 
@@ -42,19 +42,19 @@ public class BundleTools {
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     private static final File propsFile;
     static {
-        StringBuilder bufDir = new StringBuilder(AbstractProperties.WEASIS_PATH);
+        StringBuilder bufDir = new StringBuilder(AppProperties.WEASIS_PATH);
         bufDir.append(File.separator);
         bufDir.append("preferences");
         bufDir.append(File.separator);
-        bufDir.append(AbstractProperties.WEASIS_USER);
+        bufDir.append(AppProperties.WEASIS_USER);
         bufDir.append(File.separator);
-        bufDir.append(AbstractProperties.WEASIS_PROFILE);
+        bufDir.append(AppProperties.WEASIS_PROFILE);
 
         File dir = new File(bufDir.toString());
         try {
             dir.mkdirs();
         } catch (Exception e) {
-            dir = new File(AbstractProperties.WEASIS_PATH);
+            dir = new File(AppProperties.WEASIS_PATH);
             e.printStackTrace();
         }
         propsFile = new File(dir, "weasis.properties"); //$NON-NLS-1$

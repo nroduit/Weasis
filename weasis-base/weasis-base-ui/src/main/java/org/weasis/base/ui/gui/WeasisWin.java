@@ -68,7 +68,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -196,11 +196,11 @@ public class WeasisWin {
         setSelectedPlugin(null);
         rootPaneContainer.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
 
-        rootPaneContainer.setGlassPane(AbstractProperties.glassPane);
+        rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
         if (frame != null) {
-            frame.setTitle(AbstractProperties.WEASIS_NAME
-                + " v" + AbstractProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
+            frame.setTitle(AppProperties.WEASIS_NAME
+                + " v" + AppProperties.WEASIS_VERSION + " " + Messages.getString("WeasisWin.winTitle")); //$NON-NLS-1$
             ImageIcon icon = ResourceUtil.getIconLogo64();
             if (icon != null) {
                 frame.setIconImage(icon.getImage()); //$NON-NLS-1$
@@ -692,7 +692,7 @@ public class WeasisWin {
         });
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
-            new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AbstractProperties.WEASIS_NAME)); //$NON-NLS-1$
+            new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
         aboutMenuItem.addActionListener(new ActionListener() {
 
             @Override

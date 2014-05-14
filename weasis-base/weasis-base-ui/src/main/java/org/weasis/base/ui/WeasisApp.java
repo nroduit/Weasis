@@ -17,7 +17,7 @@ import java.io.IOException;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 
 public class WeasisApp {
@@ -41,7 +41,7 @@ public class WeasisApp {
         Option opt = Options.compile(usage).parse(argv);
 
         if (opt.isSet("version")) { //$NON-NLS-1$
-            System.out.println(AbstractProperties.WEASIS_VERSION);
+            System.out.println(AppProperties.WEASIS_VERSION);
         } else {
             opt.usage();
         }

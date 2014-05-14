@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,11 +19,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.imageio.stream.ImageInputStream;
 
 public class FileUtil {
+    public static final int FILE_BUFFER = 4096;
 
     public static void safeClose(final Closeable object) {
         try {
@@ -42,6 +47,30 @@ public class FileUtil {
             }
         } catch (IOException e) {
             // Do nothing
+        }
+    }
+
+    public static void recursiveDelete(File rootDir, boolean deleteRoot) {
+        if ((rootDir == null) || !rootDir.isDirectory()) {
+            return;
+        }
+        File[] childDirs = rootDir.listFiles();
+        if (childDirs != null) {
+            for (File f : childDirs) {
+                if (f.isDirectory()) {
+                    recursiveDelete(f, deleteRoot);
+                    f.delete();
+                } else {
+                    try {
+                        f.delete();
+                    } catch (Exception e) {
+                        // Do nothing, wait next start to delete it
+                    }
+                }
+            }
+        }
+        if (deleteRoot) {
+            rootDir.delete();
         }
     }
 
@@ -105,7 +134,7 @@ public class FileUtil {
             return;
         }
         try {
-            byte[] buf = new byte[4096];
+            byte[] buf = new byte[FILE_BUFFER];
             int offset;
             while ((offset = inputStream.read(buf)) > 0) {
                 out.write(buf, 0, offset);
@@ -121,15 +150,64 @@ public class FileUtil {
         }
     }
 
-    public static void writeLogoFiles(String srcPath, String outputDir) {
-        String[] files = { "about.png", "logo-button.png" };
-        for (String lf : files) {
-            try {
-                URL url = new URL(srcPath + "/" + lf);
-                writeFile(url.openStream(), new FileOutputStream(new File(outputDir, lf)));
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-            }
+    public static String writeResources(String srcPath, File cacheDir, String date) throws Exception {
+
+        String fileDate = null;
+
+        URL url = new URL(srcPath);
+        URLConnection urlConnection = url.openConnection();
+        long last = urlConnection.getLastModified();
+        if (last != 0) {
+            fileDate = Long.toString(last);
         }
+        // Rebuild a cache for resources based on the last modified date
+        if (!cacheDir.canRead() || date == null || !date.equals(fileDate)) {
+            recursiveDelete(cacheDir, false);
+            unzip(urlConnection.getInputStream(), cacheDir);
+        }
+        return fileDate;
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        if (in == null || out == null) {
+            return;
+        }
+        byte[] buf = new byte[FILE_BUFFER];
+        int offset;
+        while ((offset = in.read(buf)) > 0) {
+            out.write(buf, 0, offset);
+        }
+        out.flush();
+    }
+
+    private static void copyZip(InputStream in, File file) throws IOException {
+        OutputStream out = new FileOutputStream(file);
+        try {
+            copy(in, out);
+        } finally {
+            out.close();
+        }
+    }
+
+    public static void unzip(InputStream inputStream, File directory) throws IOException {
+        if (inputStream == null || directory == null) {
+            return;
+        }
+        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(inputStream));
+        try {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File file = new File(directory, entry.getName());
+                if (entry.isDirectory()) {
+                    file.mkdirs();
+                } else {
+                    file.getParentFile().mkdirs();
+                    copyZip(zis, file);
+                }
+            }
+        } finally {
+            safeClose(zis);
+        }
+
     }
 }

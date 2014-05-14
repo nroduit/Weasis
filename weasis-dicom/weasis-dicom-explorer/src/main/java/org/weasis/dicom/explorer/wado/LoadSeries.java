@@ -49,7 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -86,7 +86,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     private static final Logger log = LoggerFactory.getLogger(LoadSeries.class);
     public static final String CONCURRENT_DOWNLOADS_IN_SERIES = "download.concurrent.series.images"; //$NON-NLS-1$
 
-    public static final File DICOM_TMP_DIR = AbstractProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
+    public static final File DICOM_TMP_DIR = AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
     public static final TagW DOWNLOAD_START_TIME = new TagW("", TagType.Time, 3); //$NON-NLS-1$
 
     private static final ExecutorService executor = Executors.newFixedThreadPool(3);
@@ -628,7 +628,7 @@ public class LoadSeries extends ExplorerTask implements SeriesImporter {
     // InputStream httpStream = null;
     // // File outFile = new File(TEMP_DIR + SOPInstanceUID);
     // File tempFile = File.createTempFile("image_", ".dcm",
-    // AbstractProperties.APP_TEMP_DIR);
+    // AppProperties.APP_TEMP_DIR);
     // tempFile.deleteOnExit();
     // try {
     // tempFileStream = new BufferedOutputStream(new

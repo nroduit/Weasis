@@ -13,9 +13,18 @@ package org.weasis.dicom.codec.display;
 import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
-    ImageModality(Messages.getString("Modality.by_modality")), //$NON-NLS-1$
 
     Default(Messages.getString("Modality.default")), //$NON-NLS-1$
+
+    AU("Audio"),
+
+    BI("Biomagnetic imaging"),
+
+    CD(" Color flow Doppler"),
+
+    DD("Duplex Doppler"),
+
+    DG("Diaphanography"),
 
     CR("Computed Radiography"), //$NON-NLS-1$
 
@@ -23,7 +32,23 @@ public enum Modality {
 
     DX("Digital Radiography"), //$NON-NLS-1$
 
+    ECG("Electrocardiography"),
+
+    EPS("Cardiac Electrophysiology"),
+
     ES("Endoscopy"), //$NON-NLS-1$
+
+    GM("General Microscopy"),
+
+    HC("Hard Copy"),
+
+    HD("Hemodynamic Waveform"),
+
+    IO("Intra-oral Radiography"),
+
+    IVUS("Intravascular Ultrasound"),
+
+    LS("Laser surface scan"),
 
     MG("Mammography"), //$NON-NLS-1$
 
@@ -33,6 +58,8 @@ public enum Modality {
 
     OT("Other"), //$NON-NLS-1$
 
+    OP("Ophthalmic Photography"),
+
     PR("Presentation State"), //$NON-NLS-1$
 
     PX("Panoramic X-Ray"), //$NON-NLS-1$
@@ -41,9 +68,31 @@ public enum Modality {
 
     RF("Radio Fluoroscopy"), //$NON-NLS-1$
 
-    US("Ultrasound"), //$NON-NLS-1$
+    RG("Radiographic imaging (conventional film/screen)"),
+
+    RTDOSE("Radiotherapy Dose"),
+
+    RTIMAGE("Radiotherapy Image"),
+
+    RTPLAN("Radiotherapy Plan"),
+
+    RTRECORD("RT Treatment Record"),
+
+    RTSTRUCT("Radiotherapy Structure Set"),
 
     SC("Secondary Capture"), //$NON-NLS-1$
+
+    SM("Slide Microscopy"),
+
+    SMR("Stereometric Relationship"),
+
+    SR("SR Document"),
+
+    ST("Single-photon emission computed tomography (SPECT)"),
+
+    TG("Thermography"),
+
+    US("Ultrasound"), //$NON-NLS-1$
 
     XA("X-Ray Angiography"), //$NON-NLS-1$
 

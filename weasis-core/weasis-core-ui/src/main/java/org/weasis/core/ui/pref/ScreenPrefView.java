@@ -25,7 +25,6 @@ import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.NumberFormat;
 import java.util.List;
 
 import javax.swing.Box;
@@ -38,15 +37,16 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class ScreenPrefView extends AbstractItemDialogPage {
@@ -141,7 +141,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     }
 
                     final CalibDialog dialog =
-                        new CalibDialog(SwingUtilities.getWindowAncestor((Component) e.getSource()), title,
+                        new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
                             ModalityType.APPLICATION_MODAL, monitor);
                     dialog.setBounds(frame.getBounds());
                     frame.dispose();
@@ -248,8 +248,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         private final Monitor monitor;
 
         private final Cross cross;
-        private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(
-            NumberFormat.getIntegerInstance());
+        private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(LocalUtil.getIntegerInstance());
         private final JComboBox jComboBoxType = new JComboBox(new String[] { "Displayed horizontal line length",
             "Displayed vertical line length", "Screen size (diagonal)" });
         private final JComboBox jComboBoxUnit = new JComboBox(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER,

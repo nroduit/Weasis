@@ -5,7 +5,7 @@ import java.awt.Color;
 import org.simpleframework.xml.convert.Converter;
 import org.simpleframework.xml.stream.InputNode;
 import org.simpleframework.xml.stream.OutputNode;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.service.WProperties;
 
 public class ColorConverter implements Converter<Color> {
 
@@ -18,11 +18,11 @@ public class ColorConverter implements Converter<Color> {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return AbstractProperties.hexadecimal2Color(rgb);
+        return WProperties.hexadecimal2Color(rgb);
     }
 
     @Override
     public void write(OutputNode node, Color color) throws Exception {
-        node.setAttribute("rgb", AbstractProperties.color2Hexadecimal(color));
+        node.setAttribute("rgb", WProperties.color2Hexadecimal(color));
     }
 }

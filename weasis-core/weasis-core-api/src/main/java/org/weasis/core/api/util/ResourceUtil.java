@@ -7,7 +7,6 @@ import java.net.URL;
 
 import javax.swing.ImageIcon;
 
-import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.BundleTools;
@@ -54,22 +53,31 @@ public class ResourceUtil {
     }
 
     public static ImageIcon getLargeLogo() {
-        return getLogo("about.png");
+        return getLogo("images" + File.separator + "about.png");
     }
 
     public static ImageIcon getIconLogo64() {
-        return getLogo("logo-button.png");
+        return getLogo("images" + File.separator + "logo-button.png");
     }
 
     public static ImageIcon getLogo(String filename) {
         ImageIcon icon = null;
         try {
-            File file = new File(BundleTools.SYSTEM_PREFERENCES.getProperty(Constants.FRAMEWORK_STORAGE), filename);
-            icon = new ImageIcon(file.toURI().toURL());
+            File file = getResource(filename);
+            if (file != null && file.canRead()) {
+                icon = new ImageIcon(file.toURI().toURL());
+            }
         } catch (Exception e) {
             LOGGER.error("Cannot read logo image:{}", e.getMessage());
         }
         return icon;
+    }
+
+    public static File getResource(String filename) {
+        if (filename != null) {
+            return new File(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"), filename);
+        }
+        return null;
     }
 
 }

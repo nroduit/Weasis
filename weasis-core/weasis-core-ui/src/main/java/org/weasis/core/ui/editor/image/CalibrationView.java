@@ -39,6 +39,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.graphic.Graphic;
 import org.weasis.core.ui.graphic.LineGraphic;
@@ -78,6 +79,7 @@ public class CalibrationView extends JPanel {
         gridBagLayout2.columnWeights = new double[] { 0.0, 1.0, 0.0, 0.0 };
         jPanelMode.setLayout(gridBagLayout2);
         JMVUtils.setPreferredWidth(jTextFieldLineWidth, 170);
+        jTextFieldLineWidth.setLocale(LocalUtil.getLocaleFormat());
         jTextFieldLineWidth.setFormatterFactory(DecFormater.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
         jTextFieldLineWidth.setValue(1.0);
         JMVUtils.addCheckAction(jTextFieldLineWidth);

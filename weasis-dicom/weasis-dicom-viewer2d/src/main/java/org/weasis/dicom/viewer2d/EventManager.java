@@ -90,7 +90,6 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.LutManager;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
-import org.weasis.dicom.codec.display.ViewingProtocols;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -135,7 +134,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private final ComboItemListener lutAction;
     private final ComboItemListener filterAction;
     private final ComboItemListener sortStackAction;
-    private final ComboItemListener viewingProtocolAction;
     private final ComboItemListener layoutAction;
     private final ComboItemListener synchAction;
     private final ComboItemListener measureAction;
@@ -183,7 +181,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         iniAction(lutAction = newLutAction());
         iniAction(filterAction = newFilterAction());
         iniAction(sortStackAction = newSortStackAction());
-        iniAction(viewingProtocolAction = newViewingProtocolAction());
         iniAction(layoutAction =
             newLayoutAction(View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST
                 .size()])));
@@ -635,17 +632,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         };
     }
 
-    private ComboItemListener newViewingProtocolAction() {
-        return new ComboItemListener(ActionW.VIEWINGPROTOCOL, ViewingProtocols.getValues()) {
-
-            @Override
-            public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
-            }
-        };
-    }
-
     @Override
     public ActionW getActionFromCommand(String command) {
         ActionW action = super.getActionFromCommand(command);
@@ -677,7 +663,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             // TODO - following key action handling do not return nothing and execute code instead
             // should be called from within an outer method like keyPressed(KeyEvent e)
 
-            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier) {
+            if (keyEvent == ActionW.CINESTART.getKeyCode() && ActionW.CINESTART.getModifier() == modifier
+                && moveTroughSliceAction.isActionEnabled()) {
                 if (moveTroughSliceAction.isCining()) {
                     moveTroughSliceAction.stop();
                 } else {
@@ -685,23 +672,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
             } else if (modifier == 0) {
                 // No modifier, otherwise it will conflict with other shortcuts like ctrl+a and ctrl+d
-                if (keyEvent == KeyEvent.VK_D) {
+                if (keyEvent == KeyEvent.VK_D && measureAction.isActionEnabled()) {
                     for (Object obj : measureAction.getAllItem()) {
                         if (obj instanceof LineGraphic) {
                             setMeasurement(obj);
                             break;
                         }
                     }
-                } else if (keyEvent == KeyEvent.VK_A) {
+                } else if (keyEvent == KeyEvent.VK_A && measureAction.isActionEnabled()) {
                     for (Object obj : measureAction.getAllItem()) {
                         if (obj instanceof AngleToolGraphic) {
                             setMeasurement(obj);
                             break;
                         }
                     }
-                } else if (keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
+                } else if (keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode() && koToggleAction.isActionEnabled()) {
                     koToggleAction.setSelected(!koToggleAction.isSelected());
-                } else {
+                } else if (presetAction.isActionEnabled()) {
                     DefaultComboBoxModel model = presetAction.getModel();
                     for (int i = 0; i < model.getSize(); i++) {
                         PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
@@ -714,7 +701,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         }
 
-        return action;
+        ActionState a1 = getAction(action);
+        if (a1 == null || a1.isActionEnabled()) {
+            return action;
+        }
+        return null;
     }
 
     private void setMeasurement(Object obj) {
@@ -887,7 +878,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         }
 
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
-        viewingProtocolAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.VIEWINGPROTOCOL.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
         koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));

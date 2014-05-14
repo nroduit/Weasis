@@ -42,7 +42,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.Tree;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
-import org.weasis.core.api.gui.util.AbstractProperties;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -989,7 +989,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     File[] xmlFiles = new File[args.size()];
                     for (int i = 0; i < xmlFiles.length; i++) {
                         try {
-                            File tempFile = File.createTempFile("wado_", ".xml", AbstractProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                             if (FileUtil.writeStream(new ByteArrayInputStream(Base64.decode(xmlRef[i])),
                                 new FileOutputStream(tempFile)) == -1) {
                                 xmlFiles[i] = tempFile;
@@ -1014,7 +1014,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                             dirs[i] = dirs[i].trim().replaceAll("/", File.separator); //$NON-NLS-1$
                         }
                         File[] files = new File[dirs.length];
-                        boolean notCaseSensitive = AbstractProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
+                        boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
                         if (notCaseSensitive) {
                             Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
                         }
