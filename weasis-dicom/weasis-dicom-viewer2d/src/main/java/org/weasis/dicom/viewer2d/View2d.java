@@ -365,7 +365,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     setKeyObjectSelectionFilterState((Boolean) val);
                 } else if (command.equals(ActionW.KO_TOOGLE_STATE.cmd())) {
                     // KOManager.toogleKoState(this);
-                    updateKOselectedState();
+                    // updateKOselectedState(); // TODO handle eState change somewhere in better place
+                    koStarButton.setState((Boolean) val ? eState.SELECTED : eState.UNSELECTED);
+                    actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), val);
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
@@ -679,12 +681,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.ZOOM.cmd(), zoom);
     }
 
-    @Deprecated
     void updateKOButtonVisibleState() {
 
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
         boolean koElementExist = (koElements != null && koElements.size() > 0);
-
+        // TODO may be should be a parameter so it wouln't have to be computed again
+        
         boolean needToRepaint = false;
 
         for (ViewButton vb : getViewButtons()) {
@@ -701,22 +703,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (koStarButton.isVisible() != koElementExist) {
             koStarButton.setVisible(koElementExist);
 
+            // TODO for the following think of a better place like somewhere that listen dicomModel update firePropertyChange
+
             // Force the KO annotation preference to be set visible or not depending if a KO object is loaded with any
             // reference on the series in this view, or if new KO were created for this patient
             infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, koElementExist);
             eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
                 null, null, EVENT.SELECT_VIEW)); // call iniTreeValues in DisplayTool to update checkBox
-
+            
+            
             needToRepaint = true;
         }
 
-        // if (koElementExist) {
-        // needToRepaint = updateKOselectedState();
-        // }
-
-        // if (needToRepaint) {
-        repaint();
-        // }
+        if (needToRepaint) {
+            repaint();
+        }
     }
 
     /**

@@ -234,7 +234,7 @@ public final class KOManager {
 
         if (hasChanged) {
             DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
-            // Fire an event since any view in the View2dContainner may have its KO selected state changed
+            // Fire an event since any view in any View2dContainner may have its KO selected state changed
             dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
                 validKOSelection));
         }
@@ -256,7 +256,7 @@ public final class KOManager {
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Deprecated
-    public static void toogleKoStateOld(final DefaultView2d<DicomImageElement> defaultView2d) {
+    public static void toogleKoState(final DefaultView2d<DicomImageElement> defaultView2d) {
 
         MediaSeries<DicomImageElement> currentDicomSeries = defaultView2d.getSeries();
         DicomImageElement currentImage = defaultView2d.getImage();
