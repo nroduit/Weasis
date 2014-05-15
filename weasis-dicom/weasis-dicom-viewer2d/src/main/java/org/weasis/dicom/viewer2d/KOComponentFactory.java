@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
@@ -31,6 +32,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 
 /**
  * @author benoit jacquemoud
@@ -93,16 +95,24 @@ public final class KOComponentFactory {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static KOViewButton buildKoStarButton(final View2d currentView) {
+    public static KOViewButton buildKoStarButton(final View2d view2d) {
 
         return new KOViewButton(new ShowPopup() {
             @Override
             public void showPopup(Component invoker, int x, int y) {
 
-                ToggleButtonListener koToggleAction =
-                    ((ToggleButtonListener) EventManager.getInstance().getAction(ActionW.KO_TOOGLE_STATE));
+                EventManager evtMgr = EventManager.getInstance();
+                boolean currentSelectedState = view2d.koStarButton.state.equals(eState.SELECTED) ? true : false;
 
-                koToggleAction.setSelected(!koToggleAction.isSelected());
+                if (evtMgr.getSelectedViewPane() == view2d) {
+                    ActionState koToggleAction = view2d.getEventManager().getAction(ActionW.KO_TOOGLE_STATE);
+                    if (koToggleAction instanceof ToggleButtonListener) {
+                        ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
+                    }
+                } else {
+                    KOManager.setKeyObjectReference(!currentSelectedState, view2d);
+                    evtMgr.updateKeyObjectComponentsListener(evtMgr.getSelectedViewPane());
+                }
             }
         });
     }

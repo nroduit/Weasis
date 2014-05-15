@@ -578,14 +578,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private ToggleButtonListener newKOToggleAction() {
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
-            public void actionPerformed(boolean selected) {
+            public void actionPerformed(boolean newSelectedState) {
 
-                if (KOManager.setKeyObjectReference(selected, getSelectedViewPane())) {
-                    firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                        selected));
-                } else {
-                    setSelectedWithoutTriggerAction(!selected); // canceled
+                if (KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane())) {
+                    KOManager.updateKOSelectionChange(getSelectedViewPane());
                 }
+                updateKeyObjectComponentsListener(getSelectedViewPane());
             }
         };
     }
@@ -596,6 +594,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void itemStateChanged(Object object) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     object));
+
+                KOManager.updateKOSelectionChange(getSelectedViewPane());
+                updateKeyObjectComponentsListener(getSelectedViewPane());
             }
         };
     }
@@ -606,6 +607,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void actionPerformed(boolean selected) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
                     selected));
+                KOManager.updateKOSelectionChange(getSelectedViewPane());
+                updateKeyObjectComponentsListener(getSelectedViewPane());
             }
         };
     }
@@ -880,11 +883,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         sortStackAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.SORTSTACK.cmd()));
         inverseStackAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd()));
 
-        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
-        koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
-
-        koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
-        koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+        updateKeyObjectComponentsListener(view2d);
 
         // register all actions for the selected view and for the other views register according to synchview.
         updateAllListeners(selectedView2dContainer, (SynchView) synchAction.getSelectedItem());
@@ -898,6 +897,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             }
         }
         return true;
+    }
+
+    public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
+        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
+        koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+
+        koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
+        koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
     }
 
     private void updateWindowLevelComponentsListener(DicomImageElement image, DefaultView2d<DicomImageElement> view2d) {
