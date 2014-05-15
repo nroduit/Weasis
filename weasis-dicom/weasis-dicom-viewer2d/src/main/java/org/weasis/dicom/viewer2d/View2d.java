@@ -71,7 +71,6 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
@@ -364,10 +363,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
                     setKeyObjectSelectionFilterState((Boolean) val);
                 } else if (command.equals(ActionW.KO_TOOGLE_STATE.cmd())) {
-                    // KOManager.toogleKoState(this);
-                    // updateKOselectedState(); // TODO handle eState change somewhere in better place
-                    koStarButton.setState((Boolean) val ? eState.SELECTED : eState.UNSELECTED);
-                    actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), val);
+
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
@@ -449,7 +445,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         setPresentationState(null);
     }
 
-    @Deprecated
     public void setKeyObjectSelection(Object newVal) {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
@@ -461,14 +456,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         actionsInView.put(ActionW.KO_SELECTION.cmd(), newVal);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
-
-        updateKOSelectionChange();
-
-        // eventManager.updateComponentsListener(this); // needed to take care of the FILTERED_SERIES changes
-        // setSeries(series, getImage());
     }
 
-    @Deprecated
     public void setKeyObjectSelectionFilterState(Boolean newState) {
 
         Filter<DicomImageElement> sopInstanceUIDFilter = null;
@@ -482,11 +471,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         actionsInView.put(ActionW.KO_FILTER.cmd(), newState);
         actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
-
-        updateKOSelectionChange();
-
-        // eventManager.updateComponentsListener(this);
-        // setSeries(series, getImage());
     }
 
     void setPresentationState(Object val) {
@@ -681,12 +665,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         actionsInView.put(ActionW.ZOOM.cmd(), zoom);
     }
 
-    void updateKOButtonVisibleState() {
+    public void updateKOButtonVisibleState() {
 
         Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
         boolean koElementExist = (koElements != null && koElements.size() > 0);
-        // TODO may be should be a parameter so it wouln't have to be computed again
-        
+        // TODO try a given parameter so it wouldn't have to be computed again
+
         boolean needToRepaint = false;
 
         for (ViewButton vb : getViewButtons()) {
@@ -703,16 +687,20 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (koStarButton.isVisible() != koElementExist) {
             koStarButton.setVisible(koElementExist);
 
-            // TODO for the following think of a better place like somewhere that listen dicomModel update firePropertyChange
-
             // Force the KO annotation preference to be set visible or not depending if a KO object is loaded with any
             // reference on the series in this view, or if new KO were created for this patient
             infoLayer.setDisplayPreferencesValue(AnnotationsLayer.KEY_OBJECT, koElementExist);
+
+            // TODO for the following think of a better place like somewhere that listen dicomModel update
+            // firePropertyChange since it concerns only current view's eventManager to be updated
             eventManager.fireSeriesViewerListeners(new SeriesViewerEvent(eventManager.getSelectedView2dContainer(),
                 null, null, EVENT.SELECT_VIEW)); // call iniTreeValues in DisplayTool to update checkBox
-            
-            
+
             needToRepaint = true;
+        }
+
+        if (koElementExist) {
+            needToRepaint = updateKOselectedState();
         }
 
         if (needToRepaint) {
@@ -723,10 +711,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     /**
      * @return true if the state has changed and if the view or at least the KO button need to be repaint
      */
-    @Deprecated
-    protected boolean updateKOselectedState() {
 
-        // TODO - should not be called here but in a manager listener dedicated to this job
+    protected boolean updateKOselectedState() {
 
         eState previousState = koStarButton.getState();
 
@@ -736,28 +722,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
         DicomImageElement dicomImage = getImage();
 
-        String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
-        String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
+        if (dicomImage != null) {
+            String sopInstanceUID = (String) dicomImage.getTagValue(TagW.SOPInstanceUID);
+            String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
 
-        if (dicomImage != null && sopInstanceUID != null && seriesInstanceUID != null) {
+            if (sopInstanceUID != null && seriesInstanceUID != null) {
+                if ((selectedKO instanceof KOSpecialElement)) {
+                    KOSpecialElement koElement = (KOSpecialElement) selectedKO;
+                    Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
 
-            if ((selectedKO instanceof KOSpecialElement)) {
-                KOSpecialElement koElement = (KOSpecialElement) selectedKO;
-                Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+                    if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
+                        newSelectionState = eState.SELECTED;
+                    }
+                } else {
+                    Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
 
-                if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
-                    newSelectionState = eState.SELECTED;
-                }
-            } else {
-                Collection<KOSpecialElement> koElements = DicomModel.getKoSpecialElements(getSeries());
+                    if (koElements != null) {
+                        for (KOSpecialElement koElement : koElements) {
+                            Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
 
-                if (koElements != null) {
-                    for (KOSpecialElement koElement : koElements) {
-                        Set<String> sopInstanceUIDSet = koElement.getReferencedSOPInstanceUIDSet(seriesInstanceUID);
-
-                        if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
-                            newSelectionState = eState.EXIST;
-                            break;
+                            if (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUID)) {
+                                newSelectionState = eState.EXIST;
+                                break;
+                            }
                         }
                     }
                 }
@@ -766,11 +753,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         koStarButton.setState(newSelectionState);
 
-        // TODO - fix this DIRTY code
         Boolean selected = koStarButton.getState().equals(eState.SELECTED) ? true : false;
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), selected);
-        ((ToggleButtonListener) eventManager.getAction(ActionW.KO_TOOGLE_STATE))
-            .setSelectedWithoutTriggerAction(selected);
 
         return (previousState != newSelectionState);
     }
@@ -803,82 +787,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         int yPos = (int) (Math.round(drawY) + (0.3 * fontHeight));
 
         return new Rectangle(xPos, yPos, koStarIcon.getIconWidth(), koStarIcon.getIconHeight());
-    }
-
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public void updateKOSelectionChange() {
-
-        // TODO should not be called here but from event manager or view2dContainer !!!!
-        // !!!!! this call must be done only from a the selected viewPane
-
-        DicomSeries dicomSeries = (DicomSeries) getSeries();
-        DicomImageElement currentImg = getImage();
-
-        Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
-
-        if (currentImg != null && dicomSeries != null && selectedKO instanceof KOSpecialElement) {
-
-            if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
-
-                int newImageIndex = getFrameIndex();
-                // The getFrameIndex() return a valid index for the current image displayed according to the current
-                // FILTERED_SERIES and the current SortComparator
-
-                // If the current image is not part anymore of the KO FILTERED_SERIES then it has been removed from the
-                // selection. Hence, the nearest image should be selected.
-
-                Filter<DicomImageElement> dicomFilter =
-                    (Filter<DicomImageElement>) getActionValue(ActionW.FILTERED_SERIES.cmd());
-                if (newImageIndex < 0) {
-
-                    double[] val = (double[]) currentImg.getTagValue(TagW.SlicePosition);
-                    double location = val[0] + val[1] + val[2];
-                    Double offset = (Double) getActionValue(ActionW.STACK_OFFSET.cmd());
-                    if (offset != null) {
-                        location += offset;
-                    }
-
-                    if (dicomSeries.size(dicomFilter) > 0) {
-                        newImageIndex =
-                            dicomSeries.getNearestImageIndex(location, getTileOffset(), dicomFilter,
-                                getCurrentSortComparator());
-                    } else {
-                        // If there is no more image in KO series filtered then disable the KO_FILTER
-                        dicomFilter = null;
-                        actionsInView.put(ActionW.KO_FILTER.cmd(), false);
-                        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), dicomFilter);
-                        newImageIndex = getFrameIndex();
-                    }
-                }
-
-                // Update the sliceAction component for the current selected View which fire a SCROLL_SERIES changeEvent
-                // (see EventManager -> stateChanged()). This change will be handled by any DefaultView2d
-                // object that listen this event change if the synchview Action is Enable
-
-                // In case a new KO selection has been added the FILTERED_SERIES size will be updated in consequence
-                // This avoids to call eventManager.updateComponentsListener since only moveTroughSliceAction should be
-                // updated
-
-                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                SliderCineListener sliceAction = null;
-                if (seqAction instanceof SliderCineListener) {
-                    sliceAction = (SliderCineListener) seqAction;
-                } else {
-                    return;
-                }
-
-                sliceAction.setMinMaxValue(1, dicomSeries.size(dicomFilter), newImageIndex + 1);
-            }
-
-            // DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
-
-            // Fire an event since any view in the View2dContainner may have its KO selected state changed
-            // dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, this, null,
-            // selectedKO));
-        }
-
-        updateKOButtonVisibleState();
     }
 
     @Override

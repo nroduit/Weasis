@@ -1663,6 +1663,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 return;
             }
 
+            if (pane.isContainingView(DefaultView2d.this) && pane.getSelectedImagePane() != DefaultView2d.this) {
+                // register all actions of the EventManager with this view waiting the focus gained in some cases is not
+                // enough, because others mouseListeners are triggered before the focus event (that means before
+                // registering the view in the EventManager)
+                pane.setSelectedImagePane(DefaultView2d.this);
+            }
+            // request the focus even it is the same pane selected
+            requestFocusInWindow();
+
             // Do select the view when pressing on a view button
             for (ViewButton b : getViewButtons()) {
                 if (b.isVisible() && b.contains(evt.getPoint())) {
@@ -1673,14 +1682,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 }
             }
 
-            if (pane.isContainingView(DefaultView2d.this) && pane.getSelectedImagePane() != DefaultView2d.this) {
-                // register all actions of the EventManager with this view waiting the focus gained in some cases is not
-                // enough, because others mouseListeners are triggered before the focus event (that means before
-                // registering the view in the EventManager)
-                pane.setSelectedImagePane(DefaultView2d.this);
-            }
-            // request the focus even it is the same pane selected
-            requestFocusInWindow();
             int modifiers = evt.getModifiersEx();
             MouseActions mouseActions = eventManager.getMouseActions();
             ActionW action = null;

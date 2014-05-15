@@ -74,11 +74,18 @@ public class KOSpecialElement extends DicomSpecialElement {
     }
 
     public Set<String> getReferencedSeriesInstanceUIDSet() {
-        if (seriesAndInstanceReferenceMapByStudyUID == null) {
+        if (sopInstanceReferenceMapBySeriesUID == null) {
             updateHierachicalSOPInstanceReference();
         }
 
         return sopInstanceReferenceMapBySeriesUID.keySet();
+    }
+
+    public boolean containsSeriesInstanceUIDReference(String seriesInstanceUIDReference) {
+        if (sopInstanceReferenceMapBySeriesUID == null) {
+            updateHierachicalSOPInstanceReference();
+        }
+        return sopInstanceReferenceMapBySeriesUID.containsKey(seriesInstanceUIDReference);
     }
 
     public Set<String> getReferencedSOPInstanceUIDSet() {
@@ -477,19 +484,15 @@ public class KOSpecialElement extends DicomSpecialElement {
             return false;
         }
 
-        if (!sopInstanceReferenceBySOPInstanceUID.isEmpty()) {
-            // Get the SeriesAndInstanceReference for this seriesUID
-            SeriesAndInstanceReference referencedSeries = seriesAndInstanceReferenceBySeriesUID.get(seriesInstanceUID);
+        if (sopInstanceReferenceBySOPInstanceUID.isEmpty()) {
 
-            // Update the current SeriesAndInstanceReference with the referencedSOPInstance Sequence
-            List<SOPInstanceReferenceAndMAC> referencedSOPInstances =
-                new ArrayList<SOPInstanceReferenceAndMAC>(sopInstanceReferenceBySOPInstanceUID.values());
-
-            referencedSeries.setReferencedSOPInstances(referencedSOPInstances);
-        } else {
+            sopInstanceReferenceMapBySeriesUID.remove(seriesInstanceUID);
             seriesAndInstanceReferenceBySeriesUID.remove(seriesInstanceUID);
 
-            if (!seriesAndInstanceReferenceBySeriesUID.isEmpty()) {
+            if (seriesAndInstanceReferenceBySeriesUID.isEmpty()) {
+                seriesAndInstanceReferenceMapByStudyUID.remove(studyInstanceUID);
+                hierachicalSOPInstanceReferenceByStudyUID.remove(studyInstanceUID);
+            } else {
                 // Get the HierachicalSOPInstanceReference for this studyUID
                 HierachicalSOPInstanceReference hierachicalDicom =
                     hierachicalSOPInstanceReferenceByStudyUID.get(studyInstanceUID);
@@ -499,17 +502,24 @@ public class KOSpecialElement extends DicomSpecialElement {
                     new ArrayList<SeriesAndInstanceReference>(seriesAndInstanceReferenceBySeriesUID.values());
 
                 hierachicalDicom.setReferencedSeries(referencedSeries);
-            } else {
-                seriesAndInstanceReferenceMapByStudyUID.remove(studyInstanceUID);
-                hierachicalSOPInstanceReferenceByStudyUID.remove(studyInstanceUID);
             }
+
+        } else {
+            // Get the SeriesAndInstanceReference for this seriesUID
+            SeriesAndInstanceReference referencedSeries = seriesAndInstanceReferenceBySeriesUID.get(seriesInstanceUID);
+
+            // Update the current SeriesAndInstanceReference with the referencedSOPInstance Sequence
+            List<SOPInstanceReferenceAndMAC> referencedSOPInstances =
+                new ArrayList<SOPInstanceReferenceAndMAC>(sopInstanceReferenceBySOPInstanceUID.values());
+
+            referencedSeries.setReferencedSOPInstances(referencedSOPInstances);
         }
 
         // Update the CurrentRequestedProcedureEvidences for the root dcmItems
         Attributes dcmItems = getMediaReader().getDicomObject();
         List<HierachicalSOPInstanceReference> referencedStudies = null;
 
-        if (!hierachicalSOPInstanceReferenceByStudyUID.isEmpty()) {
+        if (hierachicalSOPInstanceReferenceByStudyUID.isEmpty() == false) {
             referencedStudies =
                 new ArrayList<HierachicalSOPInstanceReference>(hierachicalSOPInstanceReferenceByStudyUID.values());
         }
@@ -607,7 +617,10 @@ public class KOSpecialElement extends DicomSpecialElement {
                 String seriesUID = (String) dicom.getTagValue(TagW.SeriesInstanceUID);
                 String sopInstanceUID = (String) dicom.getTagValue(TagW.SOPInstanceUID);
 
-                return getReferencedSOPInstanceUIDSet(seriesUID).contains(sopInstanceUID);
+                Set<String> referencedSOPInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesUID);
+
+                return referencedSOPInstanceUIDSet == null ? false : referencedSOPInstanceUIDSet
+                    .contains(sopInstanceUID);
             }
         };
         return filter;
