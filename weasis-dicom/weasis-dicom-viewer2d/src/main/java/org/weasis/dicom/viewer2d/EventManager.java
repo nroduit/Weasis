@@ -1104,7 +1104,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public static boolean hasSameSize(MediaSeries<DicomImageElement> series1, MediaSeries<DicomImageElement> series2) {
-        // Test if the two series has the same orientation
+        // Test if the two series has the same size
         if (series1 != null && series2 != null) {
             DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null, null);
             DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null, null);
