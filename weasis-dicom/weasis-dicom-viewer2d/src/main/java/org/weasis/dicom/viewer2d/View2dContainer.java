@@ -134,11 +134,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
-        this(VIEWS_1x1);
+        this(VIEWS_1x1, null);
     }
 
-    public View2dContainer(GridBagLayoutModel layoutModel) {
-        super(EventManager.getInstance(), layoutModel, View2dFactory.NAME, View2dFactory.ICON, null);
+    public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
+        super(EventManager.getInstance(), layoutModel, uid, View2dFactory.NAME, View2dFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -304,7 +304,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             // }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$
+                JMenu menu =
+                    ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.lut")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
                 if (invlutAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
@@ -316,13 +319,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             ActionState filterAction = eventManager.getAction(ActionW.FILTER);
             if (filterAction instanceof ComboItemListener) {
                 JMenu menu =
-                    ((ComboItemListener) filterAction).createMenu(Messages.getString("View2dContainer.filter")); //$NON-NLS-1$
+                    ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.filter")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 menuRoot.add(menu);
             }
             ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
             if (stackAction instanceof ComboItemListener) {
                 JMenu menu =
-                    ((ComboItemListener) stackAction).createMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                    ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
                 if (invstackAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
@@ -587,8 +594,10 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     for (DefaultView2d<DicomImageElement> v : view2ds) {
                         MediaSeries<DicomImageElement> s = v.getSeries();
                         if (series.equals(s)) {
-                            // Set to null to be sure that all parameters from the view are apply again to the Series
-                            // (for instance it is the same series with more images)
+                            /*
+                             * Set to null to be sure that all parameters from the view are apply again to the Series
+                             * (for instance it is the same series with more images)
+                             */
                             v.setSeries(null);
                             v.setSeries(series, null);
                         }
@@ -617,10 +626,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     specialElement = (DicomSpecialElement) newVal;
                 }
 
-                if (specialElement == null) {
-                    return;
-                }
-
                 if (specialElement instanceof PRSpecialElement) {
                     for (DefaultView2d<DicomImageElement> view : view2ds) {
                         if (view instanceof View2d) {
@@ -638,86 +643,58 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     }
                 }
 
-                // Following is about setting visible KOpopupButton in any view concerned by the KO selection updated
-                // Also the KO Annotation and the view border is about to be repaint if needed
-
-                if (specialElement instanceof KOSpecialElement) {
-
-                    KOSpecialElement updatedKOSelection = (KOSpecialElement) specialElement;
-
-                    EventManager evtMgr = EventManager.getInstance();
-                    SynchView synchview =
-                        (SynchView) ((ComboItemListener) evtMgr.getAction(ActionW.SYNCH)).getSelectedItem();
-
-                    boolean isScrollSeriesActionDisable =
-                        synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd()) == false;
-
-                    for (DefaultView2d<DicomImageElement> view : view2ds) {
-
-                        View2d view2d = ((View2d) view);
-                        DicomImageElement image = view2d.getImage();
-
-                        if ((view.getSeries() instanceof DicomSeries) == false || image == null) {
-                            continue;
-                        }
-
-                        DicomSeries dicomSeries = (DicomSeries) view.getSeries();
-                        String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
-
-                        if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false
-                            && updatedKOSelection.getMediaReader().isEditableDicom() == false) {
-                            continue;
-                        }
-
-                        boolean isKOFilterEnable = (Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd());
-
-                        if (isScrollSeriesActionDisable && isKOFilterEnable) {
-
-                            @SuppressWarnings("unchecked")
-                            Filter<DicomImageElement> dicomFilter =
-                                (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd());
-
-                            // The getFrameIndex() returns a valid index for the current image displayed according to
-                            // the current FILTERED_SERIES and the current SortComparator
-
-                            if (view2d.getFrameIndex() < 0) {
-
-                                // If the current image is not part anymore of the KO FILTERED_SERIES then it has been
-                                // removed from the selection. Hence, the nearest image should be selected.
-
-                                DicomImageElement newImage = null;
-
-                                if (dicomSeries.size(dicomFilter) > 0) {
-                                    double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
-                                    double location = val[0] + val[1] + val[2];
-                                    Double offset = (Double) view2d.getActionValue(ActionW.STACK_OFFSET.cmd());
-                                    if (offset != null) {
-                                        location += offset;
-                                    }
-
-                                    newImage =
-                                        dicomSeries.getNearestImage(location, view2d.getTileOffset(), dicomFilter,
-                                            view2d.getCurrentSortComparator());
-                                } else {
-                                    // If there is no more image in KO series filtered then disable the KO_FILTER
-                                    dicomFilter = null;
-                                    view2d.setActionsInView(ActionW.KO_FILTER.cmd(), false);
-                                    view2d.setActionsInView(ActionW.FILTERED_SERIES.cmd(), dicomFilter);
-                                    int newImageIndex = view2d.getFrameIndex();
-                                    newImage =
-                                        dicomSeries.getMedia(newImageIndex, dicomFilter,
-                                            view2d.getCurrentSortComparator());
-                                }
-
-                                if (newImage != null && !newImage.isImageAvailable()) {
-                                    newImage.getImage();
-                                }
-                                view2d.setImage(newImage);
-                            }
-                        }
-
-                        view2d.updateKOButtonVisibleState();
+                /*
+                 * Update if necessary all the views with the KOSpecialElement (Ko is selected in the view only if the
+                 * KO is newest than the previous one)
+                 */
+                else if (specialElement instanceof KOSpecialElement) {
+                    setKOSpecialElement((KOSpecialElement) specialElement, true, null);
+                }
+            } else if (ObservableEvent.BasicAction.Select.equals(action)) {
+                if (newVal instanceof KOSpecialElement) {
+                    // Match using UID of the plugin window and the source event
+                    if (this.getDockableUID().equals(evt.getSource())) {
+                        setKOSpecialElement((KOSpecialElement) newVal, false, true);
                     }
+                }
+            }
+        }
+    }
+
+    private void setKOSpecialElement(KOSpecialElement updatedKOSelection, boolean onlyNewestKO, Boolean enableFilter) {
+        if (updatedKOSelection != null) {
+            DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
+            ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels();
+            if (selectedView != null && viewList.size() > 1) {
+                /*
+                 * Set the selected view at the end of the list to trigger the synchronization of the SCROLL_SERIES
+                 * action at the end of the process
+                 */
+                viewList.remove(selectedView);
+                viewList.add(selectedView);
+            }
+
+            for (DefaultView2d<DicomImageElement> view : viewList) {
+
+                View2d view2d = ((View2d) view);
+
+                DicomImageElement image = view2d.getImage();
+                if ((view.getSeries() instanceof DicomSeries) == false || image == null) {
+                    continue;
+                }
+
+                DicomSeries dicomSeries = (DicomSeries) view.getSeries();
+                String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false
+                    && updatedKOSelection.getMediaReader().isEditableDicom() == false) {
+                    continue;
+                }
+
+                KOManager.updateKOFilter(view2d, updatedKOSelection, onlyNewestKO, enableFilter);
+
+                if (selectedView == view2d) {
+                    // Update the KO actions with the selected view
+                    EventManager.getInstance().updateKeyObjectComponentsListener(view2d);
                 }
             }
         }

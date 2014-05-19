@@ -134,12 +134,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     private final MouseHandler mouseHandler;
 
     public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String PluginName) {
-        this(eventManager, VIEWS_1x1, PluginName, null, null);
+        this(eventManager, VIEWS_1x1, PluginName, null, null, null);
     }
 
-    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel,
+    public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, GridBagLayoutModel layoutModel, String uid,
         String pluginName, Icon icon, String tooltips) {
-        super(pluginName, icon, tooltips);
+        super(uid, pluginName, icon, tooltips);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

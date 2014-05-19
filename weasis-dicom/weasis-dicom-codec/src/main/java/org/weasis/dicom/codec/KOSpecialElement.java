@@ -647,4 +647,5 @@ public class KOSpecialElement extends DicomSpecialElement {
         }
         return super.getFile();
     }
+
 }

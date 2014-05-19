@@ -42,6 +42,7 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.swing.Action;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -420,6 +421,12 @@ public class WeasisWin {
                     title = title.concat("..."); //$NON-NLS-1$
                 }
                 viewer.setPluginName(title);
+            }
+
+            // Override default plugin icon
+            Object val = props.get(ViewerPluginBuilder.ICON);
+            if (val instanceof Icon) {
+                viewer.getDockable().setTitleIcon((Icon) val);
             }
 
             boolean isregistered;

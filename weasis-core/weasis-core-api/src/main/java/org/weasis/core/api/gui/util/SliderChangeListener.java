@@ -237,23 +237,26 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (basicState.isActionEnabled()) {
+        if (basicState.isActionEnabled() && !e.isConsumed()) {
             int buttonMask = getButtonMaskEx();
-            if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
+            if ((e.getModifiersEx() & buttonMask) != 0) {
                 lastPosition = isMoveOnX() ? e.getX() : e.getY();
                 dragAccumulator = getValue();
             }
+        } else {
+            // Ensure to not enter in drag event when the mouse event is consumed
+            dragAccumulator = Double.MAX_VALUE;
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (basicState.isActionEnabled()) {
+        if (basicState.isActionEnabled() && !e.isConsumed()) {
             int buttonMask = getButtonMaskEx();
             int modifier = e.getModifiersEx();
             // dragAccumulator == Double.NaN when the listener did not catch the Pressed MouseEvent (could append in
             // multisplit container)
-            if (!e.isConsumed() && (modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
+            if ((modifier & buttonMask) != 0 && dragAccumulator != Double.MAX_VALUE) {
                 int position = isMoveOnX() ? e.getX() : e.getY();
                 int mask = (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
                 // Accelerate the action if ctrl or shift is down
@@ -280,7 +283,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        if (basicState.isActionEnabled()) {
+        if (basicState.isActionEnabled() && !e.isConsumed()) {
             setValue(getValue() + e.getWheelRotation() * e.getScrollAmount());
         }
     }

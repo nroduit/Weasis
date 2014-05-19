@@ -358,12 +358,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
                     actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
-                } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
-                    setKeyObjectSelection(val);
-                } else if (command.equals(ActionW.KO_FILTER.cmd())) {
-                    setKeyObjectSelectionFilterState((Boolean) val);
-                } else if (command.equals(ActionW.KO_TOOGLE_STATE.cmd())) {
-
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
@@ -443,34 +437,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     public void reset() {
         super.reset();
         setPresentationState(null);
-    }
-
-    public void setKeyObjectSelection(Object newVal) {
-
-        Filter<DicomImageElement> sopInstanceUIDFilter = null;
-
-        if ((Boolean) getActionValue(ActionW.KO_FILTER.cmd())) {
-            sopInstanceUIDFilter =
-                (newVal instanceof KOSpecialElement) ? ((KOSpecialElement) newVal).getSOPInstanceUIDFilter() : null;
-        }
-
-        actionsInView.put(ActionW.KO_SELECTION.cmd(), newVal);
-        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
-    }
-
-    public void setKeyObjectSelectionFilterState(Boolean newState) {
-
-        Filter<DicomImageElement> sopInstanceUIDFilter = null;
-
-        if (newState) {
-            Object selectedKO = getActionValue(ActionW.KO_SELECTION.cmd());
-            sopInstanceUIDFilter =
-                (selectedKO instanceof KOSpecialElement) ? ((KOSpecialElement) selectedKO).getSOPInstanceUIDFilter()
-                    : null;
-        }
-
-        actionsInView.put(ActionW.KO_FILTER.cmd(), newState);
-        actionsInView.put(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
     }
 
     void setPresentationState(Object val) {
@@ -824,17 +790,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         super.setImage(img);
 
-        updateButtonState(img, newImg);
+        updatePrButtonState(img, newImg);
     }
 
     void updatePR() {
         DicomImageElement img = imageLayer.getSourceImage();
         if (img != null) {
-            updateButtonState(img, true);
+            updatePrButtonState(img, true);
         }
     }
 
-    private void updateButtonState(DicomImageElement img, boolean newImg) {
+    private void updatePrButtonState(DicomImageElement img, boolean newImg) {
         if (img == null || newImg) {
             // Remove old PR button
             for (int i = getViewButtons().size() - 1; i >= 0; i--) {

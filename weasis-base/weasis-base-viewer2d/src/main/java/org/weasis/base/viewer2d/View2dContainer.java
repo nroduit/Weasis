@@ -103,11 +103,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     private static volatile boolean INI_COMPONENTS = false;
 
     public View2dContainer() {
-        this(VIEWS_1x1);
+        this(VIEWS_1x1, null);
     }
 
-    public View2dContainer(GridBagLayoutModel layoutModel) {
-        super(EventManager.getInstance(), layoutModel, ViewerFactory.NAME, ViewerFactory.ICON, null);
+    public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
+        super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -179,7 +179,10 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$
+                JMenu menu =
+                    ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.lut")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
                 if (invlutAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
@@ -191,7 +194,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             ActionState filterAction = eventManager.getAction(ActionW.FILTER);
             if (filterAction instanceof ComboItemListener) {
                 JMenu menu =
-                    ((ComboItemListener) filterAction).createMenu(Messages.getString("View2dContainer.filter")); //$NON-NLS-1$
+                    ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.filter")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 menuRoot.add(menu);
             }
             // ActionState stackAction = EventManager.getInstance().getAction(ActionW.SORTSTACK);

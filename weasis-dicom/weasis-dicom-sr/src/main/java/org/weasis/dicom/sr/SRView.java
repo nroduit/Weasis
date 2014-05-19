@@ -13,9 +13,7 @@ package org.weasis.dicom.sr;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,9 +41,10 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.macro.ImageSOPInstanceReference;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -201,16 +200,11 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                     if (s != null) {
                         SeriesViewerFactory plugin = UIManager.getViewerFactory(s.getMimeType());
                         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                            Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
-                            props.put(ViewerPluginBuilder.KOS, buildKO(ref));
-                            props.put(ViewerPluginBuilder.PR, buildPR(imgRef));
-                            ArrayList<MediaSeries<? extends MediaElement<?>>> list =
-                                new ArrayList<MediaSeries<? extends MediaElement<?>>>(1);
-                            list.add(s);
-                            ViewerPluginBuilder builder =
-                                new ViewerPluginBuilder(plugin, list, dicomView.getDataExplorerModel(), props);
-                            ViewerPluginBuilder.openSequenceInPlugin(builder);
-
+                            KOSpecialElement ko = buildKO(ref);
+                            PRSpecialElement pr = buildPR(imgRef);
+                            // TODO build a special series and add it to the model
+                            // model.addSpecialModality(s);
+                            model.openrelatedSeries(ko, patient);
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
@@ -251,7 +245,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         return null;
     }
 
-    private DicomSpecialElement buildKO(final ImageSOPInstanceReference ref) {
+    private KOSpecialElement buildKO(final ImageSOPInstanceReference ref) {
         if (ref == null) {
             return null;
         }
@@ -260,7 +254,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         return null;
     }
 
-    private DicomSpecialElement buildPR(final SRImageReference ref) {
+    private PRSpecialElement buildPR(final SRImageReference ref) {
         if (ref != null) {
             // TODO build PR
             return null;
