@@ -32,6 +32,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
@@ -64,6 +65,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     @Override
     public SeriesViewer<? extends MediaElement<?>> createSeriesViewer(Map<String, Object> properties) {
         GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
+        String uid = null;
         if (properties != null) {
             Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
             if (obj instanceof GridBagLayoutModel) {
@@ -85,8 +87,13 @@ public class ViewerFactory implements SeriesViewerFactory {
                     }
                 }
             }
+            // Set UID
+            Object val = properties.get(ViewerPluginBuilder.UID);
+            if (val instanceof String) {
+                uid = (String) val;
+            }
         }
-        View2dContainer instance = new View2dContainer(model);
+        View2dContainer instance = new View2dContainer(model, uid);
         if (properties != null) {
             Object obj = properties.get(DataExplorerModel.class.getName());
             if (obj instanceof DataExplorerModel) {

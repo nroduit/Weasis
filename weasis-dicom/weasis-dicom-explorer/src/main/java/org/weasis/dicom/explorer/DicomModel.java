@@ -27,9 +27,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -55,6 +59,9 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.Base64;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -676,6 +683,70 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
         }
         return null;
+    }
+
+    public static List<KOSpecialElement> getKoSpecialElements(MediaSeriesGroup patientGroup) {
+        if (patientGroup != null) {
+            List<DicomSpecialElement> kos =
+                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                List<KOSpecialElement> list = new ArrayList<KOSpecialElement>();
+                for (DicomSpecialElement el : kos) {
+                    if (el instanceof KOSpecialElement) {
+                        list.add((KOSpecialElement) el);
+                    }
+                }
+                return list;
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasPatientKoElements(MediaSeriesGroup patientGroup) {
+        if (patientGroup != null) {
+            List<DicomSpecialElement> kos =
+                (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
+            if (kos != null) {
+                for (DicomSpecialElement el : kos) {
+                    if (el instanceof KOSpecialElement) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public void openrelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
+        if (koSpecialElement != null && patient != null) {
+            SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+                Set<String> koSet = koSpecialElement.getReferencedSeriesInstanceUIDSet();
+                List<MediaSeries<? extends MediaElement<?>>> seriesList =
+                    new ArrayList<MediaSeries<? extends MediaElement<?>>>();
+
+                for (MediaSeriesGroup st : this.getChildren(patient)) {
+                    for (MediaSeriesGroup s : this.getChildren(st)) {
+                        if (koSet.contains(s.getTagValue(TagW.SeriesInstanceUID))) {
+                            seriesList.add((MediaSeries<? extends MediaElement<?>>) s);
+                        }
+                    }
+                }
+                if (seriesList.size() > 0) {
+                    String uid = UUID.randomUUID().toString();
+                    Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+                    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
+                    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+                    props.put(ViewerPluginBuilder.ICON,
+                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png")));
+                    props.put(ViewerPluginBuilder.UID, uid);
+                    ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
+                    ViewerPluginBuilder.openSequenceInPlugin(builder);
+                    this.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Select, uid, null,
+                        koSpecialElement));
+                }
+            }
+        }
     }
 
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {

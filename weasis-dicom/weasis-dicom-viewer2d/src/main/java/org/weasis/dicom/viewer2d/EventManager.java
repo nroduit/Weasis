@@ -371,6 +371,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         node.setParam(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
                     }
                     updateWindowLevelComponentsListener(image, view2d);
+
                 }
 
                 firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
@@ -378,6 +379,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     fireSeriesViewerListeners(new SeriesViewerEvent(selectedView2dContainer, series, image,
                         EVENT.SELECT));
                 }
+
+                updateKeyObjectComponentsListener(view2d);
 
             }
 
@@ -579,11 +582,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean newSelectedState) {
-
-                if (KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane())) {
-                    KOManager.updateKOSelectionChange(getSelectedViewPane());
-                }
-                updateKeyObjectComponentsListener(getSelectedViewPane());
+                KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane());
             }
         };
     }
@@ -592,11 +591,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
             @Override
             public void itemStateChanged(Object object) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    object));
-
-                KOManager.updateKOSelectionChange(getSelectedViewPane());
-                updateKeyObjectComponentsListener(getSelectedViewPane());
+                KOManager.updateKOFilter(getSelectedViewPane(), object, null);
             }
         };
     }
@@ -605,11 +600,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_FILTER, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
-                    selected));
-
-                KOManager.updateKOSelectionChange(getSelectedViewPane());
-                updateKeyObjectComponentsListener(getSelectedViewPane());
+                KOManager.updateKOFilter(getSelectedViewPane(), null, selected);
             }
         };
     }
@@ -901,11 +892,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void updateKeyObjectComponentsListener(DefaultView2d<DicomImageElement> view2d) {
-        koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
-        koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+        if (view2d != null) {
+            koToggleAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE
+                .cmd()));
+            koFilterAction.setSelectedWithoutTriggerAction((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
 
-        koSelectionAction.setDataListWithoutTriggerAction(KOManager.getKOElementListWithNone(view2d).toArray());
-        koSelectionAction.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+            Object[] kos = KOManager.getKOElementListWithNone(view2d).toArray();
+            boolean enable = kos.length > 1;
+            if (enable) {
+                koSelectionAction.setDataListWithoutTriggerAction(kos);
+                koSelectionAction
+                    .setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.KO_SELECTION.cmd()));
+            }
+            koFilterAction.enableAction(enable);
+            koSelectionAction.enableAction(enable);
+        }
+
     }
 
     private void updateWindowLevelComponentsListener(DicomImageElement image, DefaultView2d<DicomImageElement> view2d) {

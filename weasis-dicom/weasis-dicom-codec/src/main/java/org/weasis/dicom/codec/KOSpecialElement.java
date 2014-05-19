@@ -101,12 +101,26 @@ public class KOSpecialElement extends DicomSpecialElement {
     }
 
     public Set<String> getReferencedSOPInstanceUIDSet(String seriesUID) {
+        if (seriesUID == null) {
+            return getReferencedSOPInstanceUIDSet();
+        }
+
         if (sopInstanceReferenceMapBySeriesUID == null) {
             updateHierachicalSOPInstanceReference();
         }
+
         Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
             sopInstanceReferenceMapBySeriesUID.get(seriesUID);
         return sopInstanceReferenceBySOPInstanceUID != null ? sopInstanceReferenceBySOPInstanceUID.keySet() : null;
+    }
+
+    public boolean containsSopInstanceUIDReference(String seriesInstanceUID, String sopInstanceUIDReference) {
+        Set<String> sopInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+        return (sopInstanceUIDSet != null && sopInstanceUIDSet.contains(sopInstanceUIDReference));
+    }
+
+    public boolean containsSopInstanceUIDReference(String sopInstanceUIDReference) {
+        return containsSopInstanceUIDReference(null, sopInstanceUIDReference);
     }
 
     public boolean isEmpty() {
@@ -647,4 +661,5 @@ public class KOSpecialElement extends DicomSpecialElement {
         }
         return super.getFile();
     }
+
 }

@@ -80,7 +80,7 @@ public class ActionW {
     public static final ActionW PR_STATE = new ActionW(Messages.getString("ActionW.PR"), "pr_state", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
     public static final ActionW KO_TOOGLE_STATE = new ActionW("Toggle KO State", "ko_toogle_state", KeyEvent.VK_K, 0,
         null);
-    public static final ActionW KO_SELECTION = new ActionW("Change KO Selection", "ko_selection", 0, 0, null);
+    public static final ActionW KO_SELECTION = new ActionW("KO Selection", "ko_selection", 0, 0, null);
     public static final ActionW KO_FILTER = new ActionW("Apply Filter to KO selection", "ko_filter", 0, 0, null);
     public static final ActionW IMAGE_PIX_PADDING = new ActionW(
         Messages.getString("ActionW.pixpad"), "pixel_padding", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$

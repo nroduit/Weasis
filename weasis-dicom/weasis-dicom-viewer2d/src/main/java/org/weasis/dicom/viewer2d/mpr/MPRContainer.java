@@ -142,11 +142,11 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     private volatile String lastCommand;
 
     public MPRContainer() {
-        this(VIEWS_1x1);
+        this(VIEWS_1x1, null);
     }
 
-    public MPRContainer(GridBagLayoutModel layoutModel) {
-        super(EventManager.getInstance(), layoutModel, MPRFactory.NAME, MPRFactory.ICON, null);
+    public MPRContainer(GridBagLayoutModel layoutModel, String uid) {
+        super(EventManager.getInstance(), layoutModel, uid, MPRFactory.NAME, MPRFactory.ICON, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -217,7 +217,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             // }
             ActionState lutAction = eventManager.getAction(ActionW.LUT);
             if (lutAction instanceof ComboItemListener) {
-                JMenu menu = ((ComboItemListener) lutAction).createMenu(Messages.getString("View2dContainer.lut")); //$NON-NLS-1$
+                JMenu menu =
+                    ((ComboItemListener) lutAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.lut")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 ActionState invlutAction = eventManager.getAction(ActionW.INVERSELUT);
                 if (invlutAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
@@ -229,13 +232,17 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             ActionState filterAction = eventManager.getAction(ActionW.FILTER);
             if (filterAction instanceof ComboItemListener) {
                 JMenu menu =
-                    ((ComboItemListener) filterAction).createMenu(Messages.getString("View2dContainer.filter")); //$NON-NLS-1$
+                    ((ComboItemListener) filterAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.filter")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 menuRoot.add(menu);
             }
             ActionState stackAction = eventManager.getAction(ActionW.SORTSTACK);
             if (stackAction instanceof ComboItemListener) {
                 JMenu menu =
-                    ((ComboItemListener) stackAction).createMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                    ((ComboItemListener) stackAction).createUnregisteredRadioMenu(Messages
+                        .getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                menu.setEnabled(true);
                 ActionState invstackAction = eventManager.getAction(ActionW.INVERSESTACK);
                 if (invstackAction instanceof ToggleButtonListener) {
                     menu.add(new JSeparator());
