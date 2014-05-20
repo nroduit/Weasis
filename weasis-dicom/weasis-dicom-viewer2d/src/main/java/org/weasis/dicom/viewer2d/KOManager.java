@@ -241,21 +241,23 @@ public final class KOManager {
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static void setKeyObjectReference(boolean selectedState, final DefaultView2d<DicomImageElement> view2d) {
+    public static boolean setKeyObjectReference(boolean selectedState, final DefaultView2d<DicomImageElement> view2d) {
 
         KOSpecialElement validKOSelection = getValidKOSelection(view2d);
 
         if (validKOSelection == null) {
-            return; // canceled
+            return false; // canceled
         }
 
         KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
+
+        boolean hasKeyObjectReferenceChanged = false;
 
         if (validKOSelection != currentSelectedKO) {
             updateKOFilter(view2d, validKOSelection, null);
         } else {
             DicomImageElement currentImage = view2d.getImage();
-            boolean hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
+            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
 
             if (hasKeyObjectReferenceChanged) {
                 DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
@@ -265,7 +267,7 @@ public final class KOManager {
             }
         }
 
-        return;
+        return hasKeyObjectReferenceChanged;
     }
 
     public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,

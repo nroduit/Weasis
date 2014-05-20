@@ -270,7 +270,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         actionsInView.put(ActionW.KO_FILTER.cmd(), false);
         actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), false);
-        actionsInView.put(ActionW.KO_SELECTION.cmd(), null);
+        actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NONE);
 
         // Set the more recent KO by default
 

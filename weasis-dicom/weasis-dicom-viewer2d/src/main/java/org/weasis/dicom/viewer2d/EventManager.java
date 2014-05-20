@@ -582,7 +582,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean newSelectedState) {
-                KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane());
+                if (KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane()) == false) {
+                    setSelectedWithoutTriggerAction(!newSelectedState);
+                }
             }
         };
     }
