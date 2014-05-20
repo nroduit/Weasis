@@ -1034,7 +1034,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             oldSynch = synch;
                         }
                         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-                        pane.updateSynchState();
+                        // pane.updateSynchState();
                     }
                 } else {
                     // TODO if Pan is activated than rotation is required
@@ -1093,7 +1093,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                                     addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                                 }
                                 pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-                                pane.updateSynchState();
+                                // pane.updateSynchState();
                             }
                         }
                         // Force to draw crosslines without changing the slice position
@@ -1109,13 +1109,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-                            pane.updateSynchState();
+                            // pane.updateSynchState();
                         }
                     }
                 }
             }
 
-            viewPane.updateSynchState();
+            // viewPane.updateSynchState();
         }
     }
 
