@@ -672,7 +672,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
 
                 if (updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
-                    KOManager.updateKOFilter(view, updatedKOSelection, enableFilter);
+                    KOManager.updateKOFilter(view, null, enableFilter);
                 }
 
                 DicomSeries dicomSeries = (DicomSeries) view.getSeries();

@@ -582,8 +582,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
             @Override
             public void actionPerformed(boolean newSelectedState) {
-                if (KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane()) == false) {
-                    setSelectedWithoutTriggerAction(!newSelectedState);
+                View2d selectedViewPane = (View2d) getSelectedViewPane();
+                
+                if (KOManager.setKeyObjectReference(newSelectedState, selectedViewPane) == false) {
+                    selectedViewPane.updateKOButtonVisibleState();
+                    updateKeyObjectComponentsListener(selectedViewPane);
                 }
             }
         };
@@ -593,7 +596,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
             @Override
             public void itemStateChanged(Object object) {
-                KOManager.updateKOFilter(getSelectedViewPane(), object, null);
+                View2d selectedViewPane = (View2d) getSelectedViewPane();
+           
+                KOManager.updateKOFilter(selectedViewPane, object, null);
+                selectedViewPane.updateKOButtonVisibleState();
+                updateKeyObjectComponentsListener(selectedViewPane);
             }
         };
     }
@@ -602,7 +609,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_FILTER, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                KOManager.updateKOFilter(getSelectedViewPane(), null, selected);
+                View2d selectedViewPane = (View2d) getSelectedViewPane();
+                
+                KOManager.updateKOFilter(selectedViewPane, null, selected);
+                selectedViewPane.updateKOButtonVisibleState();
+                updateKeyObjectComponentsListener(selectedViewPane);
             }
         };
     }
