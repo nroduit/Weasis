@@ -54,7 +54,7 @@ public final class KOManager {
      * if there is a more suitable new KEY_OBJECT element. Ask the user if needed.
      */
 
-    private static KOSpecialElement getValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
+    public static KOSpecialElement getValidKOSelection(final DefaultView2d<DicomImageElement> view2d) {
 
         KOSpecialElement currentSelectedKO = getCurrentKOSelection(view2d);
         DicomImageElement currentImage = view2d.getImage();
@@ -274,6 +274,35 @@ public final class KOManager {
         return hasKeyObjectReferenceChanged;
     }
 
+    public static void setKeyObjectReferenceAllSeries(boolean selectedState,
+        final DefaultView2d<DicomImageElement> view2d) {
+
+        KOSpecialElement validKOSelection = getValidKOSelection(view2d);
+
+        if (validKOSelection == null) {
+            ((EventManager) view2d.getEventManager()).updateKeyObjectComponentsListener(view2d);
+            return; // canceled
+        }
+
+        KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
+
+        if (validKOSelection != currentSelectedKO) {
+            ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
+            if (koSelection instanceof ComboItemListener) {
+                ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+            }
+        }
+
+        validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries().getSortedMedias(null));
+
+        DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
+        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.Update, view2d, null,
+            validKOSelection));
+
+    }
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
         Boolean enableFilter) {
 
@@ -306,6 +335,7 @@ public final class KOManager {
             DicomSeries dicomSeries = (DicomSeries) view2D.getSeries();
             String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
             Filter<DicomImageElement> sopInstanceUIDFilter = null;
+
             if (enableFilter && selectedKO.containsSeriesInstanceUIDReference(seriesInstanceUID)) {
                 sopInstanceUIDFilter = selectedKO.getSOPInstanceUIDFilter();
             }

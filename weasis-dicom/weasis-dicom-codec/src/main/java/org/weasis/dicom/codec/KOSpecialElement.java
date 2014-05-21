@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -371,6 +373,58 @@ public class KOSpecialElement extends DicomSpecialElement {
         new KODocumentModule(dcmItems).setCurrentRequestedProcedureEvidences(referencedStudies);
 
         return true;
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean setKeyObjectReference(boolean selectedState, List<DicomImageElement> dicomImageList) {
+
+        Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<String, Set<DicomImageElement>>();
+
+        for (DicomImageElement dicomImage : dicomImageList) {
+            String studyInstanceUID = (String) dicomImage.getTagValue(TagW.StudyInstanceUID);
+            String seriesInstanceUID = (String) dicomImage.getTagValue(TagW.SeriesInstanceUID);
+            String sopClassUID = (String) dicomImage.getTagValue(TagW.SOPClassUID);
+
+            String hashcode = studyInstanceUID + seriesInstanceUID + sopClassUID;
+
+            Set<DicomImageElement> dicomImageSet = dicomImageSetMap.get(hashcode);
+            if (dicomImageSet == null) {
+                dicomImageSetMap.put(hashcode, dicomImageSet = new HashSet<DicomImageElement>());
+            }
+            dicomImageSet.add(dicomImage);
+        }
+
+        boolean hasDataModelChanged = false;
+
+        for (Set<DicomImageElement> dicomImageSet : dicomImageSetMap.values()) {
+
+            DicomImageElement firstDicomImage = dicomImageSet.iterator().next();
+
+            String studyInstanceUID = (String) firstDicomImage.getTagValue(TagW.StudyInstanceUID);
+            String seriesInstanceUID = (String) firstDicomImage.getTagValue(TagW.SeriesInstanceUID);
+            String sopClassUID = (String) firstDicomImage.getTagValue(TagW.SOPClassUID);
+
+            Collection<String> sopInstanceUIDs = new ArrayList<String>(dicomImageSet.size());
+            for (DicomImageElement dicomImage : dicomImageSet) {
+                sopInstanceUIDs.add((String) dicomImage.getTagValue(TagW.SOPInstanceUID));
+            }
+
+            hasDataModelChanged |=
+                setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
+        }
+
+        return hasDataModelChanged;
+    }
+
+    private boolean setKeyObjectReference(boolean selectedState, String studyInstanceUID, String seriesInstanceUID,
+        Collection<String> sopInstanceUIDs, String sopClassUID) {
+
+        if (selectedState) {
+            return addKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
+        } else {
+            return removeKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs);
+        }
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
