@@ -73,6 +73,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
+import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
@@ -663,30 +664,49 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     private void setKOSpecialElement(KOSpecialElement updatedKOSelection, Boolean enableFilter) {
         if (updatedKOSelection != null) {
             DefaultView2d<DicomImageElement> selectedView = getSelectedImagePane();
-            ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels(true);
-
-            for (DefaultView2d<DicomImageElement> view : viewList) {
-
-                if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
-                    continue;
+            if (SynchData.Mode.Tile.equals(this.getSynchView().getSynchData().getMode())) {
+                if (updatedKOSelection != null) {
+                    ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
+                    if (koSelection instanceof ComboItemListener) {
+                        ((ComboItemListener) koSelection).setSelectedItem(updatedKOSelection);
+                    }
                 }
-
-                if (updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
-                    KOManager.updateKOFilter(view, null, enableFilter);
+                if (enableFilter != null) {
+                    ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
+                    if (koFilterAction instanceof ToggleButtonListener) {
+                        ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
+                    }
                 }
+            } else {
+                /*
+                 * Set the selected view at the end of the list to trigger the synchronization of the SCROLL_SERIES
+                 * action at the end of the process
+                 */
+                ArrayList<DefaultView2d<DicomImageElement>> viewList = getImagePanels(true);
 
-                DicomSeries dicomSeries = (DicomSeries) view.getSeries();
-                String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+                for (DefaultView2d<DicomImageElement> view : viewList) {
 
-                if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false
-                    && updatedKOSelection.getMediaReader().isEditableDicom() == false) {
-                    continue;
-                }
+                    if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
+                        continue;
+                    }
 
-                ((View2d) view).updateKOButtonVisibleState();
+                    if (updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
+                        KOManager.updateKOFilter(view, null, enableFilter);
+                    }
 
-                if (selectedView == view) {
-                    EventManager.getInstance().updateKeyObjectComponentsListener(view);
+                    DicomSeries dicomSeries = (DicomSeries) view.getSeries();
+                    String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+
+                    if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false
+                        && updatedKOSelection.getMediaReader().isEditableDicom() == false) {
+                        continue;
+                    }
+
+                    ((View2d) view).updateKOButtonVisibleState();
+
+                    if (selectedView == view) {
+                        EventManager.getInstance().updateKeyObjectComponentsListener(view);
+                    }
                 }
             }
         }

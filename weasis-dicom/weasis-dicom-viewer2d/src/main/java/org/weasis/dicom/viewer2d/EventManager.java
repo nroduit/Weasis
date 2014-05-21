@@ -583,7 +583,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             @Override
             public void actionPerformed(boolean newSelectedState) {
                 View2d selectedViewPane = (View2d) getSelectedViewPane();
-                
+
                 if (KOManager.setKeyObjectReference(newSelectedState, selectedViewPane) == false) {
                     selectedViewPane.updateKOButtonVisibleState();
                     updateKeyObjectComponentsListener(selectedViewPane);
@@ -596,11 +596,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ComboItemListener(ActionW.KO_SELECTION, new String[] { ActionState.NONE }) {
             @Override
             public void itemStateChanged(Object object) {
-                View2d selectedViewPane = (View2d) getSelectedViewPane();
-           
-                KOManager.updateKOFilter(selectedViewPane, object, null);
-                selectedViewPane.updateKOButtonVisibleState();
-                updateKeyObjectComponentsListener(selectedViewPane);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    object));
             }
         };
     }
@@ -609,11 +606,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         return new ToggleButtonListener(ActionW.KO_FILTER, false) {
             @Override
             public void actionPerformed(boolean selected) {
-                View2d selectedViewPane = (View2d) getSelectedViewPane();
-                
-                KOManager.updateKOFilter(selectedViewPane, null, selected);
-                selectedViewPane.updateKOButtonVisibleState();
-                updateKeyObjectComponentsListener(selectedViewPane);
+                firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(),
+                    selected));
             }
         };
     }
@@ -1118,6 +1112,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                                 oldSynch = synch.clone();
                             }
+                            synch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
+                            synch.getActions().put(ActionW.KO_FILTER.cmd(), true);
+
                             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                             addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);

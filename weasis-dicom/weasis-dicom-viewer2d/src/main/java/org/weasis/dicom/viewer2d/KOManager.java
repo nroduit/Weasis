@@ -11,6 +11,7 @@ import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -254,7 +255,10 @@ public final class KOManager {
         boolean hasKeyObjectReferenceChanged = false;
 
         if (validKOSelection != currentSelectedKO) {
-            updateKOFilter(view2d, validKOSelection, null);
+            ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
+            if (koSelection instanceof ComboItemListener) {
+                ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+            }
         } else {
             DicomImageElement currentImage = view2d.getImage();
             hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, currentImage);
@@ -273,47 +277,38 @@ public final class KOManager {
     public static void updateKOFilter(DefaultView2d<DicomImageElement> view2D, Object newSelectedKO,
         Boolean enableFilter) {
 
-        if ((view2D instanceof View2d) == false) {
-            return;
-        }
+        if (view2D instanceof View2d) {
 
-        KOSpecialElement selectedKO = null;
-
-        if (newSelectedKO == null) {
-            Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
-            if (actionValue instanceof KOSpecialElement) {
-                selectedKO = (KOSpecialElement) actionValue;
+            KOSpecialElement selectedKO = null;
+            if (newSelectedKO == null) {
+                Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
+                if (actionValue instanceof KOSpecialElement) {
+                    selectedKO = (KOSpecialElement) actionValue;
+                }
+            } else {
+                if (newSelectedKO instanceof KOSpecialElement) {
+                    selectedKO = (KOSpecialElement) newSelectedKO;
+                }
+                view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
             }
-        } else {
-            view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
-            if (newSelectedKO instanceof KOSpecialElement) {
-                selectedKO = (KOSpecialElement) newSelectedKO;
+
+            if (enableFilter == null) {
+                enableFilter = JMVUtils.getNULLtoFalse(view2D.getActionValue(ActionW.KO_FILTER.cmd()));
+            } else {
+                view2D.setActionsInView(ActionW.KO_FILTER.cmd(), enableFilter);
+                view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), null);
             }
-        }
 
-        if (enableFilter == null) {
-            enableFilter = JMVUtils.getNULLtoFalse(view2D.getActionValue(ActionW.KO_FILTER.cmd()));
-        } else {
-            view2D.setActionsInView(ActionW.KO_FILTER.cmd(), enableFilter);
-            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), null);
-        }
+            if (selectedKO == null || view2D.getSeries() == null || view2D.getImage() == null) {
+                return;
+            }
 
-        if (enableFilter == false || selectedKO == null || view2D.getSeries() == null || view2D.getImage() == null) {
-            return;
-        }
-
-        DicomSeries dicomSeries = (DicomSeries) view2D.getSeries();
-
-        String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
-
-        if (selectedKO.containsSeriesInstanceUIDReference(seriesInstanceUID) == false) {
-
-            view2D.setActionsInView(ActionW.KO_FILTER.cmd(), false);
-            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), null);
-
-        } else {
-
-            Filter<DicomImageElement> sopInstanceUIDFilter = selectedKO.getSOPInstanceUIDFilter();
+            DicomSeries dicomSeries = (DicomSeries) view2D.getSeries();
+            String seriesInstanceUID = (String) dicomSeries.getTagValue(TagW.SeriesInstanceUID);
+            Filter<DicomImageElement> sopInstanceUIDFilter = null;
+            if (enableFilter && selectedKO.containsSeriesInstanceUIDReference(seriesInstanceUID)) {
+                sopInstanceUIDFilter = selectedKO.getSOPInstanceUIDFilter();
+            }
             view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
 
             /*
@@ -322,8 +317,8 @@ public final class KOManager {
              */
             int newImageIndex = view2D.getFrameIndex();
 
-            if (newImageIndex < 0) {
-                if (dicomSeries.size(sopInstanceUIDFilter) > 0) {
+            if (enableFilter && newImageIndex < 0) {
+                if (dicomSeries.size(sopInstanceUIDFilter) > 0 && view2D.getImage() != null) {
 
                     double[] val = (double[]) view2D.getImage().getTagValue(TagW.SlicePosition);
                     double location = val[0] + val[1] + val[2];
@@ -362,6 +357,7 @@ public final class KOManager {
                 }
                 ((View2d) view2D).setImage(newImage);
             }
+            ((View2d) view2D).updateKOButtonVisibleState();
         }
     }
 }

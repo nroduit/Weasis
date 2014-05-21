@@ -623,14 +623,23 @@ public abstract class ImageViewerEventManager<E extends ImageElement> {
     }
 
     public DefaultView2d<E> getSelectedViewPane() {
-        if (selectedView2dContainer != null) {
-            return selectedView2dContainer.getSelectedImagePane();
+        ImageViewerPlugin<E> container = selectedView2dContainer;
+        if (container != null) {
+            return container.getSelectedImagePane();
         }
         return null;
     }
 
     public ImageViewerPlugin<E> getSelectedView2dContainer() {
         return selectedView2dContainer;
+    }
+
+    public boolean isSelectedView2dContainerInTileMode() {
+        ImageViewerPlugin<E> container = selectedView2dContainer;
+        if (container != null) {
+            return SynchData.Mode.Tile.equals(container.getSynchView().getSynchData().getMode());
+        }
+        return false;
     }
 
     public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {

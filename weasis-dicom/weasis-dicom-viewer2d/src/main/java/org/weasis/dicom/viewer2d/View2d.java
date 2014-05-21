@@ -359,6 +359,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
                     actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
+                } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
+                    KOManager.updateKOFilter(this, val, null);
+                } else if (command.equals(ActionW.KO_FILTER.cmd())) {
+                    KOManager.updateKOFilter(this, null, (Boolean) val);
                 } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
                     if (series != null && val instanceof Point2D.Double) {
                         Point2D.Double p = (Point2D.Double) val;
